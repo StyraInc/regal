@@ -12,3 +12,5 @@ ast(policy) := rego.parse_module("policy.rego", concat("", [
 	"package policy\n\n",
 	policy,
 ]))
+
+is_snake_case(str) := str == lower(str)

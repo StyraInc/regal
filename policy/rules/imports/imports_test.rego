@@ -11,7 +11,6 @@ test_fail_future_keywords_import_wildcard if {
 	result == {{
 		"description": "Use explicit future keyword imports",
 		"related_resources": [{"ref": "https://docs.styra.com/regal/rules/sty-imports-001"}],
-		"scope": "rule",
 		"title": "STY-IMPORTS-001",
 	}}
 }

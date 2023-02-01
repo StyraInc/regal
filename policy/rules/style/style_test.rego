@@ -11,7 +11,6 @@ test_fail_camel_cased_rule_name if {
 	result == {{
 		"description": "Prefer snake_case for names",
 		"related_resources": [{"ref": "https://docs.styra.com/regal/rules/sty-style-001"}],
-		"scope": "rule",
 		"title": "STY-STYLE-001",
 	}}
 }

@@ -12,8 +12,21 @@ import data.regal
 # related_resources:
 # - https://docs.styra.com/regal/rules/sty-style-001
 violation contains msg if {
-    some rule in input.rules
-    not regal.is_snake_case(rule.head.name)
+	some rule in input.rules
+	not regal.is_snake_case(rule.head.name)
 
 	msg := regal.fail(rego.metadata.rule(), {})
 }
+
+# TODO: more cases, like:
+#
+# allow {
+#	some fooBar
+#	input[fooBar]
+#}
+#allow {
+#	some fooBar in input
+#}
+#allow {
+#	fooBar := 5
+#}

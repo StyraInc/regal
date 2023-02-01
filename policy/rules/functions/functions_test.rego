@@ -11,7 +11,6 @@ test_fail_function_references_input if {
 	result == {{
 		"description": "Reference to input or data in function body",
 		"related_resources": [{"ref": "https://docs.styra.com/regal/rules/sty-functions-001"}],
-		"scope": "rule",
 		"title": "STY-FUNCTIONS-001",
 	}}
 }
@@ -22,7 +21,6 @@ test_fail_function_references_data if {
 	result == {{
 		"description": "Reference to input or data in function body",
 		"related_resources": [{"ref": "https://docs.styra.com/regal/rules/sty-functions-001"}],
-		"scope": "rule",
 		"title": "STY-FUNCTIONS-001",
 	}}
 }

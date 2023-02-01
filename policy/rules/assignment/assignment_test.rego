@@ -39,3 +39,10 @@ test_success_assignment_in_object_rule_assignment if {
 	result := assignment.violation with input as ast
 	result == set()
 }
+
+# Blocked by https://github.com/StyraInc/regal/issues/6
+#
+# allow = true { true }
+#
+# f(x) = 5
+

@@ -1,8 +1,5 @@
 package regal.rules.assignment
 
-# Rules may have a scope (like a rule or expr) and can be ignored
-# if the current scope does not match that
-
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in

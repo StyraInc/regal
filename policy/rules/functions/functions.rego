@@ -14,11 +14,11 @@ import data.regal
 violation contains msg if {
 	some rule in input.rules
 	rule.head.args
-    some expr in rule.body
+	some expr in rule.body
 
-    terms := expr.terms.value
-    terms[0].type == "var"
-    terms[0].value in {"input", "data"}
+	terms := expr.terms.value
+	terms[0].type == "var"
+	terms[0].value in {"input", "data"}
 
 	msg := regal.fail(rego.metadata.rule(), {})
 }

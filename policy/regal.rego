@@ -6,9 +6,11 @@
 # - https://www.styra.com
 package regal
 
-fail(metadata, details) := object.union(metadata, details)
+fail(metadata, details) := object.union(object.remove(metadata, ["scope"]), details)
 
 ast(policy) := rego.parse_module("policy.rego", concat("", [
 	"package policy\n\n",
 	policy,
 ]))
+
+is_snake_case(str) := str == lower(str)

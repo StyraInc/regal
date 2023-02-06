@@ -9,7 +9,14 @@ package regal
 fail(metadata, details) := object.union(object.remove(metadata, ["scope"]), details)
 
 ast(policy) := rego.parse_module("policy.rego", concat("", [
-	"package policy\n\n",
+	`package policy
+
+	import future.keywords.contains
+	import future.keywords.every
+	import future.keywords.if
+	import future.keywords.in
+
+	`,
 	policy,
 ]))
 

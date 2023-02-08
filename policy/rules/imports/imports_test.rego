@@ -30,3 +30,13 @@ test_success_future_keywords_import_specific_many if {
 	result := imports.violation with input as ast
 	result == set()
 }
+
+test_fail_import_input if {
+	ast := regal.ast(`import input.foo`)
+	result := imports.violation with input as ast
+	result == {{
+		"description": "Avoid importing input",
+		"related_resources": [{"ref": "https://docs.styra.com/regal/rules/sty-imports-002"}],
+		"title": "STY-IMPORTS-002",
+	}}
+}

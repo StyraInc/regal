@@ -24,3 +24,20 @@ violation contains msg if {
 
 	msg := regal.fail(rego.metadata.rule(), {})
 }
+
+# METADATA
+# title: STY-IMPORTS-002
+# description: Avoid importing input
+# related_resources:
+# - https://docs.styra.com/regal/rules/sty-imports-002
+violation contains msg if {
+	some imported in input.imports
+
+	imported.path.value[0].value == "input"
+
+	# If we want to allow aliasing input, eg `import input as tfplan`:
+	# count(imported.path.value) == 1
+    # imported.alias
+
+	msg := regal.fail(rego.metadata.rule(), {})
+}

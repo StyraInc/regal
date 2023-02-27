@@ -1,6 +1,9 @@
 # Regal
 
-Regal is a linter for Rego, with the goal of making your Rego magnificient!
+[![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
+![OPA v0.49.2](https://openpolicyagent.org/badge/v0.49.2)
+
+Regal is a linter for Rego, with the goal of making your Rego magnificent!
 
 > regal
 >

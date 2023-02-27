@@ -25,5 +25,3 @@ builtin_metadata[builtin] := object.filter(attributes, ["args", "result"]) if {
     not something_wrong
     some builtin, attributes in object.remove(response.body, ["_categories"])
 }
-
-builtins := {"builtins": builtin_metadata}

@@ -16,12 +16,21 @@ using the JSON representation of the Rego abstract syntax tree (AST) as input, a
 few additional custom built-in functions and some indexed data structures to help
 with linting.
 
+## Try it out!
+
+Run `regal` pointed at a Rego policy to have it linted:
+
+```shell
+./regal policy.rego
+```
+
 ## Development
 
 ### Building
 
-Run the `build.sh` script to populate the `data` directory with any data necessary for
-linting (such as the built-in function metadata from OPA).
+1. Run the `build.sh` script to populate the `data` directory with any data necessary for
+   linting (such as the built-in function metadata from OPA).
+2. Build the `regal` executable by running `go build`.
 
 ### Testing
 

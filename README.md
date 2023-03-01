@@ -21,10 +21,10 @@ with linting.
 
 ## Try it out!
 
-Run `regal` pointed at a Rego policy to have it linted:
+Run `regal` pointed at one or more files or directories to have them linted:
 
 ```shell
-./regal policy.rego
+./regal policy/
 ```
 
 ## Development

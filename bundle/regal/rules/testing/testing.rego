@@ -11,15 +11,20 @@ import data.regal
 package_name := concat(".", [path.value | some path in input["package"].path])
 
 # METADATA
-# title: STY-TESTING-001
+# title: test-outside-test-package
 # description: Test outside of test package
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-testing-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/test-outside-test-package
+# custom:
+#   category: testing
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	not endswith(package_name, "_test")
 
     some rule in input.rules
     startswith(rule.head.name, "test_")
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }

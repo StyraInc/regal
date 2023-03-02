@@ -7,11 +7,16 @@ import future.keywords.in
 import data.regal
 
 # METADATA
-# title: STY-VARIABLES-001
+# title: unconditional-assignment
 # description: Unconditional assignment in rule body
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-variables-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/unconditional-assignment
+# custom:
+#   category: variables
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 
     # Single expression in rule body
@@ -24,6 +29,10 @@ violation contains msg if {
 	rule.head.value.type == "var"
 	rule_head_var := rule.head.value.value
 
+	# If a `with` statement is found in body, back out, as these
+	# can't be moved to the rule head
+	not rule.body[0]["with"]
+
 	# Which is an assignment (= or :=)
     terms := rule.body[0].terms
 	terms[0].type == "ref"
@@ -34,5 +43,5 @@ violation contains msg if {
 	terms[1].type == "var"
     terms[1].value == rule_head_var
 
-    msg := regal.fail(rego.metadata.rule(), {})
+    violation := regal.fail(rego.metadata.rule(), {})
 }

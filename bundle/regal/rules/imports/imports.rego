@@ -15,22 +15,32 @@ future_keywords_wildcard := {"path": {
 }}
 
 # METADATA
-# title: STY-IMPORTS-001
+# title: implicit-future-keywords
 # description: Use explicit future keyword imports
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-imports-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/implicit-future-keywords
+# custom:
+#   category: imports
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	future_keywords_wildcard in input.imports
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-IMPORTS-002
+# title: avoid-importing-input
 # description: Avoid importing input
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-imports-002
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/avoid-importing-input
+# custom:
+#   category: imports
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some imported in input.imports
 
 	imported.path.value[0].value == "input"
@@ -39,5 +49,5 @@ violation contains msg if {
 	# count(imported.path.value) == 1
     # imported.alias
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }

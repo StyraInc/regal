@@ -7,23 +7,33 @@ import future.keywords.in
 import data.regal
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	not regal.is_snake_case(rule.head.name)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 	some symbol in expr.terms.symbols
@@ -32,15 +42,20 @@ violation contains msg if {
 	is_string(symbol.value)
 	not regal.is_snake_case(symbol.value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 
@@ -52,15 +67,20 @@ violation contains msg if {
 
 	not regal.is_snake_case(expr.terms[1].value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 	some symbol in expr.terms.symbols
@@ -71,15 +91,20 @@ violation contains msg if {
 
 	not regal.is_snake_case(symbol.value[1].value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 	some symbol in expr.terms.symbols
@@ -90,15 +115,20 @@ violation contains msg if {
 
 	not regal.is_snake_case(symbol.value[2].value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 
@@ -108,15 +138,20 @@ violation contains msg if {
 
 	not regal.is_snake_case(expr.terms.key.value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # METADATA
-# title: STY-STYLE-001
+# title: prefer-snake-case
 # description: Prefer snake_case for names
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-style-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
 	some rule in input.rules
 	some expr in rule.body
 
@@ -126,7 +161,7 @@ violation contains msg if {
 
 	not regal.is_snake_case(expr.terms.value.value)
 
-	msg := regal.fail(rego.metadata.rule(), {})
+	violation := regal.fail(rego.metadata.rule(), {})
 }
 
 # TODO: scan doesn't currently go into the body of

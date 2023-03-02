@@ -1,0 +1,27 @@
+rules:
+  assignment:
+    use-assignment-operator:
+      enabled: true
+  comments:
+    todo-comment:
+      enabled: true
+  functions:
+    input-or-data-reference:
+      enabled: true
+  imports:
+    implicit-future-keywords:
+      enabled: true
+    avoid-importing-input:
+      enabled: true
+  rules:
+    rule-shadows-builtin:
+      enabled: true
+  style:
+    prefer-snake-case:
+      enabled: true
+  testing:
+    test-outside-test-package:
+      enabled: true
+  variables:
+    unconditional-assignment:
+      enabled: true

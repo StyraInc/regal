@@ -27,6 +27,20 @@ Run `regal` pointed at one or more files or directories to have them linted:
 ./regal policy/
 ```
 
+## Rules
+
+This table should be generated from metadata annotations, and inserted here as part of the build process.
+See: https://github.com/StyraInc/regal/issues/36
+
+| Category   | Rule                                                                                  | Description                     | Enabled |
+|------------|---------------------------------------------------------------------------------------|---------------------------------|---------|
+| Assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator) | Prefer := over = for assignment | true    |
+| Comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                       | Avoid TODO comments             | true    |
+
+## Configuration
+
+TODO
+
 ## Development
 
 ### Building
@@ -41,4 +55,29 @@ To run all Rego tests:
 
 ```shell
 opa test policy data
+```
+
+### Authoring Rules
+
+During development of Rego-based rules, you may want to test the policies in isolation — i.e. without running Regal.
+Since Regal policies and data are kept in a regular
+[bundle](https://www.openpolicyagent.org/docs/latest/management-bundles/) structure, this is simple. Given we want to 
+test `p.rego` against the available set of rules, we can have OPA parse it and pipe the output to `opa eval` for
+evaluation:
+
+```shell
+$ opa parse p.rego --format json | opa eval -f pretty -b bundle -I data.regal.main.report
+[
+  {
+    "category": "variables",
+    "description": "Unconditional assignment in rule body",
+    "related_resources": [
+      {
+        "description": "documentation",
+        "ref": "https://docs.styra.com/regal/rules/unconditional-assignment"
+      }
+    ],
+    "title": "unconditional-assignment"
+  }
+]
 ```

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"io/fs"
 	"log"
 	"os"
 	"time"
@@ -14,21 +15,25 @@ import (
 
 // Note: this will bundle the tests as well, but since that has negligible impact on the size of the binary,
 // it's preferable to filter them out from the bundle than to e.g. create a separate directory for tests
-//
-//go:embed policy data
-var content embed.FS
+//go:embed all:bundle
+var bundle embed.FS
 
 func main() {
 	// Remove date and time from any `log.*` calls, as that doesn't add much of value here
 	log.SetFlags(0)
 
-	// TODO: Obviously, we'll want to deal with directories and not single files, but we'll need to decide on what
-	//       format to use for merging the ASTs, or if we should just present them as they are in a collection.
 	if len(os.Args) < 2 {
 		log.Fatal("At least one file or directory must be provided for linting")
 	}
 
-	regalRules := rio.MustLoadRegalBundle(content)
+	// Create new fs from root of bundle, do avoid having to deal with
+	// "bundle" in paths (i.e. `data.bundle.rega`)
+	bfs, err := fs.Sub(bundle, "bundle")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	regalRules := rio.MustLoadRegalBundle(bfs)
 	policies, err := loader.AllRegos(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)

@@ -12,16 +12,19 @@ todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
 todo_pattern := sprintf("(%s)", [concat("|", todo_identifiers)])
 
 # METADATA
-# title: STY-COMMENTS-001
-# description: TODO comment
+# title: todo-comment
+# description: Avoid TODO comments
 # related_resources:
-# - https://docs.styra.com/regal/rules/sty-comments-001
-violation contains msg if {
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/todo-comment
+# custom:
+#   category: comments
+report contains violation if {
+	regal.rule_config(rego.metadata.rule()).enabled == true
+
     some comment in input.comments
     text := base64.decode(comment.Text)
     regex.match(todo_pattern, text)
 
-    msg := regal.fail(rego.metadata.rule(), {
-        "location": comment.Location
-    })
+    violation := regal.fail(rego.metadata.rule(), {"location": comment.Location})
 }

@@ -3,8 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/styrainc/regal/internal/util"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Config map[string]Category
@@ -18,46 +19,38 @@ type Rule struct {
 	Extra   ExtraAttributes
 }
 
-func DefaultConfig(data map[string]any) (Config, error) {
-	rulesRaw, err := util.SearchMap(data, []string{"data", "regal", "config", "rules"})
+const configFileRelLocation = ".regal/config.yaml"
+const pathSeparator = string(os.PathSeparator)
+
+// FindConfig searches for .regal/config.yaml first in the directory of path,
+// and if not found, in the parent directory, and if not found, in the parent's
+// parent directory, and so on.
+func FindConfig(path string) (*os.File, error) {
+	finfo, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
-
-	rulesNode, ok := rulesRaw.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("expected 'rules' of object type")
+	dir := path
+	if !finfo.IsDir() {
+		dir = filepath.Dir(path)
 	}
 
-	config := Config{}
-
-	for cat, attributes := range rulesNode {
-		category := make(Category)
-		rules, ok := attributes.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("unexpected structure of category %v", cat)
+	for {
+		searchPath := filepath.Join(pathSeparator, dir, configFileRelLocation)
+		config, err := os.Open(searchPath)
+		if err == nil {
+			return config, nil
 		}
-		for name, confRaw := range rules {
-			rule := Rule{}
-			conf, ok := confRaw.(map[string]any)
-			if !ok {
-				return nil, fmt.Errorf("unexpected structure of rule %v in category %v", name, cat)
-			}
-			enabled, ok := conf["enabled"].(bool)
-			if !ok {
-				return nil, fmt.Errorf("unexpected type for attribute 'enabled' in rule %v: must be boolean", name)
-			}
-			delete(conf, "enabled")
-
-			rule.Enabled = enabled
-			rule.Extra = conf
-
-			category[name] = rule
+		if searchPath == pathSeparator+configFileRelLocation {
+			// Stop traversing at the root path
+			return nil, err
 		}
-		config[cat] = category
+
+		// Move up one level in the directory tree
+		parts := strings.Split(dir, pathSeparator)
+		parts = parts[:len(parts)-1]
+		dir = filepath.Join(parts...)
 	}
-
-	return config, nil
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {

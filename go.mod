@@ -2,7 +2,10 @@ module github.com/styrainc/regal
 
 go 1.20
 
-require github.com/open-policy-agent/opa v0.50.1
+require (
+	github.com/open-policy-agent/opa v0.50.1
+	gopkg.in/yaml.v3 v3.0.1
+)
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect

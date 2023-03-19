@@ -16,18 +16,18 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
-// Linter stores data to use for linting
+// Linter stores data to use for linting.
 type Linter struct {
 	ruleBundles  []*bundle.Bundle
 	configBundle *bundle.Bundle
 }
 
-// NewLinter creates a new Regal linter
+// NewLinter creates a new Regal linter.
 func NewLinter() Linter {
 	return Linter{}
 }
 
-// WithAddedBundle adds a bundle of rules and data to include in evaluation
+// WithAddedBundle adds a bundle of rules and data to include in evaluation.
 func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 	l.ruleBundles = append(l.ruleBundles, &b)
 
@@ -36,7 +36,7 @@ func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 
 const regalUserConfig = "regal_user_config"
 
-// WithUserConfig provides config overrides set by the user
+// WithUserConfig provides config overrides set by the user.
 func (l Linter) WithUserConfig(config map[string]any) Linter {
 	l.configBundle = &bundle.Bundle{
 		Manifest: bundle.Manifest{
@@ -49,7 +49,7 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 	return l
 }
 
-// Lint runs the linter on provided policies
+// Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report, error) {
 	var regoArgs []func(*rego.Rego)
 	regoArgs = append(regoArgs,

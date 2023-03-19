@@ -30,7 +30,9 @@ func FindConfig(path string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	dir := path
+
 	if !finfo.IsDir() {
 		dir = filepath.Dir(path)
 	}
@@ -38,9 +40,11 @@ func FindConfig(path string) (*os.File, error) {
 	for {
 		searchPath := filepath.Join(pathSeparator, dir, configFileRelLocation)
 		config, err := os.Open(searchPath)
+
 		if err == nil {
 			return config, nil
 		}
+
 		if searchPath == pathSeparator+configFileRelLocation {
 			// Stop traversing at the root path
 			return nil, err
@@ -69,10 +73,12 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &result); err != nil {
 		return err
 	}
+
 	enabled, ok := result["enabled"].(bool)
 	if !ok {
 		return fmt.Errorf("value of 'enabled' must be boolean")
 	}
+
 	delete(result, "enabled")
 
 	rule.Enabled = enabled

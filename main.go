@@ -37,6 +37,7 @@ func main() {
 	}
 
 	regalRules := rio.MustLoadRegalBundleFS(bfs)
+
 	policies, err := loader.AllRegos(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)

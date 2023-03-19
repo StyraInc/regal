@@ -68,6 +68,7 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report,
 			if metadataName, ok := ruleBundle.Manifest.Metadata["name"].(string); ok {
 				bundleName = metadataName
 			}
+
 			regoArgs = append(regoArgs, rego.ParsedBundle(bundleName, ruleBundle))
 		}
 	}
@@ -88,6 +89,7 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report,
 		if err != nil {
 			return report.Report{}, err
 		}
+
 		if len(resultSet) != 1 {
 			return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 		}

@@ -10,6 +10,7 @@ func TestJSONRoundTrip(t *testing.T) {
 	type foo struct {
 		Bar string `json:"bar"`
 	}
+
 	m := map[string]any{"bar": "foo"}
 	f := foo{}
 

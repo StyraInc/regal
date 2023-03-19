@@ -65,6 +65,7 @@ func MustJSON(x any) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return bytes
 }
 
@@ -74,6 +75,7 @@ func JSONRoundTrip(from any, to any) error {
 	if err != nil {
 		return err
 	}
+
 	return json.Unmarshal(bs, to)
 }
 
@@ -82,6 +84,7 @@ func MustYAMLToMap(from io.Reader) (m map[string]any) {
 	if err := yaml.NewDecoder(from).Decode(&m); err != nil {
 		log.Fatal(err)
 	}
+
 	return m
 }
 

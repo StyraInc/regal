@@ -2,9 +2,7 @@ package linter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 
@@ -15,11 +13,13 @@ import (
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 // Linter stores data to use for linting
 type Linter struct {
-	ruleBundles []*bundle.Bundle
+	ruleBundles  []*bundle.Bundle
+	configBundle *bundle.Bundle
 }
 
 // NewLinter creates a new Regal linter
@@ -34,13 +34,33 @@ func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 	return l
 }
 
+const regalUserConfig = "regal_user_config"
+
+// WithUserConfig provides config overrides set by the user
+func (l Linter) WithUserConfig(config map[string]any) Linter {
+	l.configBundle = &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{regalUserConfig},
+			Metadata: map[string]any{"name": regalUserConfig},
+		},
+		Data: map[string]any{regalUserConfig: config},
+	}
+
+	return l
+}
+
 // Lint runs the linter on provided policies
-func (l Linter) Lint(ctx context.Context, result *loader.Result) {
+func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report, error) {
 	var regoArgs []func(*rego.Rego)
 	regoArgs = append(regoArgs,
 		rego.Query("report = data.regal.main.report"),
 		rego.EnablePrintStatements(true),
-		rego.PrintHook(topdown.NewPrintHook(os.Stderr)))
+		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+	)
+
+	if l.configBundle != nil {
+		regoArgs = append(regoArgs, rego.ParsedBundle(regalUserConfig, l.configBundle))
+	}
 
 	if l.ruleBundles != nil {
 		for _, ruleBundle := range l.ruleBundles {
@@ -54,33 +74,31 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) {
 
 	query, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return report.Report{}, err
 	}
 
 	// Maintain order across runs
 	modules := util.Keys(result.Modules)
 	sort.Strings(modules)
 
+	aggregate := report.Report{}
+
 	for _, name := range modules {
-		module := result.Modules[name]
-		astJSON := rio.MustJSON(module.Parsed)
-		var input map[string]any
-		if err = json.Unmarshal(astJSON, &input); err != nil {
-			log.Fatal(err)
-		}
-
-		resultSet, err := query.Eval(ctx, rego.EvalInput(input))
+		resultSet, err := query.Eval(ctx, rego.EvalInput(result.Modules[name].Parsed))
 		if err != nil {
-			log.Fatal(err)
+			return report.Report{}, err
+		}
+		if len(resultSet) != 1 {
+			return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 		}
 
-		// TODO: Create a reporter interface and implementations
-		for _, result := range resultSet {
-			report := result.Bindings["report"].([]interface{})
-			for _, entry := range report {
-				violation := entry.(map[string]interface{})
-				fmt.Printf("%v: %v\n", name, violation["description"])
-			}
+		r := report.Report{}
+		if err = rio.JSONRoundTrip(resultSet[0].Bindings, &r); err != nil {
+			return report.Report{}, err
 		}
+
+		aggregate.Violations = append(aggregate.Violations, r.Violations...)
 	}
+
+	return aggregate, nil
 }

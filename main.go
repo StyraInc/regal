@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
+	"github.com/styrainc/regal/pkg/config"
 	"io/fs"
 	"log"
 	"os"
@@ -15,6 +17,7 @@ import (
 
 // Note: this will bundle the tests as well, but since that has negligible impact on the size of the binary,
 // it's preferable to filter them out from the bundle than to e.g. create a separate directory for tests
+//
 //go:embed all:bundle
 var bundle embed.FS
 
@@ -27,14 +30,20 @@ func main() {
 	}
 
 	// Create new fs from root of bundle, do avoid having to deal with
-	// "bundle" in paths (i.e. `data.bundle.rega`)
+	// "bundle" in paths (i.e. `data.bundle.regal`)
 	bfs, err := fs.Sub(bundle, "bundle")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	regalRules := rio.MustLoadRegalBundle(bfs)
+	regalRules := rio.MustLoadRegalBundleFS(bfs)
 	policies, err := loader.AllRegos(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: Allow user-provided path to config
+	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,5 +54,18 @@ func main() {
 
 	regal := linter.NewLinter().WithAddedBundle(regalRules)
 
-	regal.Lint(ctx, policies)
+	userConfig, err := config.FindConfig(cwd)
+	if err == nil {
+		defer rio.CloseFileIgnore(userConfig)
+
+		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
+	}
+
+	rep, err := regal.Lint(ctx, policies)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: Create reporter interface and implementations
+	fmt.Println(rep)
 }

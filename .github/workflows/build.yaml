@@ -15,5 +15,7 @@ jobs:
       - uses: open-policy-agent/setup-opa@v2
         with:
           version: latest
+      - run: opa check --strict bundle
       - run: opa test --bundle bundle
+      - run: go test ./...
       - run: go build

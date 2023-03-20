@@ -2,7 +2,6 @@ package io
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v3"
 	"io"
 	files "io/fs"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/bundle"
+	"gopkg.in/yaml.v3"
 )
 
 //nolint:gochecknoglobals

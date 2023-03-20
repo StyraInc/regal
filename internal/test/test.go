@@ -2,11 +2,12 @@
 package test
 
 import (
-	"github.com/open-policy-agent/opa/bundle"
-	rio "github.com/styrainc/regal/internal/io"
 	"path/filepath"
 	"sync"
 	"testing"
+
+	"github.com/open-policy-agent/opa/bundle"
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 const regalBundleDir = "../../bundle"

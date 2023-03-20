@@ -10,7 +10,6 @@ import (
 	"github.com/open-policy-agent/opa/loader"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
-
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/report"

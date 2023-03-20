@@ -12,6 +12,7 @@ import (
 	"github.com/open-policy-agent/opa/bundle"
 )
 
+//nolint:gochecknoglobals
 var excludeTestsFilter = func(abspath string, info files.FileInfo, depth int) bool {
 	return strings.HasSuffix(info.Name(), "_test.rego")
 }

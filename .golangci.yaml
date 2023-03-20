@@ -1,0 +1,29 @@
+linters:
+  enable-all: true
+  disable:
+    # deprecated
+    - deadcode
+    - exhaustivestruct
+    - golint
+    - ifshort
+    - interfacer
+    - maligned
+    - nosnakecase
+    - scopelint
+    - structcheck
+    - varcheck
+    # does not work with generics (yet)
+    - rowserrcheck
+    - wastedassign
+    # annoying
+    - varnamelen
+    - nonamedreturns
+    - testpackage
+    - gomnd
+    - godox
+    - exhaustruct
+linters-settings:
+  tagliatelle:
+    case:
+      rules:
+        json: snake

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
 	"github.com/styrainc/regal/pkg/config"
 	"io/fs"
 	"log"
@@ -68,5 +67,5 @@ func main() {
 	}
 
 	// TODO: Create reporter interface and implementations
-	fmt.Println(rep)
+	log.Println(rep)
 }

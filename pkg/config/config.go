@@ -19,8 +19,10 @@ type Rule struct {
 	Extra   ExtraAttributes
 }
 
-const configFileRelLocation = ".regal/config.yaml"
-const pathSeparator = string(os.PathSeparator)
+const (
+	configFileRelLocation = ".regal/config.yaml"
+	pathSeparator         = string(os.PathSeparator)
+)
 
 // FindConfig searches for .regal/config.yaml first in the directory of path,
 // and if not found, in the parent directory, and if not found, in the parent's
@@ -58,7 +60,7 @@ func FindConfig(path string) (*os.File, error) {
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {
-	var result = make(map[string]any)
+	result := make(map[string]any)
 	result["enabled"] = rule.Enabled
 
 	for key, val := range rule.Extra {

@@ -63,9 +63,11 @@ func main() {
 
 	rep, err := regal.Lint(ctx, policies)
 	if err != nil {
-		log.Fatal(err)
+		defer func() {
+			log.Fatal(err)
+		}()
+	} else {
+		// TODO: Create reporter interface and implementations
+		log.Println(rep)
 	}
-
-	// TODO: Create reporter interface and implementations
-	log.Println(rep)
 }

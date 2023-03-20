@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ const (
 func FindConfig(path string) (*os.File, error) {
 	finfo, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to stat path %v: %w", path, err)
 	}
 
 	dir := path
@@ -49,7 +50,7 @@ func FindConfig(path string) (*os.File, error) {
 
 		if searchPath == pathSeparator+configFileRelLocation {
 			// Stop traversing at the root path
-			return nil, err
+			return nil, fmt.Errorf("can't traverse past root directory %w", err)
 		}
 
 		// Move up one level in the directory tree
@@ -67,18 +68,21 @@ func (rule Rule) MarshalJSON() ([]byte, error) {
 		result[key] = val
 	}
 
+	//nolint:wrapcheck
 	return json.Marshal(&result)
 }
+
+var errEnabledMustBeBoolean = errors.New("value of 'enabled' must be boolean")
 
 func (rule *Rule) UnmarshalJSON(data []byte) error {
 	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
-		return err
+		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}
 
 	enabled, ok := result["enabled"].(bool)
 	if !ok {
-		return fmt.Errorf("value of 'enabled' must be boolean")
+		return errEnabledMustBeBoolean
 	}
 
 	delete(result, "enabled")

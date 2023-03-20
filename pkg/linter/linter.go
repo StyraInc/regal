@@ -74,7 +74,7 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report,
 
 	query, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
-		return report.Report{}, err
+		return report.Report{}, fmt.Errorf("failed preparing query for linting %w", err)
 	}
 
 	// Maintain order across runs
@@ -86,16 +86,18 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report,
 	for _, name := range modules {
 		resultSet, err := query.Eval(ctx, rego.EvalInput(result.Modules[name].Parsed))
 		if err != nil {
-			return report.Report{}, err
+			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 		}
 
 		if len(resultSet) != 1 {
+			//nolint:goerr113
 			return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 		}
 
 		r := report.Report{}
 		if err = rio.JSONRoundTrip(resultSet[0].Bindings, &r); err != nil {
-			return report.Report{}, err
+			return report.Report{},
+				fmt.Errorf("JSON rountrip failed for bindings: %v %w", resultSet[0].Bindings, err)
 		}
 
 		aggregate.Violations = append(aggregate.Violations, r.Violations...)

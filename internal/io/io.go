@@ -2,6 +2,7 @@ package io
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	files "io/fs"
 	"log"
@@ -21,9 +22,10 @@ var excludeTestsFilter = func(abspath string, info files.FileInfo, depth int) bo
 func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 	embedLoader, err := bundle.NewFSLoader(fs)
 	if err != nil {
-		return bundle.Bundle{}, err
+		return bundle.Bundle{}, fmt.Errorf("failed to load bundle from filesystem: %w", err)
 	}
 
+	//nolint:wrapcheck
 	return bundle.NewCustomReader(embedLoader.WithFilter(excludeTestsFilter)).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
@@ -33,6 +35,7 @@ func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 
 // LoadRegalBundlePath loads bundle from path.
 func LoadRegalBundlePath(path string) (bundle.Bundle, error) {
+	//nolint:wrapcheck
 	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(excludeTestsFilter)).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
@@ -74,9 +77,10 @@ func MustJSON(x any) []byte {
 func JSONRoundTrip(from any, to any) error {
 	bs, err := json.Marshal(from)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed JSON marshalling %w", err)
 	}
 
+	//nolint:wrapcheck
 	return json.Unmarshal(bs, to)
 }
 

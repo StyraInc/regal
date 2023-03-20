@@ -22,6 +22,7 @@ linters:
     - gomnd
     - godox
     - exhaustruct
+    - cyclop
 linters-settings:
   tagliatelle:
     case:

@@ -15,6 +15,7 @@ jobs:
       - uses: open-policy-agent/setup-opa@v2
         with:
           version: latest
+      - uses: golangci/golangci-lint-action@v3
       - run: opa check --strict bundle
       - run: opa test --bundle bundle
       - run: go test ./...

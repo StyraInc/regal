@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
-	"github.com/styrainc/regal/pkg/config"
 	"io/fs"
 	"log"
 	"os"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/open-policy-agent/opa/loader"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
 )
 
@@ -37,6 +36,7 @@ func main() {
 	}
 
 	regalRules := rio.MustLoadRegalBundleFS(bfs)
+
 	policies, err := loader.AllRegos(os.Args[1:])
 	if err != nil {
 		log.Fatal(err)
@@ -63,9 +63,11 @@ func main() {
 
 	rep, err := regal.Lint(ctx, policies)
 	if err != nil {
-		log.Fatal(err)
+		defer func() {
+			log.Fatal(err)
+		}()
+	} else {
+		// TODO: Create reporter interface and implementations
+		log.Println(rep)
 	}
-
-	// TODO: Create reporter interface and implementations
-	fmt.Println(rep)
 }

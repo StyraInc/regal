@@ -1,12 +1,12 @@
 package report
 
-// RelatedResource provides documentation on a violation
+// RelatedResource provides documentation on a violation.
 type RelatedResource struct {
 	Description string `json:"description"`
 	Reference   string `json:"ref"`
 }
 
-// Location provides information on the location of a violation
+// Location provides information on the location of a violation.
 type Location struct {
 	Column int    `json:"col"`
 	Row    int    `json:"row"`
@@ -15,7 +15,7 @@ type Location struct {
 	Text   []byte `json:"text,omitempty"`
 }
 
-// Violation describes any violation found by Regal
+// Violation describes any violation found by Regal.
 type Violation struct {
 	Title            string            `json:"title"`
 	Description      string            `json:"description"`
@@ -24,7 +24,7 @@ type Violation struct {
 	Location         Location          `json:"location,omitempty"`
 }
 
-// Report aggregate of Violation as returned by a linter run
+// Report aggregate of Violation as returned by a linter run.
 type Report struct {
 	Violations []Violation `json:"report"`
 }

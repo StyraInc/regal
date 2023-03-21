@@ -21,10 +21,10 @@ with linting.
 
 ## Try it out!
 
-Run `regal` pointed at one or more files or directories to have them linted:
+Run `regal lint` pointed at one or more files or directories to have them linted:
 
 ```shell
-./regal policy/
+regal lint policy/
 ```
 
 ## Rules
@@ -39,7 +39,24 @@ See: https://github.com/StyraInc/regal/issues/36
 
 ## Configuration
 
-TODO
+A custom configuration file may be used to override the [default configuration](bundle/regal/config/data.yaml) options
+provided by Regal. This is particularly useful for e.g. enabling/disabling certain rules, or to provide more
+fine-grained options for the linter rules that support it.
+
+**.regal/config.yaml**
+```yaml
+rules:
+  style:
+    prefer-snake-case:
+      enabled: false
+```
+
+Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
+found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is 
+reached. If no configuration file is found, Regal will use the default configuration.
+
+A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when 
+provided will be used to override the default configuration.
 
 ## Development
 

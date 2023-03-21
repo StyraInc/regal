@@ -18,7 +18,8 @@ import (
 )
 
 type lintCommandParams struct {
-	timeout time.Duration
+	timeout    time.Duration
+	configFile string
 }
 
 //nolint:gochecknoglobals
@@ -51,6 +52,7 @@ func init() {
 		},
 	}
 
+	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default unlimited)")
 
 	RootCommand.AddCommand(lintCommand)
@@ -77,22 +79,34 @@ func lint(args []string, params lintCommandParams) error {
 
 	policies, err := loader.AllRegos(args)
 	if err != nil {
-		return fmt.Errorf("failed to load policy from provided args %w", err)
-	}
-
-	// TODO: Allow user-provided path to config
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get cwd %w", err)
+		return fmt.Errorf("failed to load policy from provided args: %w", err)
 	}
 
 	regal := linter.NewLinter().WithAddedBundle(regalRules)
 
-	userConfig, err := config.FindConfig(cwd)
-	if err == nil {
+	if params.configFile != "" {
+		userConfig, err := os.Open(params.configFile)
+		if err != nil {
+			return fmt.Errorf("failed to open config file %w", err)
+		}
+
 		defer rio.CloseFileIgnore(userConfig)
 
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
+	} else {
+		cwd, err := os.Getwd()
+		if err != nil {
+			// Should perhaps just log this?
+			return fmt.Errorf("failed to get cwd %w", err)
+		}
+
+		// Try find .regal/config.yaml in current, or any parent directory
+		userConfig, err := config.FindConfig(cwd)
+		if err == nil {
+			defer rio.CloseFileIgnore(userConfig)
+
+			regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
+		}
 	}
 
 	rep, err := regal.Lint(ctx, policies)

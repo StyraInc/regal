@@ -19,6 +19,7 @@ linters:
     - varnamelen
     - nonamedreturns
     - testpackage
+    - gochecknoinits
     - gomnd
     - godox
     - exhaustruct

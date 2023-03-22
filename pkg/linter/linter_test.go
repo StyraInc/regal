@@ -2,6 +2,7 @@ package linter
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -73,6 +74,31 @@ func TestLintWithUserConfig(t *testing.T) {
 
 	if result.Violations[0].Title != "prefer-snake-case" {
 		t.Errorf("excpected first violation to be 'prefer-snake-case', got %s", result.Violations[0].Title)
+	}
+}
+
+func TestLintWithCustomRule(t *testing.T) {
+	t.Parallel()
+
+	policy := `package p`
+
+	userBundle := LoaderResultFromString(policy)
+
+	linter := NewLinter().
+		WithAddedBundle(test.GetRegalBundle(t)).
+		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
+
+	result, err := linter.Lint(context.Background(), userBundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Violations) != 1 {
+		t.Errorf("expected 1 violation, got %d", len(result.Violations))
+	}
+
+	if result.Violations[0].Title != "acme-corp-package" {
+		t.Errorf("excpected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
 	}
 }
 

@@ -27,3 +27,7 @@ report contains violation if {
 report contains violation if {
 	violation := data.regal.rules[_].report[_]
 }
+
+report contains violation if {
+	violation := data.custom.regal.rules[_].report[_]
+}

@@ -10,13 +10,11 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/loader/filter"
 	"gopkg.in/yaml.v3"
 )
 
-//nolint:gochecknoglobals
-var excludeTestsFilter = func(abspath string, info files.FileInfo, depth int) bool {
-	return strings.HasSuffix(info.Name(), "_test.rego")
-}
+const PathSeparator = string(os.PathSeparator)
 
 // LoadRegalBundleFS loads bundle embedded from policy and data directory.
 func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
@@ -26,7 +24,7 @@ func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 	}
 
 	//nolint:wrapcheck
-	return bundle.NewCustomReader(embedLoader.WithFilter(excludeTestsFilter)).
+	return bundle.NewCustomReader(embedLoader.WithFilter(ExcludeTestFilter())).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
@@ -36,7 +34,7 @@ func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 // LoadRegalBundlePath loads bundle from path.
 func LoadRegalBundlePath(path string) (bundle.Bundle, error) {
 	//nolint:wrapcheck
-	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(excludeTestsFilter)).
+	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(ExcludeTestFilter())).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
@@ -63,16 +61,6 @@ func MustLoadRegalBundlePath(path string) bundle.Bundle {
 	return regalBundle
 }
 
-// MustJSON marshal to JSON or exit.
-func MustJSON(x any) []byte {
-	bytes, err := json.Marshal(x)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return bytes
-}
-
 // JSONRoundTrip convert any value to JSON and back again.
 func JSONRoundTrip(from any, to any) error {
 	bs, err := json.Marshal(from)
@@ -96,4 +84,10 @@ func MustYAMLToMap(from io.Reader) (m map[string]any) {
 // CloseFileIgnore closes file ignoring errors, mainly for deferred cleanup.
 func CloseFileIgnore(file *os.File) {
 	_ = file.Close()
+}
+
+func ExcludeTestFilter() filter.LoaderFilter {
+	return func(abspath string, info files.FileInfo, depth int) bool {
+		return strings.HasSuffix(info.Name(), "_test.rego")
+	}
 }

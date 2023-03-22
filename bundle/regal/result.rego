@@ -29,4 +29,5 @@ location(x) := {"location": location} {
 location(x) := {} {
 	not x.location
 	not x.Location
+	count(x.ref) != 1
 }

@@ -17,7 +17,7 @@ snake_case_violation := {
 }
 
 test_fail_camel_cased_rule_name if {
-	report(`camelCase := 5`) == {object.union(snake_case_violation, {"location": {"col": 0, "file": "policy.rego", "row": 8}})}
+	report(`camelCase := 5`) == {object.union(snake_case_violation, {"location": {"col": 1, "file": "policy.rego", "row": 8}})}
 }
 
 test_success_snake_cased_rule_name if {

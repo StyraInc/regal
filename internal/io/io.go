@@ -1,6 +1,7 @@
 package io
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -99,4 +100,18 @@ func ExcludeTestFilter() filter.LoaderFilter {
 	return func(abspath string, info files.FileInfo, depth int) bool {
 		return strings.HasSuffix(info.Name(), "_test.rego")
 	}
+}
+
+func ReadRow(reader io.Reader, row int) ([]byte, error) {
+	scanner := bufio.NewScanner(reader)
+
+	r := 0
+	for scanner.Scan() {
+		r++
+		if r == row {
+			return scanner.Bytes(), scanner.Err()
+		}
+	}
+
+	return nil, scanner.Err() //nolint:wrapcheck
 }

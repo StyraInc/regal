@@ -36,8 +36,32 @@ camelCase {
 		t.Errorf("excpected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
 	}
 
+	if result.Violations[0].Location.Row != 3 {
+		t.Errorf("excpected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
+	}
+
+	if result.Violations[0].Location.Column != 1 {
+		t.Errorf("excpected first violation to be on column 1, got %d", result.Violations[0].Location.Column)
+	}
+
+	if string(result.Violations[0].Location.Text) != "# TODO: fix this" {
+		t.Errorf("excpected first violation to be on '# TODO: fix this', got %s", result.Violations[0].Location.Text)
+	}
+
 	if result.Violations[1].Title != "prefer-snake-case" {
 		t.Errorf("excpected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
+	}
+
+	if result.Violations[1].Location.Row != 4 {
+		t.Errorf("excpected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
+	}
+
+	if result.Violations[1].Location.Column != 1 {
+		t.Errorf("excpected second violation to be on column 1, got %d", result.Violations[1].Location.Column)
+	}
+
+	if string(result.Violations[1].Location.Text) != "camelCase {" {
+		t.Errorf("excpected second violation to be on 'camelCase {', got %s", result.Violations[1].Location.Text)
 	}
 }
 

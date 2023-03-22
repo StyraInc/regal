@@ -62,7 +62,7 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 	return l
 }
 
-var query = ast.MustParseBody("report = data.regal.main.report") //nolint:gochecknoglobals
+var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, error) {
@@ -156,10 +156,23 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				fmt.Errorf("JSON rountrip failed for bindings: %v %w", resultSet[0].Bindings, err)
 		}
 
+		for i, v := range r.Violations {
+			r.Violations[i] = addText(v, input.FileContent[name])
+		}
+
 		aggregate.Violations = append(aggregate.Violations, r.Violations...)
 	}
 
 	return aggregate, nil
+}
+
+func addText(violation report.Violation, content string) report.Violation {
+	if violation.Location.Text == nil && violation.Location.Row != 0 && violation.Location.Column != 0 {
+		rowText, _ := rio.ReadRow(strings.NewReader(content), violation.Location.Row)
+		violation.Location.Text = rowText
+	}
+
+	return violation
 }
 
 func (l Linter) mergedConfig() (config.Config, error) {

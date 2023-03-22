@@ -19,8 +19,8 @@ import (
 type Input struct {
 	// FileNames is used to maintain consistent order between runs.
 	FileNames []string
-	// FileBytes carries the raw bytes of each file
-	FileBytes map[string][]byte
+	// FileContent carries the string contents of each file
+	FileContent map[string]string
 	// Modules is the set of modules to lint.
 	Modules map[string]*ast.Module
 }
@@ -36,15 +36,15 @@ type Rule interface {
 }
 
 // NewInput creates a new Input from a set of modules.
-func NewInput(fileBytes map[string][]byte, modules map[string]*ast.Module) Input {
+func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Input {
 	// Maintain order across runs
 	filenames := util.Keys(modules)
 	sort.Strings(filenames)
 
 	return Input{
-		FileBytes: fileBytes,
-		FileNames: filenames,
-		Modules:   modules,
+		FileContent: fileContent,
+		FileNames:   filenames,
+		Modules:     modules,
 	}
 }
 
@@ -57,7 +57,7 @@ func InputFromPaths(paths []string) (Input, error) {
 		return Input{}, fmt.Errorf("failed to load policy from provided args: %w", err)
 	}
 
-	filebytes := make(map[string][]byte, len(policyPaths))
+	fileContent := make(map[string]string, len(policyPaths))
 	modules := make(map[string]*ast.Module, len(policyPaths))
 
 	for _, path := range policyPaths {
@@ -67,9 +67,9 @@ func InputFromPaths(paths []string) (Input, error) {
 			return Input{}, err //nolint:wrapcheck
 		}
 
-		filebytes[result.Name] = result.Raw
+		fileContent[result.Name] = string(result.Raw)
 		modules[result.Name] = result.Parsed
 	}
 
-	return NewInput(filebytes, modules), nil
+	return NewInput(fileContent, modules), nil
 }

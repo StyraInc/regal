@@ -32,7 +32,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 			return nil, fmt.Errorf("timeout when running %s rule: %w", title, ctx.Err())
 		default:
 			module := input.Modules[filename]
-			unformatted := input.FileBytes[filename]
+			unformatted := []byte(input.FileContent[filename])
 
 			formatted, err := format.Ast(module)
 			if err != nil {

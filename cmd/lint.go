@@ -8,6 +8,8 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/open-policy-agent/opa/loader"
@@ -20,6 +22,29 @@ import (
 type lintCommandParams struct {
 	timeout    time.Duration
 	configFile string
+	rules      repeatedStringFlag
+}
+
+const stringType = "string"
+
+type repeatedStringFlag struct {
+	v     []string
+	isSet bool
+}
+
+func (f *repeatedStringFlag) Type() string {
+	return stringType
+}
+
+func (f *repeatedStringFlag) String() string {
+	return strings.Join(f.v, ",")
+}
+
+func (f *repeatedStringFlag) Set(s string) error {
+	f.v = append(f.v, s)
+	f.isSet = true
+
+	return nil
 }
 
 //nolint:gochecknoglobals
@@ -53,20 +78,15 @@ func init() {
 	}
 
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
+	lintCommand.Flags().VarP(&params.rules, "rules", "r", "set custom rules file(s). This flag can be repeated.")
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default unlimited)")
 
 	RootCommand.AddCommand(lintCommand)
 }
 
 func lint(args []string, params lintCommandParams) error {
-	ctx := context.Background()
-
-	if params.timeout != 0 {
-		var cancel func()
-		ctx, cancel = context.WithTimeout(ctx, params.timeout)
-
-		defer cancel()
-	}
+	ctx, cancel := getLinterContext(params)
+	defer cancel()
 
 	// Create new fs from root of bundle, to avoid having to deal with
 	// "bundle" in paths (i.e. `data.bundle.regal`)
@@ -77,6 +97,20 @@ func lint(args []string, params lintCommandParams) error {
 
 	regalRules := rio.MustLoadRegalBundleFS(bfs)
 
+	var regalDir *os.File
+
+	var customRulesDir string
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Println("failed to get current directory - won't search for custom config or rules")
+	} else {
+		regalDir, err = config.FindRegalDirectory(cwd)
+		if err == nil {
+			customRulesDir = filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
+		}
+	}
+
 	policies, err := loader.AllRegos(args)
 	if err != nil {
 		return fmt.Errorf("failed to load policy from provided args: %w", err)
@@ -84,29 +118,18 @@ func lint(args []string, params lintCommandParams) error {
 
 	regal := linter.NewLinter().WithAddedBundle(regalRules)
 
-	if params.configFile != "" {
-		userConfig, err := os.Open(params.configFile)
-		if err != nil {
-			return fmt.Errorf("failed to open config file %w", err)
-		}
+	if customRulesDir != "" {
+		regal = regal.WithCustomRules([]string{customRulesDir})
+	}
 
+	if params.rules.isSet {
+		regal = regal.WithCustomRules(params.rules.v)
+	}
+
+	userConfig, err := readUserConfig(params, regalDir)
+	if err == nil {
 		defer rio.CloseFileIgnore(userConfig)
-
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
-	} else {
-		cwd, err := os.Getwd()
-		if err != nil {
-			// Should perhaps just log this?
-			return fmt.Errorf("failed to get cwd %w", err)
-		}
-
-		// Try find .regal/config.yaml in current, or any parent directory
-		userConfig, err := config.FindConfig(cwd)
-		if err == nil {
-			defer rio.CloseFileIgnore(userConfig)
-
-			regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
-		}
 	}
 
 	rep, err := regal.Lint(ctx, policies)
@@ -118,4 +141,36 @@ func lint(args []string, params lintCommandParams) error {
 	log.Println(rep)
 
 	return nil
+}
+
+func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os.File, err error) {
+	if params.configFile != "" {
+		userConfig, err = os.Open(params.configFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open config file %w", err)
+		}
+	} else {
+		searchPath, _ := os.Getwd()
+		if regalDir != nil {
+			searchPath = regalDir.Name()
+		}
+		if searchPath != "" {
+			userConfig, err = config.FindConfig(searchPath)
+		}
+	}
+
+	//nolint:wrapcheck
+	return userConfig, err
+}
+
+func getLinterContext(params lintCommandParams) (context.Context, func()) {
+	ctx := context.Background()
+
+	cancel := func() {}
+
+	if params.timeout != 0 {
+		ctx, cancel = context.WithTimeout(ctx, params.timeout)
+	}
+
+	return ctx, cancel
 }

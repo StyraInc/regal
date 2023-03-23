@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 type Config map[string]Category
@@ -21,14 +23,13 @@ type Rule struct {
 }
 
 const (
-	configFileRelLocation = ".regal/config.yaml"
-	pathSeparator         = string(os.PathSeparator)
+	regalDirName   = ".regal"
+	configFileName = "config.yaml"
 )
 
-// FindConfig searches for .regal/config.yaml first in the directory of path,
-// and if not found, in the parent directory, and if not found, in the parent's
-// parent directory, and so on.
-func FindConfig(path string) (*os.File, error) {
+// FindRegalDirectory searches for a .regal directory first in the directory of path, and if not found,
+// in the parent directory, and if not found, in the parent's parent directory, and so on.
+func FindRegalDirectory(path string) (*os.File, error) {
 	finfo, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat path %v: %w", path, err)
@@ -41,23 +42,36 @@ func FindConfig(path string) (*os.File, error) {
 	}
 
 	for {
-		searchPath := filepath.Join(pathSeparator, dir, configFileRelLocation)
-		config, err := os.Open(searchPath)
+		searchPath := filepath.Join(rio.PathSeparator, dir, regalDirName)
+		regalDir, err := os.Open(searchPath)
 
 		if err == nil {
-			return config, nil
+			rdInfo, err := regalDir.Stat()
+			if err == nil && rdInfo.IsDir() {
+				return regalDir, nil
+			}
 		}
 
-		if searchPath == pathSeparator+configFileRelLocation {
+		if searchPath == rio.PathSeparator+regalDirName {
 			// Stop traversing at the root path
 			return nil, fmt.Errorf("can't traverse past root directory %w", err)
 		}
 
 		// Move up one level in the directory tree
-		parts := strings.Split(dir, pathSeparator)
+		parts := strings.Split(dir, rio.PathSeparator)
 		parts = parts[:len(parts)-1]
 		dir = filepath.Join(parts...)
 	}
+}
+
+func FindConfig(path string) (*os.File, error) {
+	regalDir, err := FindRegalDirectory(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not find .regal directory %w", err)
+	}
+
+	//nolint:wrapcheck
+	return os.Open(filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName))
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {

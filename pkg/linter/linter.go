@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader"
 	"github.com/open-policy-agent/opa/rego"
@@ -17,9 +18,12 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
-	ruleBundles  []*bundle.Bundle
-	configBundle *bundle.Bundle
+	ruleBundles      []*bundle.Bundle
+	configBundle     *bundle.Bundle
+	customRulesPaths []string
 }
+
+const regalUserConfig = "regal_user_config"
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
@@ -33,7 +37,12 @@ func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 	return l
 }
 
-const regalUserConfig = "regal_user_config"
+// WithCustomRules adds custom rules for evaluation, from the Rego (and data) files provided at paths.
+func (l Linter) WithCustomRules(paths []string) Linter {
+	l.customRulesPaths = paths
+
+	return l
+}
 
 // WithUserConfig provides config overrides set by the user.
 func (l Linter) WithUserConfig(config map[string]any) Linter {
@@ -48,17 +57,24 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 	return l
 }
 
+//nolint:gochecknoglobals
+var query = ast.MustParseBody("report = data.regal.main.report")
+
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report, error) {
 	var regoArgs []func(*rego.Rego)
 	regoArgs = append(regoArgs,
-		rego.Query("report = data.regal.main.report"),
+		rego.ParsedQuery(query),
 		rego.EnablePrintStatements(true),
 		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
 	)
 
 	if l.configBundle != nil {
 		regoArgs = append(regoArgs, rego.ParsedBundle(regalUserConfig, l.configBundle))
+	}
+
+	if l.customRulesPaths != nil {
+		regoArgs = append(regoArgs, rego.Load(l.customRulesPaths, rio.ExcludeTestFilter()))
 	}
 
 	if l.ruleBundles != nil {

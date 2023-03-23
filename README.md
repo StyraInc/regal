@@ -116,7 +116,7 @@ package custom.regal.rules.naming
 import future.keywords.contains
 import future.keywords.if
 
-import data.regal
+import data.regal.result
 
 # METADATA
 # title: acme-corp-package
@@ -130,7 +130,7 @@ report contains violation if {
 	not acme_corp_package
 	not system_log_package
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(input["package"].path[1]))
 }
 
 acme_corp_package if {
@@ -156,8 +156,9 @@ Starting from top to bottom, these are the components comprising our custom rule
 5. In our example `report` rule, we evaluate another rule (`acme_corp_package`) in order to know if the package name 
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither
    of the conditions are true, the rule fails and violation is created.
-6. The violation is created by calling `regal.fail`, which takes the metadata from the rule and returns it, which will
+6. The violation is created by calling `result.fail`, which takes the metadata from the rule and returns it, which will
    later be included in the final report provided by Regal.
+7. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 
 ## Development
 
@@ -169,10 +170,18 @@ Starting from top to bottom, these are the components comprising our custom rule
 
 ### Testing
 
-To run all Rego tests:
+To run all tests, including the Rego rules unit tests:
 
 ```shell
-opa test policy data
+go test ./...
+```
+
+### Linting
+
+Regal uses [golangci-lint](https://golangci-lint.run/) with most linters enabled. In order to check your code, run:
+
+```shell
+golangci-lint run ./...
 ```
 
 ### Authoring Rules

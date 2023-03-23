@@ -12,9 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader"
 	"github.com/spf13/cobra"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
 )
@@ -111,11 +114,6 @@ func lint(args []string, params lintCommandParams) error {
 		}
 	}
 
-	policies, err := loader.AllRegos(args)
-	if err != nil {
-		return fmt.Errorf("failed to load policy from provided args: %w", err)
-	}
-
 	regal := linter.NewLinter().WithAddedBundle(regalRules)
 
 	if customRulesDir != "" {
@@ -132,7 +130,12 @@ func lint(args []string, params lintCommandParams) error {
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
 	}
 
-	rep, err := regal.Lint(ctx, policies)
+	modules, err := parseModules(args)
+	if err != nil {
+		return err
+	}
+
+	rep, err := regal.Lint(ctx, modules)
 	if err != nil {
 		return fmt.Errorf("error(s) ecountered while linting %w", err)
 	}
@@ -173,4 +176,28 @@ func getLinterContext(params lintCommandParams) (context.Context, func()) {
 	}
 
 	return ctx, cancel
+}
+
+func parseModules(paths []string) (map[string]*ast.Module, error) {
+	policyPaths, err := loader.FilteredPaths(paths, func(_ string, info os.FileInfo, depth int) bool {
+		return !info.IsDir() && !strings.HasSuffix(info.Name(), bundle.RegoExt)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load policy from provided args: %w", err)
+	}
+
+	modules := make(map[string]*ast.Module, len(policyPaths))
+
+	for _, path := range policyPaths {
+		result, err := loader.RegoWithOpts(path, parse.ParserOptions())
+		if err != nil {
+			// TODO: Keep running and collect errors instead?
+			//nolint:wrapcheck
+			return nil, err
+		}
+
+		modules[result.Name] = result.Parsed
+	}
+
+	return modules, nil
 }

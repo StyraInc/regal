@@ -4,7 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
 
 # METADATA
 # title: unconditional-assignment
@@ -15,7 +16,7 @@ import data.regal
 # custom:
 #   category: variables
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 
@@ -43,5 +44,5 @@ report contains violation if {
 	terms[1].type == "var"
     terms[1].value == rule_head_var
 
-    violation := regal.fail(rego.metadata.rule(), {})
+    violation := result.fail(rego.metadata.rule(), {"location": rule.head.value.location})
 }

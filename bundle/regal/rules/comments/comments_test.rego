@@ -2,7 +2,8 @@ package regal.rules.comments_test
 
 import future.keywords.if
 
-import data.regal
+import data.regal.ast
+import data.regal.config
 import data.regal.rules.comments
 
 test_fail_todo_comment if {
@@ -14,7 +15,7 @@ test_fail_todo_comment if {
 			"ref": "https://docs.styra.com/regal/rules/todo-comment"
 		}],
 		"title": "todo-comment",
-        "location": {"col": 2, "file": "policy.rego", "row": 8},
+        "location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -27,7 +28,7 @@ test_fail_fixme_comment if {
 			"ref": "https://docs.styra.com/regal/rules/todo-comment"
 		}],
 		"title": "todo-comment",
-        "location": {"col": 2, "file": "policy.rego", "row": 8},
+        "location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -36,5 +37,6 @@ test_success_no_todo_comment if {
 }
 
 report(snippet) := report {
-	report := comments.report with input as regal.ast(snippet) with regal.rule_config as {"enabled": true}
+	report := comments.report with input as ast.with_future_keywords(snippet)
+		with config.for_rule as {"enabled": true}
 }

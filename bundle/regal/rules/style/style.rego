@@ -4,7 +4,9 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
+import data.regal.util
 
 # METADATA
 # title: prefer-snake-case
@@ -15,12 +17,12 @@ import data.regal
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
-	not regal.is_snake_case(rule.head.name)
+	not util.is_snake_case(rule.head.name)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }
 
 # METADATA
@@ -32,7 +34,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -40,9 +42,9 @@ report contains violation if {
 
 	# allow { some camelCase }
 	is_string(symbol.value)
-	not regal.is_snake_case(symbol.value)
+	not util.is_snake_case(symbol.value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(symbol))
 }
 
 # METADATA
@@ -54,7 +56,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -65,9 +67,9 @@ report contains violation if {
 	expr.terms[0].value[0].value == "assign"
 	expr.terms[1].type == "var"
 
-	not regal.is_snake_case(expr.terms[1].value)
+	not util.is_snake_case(expr.terms[1].value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(expr.terms[1]))
 }
 
 # METADATA
@@ -79,7 +81,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -89,9 +91,9 @@ report contains violation if {
 	symbol.type == "call"
 	symbol.value[1].type == "var"
 
-	not regal.is_snake_case(symbol.value[1].value)
+	not util.is_snake_case(symbol.value[1].value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(symbol.value[1]))
 }
 
 # METADATA
@@ -103,7 +105,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -113,9 +115,9 @@ report contains violation if {
 	symbol.type == "call"
 	symbol.value[2].type == "var"
 
-	not regal.is_snake_case(symbol.value[2].value)
+	not util.is_snake_case(symbol.value[2].value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(symbol.value[2]))
 }
 
 # METADATA
@@ -127,7 +129,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -136,9 +138,9 @@ report contains violation if {
 	expr.terms.domain
 	expr.terms.key.type == "var"
 
-	not regal.is_snake_case(expr.terms.key.value)
+	not util.is_snake_case(expr.terms.key.value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(expr.terms.key))
 }
 
 # METADATA
@@ -150,7 +152,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	some expr in rule.body
@@ -159,9 +161,9 @@ report contains violation if {
 	expr.terms.domain
 	expr.terms.value.type == "var"
 
-	not regal.is_snake_case(expr.terms.value.value)
+	not util.is_snake_case(expr.terms.value.value)
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(expr.terms.value))
 }
 
 # TODO: scan doesn't currently go into the body of

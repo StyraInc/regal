@@ -2,7 +2,8 @@ package regal.rules.assignment_test
 
 import future.keywords.if
 
-import data.regal
+import data.regal.ast
+import data.regal.config
 import data.regal.rules.assignment
 
 test_fail_unification_in_default_assignment if {
@@ -14,6 +15,7 @@ test_fail_unification_in_default_assignment if {
 			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
 		}],
 		"title": "use-assignment-operator",
+		"location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -27,9 +29,10 @@ test_fail_unification_in_object_rule_assignment if {
 		"description": "Prefer := over = for assignment",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator"
+			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
 		}],
-		"title": "assignment-operator"
+		"title": "assignment-operator",
+		"location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -37,8 +40,9 @@ test_success_assignment_in_object_rule_assignment if {
 	report(`x["a"] := 1`) == set()
 }
 
-report(snippet) := report {
-	report := assignment.report with input as regal.ast(snippet) with regal.rule_config as {"enabled": true}
+report(snippet) := report if {
+	report := assignment.report with input as ast.with_future_keywords(snippet)
+		with config.for_rule as {"enabled": true}
 }
 
 # Blocked by https://github.com/StyraInc/regal/issues/6

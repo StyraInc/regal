@@ -3,7 +3,7 @@ package custom.regal.rules.naming
 import future.keywords.contains
 import future.keywords.if
 
-import data.regal
+import data.regal.result
 
 # METADATA
 # title: acme-corp-package
@@ -17,7 +17,7 @@ report contains violation if {
 	not acme_corp_package
 	not system_log_package
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(input["package"].path[1]))
 }
 
 acme_corp_package if {

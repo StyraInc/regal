@@ -4,7 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
 
 # Test that rules named test_* does not exist outside of _test packages
 
@@ -19,12 +20,12 @@ package_name := concat(".", [path.value | some path in input["package"].path])
 # custom:
 #   category: testing
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	not endswith(package_name, "_test")
 
     some rule in input.rules
     startswith(rule.head.name, "test_")
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }

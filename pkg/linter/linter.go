@@ -8,11 +8,11 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/loader"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -61,12 +61,13 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 var query = ast.MustParseBody("report = data.regal.main.report")
 
 // Lint runs the linter on provided policies.
-func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report, error) {
+func (l Linter) Lint(ctx context.Context, modules map[string]*ast.Module) (report.Report, error) {
 	var regoArgs []func(*rego.Rego)
 	regoArgs = append(regoArgs,
 		rego.ParsedQuery(query),
 		rego.EnablePrintStatements(true),
 		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 	)
 
 	if l.configBundle != nil {
@@ -94,13 +95,13 @@ func (l Linter) Lint(ctx context.Context, result *loader.Result) (report.Report,
 	}
 
 	// Maintain order across runs
-	modules := util.Keys(result.Modules)
-	sort.Strings(modules)
+	moduleNames := util.Keys(modules)
+	sort.Strings(moduleNames)
 
 	aggregate := report.Report{}
 
-	for _, name := range modules {
-		resultSet, err := query.Eval(ctx, rego.EvalInput(result.Modules[name].Parsed))
+	for _, name := range moduleNames {
+		resultSet, err := query.Eval(ctx, rego.EvalInput(modules[name]))
 		if err != nil {
 			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 		}

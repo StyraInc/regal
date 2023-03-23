@@ -4,7 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
 import data.regal.opa.builtins
 
 builtin_names := {builtin | some builtin, _  in builtins}
@@ -18,10 +19,10 @@ builtin_names := {builtin | some builtin, _  in builtins}
 # custom:
 #   category: rules
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	rule.head.name in builtin_names
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }

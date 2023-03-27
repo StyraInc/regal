@@ -7,29 +7,31 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/loader"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
 )
 
 func TestLintBasic(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
+	policy := parse.MustParseModule(`package p
 	# TODO: fix this
 	camelCase {
 		true
-	}`
+	}`)
 
 	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t))
 
-	result, err := linter.Lint(context.Background(), LoaderResultFromString(policy))
+	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
+		"p.rego": policy,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(result.Violations) != 2 {
-		t.Errorf("expected 2 violations, got %d", len(result.Violations))
+		t.Fatalf("expected 2 violations, got %d", len(result.Violations))
 	}
 
 	if result.Violations[0].Title != "todo-comment" {
@@ -44,11 +46,11 @@ func TestLintBasic(t *testing.T) {
 func TestLintWithUserConfig(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
+	policy := parse.MustParseModule(`package p
 	# TODO: fix this
 	camelCase {
 		true
-	}`
+	}`)
 
 	configRaw := `rules:
   comments:
@@ -57,19 +59,19 @@ func TestLintWithUserConfig(t *testing.T) {
 
 	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
 
-	userBundle := LoaderResultFromString(policy)
-
 	linter := NewLinter().
 		WithUserConfig(config).
 		WithAddedBundle(test.GetRegalBundle(t))
 
-	result, err := linter.Lint(context.Background(), userBundle)
+	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
+		"p.rego": policy,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(result.Violations) != 1 {
-		t.Errorf("expected 1 violation, got %d", len(result.Violations))
+		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
 	}
 
 	if result.Violations[0].Title != "prefer-snake-case" {
@@ -80,15 +82,15 @@ func TestLintWithUserConfig(t *testing.T) {
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p`
-
-	userBundle := LoaderResultFromString(policy)
+	policy := parse.MustParseModule(`package p`)
 
 	linter := NewLinter().
 		WithAddedBundle(test.GetRegalBundle(t)).
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
 
-	result, err := linter.Lint(context.Background(), userBundle)
+	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
+		"p.rego": policy,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,14 +102,4 @@ func TestLintWithCustomRule(t *testing.T) {
 	if result.Violations[0].Title != "acme-corp-package" {
 		t.Errorf("excpected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
 	}
-}
-
-func LoaderResultFromString(policy string) *loader.Result {
-	return &loader.Result{Modules: map[string]*loader.RegoFile{
-		"p.rego": {
-			Name:   "p.rego",
-			Parsed: ast.MustParseModule(policy),
-			Raw:    []byte(policy),
-		},
-	}}
 }

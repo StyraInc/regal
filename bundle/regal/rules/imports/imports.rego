@@ -4,15 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
-
-future_keywords_wildcard := {"path": {
-	"type": "ref",
-	"value": [
-		{"type": "var", "value": "future"},
-		{"type": "string", "value": "keywords"},
-	],
-}}
+import data.regal.config
+import data.regal.result
 
 # METADATA
 # title: implicit-future-keywords
@@ -23,11 +16,20 @@ future_keywords_wildcard := {"path": {
 # custom:
 #   category: imports
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
-	future_keywords_wildcard in input.imports
+	some imported in input.imports
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	imported.path.type == "ref"
+
+	count(imported.path.value) == 2
+
+	imported.path.value[0].type == "var"
+	imported.path.value[0].value == "future"
+	imported.path.value[1].type == "string"
+    imported.path.value[1].value == "keywords"
+
+	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
 }
 
 # METADATA
@@ -39,7 +41,7 @@ report contains violation if {
 # custom:
 #   category: imports
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some imported in input.imports
 
@@ -49,5 +51,25 @@ report contains violation if {
 	# count(imported.path.value) == 1
     # imported.alias
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
+}
+
+# METADATA
+# title: redundant-data-import
+# description: Redundant import of data
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/redundant-data-import
+# custom:
+#   category: imports
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).enabled == true
+
+	some imported in input.imports
+
+	count(imported.path.value) == 1
+
+	imported.path.value[0].value == "data"
+
+	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
 }

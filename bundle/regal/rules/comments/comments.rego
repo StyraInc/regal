@@ -4,7 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
 
 # TODO: Normalize Text and Location -> text and location
 
@@ -20,11 +21,11 @@ todo_pattern := sprintf("(%s)", [concat("|", todo_identifiers)])
 # custom:
 #   category: comments
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
     some comment in input.comments
     text := base64.decode(comment.Text)
     regex.match(todo_pattern, text)
 
-    violation := regal.fail(rego.metadata.rule(), {"location": comment.Location})
+    violation := result.fail(rego.metadata.rule(), result.location(comment))
 }

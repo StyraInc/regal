@@ -2,7 +2,8 @@ package regal.rules.variables_test
 
 import future.keywords.if
 
-import data.regal
+import data.regal.ast
+import data.regal.config
 import data.regal.rules.variables
 
 test_fail_unconditional_assignment_in_body if {
@@ -14,6 +15,7 @@ test_fail_unconditional_assignment_in_body if {
 			"ref": "https://docs.styra.com/regal/rules/unconditional-assignment",
 		}],
 		"title": "unconditional-assignment",
+		"location": {"col": 6, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -26,6 +28,7 @@ test_fail_unconditional_eq_in_body if {
 			"ref": "https://docs.styra.com/regal/rules/unconditional-assignment",
 		}],
 		"title": "unconditional-assignment",
+		"location": {"col": 5, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -38,5 +41,6 @@ test_success_unconditional_assignment_but_with_in_body if {
 }
 
 report(snippet) := report {
-	report := variables.report with input as regal.ast(snippet) with regal.rule_config as {"enabled": true}
+	report := variables.report with input as ast.with_future_keywords(snippet)
+		with config.for_rule as {"enabled": true}
 }

@@ -4,7 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal
+import data.regal.config
+import data.regal.result
 
 # METADATA
 # title: input-or-data-reference
@@ -15,7 +16,7 @@ import data.regal
 # custom:
 #   category: functions
 report contains violation if {
-	regal.rule_config(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	rule.head.args
@@ -25,5 +26,5 @@ report contains violation if {
 	terms[0].type == "var"
 	terms[0].value in {"input", "data"}
 
-	violation := regal.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), result.location(terms[0]))
 }

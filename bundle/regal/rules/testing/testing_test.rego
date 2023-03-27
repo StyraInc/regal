@@ -2,7 +2,8 @@ package regal.rules.testing_test
 
 import future.keywords.if
 
-import data.regal
+import data.regal.ast
+import data.regal.config
 import data.regal.rules.testing
 
 test_fail_test_outside_test_package if {
@@ -14,6 +15,7 @@ test_fail_test_outside_test_package if {
 			"ref": "https://docs.styra.com/regal/rules/test-outside-test-package"
 		}],
 		"title": "test-outside-test-package",
+		"location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -28,5 +30,5 @@ test_success_test_inside_test_package if {
 }
 
 report(snippet) := report {
-	report := testing.report with input as regal.ast(snippet) with regal.rule_config as {"enabled": true}
+	report := testing.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

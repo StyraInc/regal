@@ -10,7 +10,7 @@ report contains violation if {
 	violation := {
 		"category": "error",
 		"title": "invalid-input",
-		"description": "provided input must be a JSON AST"
+		"description": "provided input must be a JSON AST",
 	}
 }
 
@@ -20,7 +20,7 @@ report contains violation if {
 	violation := {
 		"category": "error",
 		"title": "invalid-input",
-		"description": "provided input must be a JSON AST"
+		"description": "provided input must be a JSON AST",
 	}
 }
 

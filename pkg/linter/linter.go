@@ -2,10 +2,12 @@ package linter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	"sort"
+	"strings"
 
+	"github.com/imdario/mergo"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
@@ -13,7 +15,9 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/rules"
 )
 
 // Linter stores data to use for linting.
@@ -21,6 +25,7 @@ type Linter struct {
 	ruleBundles      []*bundle.Bundle
 	configBundle     *bundle.Bundle
 	customRulesPaths []string
+	combinedConfig   *config.Config
 }
 
 const regalUserConfig = "regal_user_config"
@@ -57,11 +62,50 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 	return l
 }
 
-//nolint:gochecknoglobals
-var query = ast.MustParseBody("report = data.regal.main.report")
+var query = ast.MustParseBody("report = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
-func (l Linter) Lint(ctx context.Context, modules map[string]*ast.Module) (report.Report, error) {
+func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, error) {
+	aggregate := report.Report{}
+
+	goReport, err := l.lintWithGoRules(ctx, input)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
+	}
+
+	aggregate.Violations = append(aggregate.Violations, goReport.Violations...)
+
+	regoReport, err := l.lintWithRegoRules(ctx, input)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
+	}
+
+	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
+
+	return aggregate, nil
+}
+
+func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	goRules, err := l.enabledGoRules()
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
+	}
+
+	goReport := report.Report{}
+
+	for _, rule := range goRules {
+		result, err := rule.Run(ctx, input)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
+		}
+
+		goReport.Violations = append(goReport.Violations, result.Violations...)
+	}
+
+	return goReport, err
+}
+
+func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
 	var regoArgs []func(*rego.Rego)
 	regoArgs = append(regoArgs,
 		rego.ParsedQuery(query),
@@ -89,25 +133,20 @@ func (l Linter) Lint(ctx context.Context, modules map[string]*ast.Module) (repor
 		}
 	}
 
-	query, err := rego.New(regoArgs...).PrepareForEval(ctx)
+	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting %w", err)
+		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
-
-	// Maintain order across runs
-	moduleNames := util.Keys(modules)
-	sort.Strings(moduleNames)
 
 	aggregate := report.Report{}
 
-	for _, name := range moduleNames {
-		resultSet, err := query.Eval(ctx, rego.EvalInput(modules[name]))
+	for _, name := range input.FileNames {
+		resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(input.Modules[name]))
 		if err != nil {
 			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 		}
 
 		if len(resultSet) != 1 {
-			//nolint:goerr113
 			return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 		}
 
@@ -121,4 +160,78 @@ func (l Linter) Lint(ctx context.Context, modules map[string]*ast.Module) (repor
 	}
 
 	return aggregate, nil
+}
+
+func (l Linter) mergedConfig() (config.Config, error) {
+	if l.combinedConfig != nil {
+		return *l.combinedConfig, nil
+	}
+
+	regalBundle, err := l.getBundleByName("regal")
+	if err != nil {
+		return config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
+	}
+
+	path := []string{"regal", "config", "provided"}
+
+	bundled, err := util.SearchMap(regalBundle.Data, path)
+	if err != nil {
+		return config.Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
+	}
+
+	bundledConf, ok := bundled.(map[string]any)
+	if !ok {
+		return config.Config{}, errors.New("expected 'rules' of object type")
+	}
+
+	userConfig := map[string]any{}
+
+	if l.configBundle != nil && l.configBundle.Data != nil {
+		userConfig = l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
+	}
+
+	err = mergo.Merge(&bundledConf, userConfig)
+	if err != nil {
+		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	return config.FromMap(bundledConf) //nolint:wrapcheck
+}
+
+func (l Linter) enabledGoRules() ([]rules.Rule, error) {
+	allGoRules := []rules.Rule{
+		rules.NewOpaFmtRule(),
+	}
+
+	conf, err := l.mergedConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create merged config: %w", err)
+	}
+
+	var enabledGoRules []rules.Rule
+
+	for _, rule := range allGoRules {
+		ruleConf, ok := conf.Rules[rule.Category()][rule.Name()]
+		if ok && ruleConf.Enabled {
+			enabledGoRules = append(enabledGoRules, rule)
+		}
+	}
+
+	return enabledGoRules, nil
+}
+
+func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
+	if l.ruleBundles == nil {
+		return nil, fmt.Errorf("no bundles loaded")
+	}
+
+	for _, ruleBundle := range l.ruleBundles {
+		if metadataName, ok := ruleBundle.Manifest.Metadata["name"].(string); ok {
+			if metadataName == name {
+				return ruleBundle, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("no regal bundle found")
 }

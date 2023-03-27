@@ -12,10 +12,10 @@ test_fail_todo_comment if {
 		"description": "Avoid TODO comments",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/todo-comment"
+			"ref": "https://docs.styra.com/regal/rules/todo-comment",
 		}],
 		"title": "todo-comment",
-        "location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -25,10 +25,10 @@ test_fail_fixme_comment if {
 		"description": "Avoid TODO comments",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/todo-comment"
+			"ref": "https://docs.styra.com/regal/rules/todo-comment",
 		}],
 		"title": "todo-comment",
-        "location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8},
 	}}
 }
 
@@ -36,7 +36,7 @@ test_success_no_todo_comment if {
 	report(`# This code is great`) == set()
 }
 
-report(snippet) := report {
+report(snippet) := report if {
 	report := comments.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

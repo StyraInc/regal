@@ -20,13 +20,13 @@ report contains violation if {
 
 	some rule in input.rules
 
-    # Single expression in rule body
-    # There's going to be a few cases where more expressions
-    # are in the body and it still "unconditional", like e.g
-    # a `print` call.. but let's keep it simple for now
+	# Single expression in rule body
+	# There's going to be a few cases where more expressions
+	# are in the body and it still "unconditional", like e.g
+	# a `print` call.. but let's keep it simple for now
 	count(rule.body) == 1
 
-    # Var assignment in rule head
+	# Var assignment in rule head
 	rule.head.value.type == "var"
 	rule_head_var := rule.head.value.value
 
@@ -35,14 +35,14 @@ report contains violation if {
 	not rule.body[0]["with"]
 
 	# Which is an assignment (= or :=)
-    terms := rule.body[0].terms
+	terms := rule.body[0].terms
 	terms[0].type == "ref"
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value in {"eq", "assign"}
 
-    # Of var declared in rule head
+	# Of var declared in rule head
 	terms[1].type == "var"
-    terms[1].value == rule_head_var
+	terms[1].value == rule_head_var
 
-    violation := result.fail(rego.metadata.rule(), {"location": rule.head.value.location})
+	violation := result.fail(rego.metadata.rule(), {"location": rule.head.value.location})
 }

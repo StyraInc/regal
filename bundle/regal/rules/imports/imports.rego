@@ -27,7 +27,7 @@ report contains violation if {
 	imported.path.value[0].type == "var"
 	imported.path.value[0].value == "future"
 	imported.path.value[1].type == "string"
-    imported.path.value[1].value == "keywords"
+	imported.path.value[1].value == "keywords"
 
 	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
 }
@@ -49,7 +49,7 @@ report contains violation if {
 
 	# If we want to allow aliasing input, eg `import input as tfplan`:
 	# count(imported.path.value) == 1
-    # imported.alias
+	# imported.alias
 
 	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
 }

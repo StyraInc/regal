@@ -16,6 +16,7 @@ linters:
     - rowserrcheck
     - wastedassign
     # annoying
+    - goerr113
     - varnamelen
     - nonamedreturns
     - testpackage

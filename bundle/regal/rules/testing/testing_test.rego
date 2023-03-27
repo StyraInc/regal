@@ -12,7 +12,7 @@ test_fail_test_outside_test_package if {
 		"description": "Test outside of test package",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/test-outside-test-package"
+			"ref": "https://docs.styra.com/regal/rules/test-outside-test-package",
 		}],
 		"title": "test-outside-test-package",
 		"location": {"col": 1, "file": "policy.rego", "row": 8},
@@ -29,6 +29,6 @@ test_success_test_inside_test_package if {
 	result == set()
 }
 
-report(snippet) := report {
+report(snippet) := report if {
 	report := testing.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

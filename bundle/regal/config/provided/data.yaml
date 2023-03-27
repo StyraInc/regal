@@ -19,6 +19,8 @@ rules:
   style:
     prefer-snake-case:
       enabled: true
+    opa-fmt:
+      enabled: true
   testing:
     test-outside-test-package:
       enabled: true

@@ -40,7 +40,7 @@ test_success_unconditional_assignment_but_with_in_body if {
 	report(`x := y { y := 5 with input as 1 }`) == set()
 }
 
-report(snippet) := report {
+report(snippet) := report if {
 	report := variables.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

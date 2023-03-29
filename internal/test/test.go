@@ -6,8 +6,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/pkg/rules"
 )
 
 const regalBundleDir = "../../bundle"
@@ -33,4 +36,11 @@ func GetRegalBundle(t *testing.T) bundle.Bundle {
 	})
 
 	return *regalBundle
+}
+
+func InputPolicy(filename string, policy string) rules.Input {
+	filebytes := map[string][]byte{filename: []byte(policy)}
+	modules := map[string]*ast.Module{filename: parse.MustParseModule(policy)}
+
+	return rules.NewInput(filebytes, modules)
 }

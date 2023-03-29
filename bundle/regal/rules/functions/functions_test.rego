@@ -36,7 +36,7 @@ test_success_function_references_no_input_or_data if {
 	report(`f(x) { x == true }`) == set()
 }
 
-report(snippet) := report {
+report(snippet) := report if {
 	report := functions.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

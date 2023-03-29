@@ -10,6 +10,7 @@ import data.regal.result
 # TODO: Normalize Text and Location -> text and location
 
 todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
+
 todo_pattern := sprintf("(%s)", [concat("|", todo_identifiers)])
 
 # METADATA
@@ -23,9 +24,9 @@ todo_pattern := sprintf("(%s)", [concat("|", todo_identifiers)])
 report contains violation if {
 	config.for_rule(rego.metadata.rule()).enabled == true
 
-    some comment in input.comments
-    text := base64.decode(comment.Text)
-    regex.match(todo_pattern, text)
+	some comment in input.comments
+	text := base64.decode(comment.Text)
+	regex.match(todo_pattern, text)
 
-    violation := result.fail(rego.metadata.rule(), result.location(comment))
+	violation := result.fail(rego.metadata.rule(), result.location(comment))
 }

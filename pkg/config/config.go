@@ -11,7 +11,9 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 )
 
-type Config map[string]Category
+type Config struct {
+	Rules map[string]Category `json:"rules"`
+}
 
 type Category map[string]Rule
 
@@ -67,11 +69,21 @@ func FindRegalDirectory(path string) (*os.File, error) {
 func FindConfig(path string) (*os.File, error) {
 	regalDir, err := FindRegalDirectory(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not find .regal directory %w", err)
+		return nil, fmt.Errorf("could not find .regal directory: %w", err)
 	}
 
-	//nolint:wrapcheck
-	return os.Open(filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName))
+	return os.Open(filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName)) //nolint:wrapcheck
+}
+
+func FromMap(confMap map[string]any) (Config, error) {
+	var conf Config
+
+	err := rio.JSONRoundTrip(confMap, &conf)
+	if err != nil {
+		return conf, fmt.Errorf("failed to convert config map to config struct: %w", err)
+	}
+
+	return conf, nil
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {
@@ -82,8 +94,7 @@ func (rule Rule) MarshalJSON() ([]byte, error) {
 		result[key] = val
 	}
 
-	//nolint:wrapcheck
-	return json.Marshal(&result)
+	return json.Marshal(&result) //nolint:wrapcheck
 }
 
 var errEnabledMustBeBoolean = errors.New("value of 'enabled' must be boolean")

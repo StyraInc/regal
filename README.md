@@ -13,6 +13,12 @@ Regal is a linter for Rego, with the goal of making your Rego magnificent!
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
+## Goals
+
+- Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches
+- Provide advice on best practices, coding style, and tooling
+- Allow users, teams and organizations to enforce custom rules on their policy code
+
 Regal rules are to as large extent as possible
 [written in Rego](https://www.styra.com/blog/linting-rego-with-rego/) themselves,
 using the JSON representation of the Rego abstract syntax tree (AST) as input, a

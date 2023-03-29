@@ -16,7 +16,7 @@ import data.regal.result
 # custom:
 #   category: assignment
 report contains violation if {
-    config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
 	rule["default"] == true

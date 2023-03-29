@@ -12,7 +12,7 @@ test_fail_future_keywords_import_wildcard if {
 		"description": "Use explicit future keyword imports",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/implicit-future-keywords"
+			"ref": "https://docs.styra.com/regal/rules/implicit-future-keywords",
 		}],
 		"title": "implicit-future-keywords",
 		"location": {"col": 8, "file": "policy.rego", "row": 8},
@@ -37,7 +37,7 @@ test_fail_import_input if {
 		"description": "Avoid importing input",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/avoid-importing-input"
+			"ref": "https://docs.styra.com/regal/rules/avoid-importing-input",
 		}],
 		"title": "avoid-importing-input",
 		"location": {"col": 8, "file": "policy.rego", "row": 8},
@@ -50,7 +50,7 @@ test_fail_import_data if {
 		"description": "Redundant import of data",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/redundant-data-import"
+			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 8},
@@ -63,7 +63,7 @@ test_fail_import_data_aliased if {
 		"description": "Redundant import of data",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/redundant-data-import"
+			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 8},
@@ -74,7 +74,7 @@ test_success_import_data_path if {
 	report(`import data.something`) == set()
 }
 
-report(snippet) := report {
+report(snippet) := report if {
 	report := imports.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

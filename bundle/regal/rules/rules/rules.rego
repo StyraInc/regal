@@ -5,10 +5,10 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.config
-import data.regal.result
 import data.regal.opa.builtins
+import data.regal.result
 
-builtin_names := {builtin | some builtin, _  in builtins}
+builtin_names := {builtin | some builtin, _ in builtins}
 
 # METADATA
 # title: rule-shadows-builtin

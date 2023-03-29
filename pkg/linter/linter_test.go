@@ -6,26 +6,24 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
 )
 
 func TestLintBasic(t *testing.T) {
 	t.Parallel()
 
-	policy := parse.MustParseModule(`package p
-	# TODO: fix this
-	camelCase {
-		true
-	}`)
+	policy := `package p
+
+# TODO: fix this
+camelCase {
+	1 == 1
+}
+`
 
 	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t))
 
-	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
-		"p.rego": policy,
-	})
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,11 +44,13 @@ func TestLintBasic(t *testing.T) {
 func TestLintWithUserConfig(t *testing.T) {
 	t.Parallel()
 
-	policy := parse.MustParseModule(`package p
-	# TODO: fix this
-	camelCase {
-		true
-	}`)
+	policy := `package p
+
+# TODO: fix this
+camelCase {
+	1 == 1
+}
+`
 
 	configRaw := `rules:
   comments:
@@ -63,9 +63,7 @@ func TestLintWithUserConfig(t *testing.T) {
 		WithUserConfig(config).
 		WithAddedBundle(test.GetRegalBundle(t))
 
-	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
-		"p.rego": policy,
-	})
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,15 +80,13 @@ func TestLintWithUserConfig(t *testing.T) {
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	policy := parse.MustParseModule(`package p`)
+	policy := "package p\n"
 
 	linter := NewLinter().
 		WithAddedBundle(test.GetRegalBundle(t)).
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
 
-	result, err := linter.Lint(context.Background(), map[string]*ast.Module{
-		"p.rego": policy,
-	})
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,14 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/loader"
 	"github.com/spf13/cobra"
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/rules"
 )
 
 type lintCommandParams struct {
@@ -50,10 +47,7 @@ func (f *repeatedStringFlag) Set(s string) error {
 	return nil
 }
 
-//nolint:gochecknoglobals
-var EmbedBundleFS embed.FS
-
-var errNoFileProvided = errors.New("at least one file or directory must be provided for linting")
+var EmbedBundleFS embed.FS //nolint:gochecknoglobals
 
 func init() {
 	params := lintCommandParams{}
@@ -65,7 +59,7 @@ func init() {
 
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return errNoFileProvided
+				return errors.New("at least one file or directory must be provided for linting")
 			}
 
 			return nil
@@ -130,14 +124,14 @@ func lint(args []string, params lintCommandParams) error {
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
 	}
 
-	modules, err := parseModules(args)
+	input, err := rules.InputFromPaths(args)
 	if err != nil {
-		return err
+		return fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
-	rep, err := regal.Lint(ctx, modules)
+	rep, err := regal.Lint(ctx, input)
 	if err != nil {
-		return fmt.Errorf("error(s) ecountered while linting %w", err)
+		return fmt.Errorf("error(s) ecountered while linting: %w", err)
 	}
 
 	// TODO: Create reporter interface and implementations
@@ -162,8 +156,7 @@ func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os
 		}
 	}
 
-	//nolint:wrapcheck
-	return userConfig, err
+	return userConfig, err //nolint:wrapcheck
 }
 
 func getLinterContext(params lintCommandParams) (context.Context, func()) {
@@ -176,28 +169,4 @@ func getLinterContext(params lintCommandParams) (context.Context, func()) {
 	}
 
 	return ctx, cancel
-}
-
-func parseModules(paths []string) (map[string]*ast.Module, error) {
-	policyPaths, err := loader.FilteredPaths(paths, func(_ string, info os.FileInfo, depth int) bool {
-		return !info.IsDir() && !strings.HasSuffix(info.Name(), bundle.RegoExt)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to load policy from provided args: %w", err)
-	}
-
-	modules := make(map[string]*ast.Module, len(policyPaths))
-
-	for _, path := range policyPaths {
-		result, err := loader.RegoWithOpts(path, parse.ParserOptions())
-		if err != nil {
-			// TODO: Keep running and collect errors instead?
-			//nolint:wrapcheck
-			return nil, err
-		}
-
-		modules[result.Name] = result.Parsed
-	}
-
-	return modules, nil
 }

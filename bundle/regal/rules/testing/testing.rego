@@ -24,8 +24,8 @@ report contains violation if {
 
 	not endswith(package_name, "_test")
 
-    some rule in input.rules
-    startswith(rule.head.name, "test_")
+	some rule in input.rules
+	startswith(rule.head.name, "test_")
 
 	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }

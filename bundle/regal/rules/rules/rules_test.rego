@@ -24,5 +24,6 @@ test_success_rule_name_does_not_shadows_builtin if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := rules.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

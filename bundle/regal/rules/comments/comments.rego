@@ -11,7 +11,7 @@ import data.regal.result
 
 todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
 
-todo_pattern := sprintf("(%s)", [concat("|", todo_identifiers)])
+todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
 
 # METADATA
 # title: todo-comment

@@ -30,5 +30,6 @@ test_success_test_inside_test_package if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := testing.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

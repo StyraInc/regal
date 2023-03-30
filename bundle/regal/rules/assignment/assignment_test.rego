@@ -41,6 +41,7 @@ test_success_assignment_in_object_rule_assignment if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := assignment.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

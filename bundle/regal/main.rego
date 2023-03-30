@@ -26,8 +26,32 @@ report contains violation if {
 
 report contains violation if {
 	violation := data.regal.rules[_].report[_]
+
+	not ignored(violation, ignore_directives)
 }
 
 report contains violation if {
 	violation := data.custom.regal.rules[_].report[_]
+
+	not ignored(violation, ignore_directives)
+}
+
+ignored(violation, directives) if {
+	ignored_rules := directives[violation.location.row]
+	violation.title in ignored_rules
+}
+
+ignore_directives[row] := rules if {
+	some comment in input.comments
+	text := trim_space(base64.decode(comment.Text))
+
+	startswith(text, "regal")
+
+	i := indexof(text, "ignore:")
+	i != -1
+
+	list := regex.replace(substring(text, i + 7, -1), `\s`, "")
+
+	row := comment.Location.row + 1
+	rules := split(list, ",")
 }

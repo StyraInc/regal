@@ -37,6 +37,7 @@ test_success_no_todo_comment if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := comments.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

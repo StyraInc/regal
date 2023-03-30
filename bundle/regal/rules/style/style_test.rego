@@ -81,5 +81,6 @@ test_success_snake_cased_every if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := style.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

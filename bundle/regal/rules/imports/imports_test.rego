@@ -75,6 +75,7 @@ test_success_import_data_path if {
 }
 
 report(snippet) := report if {
+	# regal ignore:input-or-data-reference
 	report := imports.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

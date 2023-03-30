@@ -37,6 +37,24 @@ report contains violation if {
 	config.for_rule(rego.metadata.rule()).enabled == true
 
 	some rule in input.rules
+	rule["default"] == true
+	not util.is_snake_case(rule.head.name)
+
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+}
+
+# METADATA
+# title: prefer-snake-case
+# description: Prefer snake_case for names
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+# custom:
+#   category: style
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).enabled == true
+
+	some rule in input.rules
 	some expr in rule.body
 	some symbol in expr.terms.symbols
 

@@ -16,12 +16,14 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/reporter"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
 type lintCommandParams struct {
 	timeout    time.Duration
 	configFile string
+	format     string
 	rules      repeatedStringFlag
 }
 
@@ -75,6 +77,7 @@ func init() {
 	}
 
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
+	lintCommand.Flags().StringVarP(&params.format, "format", "f", "pretty", "set output format (pretty, compact, json)")
 	lintCommand.Flags().VarP(&params.rules, "rules", "r", "set custom rules file(s). This flag can be repeated.")
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default unlimited)")
 
@@ -129,15 +132,30 @@ func lint(args []string, params lintCommandParams) error {
 		return fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
-	rep, err := regal.Lint(ctx, input)
+	result, err := regal.Lint(ctx, input)
 	if err != nil {
 		return fmt.Errorf("error(s) ecountered while linting: %w", err)
 	}
 
-	// TODO: Create reporter interface and implementations
-	log.Println(rep)
+	rep, err := getReporter(params.format)
+	if err != nil {
+		return fmt.Errorf("failed to get reporter: %w", err)
+	}
 
-	return nil
+	return rep.Publish(result) //nolint:wrapcheck
+}
+
+func getReporter(format string) (reporter.Reporter, error) {
+	switch format {
+	case "pretty":
+		return reporter.NewPrettyReporter(os.Stdout), nil
+	case "compact":
+		return reporter.NewCompactReporter(os.Stdout), nil
+	case "json":
+		return reporter.NewJSONReporter(os.Stdout), nil
+	default:
+		return nil, fmt.Errorf("unknown format %s", format)
+	}
 }
 
 func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os.File, err error) {

@@ -1,5 +1,7 @@
 package report
 
+import "fmt"
+
 // RelatedResource provides documentation on a violation.
 type RelatedResource struct {
 	Description string `json:"description"`
@@ -26,5 +28,23 @@ type Violation struct {
 
 // Report aggregate of Violation as returned by a linter run.
 type Report struct {
-	Violations []Violation `json:"report"`
+	Violations []Violation `json:"violations"`
+}
+
+func (r Report) FileCount() map[string]int {
+	fc := map[string]int{}
+	for _, violation := range r.Violations {
+		fc[violation.Location.File]++
+	}
+
+	return fc
+}
+
+// String shorthand form for a Location.
+func (l Location) String() string {
+	if l.Row == 0 && l.Column == 0 {
+		return l.File
+	}
+
+	return fmt.Sprintf("%s:%d:%d", l.File, l.Row, l.Column)
 }

@@ -25,6 +25,7 @@ linters:
     - godox
     - exhaustruct
     - cyclop
+    - ireturn
 linters-settings:
   tagliatelle:
     case:

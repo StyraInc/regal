@@ -39,8 +39,8 @@ func GetRegalBundle(t *testing.T) bundle.Bundle {
 }
 
 func InputPolicy(filename string, policy string) rules.Input {
-	filebytes := map[string][]byte{filename: []byte(policy)}
+	content := map[string]string{filename: policy}
 	modules := map[string]*ast.Module{filename: parse.MustParseModule(policy)}
 
-	return rules.NewInput(filebytes, modules)
+	return rules.NewInput(content, modules)
 }

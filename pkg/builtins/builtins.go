@@ -53,12 +53,3 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 
 	return term, nil
 }
-
-func AsAstBuiltins() []*ast.Builtin {
-	regalParseModule := &ast.Builtin{
-		Name: RegalParseModuleMeta.Name,
-		Decl: RegalParseModuleMeta.Decl,
-	}
-
-	return []*ast.Builtin{regalParseModule}
-}

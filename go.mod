@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/imdario/mergo v0.3.15
-	github.com/open-policy-agent/opa v0.50.2
+	github.com/open-policy-agent/opa v0.51.0
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v3 v3.0.1
 )

@@ -19,26 +19,42 @@ import future.keywords.in
 	policy,
 ]))
 
-is_path(path, x) if path[count(path)-1] == x
+is_path(path, x) if path[count(path) - 1] == x
 
-is_terms(path)   if is_path(path, "terms")
+is_terms(path) if is_path(path, "terms")
+
 is_symbols(path) if is_path(path, "symbols")
 
 # simple assignment, i.e. `x := 100` returns `x`
 # always returns a single var, but wrapped in an
 # array for consistency
-_find_assign_vars(path, value) := var {
+_find_assign_vars(path, value) := var if {
 	is_terms(path)
 	is_array(value)
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "assign"
 
+	value[1].type == "var"
+
 	var := [value[1]]
 }
 
+# 'destructuring' assignment, i.e. [a, b, c] := [1, 2, 3]
+_find_assign_vars(path, value) := var if {
+	is_terms(path)
+	is_array(value)
+	value[0].type == "ref"
+	value[0].value[0].type == "var"
+	value[0].value[0].value == "assign"
+
+	value[1].type == "array"
+
+	var := [v | some v in value[1].value]
+}
+
 # var declared via `some`, i.e. `some x` or `some x, y`
-_find_some_decl_vars(path, value) := var {
+_find_some_decl_vars(path, value) := var if {
 	is_symbols(path)
 
 	value[0].type != "call"
@@ -54,7 +70,7 @@ _find_some_decl_vars(path, value) := var {
 # Where `x` _is_ declared inside of an object/array
 
 # single var declared via `some in`, i.e. `some x in y`
-_find_some_in_decl_vars(path, value) := var {
+_find_some_in_decl_vars(path, value) := var if {
 	is_symbols(path)
 
 	value[0].type == "call"
@@ -66,7 +82,7 @@ _find_some_in_decl_vars(path, value) := var {
 }
 
 # two vars declared via `some in`, i.e. `some x, y in z`
-_find_some_in_decl_vars(path, value) := var {
+_find_some_in_decl_vars(path, value) := var if {
 	is_symbols(path)
 
 	value[0].type == "call"
@@ -81,7 +97,7 @@ _find_some_in_decl_vars(path, value) := var {
 }
 
 # one var declared via `every`, i.e. `every x in y {}`
-_find_every_vars(path, value) := var {
+_find_every_vars(path, value) := var if {
 	is_terms(path)
 	value.domain
 	value.key == null
@@ -91,7 +107,7 @@ _find_every_vars(path, value) := var {
 }
 
 # two vars declared via `every`, i.e. `every x, y in y {}`
-_find_every_vars(path, value) := var {
+_find_every_vars(path, value) := var if {
 	is_terms(path)
 	value.domain
 
@@ -104,8 +120,11 @@ _find_every_vars(path, value) := var {
 }
 
 _find_vars(path, value) := _find_assign_vars(path, value)
+
 _find_vars(path, value) := _find_some_decl_vars(path, value)
+
 _find_vars(path, value) := _find_some_in_decl_vars(path, value)
+
 _find_vars(path, value) := _find_every_vars(path, value)
 
 # METADATA

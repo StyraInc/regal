@@ -15,3 +15,5 @@ jobs:
       - uses: golangci/golangci-lint-action@v3
       - run: go test ./...
       - run: go build
+      - run: chmod +x regal
+      - run: ./regal lint bundle

@@ -29,12 +29,14 @@ test_find_vars if {
 		input.bar[g][h]
 		some i in input
 		some j, k in input
+
+		[l, m, n] := jwt.decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Et9HFtf9R3GEMA0IICOfFMVXY7kkTX1wr4qCyhIf58U")
 	}
 	`
 
 	module := regal.parse_module("p.rego", policy)
 
-    vars := ast.find_vars(module.rules)
+	vars := ast.find_vars(module.rules)
 
 	names := [name |
 		some var in vars
@@ -42,5 +44,7 @@ test_find_vars if {
 		name := var.value
 	]
 
-	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+	print(names)
+
+	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"]
 }

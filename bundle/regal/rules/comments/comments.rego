@@ -7,7 +7,9 @@ import future.keywords.in
 import data.regal.config
 import data.regal.result
 
-# TODO: Normalize Text and Location -> text and location
+# For comments, OPA uses capital-cases Text and Location rather
+# than text and location. As fixing this would potentially break
+# things, we need to take it into consideration here.
 
 todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
 

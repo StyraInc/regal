@@ -59,6 +59,14 @@ test_success_function_references_no_input_or_data_reverse if {
 	report(`f(x) { true == x }`) == set()
 }
 
+test_success_function_references_only_own_vars if {
+	report(`f(x) { y := x; y == 10 }`) == set()
+}
+
+test_success_function_references_only_own_vars_nested if {
+	report(`f(x, z) { y := x; y == [1, 2, z]}`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:input-or-data-reference
 	report := functions.report with input as ast.with_future_keywords(snippet)

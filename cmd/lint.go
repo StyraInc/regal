@@ -84,6 +84,7 @@ func init() {
 	RootCommand.AddCommand(lintCommand)
 }
 
+//nolint:funlen
 func lint(args []string, params lintCommandParams) error {
 	ctx, cancel := getLinterContext(params)
 	defer cancel()
@@ -107,7 +108,10 @@ func lint(args []string, params lintCommandParams) error {
 	} else {
 		regalDir, err = config.FindRegalDirectory(cwd)
 		if err == nil {
-			customRulesDir = filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
+			customRulesPath := filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
+			if _, err = os.Stat(customRulesPath); err == nil {
+				customRulesDir = customRulesPath
+			}
 		}
 	}
 

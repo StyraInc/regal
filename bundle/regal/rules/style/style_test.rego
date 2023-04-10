@@ -80,6 +80,76 @@ test_success_snake_cased_every if {
 	report(`allow { every sc in input { sc == 1 } }`) == set()
 }
 
+# Prefer in operator over iteration
+
+test_fail_use_in_operator_string_lhs if {
+	report(`allow {
+		"admin" == input.user.roles[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 14, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_var_lhs if {
+	report(`allow {
+		admin == input.user.roles[_]
+	}`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 12, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_string_rhs if {
+	report(`allow {
+		input.user.roles[_] == "admin"
+	}`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 3, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_var_rhs if {
+	report(`allow {
+		input.user.roles[_] == admin
+	}`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 3, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_success_refs_both_sides if {
+	report(`allow { required_roles[_] == input.user.roles[_] }`) == set()
+}
+
+test_success_uses_in_operator if {
+	report(`allow { "admin" in input.user.roles[_] }`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:input-or-data-reference
 	report := style.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}

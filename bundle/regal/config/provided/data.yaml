@@ -13,6 +13,8 @@ rules:
       enabled: true
     avoid-importing-input:
       enabled: true
+    import-shadows-import:
+      enabled: true
   rules:
     rule-shadows-builtin:
       enabled: true
@@ -20,6 +22,8 @@ rules:
     prefer-snake-case:
       enabled: true
     opa-fmt:
+      enabled: true
+    use-in-operator:
       enabled: true
   testing:
     test-outside-test-package:

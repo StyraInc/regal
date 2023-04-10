@@ -21,12 +21,63 @@ test_fail_test_outside_test_package if {
 
 test_success_test_inside_test_package if {
 	ast := rego.parse_module("foo_test.rego", `
-        package foo_test
+	package foo_test
 
-        test_foo { false }
-    `)
+	test_foo { false }
+	`)
 	result := testing.report with input as ast
 	result == set()
+}
+
+test_fail_identically_named_tests if {
+	ast := rego.parse_module("foo_test.rego", `
+	package foo_test
+
+	test_foo { false }
+	test_foo { true }
+	`)
+	result := testing.report with input as ast
+	result == {{
+		"category": "testing",
+		"description": "Multiple tests with same name",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/identically-named-tests",
+		}],
+		"title": "identically-named-tests",
+	}}
+}
+
+test_success_differently_named_tests if {
+	ast := rego.parse_module("foo_test.rego", `
+	package foo_test
+
+	test_foo { false }
+	test_bar { true }
+	test_baz { 1 == 1 }
+	`)
+	result := testing.report with input as ast
+	result == set()
+}
+
+test_fail_todo_test if {
+	ast := rego.parse_module("foo_test.rego", `
+	package foo_test
+
+	todo_test_foo { false }
+
+	test_bar { true }
+	`)
+	result := testing.report with input as ast
+	result == {{
+		"category": "testing",
+		"description": "TODO test encountered",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/todo-test",
+		}],
+		"title": "todo-test",
+	}}
 }
 
 report(snippet) := report if {

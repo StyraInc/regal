@@ -101,3 +101,31 @@ eq_exprs contains expr if {
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value == "equal"
 }
+
+# METADATA
+# title: line-length
+# description: Line too long
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/line-length
+# custom:
+#   category: style
+report contains violation if {
+	cfg := config.for_rule(rego.metadata.rule())
+
+	cfg.enabled == true
+
+	some i, line in input.regal.file.lines
+
+	line_length := count(line)
+	line_length > cfg["max-line-length"]
+
+	violation := result.fail(
+		rego.metadata.rule(),
+		{"location": {
+			"file": input.regal.file.name,
+			"row": i + 1,
+			"col": line_length,
+		}},
+	)
+}

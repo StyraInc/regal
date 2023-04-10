@@ -25,6 +25,12 @@ using the JSON representation of the Rego abstract syntax tree (AST) as input, a
 few additional custom built-in functions and some indexed data structures to help
 with linting.
 
+## Status
+
+Regal is currently in an alpha stage. While we'd like to think of it as helpful already, **every** feature, API, name,
+config attribute and paragraph of documentation is subject to change. If you'd still like to use it, we'd love to hear
+what you think!
+
 ## Try it out!
 
 Run `regal lint` pointed at one or more files or directories to have them linted:

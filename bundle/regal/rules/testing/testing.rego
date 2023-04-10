@@ -53,7 +53,7 @@ report contains violation if {
 
 	# We don't currently have location for rule heads, but this should
 	# change soon: https://github.com/open-policy-agent/opa/pull/5811
-	violation := result.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), {"location": {"file": input.regal.file.name}})
 }
 
 # METADATA
@@ -69,9 +69,9 @@ report contains violation if {
 
 	some rule in input.rules
 
-	startswith(rule.head.name, "todo_")
+	startswith(rule.head.name, "todo_test_")
 
 	# We don't currently have location for rule heads, but this should
 	# change soon: https://github.com/open-policy-agent/opa/pull/5811
-	violation := result.fail(rego.metadata.rule(), {})
+	violation := result.fail(rego.metadata.rule(), {"location": {"file": input.regal.file.name}})
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
@@ -105,8 +106,9 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return goReport, err
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
+
 	regoArgs = append(regoArgs,
 		rego.ParsedQuery(query),
 		rego.EnablePrintStatements(true),
@@ -133,6 +135,12 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 		}
 	}
 
+	return regoArgs
+}
+
+func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	regoArgs := l.prepareRegoArgs()
+
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
@@ -141,29 +149,43 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	aggregate := report.Report{}
 
 	for _, name := range input.FileNames {
-		resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(input.Modules[name]))
+		enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed preparing AST: %w", err)
+		}
+
+		resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
 		if err != nil {
 			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 		}
 
-		if len(resultSet) != 1 {
-			return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
-		}
-
-		r := report.Report{}
-		if err = rio.JSONRoundTrip(resultSet[0].Bindings, &r); err != nil {
-			return report.Report{},
-				fmt.Errorf("JSON rountrip failed for bindings: %v %w", resultSet[0].Bindings, err)
-		}
-
-		for i, v := range r.Violations {
-			r.Violations[i] = addText(v, input.FileContent[name])
+		r, err := resultSetToReport(resultSet, input.FileContent[name])
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
 		}
 
 		aggregate.Violations = append(aggregate.Violations, r.Violations...)
 	}
 
 	return aggregate, nil
+}
+
+func resultSetToReport(resultSet rego.ResultSet, content string) (report.Report, error) {
+	if len(resultSet) != 1 {
+		return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
+	}
+
+	r := report.Report{}
+	if err := rio.JSONRoundTrip(resultSet[0].Bindings, &r); err != nil {
+		return report.Report{},
+			fmt.Errorf("JSON rountrip failed for bindings: %v %w", resultSet[0].Bindings, err)
+	}
+
+	for i, v := range r.Violations {
+		r.Violations[i] = addText(v, content)
+	}
+
+	return r, nil
 }
 
 func addText(violation report.Violation, content string) report.Violation {

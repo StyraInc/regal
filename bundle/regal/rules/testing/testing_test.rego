@@ -20,7 +20,7 @@ test_fail_test_outside_test_package if {
 }
 
 test_success_test_inside_test_package if {
-	ast := rego.parse_module("foo_test.rego", `
+	ast := regal.parse_module("foo_test.rego", `
 	package foo_test
 
 	test_foo { false }
@@ -30,7 +30,7 @@ test_success_test_inside_test_package if {
 }
 
 test_fail_identically_named_tests if {
-	ast := rego.parse_module("foo_test.rego", `
+	ast := regal.parse_module("foo_test.rego", `
 	package foo_test
 
 	test_foo { false }
@@ -45,11 +45,12 @@ test_fail_identically_named_tests if {
 			"ref": "https://docs.styra.com/regal/rules/identically-named-tests",
 		}],
 		"title": "identically-named-tests",
+		"location": {"file": "foo_test.rego"},
 	}}
 }
 
 test_success_differently_named_tests if {
-	ast := rego.parse_module("foo_test.rego", `
+	ast := regal.parse_module("foo_test.rego", `
 	package foo_test
 
 	test_foo { false }
@@ -61,7 +62,7 @@ test_success_differently_named_tests if {
 }
 
 test_fail_todo_test if {
-	ast := rego.parse_module("foo_test.rego", `
+	ast := regal.parse_module("foo_test.rego", `
 	package foo_test
 
 	todo_test_foo { false }
@@ -77,6 +78,7 @@ test_fail_todo_test if {
 			"ref": "https://docs.styra.com/regal/rules/todo-test",
 		}],
 		"title": "todo-test",
+		"location": {"file": "foo_test.rego"},
 	}}
 }
 

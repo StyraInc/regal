@@ -5,6 +5,11 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
+policy(snippet) := regal.parse_module("policy.rego", concat("", [
+	"package policy\n\n",
+	snippet,
+]))
+
 # METADATA
 # description: parses provided policy with all future keywords imported. Primarily for testing.
 with_future_keywords(policy) := regal.parse_module("policy.rego", concat("", [

@@ -7,6 +7,19 @@ import future.keywords.in
 import data.regal.config
 import data.regal.result
 
+_identifiers := [_ident(imported) |
+	some imported in input.imports
+]
+
+# regular import
+_ident(imported) := path[count(path) - 1].value if {
+	not imported.alias
+	path := imported.path.value
+}
+
+# aliased import
+_ident(imported) := imported.alias
+
 # METADATA
 # title: implicit-future-keywords
 # description: Use explicit future keyword imports
@@ -29,7 +42,7 @@ report contains violation if {
 	imported.path.value[1].type == "string"
 	imported.path.value[1].value == "keywords"
 
-	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
+	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
 }
 
 # METADATA
@@ -51,7 +64,7 @@ report contains violation if {
 	# count(imported.path.value) == 1
 	# imported.alias
 
-	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
+	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
 }
 
 # METADATA
@@ -71,5 +84,23 @@ report contains violation if {
 
 	imported.path.value[0].value == "data"
 
-	violation := result.fail(rego.metadata.rule(), {"location": imported.path.value[0].location})
+	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
+}
+
+# METADATA
+# title: import-shadows-import
+# description: Import shadows another import
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/import-shadows-import
+# custom:
+#   category: imports
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).enabled == true
+
+	some i, identifier in _identifiers
+
+	identifier in array.slice(_identifiers, 0, i)
+
+	violation := result.fail(rego.metadata.rule(), result.location(input.imports[i].path.value[0]))
 }

@@ -5,6 +5,8 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
+# METADATA
+# description: parse provided snippet with a generic package declaration added
 policy(snippet) := regal.parse_module("policy.rego", concat("", [
 	"package policy\n\n",
 	snippet,

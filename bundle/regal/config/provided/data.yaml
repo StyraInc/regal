@@ -19,9 +19,12 @@ rules:
     rule-shadows-builtin:
       enabled: true
   style:
-    prefer-snake-case:
+    line-length:
       enabled: true
+      max-line-length: 120
     opa-fmt:
+      enabled: true
+    prefer-snake-case:
       enabled: true
     use-in-operator:
       enabled: true

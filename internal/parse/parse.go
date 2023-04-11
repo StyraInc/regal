@@ -1,6 +1,12 @@
 package parse
 
-import "github.com/open-policy-agent/opa/ast"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/open-policy-agent/opa/ast"
+	rio "github.com/styrainc/regal/internal/io"
+)
 
 // ParserOptions provides the parse options necessary to include location data in AST results.
 func ParserOptions() ast.ParserOptions {
@@ -30,4 +36,21 @@ func ParserOptions() ast.ParserOptions {
 // MustParseModule works like ast.MustParseModule but with the Regal parser options applied.
 func MustParseModule(policy string) *ast.Module {
 	return ast.MustParseModuleWithOpts(policy, ParserOptions())
+}
+
+func EnhanceAST(name string, content string, module *ast.Module) (map[string]any, error) {
+	var enhancedAst map[string]any
+
+	if err := rio.JSONRoundTrip(module, &enhancedAst); err != nil {
+		return nil, fmt.Errorf("JSON rountrip failed for module: %w", err)
+	}
+
+	enhancedAst["regal"] = map[string]any{
+		"file": map[string]any{
+			"name":  name,
+			"lines": strings.Split(content, "\n"),
+		},
+	}
+
+	return enhancedAst, nil
 }

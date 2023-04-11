@@ -17,7 +17,10 @@ snake_case_violation := {
 }
 
 test_fail_camel_cased_rule_name if {
-	report(`camelCase := 5`) == {object.union(snake_case_violation, {"location": {"col": 1, "file": "policy.rego", "row": 8}})}
+	report(`camelCase := 5`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 1, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_rule_name if {
@@ -25,7 +28,10 @@ test_success_snake_cased_rule_name if {
 }
 
 test_fail_camel_cased_some_declaration if {
-	report(`p {some fooBar; input[fooBar]}`) == {object.union(snake_case_violation, {"location": {"col": 9, "file": "policy.rego", "row": 8}})}
+	report(`p {some fooBar; input[fooBar]}`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 9, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_some_declaration if {
@@ -33,7 +39,10 @@ test_success_snake_cased_some_declaration if {
 }
 
 test_fail_camel_cased_multiple_some_declaration if {
-	report(`p {some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]}`) == {object.union(snake_case_violation, {"location": {"col": 21, "file": "policy.rego", "row": 8}})}
+	report(`p {some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]}`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 21, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_multiple_some_declaration if {
@@ -41,11 +50,17 @@ test_success_snake_cased_multiple_some_declaration if {
 }
 
 test_fail_camel_cased_var_assignment if {
-	report(`allow { camelCase := 5 }`) == {object.union(snake_case_violation, {"location": {"col": 9, "file": "policy.rego", "row": 8}})}
+	report(`allow { camelCase := 5 }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 9, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_fail_camel_cased_multiple_var_assignment if {
-	report(`allow { snake_case := "foo"; camelCase := 5 }`) == {object.union(snake_case_violation, {"location": {"col": 30, "file": "policy.rego", "row": 8}})}
+	report(`allow { snake_case := "foo"; camelCase := 5 }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 30, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_var_assignment if {
@@ -53,15 +68,24 @@ test_success_snake_cased_var_assignment if {
 }
 
 test_fail_camel_cased_some_in_value if {
-	report(`allow { some cC in input }`) == {object.union(snake_case_violation, {"location": {"col": 14, "file": "policy.rego", "row": 8}})}
+	report(`allow { some cC in input }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 14, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_fail_camel_cased_some_in_key_value if {
-	report(`allow { some cC, sc in input }`) == {object.union(snake_case_violation, {"location": {"col": 14, "file": "policy.rego", "row": 8}})}
+	report(`allow { some cC, sc in input }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 14, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_fail_camel_cased_some_in_key_value_2 if {
-	report(`allow { some sc, cC in input }`) == {object.union(snake_case_violation, {"location": {"col": 18, "file": "policy.rego", "row": 8}})}
+	report(`allow { some sc, cC in input }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 18, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_some_in if {
@@ -69,11 +93,17 @@ test_success_snake_cased_some_in if {
 }
 
 test_fail_camel_cased_every_value if {
-	report(`allow { every cC in input { cC == 1 } }`) == {object.union(snake_case_violation, {"location": {"col": 15, "file": "policy.rego", "row": 8}})}
+	report(`allow { every cC in input { cC == 1 } }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 15, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_fail_camel_cased_every_key if {
-	report(`allow { every cC, sc in input { cC == 1; print(sc) } }`) == {object.union(snake_case_violation, {"location": {"col": 15, "file": "policy.rego", "row": 8}})}
+	report(`allow { every cC, sc in input { cC == 1; print(sc) } }`) == {object.union(
+		snake_case_violation,
+		{"location": {"col": 15, "file": "policy.rego", "row": 8}},
+	)}
 }
 
 test_success_snake_cased_every if {
@@ -150,7 +180,30 @@ test_success_uses_in_operator if {
 	report(`allow { "admin" in input.user.roles[_] }`) == set()
 }
 
+# Line length
+
+test_fail_line_too_long if {
+	r := report(`allow {
+		foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
+	}`)
+	r == {{
+		"category": "style",
+		"description": "Line too long",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/line-length",
+		}],
+		"title": "line-length",
+		"location": {"col": 105, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_success_line_not_too_long if {
+	report(`allow { "foo" == "bar" }`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:input-or-data-reference
-	report := style.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
+	report := style.report with input as ast.with_future_keywords(snippet)
+		with config.for_rule as {"enabled": true, "max-line-length": 80}
 }

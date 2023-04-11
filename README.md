@@ -58,10 +58,10 @@ rules:
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
-found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is 
+found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is
 reached. If no configuration file is found, Regal will use the default configuration.
 
-A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when 
+A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
 provided will be used to override the default configuration.
 
 ## Custom Rules
@@ -78,7 +78,7 @@ to a Rego file, or a directory containing Rego files and potentially data (JSON 
 
 Regal rules works primarily on the abstract syntax tree (AST) as parsed by OPA. The AST of each policy scanned will be
 provided as input to the linter policies, and additional data useful in the context of linting, as well as some
-purpose-built custom functions are made available in any Regal policy. 
+purpose-built custom functions are made available in any Regal policy.
 
 If we were to write the simplest policy possible, it would contain nothing but a package declaration:
 
@@ -159,7 +159,7 @@ Starting from top to bottom, these are the components comprising our custom rule
    All rules **must** have a `title`, a `description`, and a `category` (placed under the `custom` object). Providing
    links to additional documentation under `related_resources` is recommended, but not required.
 4. Regal will evaluate any rule named `report` in each linter policy, so at least one `report` rule **must** be present.
-5. In our example `report` rule, we evaluate another rule (`acme_corp_package`) in order to know if the package name 
+5. In our example `report` rule, we evaluate another rule (`acme_corp_package`) in order to know if the package name
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither
    of the conditions are true, the rule fails and violation is created.
 6. The violation is created by calling `result.fail`, which takes the metadata from the rule and returns it, which will
@@ -194,7 +194,7 @@ golangci-lint run ./...
 
 During development of Rego-based rules, you may want to test the policies in isolation — i.e. without running Regal.
 Since Regal policies and data are kept in a regular
-[bundle](https://www.openpolicyagent.org/docs/latest/management-bundles/) structure, this is simple. Given we want to 
+[bundle](https://www.openpolicyagent.org/docs/latest/management-bundles/) structure, this is simple. Given we want to
 test `p.rego` against the available set of rules, we can have OPA parse it and pipe the output to `opa eval` for
 evaluation:
 
@@ -214,3 +214,7 @@ $ opa parse p.rego --format json | opa eval -f pretty -b bundle -I data.regal.ma
   }
 ]
 ```
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join the Styra community on [Slack](https://join.slack.com/t/styracommunity/shared_invite/zt-1p81qz8g4-t2OLKbvw0J5ibdcNc62~6Q)!

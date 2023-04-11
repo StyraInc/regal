@@ -127,6 +127,96 @@ test_fail_use_in_operator_string_lhs if {
 	}}
 }
 
+test_fail_use_in_operator_number_lhs if {
+	report(`allow {
+		1 == input.lucky_numbers[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 8, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_array_lhs if {
+	report(`allow {
+		[1] == input.arrays[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 10, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_boolean_lhs if {
+	report(`allow {
+		true == input.booleans[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 11, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_object_lhs if {
+	report(`allow {
+		{"x": "y"} == input.objects[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 17, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_null_lhs if {
+	report(`allow {
+		null == input.objects[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 11, "file": "policy.rego", "row": 9},
+	}}
+}
+
+test_fail_use_in_operator_set_lhs if {
+	report(`allow {
+		{"foo"} == input.objects[_]
+	 }`) == {{
+		"category": "style",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 14, "file": "policy.rego", "row": 9},
+	}}
+}
+
 test_fail_use_in_operator_var_lhs if {
 	report(`allow {
 		admin == input.user.roles[_]

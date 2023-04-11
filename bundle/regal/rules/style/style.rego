@@ -56,7 +56,7 @@ report contains violation if {
 
 	some expr in eq_exprs
 
-	expr.terms[1].type in {"string", "var"}
+	expr.terms[1].type in {"array", "boolean", "object", "null", "number", "set", "string", "var"}
 	expr.terms[2].type == "ref"
 
 	last := expr.terms[2].value[count(expr.terms[2].value) - 1]
@@ -81,7 +81,7 @@ report contains violation if {
 	some expr in eq_exprs
 
 	expr.terms[1].type == "ref"
-	expr.terms[2].type in {"string", "var"}
+	expr.terms[2].type in {"array", "boolean", "object", "null", "number", "set", "string", "var"}
 
 	last := expr.terms[1].value[count(expr.terms[1].value) - 1]
 

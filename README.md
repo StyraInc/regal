@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.50.2](https://openpolicyagent.org/badge/v0.50.2)
+![OPA v0.51.0](https://openpolicyagent.org/badge/v0.51.0)
 
 Regal is a linter for Rego, with the goal of making your Rego magnificent!
 
@@ -87,17 +87,32 @@ If we were to write the simplest policy possible, it would contain nothing but a
 package policy
 ```
 
-Using `opa parse --json policy.rego`, we're provided with the AST of the above policy:
+Using `opa parse --format json --json-include locations policy.rego`, we're provided with the AST of the above policy:
 
 ```json
 {
   "package": {
+    "location": {
+      "file": "policy.rego",
+      "row": 1,
+      "col": 1
+    },
     "path": [
       {
+        "location": {
+          "file": "policy.rego",
+          "row": 1,
+          "col": 9
+        },
         "type": "var",
         "value": "data"
       },
       {
+        "location": {
+          "file": "policy.rego",
+          "row": 1,
+          "col": 9
+        },
         "type": "string",
         "value": "policy"
       }
@@ -199,7 +214,7 @@ test `p.rego` against the available set of rules, we can have OPA parse it and p
 evaluation:
 
 ```shell
-$ opa parse p.rego --format json | opa eval -f pretty -b bundle -I data.regal.main.report
+$ opa parse p.rego --format json --json-include locations | opa eval -f pretty -b bundle -I data.regal.main.report
 [
   {
     "category": "variables",

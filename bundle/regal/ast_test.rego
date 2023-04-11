@@ -30,7 +30,15 @@ test_find_vars if {
 		some i in input
 		some j, k in input
 
-		[l, m, n] := jwt.decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Et9HFtf9R3GEMA0IICOfFMVXY7kkTX1wr4qCyhIf58U")
+		[l, m, n] := [1, 2, 3]
+
+		[o, [p, _]] := [1, [2, 1]]
+
+		some _, [q, r] in [["foo", "bar"], [1, 2]]
+
+		{"x": s} := {"x": 1}
+
+		some [t] in [[1]]
 	}
 	`
 
@@ -44,7 +52,5 @@ test_find_vars if {
 		name := var.value
 	]
 
-	print(names)
-
-	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n"]
+	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 }

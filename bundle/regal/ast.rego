@@ -19,6 +19,12 @@ import future.keywords.in
 	policy,
 ]))
 
+_find_nested_vars(obj) := [value |
+	walk(obj, [_, value])
+	value.type == "var"
+	indexof(value.value, "$") == -1
+]
+
 # simple assignment, i.e. `x := 100` returns `x`
 # always returns a single var, but wrapped in an
 # array for consistency
@@ -27,10 +33,13 @@ _find_assign_vars(path, value) := var if {
 	var := [value[1]]
 }
 
-# 'destructuring' assignment, i.e. [a, b, c] := [1, 2, 3]
+# 'destructuring' array assignment, i.e.
+# [a, b, c] := [1, 2, 3]
+# or
+# {a: b} := {"foo": "bar"}
 _find_assign_vars(path, value) := var if {
-	value[1].type == "array"
-	var := [v | some v in value[1].value]
+	value[1].type in {"array", "object"}
+	var := _find_nested_vars(value[1])
 }
 
 # var declared via `some`, i.e. `some x` or `some x, y`
@@ -39,17 +48,12 @@ _find_some_decl_vars(path, value) := [v |
 	v.type == "var"
 ]
 
-# Note: the `some` vars check currently does not account for constructs like:
-# p := x if some {"x": x} in [{"x": 12}]
-# Where `x` _is_ declared inside of an object/array
-
 # single var declared via `some in`, i.e. `some x in y`
 _find_some_in_decl_vars(path, value) := var if {
 	arr := value[0].value
 	count(arr) == 3
-	arr[1].type == "var"
 
-	var := [arr[1]]
+	var := _find_nested_vars(arr[1])
 }
 
 # two vars declared via `some in`, i.e. `some x, y in z`
@@ -59,16 +63,15 @@ _find_some_in_decl_vars(path, value) := var if {
 
 	var := [v |
 		some i in [1, 2]
-		v := arr[i]
-		v.type == "var"
+		some v in _find_nested_vars(arr[i])
 	]
 }
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
 # or `every`, i.e. `every x, y in y {}`
 _find_every_vars(path, value) := var if {
-	key_var := [v | v := value.key; v.type == "var"]
-	val_var := [v | v := value.value; v.type == "var"]
+	key_var := [v | v := value.key; v.type == "var"; indexof(v.value, "$") == -1]
+	val_var := [v | v := value.value; v.type == "var"; indexof(v.value, "$") == -1]
 
 	var := array.concat(key_var, val_var)
 }

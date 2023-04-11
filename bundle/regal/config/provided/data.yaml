@@ -26,7 +26,11 @@ rules:
     use-in-operator:
       enabled: true
   testing:
+    identically-named-tests:
+      enabled: true
     test-outside-test-package:
+      enabled: true
+    todo-test:
       enabled: true
   variables:
     unconditional-assignment:

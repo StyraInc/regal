@@ -15,7 +15,7 @@ test_fail_unification_in_default_assignment if {
 			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "default x = false"},
 	}}
 }
 
@@ -32,7 +32,7 @@ test_fail_unification_in_object_rule_assignment if {
 			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
 		}],
 		"title": "assignment-operator",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `x["a"] = 1`},
 	}}
 }
 

@@ -10,7 +10,7 @@ test_fail_function_references_input if {
 	report(`f(_) { input.foo }`) == {{
 		"category": "functions",
 		"description": "Reference to input, data or rule ref in function body",
-		"location": {"col": 8, "file": "policy.rego", "row": 8},
+		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { input.foo }`},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",
@@ -28,21 +28,23 @@ test_fail_function_references_data if {
 			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",
 		}],
 		"title": "input-or-data-reference",
-		"location": {"col": 8, "file": "policy.rego", "row": 8},
+		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { data.foo }`},
 	}}
 }
 
 test_fail_function_references_rule if {
-	report(`
-	foo := "bar"
+	r := report(`
+foo := "bar"
 
-	f(x, y) {
-		x == 5
-		y == foo
-	}`) == {{
+f(x, y) {
+	x == 5
+	y == foo
+}
+	`)
+	r == {{
 		"category": "functions",
 		"description": "Reference to input, data or rule ref in function body",
-		"location": {"col": 8, "file": "policy.rego", "row": 13},
+		"location": {"col": 7, "file": "policy.rego", "row": 13, "text": `	y == foo`},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",

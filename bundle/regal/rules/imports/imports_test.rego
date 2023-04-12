@@ -15,7 +15,7 @@ test_fail_future_keywords_import_wildcard if {
 			"ref": "https://docs.styra.com/regal/rules/implicit-future-keywords",
 		}],
 		"title": "implicit-future-keywords",
-		"location": {"col": 8, "file": "policy.rego", "row": 3},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import future.keywords`},
 	}}
 }
 
@@ -40,7 +40,7 @@ test_fail_import_input if {
 			"ref": "https://docs.styra.com/regal/rules/avoid-importing-input",
 		}],
 		"title": "avoid-importing-input",
-		"location": {"col": 8, "file": "policy.rego", "row": 3},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import input.foo`},
 	}}
 }
 
@@ -53,7 +53,7 @@ test_fail_import_data if {
 			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
 		}],
 		"title": "redundant-data-import",
-		"location": {"col": 8, "file": "policy.rego", "row": 3},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data`},
 	}}
 }
 
@@ -66,7 +66,7 @@ test_fail_import_data_aliased if {
 			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
 		}],
 		"title": "redundant-data-import",
-		"location": {"col": 8, "file": "policy.rego", "row": 3},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data as d`},
 	}}
 }
 
@@ -75,10 +75,11 @@ test_success_import_data_path if {
 }
 
 test_fail_duplicate_import if {
-	report(`
-	import data.foo
-	import data.foo
-	`) == {{
+	r := report(`
+import data.foo
+import data.foo
+	`)
+	r == {{
 		"category": "imports",
 		"description": "Import shadows another import",
 		"related_resources": [{
@@ -86,14 +87,14 @@ test_fail_duplicate_import if {
 			"ref": "https://docs.styra.com/regal/rules/import-shadows-import",
 		}],
 		"title": "import-shadows-import",
-		"location": {"col": 9, "file": "policy.rego", "row": 5},
+		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.foo`},
 	}}
 }
 
 test_fail_duplicate_import_alias if {
 	report(`
-	import data.foo
-	import data.bar as foo
+import data.foo
+import data.bar as foo
 	`) == {{
 		"category": "imports",
 		"description": "Import shadows another import",
@@ -102,7 +103,7 @@ test_fail_duplicate_import_alias if {
 			"ref": "https://docs.styra.com/regal/rules/import-shadows-import",
 		}],
 		"title": "import-shadows-import",
-		"location": {"col": 9, "file": "policy.rego", "row": 5},
+		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.bar as foo`},
 	}}
 }
 

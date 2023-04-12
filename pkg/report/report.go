@@ -10,11 +10,11 @@ type RelatedResource struct {
 
 // Location provides information on the location of a violation.
 type Location struct {
-	Column int    `json:"col"`
-	Row    int    `json:"row"`
-	Offset int    `json:"offset,omitempty"`
-	File   string `json:"file"`
-	Text   []byte `json:"text,omitempty"`
+	Column int     `json:"col"`
+	Row    int     `json:"row"`
+	Offset int     `json:"offset,omitempty"`
+	File   string  `json:"file"`
+	Text   *string `json:"text,omitempty"`
 }
 
 // Violation describes any violation found by Regal.

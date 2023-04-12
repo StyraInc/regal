@@ -15,7 +15,7 @@ test_fail_rule_name_shadows_builtin if {
 			"ref": "https://docs.styra.com/regal/rules/rule-shadows-builtin",
 		}],
 		"title": "rule-shadows-builtin",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "or := 1"},
 	}}
 }
 

@@ -126,6 +126,7 @@ report contains violation if {
 			"file": input.regal.file.name,
 			"row": i + 1,
 			"col": line_length,
+			"text": input.regal.file.lines[i],
 		}},
 	)
 }

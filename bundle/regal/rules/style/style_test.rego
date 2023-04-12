@@ -19,7 +19,7 @@ snake_case_violation := {
 test_fail_camel_cased_rule_name if {
 	report(`camelCase := 5`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 1, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `camelCase := 5`}},
 	)}
 }
 
@@ -30,7 +30,7 @@ test_success_snake_cased_rule_name if {
 test_fail_camel_cased_some_declaration if {
 	report(`p {some fooBar; input[fooBar]}`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 9, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 9, "file": "policy.rego", "row": 8, "text": `p {some fooBar; input[fooBar]}`}},
 	)}
 }
 
@@ -41,7 +41,10 @@ test_success_snake_cased_some_declaration if {
 test_fail_camel_cased_multiple_some_declaration if {
 	report(`p {some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]}`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 21, "file": "policy.rego", "row": 8}},
+		{"location": {
+			"col": 21, "file": "policy.rego", "row": 8,
+			"text": `p {some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]}`,
+		}},
 	)}
 }
 
@@ -52,14 +55,17 @@ test_success_snake_cased_multiple_some_declaration if {
 test_fail_camel_cased_var_assignment if {
 	report(`allow { camelCase := 5 }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 9, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 9, "file": "policy.rego", "row": 8, "text": `allow { camelCase := 5 }`}},
 	)}
 }
 
 test_fail_camel_cased_multiple_var_assignment if {
 	report(`allow { snake_case := "foo"; camelCase := 5 }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 30, "file": "policy.rego", "row": 8}},
+		{"location": {
+			"col": 30, "file": "policy.rego", "row": 8,
+			"text": `allow { snake_case := "foo"; camelCase := 5 }`,
+		}},
 	)}
 }
 
@@ -70,21 +76,21 @@ test_success_snake_cased_var_assignment if {
 test_fail_camel_cased_some_in_value if {
 	report(`allow { some cC in input }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 14, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 14, "file": "policy.rego", "row": 8, "text": `allow { some cC in input }`}},
 	)}
 }
 
 test_fail_camel_cased_some_in_key_value if {
 	report(`allow { some cC, sc in input }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 14, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 14, "file": "policy.rego", "row": 8, "text": `allow { some cC, sc in input }`}},
 	)}
 }
 
 test_fail_camel_cased_some_in_key_value_2 if {
 	report(`allow { some sc, cC in input }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 18, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 18, "file": "policy.rego", "row": 8, "text": `allow { some sc, cC in input }`}},
 	)}
 }
 
@@ -95,14 +101,17 @@ test_success_snake_cased_some_in if {
 test_fail_camel_cased_every_value if {
 	report(`allow { every cC in input { cC == 1 } }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 15, "file": "policy.rego", "row": 8}},
+		{"location": {"col": 15, "file": "policy.rego", "row": 8, "text": `allow { every cC in input { cC == 1 } }`}},
 	)}
 }
 
 test_fail_camel_cased_every_key if {
 	report(`allow { every cC, sc in input { cC == 1; print(sc) } }`) == {object.union(
 		snake_case_violation,
-		{"location": {"col": 15, "file": "policy.rego", "row": 8}},
+		{"location": {
+			"col": 15, "file": "policy.rego", "row": 8,
+			"text": `allow { every cC, sc in input { cC == 1; print(sc) } }`,
+		}},
 	)}
 }
 
@@ -113,9 +122,10 @@ test_success_snake_cased_every if {
 # Prefer in operator over iteration
 
 test_fail_use_in_operator_string_lhs if {
-	report(`allow {
-		"admin" == input.user.roles[_]
-	 }`) == {{
+	r:= report(`allow {
+	"admin" == input.user.roles[_]
+	}`)
+	r == {{
 		"category": "style",
 		"description": "Use in to check for membership",
 		"related_resources": [{
@@ -123,13 +133,13 @@ test_fail_use_in_operator_string_lhs if {
 			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
 		}],
 		"title": "use-in-operator",
-		"location": {"col": 14, "file": "policy.rego", "row": 9},
+		"location": {"col": 13, "file": "policy.rego", "row": 9, "text": "\t\"admin\" == input.user.roles[_]"},
 	}}
 }
 
 test_fail_use_in_operator_var_lhs if {
 	report(`allow {
-		admin == input.user.roles[_]
+	admin == input.user.roles[_]
 	}`) == {{
 		"category": "style",
 		"description": "Use in to check for membership",
@@ -138,13 +148,13 @@ test_fail_use_in_operator_var_lhs if {
 			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
 		}],
 		"title": "use-in-operator",
-		"location": {"col": 12, "file": "policy.rego", "row": 9},
+		"location": {"col": 11, "file": "policy.rego", "row": 9, "text": "\tadmin == input.user.roles[_]"},
 	}}
 }
 
 test_fail_use_in_operator_string_rhs if {
 	report(`allow {
-		input.user.roles[_] == "admin"
+	input.user.roles[_] == "admin"
 	}`) == {{
 		"category": "style",
 		"description": "Use in to check for membership",
@@ -153,7 +163,7 @@ test_fail_use_in_operator_string_rhs if {
 			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
 		}],
 		"title": "use-in-operator",
-		"location": {"col": 3, "file": "policy.rego", "row": 9},
+		"location": {"col": 2, "file": "policy.rego", "row": 9, "text": "\tinput.user.roles[_] == \"admin\""},
 	}}
 }
 
@@ -168,7 +178,7 @@ test_fail_use_in_operator_var_rhs if {
 			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
 		}],
 		"title": "use-in-operator",
-		"location": {"col": 3, "file": "policy.rego", "row": 9},
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\tinput.user.roles[_] == admin"},
 	}}
 }
 
@@ -184,7 +194,7 @@ test_success_uses_in_operator if {
 
 test_fail_line_too_long if {
 	r := report(`allow {
-		foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
+foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
 	}`)
 	r == {{
 		"category": "style",
@@ -194,7 +204,10 @@ test_fail_line_too_long if {
 			"ref": "https://docs.styra.com/regal/rules/line-length",
 		}],
 		"title": "line-length",
-		"location": {"col": 105, "file": "policy.rego", "row": 9},
+		"location": {
+			"col": 103, "file": "policy.rego", "row": 9,
+			"text": `foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]`,
+		},
 	}}
 }
 

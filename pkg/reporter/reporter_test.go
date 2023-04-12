@@ -7,6 +7,10 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
+func ptr(s string) *string {
+	return &s
+}
+
 //nolint:gochecknoglobals
 var rep = report.Report{
 	Violations: []report.Violation{
@@ -18,7 +22,7 @@ var rep = report.Report{
 				File:   "a.rego",
 				Row:    1,
 				Column: 1,
-				Text:   []byte("package illegal"),
+				Text:   ptr("package illegal"),
 			},
 			RelatedResources: []report.RelatedResource{
 				{
@@ -35,7 +39,7 @@ var rep = report.Report{
 				File:   "b.rego",
 				Row:    22,
 				Column: 18,
-				Text:   []byte("default allow = true"),
+				Text:   ptr("default allow = true"),
 			},
 			RelatedResources: []report.RelatedResource{
 				{
@@ -164,7 +168,7 @@ func TestJSONReporterPublish(t *testing.T) {
         "col": 1,
         "row": 1,
         "file": "a.rego",
-        "text": "cGFja2FnZSBpbGxlZ2Fs"
+        "text": "package illegal"
       }
     },
     {
@@ -181,7 +185,7 @@ func TestJSONReporterPublish(t *testing.T) {
         "col": 18,
         "row": 22,
         "file": "b.rego",
-        "text": "ZGVmYXVsdCBhbGxvdyA9IHRydWU="
+        "text": "default allow = true"
       }
     }
   ]

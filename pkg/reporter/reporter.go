@@ -62,7 +62,7 @@ func (tr PrettyReporter) Publish(r report.Report) error {
 		table.AddRow("Location:", violation.Location.String())
 
 		if violation.Location.Text != nil {
-			table.AddRow("Text:", string(violation.Location.Text))
+			table.AddRow("Text:", *violation.Location.Text)
 		}
 
 		table.AddRow("Documentation:", getDocumentationURL(violation))

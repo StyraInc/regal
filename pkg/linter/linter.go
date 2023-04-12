@@ -8,10 +8,12 @@ import (
 	"strings"
 
 	"github.com/imdario/mergo"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
+
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"

@@ -41,13 +41,34 @@ regal lint policy/
 
 ## Rules
 
-This table should be generated from metadata annotations, and inserted here as part of the build process.
-See: https://github.com/StyraInc/regal/issues/36
+Regal comes with a set of built-in rules. The following rules are currently available:
 
-| Category   | Rule                                                                                  | Description                     | Enabled |
-|------------|---------------------------------------------------------------------------------------|---------------------------------|---------|
-| Assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator) | Prefer := over = for assignment | true    |
-| Comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                       | Avoid TODO comments             | true    |
+<!-- RULES_TABLE_START -->
+
+|  Category  |                                           Title                                           |                      Description                      |
+|------------|-------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)     | Prefer := over = for assignment                       |
+| assignment | [assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)         | Prefer := over = for assignment                       |
+| comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                           | Avoid TODO comments                                   |
+| functions  | [input-or-data-reference](https://docs.styra.com/regal/rules/input-or-data-reference)     | Reference to input, data or rule ref in function body |
+| imports    | [implicit-future-keywords](https://docs.styra.com/regal/rules/implicit-future-keywords)   | Use explicit future keyword imports                   |
+| imports    | [avoid-importing-input](https://docs.styra.com/regal/rules/avoid-importing-input)         | Avoid importing input                                 |
+| imports    | [redundant-data-import](https://docs.styra.com/regal/rules/redundant-data-import)         | Redundant import of data                              |
+| imports    | [import-shadows-import](https://docs.styra.com/regal/rules/import-shadows-import)         | Import shadows another import                         |
+| rules      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/rule-shadows-builtin)           | Rule name shadows built-in                            |
+| style      | [prefer-snake-case](https://docs.styra.com/regal/rules/prefer-snake-case)                 | Prefer snake_case for names                           |
+| style      | [use-in-operator](https://docs.styra.com/regal/rules/use-in-operator)                     | Use in to check for membership                        |
+| style      | [line-length](https://docs.styra.com/regal/rules/line-length)                             | Line too long                                         |
+| testing    | [test-outside-test-package](https://docs.styra.com/regal/rules/test-outside-test-package) | Test outside of test package                          |
+| testing    | [identically-named-tests](https://docs.styra.com/regal/rules/identically-named-tests)     | Multiple tests with same name                         |
+| testing    | [todo-test](https://docs.styra.com/regal/rules/todo-test)                                 | TODO test encountered                                 |
+| variables  | [unconditional-assignment](https://docs.styra.com/regal/rules/unconditional-assignment)   | Unconditional assignment in rule body                 |
+
+<!-- RULES_TABLE_END -->
+
+If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
+request, or better yet, submit a PR! See the [custom rules](#custom-rules) section for more information on how to
+develop your own rules, for yourself or for inclusion in Regal.
 
 ## Configuration
 
@@ -211,6 +232,18 @@ Regal uses [golangci-lint](https://golangci-lint.run/) with most linters enabled
 golangci-lint run ./...
 ```
 
+In order to satisfy the [gci](https://github.com/daixiang0/gci) linter, you may either manually order imports, or have
+them automatically ordered and grouped by the tool:
+
+```shell
+gci write \
+  -s standard \
+  -s default \
+  -s "prefix(github.com/open-policy-agent/opa)" \
+  -s "prefix(github.com/styrainc/regal)" \
+  -s blank \
+  -s dot .
+```
 ### Authoring Rules
 
 During development of Rego-based rules, you may want to test the policies in isolation — i.e. without running Regal.

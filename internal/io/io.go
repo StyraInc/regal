@@ -9,9 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader/filter"
-	"gopkg.in/yaml.v3"
 )
 
 const PathSeparator = string(os.PathSeparator)

@@ -6,14 +6,16 @@ rules:
     todo-comment:
       enabled: true
   functions:
-    input-or-data-reference:
+    external-reference:
       enabled: true
   imports:
-    implicit-future-keywords:
-      enabled: true
     avoid-importing-input:
       enabled: true
+    implicit-future-keywords:
+      enabled: true
     import-shadows-import:
+      enabled: true
+    redundant-data-import:
       enabled: true
   rules:
     rule-shadows-builtin:
@@ -29,6 +31,8 @@ rules:
     use-in-operator:
       enabled: true
   testing:
+    file-missing-test-suffix:
+      enabled: true
     identically-named-tests:
       enabled: true
     test-outside-test-package:

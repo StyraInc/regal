@@ -68,3 +68,11 @@ func (f *OpaFmtRule) Name() string {
 func (f *OpaFmtRule) Category() string {
 	return category
 }
+
+func (f *OpaFmtRule) Description() string {
+	return description
+}
+
+func (f *OpaFmtRule) Documentation() string {
+	return relatedResourcesRef
+}

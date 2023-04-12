@@ -230,10 +230,6 @@ func (l Linter) mergedConfig() (config.Config, error) {
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {
-	allGoRules := []rules.Rule{
-		rules.NewOpaFmtRule(),
-	}
-
 	conf, err := l.mergedConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create merged config: %w", err)
@@ -241,7 +237,7 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 	var enabledGoRules []rules.Rule
 
-	for _, rule := range allGoRules {
+	for _, rule := range rules.AllGoRules() {
 		ruleConf, ok := conf.Rules[rule.Category()][rule.Name()]
 		if ok && ruleConf.Enabled {
 			enabledGoRules = append(enabledGoRules, rule)

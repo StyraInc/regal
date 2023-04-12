@@ -39,6 +39,7 @@ func MustParseModule(policy string) *ast.Module {
 	return ast.MustParseModuleWithOpts(policy, ParserOptions())
 }
 
+// EnhanceAST TODO rename with https://github.com/StyraInc/regal/issues/86.
 func EnhanceAST(name string, content string, module *ast.Module) (map[string]any, error) {
 	var enhancedAst map[string]any
 

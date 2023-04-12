@@ -15,7 +15,7 @@ test_fail_test_outside_test_package if {
 			"ref": "https://docs.styra.com/regal/rules/test-outside-test-package",
 		}],
 		"title": "test-outside-test-package",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `test_foo { false }`},
 	}}
 }
 

@@ -83,6 +83,13 @@ func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, err
 
 	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
 
+	aggregate.Summary = report.Summary{
+		FilesScanned:  len(input.FileNames),
+		FilesFailed:   len(aggregate.ViolationsFileCount()),
+		FilesSkipped:  0,
+		NumViolations: len(aggregate.Violations),
+	}
+
 	return aggregate, nil
 }
 
@@ -159,7 +166,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 		}
 
-		r, err := resultSetToReport(resultSet, input.FileContent[name])
+		r, err := resultSetToReport(resultSet)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
 		}
@@ -170,7 +177,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	return aggregate, nil
 }
 
-func resultSetToReport(resultSet rego.ResultSet, content string) (report.Report, error) {
+func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	if len(resultSet) != 1 {
 		return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 	}
@@ -181,20 +188,7 @@ func resultSetToReport(resultSet rego.ResultSet, content string) (report.Report,
 			fmt.Errorf("JSON rountrip failed for bindings: %v %w", resultSet[0].Bindings, err)
 	}
 
-	for i, v := range r.Violations {
-		r.Violations[i] = addText(v, content)
-	}
-
 	return r, nil
-}
-
-func addText(violation report.Violation, content string) report.Violation {
-	if violation.Location.Text == nil && violation.Location.Row != 0 && violation.Location.Column != 0 {
-		rowText, _ := rio.ReadRow(strings.NewReader(content), violation.Location.Row)
-		violation.Location.Text = rowText
-	}
-
-	return violation
 }
 
 func (l Linter) mergedConfig() (config.Config, error) {

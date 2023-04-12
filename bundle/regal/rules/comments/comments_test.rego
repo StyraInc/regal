@@ -15,7 +15,7 @@ test_fail_todo_comment if {
 			"ref": "https://docs.styra.com/regal/rules/todo-comment",
 		}],
 		"title": "todo-comment",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# TODO: do someting clever`},
 	}}
 }
 
@@ -28,7 +28,7 @@ test_fail_fixme_comment if {
 			"ref": "https://docs.styra.com/regal/rules/todo-comment",
 		}],
 		"title": "todo-comment",
-		"location": {"col": 1, "file": "policy.rego", "row": 8},
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# fixme: this is broken`},
 	}}
 }
 

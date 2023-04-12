@@ -7,8 +7,17 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
+func ptr(s string) *string {
+	return &s
+}
+
 //nolint:gochecknoglobals
 var rep = report.Report{
+	Summary: report.Summary{
+		FilesScanned:  3,
+		NumViolations: 2,
+		FilesFailed:   2,
+	},
 	Violations: []report.Violation{
 		{
 			Title:       "breaking-the-law",
@@ -18,7 +27,7 @@ var rep = report.Report{
 				File:   "a.rego",
 				Row:    1,
 				Column: 1,
-				Text:   []byte("package illegal"),
+				Text:   ptr("package illegal"),
 			},
 			RelatedResources: []report.RelatedResource{
 				{
@@ -35,7 +44,7 @@ var rep = report.Report{
 				File:   "b.rego",
 				Row:    22,
 				Column: 18,
-				Text:   []byte("default allow = true"),
+				Text:   ptr("default allow = true"),
 			},
 			RelatedResources: []report.RelatedResource{
 				{
@@ -59,22 +68,8 @@ func TestPrettyReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect := `Found 2 violations in 2 files
-
-Rule:         	breaking-the-law                
-Description:  	Rego must not break the law!    
-Category:     	legal                           
-Location:     	a.rego:1:1                      
-Text:         	package illegal                 
-Documentation:	https://example.com/illegal     
-              
-Rule:         	questionable-decision           
-Description:  	Questionable decision found     
-Category:     	really?                         
-Location:     	b.rego:22:18                    
-Text:         	default allow = true            
-Documentation:	https://example.com/questionable
-`
+	// TODO(anders): I cannot for the life of me get this to work using a raw string 🫠
+	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files.\n" //nolint:lll
 
 	if buf.String() != expect {
 		t.Errorf("expected %q, got %q", expect, buf.String())
@@ -93,7 +88,7 @@ func TestPrettyReporterPublishNoViolations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if buf.String() != "Found 0 violations in 0 files\n\n" {
+	if buf.String() != "0 files linted. No violations found.\n" {
 		t.Errorf("expected %q, got %q", "Found 0 violations in 0 files\n\n", buf.String())
 	}
 }
@@ -164,7 +159,7 @@ func TestJSONReporterPublish(t *testing.T) {
         "col": 1,
         "row": 1,
         "file": "a.rego",
-        "text": "cGFja2FnZSBpbGxlZ2Fs"
+        "text": "package illegal"
       }
     },
     {
@@ -181,10 +176,16 @@ func TestJSONReporterPublish(t *testing.T) {
         "col": 18,
         "row": 22,
         "file": "b.rego",
-        "text": "ZGVmYXVsdCBhbGxvdyA9IHRydWU="
+        "text": "default allow = true"
       }
     }
-  ]
+  ],
+  "summary": {
+    "files_scanned": 3,
+    "files_failed": 2,
+    "files_skipped": 0,
+    "num_violations": 2
+  }
 }
 `
 	if buf.String() != expect {
@@ -205,7 +206,13 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 	}
 
 	if buf.String() != `{
-  "violations": []
+  "violations": [],
+  "summary": {
+    "files_scanned": 0,
+    "files_failed": 0,
+    "files_skipped": 0,
+    "num_violations": 0
+  }
 }
 ` {
 		t.Errorf("expected %q, got %q", `{"violations":[]}`, buf.String())

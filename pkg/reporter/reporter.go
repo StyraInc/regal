@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/fatih/color"
 	"github.com/gosuri/uitable"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -20,52 +21,89 @@ type PrettyReporter struct {
 	out io.Writer
 }
 
+// CompactReporter reports violations in a compact table.
 type CompactReporter struct {
 	out io.Writer
 }
 
+// JSONReporter reports violations as JSON.
 type JSONReporter struct {
 	out io.Writer
 }
 
+// NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
 }
 
+// NewCompactReporter creates a new CompactReporter.
 func NewCompactReporter(out io.Writer) CompactReporter {
 	return CompactReporter{out: out}
 }
 
+// NewJSONReporter creates a new JSONReporter.
 func NewJSONReporter(out io.Writer) JSONReporter {
 	return JSONReporter{out: out}
 }
 
+// Publish prints a pretty report to the configured output.
 func (tr PrettyReporter) Publish(r report.Report) error {
-	table := uitable.New()
-	table.MaxColWidth = 80
-	table.Wrap = true
-	numFiles := len(r.FileCount())
+	table := buildPrettyViolationsTable(r.Violations)
 
-	plural := ""
-	if numFiles == 0 || numFiles > 1 {
-		plural = "s"
+	pluralScanned := ""
+	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
+		pluralScanned = "s"
 	}
 
-	heading := fmt.Sprintf("Found %d violations in %d file%s\n\n", len(r.Violations), numFiles, plural)
+	footer := fmt.Sprintf("%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
 
-	numViolations := len(r.Violations)
-
-	for i, violation := range r.Violations {
-		table.AddRow("Rule:", violation.Title)
-		table.AddRow("Description:", violation.Description)
-		table.AddRow("Category:", violation.Category)
-		table.AddRow("Location:", violation.Location.String())
-
-		if violation.Location.Text != nil {
-			table.AddRow("Text:", string(violation.Location.Text))
+	if r.Summary.NumViolations == 0 { //nolint:nestif
+		footer += " No violations found"
+	} else {
+		pluralViolations := ""
+		if r.Summary.NumViolations > 1 {
+			pluralViolations = "s"
 		}
 
-		table.AddRow("Documentation:", getDocumentationURL(violation))
+		footer += fmt.Sprintf(" %d violation%s found", r.Summary.NumViolations, pluralViolations)
+
+		if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
+			pluralFailed := ""
+			if r.Summary.FilesFailed > 1 {
+				pluralFailed = "s"
+			}
+
+			footer += fmt.Sprintf(" in %d file%s", r.Summary.FilesFailed, pluralFailed)
+		}
+	}
+
+	_, err := fmt.Fprint(tr.out, table+footer+".\n")
+
+	return err //nolint:wrapcheck
+}
+
+func buildPrettyViolationsTable(violations []report.Violation) string {
+	table := uitable.New()
+	table.MaxColWidth = 120
+	table.Wrap = true
+
+	numViolations := len(violations)
+
+	yellow := color.New(color.FgYellow).SprintFunc()
+	cyan := color.New(color.FgCyan).SprintFunc()
+	red := color.New(color.FgRed).SprintFunc()
+
+	for i, violation := range violations {
+		table.AddRow(yellow("Rule:"), violation.Title)
+		table.AddRow(yellow("Description:"), red(violation.Description))
+		table.AddRow(yellow("Category:"), violation.Category)
+		table.AddRow(yellow("Location:"), cyan(violation.Location.String()))
+
+		if violation.Location.Text != nil {
+			table.AddRow(yellow("Text:"), *violation.Location.Text)
+		}
+
+		table.AddRow(yellow("Documentation:"), cyan(getDocumentationURL(violation)))
 
 		if i+1 < numViolations {
 			table.AddRow("")
@@ -74,14 +112,13 @@ func (tr PrettyReporter) Publish(r report.Report) error {
 
 	end := ""
 	if numViolations > 0 {
-		end = "\n"
+		end = "\n\n"
 	}
 
-	_, err := fmt.Fprint(tr.out, heading+table.String()+end)
-
-	return err //nolint:wrapcheck
+	return table.String() + end
 }
 
+// Publish prints a compact report to the configured output.
 func (tr CompactReporter) Publish(r report.Report) error {
 	table := uitable.New()
 	table.MaxColWidth = 80
@@ -96,6 +133,7 @@ func (tr CompactReporter) Publish(r report.Report) error {
 	return err //nolint:wrapcheck
 }
 
+// Publish prints a JSON report to the configured output.
 func (tr JSONReporter) Publish(r report.Report) error {
 	if r.Violations == nil {
 		r.Violations = []report.Violation{}

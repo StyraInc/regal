@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
@@ -25,6 +26,7 @@ type lintCommandParams struct {
 	configFile string
 	format     string
 	rules      repeatedStringFlag
+	noColor    bool
 }
 
 const stringType = "string"
@@ -78,6 +80,7 @@ func init() {
 
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
 	lintCommand.Flags().StringVarP(&params.format, "format", "f", "pretty", "set output format (pretty, compact, json)")
+	lintCommand.Flags().BoolVar(&params.noColor, "no-color", false, "Disable color output")
 	lintCommand.Flags().VarP(&params.rules, "rules", "r", "set custom rules file(s). This flag can be repeated.")
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default unlimited)")
 
@@ -88,6 +91,10 @@ func init() {
 func lint(args []string, params lintCommandParams) error {
 	ctx, cancel := getLinterContext(params)
 	defer cancel()
+
+	if params.noColor {
+		color.NoColor = true
+	}
 
 	// Create new fs from root of bundle, to avoid having to deal with
 	// "bundle" in paths (i.e. `data.bundle.regal`)

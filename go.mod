@@ -3,6 +3,7 @@ module github.com/styrainc/regal
 go 1.20
 
 require (
+	github.com/fatih/color v1.15.0
 	github.com/gosuri/uitable v0.0.4
 	github.com/imdario/mergo v0.3.15
 	github.com/open-policy-agent/opa v0.51.0
@@ -13,7 +14,6 @@ require (
 require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/fatih/color v1.15.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

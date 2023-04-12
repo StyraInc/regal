@@ -83,6 +83,13 @@ func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, err
 
 	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
 
+	aggregate.Summary = report.Summary{
+		FilesScanned:  len(input.FileNames),
+		FilesFailed:   len(aggregate.ViolationsFileCount()),
+		FilesSkipped:  0,
+		NumViolations: len(aggregate.Violations),
+	}
+
 	return aggregate, nil
 }
 

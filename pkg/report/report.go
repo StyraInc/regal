@@ -26,12 +26,21 @@ type Violation struct {
 	Location         Location          `json:"location,omitempty"`
 }
 
+type Summary struct {
+	FilesScanned  int `json:"files_scanned"`
+	FilesFailed   int `json:"files_failed"`
+	FilesSkipped  int `json:"files_skipped"`
+	NumViolations int `json:"num_violations"`
+}
+
 // Report aggregate of Violation as returned by a linter run.
 type Report struct {
 	Violations []Violation `json:"violations"`
+	Summary    Summary     `json:"summary"`
 }
 
-func (r Report) FileCount() map[string]int {
+// ViolationsFileCount returns the number of files containing violations.
+func (r Report) ViolationsFileCount() map[string]int {
 	fc := map[string]int{}
 	for _, violation := range r.Violations {
 		fc[violation.Location.File]++

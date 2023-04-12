@@ -11,6 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"github.com/open-policy-agent/opa/tester"
+
 	"github.com/styrainc/regal/pkg/builtins"
 )
 

@@ -9,6 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/builtins"
 	"github.com/open-policy-agent/opa/types"
+
 	"github.com/styrainc/regal/internal/parse"
 )
 

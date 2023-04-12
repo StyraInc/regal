@@ -8,6 +8,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
+
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/rules"

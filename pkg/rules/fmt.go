@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/open-policy-agent/opa/format"
+
 	"github.com/styrainc/regal/pkg/report"
 )
 

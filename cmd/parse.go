@@ -7,8 +7,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/open-policy-agent/opa/ast"
 	"github.com/spf13/cobra"
+
+	"github.com/open-policy-agent/opa/ast"
+
 	rp "github.com/styrainc/regal/internal/parse"
 )
 

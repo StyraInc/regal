@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/util/test"
+
 	rio "github.com/styrainc/regal/internal/io"
 )
 

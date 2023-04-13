@@ -71,5 +71,12 @@ func customBuiltins() []*tester.Builtin {
 			},
 			Func: rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		},
+		{
+			Decl: &ast.Builtin{
+				Name: builtins.RegalJSONPrettyMeta.Name,
+				Decl: builtins.RegalJSONPrettyMeta.Decl,
+			},
+			Func: rego.Function1(builtins.RegalJSONPrettyMeta, builtins.RegalJSONPretty),
+		},
 	}
 }

@@ -271,6 +271,21 @@ $ opa parse p.rego --format json --json-include locations | opa eval -f pretty -
 ]
 ```
 
+### Built-in Functions
+
+Regal provides a few custom built-in functions tailor-made for linter policies. 
+
+#### `regal.parse_module(filename, policy)`
+
+Works just like `rego.parse_module`, but provides an AST including location information, and custom additions added
+by Regal, like the text representation of each line in the original policy.
+
+#### `regal.json_pretty(data)`
+
+Printing nested objects and arrays is quite helpful for debugging AST nodes, but the standard representation — where
+everything is displayed on a single line — not so much. This built-in allows marshalling JSON similar to `json.marshal`,
+but with newlines and spaces added for a more pleasant experience.
+
 ## Community
 
 For questions, discussions and announcements related to Styra products, services and open source projects, please join the Styra community on [Slack](https://join.slack.com/t/styracommunity/shared_invite/zt-1p81qz8g4-t2OLKbvw0J5ibdcNc62~6Q)!

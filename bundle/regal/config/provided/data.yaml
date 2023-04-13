@@ -2,6 +2,11 @@ rules:
   assignment:
     use-assignment-operator:
       enabled: true
+  bugs:
+    constant-condition:
+      enabled: true
+    top-level-iteration:
+      enabled: true
   comments:
     todo-comment:
       enabled: true

@@ -7,8 +7,6 @@ import future.keywords.in
 import data.regal.config
 import data.regal.result
 
-# Test that rules named test_* does not exist outside of _test packages
-
 package_name := concat(".", [path.value | some path in input["package"].path])
 
 tests := [rule |
@@ -32,6 +30,24 @@ report contains violation if {
 	some rule in tests
 
 	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+}
+
+# METADATA
+# title: file-missing-test-suffix
+# description: Files containing tests should have a _test.rego suffix
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/file-missing-test-suffix
+# custom:
+#   category: testing
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).enabled == true
+
+	count(tests) > 0
+
+	not endswith(input.regal.file.name, "_test.rego")
+
+	violation := result.fail(rego.metadata.rule(), {"location": {"file": input.regal.file.name}})
 }
 
 # METADATA

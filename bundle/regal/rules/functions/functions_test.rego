@@ -13,9 +13,9 @@ test_fail_function_references_input if {
 		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { input.foo }`},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",
+			"ref": "https://docs.styra.com/regal/rules/external-reference",
 		}],
-		"title": "input-or-data-reference",
+		"title": "external-reference",
 	}}
 }
 
@@ -25,9 +25,9 @@ test_fail_function_references_data if {
 		"description": "Reference to input, data or rule ref in function body",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",
+			"ref": "https://docs.styra.com/regal/rules/external-reference",
 		}],
-		"title": "input-or-data-reference",
+		"title": "external-reference",
 		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { data.foo }`},
 	}}
 }
@@ -47,9 +47,9 @@ f(x, y) {
 		"location": {"col": 7, "file": "policy.rego", "row": 13, "text": `	y == foo`},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/input-or-data-reference",
+			"ref": "https://docs.styra.com/regal/rules/external-reference",
 		}],
-		"title": "input-or-data-reference",
+		"title": "external-reference",
 	}}
 }
 
@@ -70,7 +70,7 @@ test_success_function_references_only_own_vars_nested if {
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := functions.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

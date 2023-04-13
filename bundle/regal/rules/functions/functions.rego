@@ -9,11 +9,11 @@ import data.regal.config
 import data.regal.result
 
 # METADATA
-# title: input-or-data-reference
+# title: external-reference
 # description: Reference to input, data or rule ref in function body
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/input-or-data-reference
+#   ref: https://docs.styra.com/regal/rules/external-reference
 # custom:
 #   category: functions
 report contains violation if {
@@ -40,11 +40,11 @@ report contains violation if {
 }
 
 # METADATA
-# title: input-or-data-reference
+# title: external-reference
 # description: Reference to input, data or rule ref in function body
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/input-or-data-reference
+#   ref: https://docs.styra.com/regal/rules/external-reference
 # custom:
 #   category: functions
 report contains violation if {

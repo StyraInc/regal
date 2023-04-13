@@ -7,7 +7,7 @@ import data.regal.config
 import data.regal.rules.testing
 
 test_fail_test_outside_test_package if {
-	report(`test_foo { false }`) == {{
+	report(`test_foo { false }`) with input.regal.file.name as "p_test.rego" == {{
 		"category": "testing",
 		"description": "Test outside of test package",
 		"related_resources": [{
@@ -27,6 +27,26 @@ test_success_test_inside_test_package if {
 	`)
 	result := testing.report with input as ast
 	result == set()
+}
+
+test_fail_test_in_file_without_test_suffix if {
+	ast := regal.parse_module("policy.rego", `package foo_test
+
+	test_foo { false }
+	`)
+
+	r := testing.report with input as ast with config.for_rule as {"enabled": true}
+
+	r == {{
+		"category": "testing",
+		"description": "Files containing tests should have a _test.rego suffix",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/file-missing-test-suffix",
+		}],
+		"title": "file-missing-test-suffix",
+		"location": {"file": "policy.rego"},
+	}}
 }
 
 test_fail_identically_named_tests if {
@@ -83,6 +103,6 @@ test_fail_todo_test if {
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := testing.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
 }

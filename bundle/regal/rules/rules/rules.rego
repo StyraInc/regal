@@ -26,3 +26,20 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }
+
+# METADATA
+# title: avoid-get-and-list-prefix
+# description: Avoid get_ and list_ prefix for rules and functions
+# related_resources:
+# - description: documentation
+#   ref: https://docs.styra.com/regal/rules/avoid-get-and-list-prefix
+# custom:
+#   category: rules
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).enabled == true
+
+	some rule in input.rules
+	strings.any_prefix_match(rule.head.name, {"get_", "list_"})
+
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+}

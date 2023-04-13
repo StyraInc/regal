@@ -41,7 +41,7 @@ test_success_unconditional_assignment_but_with_in_body if {
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := variables.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

@@ -45,24 +45,26 @@ Regal comes with a set of built-in rules. The following rules are currently avai
 
 <!-- RULES_TABLE_START -->
 
-|  Category  |                                           Title                                           |                      Description                      |
-|------------|-------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)     | Prefer := over = for assignment                       |
-| assignment | [assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)         | Prefer := over = for assignment                       |
-| comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                           | Avoid TODO comments                                   |
-| functions  | [input-or-data-reference](https://docs.styra.com/regal/rules/input-or-data-reference)     | Reference to input, data or rule ref in function body |
-| imports    | [implicit-future-keywords](https://docs.styra.com/regal/rules/implicit-future-keywords)   | Use explicit future keyword imports                   |
-| imports    | [avoid-importing-input](https://docs.styra.com/regal/rules/avoid-importing-input)         | Avoid importing input                                 |
-| imports    | [redundant-data-import](https://docs.styra.com/regal/rules/redundant-data-import)         | Redundant import of data                              |
-| imports    | [import-shadows-import](https://docs.styra.com/regal/rules/import-shadows-import)         | Import shadows another import                         |
-| rules      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/rule-shadows-builtin)           | Rule name shadows built-in                            |
-| style      | [prefer-snake-case](https://docs.styra.com/regal/rules/prefer-snake-case)                 | Prefer snake_case for names                           |
-| style      | [use-in-operator](https://docs.styra.com/regal/rules/use-in-operator)                     | Use in to check for membership                        |
-| style      | [line-length](https://docs.styra.com/regal/rules/line-length)                             | Line too long                                         |
-| testing    | [test-outside-test-package](https://docs.styra.com/regal/rules/test-outside-test-package) | Test outside of test package                          |
-| testing    | [identically-named-tests](https://docs.styra.com/regal/rules/identically-named-tests)     | Multiple tests with same name                         |
-| testing    | [todo-test](https://docs.styra.com/regal/rules/todo-test)                                 | TODO test encountered                                 |
-| variables  | [unconditional-assignment](https://docs.styra.com/regal/rules/unconditional-assignment)   | Unconditional assignment in rule body                 |
+|  Category  |                                           Title                                           |                      Description                       |
+|------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------|
+| assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)     | Prefer := over = for assignment                        |
+| comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                           | Avoid TODO comments                                    |
+| functions  | [external-reference](https://docs.styra.com/regal/rules/external-reference)               | Reference to input, data or rule ref in function body  |
+| imports    | [implicit-future-keywords](https://docs.styra.com/regal/rules/implicit-future-keywords)   | Use explicit future keyword imports                    |
+| imports    | [avoid-importing-input](https://docs.styra.com/regal/rules/avoid-importing-input)         | Avoid importing input                                  |
+| imports    | [redundant-data-import](https://docs.styra.com/regal/rules/redundant-data-import)         | Redundant import of data                               |
+| imports    | [import-shadows-import](https://docs.styra.com/regal/rules/import-shadows-import)         | Import shadows another import                          |
+| rules      | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/avoid-get-and-list-prefix) | Avoid get_ and list_ prefix for rules and functions    |
+| rules      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/rule-shadows-builtin)           | Rule name shadows built-in                             |
+| style      | [prefer-snake-case](https://docs.styra.com/regal/rules/prefer-snake-case)                 | Prefer snake_case for names                            |
+| style      | [use-in-operator](https://docs.styra.com/regal/rules/use-in-operator)                     | Use in to check for membership                         |
+| style      | [line-length](https://docs.styra.com/regal/rules/line-length)                             | Line too long                                          |
+| style      | [opa-fmt](https://docs.styra.com/regal/rules/opa-fmt)                                     | File should be formatted with `opa fmt`                |
+| testing    | [test-outside-test-package](https://docs.styra.com/regal/rules/test-outside-test-package) | Test outside of test package                           |
+| testing    | [file-missing-test-suffix](https://docs.styra.com/regal/rules/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix |
+| testing    | [identically-named-tests](https://docs.styra.com/regal/rules/identically-named-tests)     | Multiple tests with same name                          |
+| testing    | [todo-test](https://docs.styra.com/regal/rules/todo-test)                                 | TODO test encountered                                  |
+| variables  | [unconditional-assignment](https://docs.styra.com/regal/rules/unconditional-assignment)   | Unconditional assignment in rule body                  |
 
 <!-- RULES_TABLE_END -->
 

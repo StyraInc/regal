@@ -312,7 +312,7 @@ test_success_line_not_too_long if {
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := style.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true, "max-line-length": 80}
 }

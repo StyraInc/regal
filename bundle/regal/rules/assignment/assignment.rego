@@ -26,7 +26,7 @@ report contains violation if {
 }
 
 # METADATA
-# title: assignment-operator
+# title: use-assignment-operator
 # description: Prefer := over = for assignment
 # related_resources:
 # - description: documentation

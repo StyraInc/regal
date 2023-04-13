@@ -108,7 +108,7 @@ import data.bar as foo
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := imports.report with input as ast.policy(snippet)
 		with config.for_rule as {"enabled": true}
 }

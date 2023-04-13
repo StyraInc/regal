@@ -9,7 +9,7 @@ for Regal to check, and should be targeted by other means.
 ## General Advice
 
 - [x] ~~Optimize for readability, not performance~~
-- [ ] Use `opa fmt`
+- [x] Use `opa fmt`
 - [ ] Use strict mode
 - [ ] Use metadata annotations
 - [x] ~~Get to know the built-in functions~~
@@ -30,17 +30,14 @@ certainly have to be configurable to be usable. Same goes for JSON schemas.
 ## Style
 
 - [x] Prefer snake_case for rule names and variables
-- [ ] Keep line length <= 120 characters
-
-### Notes
-Line length check easiest done in Go, but ideally via a custom built-in function.
+- [x] Keep line length <= 120 characters
 
 ## Rules
 
 - [ ] Use helper rules and functions
 - [ ] Use negation to handle undefined
 - [x] ~~Consider partial helper rules over comprehensions in rule bodies~~
-- [ ] Avoid prefixing rules and functions with get_ or list_
+- [x] Avoid prefixing rules and functions with get_ or list_
 - [x] Prefer unconditional assignment in rule head over rule body
 
 ### Notes
@@ -54,7 +51,7 @@ determine whether the author has done, and both have valid use cases.
 
 ## Variables and Data Types
 
-- [ ] Use `in` to check for membership
+- [x] Use `in` to check for membership
 - [ ] Prefer some .. in for iteration
 - [ ] Use every to express FOR ALL
 - [ ] Don't use unification operator for assignment or comparison

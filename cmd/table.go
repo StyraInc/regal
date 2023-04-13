@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
@@ -16,6 +17,7 @@ import (
 	"github.com/open-policy-agent/opa/loader"
 
 	"github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/pkg/rules"
 )
 
 type tableCommandParams struct {
@@ -70,9 +72,7 @@ func createTable(args []string, params tableCommandParams) error {
 		return compiler.Errors
 	}
 
-	as := compiler.GetAnnotationSet()
-	flattened := as.Flatten()
-
+	flattened := compiler.GetAnnotationSet().Flatten()
 	tableData := make([][]string, 0, len(flattened))
 
 	traversedTitles := map[string]struct{}{}
@@ -98,6 +98,18 @@ func createTable(args []string, params tableCommandParams) error {
 			annotations.Description,
 		})
 	}
+
+	for _, rule := range rules.AllGoRules() {
+		tableData = append(tableData, []string{
+			rule.Category(),
+			"[" + rule.Name() + "](" + rule.Documentation() + ")",
+			rule.Description(),
+		})
+	}
+
+	sort.Slice(tableData, func(i, j int) bool {
+		return tableData[i][0] < tableData[j][0]
+	})
 
 	return writeTable(tableData, params)
 }

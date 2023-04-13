@@ -34,6 +34,10 @@ type Rule interface {
 	Name() string
 	// Category returns the category of the rule.
 	Category() string
+	// Description returns the description of the rule.
+	Description() string
+	// Documentation returns the documentation URL for the rule.
+	Documentation() string
 }
 
 // NewInput creates a new Input from a set of modules.
@@ -73,4 +77,10 @@ func InputFromPaths(paths []string) (Input, error) {
 	}
 
 	return NewInput(fileContent, modules), nil
+}
+
+func AllGoRules() []Rule {
+	return []Rule{
+		NewOpaFmtRule(),
+	}
 }

@@ -31,7 +31,7 @@ test_fail_unification_in_object_rule_assignment if {
 			"description": "documentation",
 			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
 		}],
-		"title": "assignment-operator",
+		"title": "use-assignment-operator",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `x["a"] = 1`},
 	}}
 }
@@ -41,7 +41,7 @@ test_success_assignment_in_object_rule_assignment if {
 }
 
 report(snippet) := report if {
-	# regal ignore:input-or-data-reference
+	# regal ignore:external-reference
 	report := assignment.report with input as ast.with_future_keywords(snippet)
 		with config.for_rule as {"enabled": true}
 }

@@ -12,6 +12,10 @@ func NewCompilerWithRegalBuiltins() *ast.Compiler {
 		Name: builtins.RegalParseModuleMeta.Name,
 		Decl: builtins.RegalParseModuleMeta.Decl,
 	})
+	caps.Builtins = append(caps.Builtins, &ast.Builtin{
+		Name: builtins.RegalJSONPrettyMeta.Name,
+		Decl: builtins.RegalJSONPrettyMeta.Decl,
+	})
 
 	return ast.NewCompiler().WithCapabilities(caps)
 }

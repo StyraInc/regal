@@ -25,6 +25,17 @@ var RegalParseModuleMeta = &rego.Function{
 	),
 }
 
+// RegalJSONPrettyMeta metadata for regal.json_pretty.
+var RegalJSONPrettyMeta = &rego.Function{
+	Name: "regal.json_pretty",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("data", types.A).Description("data to marshal to JSON in a pretty format"),
+		),
+		types.Named("output", types.S),
+	),
+}
+
 // RegalParseModule regal.parse_module, like rego.parse_module but with location data included in AST.
 func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Term) (*ast.Term, error) {
 	policyStr, err := builtins.StringOperand(policy.Value, 1)
@@ -58,4 +69,14 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 	}
 
 	return term, nil
+}
+
+// RegalJSONPretty regal.json_pretty, like json.marshal but with pretty formatting.
+func RegalJSONPretty(_ rego.BuiltinContext, data *ast.Term) (*ast.Term, error) {
+	encoded, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.StringTerm(string(encoded)), nil
 }

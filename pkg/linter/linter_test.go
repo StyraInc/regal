@@ -17,7 +17,7 @@ func TestLintBasic(t *testing.T) {
 
 # TODO: fix this
 camelCase {
-	1 == 1
+	1 == input.one
 }
 `
 
@@ -72,7 +72,7 @@ func TestLintWithUserConfig(t *testing.T) {
 
 # TODO: fix this
 camelCase {
-	1 == 1
+	1 == input.one
 }
 `
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/tester"
 	"github.com/open-policy-agent/opa/topdown/builtins"
 	"github.com/open-policy-agent/opa/types"
 
@@ -79,4 +80,24 @@ func RegalJSONPretty(_ rego.BuiltinContext, data *ast.Term) (*ast.Term, error) {
 	}
 
 	return ast.StringTerm(string(encoded)), nil
+}
+
+// TestContextBuiltins returns the list of builtins as expected by the test runner.
+func TestContextBuiltins() []*tester.Builtin {
+	return []*tester.Builtin{
+		{
+			Decl: &ast.Builtin{
+				Name: RegalParseModuleMeta.Name,
+				Decl: RegalParseModuleMeta.Decl,
+			},
+			Func: rego.Function2(RegalParseModuleMeta, RegalParseModule),
+		},
+		{
+			Decl: &ast.Builtin{
+				Name: RegalJSONPrettyMeta.Name,
+				Decl: RegalJSONPrettyMeta.Decl,
+			},
+			Func: rego.Function1(RegalJSONPrettyMeta, RegalJSONPretty),
+		},
+	}
 }

@@ -74,6 +74,24 @@ If you'd like to see more rules, please [open an issue](https://github.com/Styra
 request, or better yet, submit a PR! See the [custom rules](#custom-rules) section for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.
 
+### Ignoring Rules
+
+If you'd like to ignore a specific violation, you can add an ignore directive above the line in question:
+
+```rego
+package policy
+
+# regal ignore:prefer-snake-case
+camelCase := "yes"
+```
+
+The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, where `<rule-name>` is the name of the
+rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
+
+Note that at this point in time, Regal only considers the line following the ignore directive, i.e. it does not ignore
+entire blocks of code (like rules, or even packages). See [configuration](#configuration) if you want to ignore certain
+rules altogether.
+
 ## Configuration
 
 A custom configuration file may be used to override the [default configuration](bundle/regal/config/provided/data.yaml)

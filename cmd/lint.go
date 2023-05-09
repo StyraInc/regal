@@ -18,6 +18,7 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/reporter"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -71,9 +72,16 @@ func init() {
 		},
 
 		Run: func(_ *cobra.Command, args []string) {
-			if err := lint(args, params); err != nil {
+			rep, err := lint(args, params)
+			if err != nil {
 				log.SetOutput(os.Stderr)
 				log.Println(err)
+				os.Exit(1)
+			}
+
+			if len(rep.Violations) > 0 {
+				// Later on, we'll want to allow warnings, which should print but
+				// not necessarily alter the exit code
 				os.Exit(1)
 			}
 		},
@@ -89,7 +97,7 @@ func init() {
 }
 
 //nolint:funlen
-func lint(args []string, params lintCommandParams) error {
+func lint(args []string, params lintCommandParams) (report.Report, error) {
 	ctx, cancel := getLinterContext(params)
 	defer cancel()
 
@@ -101,7 +109,7 @@ func lint(args []string, params lintCommandParams) error {
 	// "bundle" in paths (i.e. `data.bundle.regal`)
 	bfs, err := fs.Sub(EmbedBundleFS, "bundle")
 	if err != nil {
-		return fmt.Errorf("failed reading embedded bundle %w", err)
+		return report.Report{}, fmt.Errorf("failed reading embedded bundle %w", err)
 	}
 
 	regalRules := rio.MustLoadRegalBundleFS(bfs)
@@ -141,20 +149,20 @@ func lint(args []string, params lintCommandParams) error {
 
 	input, err := rules.InputFromPaths(args)
 	if err != nil {
-		return fmt.Errorf("errors encountered when reading files to lint: %w", err)
+		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
 	result, err := regal.Lint(ctx, input)
 	if err != nil {
-		return fmt.Errorf("error(s) ecountered while linting: %w", err)
+		return report.Report{}, fmt.Errorf("error(s) ecountered while linting: %w", err)
 	}
 
 	rep, err := getReporter(params.format)
 	if err != nil {
-		return fmt.Errorf("failed to get reporter: %w", err)
+		return report.Report{}, fmt.Errorf("failed to get reporter: %w", err)
 	}
 
-	return rep.Publish(result) //nolint:wrapcheck
+	return result, rep.Publish(result) //nolint:wrapcheck
 }
 
 func getReporter(format string) (reporter.Reporter, error) {

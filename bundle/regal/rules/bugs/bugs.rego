@@ -92,6 +92,7 @@ report contains violation if {
 	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }
 
+# regal ignore:external-reference
 illegal_value_ref(value) if not value in _rule_names
 
 # i.e. allow {..}, or allow := true, which expands to allow = true { true }

@@ -238,9 +238,8 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 	var enabledGoRules []rules.Rule
 
-	for _, rule := range rules.AllGoRules() {
-		ruleConf, ok := conf.Rules[rule.Category()][rule.Name()]
-		if ok && ruleConf.Enabled {
+	for _, rule := range rules.AllGoRules(conf) {
+		if rule.Config().Level != "ignore" {
 			enabledGoRules = append(enabledGoRules, rule)
 		}
 	}

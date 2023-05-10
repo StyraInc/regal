@@ -23,7 +23,7 @@ tests := [rule |
 # custom:
 #   category: testing
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	not endswith(package_name, "_test")
 
@@ -41,7 +41,7 @@ report contains violation if {
 # custom:
 #   category: testing
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	count(tests) > 0
 
@@ -59,7 +59,7 @@ report contains violation if {
 # custom:
 #   category: testing
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	test_names := [rule.head.name | some rule in tests]
 
@@ -81,7 +81,7 @@ report contains violation if {
 # custom:
 #   category: testing
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 

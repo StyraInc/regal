@@ -2,9 +2,14 @@ package regal.result
 
 import future.keywords.if
 
+import data.regal.config
+
 fail(metadata, details) := violation if {
 	with_location := object.union(metadata, details)
-	with_category := object.union(with_location, {"category": with_location.custom.category})
+	with_category := object.union(with_location, {
+		"category": with_location.custom.category,
+		"level": config.rule_level(config.for_rule(with_location)),
+	})
 
 	violation := object.remove(with_category, ["custom", "scope"])
 }

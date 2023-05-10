@@ -22,6 +22,7 @@ type Violation struct {
 	Title            string            `json:"title"`
 	Description      string            `json:"description"`
 	Category         string            `json:"category"`
+	Level            string            `json:"level"`
 	RelatedResources []RelatedResource `json:"related_resources,omitempty"`
 	Location         Location          `json:"location,omitempty"`
 }

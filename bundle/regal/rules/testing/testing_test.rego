@@ -16,6 +16,7 @@ test_fail_test_outside_test_package if {
 		}],
 		"title": "test-outside-test-package",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `test_foo { false }`},
+		"level": "error",
 	}}
 }
 
@@ -35,7 +36,7 @@ test_fail_test_in_file_without_test_suffix if {
 	test_foo { false }
 	`)
 
-	r := testing.report with input as ast with config.for_rule as {"enabled": true}
+	r := testing.report with input as ast with config.for_rule as {"level": "error"}
 
 	r == {{
 		"category": "testing",
@@ -46,6 +47,7 @@ test_fail_test_in_file_without_test_suffix if {
 		}],
 		"title": "file-missing-test-suffix",
 		"location": {"file": "policy.rego"},
+		"level": "error",
 	}}
 }
 
@@ -66,6 +68,7 @@ test_fail_identically_named_tests if {
 		}],
 		"title": "identically-named-tests",
 		"location": {"file": "foo_test.rego"},
+		"level": "error",
 	}}
 }
 
@@ -99,10 +102,11 @@ test_fail_todo_test if {
 		}],
 		"title": "todo-test",
 		"location": {"file": "foo_test.rego"},
+		"level": "error",
 	}}
 }
 
 report(snippet) := report if {
 	# regal ignore:external-reference
-	report := testing.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
+	report := testing.report with input as ast.with_future_keywords(snippet)
 }

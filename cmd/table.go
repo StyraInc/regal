@@ -17,6 +17,7 @@ import (
 	"github.com/open-policy-agent/opa/loader"
 
 	"github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -99,7 +100,9 @@ func createTable(args []string, params tableCommandParams) error {
 		})
 	}
 
-	for _, rule := range rules.AllGoRules() {
+	// We currently don't include the severity level sourced from the provided config in the
+	// table, as all rules default to error at this point. We might want to change that later.
+	for _, rule := range rules.AllGoRules(config.Config{}) {
 		tableData = append(tableData, []string{
 			rule.Category(),
 			"[" + rule.Name() + "](" + rule.Documentation() + ")",

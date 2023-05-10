@@ -24,7 +24,7 @@ todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
 # custom:
 #   category: comments
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some comment in input.comments
 	text := base64.decode(comment.Text)

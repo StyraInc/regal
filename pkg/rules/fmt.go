@@ -7,10 +7,13 @@ import (
 
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
 
-type OpaFmtRule struct{}
+type OpaFmtRule struct {
+	ruleConfig config.Rule
+}
 
 const (
 	title                       = "opa-fmt"
@@ -20,8 +23,15 @@ const (
 	relatedResourcesRef         = "https://docs.styra.com/regal/rules/opa-fmt"
 )
 
-func NewOpaFmtRule() *OpaFmtRule {
-	return &OpaFmtRule{}
+func NewOpaFmtRule(conf config.Config) *OpaFmtRule {
+	ruleConf, ok := conf.Rules[category][title]
+	if ok {
+		return &OpaFmtRule{ruleConfig: ruleConf}
+	}
+
+	return &OpaFmtRule{ruleConfig: config.Rule{
+		Level: "error",
+	}}
 }
 
 func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, error) {
@@ -52,6 +62,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 					Location: report.Location{
 						File: filename,
 					},
+					Level: f.ruleConfig.Level,
 				}
 				result.Violations = append(result.Violations, violation)
 			}
@@ -75,4 +86,8 @@ func (f *OpaFmtRule) Description() string {
 
 func (f *OpaFmtRule) Documentation() string {
 	return relatedResourcesRef
+}
+
+func (f *OpaFmtRule) Config() config.Rule {
+	return f.ruleConfig
 }

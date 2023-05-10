@@ -16,6 +16,7 @@ test_fail_unconditional_assignment_in_body if {
 		}],
 		"title": "unconditional-assignment",
 		"location": {"col": 6, "file": "policy.rego", "row": 8},
+		"level": "error",
 	}}
 }
 
@@ -29,6 +30,7 @@ test_fail_unconditional_eq_in_body if {
 		}],
 		"title": "unconditional-assignment",
 		"location": {"col": 5, "file": "policy.rego", "row": 8},
+		"level": "error",
 	}}
 }
 
@@ -43,5 +45,4 @@ test_success_unconditional_assignment_but_with_in_body if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := variables.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true}
 }

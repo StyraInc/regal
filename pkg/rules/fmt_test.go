@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/styrainc/regal/internal/test"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -15,7 +16,7 @@ func TestFmtRuleFail(t *testing.T) {
 
 	policy := "  package p "
 
-	result, err := rules.NewOpaFmtRule().Run(ctx, test.InputPolicy("p.rego", policy))
+	result, err := rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +45,7 @@ func TestFmtRuleSuccess(t *testing.T) {
 
 	policy := "package p\n"
 
-	result, err := rules.NewOpaFmtRule().Run(ctx, test.InputPolicy("p.rego", policy))
+	result, err := rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy))
 	if err != nil {
 		t.Fatal(err)
 	}

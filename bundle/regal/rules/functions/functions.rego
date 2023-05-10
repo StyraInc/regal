@@ -17,7 +17,7 @@ import data.regal.result
 # custom:
 #   category: functions
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 	rule.head.args
@@ -48,7 +48,7 @@ report contains violation if {
 # custom:
 #   category: functions
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 	rule.head.args

@@ -36,7 +36,7 @@ _rules_with_bodies := [rule |
 # custom:
 #   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in _rules_with_bodies
 	some expr in rule.body
@@ -55,7 +55,7 @@ report contains violation if {
 # custom:
 #   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in _rules_with_bodies
 	some expr in rule.body
@@ -78,7 +78,7 @@ report contains violation if {
 # custom:
 #   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 

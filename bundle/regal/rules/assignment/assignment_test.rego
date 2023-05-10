@@ -16,6 +16,7 @@ test_fail_unification_in_default_assignment if {
 		}],
 		"title": "use-assignment-operator",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "default x = false"},
+		"level": "error",
 	}}
 }
 
@@ -33,6 +34,7 @@ test_fail_unification_in_object_rule_assignment if {
 		}],
 		"title": "use-assignment-operator",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `x["a"] = 1`},
+		"level": "error",
 	}}
 }
 
@@ -43,7 +45,6 @@ test_success_assignment_in_object_rule_assignment if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := assignment.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true}
 }
 
 # Blocked by https://github.com/StyraInc/regal/issues/6

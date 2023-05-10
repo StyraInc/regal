@@ -16,6 +16,7 @@ test_fail_future_keywords_import_wildcard if {
 		}],
 		"title": "implicit-future-keywords",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import future.keywords`},
+		"level": "error",
 	}}
 }
 
@@ -41,6 +42,7 @@ test_fail_import_input if {
 		}],
 		"title": "avoid-importing-input",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import input.foo`},
+		"level": "error",
 	}}
 }
 
@@ -54,6 +56,7 @@ test_fail_import_data if {
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data`},
+		"level": "error",
 	}}
 }
 
@@ -67,6 +70,7 @@ test_fail_import_data_aliased if {
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data as d`},
+		"level": "error",
 	}}
 }
 
@@ -88,6 +92,7 @@ import data.foo
 		}],
 		"title": "import-shadows-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.foo`},
+		"level": "error",
 	}}
 }
 
@@ -104,11 +109,11 @@ import data.bar as foo
 		}],
 		"title": "import-shadows-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.bar as foo`},
+		"level": "error",
 	}}
 }
 
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := imports.report with input as ast.policy(snippet)
-		with config.for_rule as {"enabled": true}
 }

@@ -19,6 +19,7 @@ test_fail_simple_constant_condition if {
 			"ref": "https://docs.styra.com/regal/rules/constant-condition",
 		}],
 		"title": "constant-condition",
+		"level": "error",
 	}}
 }
 
@@ -39,6 +40,7 @@ test_fail_operator_constant_condition if {
 			"ref": "https://docs.styra.com/regal/rules/constant-condition",
 		}],
 		"title": "constant-condition",
+		"level": "error",
 	}}
 }
 
@@ -57,6 +59,7 @@ test_fail_top_level_iteration_wildcard if {
 			"ref": "https://docs.styra.com/regal/rules/top-level-iteration",
 		}],
 		"title": "top-level-iteration",
+		"level": "error",
 	}}
 }
 
@@ -71,6 +74,7 @@ test_fail_top_level_iteration_named_var if {
 			"ref": "https://docs.styra.com/regal/rules/top-level-iteration",
 		}],
 		"title": "top-level-iteration",
+		"level": "error",
 	}}
 }
 
@@ -87,5 +91,4 @@ test_success_top_level_input_ref if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := bugs.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true}
 }

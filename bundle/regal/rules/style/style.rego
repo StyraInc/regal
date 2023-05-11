@@ -18,7 +18,7 @@ import data.regal.util
 # custom:
 #   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 	not util.is_snake_case(rule.head.name)
@@ -35,7 +35,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some var in ast.find_vars(input.rules)
 	not util.is_snake_case(var.value)
@@ -52,7 +52,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some expr in eq_exprs
 
@@ -76,7 +76,7 @@ report contains violation if {
 # custom:
 #   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some expr in eq_exprs
 
@@ -92,7 +92,7 @@ report contains violation if {
 }
 
 eq_exprs contains expr if {
-	config.for_rule({"category": "style", "title": "use-in-operator"}).enabled == true
+	config.for_rule({"category": "style", "title": "use-in-operator"}).level != "ignore"
 
 	some rule in input.rules
 	some expr in rule.body
@@ -113,7 +113,7 @@ eq_exprs contains expr if {
 report contains violation if {
 	cfg := config.for_rule(rego.metadata.rule())
 
-	cfg.enabled == true
+	cfg.level != "ignore"
 
 	some i, line in input.regal.file.lines
 

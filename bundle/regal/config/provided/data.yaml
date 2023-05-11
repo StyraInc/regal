@@ -1,49 +1,51 @@
 rules:
   assignment:
     use-assignment-operator:
-      enabled: true
+      level: error
   bugs:
     constant-condition:
-      enabled: true
+      level: error
     top-level-iteration:
-      enabled: true
+      level: error
   comments:
     todo-comment:
-      enabled: true
+      level: error
   functions:
     external-reference:
-      enabled: true
+      level: error
   imports:
     avoid-importing-input:
-      enabled: true
+      level: error
     implicit-future-keywords:
-      enabled: true
+      level: error
     import-shadows-import:
-      enabled: true
+      level: error
     redundant-data-import:
-      enabled: true
+      level: error
   rules:
     rule-shadows-builtin:
-      enabled: true
+      level: error
+    avoid-get-and-list-prefix:
+      level: error
   style:
     line-length:
-      enabled: true
+      level: error
       max-line-length: 120
     opa-fmt:
-      enabled: true
+      level: error
     prefer-snake-case:
-      enabled: true
+      level: error
     use-in-operator:
-      enabled: true
+      level: error
   testing:
     file-missing-test-suffix:
-      enabled: true
+      level: error
     identically-named-tests:
-      enabled: true
+      level: error
     test-outside-test-package:
-      enabled: true
+      level: error
     todo-test:
-      enabled: true
+      level: error
   variables:
     unconditional-assignment:
-      enabled: true
+      level: error

@@ -13,6 +13,7 @@ import (
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -38,6 +39,8 @@ type Rule interface {
 	Description() string
 	// Documentation returns the documentation URL for the rule.
 	Documentation() string
+	// Config returns the provided configuration for the rule
+	Config() config.Rule
 }
 
 // NewInput creates a new Input from a set of modules.
@@ -79,8 +82,8 @@ func InputFromPaths(paths []string) (Input, error) {
 	return NewInput(fileContent, modules), nil
 }
 
-func AllGoRules() []Rule {
+func AllGoRules(conf config.Config) []Rule {
 	return []Rule{
-		NewOpaFmtRule(),
+		NewOpaFmtRule(conf),
 	}
 }

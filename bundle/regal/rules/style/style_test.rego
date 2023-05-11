@@ -14,6 +14,7 @@ snake_case_violation := {
 		"ref": "https://docs.styra.com/regal/rules/prefer-snake-case",
 	}],
 	"title": "prefer-snake-case",
+	"level": "error",
 }
 
 test_fail_camel_cased_rule_name if {
@@ -134,6 +135,7 @@ test_fail_use_in_operator_string_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 9, "text": "\t\"admin\" == input.user.roles[_]"},
+		"level": "error",
 	}}
 }
 
@@ -150,6 +152,7 @@ test_fail_use_in_operator_number_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 7, "file": "policy.rego", "row": 9, "text": "\t1 == input.lucky_numbers[_]"},
+		"level": "error",
 	}}
 }
 
@@ -166,6 +169,7 @@ test_fail_use_in_operator_array_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 9, "file": "policy.rego", "row": 9, "text": "\t[1] == input.arrays[_]"},
+		"level": "error",
 	}}
 }
 
@@ -182,6 +186,7 @@ test_fail_use_in_operator_boolean_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 9, "text": "\ttrue == input.booleans[_]"},
+		"level": "error",
 	}}
 }
 
@@ -198,6 +203,7 @@ test_fail_use_in_operator_object_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 16, "file": "policy.rego", "row": 9, "text": "\t{\"x\": \"y\"} == input.objects[_]"},
+		"level": "error",
 	}}
 }
 
@@ -214,6 +220,7 @@ test_fail_use_in_operator_null_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 9, "text": "\tnull == input.objects[_]"},
+		"level": "error",
 	}}
 }
 
@@ -230,6 +237,7 @@ test_fail_use_in_operator_set_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 9, "text": "\t{\"foo\"} == input.objects[_]"},
+		"level": "error",
 	}}
 }
 
@@ -245,6 +253,7 @@ test_fail_use_in_operator_var_lhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 11, "file": "policy.rego", "row": 9, "text": "\tadmin == input.user.roles[_]"},
+		"level": "error",
 	}}
 }
 
@@ -260,13 +269,15 @@ test_fail_use_in_operator_string_rhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 2, "file": "policy.rego", "row": 9, "text": "\tinput.user.roles[_] == \"admin\""},
+		"level": "error",
 	}}
 }
 
 test_fail_use_in_operator_var_rhs if {
-	report(`allow {
+	r := report(`allow {
 		input.user.roles[_] == admin
-	}`) == {{
+	}`)
+	r == {{
 		"category": "style",
 		"description": "Use in to check for membership",
 		"related_resources": [{
@@ -275,6 +286,7 @@ test_fail_use_in_operator_var_rhs if {
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\tinput.user.roles[_] == admin"},
+		"level": "error",
 	}}
 }
 
@@ -304,6 +316,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 			"col": 103, "file": "policy.rego", "row": 9,
 			"text": `foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]`,
 		},
+		"level": "error",
 	}}
 }
 
@@ -314,5 +327,5 @@ test_success_line_not_too_long if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := style.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true, "max-line-length": 80}
+		with config.for_rule as {"level": "error", "max-line-length": 80}
 }

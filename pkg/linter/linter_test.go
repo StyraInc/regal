@@ -79,7 +79,7 @@ camelCase {
 	configRaw := `rules:
   comments:
     todo-comment:
-      enabled: false`
+      level: ignore`
 
 	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
 
@@ -116,7 +116,7 @@ func TestLintWithCustomRule(t *testing.T) {
 	}
 
 	if len(result.Violations) != 1 {
-		t.Errorf("expected 1 violation, got %d", len(result.Violations))
+		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
 	}
 
 	if result.Violations[0].Title != "acme-corp-package" {

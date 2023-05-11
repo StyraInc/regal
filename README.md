@@ -74,7 +74,65 @@ If you'd like to see more rules, please [open an issue](https://github.com/Styra
 request, or better yet, submit a PR! See the [custom rules](#custom-rules) section for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.
 
-### Ignoring Rules
+## Configuration
+
+A custom configuration file may be used to override the [default configuration](bundle/regal/config/provided/data.yaml)
+options provided by Regal. The most common use case for this is to change the severity level of a rule. These three
+levels are available:
+
+- `ignore`  — disable the rule entirely
+- `warning` — report the violation without changing the exit code of the lint command
+- `error`   — report the violation and have the lint command exit with a non-zero exit code (default)
+
+Additionally, some rules may have configuration options of their own. See the documentation page for a rule to learn
+more about it.
+
+**.regal/config.yaml**
+```yaml
+rules:
+  comments:
+    todo-comment:
+      # don't report on todo comments
+      level: ignore
+  style:
+    line-length:
+      # custom rule configuration
+      max-line-length: 100
+      # warn on too long lines, but don't fail
+      level: warning
+    opa-fmt:
+      # not needed as error is the default, but
+      # being explicit won't hurt
+      level: error
+```
+
+Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
+found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is
+reached. If no configuration file is found, Regal will use the default configuration.
+
+A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
+provided will be used to override the default configuration.
+
+## Exit Codes
+
+Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be 
+used to change the exit code behavior, and allows a value of either `warning` or `error` (default).
+
+If `--fail-level error` is supplied, exit code will be zero even if warnings are present:
+
+- `0`: no errors were found
+- `0`: one or more warnings were found
+- `3`: one or more errors were found
+
+This is the default behavior.
+
+If `--fail-level warning` is supplied, warnings will result in a non-zero exit code:
+
+- `0`: no errors or warnings were found
+- `2`: one or more warnings were found
+- `3`: one or more errors were found
+
+## Inline Ignore Directives
 
 If you'd like to ignore a specific violation, you can add an ignore directive above the line in question:
 
@@ -91,27 +149,6 @@ rule to ignore. Multiple rules may be added to the same ignore directive, separa
 Note that at this point in time, Regal only considers the line following the ignore directive, i.e. it does not ignore
 entire blocks of code (like rules, or even packages). See [configuration](#configuration) if you want to ignore certain
 rules altogether.
-
-## Configuration
-
-A custom configuration file may be used to override the [default configuration](bundle/regal/config/provided/data.yaml)
-options provided by Regal. This is particularly useful for e.g. enabling/disabling certain rules, or to provide more
-fine-grained options for the linter rules that support it.
-
-**.regal/config.yaml**
-```yaml
-rules:
-  style:
-    prefer-snake-case:
-      enabled: false
-```
-
-Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
-found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is
-reached. If no configuration file is found, Regal will use the default configuration.
-
-A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
-provided will be used to override the default configuration.
 
 ## Custom Rules
 

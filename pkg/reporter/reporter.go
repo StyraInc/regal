@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/gosuri/uitable"
@@ -86,7 +87,7 @@ func (tr PrettyReporter) Publish(r report.Report) error {
 func buildPrettyViolationsTable(violations []report.Violation) string {
 	table := uitable.New()
 	table.MaxColWidth = 120
-	table.Wrap = true
+	table.Wrap = false
 
 	numViolations := len(violations)
 
@@ -95,13 +96,19 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 	red := color.New(color.FgRed).SprintFunc()
 
 	for i, violation := range violations {
+		level := red(violation.Level)
+		if violation.Level == "warning" {
+			level = yellow(violation.Level)
+		}
+
 		table.AddRow(yellow("Rule:"), violation.Title)
 		table.AddRow(yellow("Description:"), red(violation.Description))
 		table.AddRow(yellow("Category:"), violation.Category)
 		table.AddRow(yellow("Location:"), cyan(violation.Location.String()))
+		table.AddRow(yellow("Level:"), level)
 
 		if violation.Location.Text != nil {
-			table.AddRow(yellow("Text:"), *violation.Location.Text)
+			table.AddRow(yellow("Text:"), strings.TrimSpace(*violation.Location.Text))
 		}
 
 		table.AddRow(yellow("Documentation:"), cyan(getDocumentationURL(violation)))

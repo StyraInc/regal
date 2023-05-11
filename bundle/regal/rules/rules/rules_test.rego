@@ -17,6 +17,7 @@ test_fail_rule_name_shadows_builtin if {
 		}],
 		"title": "rule-shadows-builtin",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "or := 1"},
+		"level": "error",
 	}}
 }
 
@@ -31,6 +32,7 @@ test_fail_rule_name_starts_with_get if {
 		}],
 		"title": "avoid-get-and-list-prefix",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "get_foo := 1"},
+		"level": "error",
 	}}
 }
 
@@ -48,6 +50,7 @@ test_fail_function_name_starts_with_list if {
 			"col": 1, "file": "policy.rego", "row": 8,
 			"text": `list_users(datasource) := ["we", "have", "no", "users"]`,
 		},
+		"level": "error",
 	}}
 }
 
@@ -57,5 +60,5 @@ test_success_rule_name_does_not_shadows_builtin if {
 
 report(snippet) := report if {
 	# regal ignore:external-reference
-	report := rules.report with input as ast.with_future_keywords(snippet) with config.for_rule as {"enabled": true}
+	report := rules.report with input as ast.with_future_keywords(snippet)
 }

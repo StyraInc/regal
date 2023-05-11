@@ -27,6 +27,7 @@ type lintCommandParams struct {
 	timeout    time.Duration
 	configFile string
 	format     string
+	failLevel  string
 	rules      repeatedStringFlag
 	noColor    bool
 }
@@ -79,24 +80,51 @@ func init() {
 				os.Exit(1)
 			}
 
-			if len(rep.Violations) > 0 {
-				// Later on, we'll want to allow warnings, which should print but
-				// not necessarily alter the exit code
-				os.Exit(1)
+			errorsFound := 0
+			warningsFound := 0
+
+			for _, violation := range rep.Violations {
+				if violation.Level == "error" {
+					errorsFound++
+				} else if violation.Level == "warning" {
+					warningsFound++
+				}
 			}
+
+			exitCode := 0
+
+			if params.failLevel == "error" && errorsFound > 0 {
+				exitCode = 3
+			}
+
+			if params.failLevel == "warning" {
+				if errorsFound > 0 {
+					exitCode = 3
+				} else if warningsFound > 0 {
+					exitCode = 2
+				}
+			}
+
+			os.Exit(exitCode)
 		},
 	}
 
-	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
-	lintCommand.Flags().StringVarP(&params.format, "format", "f", "pretty", "set output format (pretty, compact, json)")
-	lintCommand.Flags().BoolVar(&params.noColor, "no-color", false, "Disable color output")
-	lintCommand.Flags().VarP(&params.rules, "rules", "r", "set custom rules file(s). This flag can be repeated.")
-	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default unlimited)")
+	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
+		"set path of configuration file")
+	lintCommand.Flags().StringVarP(&params.format, "format", "f", "pretty",
+		"set output format (pretty, compact, json)")
+	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
+		"set level at which to fail with a non-zero exit code (error, warning)")
+	lintCommand.Flags().BoolVar(&params.noColor, "no-color", false,
+		"Disable color output")
+	lintCommand.Flags().VarP(&params.rules, "rules", "r",
+		"set custom rules file(s). This flag can be repeated.")
+	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0,
+		"set timeout for linting (default unlimited)")
 
 	RootCommand.AddCommand(lintCommand)
 }
 
-//nolint:funlen
 func lint(args []string, params lintCommandParams) (report.Report, error) {
 	ctx, cancel := getLinterContext(params)
 	defer cancel()

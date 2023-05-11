@@ -20,8 +20,8 @@ type Category map[string]Rule
 type ExtraAttributes map[string]any
 
 type Rule struct {
-	Enabled bool
-	Extra   ExtraAttributes
+	Level string
+	Extra ExtraAttributes
 }
 
 const (
@@ -88,7 +88,7 @@ func FromMap(confMap map[string]any) (Config, error) {
 
 func (rule Rule) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
-	result["enabled"] = rule.Enabled
+	result["level"] = rule.Level
 
 	for key, val := range rule.Extra {
 		result[key] = val
@@ -97,7 +97,7 @@ func (rule Rule) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&result) //nolint:wrapcheck
 }
 
-var errEnabledMustBeBoolean = errors.New("value of 'enabled' must be boolean")
+var errLevelMustBeString = errors.New("value of 'level' must be string")
 
 func (rule *Rule) UnmarshalJSON(data []byte) error {
 	var result map[string]any
@@ -105,14 +105,14 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}
 
-	enabled, ok := result["enabled"].(bool)
+	level, ok := result["level"].(string)
 	if !ok {
-		return errEnabledMustBeBoolean
+		return errLevelMustBeString
 	}
 
 	delete(result, "enabled")
 
-	rule.Enabled = enabled
+	rule.Level = level
 	rule.Extra = result
 
 	return nil

@@ -85,7 +85,7 @@ rules.
 	},
 }
 
-func opaTest(args []string) int { //nolint: funlen
+func opaTest(args []string) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

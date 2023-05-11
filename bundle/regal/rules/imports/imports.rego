@@ -29,7 +29,7 @@ _ident(imported) := imported.alias
 # custom:
 #   category: imports
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some imported in input.imports
 
@@ -54,7 +54,7 @@ report contains violation if {
 # custom:
 #   category: imports
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some imported in input.imports
 
@@ -76,7 +76,7 @@ report contains violation if {
 # custom:
 #   category: imports
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some imported in input.imports
 
@@ -96,7 +96,7 @@ report contains violation if {
 # custom:
 #   category: imports
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some i, identifier in _identifiers
 

@@ -16,6 +16,7 @@ test_fail_function_references_input if {
 			"ref": "https://docs.styra.com/regal/rules/external-reference",
 		}],
 		"title": "external-reference",
+		"level": "error",
 	}}
 }
 
@@ -29,6 +30,7 @@ test_fail_function_references_data if {
 		}],
 		"title": "external-reference",
 		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { data.foo }`},
+		"level": "error",
 	}}
 }
 
@@ -50,6 +52,7 @@ f(x, y) {
 			"ref": "https://docs.styra.com/regal/rules/external-reference",
 		}],
 		"title": "external-reference",
+		"level": "error",
 	}}
 }
 
@@ -72,5 +75,4 @@ test_success_function_references_only_own_vars_nested if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := functions.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true}
 }

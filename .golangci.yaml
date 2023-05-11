@@ -26,6 +26,7 @@ linters:
     - exhaustruct
     - cyclop
     - ireturn
+    - funlen
 linters-settings:
   tagliatelle:
     case:

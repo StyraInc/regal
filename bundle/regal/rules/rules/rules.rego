@@ -19,7 +19,7 @@ builtin_names := {builtin | some builtin, _ in builtins}
 # custom:
 #   category: rules
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 	rule.head.name in builtin_names
@@ -36,7 +36,7 @@ report contains violation if {
 # custom:
 #   category: rules
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 	strings.any_prefix_match(rule.head.name, {"get_", "list_"})

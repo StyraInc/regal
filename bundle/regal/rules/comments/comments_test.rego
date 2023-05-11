@@ -16,6 +16,7 @@ test_fail_todo_comment if {
 		}],
 		"title": "todo-comment",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# TODO: do someting clever`},
+		"level": "error",
 	}}
 }
 
@@ -29,6 +30,7 @@ test_fail_fixme_comment if {
 		}],
 		"title": "todo-comment",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# fixme: this is broken`},
+		"level": "error",
 	}}
 }
 
@@ -39,5 +41,4 @@ test_success_no_todo_comment if {
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := comments.report with input as ast.with_future_keywords(snippet)
-		with config.for_rule as {"enabled": true}
 }

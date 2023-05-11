@@ -16,7 +16,7 @@ import data.regal.result
 # custom:
 #   category: variables
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).enabled == true
+	config.for_rule(rego.metadata.rule()).level != "ignore"
 
 	some rule in input.rules
 

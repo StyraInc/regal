@@ -16,7 +16,7 @@ Regal is a linter for Rego, with the goal of making your Rego magnificent!
 ## Goals
 
 - Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches
-- Provide advice on best practices, coding style, and tooling
+- Provide advice on [best practices](https://github.com/StyraInc/rego-style-guide), coding style, and tooling
 - Allow users, teams and organizations to enforce custom rules on their policy code
 
 Regal rules are to as large extent as possible
@@ -150,13 +150,11 @@ Note that at this point in time, Regal only considers the line following the ign
 entire blocks of code (like rules, or even packages). See [configuration](#configuration) if you want to ignore certain
 rules altogether.
 
-## Custom Rules
+## Documentation
 
-See the docs on [custom rules](/docs/custom-rules) for more information on how to develop your own rules.
-
-## Development
-
-See the [development](/docs/development) docs if you'd like to hack on Regal itself.
+- [Custom Rules](/docs/custom-rules) describes how to develop your own rules
+- [Development](/docs/development) for info about how to hack on Regal itself
+- [Rego Style Guide](/docs/rego-style-guide) contains notes on implementing the [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
 
 ## Community
 

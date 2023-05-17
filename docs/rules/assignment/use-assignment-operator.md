@@ -1,8 +1,8 @@
 # use-assignment-operator
 
-**Category**: Assignment
-
 **Summary**: Prefer `:=` over `=` for assignment
+
+**Category**: Assignment
 
 **Avoid**
 ```rego

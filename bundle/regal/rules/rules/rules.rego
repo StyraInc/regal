@@ -15,7 +15,7 @@ builtin_names := {builtin | some builtin, _ in builtins}
 # description: Rule name shadows built-in
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/rule-shadows-builtin
+#   ref: $baseUrl/$category/rule-shadows-builtin
 # custom:
 #   category: rules
 report contains violation if {
@@ -32,7 +32,7 @@ report contains violation if {
 # description: Avoid get_ and list_ prefix for rules and functions
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/avoid-get-and-list-prefix
+#   ref: $baseUrl/$category/avoid-get-and-list-prefix
 # custom:
 #   category: rules
 report contains violation if {

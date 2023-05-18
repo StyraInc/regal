@@ -12,7 +12,7 @@ test_fail_unconditional_assignment_in_body if {
 		"description": "Unconditional assignment in rule body",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/unconditional-assignment",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "variables"),
 		}],
 		"title": "unconditional-assignment",
 		"location": {"col": 6, "file": "policy.rego", "row": 8},
@@ -26,7 +26,7 @@ test_fail_unconditional_eq_in_body if {
 		"description": "Unconditional assignment in rule body",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/unconditional-assignment",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "variables"),
 		}],
 		"title": "unconditional-assignment",
 		"location": {"col": 5, "file": "policy.rego", "row": 8},

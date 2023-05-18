@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -20,7 +22,6 @@ const (
 	description                 = "File should be formatted with `opa fmt`"
 	category                    = "style"
 	relatedResourcesDescription = "documentation"
-	relatedResourcesRef         = "https://docs.styra.com/regal/rules/opa-fmt"
 )
 
 func NewOpaFmtRule(conf config.Config) *OpaFmtRule {
@@ -57,7 +58,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 					Category:    category,
 					RelatedResources: []report.RelatedResource{{
 						Description: relatedResourcesDescription,
-						Reference:   relatedResourcesRef,
+						Reference:   f.Documentation(),
 					}},
 					Location: report.Location{
 						File: filename,
@@ -85,7 +86,7 @@ func (f *OpaFmtRule) Description() string {
 }
 
 func (f *OpaFmtRule) Documentation() string {
-	return relatedResourcesRef
+	return path.Join(docs.DocsBaseURL, category, title+".md")
 }
 
 func (f *OpaFmtRule) Config() config.Rule {

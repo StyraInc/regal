@@ -12,7 +12,7 @@ test_fail_test_outside_test_package if {
 		"description": "Test outside of test package",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/test-outside-test-package",
+			"ref": config.docs.resolve_url("$baseUrl/$category/test-outside-test-package", "testing"),
 		}],
 		"title": "test-outside-test-package",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `test_foo { false }`},
@@ -43,7 +43,7 @@ test_fail_test_in_file_without_test_suffix if {
 		"description": "Files containing tests should have a _test.rego suffix",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/file-missing-test-suffix",
+			"ref": config.docs.resolve_url("$baseUrl/$category/file-missing-test-suffix", "testing"),
 		}],
 		"title": "file-missing-test-suffix",
 		"location": {"file": "policy.rego"},
@@ -64,7 +64,7 @@ test_fail_identically_named_tests if {
 		"description": "Multiple tests with same name",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/identically-named-tests",
+			"ref": config.docs.resolve_url("$baseUrl/$category/identically-named-tests", "testing"),
 		}],
 		"title": "identically-named-tests",
 		"location": {"file": "foo_test.rego"},
@@ -98,7 +98,7 @@ test_fail_todo_test if {
 		"description": "TODO test encountered",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/todo-test",
+			"ref": config.docs.resolve_url("$baseUrl/$category/todo-test", "testing"),
 		}],
 		"title": "todo-test",
 		"location": {"file": "foo_test.rego"},

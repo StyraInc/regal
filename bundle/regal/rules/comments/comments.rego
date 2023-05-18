@@ -20,7 +20,7 @@ todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
 # description: Avoid TODO comments
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/todo-comment
+#   ref: $baseUrl/$category/todo-comment
 # custom:
 #   category: comments
 report contains violation if {

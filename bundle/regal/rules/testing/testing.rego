@@ -19,7 +19,7 @@ tests := [rule |
 # description: Test outside of test package
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/test-outside-test-package
+#   ref: $baseUrl/$category/test-outside-test-package
 # custom:
 #   category: testing
 report contains violation if {
@@ -37,7 +37,7 @@ report contains violation if {
 # description: Files containing tests should have a _test.rego suffix
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/file-missing-test-suffix
+#   ref: $baseUrl/$category/file-missing-test-suffix
 # custom:
 #   category: testing
 report contains violation if {
@@ -55,7 +55,7 @@ report contains violation if {
 # description: Multiple tests with same name
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/identically-named-tests
+#   ref: $baseUrl/$category/identically-named-tests
 # custom:
 #   category: testing
 report contains violation if {
@@ -77,7 +77,7 @@ report contains violation if {
 # description: TODO test encountered
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/todo-test
+#   ref: $baseUrl/$category/todo-test
 # custom:
 #   category: testing
 report contains violation if {

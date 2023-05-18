@@ -1,18 +1,31 @@
 package regal.result
 
 import future.keywords.if
+import future.keywords.in
 
 import data.regal.config
 
 fail(metadata, details) := violation if {
 	with_location := object.union(metadata, details)
+	category := with_location.custom.category
 	with_category := object.union(with_location, {
-		"category": with_location.custom.category,
+		"category": category,
 		"level": config.rule_level(config.for_rule(with_location)),
 	})
 
-	violation := object.remove(with_category, ["custom", "scope"])
+	without_custom_and_scope := object.remove(with_category, ["custom", "scope"])
+	related_resources := resource_urls(without_custom_and_scope.related_resources, category)
+
+	violation := object.union(
+		object.remove(without_custom_and_scope, ["related_resources"]),
+		{"related_resources": related_resources},
+	)
 }
+
+resource_urls(related_resources, category) := [r |
+	some item in related_resources
+	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
+]
 
 with_text(location) := {"location": object.union(location, {"text": input.regal.file.lines[location.row - 1]})} if {
 	location.row

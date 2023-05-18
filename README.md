@@ -45,28 +45,28 @@ Regal comes with a set of built-in rules. The following rules are currently avai
 
 <!-- RULES_TABLE_START -->
 
-|  Category  |                                           Title                                           |                      Description                       |
-|------------|-------------------------------------------------------------------------------------------|--------------------------------------------------------|
-| assignment | [use-assignment-operator](https://docs.styra.com/regal/rules/use-assignment-operator)     | Prefer := over = for assignment                        |
-| bugs       | [constant-condition](https://docs.styra.com/regal/rules/constant-condition)               | Constant condition                                     |
-| bugs       | [top-level-iteration](https://docs.styra.com/regal/rules/top-level-iteration)             | Iteration in top-level assignment                      |
-| comments   | [todo-comment](https://docs.styra.com/regal/rules/todo-comment)                           | Avoid TODO comments                                    |
-| functions  | [external-reference](https://docs.styra.com/regal/rules/external-reference)               | Reference to input, data or rule ref in function body  |
-| imports    | [implicit-future-keywords](https://docs.styra.com/regal/rules/implicit-future-keywords)   | Use explicit future keyword imports                    |
-| imports    | [avoid-importing-input](https://docs.styra.com/regal/rules/avoid-importing-input)         | Avoid importing input                                  |
-| imports    | [redundant-data-import](https://docs.styra.com/regal/rules/redundant-data-import)         | Redundant import of data                               |
-| imports    | [import-shadows-import](https://docs.styra.com/regal/rules/import-shadows-import)         | Import shadows another import                          |
-| rules      | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/avoid-get-and-list-prefix) | Avoid get_ and list_ prefix for rules and functions    |
-| rules      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/rule-shadows-builtin)           | Rule name shadows built-in                             |
-| style      | [prefer-snake-case](https://docs.styra.com/regal/rules/prefer-snake-case)                 | Prefer snake_case for names                            |
-| style      | [use-in-operator](https://docs.styra.com/regal/rules/use-in-operator)                     | Use in to check for membership                         |
-| style      | [line-length](https://docs.styra.com/regal/rules/line-length)                             | Line too long                                          |
-| style      | [opa-fmt](https://docs.styra.com/regal/rules/opa-fmt)                                     | File should be formatted with `opa fmt`                |
-| testing    | [test-outside-test-package](https://docs.styra.com/regal/rules/test-outside-test-package) | Test outside of test package                           |
-| testing    | [file-missing-test-suffix](https://docs.styra.com/regal/rules/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix |
-| testing    | [identically-named-tests](https://docs.styra.com/regal/rules/identically-named-tests)     | Multiple tests with same name                          |
-| testing    | [todo-test](https://docs.styra.com/regal/rules/todo-test)                                 | TODO test encountered                                  |
-| variables  | [unconditional-assignment](https://docs.styra.com/regal/rules/unconditional-assignment)   | Unconditional assignment in rule body                  |
+|  Category  |                                                          Title                                                           |                      Description                       |
+|------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
+| assignment | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/assignment/use-assignment-operator.md)  | Prefer := over = for assignment                        |
+| bugs       | [constant-condition](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/constant-condition.md)                  | Constant condition                                     |
+| bugs       | [top-level-iteration](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/top-level-iteration.md)                | Iteration in top-level assignment                      |
+| comments   | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/comments/todo-comment.md)                          | Avoid TODO comments                                    |
+| functions  | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/functions/external-reference.md)             | Reference to input, data or rule ref in function body  |
+| imports    | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                    |
+| imports    | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                  |
+| imports    | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                               |
+| imports    | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                          |
+| rules      | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
+| rules      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/rule-shadows-builtin.md)             | Rule name shadows built-in                             |
+| style      | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                            |
+| style      | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                         |
+| style      | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                          |
+| style      | [opa-fmt](https:/github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                        | File should be formatted with `opa fmt`                |
+| testing    | [test-outside-test-package](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/test-outside-test-package.md) | Test outside of test package                           |
+| testing    | [file-missing-test-suffix](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/file-missing-test-suffix.md)   | Files containing tests should have a _test.rego suffix |
+| testing    | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                          |
+| testing    | [todo-test](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/todo-test.md)                                 | TODO test encountered                                  |
+| variables  | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/variables/unconditional-assignment.md) | Unconditional assignment in rule body                  |
 
 <!-- RULES_TABLE_END -->
 

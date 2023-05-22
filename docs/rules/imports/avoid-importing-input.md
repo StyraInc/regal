@@ -35,7 +35,7 @@ allow if {
 }
 ```
 
-**Exception**
+**Exceptions**
 
 Using an alias for `input` can sometimes be useful, e.g. when using `input` is known to represent something specific,
 like a Terraform plan. Aliasing of specific input attributes should however be avoided in favor of local assignments.

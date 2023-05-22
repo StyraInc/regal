@@ -13,7 +13,7 @@ import data.regal.result
 # description: Reference to input, data or rule ref in function body
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/external-reference
+#   ref: $baseUrl/$category/external-reference
 # custom:
 #   category: functions
 report contains violation if {
@@ -44,7 +44,7 @@ report contains violation if {
 # description: Reference to input, data or rule ref in function body
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/external-reference
+#   ref: $baseUrl/$category/external-reference
 # custom:
 #   category: functions
 report contains violation if {

@@ -25,7 +25,7 @@ _ident(imported) := imported.alias
 # description: Use explicit future keyword imports
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/implicit-future-keywords
+#   ref: $baseUrl/$category/implicit-future-keywords
 # custom:
 #   category: imports
 report contains violation if {
@@ -50,7 +50,7 @@ report contains violation if {
 # description: Avoid importing input
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/avoid-importing-input
+#   ref: $baseUrl/$category/avoid-importing-input
 # custom:
 #   category: imports
 report contains violation if {
@@ -72,7 +72,7 @@ report contains violation if {
 # description: Redundant import of data
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/redundant-data-import
+#   ref: $baseUrl/$category/redundant-data-import
 # custom:
 #   category: imports
 report contains violation if {
@@ -92,7 +92,7 @@ report contains violation if {
 # description: Import shadows another import
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/import-shadows-import
+#   ref: $baseUrl/$category/import-shadows-import
 # custom:
 #   category: imports
 report contains violation if {

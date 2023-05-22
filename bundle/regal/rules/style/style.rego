@@ -14,7 +14,7 @@ import data.regal.util
 # description: Prefer snake_case for names
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+#   ref: $baseUrl/$category/prefer-snake-case
 # custom:
 #   category: style
 report contains violation if {
@@ -31,7 +31,7 @@ report contains violation if {
 # description: Prefer snake_case for names
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/prefer-snake-case
+#   ref: $baseUrl/$category/prefer-snake-case
 # custom:
 #   category: style
 report contains violation if {
@@ -48,7 +48,7 @@ report contains violation if {
 # description: Use in to check for membership
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/use-in-operator
+#   ref: $baseUrl/$category/use-in-operator
 # custom:
 #   category: style
 report contains violation if {
@@ -72,7 +72,7 @@ report contains violation if {
 # description: Use in to check for membership
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/use-in-operator
+#   ref: $baseUrl/$category/use-in-operator
 # custom:
 #   category: style
 report contains violation if {
@@ -107,7 +107,7 @@ eq_exprs contains expr if {
 # description: Line too long
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/line-length
+#   ref: $baseUrl/$category/line-length
 # custom:
 #   category: style
 report contains violation if {

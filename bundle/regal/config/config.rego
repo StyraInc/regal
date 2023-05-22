@@ -4,6 +4,13 @@ import future.keywords.if
 
 default user_config := {}
 
+docs["base_url"] := "https://github.com/StyraInc/regal/blob/main/docs/rules"
+
+docs["resolve_url"](url, category) := concat("", [
+	replace(replace(url, "$baseUrl", docs.base_url), "$category", category),
+	".md",
+])
+
 user_config := data.regal_user_config
 
 merged_config := object.union(data.regal.config.provided, user_config)

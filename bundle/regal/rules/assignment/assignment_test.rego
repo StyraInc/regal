@@ -12,7 +12,7 @@ test_fail_unification_in_default_assignment if {
 		"description": "Prefer := over = for assignment",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "assignment"),
 		}],
 		"title": "use-assignment-operator",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "default x = false"},
@@ -30,7 +30,7 @@ test_fail_unification_in_object_rule_assignment if {
 		"description": "Prefer := over = for assignment",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-assignment-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "assignment"),
 		}],
 		"title": "use-assignment-operator",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `x["a"] = 1`},

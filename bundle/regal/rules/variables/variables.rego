@@ -12,7 +12,7 @@ import data.regal.result
 # description: Unconditional assignment in rule body
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/unconditional-assignment
+#   ref: $baseUrl/$category/unconditional-assignment
 # custom:
 #   category: variables
 report contains violation if {

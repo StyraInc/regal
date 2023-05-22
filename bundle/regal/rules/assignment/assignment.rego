@@ -12,7 +12,7 @@ import data.regal.result
 # description: Prefer := over = for assignment
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/use-assignment-operator
+#   ref: $baseUrl/$category/use-assignment-operator
 # custom:
 #   category: assignment
 report contains violation if {
@@ -30,7 +30,7 @@ report contains violation if {
 # description: Prefer := over = for assignment
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/use-assignment-operator
+#   ref: $baseUrl/$category/use-assignment-operator
 # custom:
 #   category: assignment
 report contains violation if {

@@ -16,7 +16,7 @@ test_fail_simple_constant_condition if {
 		"location": {"col": 2, "file": "policy.rego", "row": 9, "text": "\t1"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/constant-condition",
+			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
 		}],
 		"title": "constant-condition",
 		"level": "error",
@@ -37,7 +37,7 @@ test_fail_operator_constant_condition if {
 		"location": {"col": 2, "file": "policy.rego", "row": 9, "text": "\t1 == 1"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/constant-condition",
+			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
 		}],
 		"title": "constant-condition",
 		"level": "error",
@@ -56,7 +56,7 @@ test_fail_top_level_iteration_wildcard if {
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "x := input.foo.bar[_]"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/top-level-iteration",
+			"ref": config.docs.resolve_url("$baseUrl/$category/top-level-iteration", "bugs"),
 		}],
 		"title": "top-level-iteration",
 		"level": "error",
@@ -71,7 +71,7 @@ test_fail_top_level_iteration_named_var if {
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "x := input.foo.bar[i]"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/top-level-iteration",
+			"ref": config.docs.resolve_url("$baseUrl/$category/top-level-iteration", "bugs"),
 		}],
 		"title": "top-level-iteration",
 		"level": "error",

@@ -12,7 +12,7 @@ test_fail_future_keywords_import_wildcard if {
 		"description": "Use explicit future keyword imports",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/implicit-future-keywords",
+			"ref": config.docs.resolve_url("$baseUrl/$category/implicit-future-keywords", "imports"),
 		}],
 		"title": "implicit-future-keywords",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import future.keywords`},
@@ -38,7 +38,7 @@ test_fail_import_input if {
 		"description": "Avoid importing input",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/avoid-importing-input",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-importing-input", "imports"),
 		}],
 		"title": "avoid-importing-input",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import input.foo`},
@@ -52,7 +52,7 @@ test_fail_import_data if {
 		"description": "Redundant import of data",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/redundant-data-import", "imports"),
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data`},
@@ -66,7 +66,7 @@ test_fail_import_data_aliased if {
 		"description": "Redundant import of data",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/redundant-data-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/redundant-data-import", "imports"),
 		}],
 		"title": "redundant-data-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import data as d`},
@@ -88,7 +88,7 @@ import data.foo
 		"description": "Import shadows another import",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/import-shadows-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/import-shadows-import", "imports"),
 		}],
 		"title": "import-shadows-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.foo`},
@@ -105,7 +105,7 @@ import data.bar as foo
 		"description": "Import shadows another import",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/import-shadows-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/import-shadows-import", "imports"),
 		}],
 		"title": "import-shadows-import",
 		"location": {"col": 8, "file": "policy.rego", "row": 5, "text": `import data.bar as foo`},

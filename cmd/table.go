@@ -17,6 +17,7 @@ import (
 	"github.com/open-policy-agent/opa/loader"
 
 	"github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -50,6 +51,13 @@ func init() {
 	}
 	parseCommand.Flags().BoolVar(&params.writeToReadme, "write-to-readme", false, "Write table to README.md")
 	RootCommand.AddCommand(parseCommand)
+}
+
+func resolveDocsURL(url, category string) string {
+	b := strings.Replace(url, "$baseUrl", docs.DocsBaseURL, 1)
+	c := strings.Replace(b, "$category", category, 1)
+
+	return c + ".md"
 }
 
 func createTable(args []string, params tableCommandParams) error {
@@ -92,10 +100,13 @@ func createTable(args []string, params tableCommandParams) error {
 
 		traversedTitles[annotations.Title] = struct{}{}
 
-		//nolint:forcetypeassert
+		category := annotations.Custom["category"].(string) //nolint:forcetypeassert
+
 		tableData = append(tableData, []string{
-			annotations.Custom["category"].(string),
-			"[" + annotations.Title + "](" + annotations.RelatedResources[0].Ref.String() + ")",
+			category,
+			"[" + annotations.Title + "](" +
+				resolveDocsURL(annotations.RelatedResources[0].Ref.String(), category) +
+				")",
 			annotations.Description,
 		})
 	}

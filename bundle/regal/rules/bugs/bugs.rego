@@ -32,7 +32,7 @@ _rules_with_bodies := [rule |
 # description: Constant condition
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/constant-condition
+#   ref: $baseUrl/$category/constant-condition
 # custom:
 #   category: bugs
 report contains violation if {
@@ -51,7 +51,7 @@ report contains violation if {
 # description: Constant condition
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/constant-condition
+#   ref: $baseUrl/$category/constant-condition
 # custom:
 #   category: bugs
 report contains violation if {
@@ -74,7 +74,7 @@ report contains violation if {
 # description: Iteration in top-level assignment
 # related_resources:
 # - description: documentation
-#   ref: https://docs.styra.com/regal/rules/top-level-iteration
+#   ref: $baseUrl/$category/top-level-iteration
 # custom:
 #   category: bugs
 report contains violation if {

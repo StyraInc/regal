@@ -13,7 +13,7 @@ test_fail_rule_name_shadows_builtin if {
 		"description": "Rule name shadows built-in",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/rule-shadows-builtin",
+			"ref": config.docs.resolve_url("$baseUrl/$category/rule-shadows-builtin", "rules"),
 		}],
 		"title": "rule-shadows-builtin",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "or := 1"},
@@ -28,7 +28,7 @@ test_fail_rule_name_starts_with_get if {
 		"description": "Avoid get_ and list_ prefix for rules and functions",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/avoid-get-and-list-prefix",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "rules"),
 		}],
 		"title": "avoid-get-and-list-prefix",
 		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "get_foo := 1"},
@@ -43,7 +43,7 @@ test_fail_function_name_starts_with_list if {
 		"description": "Avoid get_ and list_ prefix for rules and functions",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/avoid-get-and-list-prefix",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "rules"),
 		}],
 		"title": "avoid-get-and-list-prefix",
 		"location": {

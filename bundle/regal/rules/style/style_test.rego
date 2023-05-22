@@ -11,7 +11,7 @@ snake_case_violation := {
 	"description": "Prefer snake_case for names",
 	"related_resources": [{
 		"description": "documentation",
-		"ref": "https://docs.styra.com/regal/rules/prefer-snake-case",
+		"ref": config.docs.resolve_url("$baseUrl/$category/prefer-snake-case", "style"),
 	}],
 	"title": "prefer-snake-case",
 	"level": "error",
@@ -131,7 +131,7 @@ test_fail_use_in_operator_string_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 9, "text": "\t\"admin\" == input.user.roles[_]"},
@@ -148,7 +148,7 @@ test_fail_use_in_operator_number_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 7, "file": "policy.rego", "row": 9, "text": "\t1 == input.lucky_numbers[_]"},
@@ -165,7 +165,7 @@ test_fail_use_in_operator_array_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 9, "file": "policy.rego", "row": 9, "text": "\t[1] == input.arrays[_]"},
@@ -182,7 +182,7 @@ test_fail_use_in_operator_boolean_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 9, "text": "\ttrue == input.booleans[_]"},
@@ -199,7 +199,7 @@ test_fail_use_in_operator_object_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 16, "file": "policy.rego", "row": 9, "text": "\t{\"x\": \"y\"} == input.objects[_]"},
@@ -216,7 +216,7 @@ test_fail_use_in_operator_null_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 9, "text": "\tnull == input.objects[_]"},
@@ -233,7 +233,7 @@ test_fail_use_in_operator_set_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 9, "text": "\t{\"foo\"} == input.objects[_]"},
@@ -249,7 +249,7 @@ test_fail_use_in_operator_var_lhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 11, "file": "policy.rego", "row": 9, "text": "\tadmin == input.user.roles[_]"},
@@ -265,7 +265,7 @@ test_fail_use_in_operator_string_rhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 2, "file": "policy.rego", "row": 9, "text": "\tinput.user.roles[_] == \"admin\""},
@@ -282,7 +282,7 @@ test_fail_use_in_operator_var_rhs if {
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/use-in-operator",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\tinput.user.roles[_] == admin"},
@@ -309,7 +309,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 		"description": "Line too long",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/line-length",
+			"ref": config.docs.resolve_url("$baseUrl/$category/line-length", "style"),
 		}],
 		"title": "line-length",
 		"location": {

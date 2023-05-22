@@ -1,3 +1,4 @@
+// nolint: gochecknoglobals
 package version
 
 import (
@@ -15,11 +16,11 @@ var (
 	Hostname  = ""
 )
 
-// goVersion is the version of Go this was built with
+// goVersion is the version of Go this was built with.
 var goVersion = runtime.Version()
 
-// platform is the runtime OS and architecture of this OPA binary
-var platform = runtime.GOOS + "/" + runtime.GOARCH
+// platform is the runtime OS and architecture of this OPA binary.
+const platform = runtime.GOOS + "/" + runtime.GOARCH
 
 // Info wraps the various version metadata values and provides a means of marshalling as JSON or pretty string.
 type Info struct {
@@ -50,18 +51,19 @@ func (vi Info) String() string {
 
 func New() Info {
 	return Info{
-		Version:   defaultedString(Version, "unknown"),
+		Version:   unknownString(Version),
 		GoVersion: goVersion,
 		Platform:  platform,
-		Commit:    defaultedString(Vcs, "unknown"),
-		Timestamp: defaultedString(Timestamp, "unknown"),
-		Hostname:  defaultedString(Hostname, "unknown"),
+		Commit:    unknownString(Vcs),
+		Timestamp: unknownString(Timestamp),
+		Hostname:  unknownString(Hostname),
 	}
 }
 
-func defaultedString(s string, defaultVal string) string {
+func unknownString(s string) string {
 	if s == "" {
-		return defaultVal
+		return "unknown"
 	}
+
 	return s
 }

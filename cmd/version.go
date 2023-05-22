@@ -37,7 +37,7 @@ func init() {
 			vi := version.New()
 
 			switch params.format {
-			case "json":
+			case formatPretty:
 				e := json.NewEncoder(os.Stdout)
 				e.SetIndent("", "  ")
 				err := e.Encode(vi)
@@ -46,16 +46,20 @@ func init() {
 					log.Println(err)
 					os.Exit(1)
 				}
-			case "pretty":
+			case formatJSON:
 				os.Stdout.WriteString(vi.String())
 			default:
 				log.SetOutput(os.Stderr)
 				log.Printf("invalid format: %s\n", params.format)
 				os.Exit(1)
 			}
-
 		},
 	}
-	parseCommand.Flags().StringVar(&params.format, "format", "pretty", "Output format. Valid values are 'json' and 'pretty'.")
+	parseCommand.Flags().StringVar(
+		&params.format,
+		"format",
+		formatPretty,
+		fmt.Sprintf("Output format. Valid values are '%s' and '%s'.", formatPretty, formatJSON),
+	)
 	RootCommand.AddCommand(parseCommand)
 }

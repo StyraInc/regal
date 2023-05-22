@@ -29,8 +29,6 @@ import (
 )
 
 const (
-	testPrettyOutput       = "pretty"
-	testJSONOutput         = "json"
 	benchmarkGoBenchOutput = "gobench"
 )
 
@@ -51,9 +49,9 @@ type testCommandParams struct {
 
 func newTestCommandParams() *testCommandParams {
 	return &testCommandParams{
-		outputFormat: util.NewEnumFlag(testPrettyOutput, []string{
-			testPrettyOutput,
-			testJSONOutput,
+		outputFormat: util.NewEnumFlag(formatPretty, []string{
+			formatPretty,
+			formatJSON,
 			benchmarkGoBenchOutput,
 		}),
 	}
@@ -191,7 +189,7 @@ func testReporter(cov *cover.Cover, modules map[string]*ast.Module) tester.Repor
 
 	if !testParams.coverage {
 		switch testParams.outputFormat.String() {
-		case testJSONOutput:
+		case formatJSON:
 			reporter = tester.JSONReporter{Output: os.Stdout}
 		case benchmarkGoBenchOutput:
 			goBench = true

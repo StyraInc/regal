@@ -60,11 +60,15 @@ report contains violation if {
 
 	imported.path.value[0].value == "input"
 
-	# If we want to allow aliasing input, eg `import input as tfplan`:
-	# count(imported.path.value) == 1
-	# imported.alias
+	# Allow aliasing input, eg `import input as tfplan`:
+	not _aliased_input(imported)
 
 	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
+}
+
+_aliased_input(imported) if {
+	count(imported.path.value) == 1
+	imported.alias
 }
 
 # METADATA

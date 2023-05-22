@@ -46,6 +46,24 @@ test_fail_import_input if {
 	}}
 }
 
+test_sucess_import_aliased_input if {
+	report(`import input as tfplan`) == set()
+}
+
+test_fail_import_input_aliased_attribute if {
+	report(`import input.foo.bar as barbar`) == {{
+		"category": "imports",
+		"description": "Avoid importing input",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-importing-input", "imports"),
+		}],
+		"title": "avoid-importing-input",
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `import input.foo.bar as barbar`},
+		"level": "error",
+	}}
+}
+
 test_fail_import_data if {
 	report(`import data`) == {{
 		"category": "imports",

@@ -20,6 +20,8 @@ rules:
       level: error
     import-shadows-import:
       level: error
+    redundant-alias:
+      level: error
     redundant-data-import:
       level: error
   rules:

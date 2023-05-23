@@ -27,6 +27,7 @@ linters:
     - cyclop
     - ireturn
     - funlen
+    - nolintlint
 linters-settings:
   tagliatelle:
     case:

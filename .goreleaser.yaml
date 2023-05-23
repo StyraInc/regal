@@ -1,0 +1,81 @@
+project_name: regal
+
+env:
+  - CGO_ENABLED=0
+
+builds:
+  - id: linux-windows-build
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
+      - -X github.com/styrainc/regal/pkg/version.Commit={{ .Commit }}
+      - -X github.com/styrainc/regal/pkg/version.Timestamp={{ .Date }}
+      - -X github.com/styrainc/regal/pkg/version.Hostname=github.actions.local
+  - id: darwin-build
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
+      - -X github.com/styrainc/regal/pkg/version.Commit={{ .Commit }}
+      - -X github.com/styrainc/regal/pkg/version.Timestamp={{ .Date }}
+      - -X github.com/styrainc/regal/pkg/version.Hostname=github.actions.local
+
+archives:
+  - id: binary
+    format: binary
+    files:
+      - none*
+    # example: regal_Darwin_arm64
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+
+release:
+  github:
+    owner: StyraInc
+    name: regal
+
+brews:
+  - tap:
+      owner: StyraInc
+      name: homebrew-packages
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    url_template: >-
+      https://github.com/StyraInc/regal/releases/download/{{ .Tag }}/{{ .ProjectName }}_{{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    commit_author:
+      name: Styra DevRel
+      email: devrel@styra.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://github.com/StyraInc/regal"
+    description: "Regal is a linter for Rego, the policy language of OPA."

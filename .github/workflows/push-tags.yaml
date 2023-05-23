@@ -1,0 +1,31 @@
+name: Push Tags
+
+on:
+  push:
+    tags:
+      - v[0-9].**
+
+jobs:
+  goreleaser:
+    name: GoReleaser
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          install-only: true
+
+      - name: Run GoReleaser
+        run: goreleaser release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -111,7 +111,7 @@ func init() {
 
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
 		"set path of configuration file")
-	lintCommand.Flags().StringVarP(&params.format, "format", "f", "pretty",
+	lintCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
 		"set output format (pretty, compact, json)")
 	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
 		"set level at which to fail with a non-zero exit code (error, warning)")
@@ -195,11 +195,11 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 func getReporter(format string) (reporter.Reporter, error) {
 	switch format {
-	case "pretty":
+	case formatPretty:
 		return reporter.NewPrettyReporter(os.Stdout), nil
-	case "compact":
+	case formatCompact:
 		return reporter.NewCompactReporter(os.Stdout), nil
-	case "json":
+	case formatJSON:
 		return reporter.NewJSONReporter(os.Stdout), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)

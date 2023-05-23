@@ -1,4 +1,4 @@
-# avoid-get-and-list-prefix
+# rule-shadows-builtin
 
 **Summary**: Rule name shadows built-in
 

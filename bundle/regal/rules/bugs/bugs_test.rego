@@ -88,6 +88,31 @@ test_success_top_level_input_ref if {
 	report(`x := input.foo.bar[input.y]`) == set()
 }
 
+test_fail_unused_return_value if {
+	r := report(`allow {
+		indexof("s", "s")
+	}`)
+	r == {{
+		"category": "bugs",
+		"description": "Non-boolean return value unused",
+		"level": "error",
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\tindexof(\"s\", \"s\")"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unused-return-value", "bugs"),
+		}],
+		"title": "unused-return-value",
+	}}
+}
+
+test_success_unused_boolean_return_value if {
+	report(`allow { startswith("s", "s") }`) == set()
+}
+
+test_success_return_value_assigned if {
+	report(`allow { x := indexof("s", "s") }`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := bugs.report with input as ast.with_future_keywords(snippet)

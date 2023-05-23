@@ -50,13 +50,14 @@ Regal comes with a set of built-in rules. The following rules are currently avai
 | assignment | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/assignment/use-assignment-operator.md)  | Prefer := over = for assignment                        |
 | bugs       | [constant-condition](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/constant-condition.md)                  | Constant condition                                     |
 | bugs       | [top-level-iteration](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/top-level-iteration.md)                | Iteration in top-level assignment                      |
+| bugs       | [unused-return-value](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/unused-return-value.md)                | Non-boolean return value unused                        |
 | comments   | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/comments/todo-comment.md)                          | Avoid TODO comments                                    |
 | functions  | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/functions/external-reference.md)             | Reference to input, data or rule ref in function body  |
-| imports    | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                    |
+| imports    | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                        |
 | imports    | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                  |
 | imports    | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                               |
 | imports    | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                          |
-| imports    | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                        |
+| imports    | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                    |
 | rules      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/rule-shadows-builtin.md)             | Rule name shadows built-in                             |
 | rules      | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
 | style      | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                            |

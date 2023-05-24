@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -27,6 +28,7 @@ type lintCommandParams struct {
 	timeout    time.Duration
 	configFile string
 	format     string
+	outputFile string
 	failLevel  string
 	rules      repeatedStringFlag
 	noColor    bool
@@ -113,6 +115,8 @@ func init() {
 		"set path of configuration file")
 	lintCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
 		"set output format (pretty, compact, json)")
+	lintCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
+		"set file to use for linting output, defaults to stdout")
 	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
 		"set level at which to fail with a non-zero exit code (error, warning)")
 	lintCommand.Flags().BoolVar(&params.noColor, "no-color", false,
@@ -131,6 +135,21 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 	if params.noColor {
 		color.NoColor = true
+	}
+
+	// if an outputFile has been set, open it for writing or create it
+	outputWriter := os.Stdout
+	if params.outputFile != "" {
+		if _, err := os.Stat(params.outputFile); err == nil {
+			outputWriter, err = os.OpenFile(params.outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			if err != nil {
+				return report.Report{}, fmt.Errorf("failed to open output file before use %w", err)
+			}
+		} else {
+			if outputWriter, err = os.Create(params.outputFile); err != nil {
+				return report.Report{}, fmt.Errorf("failed to create output file before use %w", err)
+			}
+		}
 	}
 
 	// Create new fs from root of bundle, to avoid having to deal with
@@ -185,7 +204,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("error(s) ecountered while linting: %w", err)
 	}
 
-	rep, err := getReporter(params.format)
+	rep, err := getReporter(params.format, outputWriter)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to get reporter: %w", err)
 	}
@@ -193,14 +212,14 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	return result, rep.Publish(result) //nolint:wrapcheck
 }
 
-func getReporter(format string) (reporter.Reporter, error) {
+func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {
 	switch format {
 	case formatPretty:
-		return reporter.NewPrettyReporter(os.Stdout), nil
+		return reporter.NewPrettyReporter(outputWriter), nil
 	case formatCompact:
-		return reporter.NewCompactReporter(os.Stdout), nil
+		return reporter.NewCompactReporter(outputWriter), nil
 	case formatJSON:
-		return reporter.NewJSONReporter(os.Stdout), nil
+		return reporter.NewJSONReporter(outputWriter), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}

@@ -101,6 +101,61 @@ camelCase {
 	}
 }
 
+func TestLintWithGoRule(t *testing.T) {
+	t.Parallel()
+
+	policy := `package p
+
+ x := true
+`
+
+	linter := NewLinter().
+		WithAddedBundle(test.GetRegalBundle(t))
+
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
+	}
+
+	if result.Violations[0].Title != "opa-fmt" {
+		t.Errorf("excpected first violation to be 'opa-fmt', got %s", result.Violations[0].Title)
+	}
+}
+
+func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
+	t.Parallel()
+
+	policy := `package p
+
+ x := true
+`
+
+	configRaw := `rules:
+  style:
+    opa-fmt:
+      level: ignore
+`
+
+	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
+
+	linter := NewLinter().
+		WithUserConfig(config).
+		WithAddedBundle(test.GetRegalBundle(t))
+
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Violations) != 0 {
+		t.Fatalf("expected no violation, got %d", len(result.Violations))
+	}
+}
+
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 

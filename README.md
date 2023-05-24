@@ -117,7 +117,7 @@ provided will be used to override the default configuration.
 
 ## Exit Codes
 
-Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be 
+Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be
 used to change the exit code behavior, and allows a value of either `warning` or `error` (default).
 
 If `--fail-level error` is supplied, exit code will be zero even if warnings are present:
@@ -160,5 +160,5 @@ rules altogether.
 
 ## Community
 
-For questions, discussions and announcements related to Styra products, services and open source projects, please join 
-the Styra community on [Slack](https://join.slack.com/t/styracommunity/shared_invite/zt-1p81qz8g4-t2OLKbvw0J5ibdcNc62~6Q)!
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://communityinviter.com/apps/styracommunity/signup)!

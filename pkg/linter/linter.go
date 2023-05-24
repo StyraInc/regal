@@ -222,12 +222,14 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		userConfig = l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
 	}
 
-	err = mergo.Merge(&bundledConf, userConfig)
+	mergedConf := util.CopyMap(bundledConf)
+
+	err = mergo.Merge(&mergedConf, userConfig, mergo.WithOverride)
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	return config.FromMap(bundledConf) //nolint:wrapcheck
+	return config.FromMap(mergedConf) //nolint:wrapcheck
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {

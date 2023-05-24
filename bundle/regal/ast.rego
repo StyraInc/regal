@@ -116,7 +116,7 @@ _find_vars(path, value, last) := _find_every_vars(path, value) if {
 find_vars(node) := [var |
 	walk(node, [path, value])
 
-	some var in _find_vars(path, value, path[count(path) - 1])
+	some var in _find_vars(path, value, regal.last(path))
 ]
 
 # METADATA
@@ -126,7 +126,7 @@ find_vars(node) := [var |
 find_builtin_calls(node) := [value |
 	walk(node, [path, value])
 
-	path[count(path) - 1] == "terms"
+	regal.last(path) == "terms"
 
 	value[0].type == "ref"
 	value[0].value[0].type == "var"

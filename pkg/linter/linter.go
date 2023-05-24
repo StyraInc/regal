@@ -125,6 +125,7 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalJSONPrettyMeta, builtins.RegalJSONPretty),
+		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
 
 	if l.configBundle != nil {

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"github.com/open-policy-agent/opa/tester"
@@ -44,7 +43,7 @@ func TestRunRegoUnitTests(t *testing.T) {
 		CapturePrintOutput(true).
 		SetRuntime(ast.NewTerm(ast.NewObject())).
 		SetBundles(bundle).
-		AddCustomBuiltins(customBuiltins())
+		AddCustomBuiltins(builtins.TestContextBuiltins())
 
 	ch, err := runner.RunTests(ctx, txn)
 	if err != nil {
@@ -59,24 +58,5 @@ func TestRunRegoUnitTests(t *testing.T) {
 				t.Errorf("%v\n%v", string(rc.Output), rc.Location)
 			}
 		})
-	}
-}
-
-func customBuiltins() []*tester.Builtin {
-	return []*tester.Builtin{
-		{
-			Decl: &ast.Builtin{
-				Name: builtins.RegalParseModuleMeta.Name,
-				Decl: builtins.RegalParseModuleMeta.Decl,
-			},
-			Func: rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		},
-		{
-			Decl: &ast.Builtin{
-				Name: builtins.RegalJSONPrettyMeta.Name,
-				Decl: builtins.RegalJSONPrettyMeta.Decl,
-			},
-			Func: rego.Function1(builtins.RegalJSONPrettyMeta, builtins.RegalJSONPretty),
-		},
 	}
 }

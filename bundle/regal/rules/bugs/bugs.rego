@@ -85,7 +85,7 @@ report contains violation if {
 
 	rule.head.value.type == "ref"
 
-	last := rule.head.value.value[count(rule.head.value.value) - 1]
+	last := regal.last(rule.head.value.value)
 	last.type == "var"
 
 	illegal_value_ref(last.value)

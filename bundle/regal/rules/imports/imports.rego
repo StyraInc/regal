@@ -108,3 +108,21 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.rule(), result.location(input.imports[i].path.value[0]))
 }
+
+# METADATA
+# title: redundant-alias
+# description: Redundant alias
+# related_resources:
+# - description: documentation
+#   ref: $baseUrl/$category/redundant-alias
+# custom:
+#   category: imports
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).level != "ignore"
+
+	some imported in input.imports
+
+	imported.path.value[count(imported.path.value) - 1].value == imported.alias
+
+	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
+}

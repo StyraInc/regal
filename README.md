@@ -56,8 +56,9 @@ Regal comes with a set of built-in rules. The following rules are currently avai
 | imports    | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                  |
 | imports    | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                               |
 | imports    | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                          |
-| rules      | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
+| imports    | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                        |
 | rules      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/rule-shadows-builtin.md)             | Rule name shadows built-in                             |
+| rules      | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/rules/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
 | style      | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                            |
 | style      | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                         |
 | style      | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                          |

@@ -61,3 +61,21 @@ release:
   github:
     owner: StyraInc
     name: regal
+
+brews:
+  - tap:
+      owner: StyraInc
+      name: homebrew-packages
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    url_template: >-
+      https://github.com/StyraInc/{{ .ProjectName }}/releases/download/{{ .Tag }}/{{ .ProjectName }}_{{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    commit_author:
+      name: Styra DevRel
+      email: devrel@styra.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://github.com/styrainc/regal"
+    description: "Regal is a linter for Rego, with the goal of making your Rego magnificent!"

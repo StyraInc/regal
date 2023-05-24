@@ -44,5 +44,5 @@ report contains violation if {
 	terms[1].type == "var"
 	terms[1].value == rule_head_var
 
-	violation := result.fail(rego.metadata.rule(), {"location": rule.head.value.location})
+	violation := result.fail(rego.metadata.rule(), result.location(terms[1]))
 }

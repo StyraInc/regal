@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/imdario/mergo"
 
@@ -101,7 +102,7 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
 	}
 
-	goReport := report.Report{}
+	aggregate := report.Report{}
 
 	for _, rule := range goRules {
 		result, err := rule.Run(ctx, input)
@@ -109,10 +110,10 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
 		}
 
-		goReport.Violations = append(goReport.Violations, result.Violations...)
+		aggregate.Violations = append(aggregate.Violations, result.Violations...)
 	}
 
-	return goReport, err
+	return aggregate, err
 }
 
 func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
@@ -149,6 +150,9 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 }
 
 func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	regoArgs := l.prepareRegoArgs()
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
@@ -158,26 +162,59 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 	aggregate := report.Report{}
 
+	var wg sync.WaitGroup
+
+	var mu sync.Mutex
+
+	errCh := make(chan error)
+	doneCh := make(chan bool)
+
+	go func() {
+		wg.Wait()
+		doneCh <- true
+	}()
+
 	for _, name := range input.FileNames {
-		enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
-		if err != nil {
-			return report.Report{}, fmt.Errorf("failed preparing AST: %w", err)
-		}
+		wg.Add(1)
 
-		resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
-		if err != nil {
-			return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
-		}
+		go func(name string) {
+			defer wg.Done()
 
-		r, err := resultSetToReport(resultSet)
-		if err != nil {
-			return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
-		}
+			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				errCh <- fmt.Errorf("failed preparing AST: %w", err)
 
-		aggregate.Violations = append(aggregate.Violations, r.Violations...)
+				return
+			}
+
+			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
+			if err != nil {
+				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+
+				return
+			}
+
+			result, err := resultSetToReport(resultSet)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+
+				return
+			}
+
+			mu.Lock()
+			aggregate.Violations = append(aggregate.Violations, result.Violations...)
+			mu.Unlock()
+		}(name)
 	}
 
-	return aggregate, nil
+	select {
+	case <-ctx.Done():
+		return report.Report{}, fmt.Errorf("context cancelled: %w", ctx.Err())
+	case err := <-errCh:
+		return report.Report{}, fmt.Errorf("error encountered in rule evaluation %w", err)
+	case <-doneCh:
+		return aggregate, nil
+	}
 }
 
 func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {

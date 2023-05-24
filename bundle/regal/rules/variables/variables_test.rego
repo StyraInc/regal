@@ -7,7 +7,10 @@ import data.regal.config
 import data.regal.rules.variables
 
 test_fail_unconditional_assignment_in_body if {
-	report(`x := y { y := 1 }`) == {{
+	r := report(`x := y {
+		y := 1
+	}`)
+	r == {{
 		"category": "variables",
 		"description": "Unconditional assignment in rule body",
 		"related_resources": [{
@@ -15,13 +18,16 @@ test_fail_unconditional_assignment_in_body if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "variables"),
 		}],
 		"title": "unconditional-assignment",
-		"location": {"col": 6, "file": "policy.rego", "row": 8},
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\ty := 1"},
 		"level": "error",
 	}}
 }
 
 test_fail_unconditional_eq_in_body if {
-	report(`x = y { y = 1 }`) == {{
+	r := report(`x = y {
+		y = 1
+	}`)
+	r == {{
 		"category": "variables",
 		"description": "Unconditional assignment in rule body",
 		"related_resources": [{
@@ -29,7 +35,7 @@ test_fail_unconditional_eq_in_body if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "variables"),
 		}],
 		"title": "unconditional-assignment",
-		"location": {"col": 5, "file": "policy.rego", "row": 8},
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\ty = 1"},
 		"level": "error",
 	}}
 }

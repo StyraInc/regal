@@ -7,6 +7,8 @@ rules:
       level: error
     top-level-iteration:
       level: error
+    unused-return-value:
+      level: error
   comments:
     todo-comment:
       level: error

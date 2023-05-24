@@ -130,6 +130,8 @@ func init() {
 }
 
 func lint(args []string, params lintCommandParams) (report.Report, error) {
+	var err error
+
 	ctx, cancel := getLinterContext(params)
 	defer cancel()
 
@@ -138,17 +140,13 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	}
 
 	// if an outputFile has been set, open it for writing or create it
-	outputWriter := os.Stdout
+	var outputWriter io.Writer
+
+	outputWriter = os.Stdout
 	if params.outputFile != "" {
-		if _, err := os.Stat(params.outputFile); err == nil {
-			outputWriter, err = os.OpenFile(params.outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-			if err != nil {
-				return report.Report{}, fmt.Errorf("failed to open output file before use %w", err)
-			}
-		} else {
-			if outputWriter, err = os.Create(params.outputFile); err != nil {
-				return report.Report{}, fmt.Errorf("failed to create output file before use %w", err)
-			}
+		outputWriter, err = getWriterForOutputFile(params.outputFile)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to open output file before use %w", err)
 		}
 	}
 
@@ -254,4 +252,22 @@ func getLinterContext(params lintCommandParams) (context.Context, func()) {
 	}
 
 	return ctx, cancel
+}
+
+func getWriterForOutputFile(filename string) (io.Writer, error) {
+	if _, err := os.Stat(filename); err == nil {
+		f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open output file %w", err)
+		}
+
+		return f, nil
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create output file %w", err)
+	}
+
+	return f, nil
 }

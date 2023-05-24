@@ -163,7 +163,9 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	aggregate := report.Report{}
 
 	var wg sync.WaitGroup
+
 	var mu sync.Mutex
+
 	errCh := make(chan error)
 	doneCh := make(chan bool)
 
@@ -177,21 +179,25 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 		go func(name string) {
 			defer wg.Done()
+
 			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
 				errCh <- fmt.Errorf("failed preparing AST: %w", err)
+
 				return
 			}
 
 			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+
 				return
 			}
 
 			result, err := resultSetToReport(resultSet)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+
 				return
 			}
 

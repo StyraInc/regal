@@ -68,3 +68,22 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.rule(), result.location(terms[0]))
 }
+
+# METADATA
+# title: print-or-trace-call
+# description: Call to print or trace function
+# related_resources:
+# - description: documentation
+#   ref: $baseUrl/$category/print-or-trace-call
+# custom:
+#   category: functions
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).level != "ignore"
+
+	some call in ast.find_builtin_calls(input)
+
+	name := call[0].value[0].value
+	name in {"print", "trace"}
+
+	violation := result.fail(rego.metadata.rule(), result.location(call[0].value[0]))
+}

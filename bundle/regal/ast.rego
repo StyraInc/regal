@@ -5,6 +5,10 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.opa
+
+_builtin_names := object.keys(opa.builtins)
+
 # METADATA
 # description: parse provided snippet with a generic package declaration added
 policy(snippet) := regal.parse_module("policy.rego", concat("", [
@@ -107,10 +111,24 @@ _find_vars(path, value, last) := _find_every_vars(path, value) if {
 
 # METADATA
 # description: |
-#   traverses all nodes under provided path (using `walk`), and returns an array with
+#   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some` or `every`
-find_vars(path) := [var |
-	walk(path, [_path, _value])
+find_vars(node) := [var |
+	walk(node, [path, value])
 
-	some var in _find_vars(_path, _value, _path[count(_path) - 1])
+	some var in _find_vars(path, value, path[count(path) - 1])
+]
+
+# METADATA
+# description: |
+#   traverses all nodes under provided node (using `walk`), and returns an array with
+#   all calls to builtin functions
+find_builtin_calls(node) := [value |
+	walk(node, [path, value])
+
+	path[count(path) - 1] == "terms"
+
+	value[0].type == "ref"
+	value[0].value[0].type == "var"
+	value[0].value[0].value in _builtin_names
 ]

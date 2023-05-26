@@ -113,6 +113,52 @@ test_success_return_value_assigned if {
 	report(`allow { x := indexof("s", "s") }`) == set()
 }
 
+test_fail_neq_in_loop if {
+	r := report(`deny {
+		"admin" != input.user.groups[_]
+		input.user.groups[_] != "admin"
+	}`)
+	r == {
+		{
+			"category": "bugs",
+			"description": "Use of != in loop",
+			"level": "error",
+			"location": {"col": 11, "file": "policy.rego", "row": 9, "text": "\t\t\"admin\" != input.user.groups[_]"},
+			"related_resources": [{
+				"description": "documentation",
+				"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md",
+			}],
+			"title": "not-equals-in-loop",
+		},
+		{
+			"category": "bugs",
+			"description": "Use of != in loop",
+			"level": "error",
+			"location": {"col": 24, "file": "policy.rego", "row": 10, "text": "\t\tinput.user.groups[_] != \"admin\""},
+			"related_resources": [{
+				"description": "documentation",
+				"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md",
+			}],
+			"title": "not-equals-in-loop",
+		},
+	}
+}
+
+test_fail_neq_in_loop_one_liner if {
+	r := report(`deny if "admin" != input.user.groups[_]`)
+	r == {{
+		"category": "bugs",
+		"description": "Use of != in loop",
+		"level": "error",
+		"location": {"col": 17, "file": "policy.rego", "row": 8, "text": "deny if \"admin\" != input.user.groups[_]"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md",
+		}],
+		"title": "not-equals-in-loop",
+	}}
+}
+
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := bugs.report with input as ast.with_future_keywords(snippet)

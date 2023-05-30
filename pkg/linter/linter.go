@@ -30,6 +30,12 @@ type Linter struct {
 	configBundle     *bundle.Bundle
 	customRulesPaths []string
 	combinedConfig   *config.Config
+	disable          []string
+	disableAll       bool
+	disableCategory  []string
+	enable           []string
+	enableAll        bool
+	enableCategory   []string
 }
 
 const regalUserConfig = "regal_user_config"
@@ -62,6 +68,48 @@ func (l Linter) WithUserConfig(config map[string]any) Linter {
 		},
 		Data: map[string]any{regalUserConfig: config},
 	}
+
+	return l
+}
+
+// WithDisabledRules disables provided rules. This overrides configuration provided in file.
+func (l Linter) WithDisabledRules(disable ...string) Linter {
+	l.disable = disable
+
+	return l
+}
+
+// WithDisableAll disables all rules when set to true. This overrides configuration provided in file.
+func (l Linter) WithDisableAll(disableAll bool) Linter {
+	l.disableAll = disableAll
+
+	return l
+}
+
+// WithDisabledCategories disables provided categories of rules. This overrides configuration provided in file.
+func (l Linter) WithDisabledCategories(disableCategory ...string) Linter {
+	l.disableCategory = disableCategory
+
+	return l
+}
+
+// WithEnabledRules enables provided rules. This overrides configuration provided in file.
+func (l Linter) WithEnabledRules(enable ...string) Linter {
+	l.enable = enable
+
+	return l
+}
+
+// WithEnableAll enables all rules when set to true. This overrides configuration provided in file.
+func (l Linter) WithEnableAll(enableAll bool) Linter {
+	l.enableAll = enableAll
+
+	return l
+}
+
+// WithEnabledCategories enables provided categories of rules. This overrides configuration provided in file.
+func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
+	l.enableCategory = enableCategory
 
 	return l
 }
@@ -116,11 +164,20 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return aggregate, err
 }
 
-func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
+func (l Linter) prepareRegoArgs(data map[string]any) []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
+
+	roots := []string{"eval"}
+
+	dataBundle := bundle.Bundle{
+		Data:     data,
+		Manifest: bundle.Manifest{Roots: &roots},
+	}
 
 	regoArgs = append(regoArgs,
 		rego.ParsedQuery(query),
+		rego.ParsedBundle("regal_eval_params", &dataBundle),
+		// TODO: Only enable when --debug (or similar) is provided, as some optimizations are disabled by this.
 		rego.EnablePrintStatements(true),
 		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
@@ -153,7 +210,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs()
+	regoArgs := l.prepareRegoArgs(input.Config)
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -270,14 +327,61 @@ func (l Linter) mergedConfig() (config.Config, error) {
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {
+	var enabledGoRules []rules.Rule
+
+	// enabling/disabling all rules takes precedence and entirely disregards configuration
+	// files, but still respects the enable/disable category or rule flags
+
+	if l.disableAll {
+		for _, rule := range rules.AllGoRules(config.Config{}) {
+			if util.Contains(l.enableCategory, rule.Category()) || util.Contains(l.enable, rule.Name()) {
+				enabledGoRules = append(enabledGoRules, rule)
+			}
+		}
+
+		return enabledGoRules, nil
+	}
+
+	if l.enableAll {
+		for _, rule := range rules.AllGoRules(config.Config{}) {
+			if !util.Contains(l.disableCategory, rule.Category()) && !util.Contains(l.disable, rule.Name()) {
+				enabledGoRules = append(enabledGoRules, rule)
+			}
+		}
+
+		return enabledGoRules, nil
+	}
+
 	conf, err := l.mergedConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create merged config: %w", err)
 	}
 
-	var enabledGoRules []rules.Rule
-
 	for _, rule := range rules.AllGoRules(conf) {
+		// disabling specific rule has the highest precedence
+		if util.Contains(l.disable, rule.Name()) {
+			continue
+		}
+
+		// likewise for enabling specific rule
+		if util.Contains(l.enable, rule.Name()) {
+			enabledGoRules = append(enabledGoRules, rule)
+
+			continue
+		}
+
+		// next highest precedence is disabling / enabling a category
+		if util.Contains(l.disableCategory, rule.Category()) {
+			continue
+		}
+
+		if util.Contains(l.enableCategory, rule.Category()) {
+			enabledGoRules = append(enabledGoRules, rule)
+
+			continue
+		}
+
+		// if none of the above applies, check the config for the rule
 		if rule.Config().Level != "ignore" {
 			enabledGoRules = append(enabledGoRules, rule)
 		}

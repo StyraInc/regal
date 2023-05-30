@@ -116,6 +116,20 @@ reached. If no configuration file is found, Regal will use the default configura
 A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
 provided will be used to override the default configuration.
 
+### CLI flags
+
+For development, rules may also quickly be enabled or disabled using the relevant CLI flags for the `regal lint`
+command.
+
+- `--disable-all` disables **all** rules
+- `--disable-category` disables all rules in a category, overriding `--enable-all` (may be repeated)
+- `--disable` disables a specific rule, overriding `--enable-all` and `--enable-category` (may be repeated)
+- `--enable-all` enables **all** rules
+- `--enable-category` enables all rules in a category, overriding `--disable-all` (may be repeated)
+- `--enable` enables a specific rule, overriding `--disable-all` and `--disable-category` (may be repeated)
+
+All CLI flags override configuration provided in file.
+
 ## Exit Codes
 
 Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be

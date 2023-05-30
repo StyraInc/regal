@@ -25,6 +25,8 @@ type Input struct {
 	FileContent map[string]string
 	// Modules is the set of modules to lint.
 	Modules map[string]*ast.Module
+	// Config provides extra configuration applicable to evaluation.
+	Config map[string]any
 }
 
 // Rule represents a linter rule.
@@ -44,7 +46,7 @@ type Rule interface {
 }
 
 // NewInput creates a new Input from a set of modules.
-func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Input {
+func NewInput(fileContent map[string]string, modules map[string]*ast.Module, config map[string]any) Input {
 	// Maintain order across runs
 	filenames := util.Keys(modules)
 	sort.Strings(filenames)
@@ -53,11 +55,12 @@ func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Inp
 		FileContent: fileContent,
 		FileNames:   filenames,
 		Modules:     modules,
+		Config:      config,
 	}
 }
 
 // InputFromPaths creates a new Input from a set of file or directory paths.
-func InputFromPaths(paths []string) (Input, error) {
+func InputFromPaths(paths []string, conf map[string]any) (Input, error) {
 	policyPaths, err := loader.FilteredPaths(paths, func(_ string, info os.FileInfo, depth int) bool {
 		return !info.IsDir() && !strings.HasSuffix(info.Name(), bundle.RegoExt)
 	})
@@ -79,7 +82,7 @@ func InputFromPaths(paths []string) (Input, error) {
 		modules[result.Name] = result.Parsed
 	}
 
-	return NewInput(fileContent, modules), nil
+	return NewInput(fileContent, modules, conf), nil
 }
 
 func AllGoRules(conf config.Config) []Rule {

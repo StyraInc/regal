@@ -59,7 +59,7 @@ report contains violation if {
 	expr.terms[1].type in {"array", "boolean", "object", "null", "number", "set", "string", "var"}
 	expr.terms[2].type == "ref"
 
-	last := expr.terms[2].value[count(expr.terms[2].value) - 1]
+	last := regal.last(expr.terms[2].value)
 
 	last.type == "var"
 	startswith(last.value, "$")
@@ -83,7 +83,7 @@ report contains violation if {
 	expr.terms[1].type == "ref"
 	expr.terms[2].type in {"array", "boolean", "object", "null", "number", "set", "string", "var"}
 
-	last := expr.terms[1].value[count(expr.terms[1].value) - 1]
+	last := regal.last(expr.terms[1].value)
 
 	last.type == "var"
 	startswith(last.value, "$")

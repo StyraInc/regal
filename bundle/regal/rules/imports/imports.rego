@@ -12,7 +12,7 @@ _identifiers := [_ident(imported) |
 ]
 
 # regular import
-_ident(imported) := path[count(path) - 1].value if {
+_ident(imported) := regal.last(path).value if {
 	not imported.alias
 	path := imported.path.value
 }
@@ -122,7 +122,7 @@ report contains violation if {
 
 	some imported in input.imports
 
-	imported.path.value[count(imported.path.value) - 1].value == imported.alias
+	regal.last(imported.path.value).value == imported.alias
 
 	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
 }

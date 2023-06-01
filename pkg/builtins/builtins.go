@@ -4,6 +4,7 @@ package builtins
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -34,6 +35,18 @@ var RegalJSONPrettyMeta = &rego.Function{
 			types.Named("data", types.A).Description("data to marshal to JSON in a pretty format"),
 		),
 		types.Named("output", types.S),
+	),
+}
+
+// RegalLastMeta metadata for regal.last.
+var RegalLastMeta = &rego.Function{
+	Name: "regal.last",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("array", types.NewArray(nil, types.A)).
+				Description("performance optimized last index retrieval"),
+		),
+		types.Named("element", types.A),
 	),
 }
 
@@ -72,6 +85,22 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 	return term, nil
 }
 
+var errAiob = errors.New("array index out of bounds")
+
+// RegalLast regal.last returns the last element of an array.
+func RegalLast(_ rego.BuiltinContext, arr *ast.Term) (*ast.Term, error) {
+	arrOp, err := builtins.ArrayOperand(arr.Value, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	if arrOp.Len() == 0 {
+		return nil, errAiob
+	}
+
+	return arrOp.Elem(arrOp.Len() - 1), nil
+}
+
 // RegalJSONPretty regal.json_pretty, like json.marshal but with pretty formatting.
 func RegalJSONPretty(_ rego.BuiltinContext, data *ast.Term) (*ast.Term, error) {
 	encoded, err := json.MarshalIndent(data, "", "  ")
@@ -98,6 +127,13 @@ func TestContextBuiltins() []*tester.Builtin {
 				Decl: RegalJSONPrettyMeta.Decl,
 			},
 			Func: rego.Function1(RegalJSONPrettyMeta, RegalJSONPretty),
+		},
+		{
+			Decl: &ast.Builtin{
+				Name: RegalLastMeta.Name,
+				Decl: RegalLastMeta.Decl,
+			},
+			Func: rego.Function1(RegalLastMeta, RegalLast),
 		},
 	}
 }

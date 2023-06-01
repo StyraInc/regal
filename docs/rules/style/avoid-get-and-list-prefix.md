@@ -2,7 +2,7 @@
 
 **Summary**: Avoid `get_` and `list_` prefix for rules and functions
 
-**Category**: Rules
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -49,7 +49,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  rules:
+  style:
     avoid-get-and-list-prefix:
       # one of "error", "warning", "ignore"
       level: error

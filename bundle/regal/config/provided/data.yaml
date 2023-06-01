@@ -23,24 +23,24 @@ rules:
       level: error
   style:
     avoid-get-and-list-prefix:
-      level: ignore
+      level: error
     external-reference:
-      level: ignore
+      level: error
     line-length:
-      level: ignore
+      level: error
       max-line-length: 120
     opa-fmt:
-      level: ignore
+      level: error
     prefer-snake-case:
-      level: ignore
+      level: error
     todo-comment:
-      level: ignore
+      level: error
     unconditional-assignment:
-      level: ignore
+      level: error
     use-assignment-operator:
-      level: ignore
+      level: error
     use-in-operator:
-      level: ignore
+      level: error
   testing:
     file-missing-test-suffix:
       level: error

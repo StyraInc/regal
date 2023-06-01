@@ -2,7 +2,7 @@
 
 **Summary**: Unconditional assignment in rule body
 
-**Category**: Variables
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -37,7 +37,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  variables:
+  style:
     unconditional-assignment:
       # one of "error", "warning", "ignore"
       level: error

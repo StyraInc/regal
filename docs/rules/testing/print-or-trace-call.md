@@ -2,7 +2,7 @@
 
 **Summary**: Call to `print` or `trace` function
 
-**Category**: Functions
+**Category**: Testing
 
 **Avoid**
 ```rego
@@ -35,7 +35,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules:
-  functions:
+  testing:
     print-or-trace-call:
       # one of "error", "warning", "ignore"
       level: error

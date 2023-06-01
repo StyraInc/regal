@@ -71,8 +71,7 @@ func TestPrettyReporterPublish(t *testing.T) {
 	}
 
 	// TODO(anders): I cannot for the life of me get this to work using a raw string 🫠
-	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nLevel:        \terror                           \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nLevel:        \twarning                         \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files.\n" //nolint:lll
-
+	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files.\n" //nolint: lll
 	if buf.String() != expect {
 		t.Errorf("expected %q, got %q", expect, buf.String())
 	}

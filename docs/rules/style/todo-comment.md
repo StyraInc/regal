@@ -2,7 +2,7 @@
 
 **Summary**: Avoid TODO Comments
 
-**Category**: Comments
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -40,7 +40,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  comments:
+  style:
     todo-comment:
       # one of "error", "warning", "ignore"
       level: error

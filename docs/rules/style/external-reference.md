@@ -2,7 +2,7 @@
 
 **Summary**: Reference to input, data or rule ref in function body
 
-**Category**: Functions
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -46,7 +46,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  functions:
+  style:
     external-reference:
       # one of "error", "warning", "ignore"
       level: error

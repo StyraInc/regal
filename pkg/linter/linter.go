@@ -164,13 +164,28 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return aggregate, err
 }
 
-func (l Linter) prepareRegoArgs(data map[string]any) []func(*rego.Rego) {
+func (l Linter) paramsToRulesConfig() map[string]any {
+	return map[string]interface{}{
+		"eval": map[string]any{
+			"params": map[string]any{
+				"disable_all":      l.disableAll,
+				"disable_category": util.NullToEmpty(l.disableCategory),
+				"disable":          util.NullToEmpty(l.disable),
+				"enable_all":       l.enableAll,
+				"enable_category":  util.NullToEmpty(l.enableCategory),
+				"enable":           util.NullToEmpty(l.enable),
+			},
+		},
+	}
+}
+
+func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
 
 	roots := []string{"eval"}
 
 	dataBundle := bundle.Bundle{
-		Data:     data,
+		Data:     l.paramsToRulesConfig(),
 		Manifest: bundle.Manifest{Roots: &roots},
 	}
 
@@ -211,7 +226,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs(input.Config)
+	regoArgs := l.prepareRegoArgs()
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {

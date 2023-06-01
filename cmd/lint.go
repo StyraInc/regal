@@ -219,7 +219,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
 	}
 
-	input, err := rules.InputFromPaths(args, paramsToRulesConfig(params))
+	input, err := rules.InputFromPaths(args)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -235,29 +235,6 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	}
 
 	return result, rep.Publish(result) //nolint:wrapcheck
-}
-
-func nullToEmpty(a []string) []string {
-	if a == nil {
-		return []string{}
-	}
-
-	return a
-}
-
-func paramsToRulesConfig(params lintCommandParams) map[string]any {
-	return map[string]interface{}{
-		"eval": map[string]any{
-			"params": map[string]any{
-				"disable_all":      params.disableAll,
-				"disable_category": nullToEmpty(params.disableCategory.v),
-				"disable":          nullToEmpty(params.disable.v),
-				"enable_all":       params.enableAll,
-				"enable_category":  nullToEmpty(params.enableCategory.v),
-				"enable":           nullToEmpty(params.enable.v),
-			},
-		},
-	}
 }
 
 func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {

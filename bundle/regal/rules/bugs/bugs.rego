@@ -157,3 +157,20 @@ probably_no_body(rule) if {
 	rule.body[0].terms.type == "boolean"
 	rule.body[0].terms.value == true
 }
+
+# METADATA
+# title: rule-shadows-builtin
+# description: Rule name shadows built-in
+# related_resources:
+# - description: documentation
+#   ref: $baseUrl/$category/rule-shadows-builtin
+# custom:
+#   category: bugs
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).level != "ignore"
+
+	some rule in input.rules
+	rule.head.name in _builtin_names
+
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+}

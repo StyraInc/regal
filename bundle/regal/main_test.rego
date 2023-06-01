@@ -12,6 +12,7 @@ test_main_multiple_failues {
 	default camelCase = "yes"
 	`
 	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 2
 }
@@ -23,6 +24,7 @@ test_main_ignore_directive_failure {
 	camelCase := "yes"
 	`
 	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 1
 }
@@ -34,6 +36,7 @@ test_main_ignore_directive_success {
 	camelCase := "yes"
 	`
 	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 0
 }
@@ -45,6 +48,7 @@ test_main_ignore_directive_multiple_success {
 	default camelCase = "yes"
 	`
 	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 0
 }
@@ -56,6 +60,7 @@ test_main_ignore_directive_multiple_mixed_success {
 	default camelCase = "yes"
 	`
 	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 1
 }

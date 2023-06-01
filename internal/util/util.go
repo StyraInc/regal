@@ -29,6 +29,15 @@ func Contains[T comparable](s []T, e T) bool {
 	return false
 }
 
+// NullToEmpty returns empty slice if provided slice is nil.
+func NullToEmpty[T any](a []T) []T {
+	if a == nil {
+		return []T{}
+	}
+
+	return a
+}
+
 // SearchMap searches map for value at provided path.
 func SearchMap(object map[string]any, path []string) (any, error) {
 	current := object

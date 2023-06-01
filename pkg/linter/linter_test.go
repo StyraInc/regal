@@ -21,7 +21,7 @@ camelCase {
 }
 `
 
-	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t))
+	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true)
 
 	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
 	if err != nil {
@@ -70,15 +70,14 @@ func TestLintWithUserConfig(t *testing.T) {
 
 	policy := `package p
 
-# TODO: fix this
-camelCase {
-	1 == input.one
-}
+foo := input.bar[_]
+	
+or := 1
 `
 
 	configRaw := `rules:
-  comments:
-    todo-comment:
+  bugs:
+    rule-shadows-builtin:
       level: ignore`
 
 	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
@@ -96,8 +95,8 @@ camelCase {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
 	}
 
-	if result.Violations[0].Title != "prefer-snake-case" {
-		t.Errorf("excpected first violation to be 'prefer-snake-case', got %s", result.Violations[0].Title)
+	if result.Violations[0].Title != "top-level-iteration" {
+		t.Errorf("excpected first violation to be 'top-level-iteration', got %s", result.Violations[0].Title)
 	}
 }
 
@@ -110,7 +109,7 @@ func TestLintWithGoRule(t *testing.T) {
 `
 
 	linter := NewLinter().
-		WithAddedBundle(test.GetRegalBundle(t))
+		WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true)
 
 	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
 	if err != nil {

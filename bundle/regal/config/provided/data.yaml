@@ -1,19 +1,14 @@
 rules:
-  assignment:
-    use-assignment-operator:
-      level: error
   bugs:
     constant-condition:
+      level: error
+    not-equals-in-loop:
+      level: error
+    rule-shadows-builtin:
       level: error
     top-level-iteration:
       level: error
     unused-return-value:
-      level: error
-  comments:
-    todo-comment:
-      level: error
-  functions:
-    external-reference:
       level: error
   imports:
     avoid-importing-input:
@@ -26,30 +21,34 @@ rules:
       level: error
     redundant-data-import:
       level: error
-  rules:
-    rule-shadows-builtin:
-      level: error
-    avoid-get-and-list-prefix:
-      level: error
   style:
+    avoid-get-and-list-prefix:
+      level: ignore
+    external-reference:
+      level: ignore
     line-length:
-      level: error
+      level: ignore
       max-line-length: 120
     opa-fmt:
-      level: error
+      level: ignore
     prefer-snake-case:
-      level: error
+      level: ignore
+    todo-comment:
+      level: ignore
+    unconditional-assignment:
+      level: ignore
+    use-assignment-operator:
+      level: ignore
     use-in-operator:
-      level: error
+      level: ignore
   testing:
     file-missing-test-suffix:
       level: error
     identically-named-tests:
       level: error
+    print-or-trace-call:
+      level: error
     test-outside-test-package:
       level: error
     todo-test:
-      level: error
-  variables:
-    unconditional-assignment:
       level: error

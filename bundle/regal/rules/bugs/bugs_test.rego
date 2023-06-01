@@ -159,6 +159,25 @@ test_fail_neq_in_loop_one_liner if {
 	}}
 }
 
+test_fail_rule_name_shadows_builtin if {
+	r := report(`or := 1`)
+	r == {{
+		"category": "bugs",
+		"description": "Rule name shadows built-in",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/rule-shadows-builtin", "bugs"),
+		}],
+		"title": "rule-shadows-builtin",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "or := 1"},
+		"level": "error",
+	}}
+}
+
+test_success_rule_name_does_not_shadows_builtin if {
+	report(`foo := 1`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := bugs.report with input as ast.with_future_keywords(snippet)

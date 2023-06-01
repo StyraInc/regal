@@ -324,6 +324,222 @@ test_success_line_not_too_long if {
 	report(`allow { "foo" == "bar" }`) == set()
 }
 
+test_fail_unification_in_default_assignment if {
+	report(`default x = false`) == {{
+		"category": "style",
+		"description": "Prefer := over = for assignment",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
+		}],
+		"title": "use-assignment-operator",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "default x = false"},
+		"level": "error",
+	}}
+}
+
+test_success_assignment_in_default_assignment if {
+	report(`default x := false`) == set()
+}
+
+test_fail_unification_in_object_rule_assignment if {
+	r := report(`x["a"] = 1`)
+	r == {{
+		"category": "style",
+		"description": "Prefer := over = for assignment",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
+		}],
+		"title": "use-assignment-operator",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `x["a"] = 1`},
+		"level": "error",
+	}}
+}
+
+test_success_assignment_in_object_rule_assignment if {
+	report(`x["a"] := 1`) == set()
+}
+
+# Some cases blocked by https://github.com/StyraInc/regal/issues/6 - e.g:
+#
+# allow = true { true }
+#
+# f(x) = 5
+
+test_fail_todo_comment if {
+	report(`# TODO: do someting clever`) == {{
+		"category": "style",
+		"description": "Avoid TODO comments",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/todo-comment", "style"),
+		}],
+		"title": "todo-comment",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# TODO: do someting clever`},
+		"level": "error",
+	}}
+}
+
+test_fail_fixme_comment if {
+	report(`# fixme: this is broken`) == {{
+		"category": "style",
+		"description": "Avoid TODO comments",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/todo-comment", "style"),
+		}],
+		"title": "todo-comment",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": `# fixme: this is broken`},
+		"level": "error",
+	}}
+}
+
+test_success_no_todo_comment if {
+	report(`# This code is great`) == set()
+}
+
+test_fail_function_references_input if {
+	report(`f(_) { input.foo }`) == {{
+		"category": "style",
+		"description": "Reference to input, data or rule ref in function body",
+		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { input.foo }`},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
+		}],
+		"title": "external-reference",
+		"level": "error",
+	}}
+}
+
+test_fail_function_references_data if {
+	report(`f(_) { data.foo }`) == {{
+		"category": "style",
+		"description": "Reference to input, data or rule ref in function body",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
+		}],
+		"title": "external-reference",
+		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { data.foo }`},
+		"level": "error",
+	}}
+}
+
+test_fail_function_references_rule if {
+	r := report(`
+foo := "bar"
+
+f(x, y) {
+	x == 5
+	y == foo
+}
+	`)
+	r == {{
+		"category": "style",
+		"description": "Reference to input, data or rule ref in function body",
+		"location": {"col": 7, "file": "policy.rego", "row": 13, "text": `	y == foo`},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
+		}],
+		"title": "external-reference",
+		"level": "error",
+	}}
+}
+
+test_success_function_references_no_input_or_data if {
+	report(`f(x) { x == true }`) == set()
+}
+
+test_success_function_references_no_input_or_data_reverse if {
+	report(`f(x) { true == x }`) == set()
+}
+
+test_success_function_references_only_own_vars if {
+	report(`f(x) { y := x; y == 10 }`) == set()
+}
+
+test_success_function_references_only_own_vars_nested if {
+	report(`f(x, z) { y := x; y == [1, 2, z]}`) == set()
+}
+
+test_fail_rule_name_starts_with_get if {
+	r := report(`get_foo := 1`)
+	r == {{
+		"category": "style",
+		"description": "Avoid get_ and list_ prefix for rules and functions",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "style"),
+		}],
+		"title": "avoid-get-and-list-prefix",
+		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "get_foo := 1"},
+		"level": "error",
+	}}
+}
+
+test_fail_function_name_starts_with_list if {
+	r := report(`list_users(datasource) := ["we", "have", "no", "users"]`)
+	r == {{
+		"category": "style",
+		"description": "Avoid get_ and list_ prefix for rules and functions",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "style"),
+		}],
+		"title": "avoid-get-and-list-prefix",
+		"location": {
+			"col": 1, "file": "policy.rego", "row": 8,
+			"text": `list_users(datasource) := ["we", "have", "no", "users"]`,
+		},
+		"level": "error",
+	}}
+}
+
+test_fail_unconditional_assignment_in_body if {
+	r := report(`x := y {
+		y := 1
+	}`)
+	r == {{
+		"category": "style",
+		"description": "Unconditional assignment in rule body",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "style"),
+		}],
+		"title": "unconditional-assignment",
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\ty := 1"},
+		"level": "error",
+	}}
+}
+
+test_fail_unconditional_eq_in_body if {
+	r := report(`x = y {
+		y = 1
+	}`)
+	r == {{
+		"category": "style",
+		"description": "Unconditional assignment in rule body",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unconditional-assignment", "style"),
+		}],
+		"title": "unconditional-assignment",
+		"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\ty = 1"},
+		"level": "error",
+	}}
+}
+
+test_success_conditional_assignment_in_body if {
+	report(`x := y { input.foo == "bar"; y := 1 }`) == set()
+}
+
+test_success_unconditional_assignment_but_with_in_body if {
+	report(`x := y { y := 5 with input as 1 }`) == set()
+}
+
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := style.report with input as ast.with_future_keywords(snippet)

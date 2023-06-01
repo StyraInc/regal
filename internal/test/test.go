@@ -43,5 +43,5 @@ func InputPolicy(filename string, policy string) rules.Input {
 	content := map[string]string{filename: policy}
 	modules := map[string]*ast.Module{filename: parse.MustParseModule(policy)}
 
-	return rules.NewInput(content, modules)
+	return rules.NewInput(content, modules, map[string]any{})
 }

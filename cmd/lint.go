@@ -25,13 +25,19 @@ import (
 )
 
 type lintCommandParams struct {
-	timeout    time.Duration
-	configFile string
-	format     string
-	outputFile string
-	failLevel  string
-	rules      repeatedStringFlag
-	noColor    bool
+	timeout         time.Duration
+	configFile      string
+	format          string
+	outputFile      string
+	failLevel       string
+	rules           repeatedStringFlag
+	noColor         bool
+	disable         repeatedStringFlag
+	disableAll      bool
+	disableCategory repeatedStringFlag
+	enable          repeatedStringFlag
+	enableAll       bool
+	enableCategory  repeatedStringFlag
 }
 
 const stringType = "string"
@@ -126,6 +132,20 @@ func init() {
 	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0,
 		"set timeout for linting (default unlimited)")
 
+	lintCommand.Flags().VarP(&params.disable, "disable", "d",
+		"disable specific rule(s). This flag can be repeated.")
+	lintCommand.Flags().BoolVarP(&params.disableAll, "disable-all", "D", false,
+		"disable all rules")
+	lintCommand.Flags().VarP(&params.disableCategory, "disable-category", "",
+		"disable all rules in a category. This flag can be repeated.")
+
+	lintCommand.Flags().VarP(&params.enable, "enable", "e",
+		"enable specific rule(s). This flag can be repeated.")
+	lintCommand.Flags().BoolVarP(&params.enableAll, "enable-all", "E", false,
+		"enable all rules")
+	lintCommand.Flags().VarP(&params.enableCategory, "enable-category", "",
+		"enable all rules in a category. This flag can be repeated.")
+
 	RootCommand.AddCommand(lintCommand)
 }
 
@@ -176,7 +196,14 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 	}
 
-	regal := linter.NewLinter().WithAddedBundle(regalRules)
+	regal := linter.NewLinter().
+		WithAddedBundle(regalRules).
+		WithDisableAll(params.disableAll).
+		WithDisabledCategories(params.disableCategory.v...).
+		WithDisabledRules(params.disable.v...).
+		WithEnableAll(params.enableAll).
+		WithEnabledCategories(params.enableCategory.v...).
+		WithEnabledRules(params.enable.v...)
 
 	if customRulesDir != "" {
 		regal = regal.WithCustomRules([]string{customRulesDir})
@@ -192,7 +219,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
 	}
 
-	input, err := rules.InputFromPaths(args)
+	input, err := rules.InputFromPaths(args, paramsToRulesConfig(params))
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -208,6 +235,29 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	}
 
 	return result, rep.Publish(result) //nolint:wrapcheck
+}
+
+func nullToEmpty(a []string) []string {
+	if a == nil {
+		return []string{}
+	}
+
+	return a
+}
+
+func paramsToRulesConfig(params lintCommandParams) map[string]any {
+	return map[string]interface{}{
+		"eval": map[string]any{
+			"params": map[string]any{
+				"disable_all":      params.disableAll,
+				"disable_category": nullToEmpty(params.disableCategory.v),
+				"disable":          nullToEmpty(params.disable.v),
+				"enable_all":       params.enableAll,
+				"enable_category":  nullToEmpty(params.enableCategory.v),
+				"enable":           nullToEmpty(params.enable.v),
+			},
+		},
+	}
 }
 
 func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {

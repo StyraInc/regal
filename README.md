@@ -60,7 +60,7 @@ curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/down
 
 See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page.
 
-</details><br/>
+</details>
 
 ### Try it out!
 
@@ -88,26 +88,27 @@ regal lint policy/
 Rule:         	not-equals-in-loop
 Description:  	Use of != in loop
 Category:     	bugs
-Location:     	p.rego:8:10
+Location:     	policy/authz.rego:8:10
 Text:         	"admin" != input.user.roles[_]
 Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md
 
 Rule:         	implicit-future-keywords
 Description:  	Use explicit future keyword imports
 Category:     	imports
-Location:     	p.rego:3:8
+Location:     	policy/authz.rego:3:8
 Text:         	import future.keywords
 Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md
 
 Rule:         	use-assignment-operator
 Description:  	Prefer := over = for assignment
 Category:     	style
-Location:     	p.rego:5:1
+Location:     	policy/authz.rego:5:1
 Text:         	default deny = true
 Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md
 
 1 file linted. 3 violations found.
 ```
+<br />
 
 > **Note**
 > If you're running Regal on an existing policy library, you may want to disable the `style` category initially, as it
@@ -159,7 +160,7 @@ The following rules are currently available:
 By default, all rules are currently **enabled**.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
-request, or better yet, submit a PR! See the [custom rules](#custom-rules) section for more information on how to
+request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules) page for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.
 
 ## Configuration

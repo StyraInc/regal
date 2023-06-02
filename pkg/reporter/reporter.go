@@ -96,16 +96,15 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 	red := color.New(color.FgRed).SprintFunc()
 
 	for i, violation := range violations {
-		level := red(violation.Level)
+		description := red(violation.Description)
 		if violation.Level == "warning" {
-			level = yellow(violation.Level)
+			description = yellow(violation.Description)
 		}
 
 		table.AddRow(yellow("Rule:"), violation.Title)
-		table.AddRow(yellow("Description:"), red(violation.Description))
+		table.AddRow(yellow("Description:"), description)
 		table.AddRow(yellow("Category:"), violation.Category)
 		table.AddRow(yellow("Location:"), cyan(violation.Location.String()))
-		table.AddRow(yellow("Level:"), level)
 
 		if violation.Location.Text != nil {
 			table.AddRow(yellow("Text:"), strings.TrimSpace(*violation.Location.Text))

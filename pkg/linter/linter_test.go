@@ -71,7 +71,7 @@ func TestLintWithUserConfig(t *testing.T) {
 	policy := `package p
 
 foo := input.bar[_]
-	
+
 or := 1
 `
 

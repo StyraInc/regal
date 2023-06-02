@@ -2,7 +2,7 @@
 
 **Summary**: Prefer `:=` over `=` for assignment
 
-**Category**: Assignment
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -74,7 +74,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  assignment:
+  style:
     use-assignment-operator:
       # one of "error", "warning", "ignore"
       level: error

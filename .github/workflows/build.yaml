@@ -15,6 +15,8 @@ jobs:
         with:
           go-version: 1.20.1
       - uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.52.2
       - run: go test ./...
       - run: go build
       - run: chmod +x regal

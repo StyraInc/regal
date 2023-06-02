@@ -25,28 +25,103 @@ using the JSON representation of the Rego abstract syntax tree (AST) as input, a
 few additional custom built-in functions and some indexed data structures to help
 with linting.
 
-## Status
+## Getting Started
 
-Regal is currently in an alpha stage. While we'd like to think of it as helpful already, **every** feature, API, name,
-config attribute and paragraph of documentation is subject to change. If you'd still like to use it, we'd love to hear
-what you think!
+### Download Regal
 
-## Try it out!
+**MacOS and Linux**
+```shell
+brew install styrainc/packages/regal
+```
 
-Run `regal lint` pointed at one or more files or directories to have them linted:
+<details>
+  <summary><strong>Manual download options</strong></summary>
+
+**MacOS (Apple Silicon)**
+```shell
+curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_arm64"
+```
+
+**MacOS (x86_64)**
+```shell
+curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_x86_64"
+```
+
+**Linux (x86_64)**
+```shell
+curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Linux_x86_64"
+chmod +x regal
+```
+
+**Windows**
+```shell
+curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/download/regal_Windows_x86_64.exe"
+```
+
+See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page.
+
+</details><br/>
+
+### Try it out!
+
+First, author some Rego!
+
+**policy/authz.rego**
+```rego
+package authz
+
+import future.keywords
+
+default deny = true
+
+deny if {
+	"admin" != input.user.roles[_]
+}
+```
+
+Next, run `regal lint` pointed at one or more files or directories to have them linted.
 
 ```shell
 regal lint policy/
 ```
+```text
+Rule:         	not-equals-in-loop
+Description:  	Use of != in loop
+Category:     	bugs
+Location:     	p.rego:8:10
+Text:         	"admin" != input.user.roles[_]
+Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md
+
+Rule:         	implicit-future-keywords
+Description:  	Use explicit future keyword imports
+Category:     	imports
+Location:     	p.rego:3:8
+Text:         	import future.keywords
+Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md
+
+Rule:         	use-assignment-operator
+Description:  	Prefer := over = for assignment
+Category:     	style
+Location:     	p.rego:5:1
+Text:         	default deny = true
+Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md
+
+1 file linted. 3 violations found.
+```
+
+> **Note**
+> If you're running Regal on an existing policy library, you may want to disable the `style` category initially, as it
+> will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
+> `regal lint`.
 
 ## Rules
 
 Regal comes with a set of built-in rules, grouped by category.
 
-- **bugs**: Common mistakes, potential bugs and inefficiencies in Rego policies. All rules **enabled** by default.
-- **imports**: Best practices for imports. All rules **enabled** by default.
-- **style**: [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules. All rules **disabled** by default.
-- **testing**: Rules for testing and development. All rules **enabled** by default. 
+- **bugs**: Common mistakes, potential bugs and inefficiencies in Rego policies.
+- **imports**: Best practices for imports.
+- **style**: [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
+- **testing**: Rules for testing and development.
 
 The following rules are currently available:
 
@@ -80,6 +155,8 @@ The following rules are currently available:
 | testing  | [test-outside-test-package](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/test-outside-test-package.md) | Test outside of test package                           |
 
 <!-- RULES_TABLE_END -->
+
+By default, all rules are currently **enabled**.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
 request, or better yet, submit a PR! See the [custom rules](#custom-rules) section for more information on how to
@@ -180,6 +257,20 @@ rules altogether.
 - [Custom Rules](/docs/custom-rules) describes how to develop your own rules
 - [Development](/docs/development) for info about how to hack on Regal itself
 - [Rego Style Guide](/docs/rego-style-guide) contains notes on implementing the [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
+
+## Status
+
+Regal is currently in beta. End-users should not expect any drastic changes, but any API may change without notice.
+
+## Roadmap
+
+- [ ] More rules!
+- [ ] Add `custom` category for built-in "custom", or customizable rules, to enforce things like naming conventions
+- [ ] Simplify custom rules authoring by providing command for scaffolding
+- [ ] Improvements to assist writing rules that can't be enforced using the AST alone
+- [ ] Make more rules consider nesting
+- [ ] GitHub Action
+- [ ] VS Code extension
 
 ## Community
 

@@ -2,7 +2,7 @@
 
 **Summary**: Rule name shadows built-in
 
-**Category**: Rules
+**Category**: Bugs
 
 **Avoid**
 ```rego
@@ -26,7 +26,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  rules:
+  bugs:
     rule-shadows-builtin:
       # one of "error", "warning", "ignore"
       level: error

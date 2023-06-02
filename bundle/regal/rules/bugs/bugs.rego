@@ -174,3 +174,20 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
 }
+
+# METADATA
+# title: rule-named-if
+# description: Rule named "if"
+# related_resources:
+# - description: documentation
+#   ref: $baseUrl/$category/rule-named-if
+# custom:
+#   category: bugs
+report contains violation if {
+	config.for_rule(rego.metadata.rule()).level != "ignore"
+
+	some rule in input.rules
+	rule.head.name == "if"
+
+	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+}

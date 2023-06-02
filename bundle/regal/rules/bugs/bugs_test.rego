@@ -178,6 +178,25 @@ test_success_rule_name_does_not_shadows_builtin if {
 	report(`foo := 1`) == set()
 }
 
+test_fail_rule_named_if if {
+	r := bugs.report with input as regal.parse_module("policy.rego", `package policy
+	allow := true if {
+        input.foo
+    }
+    `)
+	r == {{
+		"category": "bugs",
+		"description": "Rule named \"if\"",
+		"level": "error",
+		"location": {"col": 16, "file": "policy.rego", "row": 2, "text": "\tallow := true if {"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/rule-named-if", "bugs"),
+		}],
+		"title": "rule-named-if",
+	}}
+}
+
 report(snippet) := report if {
 	# regal ignore:external-reference
 	report := bugs.report with input as ast.with_future_keywords(snippet)

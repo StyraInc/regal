@@ -31,6 +31,7 @@ import future.keywords.in
 ]))
 
 _find_nested_vars(obj) := [value |
+	# regal ignore:function-arg-return
 	walk(obj, [_, value])
 	value.type == "var"
 	indexof(value.value, "$") == -1
@@ -114,6 +115,7 @@ _find_vars(path, value, last) := _find_every_vars(path, value) if {
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some` or `every`
 find_vars(node) := [var |
+	# regal ignore:function-arg-return
 	walk(node, [path, value])
 
 	some var in _find_vars(path, value, regal.last(path))
@@ -124,6 +126,7 @@ find_vars(node) := [var |
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all calls to builtin functions
 find_builtin_calls(node) := [value |
+	# regal ignore:function-arg-return
 	walk(node, [path, value])
 
 	regal.last(path) == "terms"
@@ -132,3 +135,30 @@ find_builtin_calls(node) := [value |
 	value[0].value[0].type == "var"
 	value[0].value[0].value in _builtin_names
 ]
+
+# METADATA
+# description: |
+#   Returns custom functions declared in input policy in the same format as opa.builtins
+function_decls(rules) := {name: args |
+	some rule in rules
+	rule.head.args
+
+	name := rule.head.name
+	args := {"args": [item |
+		some arg in rule.head.args
+		item := {"name": arg.value}
+	]}
+}
+
+function_ret_in_args(fn_name, terms) if {
+	rest := array.slice(terms, 1, count(terms))
+
+	# for now, bail out of nested calls
+	not "call" in {t | t := rest[_].type}
+
+	count(rest) > count(all_functions[fn_name].args)
+}
+
+all_functions := object.union(opa.builtins, function_decls(input.rules))
+
+all_function_names := object.keys(all_functions)

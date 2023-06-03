@@ -4,6 +4,8 @@ rules:
       level: error
     not-equals-in-loop:
       level: error
+    rule-named-if:
+      level: error
     rule-shadows-builtin:
       level: error
     top-level-iteration:
@@ -25,6 +27,8 @@ rules:
     avoid-get-and-list-prefix:
       level: error
     external-reference:
+      level: error
+    function-arg-return:
       level: error
     line-length:
       level: error

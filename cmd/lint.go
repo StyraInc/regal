@@ -15,6 +15,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
@@ -228,7 +229,13 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	userConfig, err := readUserConfig(params, regalDir)
 	if err == nil {
 		defer rio.CloseFileIgnore(userConfig)
-		regal = regal.WithUserConfig(rio.MustYAMLToMap(userConfig))
+
+		configData := make(map[string]any)
+		if err := yaml.NewDecoder(userConfig).Decode(&configData); err != nil {
+			return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
+		}
+
+		regal = regal.WithUserConfig(configData)
 	}
 
 	input, err := rules.InputFromPaths(args)

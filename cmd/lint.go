@@ -183,11 +183,23 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 	var customRulesDir string
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Println("failed to get current directory - won't search for custom config or rules")
+	var configSearchPath string
+
+	cwd, _ := os.Getwd()
+
+	if len(args) == 1 {
+		configSearchPath = args[0]
+		if !strings.HasPrefix(args[0], "/") {
+			configSearchPath = filepath.Join(cwd, args[0])
+		}
 	} else {
-		regalDir, err = config.FindRegalDirectory(cwd)
+		configSearchPath, _ = os.Getwd()
+	}
+
+	if configSearchPath == "" {
+		log.Println("failed to determine relevant directory for config file search - won't search for custom config or rules")
+	} else {
+		regalDir, err = config.FindRegalDirectory(configSearchPath)
 		if err == nil {
 			customRulesPath := filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
 			if _, err = os.Stat(customRulesPath); err == nil {

@@ -117,6 +117,10 @@ report contains violation if {
 
 	opa.builtins[ref_name].result.type != "boolean"
 
+	# if return value is provided as last argument, it's not unused
+	# it's however another violation: function-arg-return
+	not ast.function_ret_in_args(ref_name, expr.terms)
+
 	violation := result.fail(rego.metadata.rule(), result.location(expr.terms[0]))
 }
 

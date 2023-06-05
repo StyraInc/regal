@@ -107,11 +107,12 @@ test_fail_camel_cased_every_value if {
 }
 
 test_fail_camel_cased_every_key if {
-	report(`allow { every cC, sc in input { cC == 1; print(sc) } }`) == {object.union(
+	r := report(`allow { every cC, sc in input { cC == 1; sc == 2 } }`)
+	r == {object.union(
 		snake_case_violation,
 		{"location": {
 			"col": 15, "file": "policy.rego", "row": 8,
-			"text": `allow { every cC, sc in input { cC == 1; print(sc) } }`,
+			"text": `allow { every cC, sc in input { cC == 1; sc == 2 } }`,
 		}},
 	)}
 }
@@ -538,6 +539,30 @@ test_success_conditional_assignment_in_body if {
 
 test_success_unconditional_assignment_but_with_in_body if {
 	report(`x := y { y := 5 with input as 1 }`) == set()
+}
+
+test_fail_function_arg_return_value if {
+	r := report(`foo := i { indexof("foo", "o", i) }`)
+	r == {{
+		"category": "style",
+		"description": "Function argument used for return value",
+		"level": "error",
+		"location": {"col": 32, "file": "policy.rego", "row": 8, "text": "foo := i { indexof(\"foo\", \"o\", i) }"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/function-arg-return", "style"),
+		}],
+		"title": "function-arg-return",
+	}}
+}
+
+test_success_function_arg_return_value_except_function if {
+	r := style.report with input as ast.with_future_keywords(`foo := i { indexof("foo", "o", i) }`)
+		with config.for_rule as {
+			"level": "error",
+			"except-functions": ["indexof"],
+		}
+	r == set()
 }
 
 report(snippet) := report if {

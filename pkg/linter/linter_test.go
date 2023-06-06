@@ -33,35 +33,35 @@ camelCase {
 	}
 
 	if result.Violations[0].Title != "todo-comment" {
-		t.Errorf("excpected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
+		t.Errorf("expected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
 	}
 
 	if result.Violations[0].Location.Row != 3 {
-		t.Errorf("excpected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
+		t.Errorf("expected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
 	}
 
 	if result.Violations[0].Location.Column != 1 {
-		t.Errorf("excpected first violation to be on column 1, got %d", result.Violations[0].Location.Column)
+		t.Errorf("expected first violation to be on column 1, got %d", result.Violations[0].Location.Column)
 	}
 
 	if *result.Violations[0].Location.Text != "# TODO: fix this" {
-		t.Errorf("excpected first violation to be on '# TODO: fix this', got %s", *result.Violations[0].Location.Text)
+		t.Errorf("expected first violation to be on '# TODO: fix this', got %s", *result.Violations[0].Location.Text)
 	}
 
 	if result.Violations[1].Title != "prefer-snake-case" {
-		t.Errorf("excpected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
+		t.Errorf("expected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
 	}
 
 	if result.Violations[1].Location.Row != 4 {
-		t.Errorf("excpected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
+		t.Errorf("expected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
 	}
 
 	if result.Violations[1].Location.Column != 1 {
-		t.Errorf("excpected second violation to be on column 1, got %d", result.Violations[1].Location.Column)
+		t.Errorf("expected second violation to be on column 1, got %d", result.Violations[1].Location.Column)
 	}
 
 	if *result.Violations[1].Location.Text != "camelCase {" {
-		t.Errorf("excpected second violation to be on 'camelCase {', got %s", *result.Violations[1].Location.Text)
+		t.Errorf("expected second violation to be on 'camelCase {', got %s", *result.Violations[1].Location.Text)
 	}
 }
 
@@ -96,7 +96,7 @@ or := 1
 	}
 
 	if result.Violations[0].Title != "top-level-iteration" {
-		t.Errorf("excpected first violation to be 'top-level-iteration', got %s", result.Violations[0].Title)
+		t.Errorf("expected first violation to be 'top-level-iteration', got %s", result.Violations[0].Title)
 	}
 }
 
@@ -121,7 +121,7 @@ func TestLintWithGoRule(t *testing.T) {
 	}
 
 	if result.Violations[0].Title != "opa-fmt" {
-		t.Errorf("excpected first violation to be 'opa-fmt', got %s", result.Violations[0].Title)
+		t.Errorf("expected first violation to be 'opa-fmt', got %s", result.Violations[0].Title)
 	}
 }
 
@@ -174,6 +174,6 @@ func TestLintWithCustomRule(t *testing.T) {
 	}
 
 	if result.Violations[0].Title != "acme-corp-package" {
-		t.Errorf("excpected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
+		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
 	}
 }

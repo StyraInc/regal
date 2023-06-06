@@ -16,6 +16,16 @@ To run all tests, including the Rego rules unit tests:
 go test ./...
 ```
 
+### E2E tests
+
+End-to-End (E2E) tests assert the behaviour of the `regal` binary called with certain configs, and test files.
+They expect a `regal` binary either in the top-level directory, or pointed at by `$REGAL_BIN`, and can be run
+locally via
+
+```shell
+go test -tags e2e ./e2e
+```
+
 ## Linting
 
 Regal uses [golangci-lint](https://golangci-lint.run/) with most linters enabled. In order to check your code, run:

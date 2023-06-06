@@ -21,3 +21,4 @@ jobs:
       - run: go build
       - run: chmod +x regal
       - run: ./regal lint bundle
+      - run: go test -tags e2e ./e2e

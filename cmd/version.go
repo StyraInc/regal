@@ -19,7 +19,7 @@ func init() {
 	params := versionCommandParams{}
 
 	parseCommand := &cobra.Command{
-		Use:   "version [--format=json]",
+		Use:   "version [--format=json|pretty]",
 		Short: "Print the version of Regal",
 		Long:  "Show the version and other build-time metadata for the running Regal binary.",
 
@@ -37,7 +37,7 @@ func init() {
 			vi := version.New()
 
 			switch params.format {
-			case formatPretty:
+			case formatJSON:
 				e := json.NewEncoder(os.Stdout)
 				e.SetIndent("", "  ")
 				err := e.Encode(vi)
@@ -46,7 +46,7 @@ func init() {
 					log.Println(err)
 					os.Exit(1)
 				}
-			case formatJSON:
+			case formatPretty:
 				os.Stdout.WriteString(vi.String())
 			default:
 				log.SetOutput(os.Stderr)

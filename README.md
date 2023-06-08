@@ -70,11 +70,13 @@ package authz
 
 import future.keywords
 
-default deny = true
+default allow = false
 
 deny if {
 	"admin" != input.user.roles[_]
 }
+
+allow if not deny
 ```
 
 Next, run `regal lint` pointed at one or more files or directories to have them linted.
@@ -101,7 +103,7 @@ Rule:         	use-assignment-operator
 Description:  	Prefer := over = for assignment
 Category:     	style
 Location:     	policy/authz.rego:5:1
-Text:         	default deny = true
+Text:         	default allow = false
 Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md
 
 1 file linted. 3 violations found.

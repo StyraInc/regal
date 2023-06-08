@@ -411,6 +411,25 @@
       "type": "number"
     }
   },
+  "crypto.hmac.equal": {
+    "args": [
+      {
+        "description": "mac1 to compare",
+        "name": "mac1",
+        "type": "string"
+      },
+      {
+        "description": "mac2 to compare",
+        "name": "mac2",
+        "type": "string"
+      }
+    ],
+    "result": {
+      "description": "`true` if the MACs are equals, `false` otherwise",
+      "name": "result",
+      "type": "boolean"
+    }
+  },
   "crypto.hmac.md5": {
     "args": [
       {
@@ -566,6 +585,25 @@
       "description": "parsed X.509 certificates represented as objects",
       "name": "output",
       "type": "array[object[string: any]]"
+    }
+  },
+  "crypto.x509.parse_keypair": {
+    "args": [
+      {
+        "description": "string containing PEM or base64 encoded DER certificates",
+        "name": "cert",
+        "type": "string"
+      },
+      {
+        "description": "string containing PEM or base64 encoded DER keys",
+        "name": "pem",
+        "type": "string"
+      }
+    ],
+    "result": {
+      "description": "if key pair is valid, returns the tls.certificate(https://pkg.go.dev/crypto/tls#Certificate) as an object. If the key pair is invalid, nil and an error are returned.",
+      "name": "output",
+      "type": "object[string: any]"
     }
   },
   "crypto.x509.parse_rsa_private_key": {

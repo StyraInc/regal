@@ -242,11 +242,6 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	errCh := make(chan error)
 	doneCh := make(chan bool)
 
-	go func() {
-		wg.Wait()
-		doneCh <- true
-	}()
-
 	for _, name := range input.FileNames {
 		wg.Add(1)
 
@@ -279,6 +274,11 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			mu.Unlock()
 		}(name)
 	}
+
+	go func() {
+		wg.Wait()
+		doneCh <- true
+	}()
 
 	select {
 	case <-ctx.Done():

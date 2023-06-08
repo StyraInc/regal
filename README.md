@@ -7,9 +7,7 @@ Regal is a linter for Rego, with the goal of making your Rego magnificent!
 
 > regal
 >
-> 1 : of, relating to, or suitable for a king
->
-> 2 : of notable excellence or magnificence : splendid
+> adj : of notable excellence or magnificence : splendid
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 

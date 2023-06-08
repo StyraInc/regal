@@ -62,7 +62,7 @@ func resolveDocsURL(url, category string) string {
 
 func createTable(args []string, params tableCommandParams) error {
 	result, err := loader.NewFileLoader().Filtered(args, func(abspath string, info fs.FileInfo, depth int) bool {
-		return strings.HasSuffix(abspath, "_test.rego")
+		return false
 	})
 	if err != nil {
 		return err

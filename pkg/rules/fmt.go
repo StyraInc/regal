@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/open-policy-agent/opa/format"
 
@@ -86,7 +85,7 @@ func (f *OpaFmtRule) Description() string {
 }
 
 func (f *OpaFmtRule) Documentation() string {
-	return path.Join(docs.DocsBaseURL, category, title+".md")
+	return docs.DocsBaseURL + "/" + category + "/" + title + ".md"
 }
 
 func (f *OpaFmtRule) Config() config.Rule {

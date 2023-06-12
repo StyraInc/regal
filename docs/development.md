@@ -46,3 +46,10 @@ gci write \
   -s blank \
   -s dot .
 ```
+## Documentation
+
+The table in the [Rules](../README.md#rules) section of the README is generated with the following command:
+
+```shell
+go run main.go table --write-to-readme bundle
+```

@@ -150,7 +150,7 @@ The following rules are currently available:
 | style    | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
 | style    | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                            |
 | style    | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                |
-| style    | [opa-fmt](https:/github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                        | File should be formatted with `opa fmt`                |
+| style    | [opa-fmt](https://github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                       | File should be formatted with `opa fmt`                |
 | testing  | [file-missing-test-suffix](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/file-missing-test-suffix.md)   | Files containing tests should have a _test.rego suffix |
 | testing  | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                          |
 | testing  | [todo-test](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/todo-test.md)                                 | TODO test encountered                                  |

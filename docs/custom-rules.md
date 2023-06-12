@@ -10,9 +10,10 @@ to a Rego file, or a directory containing Rego files and potentially data (JSON 
 
 ## Developing Rules
 
-Regal rules works primarily on the abstract syntax tree (AST) as parsed by OPA, with a few custom additions. The AST of
-each policy scanned will be provided as input to the linter policies, and additional data useful in the context of
-linting, as well as some purpose-built custom functions are made available in any Regal policy.
+Regal rules works primarily on the [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) as
+parsed by OPA, with a few custom additions. The AST of each policy scanned will be provided as input to the linter
+policies, and additional data useful in the context of linting, as well as some purpose-built custom functions are made
+available in any Regal policy.
 
 If we were to write the simplest policy possible, and parse it using `opa parse`, it would contain nothing but a package
 declaration:
@@ -86,20 +87,20 @@ import data.regal.result
 report contains violation if {
     config.for_rule(rego.metadata.rule()).level != "ignore"
 
-	not acme_corp_package
-	not system_log_package
+    not acme_corp_package
+    not system_log_package
 
-	violation := result.fail(rego.metadata.rule(), result.location(input["package"].path[1]))
+    violation := result.fail(rego.metadata.rule(), result.location(input["package"].path[1]))
 }
 
 acme_corp_package if {
-	input["package"].path[1].value == "acme"
-	input["package"].path[2].value == "corp"
+    input["package"].path[1].value == "acme"
+    input["package"].path[2].value == "corp"
 }
 
 system_log_package if {
-	input["package"].path[1].value == "system"
-	input["package"].path[2].value == "log"
+    input["package"].path[1].value == "system"
+    input["package"].path[2].value == "log"
 }
 ```
 
@@ -130,7 +131,7 @@ custom rules:
 
 - `regal parse` works similarly to `opa parse`, but will always output JSON and include location information, and any
   additional data added to the AST by Regal.
-- `regal test` works like `opa test`
+- `regal test` works like `opa test`, but aware of any custom Regal additions. Use this to test custom linter rules.
 
 Given we want to test `p.rego` against the available set of rules, we can have OPA parse it and pipe the output
 to `opa eval` for evaluation:

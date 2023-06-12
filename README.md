@@ -162,7 +162,7 @@ The following rules are currently available:
 By default, all rules are currently **enabled**.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
-request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules) page for more information on how to
+request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules.md) page for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.
 
 ## Configuration
@@ -255,11 +255,19 @@ Note that at this point in time, Regal only considers the line following the ign
 entire blocks of code (like rules, or even packages). See [configuration](#configuration) if you want to ignore certain
 rules altogether.
 
-## Documentation
+## Resources
 
-- [Custom Rules](/docs/custom-rules) describes how to develop your own rules
-- [Development](/docs/development) for info about how to hack on Regal itself
-- [Rego Style Guide](/docs/rego-style-guide) contains notes on implementing the [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
+### Documentation
+
+- [Custom Rules](/docs/custom-rules.md) describes how to develop your own rules
+- [Development](/docs/development.md) for info about how to hack on Regal itself
+- [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
+  [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
+
+### Talks
+
+[Regal the Rego Linter](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s), CNCF London meetup, June 2023
+[![Regal the Rego Linter](docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
 
 ## Status
 
@@ -271,7 +279,7 @@ Regal is currently in beta. End-users should not expect any drastic changes, but
 - [ ] Add `custom` category for built-in "custom", or customizable rules, to enforce things like naming conventions
 - [ ] Simplify custom rules authoring by providing command for scaffolding
 - [ ] Improvements to assist writing rules that can't be enforced using the AST alone
-- [ ] Make more rules consider nesting
+- [ ] Make more rules consider nested AST nodes
 - [ ] GitHub Action
 - [ ] VS Code extension
 

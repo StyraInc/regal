@@ -33,6 +33,20 @@ builds:
       - -X github.com/styrainc/regal/pkg/version.Timestamp={{ .Date }}
       - -X github.com/styrainc/regal/pkg/version.Hostname=github.actions.local
 
+kos:
+  - # build settings are imported from this build
+    build: linux-windows-build
+    repository: ghcr.io/StyraInc/regal
+    tags:
+      - '{{.Version}}'
+      - latest
+    bare: true
+    base_image: cgr.dev/chainguard/busybox:latest-glibc
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
 archives:
   - id: binary
     format: binary

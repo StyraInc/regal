@@ -36,7 +36,7 @@ builds:
 kos:
   - # build settings are imported from this build
     build: linux-windows-build
-    repository: ghcr.io/StyraInc/regal
+    repository: ghcr.io/styrainc/regal
     tags:
       - '{{.Version}}'
       - latest

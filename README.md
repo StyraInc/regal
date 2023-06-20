@@ -11,6 +11,8 @@ Regal is a linter for Rego, with the goal of making your Rego magnificent!
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
+![illustration of a viking representing the Regal logo](./docs/assets/regal-banner.png)
+
 ## Goals
 
 - Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches

@@ -1,0 +1,28 @@
+package regal.rules.testing_test
+
+import future.keywords.contains
+import future.keywords.if
+import future.keywords.in
+
+import data.regal.config
+import data.regal.rules.testing
+
+test_fail_test_in_file_without_test_suffix if {
+	ast := regal.parse_module("policy.rego", `package foo_test
+
+	test_foo { false }
+	`)
+
+	r := testing.report with input as ast with config.for_rule as {"level": "error"}
+	r == {{
+		"category": "testing",
+		"description": "Files containing tests should have a _test.rego suffix",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/file-missing-test-suffix", "testing"),
+		}],
+		"title": "file-missing-test-suffix",
+		"location": {"file": "policy.rego"},
+		"level": "error",
+	}}
+}

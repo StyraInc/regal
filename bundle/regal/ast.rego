@@ -7,7 +7,21 @@ import future.keywords.in
 
 import data.regal.opa
 
-_builtin_names := object.keys(opa.builtins)
+builtin_names := object.keys(opa.builtins)
+
+# METADATA
+# description: |
+#   provide the package name / path as originally declared in the
+#   input policy, so "package foo.bar" would return "foo.bar"
+package_name := concat(".", [path.value |
+	some i, path in input["package"].path
+	i > 0
+])
+
+tests := [rule |
+	some rule in input.rules
+	startswith(rule.head.name, "test_")
+]
 
 # METADATA
 # description: parse provided snippet with a generic package declaration added
@@ -40,7 +54,7 @@ _find_nested_vars(obj) := [value |
 # simple assignment, i.e. `x := 100` returns `x`
 # always returns a single var, but wrapped in an
 # array for consistency
-_find_assign_vars(path, value) := var if {
+_find_assign_vars(_, value) := var if {
 	value[1].type == "var"
 	var := [value[1]]
 }
@@ -49,19 +63,19 @@ _find_assign_vars(path, value) := var if {
 # [a, b, c] := [1, 2, 3]
 # or
 # {a: b} := {"foo": "bar"}
-_find_assign_vars(path, value) := var if {
+_find_assign_vars(_, value) := var if {
 	value[1].type in {"array", "object"}
 	var := _find_nested_vars(value[1])
 }
 
 # var declared via `some`, i.e. `some x` or `some x, y`
-_find_some_decl_vars(path, value) := [v |
+_find_some_decl_vars(_, value) := [v |
 	some v in value
 	v.type == "var"
 ]
 
 # single var declared via `some in`, i.e. `some x in y`
-_find_some_in_decl_vars(path, value) := var if {
+_find_some_in_decl_vars(_, value) := var if {
 	arr := value[0].value
 	count(arr) == 3
 
@@ -69,7 +83,7 @@ _find_some_in_decl_vars(path, value) := var if {
 }
 
 # two vars declared via `some in`, i.e. `some x, y in z`
-_find_some_in_decl_vars(path, value) := var if {
+_find_some_in_decl_vars(_, value) := var if {
 	arr := value[0].value
 	count(arr) == 4
 
@@ -81,7 +95,7 @@ _find_some_in_decl_vars(path, value) := var if {
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
 # or `every`, i.e. `every x, y in y {}`
-_find_every_vars(path, value) := var if {
+_find_every_vars(_, value) := var if {
 	key_var := [v | v := value.key; v.type == "var"; indexof(v.value, "$") == -1]
 	val_var := [v | v := value.value; v.type == "var"; indexof(v.value, "$") == -1]
 
@@ -133,7 +147,7 @@ find_builtin_calls(node) := [value |
 
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
-	value[0].value[0].value in _builtin_names
+	value[0].value[0].value in builtin_names
 ]
 
 # METADATA

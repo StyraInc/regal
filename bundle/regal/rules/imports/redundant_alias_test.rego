@@ -1,12 +1,13 @@
-package regal.rules.imports_test
+package regal.rules.imports["redundant-alias_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports.common_test.report
+import data.regal.rules.imports["redundant-alias"] as rule
 
 test_fail_redundant_alias if {
-	r := report(`import data.foo.bar as bar`)
+	r := rule.report with input as ast.policy(`import data.foo.bar as bar`)
 	r == {{
 		"category": "imports",
 		"description": "Redundant alias",
@@ -21,5 +22,6 @@ test_fail_redundant_alias if {
 }
 
 test_success_not_redundant_alias if {
-	report(`import data.foo.bar as valid`) == set()
+	r := rule.report with input as ast.policy(`import data.foo.bar as valid`)
+	r == set()
 }

@@ -1,19 +1,19 @@
-package regal.rules.style_test
+package regal.rules.style["function-arg-return_test"]
 
 import future.keywords.if
 
 import data.regal.ast
 import data.regal.config
-import data.regal.rules.style
-import data.regal.rules.style.common_test.report
+import data.regal.rules.style["function-arg-return"] as rule
 
 test_fail_function_arg_return_value if {
-	r := report(`foo := i { indexof("foo", "o", i) }`)
+	r := rule.report with input as ast.policy(`foo := i { indexof("foo", "o", i) }`)
+		with config.for_rule as {"level": "error"}
 	r == {{
 		"category": "style",
 		"description": "Function argument used for return value",
 		"level": "error",
-		"location": {"col": 32, "file": "policy.rego", "row": 8, "text": "foo := i { indexof(\"foo\", \"o\", i) }"},
+		"location": {"col": 32, "file": "policy.rego", "row": 3, "text": "foo := i { indexof(\"foo\", \"o\", i) }"},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/function-arg-return", "style"),
@@ -23,7 +23,7 @@ test_fail_function_arg_return_value if {
 }
 
 test_success_function_arg_return_value_except_function if {
-	r := style.report with input as ast.with_future_keywords(`foo := i { indexof("foo", "o", i) }`)
+	r := rule.report with input as ast.with_future_keywords(`foo := i { indexof("foo", "o", i) }`)
 		with config.for_rule as {
 			"level": "error",
 			"except-functions": ["indexof"],

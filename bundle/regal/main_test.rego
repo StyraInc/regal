@@ -5,7 +5,7 @@ test_main_basic_input_success {
 	report == set()
 }
 
-test_main_multiple_failues {
+test_main_multiple_failures {
 	policy := `package p
 
 	# both camel case and unification operator
@@ -15,6 +15,28 @@ test_main_multiple_failues {
 		with data.regal.config.for_rule as {"level": "error"}
 
 	count(report) == 2
+}
+
+test_main_expect_failure {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
+
+	count(report) == 1
+}
+
+test_main_ignore_rule_config {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "ignore"}
+
+	count(report) == 0
 }
 
 test_main_ignore_directive_failure {

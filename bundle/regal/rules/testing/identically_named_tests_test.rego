@@ -1,11 +1,11 @@
-package regal.rules.testing_test
+package regal.rules.testing["identically-named-tests_test"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
 import data.regal.config
-import data.regal.rules.testing
+import data.regal.rules.testing["identically-named-tests"] as rule
 
 test_fail_identically_named_tests if {
 	ast := regal.parse_module("foo_test.rego", `
@@ -14,7 +14,7 @@ test_fail_identically_named_tests if {
 	test_foo { false }
 	test_foo { true }
 	`)
-	result := testing.report with input as ast
+	result := rule.report with input as ast
 	result == {{
 		"category": "testing",
 		"description": "Multiple tests with same name",
@@ -36,6 +36,6 @@ test_success_differently_named_tests if {
 	test_bar { true }
 	test_baz { 1 == 1 }
 	`)
-	result := testing.report with input as ast
+	result := rule.report with input as ast
 	result == set()
 }

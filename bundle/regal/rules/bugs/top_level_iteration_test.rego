@@ -1,12 +1,14 @@
-package regal.rules.bugs_test
+package regal.rules.bugs["top-level-iteration_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs.common_test.report_with_fk
+
+import data.regal.rules.bugs["top-level-iteration"] as rule
 
 test_fail_top_level_iteration_wildcard if {
-	r := report_with_fk(`x := input.foo.bar[_]`)
+	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[_]`)
 	r == {{
 		"category": "bugs",
 		"description": "Iteration in top-level assignment",
@@ -21,7 +23,7 @@ test_fail_top_level_iteration_wildcard if {
 }
 
 test_fail_top_level_iteration_named_var if {
-	r := report_with_fk(`x := input.foo.bar[i]`)
+	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[i]`)
 	r == {{
 		"category": "bugs",
 		"description": "Iteration in top-level assignment",
@@ -36,11 +38,13 @@ test_fail_top_level_iteration_named_var if {
 }
 
 test_success_top_level_known_var_ref if {
-	report_with_fk(`
+	r := rule.report with input as ast.with_future_keywords(`
 	i := "foo"
-	x := input.foo.bar[i]`) == set()
+	x := input.foo.bar[i]`)
+	r == set()
 }
 
 test_success_top_level_input_ref if {
-	report_with_fk(`x := input.foo.bar[input.y]`) == set()
+	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[input.y]`)
+	r == set()
 }

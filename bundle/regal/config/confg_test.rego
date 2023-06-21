@@ -158,3 +158,26 @@ test_enable_single_rule_with_config {
 
 	c == {"level": "error", "important_setting": 42}
 }
+
+test_all_rules_are_in_provided_configuration {
+	missing_config := {title |
+		some category, title
+		data.regal.rules[category][title]
+		not endswith(title, "_test")
+		not data.regal.config.provided.rules[category][title]
+	}
+
+	count(missing_config) == 0
+}
+
+test_all_configured_rules_exist {
+	go_rules := {"opa-fmt"}
+
+	missing_rules := {title |
+		some category, title
+		data.regal.config.provided.rules[category][title]
+		not data.regal.rules[category][title]
+	}
+
+	count(missing_rules - go_rules) == 0
+}

@@ -1,11 +1,11 @@
-package regal.rules.testing_test
+package regal.rules.testing["todo-test_test"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
 import data.regal.config
-import data.regal.rules.testing
+import data.regal.rules.testing["todo-test"] as rule
 
 test_fail_todo_test if {
 	ast := regal.parse_module("foo_test.rego", `
@@ -15,7 +15,7 @@ test_fail_todo_test if {
 
 	test_bar { true }
 	`)
-	r := testing.report with input as ast
+	r := rule.report with input as ast
 	r == {{
 		"category": "testing",
 		"description": "TODO test encountered",

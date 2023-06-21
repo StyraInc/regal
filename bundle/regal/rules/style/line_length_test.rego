@@ -1,14 +1,16 @@
-package regal.rules.style_test
+package regal.rules.style["line-length_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.style.common_test.report
+import data.regal.rules.style["line-length"] as rule
 
 test_fail_line_too_long if {
-	r := report(`allow {
+	r := rule.report with input as ast.with_future_keywords(`allow {
 foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
 	}`)
+		with config.for_rule as {"level": "error", "max-line-length": 80}
 	r == {{
 		"category": "style",
 		"description": "Line too long",
@@ -26,5 +28,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 }
 
 test_success_line_not_too_long if {
-	report(`allow { "foo" == "bar" }`) == set()
+	r := rule.report with input as ast.policy(`allow { "foo" == "bar" }`)
+		with config.for_rule as {"level": "error", "max-line-length": 80}
+	r == set()
 }

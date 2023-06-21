@@ -1,24 +1,15 @@
-package regal.rules.style
+# METADATA
+# description: Reference to input, data or rule ref in function body
+package regal.rules.style["external-reference"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: external-reference
-# description: Reference to input, data or rule ref in function body
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/external-reference
-# custom:
-#   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 	rule.head.args
 
@@ -36,20 +27,10 @@ report contains violation if {
 	term.type == "var"
 	not term.value in allowed_refs
 
-	violation := result.fail(rego.metadata.rule(), result.location(term))
+	violation := result.fail(rego.metadata.chain(), result.location(term))
 }
 
-# METADATA
-# title: external-reference
-# description: Reference to input, data or rule ref in function body
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/external-reference
-# custom:
-#   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 	rule.head.args
 
@@ -66,5 +47,5 @@ report contains violation if {
 	terms[0].type == "var"
 	not terms[0].value in allowed_refs
 
-	violation := result.fail(rego.metadata.rule(), result.location(terms[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(terms[0]))
 }

@@ -1,15 +1,17 @@
-package regal.rules.style_test
+package regal.rules.style["external-reference_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.style.common_test.report
+import data.regal.rules.style["external-reference"] as rule
 
 test_fail_function_references_input if {
-	report(`f(_) { input.foo }`) == {{
+	r := rule.report with input as ast.policy(`f(_) { input.foo }`)
+	r == {{
 		"category": "style",
 		"description": "Reference to input, data or rule ref in function body",
-		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { input.foo }`},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `f(_) { input.foo }`},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
@@ -20,7 +22,8 @@ test_fail_function_references_input if {
 }
 
 test_fail_function_references_data if {
-	report(`f(_) { data.foo }`) == {{
+	r := rule.report with input as ast.policy(`f(_) { data.foo }`)
+	r == {{
 		"category": "style",
 		"description": "Reference to input, data or rule ref in function body",
 		"related_resources": [{
@@ -28,13 +31,13 @@ test_fail_function_references_data if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
 		}],
 		"title": "external-reference",
-		"location": {"col": 8, "file": "policy.rego", "row": 8, "text": `f(_) { data.foo }`},
+		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `f(_) { data.foo }`},
 		"level": "error",
 	}}
 }
 
 test_fail_function_references_rule if {
-	r := report(`
+	r := rule.report with input as ast.policy(`
 foo := "bar"
 
 f(x, y) {
@@ -45,7 +48,7 @@ f(x, y) {
 	r == {{
 		"category": "style",
 		"description": "Reference to input, data or rule ref in function body",
-		"location": {"col": 7, "file": "policy.rego", "row": 13, "text": `	y == foo`},
+		"location": {"col": 7, "file": "policy.rego", "row": 8, "text": `	y == foo`},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/external-reference", "style"),
@@ -56,17 +59,21 @@ f(x, y) {
 }
 
 test_success_function_references_no_input_or_data if {
-	report(`f(x) { x == true }`) == set()
+	r := rule.report with input as ast.policy(`f(x) { x == true }`)
+	r == set()
 }
 
 test_success_function_references_no_input_or_data_reverse if {
-	report(`f(x) { true == x }`) == set()
+	r := rule.report with input as ast.policy(`f(x) { true == x }`)
+	r == set()
 }
 
 test_success_function_references_only_own_vars if {
-	report(`f(x) { y := x; y == 10 }`) == set()
+	r := rule.report with input as ast.policy(`f(x) { y := x; y == 10 }`)
+	r == set()
 }
 
 test_success_function_references_only_own_vars_nested if {
-	report(`f(x, z) { y := x; y == [1, 2, z]}`) == set()
+	r := rule.report with input as ast.policy(`f(x, z) { y := x; y == [1, 2, z]}`)
+	r == set()
 }

@@ -1,12 +1,13 @@
-package regal.rules.bugs_test
+package regal.rules.bugs["unused-return-value_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs.common_test.report_with_fk
+import data.regal.rules.bugs["unused-return-value"] as rule
 
 test_fail_unused_return_value if {
-	r := report_with_fk(`allow {
+	r := rule.report with input as ast.with_future_keywords(`allow {
 		indexof("s", "s")
 	}`)
 	r == {{
@@ -23,9 +24,11 @@ test_fail_unused_return_value if {
 }
 
 test_success_unused_boolean_return_value if {
-	report_with_fk(`allow { startswith("s", "s") }`) == set()
+	r := rule.report with input as ast.with_future_keywords(`allow { startswith("s", "s") }`)
+	r == set()
 }
 
 test_success_return_value_assigned if {
-	report_with_fk(`allow { x := indexof("s", "s") }`) == set()
+	r := rule.report with input as ast.with_future_keywords(`allow { x := indexof("s", "s") }`)
+	r == set()
 }

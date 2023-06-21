@@ -1,12 +1,14 @@
-package regal.rules.imports_test
+package regal.rules.imports["avoid-importing-input_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports.common_test.report
+import data.regal.rules.imports["avoid-importing-input"] as rule
 
 test_fail_import_input if {
-	report(`import input.foo`) == {{
+	r := rule.report with input as ast.policy(`import input.foo`)
+	r == {{
 		"category": "imports",
 		"description": "Avoid importing input",
 		"related_resources": [{
@@ -20,11 +22,13 @@ test_fail_import_input if {
 }
 
 test_sucess_import_aliased_input if {
-	report(`import input as tfplan`) == set()
+	r := rule.report with input as ast.policy(`import input as tfplan`)
+	r == set()
 }
 
 test_fail_import_input_aliased_attribute if {
-	report(`import input.foo.bar as barbar`) == {{
+	r := rule.report with input as ast.policy(`import input.foo.bar as barbar`)
+	r == {{
 		"category": "imports",
 		"description": "Avoid importing input",
 		"related_resources": [{

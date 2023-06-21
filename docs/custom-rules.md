@@ -68,29 +68,23 @@ from decision logs.
 An example policy to implement this requirement might look something like this:
 
 ```rego
-package custom.regal.rules.naming
-
-import future.keywords.contains
-import future.keywords.if
-
-import data.regal.config
-import data.regal.result
-
 # METADATA
-# title: acme-corp-package
 # description: All packages must use "acme.corp" base name
 # related_resources:
 # - description: documentation
 #   ref: https://www.acmecorp.example.org/docs/regal/package
-# custom:
-#   category: naming
-report contains violation if {
-    config.for_rule(rego.metadata.rule()).level != "ignore"
+package custom.regal.rules.naming["acme-corp-package"]
 
+import future.keywords.contains
+import future.keywords.if
+
+import data.regal.result
+
+report contains violation if {
     not acme_corp_package
     not system_log_package
 
-    violation := result.fail(rego.metadata.rule(), result.location(input["package"].path[1]))
+    violation := result.fail(rego.metadata.chain(), result.location(input["package"].path[1]))
 }
 
 acme_corp_package if {
@@ -106,20 +100,20 @@ system_log_package if {
 
 Starting from top to bottom, these are the components comprising our custom rule:
 
-1. The package of custom rules **must** start with `custom.regal.rules`, followed by the category of the rule.
-1. Importing `data.regal.config` allows policy authors to check rule-specific configuration, such as the level of the
-   rule (`ignore`, `warning` or `error`), and any additional configuration provided by the rule.
+1. The package of custom rules **must** start with `custom.regal.rules`, followed by the category of the rule, and the
+   title (which is commonly quoted as rule names use `-` for spaces).
 1. The `data.regal.result` provides some helpers for formatting the result of a violation for inclusion in a report.
 1. Regal rules make heavy use of [metadata annotations](https://www.openpolicyagent.org/docs/latest/annotations/) in
    order to document the purpose of the rule, along with any other information that could potentially be useful.
-   All rules **must** have a `title`, a `description`, and a `category` (placed under the `custom` object). Providing
-   links to additional documentation under `related_resources` is recommended, but not required.
+   All rule packages **must** have a `description`. Providing links to additional documentation under
+   `related_resources` is recommended, but not required.
 1. Regal will evaluate any rule named `report` in each linter policy, so at least one `report` rule **must** be present.
 1. In our example `report` rule, we evaluate another rule (`acme_corp_package`) in order to know if the package name
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither
    of the conditions are true, the rule fails and violation is created.
-1. The violation is created by calling `result.fail`, which takes the metadata from the rule and returns it, which will
-   later be included in the final report provided by Regal.
+1. The violation is created by calling `result.fail`, which takes the metadata from the package (using
+   `rego.metadata.chain` which conveniently also includes the path of the package) and returns a result, which 
+   will later be included in the final report provided by Regal.
 1. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 
 ## Parsing and Testing

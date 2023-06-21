@@ -1,12 +1,13 @@
-package regal.rules.imports_test
+package regal.rules.imports["import-shadows-import_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports.common_test.report
+import data.regal.rules.imports["import-shadows-import"] as rule
 
 test_fail_duplicate_import if {
-	r := report(`
+	r := rule.report with input as ast.policy(`
 import data.foo
 import data.foo
 	`)
@@ -24,10 +25,11 @@ import data.foo
 }
 
 test_fail_duplicate_import_alias if {
-	report(`
+	r := rule.report with input as ast.policy(`
 import data.foo
 import data.bar as foo
-	`) == {{
+	`)
+	r == {{
 		"category": "imports",
 		"description": "Import shadows another import",
 		"related_resources": [{

@@ -1,12 +1,14 @@
-package regal.rules.bugs_test
+package regal.rules.bugs["constant-condition_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs.common_test.report
+
+import data.regal.rules.bugs["constant-condition"] as rule
 
 test_fail_simple_constant_condition if {
-	r := report(`allow {
+	r := rule.report with input as ast.policy(`allow {
 	1
 	}`)
 	r == {{
@@ -23,11 +25,12 @@ test_fail_simple_constant_condition if {
 }
 
 test_success_static_condition_probably_generated if {
-	report(`allow { true }`) == set()
+	r := rule.report with input as ast.policy(`allow { true }`)
+	r == set()
 }
 
 test_fail_operator_constant_condition if {
-	r := report(`allow {
+	r := rule.report with input as ast.policy(`allow {
 	1 == 1
 	}`)
 	r == {{
@@ -44,5 +47,6 @@ test_fail_operator_constant_condition if {
 }
 
 test_success_non_constant_condition if {
-	report(`allow { 1 == input.one }`) == set()
+	r := rule.report with input as ast.policy(`allow { 1 == input.one }`)
+	r == set()
 }

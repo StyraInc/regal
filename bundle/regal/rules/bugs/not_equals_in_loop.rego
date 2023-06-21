@@ -1,23 +1,14 @@
-package regal.rules.bugs
+# METADATA
+# description: Use of != in loop
+package regal.rules.bugs["not-equals-in-loop"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: not-equals-in-loop
-# description: Use of != in loop
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/not-equals-in-loop
-# custom:
-#   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 	some expr in rule.body
 
@@ -32,5 +23,5 @@ report contains violation if {
 	neq_term.value[i].type == "var"
 	startswith(neq_term.value[i].value, "$")
 
-	violation := result.fail(rego.metadata.rule(), result.location(expr.terms[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(expr.terms[0]))
 }

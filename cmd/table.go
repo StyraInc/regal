@@ -53,11 +53,17 @@ func init() {
 	RootCommand.AddCommand(parseCommand)
 }
 
-func resolveDocsURL(url, category string) string {
-	b := strings.Replace(url, "$baseUrl", docs.DocsBaseURL, 1)
-	c := strings.Replace(b, "$category", category, 1)
+func createDocsURL(category, title string) string {
+	return docs.DocsBaseURL + "/" + category + "/" + title + ".md"
+}
 
-	return c + ".md"
+func unquotedPath(path ast.Ref) []string {
+	ret := make([]string, 0, len(path)-1)
+	for _, ref := range path[1:] {
+		ret = append(ret, strings.Trim(ref.String(), `"`))
+	}
+
+	return ret
 }
 
 func createTable(args []string, params tableCommandParams) error {
@@ -89,24 +95,32 @@ func createTable(args []string, params tableCommandParams) error {
 	for _, entry := range flattened {
 		annotations := entry.Annotations
 
-		_, ok := annotations.Custom["category"]
-		if !ok {
+		path := unquotedPath(entry.Path)
+
+		if len(path) != 4 {
 			continue
 		}
 
-		if _, ok = traversedTitles[annotations.Title]; ok {
+		if path[0] != "regal" {
 			continue
 		}
 
-		traversedTitles[annotations.Title] = struct{}{}
+		if path[1] != "rules" {
+			continue
+		}
 
-		category := annotations.Custom["category"].(string) //nolint:forcetypeassert
+		category := path[2]
+		title := path[3]
+
+		if _, ok := traversedTitles[title]; ok {
+			continue
+		}
+
+		traversedTitles[title] = struct{}{}
 
 		tableData = append(tableData, []string{
 			category,
-			"[" + annotations.Title + "](" +
-				resolveDocsURL(annotations.RelatedResources[0].Ref.String(), category) +
-				")",
+			"[" + title + "](" + createDocsURL(category, title) + ")",
 			annotations.Description,
 		})
 	}

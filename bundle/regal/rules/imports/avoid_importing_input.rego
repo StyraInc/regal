@@ -1,23 +1,14 @@
-package regal.rules.imports
+# METADATA
+# description: Avoid importing input
+package regal.rules.imports["avoid-importing-input"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: avoid-importing-input
-# description: Avoid importing input
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/avoid-importing-input
-# custom:
-#   category: imports
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some imported in input.imports
 
 	imported.path.value[0].value == "input"
@@ -25,7 +16,7 @@ report contains violation if {
 	# Allow aliasing input, eg `import input as tfplan`:
 	not _aliased_input(imported)
 
-	violation := result.fail(rego.metadata.rule(), result.location(imported.path.value[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(imported.path.value[0]))
 }
 
 _aliased_input(imported) if {

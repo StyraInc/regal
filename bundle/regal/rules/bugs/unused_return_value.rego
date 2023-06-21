@@ -1,25 +1,16 @@
-package regal.rules.bugs
+# METADATA
+# description: Non-boolean return value unused
+package regal.rules.bugs["unused-return-value"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
-import data.regal.config
 import data.regal.opa
 import data.regal.result
 
-# METADATA
-# title: unused-return-value
-# description: Non-boolean return value unused
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/unused-return-value
-# custom:
-#   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 	some expr in rule.body
 
@@ -31,5 +22,5 @@ report contains violation if {
 
 	opa.builtins[ref_name].result.type != "boolean"
 
-	violation := result.fail(rego.metadata.rule(), result.location(expr.terms[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(expr.terms[0]))
 }

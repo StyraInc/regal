@@ -1,4 +1,6 @@
-package regal.rules.style
+# METADATA
+# description: Function argument used for return value
+package regal.rules.style["function-arg-return"]
 
 import future.keywords.contains
 import future.keywords.if
@@ -8,17 +10,8 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: function-arg-return
-# description: Function argument used for return value
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/function-arg-return
-# custom:
-#   category: style
 report contains violation if {
 	cfg := config.for_rule(rego.metadata.rule())
-	cfg.level != "ignore"
 
 	except_functions := array.concat(
 		object.get(cfg, "except-functions", []),
@@ -41,5 +34,5 @@ report contains violation if {
 
 	ast.function_ret_in_args(fn_name, value)
 
-	violation := result.fail(rego.metadata.rule(), result.location(regal.last(value)))
+	violation := result.fail(rego.metadata.chain(), result.location(regal.last(value)))
 }

@@ -1,23 +1,14 @@
-package regal.rules.style
+# METADATA
+# description: Unconditional assignment in rule body
+package regal.rules.style["unconditional-assignment"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: unconditional-assignment
-# description: Unconditional assignment in rule body
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/unconditional-assignment
-# custom:
-#   category: style
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 
 	# Single expression in rule body
@@ -44,5 +35,5 @@ report contains violation if {
 	terms[1].type == "var"
 	terms[1].value == rule_head_var
 
-	violation := result.fail(rego.metadata.rule(), result.location(terms[1]))
+	violation := result.fail(rego.metadata.chain(), result.location(terms[1]))
 }

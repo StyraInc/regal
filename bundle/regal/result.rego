@@ -5,7 +5,58 @@ import future.keywords.in
 
 import data.regal.config
 
-fail(metadata, details) := violation if {
+# Provided rules, i.e. regal.rules.category.title
+fail(chain, details) := violation if {
+	is_array(chain) # from rego.metadata.chain()
+
+	some link in chain
+	link.annotations.scope == "package"
+
+	some category, title
+	["regal", "rules", category, title] = link.path
+
+	# NOTE: consider allowing annotation to override any derived values?
+	annotation := object.union(link.annotations, {
+		"custom": {"category": category},
+		"title": title,
+		"related_resources": _related_resources(link.annotations, category, title),
+	})
+
+	violation := _fail_annotated(annotation, details)
+}
+
+# Custom rules, i.e. custom.regal.rules.category.title
+fail(chain, details) := violation if {
+	is_array(chain) # from rego.metadata.chain()
+
+	some link in chain
+	link.annotations.scope == "package"
+
+	some category, title
+	["custom", "regal", "rules", category, title] = link.path
+
+	# NOTE: consider allowing annotation to override any derived values?
+	annotation := object.union(link.annotations, {
+		"custom": {"category": category},
+		"title": title,
+		"related_resources": _related_resources(link.annotations, category, title),
+	})
+
+	violation := _fail_annotated(annotation, details)
+}
+
+_related_resources(annotations, _, _) := annotations.related_resources
+
+_related_resources(annotations, category, title) := rr if {
+	not annotations.related_resources
+	rr := [{
+		"description": "documentation",
+		"ref": sprintf("%s/%s/%s", [config.docs.base_url, category, title]),
+	}]
+}
+
+_fail_annotated(metadata, details) := violation if {
+	is_object(metadata) # from rego.metadata.rule()
 	with_location := object.union(metadata, details)
 	category := with_location.custom.category
 	with_category := object.union(with_location, {
@@ -21,6 +72,8 @@ fail(metadata, details) := violation if {
 		{"related_resources": related_resources},
 	)
 }
+
+fail(metadata, details) := _fail_annotated(metadata, details)
 
 resource_urls(related_resources, category) := [r |
 	some item in related_resources

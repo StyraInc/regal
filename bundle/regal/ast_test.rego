@@ -54,3 +54,20 @@ test_find_vars if {
 
 	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 }
+
+# https://github.com/StyraInc/regal/issues/168
+test_function_decls_multiple_same_name if {
+	policy := `package p
+
+	import future.keywords.if
+
+	f(x) := x if true
+	f(y) := y if false
+	`
+	module := regal.parse_module("p.rego", policy)
+	custom := ast.function_decls(module.rules)
+
+	# we only need to assert there wasn't a conflict in the above
+	# call, not what value was returned
+	is_object(custom)
+}

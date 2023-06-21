@@ -144,10 +144,15 @@ function_decls(rules) := {name: args |
 	rule.head.args
 
 	name := rule.head.name
-	args := {"args": [item |
+
+	# ensure we only get one set of args, or we'll have a conflict
+	args := [{"args": [item |
 		some arg in rule.head.args
 		item := {"name": arg.value}
-	]}
+	]} |
+		some rule in rules
+		rule.head.name == name
+	][0]
 }
 
 function_ret_in_args(fn_name, terms) if {

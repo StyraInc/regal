@@ -2,9 +2,7 @@ package regal.rules.imports_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports
 import data.regal.rules.imports.common_test.report
 
 test_fail_future_keywords_import_wildcard if {

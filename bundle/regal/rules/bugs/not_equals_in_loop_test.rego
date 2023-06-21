@@ -2,7 +2,6 @@ package regal.rules.bugs_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.rules.bugs.common_test.report
 import data.regal.rules.bugs.common_test.report_with_fk
 

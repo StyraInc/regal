@@ -2,9 +2,7 @@ package regal.rules.style_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.config
-import data.regal.rules.style
 import data.regal.rules.style.common_test.report
 
 test_fail_function_references_input if {

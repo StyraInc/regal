@@ -2,9 +2,7 @@ package regal.rules.idiomatic_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.config
-import data.regal.rules.idiomatic
 import data.regal.rules.idiomatic.common_test.report
 
 test_fail_unnecessary_construct_in if {

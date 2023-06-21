@@ -130,34 +130,36 @@ The following rules are currently available:
 
 <!-- RULES_TABLE_START -->
 
-| Category |                                                          Title                                                           |                      Description                       |
-|----------|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
-| bugs     | [constant-condition](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/constant-condition.md)                  | Constant condition                                     |
-| bugs     | [top-level-iteration](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/top-level-iteration.md)                | Iteration in top-level assignment                      |
-| bugs     | [unused-return-value](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/unused-return-value.md)                | Non-boolean return value unused                        |
-| bugs     | [not-equals-in-loop](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md)                  | Use of != in loop                                      |
-| bugs     | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-shadows-builtin.md)              | Rule name shadows built-in                             |
-| bugs     | [rule-named-if](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-named-if.md)                            | Rule named "if"                                        |
-| imports  | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                    |
-| imports  | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                  |
-| imports  | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                               |
-| imports  | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                          |
-| imports  | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                        |
-| style    | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                         |
-| style    | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                  |
-| style    | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                          |
-| style    | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                        |
-| style    | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/todo-comment.md)                             | Avoid TODO comments                                    |
-| style    | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body  |
-| style    | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions    |
-| style    | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                            |
-| style    | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                |
-| style    | [opa-fmt](https://github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                       | File should be formatted with `opa fmt`                |
-| testing  | [file-missing-test-suffix](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/file-missing-test-suffix.md)   | Files containing tests should have a _test.rego suffix |
-| testing  | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                          |
-| testing  | [todo-test](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/todo-test.md)                                 | TODO test encountered                                  |
-| testing  | [print-or-trace-call](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/print-or-trace-call.md)             | Call to print or trace function                        |
-| testing  | [test-outside-test-package](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/test-outside-test-package.md) | Test outside of test package                           |
+| Category  |                                                          Title                                                           |                        Description                        |
+|-----------|--------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| bugs      | [constant-condition](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/constant-condition.md)                  | Constant condition                                        |
+| bugs      | [not-equals-in-loop](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md)                  | Use of != in loop                                         |
+| bugs      | [rule-named-if](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-named-if.md)                            | Rule named "if"                                           |
+| bugs      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-shadows-builtin.md)              | Rule name shadows built-in                                |
+| bugs      | [top-level-iteration](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/top-level-iteration.md)                | Iteration in top-level assignment                         |
+| bugs      | [unused-return-value](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/unused-return-value.md)                | Non-boolean return value unused                           |
+| idiomatic | [custom-has-key-construct](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/custom-has-key-construct.md) | Custom function may be replaced by `in` and `object.keys` |
+| idiomatic | [custom-in-construct](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/custom-in-construct.md)           | Custom function may be replaced by `in` keyword           |
+| imports   | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                     |
+| imports   | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                       |
+| imports   | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                             |
+| imports   | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                           |
+| imports   | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                                  |
+| style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
+| style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
+| style     | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                   |
+| style     | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                             |
+| style     | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                               |
+| style     | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/todo-comment.md)                             | Avoid TODO comments                                       |
+| style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
+| style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                            |
+| style     | [opa-fmt](https://github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                       | File should be formatted with `opa fmt`                   |
+| testing   | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                             |
+| testing   | [print-or-trace-call](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/print-or-trace-call.md)             | Call to print or trace function                           |
+| testing   | [test-outside-test-package](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/test-outside-test-package.md) | Test outside of test package                              |
+| testing   | [todo-test](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/todo-test.md)                                 | TODO test encountered                                     |
+| testing   | [file-missing-test-suffix](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/file-missing-test-suffix.md)   | Files containing tests should have a _test.rego suffix    |
 
 <!-- RULES_TABLE_END -->
 

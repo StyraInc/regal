@@ -2,9 +2,7 @@ package regal.rules.bugs_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs
 import data.regal.rules.bugs.common_test.report
 
 test_fail_rule_name_shadows_builtin if {

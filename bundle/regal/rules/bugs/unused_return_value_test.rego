@@ -2,9 +2,7 @@ package regal.rules.bugs_test
 
 import future.keywords.if
 
-import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs
 import data.regal.rules.bugs.common_test.report_with_fk
 
 test_fail_unused_return_value if {

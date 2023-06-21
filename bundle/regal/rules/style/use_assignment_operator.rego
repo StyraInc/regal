@@ -4,10 +4,8 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.ast
 import data.regal.config
 import data.regal.result
-import data.regal.util
 
 # Some cases blocked by https://github.com/StyraInc/regal/issues/6 - e.g:
 #

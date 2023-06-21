@@ -4,7 +4,6 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.ast
 import data.regal.config
 import data.regal.result
 
@@ -31,7 +30,7 @@ report contains violation if {
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value == "eq"
 
-	[var, ref] := normalize_eq_terms(terms)
+	[_, ref] := normalize_eq_terms(terms)
 
 	ref.value[0].type == "var"
 	ref.value[0].value in arg_names

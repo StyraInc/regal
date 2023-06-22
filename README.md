@@ -273,6 +273,10 @@ rules altogether.
 [Regal the Rego Linter](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s), CNCF London meetup, June 2023
 [![Regal the Rego Linter](docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
 
+### Blogs
+
+- [Guarding the Guardrails - Introducing Regal the Rego Linter](https://www.styra.com/blog/guarding-the-guardrails-introducing-regal-the-rego-linter/)
+
 ## Status
 
 Regal is currently in beta. End-users should not expect any drastic changes, but any API may change without notice.

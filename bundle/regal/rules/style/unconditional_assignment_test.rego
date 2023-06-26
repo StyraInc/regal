@@ -49,3 +49,10 @@ test_success_unconditional_assignment_but_with_in_body if {
 	r := rule.report with input as ast.policy(`x := y { y := 5 with input as 1 }`)
 	r == set()
 }
+
+test_success_unconditional_assignment_but_else if {
+	r := rule.report with input as ast.policy(`msg := x {
+    	x := input.foo
+    } else := input.bar`)
+	r == set()
+}

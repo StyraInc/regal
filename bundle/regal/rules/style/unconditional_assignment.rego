@@ -17,6 +17,11 @@ report contains violation if {
 	# a `print` call.. but let's keep it simple for now
 	count(rule.body) == 1
 
+	# Remove this and consider proper handling of else once
+	# https://github.com/open-policy-agent/opa/issues/5777
+	# is resolved
+	not rule["else"]
+
 	# Var assignment in rule head
 	rule.head.value.type == "var"
 	rule_head_var := rule.head.value.value

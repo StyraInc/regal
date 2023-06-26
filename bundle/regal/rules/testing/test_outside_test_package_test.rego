@@ -35,3 +35,14 @@ test_success_test_inside_test_package if {
 	result := rule.report with input as ast
 	result == set()
 }
+
+# https://github.com/StyraInc/regal/issues/176
+test_success_test_prefixed_function if {
+	ast := regal.parse_module("foo_test.rego", `
+	package foo
+
+	test_foo(x) { x == 1 }
+	`)
+	result := rule.report with input as ast
+	result == set()
+}

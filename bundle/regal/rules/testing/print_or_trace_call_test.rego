@@ -1,14 +1,15 @@
-package regal.rules.testing_test
+package regal.rules.testing["print-or-trace-call_test"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.testing.common_test.report
+import data.regal.rules.testing["print-or-trace-call"] as rule
 
 test_fail_call_to_print_and_trace if {
-	r := report(`allow {
+	r := rule.report with input as ast.policy(`allow {
 		print("foo")
 
 		x := [i | i = 0; trace("bar")]
@@ -18,7 +19,7 @@ test_fail_call_to_print_and_trace if {
 			"category": "testing",
 			"description": "Call to print or trace function",
 			"level": "error",
-			"location": {"col": 3, "file": "policy.rego", "row": 9, "text": "\t\tprint(\"foo\")"},
+			"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tprint(\"foo\")"},
 			"related_resources": [{
 				"description": "documentation",
 				"ref": config.docs.resolve_url("$baseUrl/$category/print-or-trace-call", "testing"),
@@ -29,7 +30,7 @@ test_fail_call_to_print_and_trace if {
 			"category": "testing",
 			"description": "Call to print or trace function",
 			"level": "error",
-			"location": {"col": 20, "file": "policy.rego", "row": 11, "text": "\t\tx := [i | i = 0; trace(\"bar\")]"},
+			"location": {"col": 20, "file": "policy.rego", "row": 6, "text": "\t\tx := [i | i = 0; trace(\"bar\")]"},
 			"related_resources": [{
 				"description": "documentation",
 				"ref": config.docs.resolve_url("$baseUrl/$category/print-or-trace-call", "testing"),

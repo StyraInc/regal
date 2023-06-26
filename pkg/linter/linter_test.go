@@ -177,3 +177,30 @@ func TestLintWithCustomRule(t *testing.T) {
 		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
 	}
 }
+
+func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
+	t.Parallel()
+
+	policy := "package p\n"
+
+	configRaw := `rules:
+  naming:
+    acme-corp-package:
+      level: ignore`
+
+	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
+
+	linter := NewLinter().
+		WithUserConfig(config).
+		WithAddedBundle(test.GetRegalBundle(t)).
+		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
+
+	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Violations) != 0 {
+		t.Fatalf("expected no violation, got %d", len(result.Violations))
+	}
+}

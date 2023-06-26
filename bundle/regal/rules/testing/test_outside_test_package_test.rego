@@ -1,4 +1,4 @@
-package regal.rules.testing_test
+package regal.rules.testing["test-outside-test-package_test"]
 
 import future.keywords.contains
 import future.keywords.if
@@ -6,10 +6,10 @@ import future.keywords.in
 
 import data.regal.ast
 import data.regal.config
-import data.regal.rules.testing
+import data.regal.rules.testing["test-outside-test-package"] as rule
 
 test_fail_test_outside_test_package if {
-	r := testing.report with input as ast.with_future_keywords(`test_foo { false }`)
+	r := rule.report with input as ast.with_future_keywords(`test_foo { false }`)
 		with config.for_rule as {"level": "error"}
 		with input.regal.file.name as "p_test.rego"
 
@@ -32,6 +32,6 @@ test_success_test_inside_test_package if {
 
 	test_foo { false }
 	`)
-	result := testing.report with input as ast
+	result := rule.report with input as ast
 	result == set()
 }

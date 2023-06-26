@@ -1,4 +1,6 @@
-package regal.rules.style
+# METADATA
+# description: Line too long
+package regal.rules.style["line-length"]
 
 import future.keywords.contains
 import future.keywords.if
@@ -7,18 +9,8 @@ import future.keywords.in
 import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: line-length
-# description: Line too long
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/line-length
-# custom:
-#   category: style
 report contains violation if {
-	cfg := config.for_rule(rego.metadata.rule())
-
-	cfg.level != "ignore"
+	cfg := config.for_rule({"category": "style", "title": "line-length"})
 
 	some i, line in input.regal.file.lines
 
@@ -26,7 +18,7 @@ report contains violation if {
 	line_length > cfg["max-line-length"]
 
 	violation := result.fail(
-		rego.metadata.rule(),
+		rego.metadata.chain(),
 		{"location": {
 			"file": input.regal.file.name,
 			"row": i + 1,

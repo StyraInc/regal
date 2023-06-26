@@ -12,6 +12,11 @@ rules:
       level: error
     unused-return-value:
       level: error
+  idiomatic:
+    custom-has-key-construct:
+      level: error
+    custom-in-construct:
+      level: error
   imports:
     avoid-importing-input:
       level: error

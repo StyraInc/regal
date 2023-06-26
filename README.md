@@ -122,6 +122,7 @@ Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-
 Regal comes with a set of built-in rules, grouped by category.
 
 - **bugs**: Common mistakes, potential bugs and inefficiencies in Rego policies.
+- **idiomatic**: Suggestions for more idiomatic constructs.
 - **imports**: Best practices for imports.
 - **style**: [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
 - **testing**: Rules for testing and development.

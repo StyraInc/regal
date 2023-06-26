@@ -1,12 +1,14 @@
-package regal.rules.imports_test
+package regal.rules.imports["redundant-data-import_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports.common_test.report
+import data.regal.rules.imports["redundant-data-import"] as rule
 
 test_fail_import_data if {
-	report(`import data`) == {{
+	r := rule.report with input as ast.policy(`import data`)
+	r == {{
 		"category": "imports",
 		"description": "Redundant import of data",
 		"related_resources": [{
@@ -20,7 +22,8 @@ test_fail_import_data if {
 }
 
 test_fail_import_data_aliased if {
-	report(`import data as d`) == {{
+	r := rule.report with input as ast.policy(`import data as d`)
+	r == {{
 		"category": "imports",
 		"description": "Redundant import of data",
 		"related_resources": [{
@@ -34,5 +37,6 @@ test_fail_import_data_aliased if {
 }
 
 test_success_import_data_path if {
-	report(`import data.something`) == set()
+	r := rule.report with input as ast.policy(`import data.something`)
+	r == set()
 }

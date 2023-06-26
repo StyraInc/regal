@@ -1,23 +1,14 @@
-package regal.rules.bugs
+# METADATA
+# description: Iteration in top-level assignment
+package regal.rules.bugs["top-level-iteration"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: top-level-iteration
-# description: Iteration in top-level assignment
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/top-level-iteration
-# custom:
-#   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 
 	rule.head.value.type == "ref"
@@ -27,7 +18,7 @@ report contains violation if {
 
 	illegal_value_ref(last.value)
 
-	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 _rule_names := {name | name := input.rules[_].head.name}

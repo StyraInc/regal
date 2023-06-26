@@ -1,12 +1,13 @@
-package regal.rules.bugs_test
+package regal.rules.bugs["rule-named-if_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.bugs.common_test.report
+import data.regal.rules.bugs["rule-named-if"] as rule
 
 test_fail_rule_named_if if {
-	r := report(`
+	r := rule.report with input as ast.policy(`
 	allow := true if {
         input.foo
     }`)

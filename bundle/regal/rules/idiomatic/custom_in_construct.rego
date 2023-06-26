@@ -1,23 +1,14 @@
-package regal.rules.idiomatic
+# METADATA
+# description: Custom function may be replaced by `in` keyword
+package regal.rules.idiomatic["custom-in-construct"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
-# METADATA
-# title: custom-in-construct
-# description: Custom function may be replaced by `in` keyword
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/custom-in-construct
-# custom:
-#   category: idiomatic
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in input.rules
 	rule.head.args
 
@@ -39,7 +30,7 @@ report contains violation if {
 	ref.value[1].type == "var"
 	ref.value[1].value == "$0"
 
-	violation := result.fail(rego.metadata.rule(), result.location(rule.head))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 # METADATA

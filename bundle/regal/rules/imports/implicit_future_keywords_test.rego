@@ -1,12 +1,14 @@
-package regal.rules.imports_test
+package regal.rules.imports["implicit-future-keywords_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.imports.common_test.report
+import data.regal.rules.imports["implicit-future-keywords"] as rule
 
 test_fail_future_keywords_import_wildcard if {
-	report(`import future.keywords`) == {{
+	r := rule.report with input as ast.policy(`import future.keywords`)
+	r == {{
 		"category": "imports",
 		"description": "Use explicit future keyword imports",
 		"related_resources": [{
@@ -20,13 +22,15 @@ test_fail_future_keywords_import_wildcard if {
 }
 
 test_success_future_keywords_import_specific if {
-	report(`import future.keywords.contains`) == set()
+	r := rule.report with input as ast.policy(`import future.keywords.contains`)
+	r == set()
 }
 
 test_success_future_keywords_import_specific_many if {
-	report(`
+	r := rule.report with input as ast.policy(`
     import future.keywords.contains
     import future.keywords.if
     import future.keywords.in
-    `) == set()
+    `)
+	r == set()
 }

@@ -1,10 +1,11 @@
-package regal.rules.bugs
+# METADATA
+# description: Constant condition
+package regal.rules.bugs["constant-condition"]
 
 import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.config
 import data.regal.result
 
 # NOTE: The constant condition checks currently don't do nesting!
@@ -31,36 +32,16 @@ probably_no_body(rule) if {
 	rule.body[0].terms.value == true
 }
 
-# METADATA
-# title: constant-condition
-# description: Constant condition
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/constant-condition
-# custom:
-#   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in _rules_with_bodies
 	some expr in rule.body
 
 	expr.terms.type in _scalars
 
-	violation := result.fail(rego.metadata.rule(), result.location(expr))
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }
 
-# METADATA
-# title: constant-condition
-# description: Constant condition
-# related_resources:
-# - description: documentation
-#   ref: $baseUrl/$category/constant-condition
-# custom:
-#   category: bugs
 report contains violation if {
-	config.for_rule(rego.metadata.rule()).level != "ignore"
-
 	some rule in _rules_with_bodies
 	some expr in rule.body
 
@@ -70,5 +51,5 @@ report contains violation if {
 	expr.terms[1].type in _scalars
 	expr.terms[2].type in _scalars
 
-	violation := result.fail(rego.metadata.rule(), result.location(expr))
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }

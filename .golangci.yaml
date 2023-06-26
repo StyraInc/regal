@@ -28,6 +28,7 @@ linters:
     - ireturn
     - funlen
     - nolintlint
+    - depguard
 linters-settings:
   tagliatelle:
     case:

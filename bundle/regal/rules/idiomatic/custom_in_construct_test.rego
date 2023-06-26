@@ -1,14 +1,16 @@
-package regal.rules.idiomatic_test
+package regal.rules.idiomatic["custom-in-construct_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.idiomatic.common_test.report
 
-test_fail_unnecessary_construct_in if {
-	r := report(`has(item, coll) {
-		item == coll[_]
-	}`)
+import data.regal.rules.idiomatic["custom-in-construct"] as rule
+
+test_fail_custom_in if {
+	r := rule.report with input as ast.policy(`has(item, coll) {
+    		item == coll[_]
+    }`)
 	r == {{
 		"category": "idiomatic",
 		"description": "Custom function may be replaced by `in` keyword",
@@ -22,8 +24,8 @@ test_fail_unnecessary_construct_in if {
 	}}
 }
 
-test_fail_unnecessary_construct_in_reversed if {
-	r := report(`has(item, coll) { coll[_] == item }`)
+test_fail_custom_in_reversed if {
+	r := rule.report with input as ast.policy(`has(item, coll) { coll[_] == item }`)
 	r == {{
 		"category": "idiomatic",
 		"description": "Custom function may be replaced by `in` keyword",

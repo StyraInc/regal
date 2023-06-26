@@ -1,12 +1,13 @@
-package regal.rules.idiomatic_test
+package regal.rules.idiomatic["custom-has-key-construct_test"]
 
 import future.keywords.if
 
+import data.regal.ast
 import data.regal.config
-import data.regal.rules.idiomatic.common_test.report
+import data.regal.rules.idiomatic["custom-has-key-construct"] as rule
 
-test_fail_unnecessary_construct_in if {
-	r := report(`has_key(name, coll) {
+test_fail_custom_has_key if {
+	r := rule.report with input as ast.policy(`has_key(name, coll) {
 		_ = coll[name]
 	}`)
 	r == {{
@@ -22,8 +23,8 @@ test_fail_unnecessary_construct_in if {
 	}}
 }
 
-test_fail_unnecessary_construct_in_reversed if {
-	r := report(`has_key(name, coll) {
+test_fail_custom_has_key_reversed if {
+	r := rule.report with input as ast.policy(`has_key(name, coll) {
 		coll[name] = _
 	}`)
 	r == {{

@@ -178,6 +178,15 @@ function_ret_in_args(fn_name, terms) if {
 	count(rest) > count(all_functions[fn_name].args)
 }
 
+# METADATA
+# description: |
+#   answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
+implicit_boolean_assignment(rule) if {
+	# note the missing location attribute here, which is how we distinguish
+	# between implicit and explicit assignments
+	rule.head.value == {"type": "boolean", "value": true}
+}
+
 all_functions := object.union(opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)

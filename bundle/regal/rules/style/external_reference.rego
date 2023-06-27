@@ -26,6 +26,7 @@ report contains violation if {
 
 	term.type == "var"
 	not term.value in allowed_refs
+	not startswith(term.value, "$")
 
 	violation := result.fail(rego.metadata.chain(), result.location(term))
 }
@@ -46,6 +47,7 @@ report contains violation if {
 	terms := expr.terms.value
 	terms[0].type == "var"
 	not terms[0].value in allowed_refs
+	not startswith(terms[0].value, "$")
 
 	violation := result.fail(rego.metadata.chain(), result.location(terms[0]))
 }

@@ -77,3 +77,8 @@ test_success_function_references_only_own_vars_nested if {
 	r := rule.report with input as ast.policy(`f(x, z) { y := x; y == [1, 2, z]}`)
 	r == set()
 }
+
+test_success_function_references_only_own_vars_and_wildcard if {
+	r := rule.report with input as ast.policy(`f(x, y) { _ = x + y }`)
+	r == set()
+}

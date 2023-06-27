@@ -20,6 +20,7 @@ package_name := concat(".", [path.value |
 
 tests := [rule |
 	some rule in input.rules
+	not rule.head.args
 	startswith(rule.head.name, "test_")
 ]
 

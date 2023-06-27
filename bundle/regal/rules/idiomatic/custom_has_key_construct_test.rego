@@ -39,3 +39,25 @@ test_fail_custom_has_key_reversed if {
 		"title": "custom-has-key-construct",
 	}}
 }
+
+test_fail_custom_has_key_multiple_wildcards if {
+	r := rule.report with input as ast.policy(`
+	other_rule["foo"] {
+		wildcard := input[_]
+	}
+
+	has_key(name, coll) {
+		coll[name] = _
+	}`)
+	r == {{
+		"category": "idiomatic",
+		"description": "Custom function may be replaced by `in` and `object.keys`",
+		"level": "error",
+		"location": {"col": 2, "file": "policy.rego", "row": 8, "text": "\thas_key(name, coll) {"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/custom-has-key-construct", "idiomatic"),
+		}],
+		"title": "custom-has-key-construct",
+	}}
+}

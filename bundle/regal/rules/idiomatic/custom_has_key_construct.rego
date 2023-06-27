@@ -35,12 +35,12 @@ report contains violation if {
 # description: Normalize var to always always be on the left hand side
 normalize_eq_terms(terms) := [terms[1], terms[2]] if {
 	terms[1].type == "var"
-	terms[1].value == "$0"
+	startswith(terms[1].value, "$")
 	terms[2].type == "ref"
 }
 
 normalize_eq_terms(terms) := [terms[2], terms[1]] if {
 	terms[1].type == "ref"
 	terms[2].type == "var"
-	terms[2].value == "$0"
+	startswith(terms[2].value, "$")
 }

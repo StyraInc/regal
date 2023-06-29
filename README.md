@@ -134,6 +134,7 @@ The following rules are currently available:
 | Category  |                                                          Title                                                           |                        Description                        |
 |-----------|--------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | bugs      | [constant-condition](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/constant-condition.md)                  | Constant condition                                        |
+| bugs      | [invalid-metadata-attribute](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/invalid-metadata-attribute.md)  | Invalid attribute in metadata annotation                  |
 | bugs      | [not-equals-in-loop](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md)                  | Use of != in loop                                         |
 | bugs      | [rule-named-if](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-named-if.md)                            | Rule named "if"                                           |
 | bugs      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-shadows-builtin.md)              | Rule name shadows built-in                                |
@@ -146,14 +147,15 @@ The following rules are currently available:
 | imports   | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                             |
 | imports   | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                                  |
-| style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
-| style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
+| style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
 | style     | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                   |
 | style     | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                             |
+| style     | [no-whitespace-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/no-whitespace-comment.md)           | Comment should start with whitespace                      |
 | style     | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                               |
 | style     | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/todo-comment.md)                             | Avoid TODO comments                                       |
-| style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
-| style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
+| style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
 | style     | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                            |
 | style     | [opa-fmt](https://github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                       | File should be formatted with `opa fmt`                   |
 | testing   | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                             |

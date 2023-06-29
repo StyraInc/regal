@@ -199,6 +199,18 @@ comments_decoded := [decoded |
 
 comments["blocks"] := comment_blocks(comments_decoded)
 
+comments["metadata_attributes"] := {
+	"scope",
+	"title",
+	"description",
+	"related_resources",
+	"authors",
+	"organizations",
+	"schemas",
+	"entrypoint",
+	"custom",
+}
+
 comment_blocks(comments) := [partition |
 	rows := [row |
 		some comment in comments

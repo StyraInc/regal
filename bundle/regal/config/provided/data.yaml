@@ -38,6 +38,8 @@ rules:
     line-length:
       level: error
       max-line-length: 120
+    no-whitespace-comment:
+      level: error
     opa-fmt:
       level: error
     prefer-snake-case:

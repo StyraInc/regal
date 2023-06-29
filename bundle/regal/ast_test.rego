@@ -71,3 +71,33 @@ test_function_decls_multiple_same_name if {
 	# call, not what value was returned
 	is_object(custom)
 }
+
+test_comment_blocks if {
+	policy := `package p
+
+# METADATA
+# title: foo
+# bar: invalid
+allow := true
+
+# not metadata
+
+# another
+# block
+`
+
+	module := regal.parse_module("p.rego", policy)
+	blocks := ast.comment_blocks(module.comments)
+	blocks == [
+		[
+			{"Location": {"col": 1, "file": "p.rego", "row": 3}, "Text": "IE1FVEFEQVRB"},
+			{"Location": {"col": 1, "file": "p.rego", "row": 4}, "Text": "IHRpdGxlOiBmb28="},
+			{"Location": {"col": 1, "file": "p.rego", "row": 5}, "Text": "IGJhcjogaW52YWxpZA=="},
+		],
+		[{"Location": {"col": 1, "file": "p.rego", "row": 8}, "Text": "IG5vdCBtZXRhZGF0YQ=="}],
+		[
+			{"Location": {"col": 1, "file": "p.rego", "row": 10}, "Text": "IGFub3RoZXI="},
+			{"Location": {"col": 1, "file": "p.rego", "row": 11}, "Text": "IGJsb2Nr"},
+		],
+	]
+}

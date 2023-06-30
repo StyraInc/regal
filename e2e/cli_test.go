@@ -6,12 +6,38 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"gopkg.in/yaml.v3"
+
+	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/report"
 )
+
+func readProvidedConfig(t *testing.T) config.Config {
+	t.Helper()
+
+	cwd := must(os.Getwd)
+
+	bs, err := os.ReadFile(filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var cfg config.Config
+
+	err = yaml.Unmarshal(bs, &cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cfg
+}
 
 func TestCLIUsage(t *testing.T) {
 	t.Parallel()
@@ -84,7 +110,7 @@ func TestLintEmptyDir(t *testing.T) {
 	}
 }
 
-func TestLintNonExistantDir(t *testing.T) {
+func TestLintNonExistentDir(t *testing.T) {
 	t.Parallel()
 
 	stdout := bytes.Buffer{}
@@ -103,6 +129,55 @@ func TestLintNonExistantDir(t *testing.T) {
 	if exp, act := "errors encountered when reading files to lint: failed to load policy from provided args: "+
 		"1 error occurred during loading: stat "+td+"/what/ever: no such file or directory\n", stdout.String(); exp != act {
 		t.Errorf("expected stdout %q, got %q", exp, act)
+	}
+}
+
+func TestLintAllViolations(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := must(os.Getwd)
+	cfg := readProvidedConfig(t)
+
+	err := regal(&stdout, &stderr)("lint", "--format", "json", cwd+"/testdata/violations")
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+
+	err = json.Unmarshal(stdout.Bytes(), &rep)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	ruleNames := make(map[string]struct{})
+
+	for _, category := range cfg.Rules {
+		for ruleName := range category {
+			ruleNames[ruleName] = struct{}{}
+		}
+	}
+
+	// Note that some violations occur more than one time.
+	violationNames := make(map[string]struct{})
+
+	for _, violation := range rep.Violations {
+		violationNames[violation.Title] = struct{}{}
+	}
+
+	if len(ruleNames) != len(violationNames) {
+		for ruleName := range ruleNames {
+			if _, ok := violationNames[ruleName]; !ok {
+				t.Errorf("expected violation for rule %q", ruleName)
+			}
+		}
 	}
 }
 
@@ -150,4 +225,15 @@ func ExitStatus(err error) int {
 	}
 
 	panic("unreachable")
+}
+
+func must[R any](f func() (R, error)) R {
+	var r R
+
+	r, err := f()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return r
 }

@@ -10,7 +10,7 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	cfg := config.for_rule({"category": "style", "title": "line-length"})
+	cfg := config.for_rule({"custom": {"category": "style"}, "title": "line-length"})
 
 	some i, line in input.regal.file.lines
 

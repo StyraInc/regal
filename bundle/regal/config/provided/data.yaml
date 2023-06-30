@@ -33,6 +33,8 @@ rules:
   style:
     avoid-get-and-list-prefix:
       level: error
+    detached-metadata:
+      level: error
     external-reference:
       level: error
     function-arg-return:

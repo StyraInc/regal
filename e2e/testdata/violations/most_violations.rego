@@ -36,6 +36,8 @@ not_equals_in_loop {
 	"foo" != input.bar[_]
 }
 
+# TODO this can't be here due to the importing of future.keywords
+# Move to another file.
 # rule-named-if
 # if { true }
 

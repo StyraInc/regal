@@ -28,7 +28,7 @@ report contains violation if {
 	var.value in arg_names
 	ref.value[0].value in arg_names
 	ref.value[1].type == "var"
-	ref.value[1].value == "$0"
+	startswith(ref.value[1].value, "$")
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

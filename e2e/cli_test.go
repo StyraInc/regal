@@ -24,16 +24,17 @@ func readProvidedConfig(t *testing.T) config.Config {
 
 	cwd := must(os.Getwd)
 
-	bs, err := os.ReadFile(filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml"))
+	configPath := filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml")
+	bs, err := os.ReadFile(configPath)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatalf("failed to read config from %q: %v", configPath, err)
 	}
 
 	var cfg config.Config
 
 	err = yaml.Unmarshal(bs, &cfg)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatalf("failed to unmarshal config: %v", err)
 	}
 
 	return cfg

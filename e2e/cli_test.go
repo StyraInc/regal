@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/tester"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -179,6 +180,32 @@ func TestLintAllViolations(t *testing.T) {
 				t.Errorf("expected violation for rule %q", ruleName)
 			}
 		}
+	}
+}
+
+func TestTestRegalBundledRules(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := must(os.Getwd)
+
+	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+"/testdata/custom_rules")
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var res []tester.Result
+
+	err = json.Unmarshal(stdout.Bytes(), &res)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 }
 

@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/open-policy-agent/opa/version"
 
 	"github.com/styrainc/regal/internal/compile"
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -127,6 +129,23 @@ func opaTest(args []string) int {
 
 		return 1
 	}
+
+	// Create new fs from root of bundle, to avoid having to deal with
+	// "bundle" in paths (i.e. `data.bundle.regal`)
+	bfs, err := fs.Sub(EmbedBundleFS, "bundle")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, fmt.Errorf("failed reading embedded bundle %w", err))
+
+		return 1
+	}
+
+	regalRules := rio.MustLoadRegalBundleFS(bfs)
+
+	if bundles == nil {
+		bundles = make(map[string]*bundle.Bundle)
+	}
+
+	bundles["regal"] = &regalRules
 
 	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {

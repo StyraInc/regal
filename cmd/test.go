@@ -135,13 +135,16 @@ func opaTest(args []string) int {
 	bfs, err := fs.Sub(EmbedBundleFS, "bundle")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Errorf("failed reading embedded bundle %w", err))
+
 		return 1
 	}
 
 	regalRules := rio.MustLoadRegalBundleFS(bfs)
+
 	if bundles == nil {
 		bundles = make(map[string]*bundle.Bundle)
 	}
+
 	bundles["regal"] = &regalRules
 
 	txn, err := store.NewTransaction(ctx, storage.WriteParams)

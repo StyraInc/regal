@@ -202,6 +202,7 @@ func TestTestRegalBundledRules(t *testing.T) {
 	}
 
 	var res []tester.Result
+
 	err = json.Unmarshal(stdout.Bytes(), &res)
 	if err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())

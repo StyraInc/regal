@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/open-policy-agent/opa/ast/module",
+  "$ref": "#/$defs/module",
+  "$defs": {
+    "module": {
+      "properties": {
+        "package": {
+          "$ref": "#/$defs/package"
+        },
+        "imports": {
+          "items": {
+            "$ref": "#/$defs/import"
+          },
+          "type": "array"
+        },
+        "annotations": {
+          "items": {
+            "$ref": "#/$defs/annotations"
+          },
+          "type": "array"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/rule"
+          },
+          "type": "array"
+        },
+        "comments": {
+          "items": {
+            "$ref": "#/$defs/comment"
+          },
+          "type": "array"
+        },
+        "regal": {
+          "$ref": "#/$defs/regal"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "package"
+      ]
+    },
+    "import": {
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/term"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "annotations": {
+      "properties": {
+        "scope": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "entrypoint": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "organizations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "related_resources": {
+          "items": {
+            "$ref": "#/$defs/related_resource_annotation"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/author_annotation"
+          },
+          "type": "array"
+        },
+        "schemas": {
+          "items": {
+            "$ref": "#/$defs/schema_annotation"
+          },
+          "type": "array"
+        },
+        "custom": {
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "scope"
+      ]
+    },
+    "rule": {
+      "properties": {
+        "default": {
+          "type": "boolean"
+        },
+        "head": {
+          "$ref": "#/$defs/head"
+        },
+        "body": {
+          "$ref": "#/$defs/body"
+        },
+        "else": {
+          "description": "should reference #/$defs/rule. temporary workaround for https://github.com/open-policy-agent/opa/issues/6099",
+          "$ref": "#/$defs/else"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "head",
+        "body"
+      ]
+    },
+    "else": {
+      "properties": {
+        "default": {
+          "type": "boolean"
+        },
+        "head": {
+          "$ref": "#/$defs/head"
+        },
+        "body": {
+          "$ref": "#/$defs/body"
+        },
+        "else": {
+          "description": "temporary workaround for https://github.com/open-policy-agent/opa/issues/6099",
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "head",
+        "body"
+      ]
+    },
+    "args": {
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "type": "array"
+    },
+    "author_annotation": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "body": {
+      "items": {
+        "$ref": "#/$defs/expr"
+      },
+      "type": "array"
+    },
+    "comment": {
+      "properties": {
+        "Text": {
+          "type": "string",
+          "contentEncoding": "base64"
+        },
+        "Location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "Text",
+        "Location"
+      ]
+    },
+    "expr": {
+      "properties": {
+        "with": {
+          "items": {
+            "$ref": "#/$defs/with"
+          },
+          "type": "array"
+        },
+        "terms": true,
+        "index": {
+          "type": "integer"
+        },
+        "generated": {
+          "type": "boolean"
+        },
+        "negated": {
+          "type": "boolean"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "terms",
+        "index"
+      ]
+    },
+    "head": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "args": {
+          "$ref": "#/$defs/args"
+        },
+        "key": {
+          "$ref": "#/$defs/term"
+        },
+        "value": {
+          "$ref": "#/$defs/term"
+        },
+        "assign": {
+          "type": "boolean"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "location": {
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "row": {
+          "type": "integer"
+        },
+        "col": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "file",
+        "row",
+        "col"
+      ]
+    },
+    "package": {
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/ref"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "ref": {
+      "items": {
+        "$ref": "#/$defs/term"
+      },
+      "type": "array"
+    },
+    "related_resource_annotation": {
+      "properties": {
+        "ref": {
+          "type": "string",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "schema_annotation": {
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/ref"
+        },
+        "schema": {
+          "$ref": "#/$defs/ref"
+        },
+        "definition": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "term": {
+      "properties": {
+        "value": true,
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "value"
+      ]
+    },
+    "with": {
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/term"
+        },
+        "value": {
+          "$ref": "#/$defs/term"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "target",
+        "value"
+      ]
+    },
+    "regal": {
+      "properties": {
+        "file": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "file"
+      ]
+    }
+  }
+}

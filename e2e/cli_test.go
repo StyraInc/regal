@@ -10,12 +10,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/tester"
+
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -206,6 +208,33 @@ func TestTestRegalBundledRules(t *testing.T) {
 	err = json.Unmarshal(stdout.Bytes(), &res)
 	if err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+}
+
+func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := must(os.Getwd)
+
+	err := regal(&stdout, &stderr)("test", cwd+"/testdata/ast_type_failure")
+
+	if exp, act := 1, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	expStart := "1 error occurred: "
+	expEnd := "rego_type_error: undefined ref: input.foo\n\tinput.foo\n\t      ^\n\t      " +
+		"have: \"foo\"\n\t      want (one of): [\"annotations\" \"comments\" \"imports\" \"package\" \"regal\" \"rules\"]\n"
+
+	if !strings.HasPrefix(stdout.String(), expStart) {
+		t.Errorf("expected stdout error message starting with %q, got %q", expStart, stdout.String())
+	}
+
+	if !strings.HasSuffix(stdout.String(), expEnd) {
+		t.Errorf("expected stdout error message ending with %q, got %q", expEnd, stdout.String())
 	}
 }
 

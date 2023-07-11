@@ -2,11 +2,12 @@ package compile
 
 import (
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/util"
 
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
-func NewCompilerWithRegalBuiltins() *ast.Compiler {
+func Capabilities() *ast.Capabilities {
 	caps := ast.CapabilitiesForThisVersion()
 	caps.Builtins = append(caps.Builtins, &ast.Builtin{
 		Name: builtins.RegalParseModuleMeta.Name,
@@ -21,5 +22,17 @@ func NewCompilerWithRegalBuiltins() *ast.Compiler {
 		Decl: builtins.RegalLastMeta.Decl,
 	})
 
-	return ast.NewCompiler().WithCapabilities(caps)
+	return caps
+}
+
+func SchemaSet(s []byte) *ast.SchemaSet {
+	schema := util.MustUnmarshalJSON(s)
+	schemaSet := ast.NewSchemaSet()
+	schemaSet.Put(ast.MustParseRef("schema.regal.ast"), schema)
+
+	return schemaSet
+}
+
+func NewCompilerWithRegalBuiltins() *ast.Compiler {
+	return ast.NewCompiler().WithCapabilities(Capabilities())
 }

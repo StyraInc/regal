@@ -36,6 +36,7 @@ type Linter struct {
 	enable           []string
 	enableAll        bool
 	enableCategory   []string
+	ignore           []string
 }
 
 const regalUserConfig = "regal_user_config"
@@ -114,13 +115,32 @@ func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
 	return l
 }
 
+// WithIgnore excludes files matching patterns. This overrides configuration provided in file.
+func (l Linter) WithIgnore(ignore []string) Linter {
+	l.ignore = ignore
+
+	return l
+}
+
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, error) {
 	aggregate := report.Report{}
 
-	goReport, err := l.lintWithGoRules(ctx, input)
+	conf, err := l.mergedConfig()
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to load merged config: %w", err)
+	}
+
+	ignore := conf.Ignore
+	if l.ignore != nil {
+		ignore = l.ignore
+	}
+
+	goInput := filterInputFiles(input, ignore)
+
+	goReport, err := l.lintWithGoRules(ctx, goInput)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}
@@ -153,7 +173,9 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	aggregate := report.Report{}
 
 	for _, rule := range goRules {
-		result, err := rule.Run(ctx, input)
+		inp := inputForRule(input, rule)
+
+		result, err := rule.Run(ctx, inp)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
 		}
@@ -164,17 +186,62 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return aggregate, err
 }
 
+func inputForRule(input rules.Input, rule rules.Rule) rules.Input {
+	ignore := rule.Config().Ignore
+
+	return filterInputFiles(input, ignore)
+}
+
+func filterInputFiles(input rules.Input, ignore []string) rules.Input {
+	if len(ignore) == 0 {
+		return input
+	}
+
+	n := len(input.FileNames)
+	newInput := rules.Input{
+		FileNames:   make([]string, 0, n),
+		FileContent: make(map[string]string, n),
+		Modules:     make(map[string]*ast.Module, n),
+	}
+
+outer:
+	for _, f := range input.FileNames {
+		for _, pattern := range ignore {
+			if excludeFile(pattern, f) {
+				continue outer
+			}
+		}
+
+		newInput.FileNames = append(newInput.FileNames, f)
+		newInput.FileContent[f] = input.FileContent[f]
+		newInput.Modules[f] = input.Modules[f]
+	}
+
+	return newInput
+}
+
+func excludeFile(pattern string, filename string) bool {
+	// TODO implement
+	panic("not implemented")
+}
+
 func (l Linter) paramsToRulesConfig() map[string]any {
+	params := map[string]any{
+		"disable_all":      l.disableAll,
+		"disable_category": util.NullToEmpty(l.disableCategory),
+		"disable":          util.NullToEmpty(l.disable),
+		"enable_all":       l.enableAll,
+		"enable_category":  util.NullToEmpty(l.enableCategory),
+		"enable":           util.NullToEmpty(l.enable),
+	}
+
+	if l.ignore != nil {
+		params["ignore"] = l.ignore
+	}
+
 	return map[string]interface{}{
 		"eval": map[string]any{
-			"params": map[string]any{
-				"disable_all":      l.disableAll,
-				"disable_category": util.NullToEmpty(l.disableCategory),
-				"disable":          util.NullToEmpty(l.disable),
-				"enable_all":       l.enableAll,
-				"enable_category":  util.NullToEmpty(l.enableCategory),
-				"enable":           util.NullToEmpty(l.enable),
-			},
+			"params": params,
 		},
 	}
 }

@@ -12,7 +12,8 @@ import (
 )
 
 type Config struct {
-	Rules map[string]Category `json:"rules"`
+	Rules  map[string]Category `json:"rules"`
+	Ignore []string            `json:"ignore"`
 }
 
 type Category map[string]Rule
@@ -20,8 +21,9 @@ type Category map[string]Rule
 type ExtraAttributes map[string]any
 
 type Rule struct {
-	Level string
-	Extra ExtraAttributes
+	Level  string
+	Ignore []string
+	Extra  ExtraAttributes
 }
 
 const (

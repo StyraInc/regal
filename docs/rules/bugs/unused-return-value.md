@@ -42,7 +42,7 @@ This linter rule provides the following configuration options:
 ```yaml
 rules: 
   bugs:
-    return-value-unused:
+    unused-return-value:
       # one of "error", "warning", "ignore"
       level: error
 ```

@@ -3,7 +3,8 @@
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
 ![OPA v0.54.0](https://openpolicyagent.org/badge/v0.54.0)
 
-Regal is a linter for Rego, with the goal of making your Rego magnificent!
+Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
+Rego magnificent!
 
 > regal
 >
@@ -148,14 +149,15 @@ The following rules are currently available:
 | imports   | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                                  |
 | style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
-| style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
+| style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
+| style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
 | style     | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                   |
 | style     | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                             |
 | style     | [no-whitespace-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/no-whitespace-comment.md)           | Comment should start with whitespace                      |
 | style     | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                               |
 | style     | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/todo-comment.md)                             | Avoid TODO comments                                       |
-| style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
-| style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
+| style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
+| style     | [detached-metadata](https://github.com/StyraInc/regal/blob/main/docs/rules/style/detached-metadata.md)                   | Detached metadata annotation                              |
 | style     | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-in-operator.md)                       | Use in to check for membership                            |
 | style     | [opa-fmt](https://github.com/StyraInc/regal/blob/main/docs/rules/style/opa-fmt.md)                                       | File should be formatted with `opa fmt`                   |
 | testing   | [identically-named-tests](https://github.com/StyraInc/regal/blob/main/docs/rules/testing/identically-named-tests.md)     | Multiple tests with same name                             |
@@ -259,8 +261,8 @@ The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, 
 rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
 
 Note that at this point in time, Regal only considers the line following the ignore directive, i.e. it does not ignore
-entire blocks of code (like rules, or even packages). See [configuration](#configuration) if you want to ignore certain
-rules altogether.
+entire blocks of code (like rules, functions or even packages). See [configuration](#configuration) if you want to
+ignore certain rules altogether.
 
 ## Resources
 

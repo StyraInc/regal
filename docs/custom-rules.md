@@ -73,6 +73,8 @@ An example policy to implement this requirement might look something like this:
 # related_resources:
 # - description: documentation
 #   ref: https://www.acmecorp.example.org/docs/regal/package
+# schemas:
+# - input: schema.regal.ast
 package custom.regal.rules.naming["acme-corp-package"]
 
 import future.keywords.contains
@@ -107,6 +109,11 @@ Starting from top to bottom, these are the components comprising our custom rule
    order to document the purpose of the rule, along with any other information that could potentially be useful.
    All rule packages **must** have a `description`. Providing links to additional documentation under
    `related_resources` is recommended, but not required.
+1. Note the `schema` attribute present in the metadata annotation. Adding this is optional, but highly recommended, as
+   it will make the compiler aware of the structure of the input, i.e. the AST. This allows the compiler to fail when
+   unknown attributes are referenced, due to typos or other mistakes. The compiler will also fail when an attribute is
+   referenced using a type it does not have, like referring to a string as if it was a number. Set to `schema.regal.ast`
+   to use the AST schema provided by Regal.
 1. Regal will evaluate any rule named `report` in each linter policy, so at least one `report` rule **must** be present.
 1. In our example `report` rule, we evaluate another rule (`acme_corp_package`) in order to know if the package name
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither

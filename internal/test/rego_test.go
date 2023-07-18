@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"github.com/open-policy-agent/opa/tester"
 
+	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -38,11 +40,22 @@ func TestRunRegoUnitTests(t *testing.T) {
 		store.Abort(ctx, txn)
 	})
 
+	schema, err := os.ReadFile("../../schemas/regal-ast.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	compiler := compile.NewCompilerWithRegalBuiltins().
+		WithSchemas(compile.SchemaSet(schema)).
+		WithUseTypeCheckAnnotations(true)
+
 	runner := tester.NewRunner().
+		SetCompiler(compiler).
 		SetStore(store).
 		CapturePrintOutput(true).
 		SetRuntime(ast.NewTerm(ast.NewObject())).
 		SetBundles(bundle).
+		// TODO: Not needed?
 		AddCustomBuiltins(builtins.TestContextBuiltins())
 
 	ch, err := runner.RunTests(ctx, txn)

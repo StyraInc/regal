@@ -26,6 +26,7 @@ import (
 	"github.com/open-policy-agent/opa/version"
 
 	"github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 )
@@ -132,7 +133,7 @@ func opaTest(args []string) int {
 
 	// Create new fs from root of bundle, to avoid having to deal with
 	// "bundle" in paths (i.e. `data.bundle.regal`)
-	bfs, err := fs.Sub(EmbedBundleFS, "bundle")
+	bfs, err := fs.Sub(embeds.EmbedBundleFS, "bundle")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Errorf("failed reading embedded bundle %w", err))
 
@@ -158,7 +159,9 @@ func opaTest(args []string) int {
 
 	compiler := compile.NewCompilerWithRegalBuiltins().
 		WithPathConflictsCheck(storage.NonEmpty(ctx, store, txn)).
-		WithEnablePrintStatements(!testParams.benchmark)
+		WithEnablePrintStatements(!testParams.benchmark).
+		WithSchemas(compile.SchemaSet(embeds.ASTSchema)).
+		WithUseTypeCheckAnnotations(true)
 
 	if testParams.threshold > 0 && !testParams.coverage {
 		testParams.coverage = true

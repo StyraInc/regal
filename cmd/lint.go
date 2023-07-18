@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
@@ -62,8 +62,6 @@ func (f *repeatedStringFlag) Set(s string) error {
 
 	return nil
 }
-
-var EmbedBundleFS embed.FS //nolint:gochecknoglobals
 
 func init() {
 	params := lintCommandParams{}
@@ -173,7 +171,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 	// Create new fs from root of bundle, to avoid having to deal with
 	// "bundle" in paths (i.e. `data.bundle.regal`)
-	bfs, err := fs.Sub(EmbedBundleFS, "bundle")
+	bfs, err := fs.Sub(embeds.EmbedBundleFS, "bundle")
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed reading embedded bundle %w", err)
 	}

@@ -62,16 +62,6 @@ func MustLoadRegalBundlePath(path string) bundle.Bundle {
 	return regalBundle
 }
 
-// MustJSON parses JSON from reader, exit on failure.
-func MustJSON(from any) []byte {
-	bs, err := json.MarshalIndent(from, "", "   ")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return bs
-}
-
 // JSONRoundTrip convert any value to JSON and back again.
 func JSONRoundTrip(from any, to any) error {
 	bs, err := json.Marshal(from)

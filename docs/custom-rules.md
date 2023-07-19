@@ -3,7 +3,20 @@
 Regal is built to be easily extended. Creating custom rules is a great way to enforce naming conventions, best practices
 or more opinionated rules across teams and organizations. If you'd like to provide your own linter rules for a project,
 you may do so by placing them in a `rules` directory inside the `.regal` directory preferably placed in the root of your
-project (which is also where custom configuration resides).
+project (which is also where custom configuration resides). The directory structure of a policy repository with custom
+linter rules might then look something like this:
+
+```text
+.
+├── .regal
+│   ├── config.yaml
+│   └── rules
+│       ├── naming.rego
+│       └── naming_test.rego
+└── policy
+    ├── authz.rego
+    └── authz_test.rego
+```
 
 If you so prefer, custom rules may also be provided using the `--rules` option for `regal lint`, which may point either
 to a Rego file, or a directory containing Rego files and potentially data (JSON or YAML).
@@ -131,28 +144,12 @@ e.g. `regal.parse_module` in a custom linter policy. The following commands are 
 custom rules:
 
 - `regal parse` works similarly to `opa parse`, but will always output JSON and include location information, and any
-  additional data added to the AST by Regal.
-- `regal test` works like `opa test`, but aware of any custom Regal additions. Use this to test custom linter rules.
+  additional data added to the AST by Regal. Use this if you want to know exactly what the `input` will look like for
+  any given policy, when provided to Regal for linting.
+- `regal test` works like `opa test`, but aware of any custom Regal additions, and the schema used for the AST. Use this
+  to test custom linter rules, e.g. `regal test .regal/rules`.
 
-Given we want to test `p.rego` against the available set of rules, we can have OPA parse it and pipe the output
-to `opa eval` for evaluation:
-
-```shell
-$ regal parse p.rego | opa eval -f pretty -b bundle -I data.regal.main.report
-[
-  {
-    "category": "variables",
-    "description": "Unconditional assignment in rule body",
-    "related_resources": [
-      {
-        "description": "documentation",
-        "ref": "https://docs.styra.com/regal/rules/unconditional-assignment"
-      }
-    ],
-    "title": "unconditional-assignment"
-  }
-]
-```
+Note that the `print` built-in function is enabled for `regal test`. Good to use for quick debugging!
 
 ## Built-in Functions
 
@@ -169,3 +166,7 @@ linter rules work as expected.
 Printing nested objects and arrays is quite helpful for debugging AST nodes, but the standard representation — where
 everything is displayed on a single line — not so much. This built-in allows marshalling JSON similar to `json.marshal`,
 but with newlines and spaces added for a more pleasant experience.
+
+In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
+[regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast.rego) package to see what's available is
+recommended!

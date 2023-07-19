@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.54.0](https://openpolicyagent.org/badge/v0.54.0)
+![OPA v0.55.0](https://openpolicyagent.org/badge/v0.55.0)
 
 Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
 Rego magnificent!
@@ -59,7 +59,13 @@ chmod +x regal
 curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/download/regal_Windows_x86_64.exe"
 ```
 
-See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page.
+**Docker**
+```shell
+docker pull ghcr.io/styrainc/regal:latest
+```
+
+See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
+published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
 
 </details>
 
@@ -189,7 +195,7 @@ more about it.
 
 **.regal/config.yaml**
 ```yaml
-# Files can be excluded from all lint 
+# Files can be excluded from all lint
 # rules according to glob-patterns
 ignore:
   files:
@@ -209,7 +215,7 @@ rules:
       # not needed as error is the default, but
       # being explicit won't hurt
       level: error
-      # Files can be ignored. 
+      # Files can be ignored.
       # In this example, test files are ignored
       ignore:
         files:
@@ -296,13 +302,16 @@ ignore certain rules altogether.
 ## Status
 
 Regal is currently in beta. End-users should not expect any drastic changes, but any API may change without notice.
+If you want to embed Regal in another project or product, please reach out!
 
 ## Roadmap
 
 - [ ] More rules!
-- [ ] Add `custom` category for built-in "custom", or customizable rules, to enforce things like naming conventions
-- [ ] Simplify custom rules authoring by providing command for scaffolding
-- [ ] Improvements to assist writing rules that can't be enforced using the AST alone
+- [ ] Add `custom` (or `organizational`, `opinionated`, or..) category for built-in "custom", or
+      [organizational rules](https://github.com/StyraInc/regal/issues/48), to enforce things like naming conventions.
+      The most common customizations should not require writing custom rules, but be made available in configuration.
+- [ ] Simplify custom rules authoring by providing
+      [command for scaffolding](https://github.com/StyraInc/regal/issues/206)
 - [ ] Make more rules consider nested AST nodes
 - [ ] GitHub Action
 - [ ] VS Code extension

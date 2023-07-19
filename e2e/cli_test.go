@@ -194,7 +194,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/ignore_files_todo_comments.yaml", cwd+"/testdata/violations")
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/ignore_files_prefer_snake_case.yaml", cwd+"/testdata/violations")
 
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -219,7 +219,6 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		}
 	}
 
-	// Note that some violations occur more than one time.
 	violationNames := make(map[string]struct{})
 
 	for _, violation := range rep.Violations {
@@ -227,25 +226,24 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	}
 
 	if available, actual := len(ruleNames), len(violationNames); available != actual+1 {
-		t.Errorf("expected one rule to be missing from reported violations, but there were %d/%d violations reported", actual, available)
+		t.Errorf("expected one rule to be missing from reported violations, but there were %d out of %d violations reported", actual, available)
 	}
 
-	tc := "prefer-snake-case"
+	ignoredRuleName := "prefer-snake-case"
 
-	if _, ok := violationNames[tc]; ok {
+	if _, ok := violationNames[ignoredRuleName]; ok {
 		t.Errorf("expected violation for rule todo-comments to be ignored")
 	}
 
 	// Should be ignored, so exclude from below check
-	delete(ruleNames, tc)
+	// also, this has specifically been checked to miss from violationNames above
+	delete(ruleNames, ignoredRuleName)
 
-	//if len(ruleNames) != len(violationNames) {
 	for ruleName := range ruleNames {
 		if _, ok := violationNames[ruleName]; !ok {
 			t.Errorf("expected violation for rule %q", ruleName)
 		}
 	}
-	//}
 }
 
 func TestTestRegalBundledRules(t *testing.T) {

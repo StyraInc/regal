@@ -35,10 +35,14 @@ exclude(pattern, file) if {
 # combined set behave as Gits .gitignore
 pattern_compiler(pattern) := ps1 if {
 	p := internal_slashes(pattern)
-	ps := leading_doublestar_pattern(p)
+	p1 := leading_slash(p)
+	ps := leading_doublestar_pattern(p1)
 	ps1 := {pat | some _p; ps[_p]; nps := trailing_slash(_p); nps[pat]}
 }
 
+# Internal slashes means that the path is relative to root,
+# if not it can appear anywhere in the hierarchy
+#
 # myfiledir and mydir/ turns into **/myfiledir and **/mydir/
 # mydir/p and mydir/d/ are returned as is
 internal_slashes(pattern) := pattern if {
@@ -64,3 +68,9 @@ trailing_slash(pattern) := {pattern, np} if {
 	endswith(pattern, "/")
 	np := concat("", [pattern, "**"])
 } else := {pattern}
+
+# If a pattern starts with a "/", the leading slash is ignored but according to
+# the .gitignore rule of internal slashes, it is relative to root
+leading_slash(pattern) := substring(pattern, 1, -1) if {
+	startswith(pattern, "/")
+} else := pattern

@@ -236,12 +236,21 @@ outer:
 	return newInput, nil
 }
 
+// excludeFile imitates the pattern matching of .gitignore files
+// See `exclusion.rego` for details on the implementation.
 func excludeFile(pattern string, filename string) (bool, error) {
 	n := len(pattern)
+
+	// Internal slashes means path is relative to root, otherwise it can
+	// appear anywhere in the directory (--> **/)
 	if !strings.Contains(pattern[:n-1], "/") {
 		pattern = "**/" + pattern
 	}
 
+	// Leading slash?
+	pattern = strings.TrimPrefix(pattern, "/")
+
+	// Leading double-star?
 	var ps []string
 	if strings.HasPrefix(pattern, "**/") {
 		ps = []string{pattern, strings.TrimPrefix(pattern, "**/")}
@@ -251,6 +260,7 @@ func excludeFile(pattern string, filename string) (bool, error) {
 
 	var ps1 []string
 
+	// trailing slash?
 	for _, p := range ps {
 		switch {
 		case strings.HasSuffix(p, "/"):
@@ -262,6 +272,7 @@ func excludeFile(pattern string, filename string) (bool, error) {
 		}
 	}
 
+	// Loop through patterns and return true on first match
 	for _, p := range ps1 {
 		g, err := glob.Compile(p, '/')
 		if err != nil {

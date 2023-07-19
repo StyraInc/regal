@@ -31,6 +31,15 @@ cases := {
 		"p.rego": false,
 		"ptest.rego": false,
 	},
+	"outer/inner/": {
+		"outer/inner/file": true,
+		"outer/inner": false,
+	},
+	"/p.rego": {
+		"p.rego": true,
+		"dir/p.rego": false,
+		"p.rego/file": true,
+	},
 }
 
 test_all_cases_are_as_expected {

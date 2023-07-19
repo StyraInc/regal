@@ -3,10 +3,11 @@ package regal.config
 import future.keywords.if
 import future.keywords.in
 
-excluded_file(rule_config, file) if {
+excluded_file(metadata, file) if {
 	force_exclude_file(file)
 } else if {
-	ex := rule_config.ignore
+	rule_config := for_rule(metadata)
+	ex := rule_config.ignore.files
 	is_array(ex)
 	some pattern in ex
 	exclude(pattern, file)
@@ -18,9 +19,9 @@ force_exclude_file(file) if {
 	exclude(pattern, file)
 }
 
-global_ignore_patterns := merged_config.ignore if {
-	not data.eval.params.ignore
-} else := data.eval.params.ignore
+global_ignore_patterns := merged_config.ignore.files if {
+	not data.eval.params.ignore_files
+} else := data.eval.params.ignore_files
 
 # exclude imitates Gits .gitignore pattern matching as best it can
 # Ref: https://git-scm.com/docs/gitignore#_pattern_format
@@ -31,7 +32,7 @@ exclude(pattern, file) if {
 } else := false
 
 # pattern_compiler transforms a glob pattern into a set of glob patterns to make the
-# groups behave as Gits .gitignore
+# combined set behave as Gits .gitignore
 pattern_compiler(pattern) := ps1 if {
 	p := internal_slashes(pattern)
 	ps := leading_doublestar_pattern(p)

@@ -39,7 +39,7 @@ type lintCommandParams struct {
 	enable          repeatedStringFlag
 	enableAll       bool
 	enableCategory  repeatedStringFlag
-	ignore          repeatedStringFlag
+	ignoreFiles     repeatedStringFlag
 }
 
 const stringType = "string"
@@ -146,7 +146,7 @@ func init() {
 	lintCommand.Flags().VarP(&params.enableCategory, "enable-category", "",
 		"enable all rules in a category. This flag can be repeated.")
 
-	lintCommand.Flags().VarP(&params.ignore, "ignore", "",
+	lintCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
 		"ignore all files matching a glob-pattern. This flag can be repeated.")
 
 	RootCommand.AddCommand(lintCommand)
@@ -228,8 +228,8 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		regal = regal.WithCustomRules(params.rules.v)
 	}
 
-	if params.ignore.isSet {
-		regal = regal.WithIgnore(params.ignore.v)
+	if params.ignoreFiles.isSet {
+		regal = regal.WithIgnore(params.ignoreFiles.v)
 	}
 
 	userConfig, err := readUserConfig(params, regalDir)

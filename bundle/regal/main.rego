@@ -36,11 +36,8 @@ report contains violation if {
 	some category, title
 	config.merged_config.rules[category][title]
 
-	rule_config := config.for_rule(to_meta(category, title))
-
-	rule_config.level != "ignore"
-
-	not config.excluded_file(rule_config, input.regal.file.name)
+	config.for_rule(to_meta(category, title)).level != "ignore"
+	not config.excluded_file(to_meta(category, title), input.regal.file.name)
 
 	violation := data.regal.rules[category][title].report[_]
 
@@ -53,11 +50,8 @@ report contains violation if {
 
 	violation := data.custom.regal.rules[category][title].report[_]
 
-	rule_config := config.for_rule(to_meta(category, title))
-
-	rule_config.level != "ignore"
-
-	not config.excluded_file(rule_config, input.regal.file.name)
+	config.for_rule(to_meta(category, title)).level != "ignore"
+	not config.excluded_file(to_meta(category, title), input.regal.file.name)
 
 	not ignored(violation, ignore_directives)
 }

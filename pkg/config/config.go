@@ -13,16 +13,20 @@ import (
 
 type Config struct {
 	Rules  map[string]Category `json:"rules"`
-	Ignore []string            `json:"ignore"`
+	Ignore Ignore              `json:"ignore"`
 }
 
 type Category map[string]Rule
+
+type Ignore struct {
+	Files []string `json:"files"`
+}
 
 type ExtraAttributes map[string]any
 
 type Rule struct {
 	Level  string
-	Ignore []string
+	Ignore Ignore `json:"ignore"`
 	Extra  ExtraAttributes
 }
 
@@ -91,6 +95,7 @@ func FromMap(confMap map[string]any) (Config, error) {
 func (rule Rule) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 	result["level"] = rule.Level
+	result["ignore"] = rule.Ignore
 
 	for key, val := range rule.Extra {
 		result[key] = val
@@ -110,6 +115,17 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 	level, ok := result["level"].(string)
 	if !ok {
 		return errLevelMustBeString
+	}
+
+	if ignore, ok := result["ignore"]; ok {
+		var dst Ignore
+
+		err := rio.JSONRoundTrip(ignore, &dst)
+		if err != nil {
+			return fmt.Errorf("unmarshalling rule ignore failed: %w", err)
+		}
+
+		rule.Ignore = dst
 	}
 
 	delete(result, "enabled")

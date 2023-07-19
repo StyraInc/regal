@@ -192,8 +192,9 @@ more about it.
 # Files can be excluded from all lint 
 # rules according to glob-patterns
 ignore:
-  - file1.rego
-  - "*_tmp.rego"
+  files:
+    - file1.rego
+    - "*_tmp.rego"
 rules:
   style:
     todo-comment:
@@ -211,7 +212,8 @@ rules:
       # Files can be ignored. 
       # In this example, test files are ignored
       ignore:
-        - "*_test.rego"
+        files:
+          - "*_test.rego"
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
@@ -232,7 +234,7 @@ command.
 - `--enable-all` enables **all** rules
 - `--enable-category` enables all rules in a category, overriding `--disable-all` (may be repeated)
 - `--enable` enables a specific rule, overriding `--disable-all` and `--disable-category` (may be repeated)
-- `--ignore` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
+- `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
 
 All CLI flags override configuration provided in file.
 

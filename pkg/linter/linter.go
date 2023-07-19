@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gobwas/glob"
 	"github.com/imdario/mergo"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -36,7 +37,7 @@ type Linter struct {
 	enable           []string
 	enableAll        bool
 	enableCategory   []string
-	ignore           []string
+	ignoreFiles      []string
 }
 
 const regalUserConfig = "regal_user_config"
@@ -117,7 +118,7 @@ func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
 
 // WithIgnore excludes files matching patterns. This overrides configuration provided in file.
 func (l Linter) WithIgnore(ignore []string) Linter {
-	l.ignore = ignore
+	l.ignoreFiles = ignore
 
 	return l
 }
@@ -133,12 +134,15 @@ func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, err
 		return report.Report{}, fmt.Errorf("failed to load merged config: %w", err)
 	}
 
-	ignore := conf.Ignore
-	if l.ignore != nil {
-		ignore = l.ignore
+	ignoreFiles := conf.Ignore.Files
+	if l.ignoreFiles != nil {
+		ignoreFiles = l.ignoreFiles
 	}
 
-	goInput := filterInputFiles(input, ignore)
+	goInput, err := filterInputFiles(input, ignoreFiles)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("error filtering input files: %w", err)
+	}
 
 	goReport, err := l.lintWithGoRules(ctx, goInput)
 	if err != nil {
@@ -173,7 +177,10 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	aggregate := report.Report{}
 
 	for _, rule := range goRules {
-		inp := inputForRule(input, rule)
+		inp, err := inputForRule(input, rule)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("error encountered while filtering input files: %w", err)
+		}
 
 		result, err := rule.Run(ctx, inp)
 		if err != nil {
@@ -186,15 +193,15 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return aggregate, err
 }
 
-func inputForRule(input rules.Input, rule rules.Rule) rules.Input {
-	ignore := rule.Config().Ignore
+func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
+	ignore := rule.Config().Ignore.Files
 
 	return filterInputFiles(input, ignore)
 }
 
-func filterInputFiles(input rules.Input, ignore []string) rules.Input {
+func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
 	if len(ignore) == 0 {
-		return input
+		return input, nil
 	}
 
 	n := len(input.FileNames)
@@ -207,7 +214,16 @@ func filterInputFiles(input rules.Input, ignore []string) rules.Input {
 outer:
 	for _, f := range input.FileNames {
 		for _, pattern := range ignore {
-			if excludeFile(pattern, f) {
+			if pattern == "" {
+				continue
+			}
+
+			excluded, err := excludeFile(pattern, f)
+			if err != nil {
+				return rules.Input{}, fmt.Errorf("failed to check for exclusion using pattern %s: %w", pattern, err)
+			}
+
+			if excluded {
 				continue outer
 			}
 		}
@@ -217,12 +233,47 @@ outer:
 		newInput.Modules[f] = input.Modules[f]
 	}
 
-	return newInput
+	return newInput, nil
 }
 
-func excludeFile(pattern string, filename string) bool {
-	// TODO implement
-	panic("not implemented")
+func excludeFile(pattern string, filename string) (bool, error) {
+	n := len(pattern)
+	if !strings.Contains(pattern[:n-1], "/") {
+		pattern = "**/" + pattern
+	}
+
+	var ps []string
+	if strings.HasPrefix(pattern, "**/") {
+		ps = []string{pattern, strings.TrimPrefix(pattern, "**/")}
+	} else {
+		ps = []string{pattern}
+	}
+
+	var ps1 []string
+
+	for _, p := range ps {
+		switch {
+		case strings.HasSuffix(p, "/"):
+			ps1 = append(ps1, p+"**")
+		case !strings.HasSuffix(p, "/") && !strings.HasSuffix(p, "**"):
+			ps1 = append(ps1, p, p+"/**")
+		default:
+			ps1 = append(ps1, p)
+		}
+	}
+
+	for _, p := range ps1 {
+		g, err := glob.Compile(p, '/')
+		if err != nil {
+			return false, fmt.Errorf("failed to compile pattern %s: %w", p, err)
+		}
+
+		if g.Match(filename) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (l Linter) paramsToRulesConfig() map[string]any {
@@ -235,8 +286,8 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 		"enable":           util.NullToEmpty(l.enable),
 	}
 
-	if l.ignore != nil {
-		params["ignore"] = l.ignore
+	if l.ignoreFiles != nil {
+		params["ignore_files"] = l.ignoreFiles
 	}
 
 	return map[string]interface{}{

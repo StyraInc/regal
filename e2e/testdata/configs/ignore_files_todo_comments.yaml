@@ -1,0 +1,7 @@
+rules:
+  style:
+    prefer-snake-case:
+      level: error
+      ignore:
+        files:
+          - "*.rego"

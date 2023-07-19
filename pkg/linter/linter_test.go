@@ -100,6 +100,110 @@ or := 1
 	}
 }
 
+func TestLintWithUserConfigTable(t *testing.T) {
+	t.Parallel()
+
+	policy := `package p
+
+foo := input.bar[_]
+
+ opa_fmt := "fail"
+
+or := 1
+`
+	tests := []struct {
+		name            string
+		configRaw       string
+		filename        string
+		expViolations   []string
+		ignoreFilesFlag []string
+	}{
+		{
+			name:          "baseline",
+			filename:      "p.rego",
+			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
+		},
+		{
+			name: "ignore rule",
+			configRaw: `rules:
+  bugs:
+    rule-shadows-builtin:
+      level: ignore
+  style:
+    opa-fmt:
+      level: ignore`,
+			filename:      "p.rego",
+			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "rule level ignore files",
+			configRaw: `rules:
+  bugs:
+    rule-shadows-builtin:
+      level: error
+      ignore:
+        files:
+          - p.rego
+  style:
+    opa-fmt:
+      level: error
+      ignore:
+        files:
+          - p.rego`,
+			filename:      "p.rego",
+			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "user config global ignore files",
+			configRaw: `ignore:
+  files:
+    - p.rego`,
+			filename:      "p.rego",
+			expViolations: []string{},
+		},
+		{
+			name:            "CLI flag ignore files",
+			filename:        "p.rego",
+			expViolations:   []string{},
+			ignoreFilesFlag: []string{"p.rego"},
+		},
+	}
+
+	for _, tc := range tests {
+		tt := tc
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			linter := NewLinter().
+				WithAddedBundle(test.GetRegalBundle(t))
+
+			if tt.configRaw != "" {
+				config := rio.MustYAMLToMap(strings.NewReader(tt.configRaw))
+				linter = linter.WithUserConfig(config)
+			}
+
+			if tt.ignoreFilesFlag != nil {
+				linter = linter.WithIgnore(tt.ignoreFilesFlag)
+			}
+
+			result, err := linter.Lint(context.Background(), test.InputPolicy(tt.filename, policy))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(result.Violations) != len(tt.expViolations) {
+				t.Fatalf("expected %d violation, got %d", len(tt.expViolations), len(result.Violations))
+			}
+
+			for idx, violation := range result.Violations {
+				if violation.Title != tt.expViolations[idx] {
+					t.Errorf("expected first violation to be '%s', got %s", tt.expViolations[idx], result.Violations[0].Title)
+				}
+			}
+		})
+	}
+}
+
 func TestLintWithGoRule(t *testing.T) {
 	t.Parallel()
 

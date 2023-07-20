@@ -190,11 +190,10 @@ more about it.
 **.regal/config.yaml**
 ```yaml
 rules:
-  comments:
+  style:
     todo-comment:
       # don't report on todo comments
       level: ignore
-  style:
     line-length:
       # custom rule configuration
       max-line-length: 100

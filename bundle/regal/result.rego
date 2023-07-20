@@ -35,14 +35,12 @@ fail(chain, details) := violation if {
 	some category, title
 	["custom", "regal", "rules", category, title] = link.path
 
-	# NOTE: consider allowing annotation to override any derived values?
 	annotation := object.union(link.annotations, {
 		"custom": {"category": category},
 		"title": title,
-		"related_resources": _related_resources(link.annotations, category, title),
 	})
 
-	violation := _fail_annotated(annotation, details)
+	violation := _fail_annotated_custom(annotation, details)
 }
 
 _related_resources(annotations, _, _) := annotations.related_resources
@@ -56,7 +54,7 @@ _related_resources(annotations, category, title) := rr if {
 }
 
 _fail_annotated(metadata, details) := violation if {
-	is_object(metadata) # from rego.metadata.rule()
+	is_object(metadata)
 	with_location := object.union(metadata, details)
 	category := with_location.custom.category
 	with_category := object.union(with_location, {
@@ -67,10 +65,22 @@ _fail_annotated(metadata, details) := violation if {
 	without_custom_and_scope := object.remove(with_category, ["custom", "scope"])
 	related_resources := resource_urls(without_custom_and_scope.related_resources, category)
 
-	violation := object.union(
-		object.remove(without_custom_and_scope, ["related_resources"]),
-		{"related_resources": related_resources},
+	violation := json.patch(
+		without_custom_and_scope,
+		[{"op": "replace", "path": "/related_resources", "value": related_resources}],
 	)
+}
+
+_fail_annotated_custom(metadata, details) := violation if {
+	is_object(metadata)
+	with_location := object.union(metadata, details)
+	category := with_location.custom.category
+	with_category := object.union(with_location, {
+		"category": category,
+		"level": config.rule_level(config.for_rule(with_location)),
+	})
+
+	violation := object.remove(with_category, ["custom", "scope"])
 }
 
 fail(metadata, details) := _fail_annotated(metadata, details)

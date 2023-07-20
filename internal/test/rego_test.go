@@ -47,12 +47,12 @@ func TestRunRegoUnitTests(t *testing.T) {
 
 	compiler := compile.NewCompilerWithRegalBuiltins().
 		WithSchemas(compile.SchemaSet(schema)).
-		WithUseTypeCheckAnnotations(true)
+		WithUseTypeCheckAnnotations(true).
+		WithEnablePrintStatements(true)
 
 	runner := tester.NewRunner().
 		SetCompiler(compiler).
 		SetStore(store).
-		CapturePrintOutput(true).
 		SetRuntime(ast.NewTerm(ast.NewObject())).
 		SetBundles(bundle).
 		// TODO: Not needed?

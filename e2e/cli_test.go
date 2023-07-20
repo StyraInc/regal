@@ -185,6 +185,67 @@ func TestLintAllViolations(t *testing.T) {
 	}
 }
 
+func TestLintRuleIgnoreFiles(t *testing.T) {
+	t.Parallel()
+
+	cwd := must(os.Getwd)
+	cfg := readProvidedConfig(t)
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/ignore_files_prefer_snake_case.yaml", cwd+"/testdata/violations")
+
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+
+	err = json.Unmarshal(stdout.Bytes(), &rep)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	ruleNames := make(map[string]struct{})
+
+	for _, category := range cfg.Rules {
+		for ruleName := range category {
+			ruleNames[ruleName] = struct{}{}
+		}
+	}
+
+	violationNames := make(map[string]struct{})
+
+	for _, violation := range rep.Violations {
+		violationNames[violation.Title] = struct{}{}
+	}
+
+	if available, actual := len(ruleNames), len(violationNames); available != actual+1 {
+		t.Errorf("expected one rule to be missing from reported violations, but there were %d out of %d violations reported", actual, available)
+	}
+
+	ignoredRuleName := "prefer-snake-case"
+
+	if _, ok := violationNames[ignoredRuleName]; ok {
+		t.Errorf("expected violation for rule todo-comments to be ignored")
+	}
+
+	// Should be ignored, so exclude from below check
+	// also, this has specifically been checked to miss from violationNames above
+	delete(ruleNames, ignoredRuleName)
+
+	for ruleName := range ruleNames {
+		if _, ok := violationNames[ruleName]; !ok {
+			t.Errorf("expected violation for rule %q", ruleName)
+		}
+	}
+}
+
 func TestTestRegalBundledRules(t *testing.T) {
 	t.Parallel()
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gobwas/glob"
 	"github.com/imdario/mergo"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -36,6 +37,7 @@ type Linter struct {
 	enable           []string
 	enableAll        bool
 	enableCategory   []string
+	ignoreFiles      []string
 }
 
 const regalUserConfig = "regal_user_config"
@@ -114,13 +116,35 @@ func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
 	return l
 }
 
+// WithIgnore excludes files matching patterns. This overrides configuration provided in file.
+func (l Linter) WithIgnore(ignore []string) Linter {
+	l.ignoreFiles = ignore
+
+	return l
+}
+
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, error) {
 	aggregate := report.Report{}
 
-	goReport, err := l.lintWithGoRules(ctx, input)
+	conf, err := l.mergedConfig()
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to load merged config: %w", err)
+	}
+
+	ignoreFiles := conf.Ignore.Files
+	if l.ignoreFiles != nil {
+		ignoreFiles = l.ignoreFiles
+	}
+
+	goInput, err := filterInputFiles(input, ignoreFiles)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("error filtering input files: %w", err)
+	}
+
+	goReport, err := l.lintWithGoRules(ctx, goInput)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}
@@ -153,7 +177,12 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	aggregate := report.Report{}
 
 	for _, rule := range goRules {
-		result, err := rule.Run(ctx, input)
+		inp, err := inputForRule(input, rule)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("error encountered while filtering input files: %w", err)
+		}
+
+		result, err := rule.Run(ctx, inp)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
 		}
@@ -164,17 +193,117 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 	return aggregate, err
 }
 
+func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
+	ignore := rule.Config().Ignore.Files
+
+	return filterInputFiles(input, ignore)
+}
+
+func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
+	if len(ignore) == 0 {
+		return input, nil
+	}
+
+	n := len(input.FileNames)
+	newInput := rules.Input{
+		FileNames:   make([]string, 0, n),
+		FileContent: make(map[string]string, n),
+		Modules:     make(map[string]*ast.Module, n),
+	}
+
+outer:
+	for _, f := range input.FileNames {
+		for _, pattern := range ignore {
+			if pattern == "" {
+				continue
+			}
+
+			excluded, err := excludeFile(pattern, f)
+			if err != nil {
+				return rules.Input{}, fmt.Errorf("failed to check for exclusion using pattern %s: %w", pattern, err)
+			}
+
+			if excluded {
+				continue outer
+			}
+		}
+
+		newInput.FileNames = append(newInput.FileNames, f)
+		newInput.FileContent[f] = input.FileContent[f]
+		newInput.Modules[f] = input.Modules[f]
+	}
+
+	return newInput, nil
+}
+
+// excludeFile imitates the pattern matching of .gitignore files
+// See `exclusion.rego` for details on the implementation.
+func excludeFile(pattern string, filename string) (bool, error) {
+	n := len(pattern)
+
+	// Internal slashes means path is relative to root, otherwise it can
+	// appear anywhere in the directory (--> **/)
+	if !strings.Contains(pattern[:n-1], "/") {
+		pattern = "**/" + pattern
+	}
+
+	// Leading slash?
+	pattern = strings.TrimPrefix(pattern, "/")
+
+	// Leading double-star?
+	var ps []string
+	if strings.HasPrefix(pattern, "**/") {
+		ps = []string{pattern, strings.TrimPrefix(pattern, "**/")}
+	} else {
+		ps = []string{pattern}
+	}
+
+	var ps1 []string
+
+	// trailing slash?
+	for _, p := range ps {
+		switch {
+		case strings.HasSuffix(p, "/"):
+			ps1 = append(ps1, p+"**")
+		case !strings.HasSuffix(p, "/") && !strings.HasSuffix(p, "**"):
+			ps1 = append(ps1, p, p+"/**")
+		default:
+			ps1 = append(ps1, p)
+		}
+	}
+
+	// Loop through patterns and return true on first match
+	for _, p := range ps1 {
+		g, err := glob.Compile(p, '/')
+		if err != nil {
+			return false, fmt.Errorf("failed to compile pattern %s: %w", p, err)
+		}
+
+		if g.Match(filename) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (l Linter) paramsToRulesConfig() map[string]any {
+	params := map[string]any{
+		"disable_all":      l.disableAll,
+		"disable_category": util.NullToEmpty(l.disableCategory),
+		"disable":          util.NullToEmpty(l.disable),
+		"enable_all":       l.enableAll,
+		"enable_category":  util.NullToEmpty(l.enableCategory),
+		"enable":           util.NullToEmpty(l.enable),
+	}
+
+	if l.ignoreFiles != nil {
+		params["ignore_files"] = l.ignoreFiles
+	}
+
 	return map[string]interface{}{
 		"eval": map[string]any{
-			"params": map[string]any{
-				"disable_all":      l.disableAll,
-				"disable_category": util.NullToEmpty(l.disableCategory),
-				"disable":          util.NullToEmpty(l.disable),
-				"enable_all":       l.enableAll,
-				"enable_category":  util.NullToEmpty(l.enableCategory),
-				"enable":           util.NullToEmpty(l.enable),
-			},
+			"params": params,
 		},
 	}
 }

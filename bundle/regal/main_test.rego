@@ -86,3 +86,52 @@ test_main_ignore_directive_multiple_mixed_success {
 
 	count(report) == 1
 }
+
+test_main_exclude_files_rule_config {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error", "ignore": {"files": ["p.rego"]}}
+
+	count(report) == 0
+}
+
+test_main_force_exclude_file_eval_param {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
+		with data.eval.params.ignore_files as ["p.rego"]
+
+	count(report) == 0
+}
+
+test_main_force_exclude_file_user_config {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
+		with data.regal.config.for_rule as {"level": "error"}
+		with data.regal.config.merged_config as {"ignore": {"files": ["p.rego"]}}
+
+	count(report) == 0
+}
+
+test_main_exclude_files_rule_config_integration {
+	policy := `package p
+
+	camelCase := "yes"
+	`
+	report := data.regal.main.report with input as regal.parse_module("/some/dir/p.rego", policy)
+		with data.regal_user_config as {"rules": {"style": {"prefer-snake-case": {
+			"level": "error",
+			"ignore": {"files": ["p.rego"]},
+		}}}}
+
+	count(report) == 0
+}

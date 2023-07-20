@@ -62,7 +62,7 @@ _fail_annotated(metadata, details) := violation if {
 		"level": config.rule_level(config.for_rule(with_location)),
 	})
 
-	without_custom_and_scope := object.remove(with_category, ["custom", "scope"])
+	without_custom_and_scope := object.remove(with_category, ["custom", "scope", "schemas"])
 	related_resources := resource_urls(without_custom_and_scope.related_resources, category)
 
 	violation := json.patch(
@@ -80,7 +80,7 @@ _fail_annotated_custom(metadata, details) := violation if {
 		"level": config.rule_level(config.for_rule(with_location)),
 	})
 
-	violation := object.remove(with_category, ["custom", "scope"])
+	violation := object.remove(with_category, ["custom", "scope", "schemas"])
 }
 
 fail(metadata, details) := _fail_annotated(metadata, details)

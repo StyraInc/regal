@@ -40,7 +40,7 @@ func TestRunRegoUnitTests(t *testing.T) {
 		store.Abort(ctx, txn)
 	})
 
-	schema, err := os.ReadFile("../../schemas/regal-ast.json")
+	schema, err := os.ReadFile("../embeds/schemas/regal-ast.json")
 	if err != nil {
 		t.Fatal(err)
 	}

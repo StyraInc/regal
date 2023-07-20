@@ -299,6 +299,56 @@ func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 	}
 }
 
+func TestCreateNewCustomRuleFromTemplate(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	tmpDir := t.TempDir()
+
+	err := regal(&stdout, &stderr)("new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir)
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	err = regal(&stdout, &stderr)("test", tmpDir)
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if strings.HasPrefix(stdout.String(), "PASS 1/1") {
+		t.Errorf("expected stdout to contain PASS 1/1, got %q", stdout.String())
+	}
+}
+
+func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	tmpDir := t.TempDir()
+
+	err := regal(&stdout, &stderr)("new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir)
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	err = regal(&stdout, &stderr)("test", tmpDir)
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if strings.HasPrefix(stdout.String(), "PASS 1/1") {
+		t.Errorf("expected stdout to contain PASS 1/1, got %q", stdout.String())
+	}
+}
+
 func binary() string {
 	if b := os.Getenv("REGAL_BIN"); b != "" {
 		return b

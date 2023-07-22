@@ -2,7 +2,7 @@
 
 **Summary**: Use `in` to check for membership
 
-**Category**: Style
+**Category**: Idiomatic
 
 **Avoid**
 ```rego
@@ -39,12 +39,8 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  style:
+  idiomatic:
     use-in-operator:
       # one of "error", "warning", "ignore"
       level: error
 ```
-
-## Related Resources
-
-- Rego Style Guide [Use `in` to check for membership](https://github.com/StyraInc/rego-style-guide#use-in-to-check-for-membership)

@@ -1,6 +1,6 @@
 # METADATA
 # description: Use in to check for membership
-package regal.rules.style["use-in-operator"]
+package regal.rules.idiomatic["use-in-operator"]
 
 import future.keywords.contains
 import future.keywords.if

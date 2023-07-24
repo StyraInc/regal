@@ -44,3 +44,7 @@ rules:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- Rego Style Guide [Use `in` to check for membership](https://github.com/StyraInc/rego-style-guide#use-in-to-check-for-membership)

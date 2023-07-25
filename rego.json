@@ -88,10 +88,10 @@
             "package $1",
             "",
             "",
-            "decision := {allow: true} {",
+            "decision := {\"allow\": true} {",
             "\tinput.foo",
             "}",
-            "decision := {allow: false} {",
+            "decision := {\"allow\": false} {",
             "\tnot input.foo",
             "}"
         ],

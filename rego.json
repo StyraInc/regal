@@ -40,7 +40,7 @@
             "",
             "import data.regal.ast",
             "import data.regal.config",
-            "import custom.regal.rules.$2 as rule",
+            "import data.custom.regal.rules.$2 as rule",
             "",
             "test_fail_$3 if {",
             "\tr := rule.report with input as ast.policy(",

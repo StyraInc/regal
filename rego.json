@@ -20,7 +20,7 @@
             "\t$3",
             "\t",
             "\t",
-            "\tviolation := result.fail(regal.metadata.chain(), result.position($4))",
+            "\tviolation := result.fail(rego.metadata.chain(), result.location($4))",
             "}"
         ],
         "description": "Regal policy template"

@@ -1,0 +1,100 @@
+{
+    "policy template": {
+        "prefix": [
+            "policy",
+            "rule",
+            "template"
+        ],
+        "body": [
+            "# METADATA ",
+            "# description: $1",
+            "package custom.regal.rules.$2",
+            "",
+            "import future.keywords.in",
+            "import future.keywords.if",
+            "import future.keywords.contains",
+            "",
+            "import data.regal.result",
+            "",
+            "report contains violation if {",
+            "\t$3",
+            "\t",
+            "\t",
+            "\tviolation := result.fail(regal.metadata.chain(), result.position($4))",
+            "}"
+        ],
+        "description": "Regal policy template"
+    },
+    "policy test": {
+        "prefix": [
+            "regal_test",
+            "testing",
+            "template"
+        ],
+        "body": [
+            "package custom.regal.rules.$1",
+            "",
+            "import future.keywords.if",
+            "import future.keywords.in",
+            "import future.keywords.contains",
+            "",
+            "import data.regal.ast",
+            "import data.regal.config",
+            "import custom.regal.rules.$2 as rule",
+            "",
+            "test_fail_$3 if {",
+            "\tr := rule.report with input as ast.policy(",
+            "\t`decision := {\"allow\": true} {",
+            "\t\tinput.foo",
+            "\t}`)",
+            "\tres := {",
+            "\t\t{",
+            "\t\t\t\"category\": \"structure\",",
+            "\t\t\t\"description\": \"Exactly two decision rules (1. allow = true, 2. allow = false) should be present in the policy.\",",
+            "\t\t\t\"level\": \"error\",",
+            "\t\t\t\"location\": {",
+            "\t\t\t\t\"col\": 1,",
+            "\t\t\t\t\"file\": \"policy.rego\",",
+            "\t\t\t\t\"row\": 3,",
+            "\t\t\t\t\"text\": \"decision := {\"allow\": true} {\"",
+            "\t\t\t},",
+            "\t\t\t\"title\": \"two-decision-clauses\"",
+            "\t\t}",
+            "\t}",
+            "\tr == res",
+            "}",
+            "",
+            "",
+            "test_success_$4 if {",
+            "\tr := rule.report with input as ast.policy(`",
+            "\tdecision := {allow: true} {",
+            "\t\tinput.foo",
+            "\t}",
+            "\tdecision := {allow: false} {",
+            "\t\tnot input.foo",
+            "\t}`)",
+            "\tr == set()",
+            "}",
+            ""
+        ],
+        "description": "Regal testing template"
+    },
+    "policy example": {
+        "prefix": [
+            "regal_example",
+            "template"
+        ],
+        "body": [
+            "package $1",
+            "",
+            "",
+            "decision := {allow: true} {",
+            "\tinput.foo",
+            "}",
+            "decision := {allow: false} {",
+            "\tnot input.foo",
+            "}"
+        ],
+        "description": "Regal example template"
+    }
+}

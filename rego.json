@@ -56,7 +56,7 @@
             "\t\t\t\t\"col\": 1,",
             "\t\t\t\t\"file\": \"policy.rego\",",
             "\t\t\t\t\"row\": 3,",
-            "\t\t\t\t\"text\": \"decision := {\"allow\": true} {\"",
+            "\t\t\t\t\"text\": \"decision := {\\\"allow\\\": true} {\"",
             "\t\t\t},",
             "\t\t\t\"title\": \"two-decision-clauses\"",
             "\t\t}",

@@ -259,7 +259,9 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to get reporter: %w", err)
 	}
 
-	return result, rep.Publish(result) //nolint:wrapcheck
+	filteredReport := filterReport(result, params.failLevel)
+
+	return result, rep.Publish(filteredReport) //nolint:wrapcheck
 }
 
 func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {
@@ -273,6 +275,26 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}
+}
+
+// filterReport removes all violations with a level lower than failLevel
+func filterReport(r report.Report, failLevel string) report.Report {
+	filteredReport := report.Report{}
+	filteredReport.Summary = r.Summary
+	filteredReport.Summary.NumViolations = 0
+
+	failLevelToInt := map[string]int{
+		"error":   1,
+		"warning": 0,
+	}
+
+	for _, violation := range r.Violations {
+		if failLevelToInt[violation.Level] >= failLevelToInt[failLevel] {
+			filteredReport.Violations = append(filteredReport.Violations, violation)
+			filteredReport.Summary.NumViolations++
+		}
+	}
+	return filteredReport
 }
 
 func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os.File, err error) {

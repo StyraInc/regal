@@ -1,21 +1,21 @@
-package regal.rules.style["use-in-operator_test"]
+package regal.rules.idiomatic["use-in-operator_test"]
 
 import future.keywords.if
 
 import data.regal.ast
 import data.regal.config
-import data.regal.rules.style["use-in-operator"] as rule
+import data.regal.rules.idiomatic["use-in-operator"] as rule
 
 test_fail_use_in_operator_string_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	"admin" == input.user.roles[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 4, "text": "\t\"admin\" == input.user.roles[_]"},
@@ -28,11 +28,11 @@ test_fail_use_in_operator_number_lhs if {
 	1 == input.lucky_numbers[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 7, "file": "policy.rego", "row": 4, "text": "\t1 == input.lucky_numbers[_]"},
@@ -45,11 +45,11 @@ test_fail_use_in_operator_array_lhs if {
 	[1] == input.arrays[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 9, "file": "policy.rego", "row": 4, "text": "\t[1] == input.arrays[_]"},
@@ -62,11 +62,11 @@ test_fail_use_in_operator_boolean_lhs if {
 	true == input.booleans[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 4, "text": "\ttrue == input.booleans[_]"},
@@ -79,11 +79,11 @@ test_fail_use_in_operator_object_lhs if {
 	{"x": "y"} == input.objects[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 16, "file": "policy.rego", "row": 4, "text": "\t{\"x\": \"y\"} == input.objects[_]"},
@@ -96,11 +96,11 @@ test_fail_use_in_operator_null_lhs if {
 	null == input.objects[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 10, "file": "policy.rego", "row": 4, "text": "\tnull == input.objects[_]"},
@@ -113,11 +113,11 @@ test_fail_use_in_operator_set_lhs if {
 	{"foo"} == input.objects[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 13, "file": "policy.rego", "row": 4, "text": "\t{\"foo\"} == input.objects[_]"},
@@ -130,11 +130,11 @@ test_fail_use_in_operator_var_lhs if {
 	admin == input.user.roles[_]
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 11, "file": "policy.rego", "row": 4, "text": "\tadmin == input.user.roles[_]"},
@@ -147,11 +147,11 @@ test_fail_use_in_operator_string_rhs if {
 	input.user.roles[_] == "admin"
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\tinput.user.roles[_] == \"admin\""},
@@ -164,11 +164,11 @@ test_fail_use_in_operator_var_rhs if {
 		input.user.roles[_] == admin
 	}`)
 	r == {{
-		"category": "style",
+		"category": "idiomatic",
 		"description": "Use in to check for membership",
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "style"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
 		}],
 		"title": "use-in-operator",
 		"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.user.roles[_] == admin"},

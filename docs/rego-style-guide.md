@@ -62,7 +62,7 @@ determine whether the author has done, and both have valid use cases.
 Almost all of these should be doable, with some possibly being quite challenging.
 One that could be very hard to implement is the `every` rule, as that would
 require us to determine what **other** method was used and that `every` is a
-suitable replacement. With the exception of "Use `in` to check for membership",
+suitable replacement. Except for "Use `in` to check for membership",
 none of the above rules can be enforced using the AST alone.
 
 ## Functions
@@ -72,7 +72,7 @@ none of the above rules can be enforced using the AST alone.
 
 ## Regex
 
-- [ ] Use raw strings for regex patterns
+- [x] Use raw strings for regex patterns
 
 ### Notes
 Can only be done by scanning the original code, as this is lost in the AST.

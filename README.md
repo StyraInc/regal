@@ -315,6 +315,14 @@ Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 
 - requires the `regal` package is already installed and available on `$PATH`.
 
+#### `regal-download`
+
+![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
+
+Runs Regal against all staged `.rego` files, aborting the commit if any fail.
+
+- Downloads the latest `regal` binary from Github.
+
 ## Resources
 
 ### Documentation

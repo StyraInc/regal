@@ -15,3 +15,12 @@
   description: policy file linting with Regal from Styra using system $PATH
   entry: regal lint
   files: (\.rego)$
+
+- id: regal-download
+  stages:
+    - pre-commit
+  language: script
+  name: policy file linting
+  description: policy file linting with Regal downloaded from Github
+  entry: build/download-and-run.sh lint
+  files: (\.rego)$

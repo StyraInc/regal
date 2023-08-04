@@ -281,48 +281,6 @@ Note that at this point in time, Regal only considers the line following the ign
 entire blocks of code (like rules, functions or even packages). See [configuration](#configuration) if you want to
 ignore certain rules altogether.
 
-## Using Regal with Pre-Commit
-
-[Pre-Commit](https://pre-commit.com) is a framework for managing and maintaining multi-language pre-commit hooks.
-
-To use Regal with pre-commit, add this to your `.pre-commit-config.yaml`
-
-```yaml
-- repo: https://github.com/StyraInc/regal
-  rev: v0.5.0 # Use the ref you want to point at
-  hooks:
-    - id: regal-lint
-  # -   id: ...
-```
-
-### Hooks Available
-
-#### `regal-lint`
-
-![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
-
-Runs Regal against all staged `.rego` files, aborting the commit if any fail.
-
-- requires the `go` build chain is installed and available on `$PATH`
-- will build and install the tagged version of Regal in an isolated `GOPATH`
-- ensures compatibility between versions
-
-#### `regal-lint-use-path`
-
-![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
-
-Runs Regal against all staged `.rego` files, aborting the commit if any fail.
-
-- requires the `regal` package is already installed and available on `$PATH`.
-
-#### `regal-download`
-
-![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
-
-Runs Regal against all staged `.rego` files, aborting the commit if any fail.
-
-- Downloads the latest `regal` binary from Github.
-
 ## Resources
 
 ### Documentation
@@ -331,6 +289,7 @@ Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 - [Development](/docs/development.md) for info about how to hack on Regal itself
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
+- [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks
 
 ### Talks
 

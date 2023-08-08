@@ -36,3 +36,9 @@ rules:
 
 - OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
 - OPA Repo: [builtin_metadata.json](https://github.com/open-policy-agent/opa/blob/main/builtin_metadata.json)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

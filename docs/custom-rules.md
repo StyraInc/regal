@@ -170,3 +170,8 @@ but with newlines and spaces added for a more pleasant experience.
 In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
 [regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast.rego) package to see what's available is
 recommended!
+
+## Community
+
+If you'd like to discuss custom rules development or just talk about Regal in general, please join us in the `#regal`
+channel in the Styra Community[Slack](https://communityinviter.com/apps/styracommunity/signup)!

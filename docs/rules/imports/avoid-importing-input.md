@@ -78,3 +78,9 @@ rules:
 
 - Rego Style Guide: [Avoid importing `input`](https://github.com/StyraInc/rego-style-guide#avoid-importing-input)
 - OPA docs: [Terraform Tutorial](https://www.openpolicyagent.org/docs/latest/terraform)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

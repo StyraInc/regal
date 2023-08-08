@@ -84,3 +84,9 @@ rules:
 
 - OPA docs: [Equality: Assignment, Comparison, and Unification](https://www.openpolicyagent.org/docs/latest/policy-language/#equality-assignment-comparison-and-unification)
 - Rego Style Guide: [Don't use unification operator for assignment or comparison](https://github.com/StyraInc/rego-style-guide#dont-use-unification-operator-for-assignment-or-comparison)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

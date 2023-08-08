@@ -48,3 +48,9 @@ rules:
 ## Related Resources
 
 - Rego Style Guide [Use `in` to check for membership](https://github.com/StyraInc/rego-style-guide#use-in-to-check-for-membership)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

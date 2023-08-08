@@ -46,3 +46,9 @@ rules:
 - OPA Blog: [Introducing the OPA print function](https://blog.openpolicyagent.org/introducing-the-opa-print-function-809da6a13aee)
 - OPA Docs: [Policy Reference: Debugging](https://www.openpolicyagent.org/docs/latest/policy-reference/#debugging)
 - OPA Docs: [Decision Logs](https://www.openpolicyagent.org/docs/latest/management-decision-logs/)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

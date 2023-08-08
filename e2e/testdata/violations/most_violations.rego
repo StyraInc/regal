@@ -105,3 +105,5 @@ todo_test_bad {
 print_or_trace_call {
 	print("forbidden!")
 }
+
+non_raw_regex_pattern := regex.match("[0-9]", "1")

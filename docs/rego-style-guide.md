@@ -68,7 +68,7 @@ none of the above rules can be enforced using the AST alone.
 ## Functions
 
 - [x] Prefer using arguments over input and data
-- [ ] Avoid using the last argument for the return value
+- [x] Avoid using the last argument for the return value
 
 ## Regex
 
@@ -78,6 +78,7 @@ none of the above rules can be enforced using the AST alone.
 Can only be done by scanning the original code, as this is lost in the AST.
 
 ## Imports
+
 - [x] Use explicit imports for future keywords
 - [ ] Prefer importing packages over rules and functions
 - [x] Avoid importing input

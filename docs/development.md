@@ -2,6 +2,22 @@
 
 If you'd like to contribute to Regal, here are some pointers to help get you started.
 
+## Contributing New Rules
+
+If you'd like to contribute a new built-in rule, the simplest way to get started is to run the `regal new rule` command.
+This should be done from the top-level directory of the Regal repository, and would look something like this:
+
+```shell
+regal new rule --type builtin --category naming --name foo-bar-baz
+```
+
+This will create two files in `bundle/regal/rules/naming` (since `naming` was the category) — one for the rule and one
+for testing it. The code here will be a pretty simple template, but contains all the required components for a built-in
+rule. A good idea for learning more about what's needed is to take a look at some previous PRs adding new rules to
+Regal.
+
+```text
+
 ## Building
 
 1. Run the `build.sh` script to populate the `data` directory with any data necessary for linting (such as the built-in

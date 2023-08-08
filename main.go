@@ -15,9 +15,6 @@ import (
 //go:embed all:bundle
 var bundle embed.FS
 
-//go:embed schemas/regal-ast.json
-var schema []byte
-
 func main() {
 	// Remove date and time from any `log.*` calls, as that doesn't add much of value here
 	// Evaluate options for logging later..
@@ -27,7 +24,6 @@ func main() {
 	// so while this isn't pretty, we'll use a separate package to carry state from here. If you
 	// know of a better way of doing this, don't hesitate to fix this.
 	embeds.EmbedBundleFS = bundle
-	embeds.ASTSchema = schema
 
 	if err := cmd.RootCommand.Execute(); err != nil {
 		os.Exit(1)

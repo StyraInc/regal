@@ -21,6 +21,26 @@ linter rules might then look something like this:
 If you so prefer, custom rules may also be provided using the `--rules` option for `regal lint`, which may point either
 to a Rego file, or a directory containing Rego files and potentially data (JSON or YAML).
 
+## Creating a New Rule
+
+The simplest way to create a new rule is to use the `regal new rule` command. This command provides scaffolding for
+quickly creating a new rule, including a file for testing. The command has two required arguments: `--category` and
+`--name`, which should be self-explanatory. To create a new custom rule:
+
+```shell
+regal new rule --category naming --name foo-bar-baz
+```
+
+This will create a `.regal/rules` directory in the current working directory, if one does not already exist, and place
+a directory named after `--category` in it, where it will place a policy for the rule, and another one to test it. If
+you'd rather create this directory structure in some other place than the current working directory, you may use the
+`--output` flag to specify a different location. The generated rule includes a simple example, which can be verified by
+running `regal test .regal/rules/${category}`. Modify the rule and the test to suit your needs!
+
+If you'd like to create a new built-in rule for submitting a PR in Regal, you may add the `--type builtin` flag to the
+command (the default is `custom`). This will create a similar scaffolding under `bundle/regal/rules` in the Regal
+repository.
+
 ## Developing Rules
 
 Regal rules works primarily on the [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) as

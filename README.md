@@ -197,7 +197,7 @@ For more advanced requirements, see the guide on writing [custom rules](/docs/cu
 
 ## Configuration
 
-A custom configuration file may be used to override the [default configuration](bundle/regal/config/provided/data.yaml)
+A custom configuration file may be used to override the [default configuration](https://github.com/StyraInc/regal/blob/main/bundle/regal/config/provided/data.yaml)
 options provided by Regal. The most common use case for this is to change the severity level of a rule. These three
 levels are available:
 

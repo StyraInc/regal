@@ -12,7 +12,7 @@ Rego magnificent!
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
-![illustration of a viking representing the Regal logo](./docs/assets/regal-banner.png)
+![illustration of a viking representing the Regal logo](/docs/assets/regal-banner.png)
 
 ## Goals
 
@@ -318,7 +318,7 @@ ignore certain rules altogether.
 ### Talks
 
 [Regal the Rego Linter](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s), CNCF London meetup, June 2023
-[![Regal the Rego Linter](docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
+[![Regal the Rego Linter](/docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
 
 ### Blogs
 

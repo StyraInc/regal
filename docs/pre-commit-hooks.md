@@ -1,4 +1,4 @@
-## Pre-Commit Hooks
+# Pre-Commit Hooks
 
 [Pre-Commit](https://pre-commit.com) is a framework for managing and maintaining multi-language pre-commit hooks.
 This allows running Regal automatically whenever (and as the name implied, before )a Rego file is about to be committed.

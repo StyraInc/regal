@@ -71,4 +71,4 @@ go run main.go table --write-to-readme bundle
 ## Community
 
 If you'd like to discuss Regal development or just talk about Regal in general, please join us in the `#regal`
-channel in the Styra Community[Slack](https://communityinviter.com/apps/styracommunity/signup)!
+channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!

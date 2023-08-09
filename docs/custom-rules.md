@@ -202,4 +202,4 @@ recommended!
 ## Community
 
 If you'd like to discuss custom rules development or just talk about Regal in general, please join us in the `#regal`
-channel in the Styra Community[Slack](https://communityinviter.com/apps/styracommunity/signup)!
+channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!

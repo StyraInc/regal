@@ -332,10 +332,10 @@ If you want to embed Regal in another project or product, please reach out!
 ## Roadmap
 
 - [ ] More rules!
-- [ ] Add `custom` (or `organizational`, `opinionated`, or..) category for built-in "custom", or
+- [x] Add `custom` (or `organizational`, `opinionated`, or..) category for built-in "custom", or
       [organizational rules](https://github.com/StyraInc/regal/issues/48), to enforce things like naming conventions.
       The most common customizations should not require writing custom rules, but be made available in configuration.
-- [ ] Simplify custom rules authoring by providing
+- [x] Simplify custom rules authoring by providing
       [command for scaffolding](https://github.com/StyraInc/regal/issues/206)
 - [ ] Make more rules consider nested AST nodes
 - [ ] GitHub Action

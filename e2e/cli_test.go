@@ -18,6 +18,7 @@ import (
 
 	"github.com/open-policy-agent/opa/tester"
 
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -164,8 +165,10 @@ func TestLintAllViolations(t *testing.T) {
 	ruleNames := make(map[string]struct{})
 
 	for _, category := range cfg.Rules {
-		for ruleName := range category {
-			ruleNames[ruleName] = struct{}{}
+		for ruleName, rule := range category {
+			if rule.Level != "ignore" {
+				ruleNames[ruleName] = struct{}{}
+			}
 		}
 	}
 
@@ -214,8 +217,10 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	ruleNames := make(map[string]struct{})
 
 	for _, category := range cfg.Rules {
-		for ruleName := range category {
-			ruleNames[ruleName] = struct{}{}
+		for ruleName, rule := range category {
+			if rule.Level != "ignore" {
+				ruleNames[ruleName] = struct{}{}
+			}
 		}
 	}
 
@@ -242,6 +247,47 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	for ruleName := range ruleNames {
 		if _, ok := violationNames[ruleName]; !ok {
 			t.Errorf("expected violation for rule %q", ruleName)
+		}
+	}
+}
+
+func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
+	t.Parallel()
+
+	cwd := must(os.Getwd)
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/custom_naming_convention.yaml", cwd+"/testdata/custom_naming_convention")
+
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+
+	err = json.Unmarshal(stdout.Bytes(), &rep)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	if rep.Summary.NumViolations != 2 {
+		t.Errorf("expected 2 violations, got %d", rep.Summary.NumViolations)
+	}
+
+	expectedViolations := []string{
+		`Naming convention violation: package name "this.fails" does not match pattern "^acmecorp\\.[a-z_\\.]+$"`,
+		`Naming convention violation: rule name "naming_convention_fail" does not match pattern "^_[a-z_]+$|^allow$"`,
+	}
+
+	for _, violation := range rep.Violations {
+		if !util.Contains(expectedViolations, violation.Description) {
+			t.Errorf("unexpected violation: %s", violation.Description)
 		}
 	}
 }

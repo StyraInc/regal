@@ -1,0 +1,11 @@
+rules:
+  custom:
+    naming-convention:
+      level: error
+      conventions:
+        - pattern: '^_[a-z_]+$|^allow$'
+          targets:
+            - rule
+        - pattern: '^acmecorp\.[a-z_\.]+$'
+          targets:
+            - package

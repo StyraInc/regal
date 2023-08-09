@@ -16,8 +16,6 @@ for testing it. The code here will be a pretty simple template, but contains all
 rule. A good idea for learning more about what's needed is to take a look at some previous PRs adding new rules to
 Regal.
 
-```text
-
 ## Building
 
 1. Run the `build.sh` script to populate the `data` directory with any data necessary for linting (such as the built-in

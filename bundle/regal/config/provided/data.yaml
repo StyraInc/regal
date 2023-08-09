@@ -23,6 +23,9 @@ rules:
       level: error
     use-in-operator:
       level: error
+  custom:
+    naming-convention:
+      level: ignore
   imports:
     avoid-importing-input:
       level: error

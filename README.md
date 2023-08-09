@@ -129,6 +129,7 @@ Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-
 Regal comes with a set of built-in rules, grouped by category.
 
 - **bugs**: Common mistakes, potential bugs and inefficiencies in Rego policies.
+- **custom**: Custom, rules where enforcement can be adjusted to match your preferences.
 - **idiomatic**: Suggestions for more idiomatic constructs.
 - **imports**: Best practices for imports.
 - **style**: [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
@@ -147,22 +148,23 @@ The following rules are currently available:
 | bugs      | [rule-shadows-builtin](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/rule-shadows-builtin.md)              | Rule name shadows built-in                                |
 | bugs      | [top-level-iteration](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/top-level-iteration.md)                | Iteration in top-level assignment                         |
 | bugs      | [unused-return-value](https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/unused-return-value.md)                | Non-boolean return value unused                           |
+| custom    | [naming-convention](https://github.com/StyraInc/regal/blob/main/docs/rules/custom/naming-convention.md)                  | Naming convention violation                               |
 | idiomatic | [custom-has-key-construct](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/custom-has-key-construct.md) | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/custom-in-construct.md)           | Custom function may be replaced by `in` keyword           |
 | idiomatic | [non-raw-regex-pattern](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/non-raw-regex-pattern.md)       | Use raw strings for regex patterns                        |
 | idiomatic | [use-in-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/use-in-operator.md)                   | Use in to check for membership                            |
-| imports   | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                     |
+| imports   | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                                  |
 | imports   | [implicit-future-keywords](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md)   | Use explicit future keyword imports                       |
 | imports   | [import-shadows-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/import-shadows-import.md)         | Import shadows another import                             |
 | imports   | [redundant-alias](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-alias.md)                     | Redundant alias                                           |
-| imports   | [redundant-data-import](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/redundant-data-import.md)         | Redundant import of data                                  |
-| style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
+| imports   | [avoid-importing-input](https://github.com/StyraInc/regal/blob/main/docs/rules/imports/avoid-importing-input.md)         | Avoid importing input                                     |
+| style     | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                               |
 | style     | [todo-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/todo-comment.md)                             | Avoid TODO comments                                       |
 | style     | [external-reference](https://github.com/StyraInc/regal/blob/main/docs/rules/style/external-reference.md)                 | Reference to input, data or rule ref in function body     |
 | style     | [function-arg-return](https://github.com/StyraInc/regal/blob/main/docs/rules/style/function-arg-return.md)               | Function argument used for return value                   |
 | style     | [line-length](https://github.com/StyraInc/regal/blob/main/docs/rules/style/line-length.md)                               | Line too long                                             |
 | style     | [no-whitespace-comment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/no-whitespace-comment.md)           | Comment should start with whitespace                      |
-| style     | [prefer-snake-case](https://github.com/StyraInc/regal/blob/main/docs/rules/style/prefer-snake-case.md)                   | Prefer snake_case for names                               |
+| style     | [avoid-get-and-list-prefix](https://github.com/StyraInc/regal/blob/main/docs/rules/style/avoid-get-and-list-prefix.md)   | Avoid get_ and list_ prefix for rules and functions       |
 | style     | [detached-metadata](https://github.com/StyraInc/regal/blob/main/docs/rules/style/detached-metadata.md)                   | Detached metadata annotation                              |
 | style     | [unconditional-assignment](https://github.com/StyraInc/regal/blob/main/docs/rules/style/unconditional-assignment.md)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md)       | Prefer := over = for assignment                           |
@@ -175,11 +177,23 @@ The following rules are currently available:
 
 <!-- RULES_TABLE_END -->
 
-By default, all rules are currently **enabled**.
+By default, all rules except for those in the `custom` category are currently **enabled**.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
 request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules.md) page for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.
+
+### Custom Rules
+
+The `custom` category is a special one, as the rules in this category allow you to enforce rules that are specific to
+your project, team or organization. This typically includes things like naming conventions, where you might want to
+ensure that, for example, all package names adhere to an organizational standard, like having a prefix matching the
+organization name.
+
+Since these rules require configuration provided by the user, they are disabled by default. In order to enable them,
+see the configuration options available for each rule for how to configure them according to your requirements.
+
+For more advanced requirements, see the guide on writing [custom rules](/docs/custom-rules.md) in Rego.
 
 ## Configuration
 
@@ -221,6 +235,15 @@ rules:
       ignore:
         files:
           - "*_test.rego"
+  custom:
+    # custom rule configuration
+    naming-convention:
+      level: error
+      conventions:
+        # ensure all package names start with "acmecorp" or "system"
+        - pattern: '^acmecorp\.[a-z_\.]+$|^system\.[a-z_\.]+$'
+          targets:
+            - package
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not

@@ -1,10 +1,18 @@
 # Custom Rules
 
-Regal is built to be easily extended. Creating custom rules is a great way to enforce naming conventions, best practices
-or more opinionated rules across teams and organizations. If you'd like to provide your own linter rules for a project,
-you may do so by placing them in a `rules` directory inside the `.regal` directory preferably placed in the root of your
-project (which is also where custom configuration resides). The directory structure of a policy repository with custom
-linter rules might then look something like this:
+Regal is built to be easily extended. Using custom rules is a great way to enforce naming conventions, best practices
+or more opinionated rules across teams and organizations.
+
+There are two types of custom rules to be aware of — those that are included with Regal in the `custom` category, and
+those that you write yourself. The rules in the `custom` category provide a way to enforce common organizational
+requirements, like naming conventions, by means of _configuration_ rather than code. If your requirements aren't
+fulfilled by the rules in this category, your other option is to write your own custom rules using Rego.
+
+## Your Own Custom Rules
+
+If you'd like to provide your own linter rules for a project, you may do so by placing them in a `rules` directory
+inside the `.regal` directory preferably placed in the root of your project (which is also where custom configuration
+resides). The directory structure of a policy repository with custom linter rules might then look something like this:
 
 ```text
 .
@@ -152,7 +160,7 @@ Starting from top to bottom, these are the components comprising our custom rule
    starts with `acme.corp`, and another rule (`system_log_package`) to know if it starts with `system.log`. If neither
    of the conditions are true, the rule fails and violation is created.
 1. The violation is created by calling `result.fail`, which takes the metadata from the package (using
-   `rego.metadata.chain` which conveniently also includes the path of the package) and returns a result, which 
+   `rego.metadata.chain` which conveniently also includes the path of the package) and returns a result, which
    will later be included in the final report provided by Regal.
 1. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 

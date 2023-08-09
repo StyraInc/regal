@@ -238,7 +238,11 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 		configData := make(map[string]any)
 		if err := yaml.NewDecoder(userConfig).Decode(&configData); err != nil {
-			return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
+			if regalDir != nil {
+				return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
+			}
+
+			return report.Report{}, fmt.Errorf("failed to decode user config: %w", err)
 		}
 
 		regal = regal.WithUserConfig(configData)

@@ -38,8 +38,7 @@ pattern_compiler(pattern) := ps1 if {
 	p1 := leading_slash(p)
 	ps := leading_doublestar_pattern(p1)
 	ps1 := {pat |
-		some _p
-		ps[_p]
+		some _p, _ in ps
 		nps := trailing_slash(_p)
 		nps[pat]
 	}

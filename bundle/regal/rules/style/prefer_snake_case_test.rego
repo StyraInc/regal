@@ -31,10 +31,10 @@ test_success_snake_cased_rule_name if {
 }
 
 test_fail_camel_cased_some_declaration if {
-	r := rule.report with input as ast.policy(`p {some fooBar; input[fooBar]}`)
+	r := rule.report with input as ast.policy(`p {some fooBar; input[_]}`)
 	r == {object.union(
 		snake_case_violation,
-		{"location": {"col": 9, "file": "policy.rego", "row": 3, "text": `p {some fooBar; input[fooBar]}`}},
+		{"location": {"col": 9, "file": "policy.rego", "row": 3, "text": `p {some fooBar; input[_]}`}},
 	)}
 }
 
@@ -45,13 +45,13 @@ test_success_snake_cased_some_declaration if {
 
 test_fail_camel_cased_multiple_some_declaration if {
 	r := rule.report with input as ast.with_future_keywords(`p {
-		some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]
+		some x, foo_bar, fooBar; x = 1; foo_bar = 2; input[_]
 	}`)
 	r == {object.union(
 		snake_case_violation,
 		{"location": {
 			"col": 20, "file": "policy.rego", "row": 9,
-			"text": "\t\tsome x, foo_bar, fooBar; x = 1; foo_bar = 2; input[fooBar]",
+			"text": "\t\tsome x, foo_bar, fooBar; x = 1; foo_bar = 2; input[_]",
 		}},
 	)}
 }

@@ -19,9 +19,9 @@ report contains violation if {
 	some neq_term in array.slice(expr.terms, 1, count(expr.terms))
 	neq_term.type == "ref"
 
-	some i
-	neq_term.value[i].type == "var"
-	startswith(neq_term.value[i].value, "$")
+	some value in neq_term.value
+	value.type == "var"
+	startswith(value.value, "$")
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr.terms[0]))
 }

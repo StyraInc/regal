@@ -15,30 +15,30 @@ test_find_vars if {
 
 	allow if {
 		a := global
-		b := [c | c := input[x]] # can't capture x
+		b := [c | c := input[d]]
 
-		every d in input {
-			d == "foo"
+		every e in input {
+			e == "foo"
 		}
 
-		every e, f in input.bar {
-			e == f
+		every f, g in input.bar {
+			f == g
 		}
 
-		some g, h
-		input.bar[g][h]
-		some i in input
-		some j, k in input
+		some h, i
+		input.bar[h][i]
+		some j in input
+		some k, l in input
 
-		[l, m, n] := [1, 2, 3]
+		[m, n, o] := [1, 2, 3]
 
-		[o, [p, _]] := [1, [2, 1]]
+		[p, [q, _]] := [1, [2, 1]]
 
-		some _, [q, r] in [["foo", "bar"], [1, 2]]
+		some _, [r, s] in [["foo", "bar"], [1, 2]]
 
-		{"x": s} := {"x": 1}
+		{"x": t} := {"x": 1}
 
-		some [t] in [[1]]
+		some [u] in [[1]]
 	}
 	`
 
@@ -52,7 +52,7 @@ test_find_vars if {
 		name := var.value
 	}
 
-	names == {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"}
+	names == {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"}
 }
 
 test_find_vars_comprehension_lhs if {
@@ -138,12 +138,12 @@ test_find_vars_in_local_scope if {
 
 	allow {
 		a := global
-		b := [c | c := input[x]] # can't capture x
+		b := [c | c := input[d]]
 
-		every d in input {
-			d == "foo"
-			e := "bar"
-			e == "foo"
+		every e in input {
+			f == "foo"
+			g := "bar"
+			h == "foo"
 		}
 	}`
 
@@ -162,11 +162,31 @@ test_find_vars_in_local_scope if {
 	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.a)) == set()
 	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.b)) == {"a"}
 	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.c)) == {"a", "b", "c"}
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.d)) == {"a", "b", "c"}
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.e)) == {"a", "b", "c", "d"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.d)) == {"a", "b", "c", "d"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.e)) == {"a", "b", "c", "d", "e"}
 }
 
-var_names(vars) := {var.value | some var in vars}
+test_find_vars_in_local_scope_complex_comprehension_term if {
+	policy := `
+	package p
+
+	import future.keywords
+
+	allow {
+		a := [{"b": b} | c := input[b]]
+	}`
+
+	module := regal.parse_module("p.rego", policy)
+
+	allow_rule := module.rules[0]
+
+	ast.find_vars_in_local_scope(allow_rule, {"col": 10, "row": 10}) == [
+		{"location": {"col": 3, "file": "p.rego", "row": 7}, "type": "var", "value": "a"},
+		{"location": {"col": 15, "file": "p.rego", "row": 7}, "type": "var", "value": "b"},
+		{"location": {"col": 20, "file": "p.rego", "row": 7}, "type": "var", "value": "c"},
+		{"location": {"col": 31, "file": "p.rego", "row": 7}, "type": "var", "value": "b"},
+	]
+}
 
 test_find_names_in_scope if {
 	policy := `
@@ -182,7 +202,7 @@ test_find_names_in_scope if {
 
 	allow {
 		a := global
-		b := [c | c := input[x]] # can't capture x
+		b := [c | c := input[_]]
 
 		every d in input {
 			d == "foo"
@@ -199,3 +219,41 @@ test_find_names_in_scope if {
 
 	in_scope == {"bar", "global", "comp", "allow", "a", "b", "c", "d", "e"}
 }
+
+test_find_some_decl_vars if {
+	policy := `
+	package p
+
+	allow {
+		foo := 1
+		some x
+		input[x]
+		some y, z
+		input[y][z] == x
+	}`
+
+	module := regal.parse_module("p.rego", policy)
+
+	some_vars := ast.find_some_decl_vars(module.rules[0])
+
+	var_names(some_vars) == {"x", "y", "z"}
+}
+
+test_find_some_decl_names_in_scope if {
+	policy := `package p
+
+	allow {
+		foo := 1
+		some x
+		input[x]
+		some y, z
+		input[y][z] == x
+	}`
+
+	module := regal.parse_module("p.rego", policy)
+
+	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 6}) == {"x"}
+	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) == {"x", "y", "z"}
+}
+
+var_names(vars) := {var.value | some var in vars}

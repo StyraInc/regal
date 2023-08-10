@@ -57,6 +57,9 @@ rules:
       level: error
     prefer-snake-case:
       level: error
+    prefer-some-in-iteration:
+      level: error
+      ignore-nesting-level: 2
     todo-comment:
       level: error
     unconditional-assignment:

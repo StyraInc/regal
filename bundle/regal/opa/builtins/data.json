@@ -519,6 +519,20 @@
       "type": "string"
     }
   },
+  "crypto.parse_private_keys": {
+    "args": [
+      {
+        "description": "PEM encoded data containing one or more private keys as concatenated blocks. Optionally Base64 encoded.",
+        "name": "keys",
+        "type": "string"
+      }
+    ],
+    "result": {
+      "description": "parsed private keys represented as objects",
+      "name": "output",
+      "type": "array[object[string: any]]"
+    }
+  },
   "crypto.sha1": {
     "args": [
       {
@@ -2609,7 +2623,7 @@
   "time.format": {
     "args": [
       {
-        "description": "a number representing the nanoseconds since the epoch (UTC); or a two-element array of the nanoseconds, and a timezone string; or a three-element array of ns, timezone string and a layout string (see golang supported time formats)",
+        "description": "a number representing the nanoseconds since the epoch (UTC); or a two-element array of the nanoseconds, and a timezone string; or a three-element array of ns, timezone string and a layout string or golang defined formatting constant (see golang supported time formats)",
         "name": "x",
         "type": "any\u003cnumber, array\u003cnumber, string\u003e, array\u003cnumber, string, string\u003e\u003e"
       }

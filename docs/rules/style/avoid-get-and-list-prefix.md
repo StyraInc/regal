@@ -31,11 +31,6 @@ developers contains user if {
 }
 ```
 
-**Exceptions**
-
-Using `is_`, or `has_` for boolean helper functions, like `is_admin(user)` may be easier to comprehend than
-`admin(user)`.
-
 ## Rationale
 
 Since Rego evaluation is generally free of side effects, any rule or function is essentially a "getter". Adding a
@@ -43,12 +38,17 @@ Since Rego evaluation is generally free of side effects, any rule or function is
 `resources`. Additionally, the type and return value of the rule should serve to tell whether a rule might return a
 single value (i.e. a complete rule) or a collection (a partial rule).
 
+## Exceptions
+
+Using `is_`, or `has_` for boolean helper functions, like `is_admin(user)` may be easier to comprehend than
+`admin(user)`.
+
 ## Configuration Options
 
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     avoid-get-and-list-prefix:
       # one of "error", "warning", "ignore"

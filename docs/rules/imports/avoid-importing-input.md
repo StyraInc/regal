@@ -35,7 +35,11 @@ allow if {
 }
 ```
 
-**Exceptions**
+## Rationale
+
+Using an import for `input` is not necessary, as both `input` and `data` are globally available.
+
+## Exceptions
 
 Using an alias for `input` can sometimes be useful, e.g. when using `input` is known to represent something specific,
 like a Terraform plan. Aliasing of specific input attributes should however be avoided in favor of local assignments.
@@ -58,16 +62,12 @@ allow if {
 }
 ```
 
-## Rationale
-
-Using an import for `input` is not necessary, as both `input` and `data` are globally available. 
-
 ## Configuration Options
 
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     avoid-importing-input:
       # one of "error", "warning", "ignore"

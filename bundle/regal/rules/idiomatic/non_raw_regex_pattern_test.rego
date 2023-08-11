@@ -16,7 +16,7 @@ test_fail_non_raw_rule_head if {
 		"location": {"col": 18, "file": "policy.rego", "row": 3, "text": "x := regex.match(\"[0-9]+\", \"1\")"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/non-raw-regex-pattern.md",
+			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),
 		}],
 		"title": "non-raw-regex-pattern",
 	}}
@@ -33,7 +33,7 @@ test_fail_non_raw_rule_body if {
 		"location": {"col": 18, "file": "policy.rego", "row": 4, "text": "\t\tregex.is_valid(\"[0-9]+\")"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/non-raw-regex-pattern.md",
+			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),
 		}],
 		"title": "non-raw-regex-pattern",
 	}}
@@ -48,7 +48,7 @@ test_fail_pattern_in_second_arg if {
 		"location": {"col": 25, "file": "policy.rego", "row": 3, "text": "r := regex.replace(\"a\", \"[a]\", \"b\")"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/idiomatic/non-raw-regex-pattern.md",
+			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),
 		}],
 		"title": "non-raw-regex-pattern",
 	}}

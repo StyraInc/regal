@@ -85,7 +85,7 @@ func (f *OpaFmtRule) Description() string {
 }
 
 func (f *OpaFmtRule) Documentation() string {
-	return docs.DocsBaseURL + "/" + category + "/" + title + ".md"
+	return docs.CreateDocsURL(category, title)
 }
 
 func (f *OpaFmtRule) Config() config.Rule {

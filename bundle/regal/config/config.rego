@@ -5,12 +5,12 @@ import future.keywords.in
 
 default user_config := {}
 
-docs["base_url"] := "https://github.com/StyraInc/regal/blob/main/docs/rules"
+docs["base_url"] := "https://docs.styra.com/regal/rules"
 
-docs["resolve_url"](url, category) := concat("", [
-	replace(replace(url, "$baseUrl", docs.base_url), "$category", category),
-	".md",
-])
+docs["resolve_url"](url, category) := replace(
+	replace(url, "$baseUrl", docs.base_url),
+	"$category", category,
+)
 
 user_config := data.regal_user_config
 

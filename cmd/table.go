@@ -53,10 +53,6 @@ func init() {
 	RootCommand.AddCommand(parseCommand)
 }
 
-func createDocsURL(category, title string) string {
-	return docs.DocsBaseURL + "/" + category + "/" + title + ".md"
-}
-
 func unquotedPath(path ast.Ref) []string {
 	ret := make([]string, 0, len(path)-1)
 	for _, ref := range path[1:] {
@@ -120,7 +116,7 @@ func createTable(args []string, params tableCommandParams) error {
 
 		tableData = append(tableData, []string{
 			category,
-			"[" + title + "](" + createDocsURL(category, title) + ")",
+			"[" + title + "](" + docs.CreateDocsURL(category, title) + ")",
 			annotations.Description,
 		})
 	}

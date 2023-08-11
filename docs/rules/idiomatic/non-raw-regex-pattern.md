@@ -58,3 +58,9 @@ rules:
 
 - Rego Style Guide [Use raw strings for regex patterns](https://github.com/StyraInc/rego-style-guide#use-raw-strings-for-regex-patterns)
 - OPA docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/latest/policy-reference/#regex)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

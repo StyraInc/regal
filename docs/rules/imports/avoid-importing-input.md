@@ -8,6 +8,7 @@
 ```rego
 package policy
 
+import future.keywords.in
 import future.keywords.if
 
 # This is always redundant
@@ -26,6 +27,9 @@ allow if {
 **Prefer**
 ```rego
 package policy
+
+import future.keywords.in
+import future.keywords.if
 
 allow if "admin" in input.user.roles
 

@@ -99,21 +99,21 @@ Description:  	Use of != in loop
 Category:     	bugs
 Location:     	policy/authz.rego:8:10
 Text:         	"admin" != input.user.roles[_]
-Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/bugs/not-equals-in-loop.md
+Documentation:	https://docs.styra.com/regal/rules/bugs/not-equals-in-loop
 
 Rule:         	implicit-future-keywords
 Description:  	Use explicit future keyword imports
 Category:     	imports
 Location:     	policy/authz.rego:3:8
 Text:         	import future.keywords
-Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/imports/implicit-future-keywords.md
+Documentation:	https://docs.styra.com/regal/rules/imports/implicit-future-keywords
 
 Rule:         	use-assignment-operator
 Description:  	Prefer := over = for assignment
 Category:     	style
 Location:     	policy/authz.rego:5:1
 Text:         	default allow = false
-Documentation:	https://github.com/StyraInc/regal/blob/main/docs/rules/style/use-assignment-operator.md
+Documentation:	https://docs.styra.com/regal/rules/style/use-assignment-operator
 
 1 file linted. 3 violations found.
 ```

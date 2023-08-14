@@ -39,9 +39,9 @@ These tools include built-in functions like
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
-    invalid-metadata:
+    invalid-metadata-attribute:
       # one of "error", "warning", "ignore"
       level: error
 ```

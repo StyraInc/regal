@@ -55,7 +55,7 @@ determine whether the author has done, and both have valid use cases.
 - [ ] Prefer some .. in for iteration
 - [ ] Use every to express FOR ALL
 - [ ] Don't use unification operator for assignment or comparison
-- [ ] Don't use undeclared variables
+- [x] Don't use undeclared variables
 - [x] ~~Prefer sets over arrays (where applicable)~~
 
 ### Notes

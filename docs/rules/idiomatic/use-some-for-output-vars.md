@@ -59,7 +59,7 @@ with that key. In Rego, however, `name` may also be an **output** — meaning th
 elsewhere, OPA will attempt to _unify_ it with any value that satisfies the expression. In this case, that means that
 `name` will be bound to each of the keys in the `users` object in turn, and the rule will succeed for each of them.
 
-This is a powerful feature of Rego, but it can also be a source of confusion. If we were to defined `name` somewhere
+This is a powerful feature of Rego, but it can also be a source of confusion. If we were to define `name` somewhere
 else in the policy, perhaps by mistake:
 
 ```rego
@@ -88,6 +88,18 @@ usernames contains name if {
 
 Even though `name` is defined in the global scope, the `some` keyword will ensure it's now considered as an output
 variable in the local scope of the `usernames` rule.
+
+## Configuration Options
+
+This linter rule provides the following configuration options:
+
+```yaml
+rules:
+  idiomatic:
+    use-some-for-output-vars:
+      # one of "error", "warning", "ignore"
+      level: error
+```
 
 ## Related Resources
 

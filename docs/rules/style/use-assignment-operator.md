@@ -31,7 +31,7 @@ default allow := false
 first_name(full_name) := split(full_name, " ")[0]
 
 allow {
-    username = input.user.name
+    username := input.user.name
     # .. more conditions ..
 }
 ```
@@ -56,11 +56,11 @@ allow {
 
 Using the unification operator, `username` is either assigned (if `username` isn't defined elsewhere in the
 policy) or being checked for equality (if `username` is defined elsewhere in the policy). Using `:=` for assignment,
-and `==` for equality comparison removes this ambiguity and make the intent obvious. 
+and `==` for equality comparison removes this ambiguity and make the intent obvious.
 
 In some cases, `=` and `:=` may be used interchangeably, as the result is the same either way:
 
-```rego 
+```rego
 first_name(full_name) = split(full_name, " ")[0]
 # same as
 first_name(full_name) := split(full_name, " ")[0]
@@ -73,7 +73,7 @@ Even when that is the case, using `:=` consistently should be considered a best 
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     use-assignment-operator:
       # one of "error", "warning", "ignore"

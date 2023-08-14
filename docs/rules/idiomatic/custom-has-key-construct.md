@@ -39,9 +39,9 @@ and using the built-in function together with `in` should be preferred.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   idiomatic:
-    custom-in-construct:
+    custom-has-key-construct:
       # one of "error", "warning", "ignore"
       level: error
 ```

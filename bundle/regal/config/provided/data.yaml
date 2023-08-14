@@ -23,6 +23,8 @@ rules:
       level: error
     use-in-operator:
       level: error
+    use-some-for-output-vars:
+      level: error
   custom:
     naming-convention:
       level: ignore

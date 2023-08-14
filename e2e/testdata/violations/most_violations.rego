@@ -107,3 +107,7 @@ print_or_trace_call {
 }
 
 non_raw_regex_pattern := regex.match("[0-9]", "1")
+
+use_some_for_output_vars {
+	input.foo[output_var]
+}

@@ -37,7 +37,12 @@ pattern_compiler(pattern) := ps1 if {
 	p := internal_slashes(pattern)
 	p1 := leading_slash(p)
 	ps := leading_doublestar_pattern(p1)
-	ps1 := {pat | some _p; ps[_p]; nps := trailing_slash(_p); nps[pat]}
+	ps1 := {pat |
+		some _p
+		ps[_p]
+		nps := trailing_slash(_p)
+		nps[pat]
+	}
 }
 
 # Internal slashes means that the path is relative to root,

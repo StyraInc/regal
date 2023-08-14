@@ -46,13 +46,39 @@ test_find_vars if {
 
 	vars := ast.find_vars(module.rules)
 
-	names := [name |
+	names := {name |
 		some var in vars
 		var.type == "var"
 		name := var.value
-	]
+	}
 
-	names == ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
+	names == {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"}
+}
+
+test_find_vars_comprehension_lhs if {
+	policy := `
+	package p
+
+	import future.keywords
+
+	allow if {
+		a := [b | input[b]]
+		c := {d | input[d]}
+		e := {f: g | g := input[f]}
+	}
+	`
+
+	module := regal.parse_module("p.rego", policy)
+
+	vars := ast.find_vars(module.rules)
+
+	names := {name |
+		some var in vars
+		var.type == "var"
+		name := var.value
+	}
+
+	names == {"a", "b", "c", "d", "e", "f", "g"}
 }
 
 # https://github.com/StyraInc/regal/issues/168
@@ -100,4 +126,76 @@ allow := true
 			{"Location": {"col": 1, "file": "p.rego", "row": 11}, "Text": "IGJsb2Nr"},
 		],
 	]
+}
+
+test_find_vars_in_local_scope if {
+	policy := `
+	package p
+
+	import future.keywords
+
+	global := "foo"
+
+	allow {
+		a := global
+		b := [c | c := input[x]] # can't capture x
+
+		every d in input {
+			d == "foo"
+			e := "bar"
+			e == "foo"
+		}
+	}`
+
+	module := regal.parse_module("p.rego", policy)
+
+	allow_rule := module.rules[1]
+
+	var_locations := {
+		"a": {"col": 3, "row": 9},
+		"b": {"col": 3, "row": 10},
+		"c": {"col": 13, "row": 10},
+		"d": {"col": 9, "row": 12},
+		"e": {"col": 4, "row": 14},
+	}
+
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.a)) == set()
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.b)) == {"a"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.c)) == {"a", "b", "c"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.d)) == {"a", "b", "c"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.e)) == {"a", "b", "c", "d"}
+}
+
+var_names(vars) := {var.value | some var in vars}
+
+test_find_names_in_scope if {
+	policy := `
+	package p
+
+	import future.keywords
+
+	bar := "baz"
+
+	global := "foo"
+
+	comp := [foo | foo := input[_]]
+
+	allow {
+		a := global
+		b := [c | c := input[x]] # can't capture x
+
+		every d in input {
+			d == "foo"
+			e := "bar"
+			e == "foo"
+		}
+	}`
+
+	module := regal.parse_module("p.rego", policy)
+
+	allow_rule := module.rules[3]
+
+	in_scope := ast.find_names_in_scope(allow_rule, {"col": 1, "row": 30}) with input as module
+
+	in_scope == {"bar", "global", "comp", "allow", "a", "b", "c", "d", "e"}
 }

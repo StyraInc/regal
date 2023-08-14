@@ -27,6 +27,8 @@ allow if {
 ```rego
 package policy
 
+import future.keywords.if
+
 allow if "admin" in input.user.roles
 
 allow if {

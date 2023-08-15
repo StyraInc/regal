@@ -18,8 +18,7 @@ Regal.
 
 ## Building
 
-1. Run the `build.sh` script to populate the `data` directory with any data necessary for linting (such as the built-in
-   function metadata from OPA)
+1. Run the `fetch_builtin_data.sh` script from inside the `build` directory to populate the `data` directory with any data necessary for linting (such as the built-in function metadata from OPA)
 2. Build the `regal` executable by running `go build`
 
 ## Testing

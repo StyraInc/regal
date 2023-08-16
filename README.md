@@ -153,11 +153,12 @@ The following rules are currently available:
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)           | Custom function may be replaced by `in` keyword           |
 | idiomatic | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)       | Use raw strings for regex patterns                        |
 | idiomatic | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                   | Use in to check for membership                            |
-| imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
+| idiomatic | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars) | Use `some` to declare output variables                    |
+| imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)   | Use explicit future keyword imports                       |
 | imports   | [import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import)         | Import shadows another import                             |
-| imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)         | Avoid importing input                                     |
+| imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |

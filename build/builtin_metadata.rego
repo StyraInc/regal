@@ -2,7 +2,7 @@
 # description: |
 #   Fetch the builtin metadata from the OPA repo, and filter out anything but
 #   the args and return value objects of each bultin function. We'll make this
-#   data available in Regal policies under `data.builtins`
+#   data available in Regal policies under `data.opa.builtins`
 package build.metadata
 
 import future.keywords.if

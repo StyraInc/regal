@@ -17,6 +17,4 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(comment))
 }
 
-_whitespace_comment(text) if startswith(text, " ")
-
-_whitespace_comment(text) if text in {"", "\n"}
+_whitespace_comment(text) if regex.match(`^(#*)(\s+.*|$)`, text)

@@ -21,8 +21,28 @@ test_no_leading_whitespace if {
 	}}
 }
 
+test_no_leading_whitespace_multiple_hashes if {
+	r := rule.report with input as ast.policy(`##foo`)
+	r == {{
+		"category": "style",
+		"description": "Comment should start with whitespace",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/no-whitespace-comment", "style"),
+		}],
+		"title": "no-whitespace-comment",
+		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "##foo"},
+		"level": "error",
+	}}
+}
+
 test_success_leading_whitespace if {
 	r := rule.report with input as ast.policy(`# foo`)
+	r == set()
+}
+
+test_success_leading_whitespace_double_hash if {
+	r := rule.report with input as ast.policy(`## foo`)
 	r == set()
 }
 
@@ -36,5 +56,13 @@ test_success_comment_with_newline if {
 	# foo
 	#
 	# bar`)
+	r == set()
+}
+
+test_success_multiple_hash_comment if {
+	r := rule.report with input as ast.policy(`
+	##########
+	# Foobar #
+	##########`)
 	r == set()
 }

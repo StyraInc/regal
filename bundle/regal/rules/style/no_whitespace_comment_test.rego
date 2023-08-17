@@ -38,3 +38,11 @@ test_success_comment_with_newline if {
 	# bar`)
 	r == set()
 }
+
+test_success_multiple_hash_comment if {
+	r := rule.report with input as ast.policy(`
+	##########
+	# Foobar #
+	##########`)
+	r == set()
+}

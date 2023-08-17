@@ -20,3 +20,5 @@ report contains violation if {
 _whitespace_comment(text) if startswith(text, " ")
 
 _whitespace_comment(text) if text in {"", "\n"}
+
+_whitespace_comment(text) if startswith(text, "##")

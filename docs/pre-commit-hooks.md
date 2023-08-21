@@ -7,7 +7,7 @@ To use Regal with pre-commit, add this to your `.pre-commit-config.yaml`
 
 ```yaml
 - repo: https://github.com/StyraInc/regal
-  rev: v0.5.0 # Use the ref you want to point at
+  rev: v0.7.0 # Use the ref you want to point at
   hooks:
     - id: regal-lint
   # -   id: ...

@@ -1,6 +1,4 @@
 - id: regal-lint
-  stages:
-    - pre-commit
   language: golang
   name: policy file linting
   description: policy file linting with Regal from Styra built from source
@@ -8,8 +6,6 @@
   files: (\.rego)$
 
 - id: regal-lint-use-path
-  stages:
-    - pre-commit
   language: system
   name: policy file linting
   description: policy file linting with Regal from Styra using system $PATH
@@ -17,8 +13,6 @@
   files: (\.rego)$
 
 - id: regal-download
-  stages:
-    - pre-commit
   language: script
   name: policy file linting
   description: policy file linting with Regal downloaded from Github

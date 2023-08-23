@@ -107,7 +107,7 @@ func TestCompactReporterPublish(t *testing.T) {
 	}
 
 	expect := `a.rego:1:1  	Rego must not break the law!
-b.rego:22:18	Questionable decision found 
+b.rego:22:18	Questionable decision found
 `
 
 	if buf.String() != expect {
@@ -219,5 +219,48 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 }
 ` {
 		t.Errorf("expected %q, got %q", `{"violations":[]}`, buf.String())
+	}
+}
+
+//nolint:paralleltest
+func TestGitHubReporterPublish(t *testing.T) {
+	// Can't use t.Parallel() here because t.Setenv() forbids that
+	t.Setenv("GITHUB_STEP_SUMMARY", "")
+
+	var buf bytes.Buffer
+
+	cr := NewGitHubReporter(&buf)
+
+	err := cr.Publish(rep)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//nolint:lll
+	expect := `::error file=a.rego,line=1,col=1::Rego must not break the law!. To learn more, see: https://example.com/illegal
+::warning file=b.rego,line=22,col=18::Questionable decision found. To learn more, see: https://example.com/questionable
+`
+
+	if buf.String() != expect {
+		t.Errorf("expected %q, got %q", expect, buf.String())
+	}
+}
+
+//nolint:paralleltest
+func TestGitHubReporterPublishNoViolations(t *testing.T) {
+	// Can't use t.Parallel() here because t.Setenv() forbids that
+	t.Setenv("GITHUB_STEP_SUMMARY", "")
+
+	var buf bytes.Buffer
+
+	cr := NewGitHubReporter(&buf)
+
+	err := cr.Publish(report.Report{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if buf.String() != "" {
+		t.Errorf("expected %q, got %q", "", buf.String())
 	}
 }

@@ -27,6 +27,8 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
+	inputPaths       []string
+	inputModules     *rules.Input
 	ruleBundles      []*bundle.Bundle
 	configBundle     *bundle.Bundle
 	customRulesPaths []string
@@ -47,6 +49,22 @@ func NewLinter() Linter {
 	return Linter{}
 }
 
+// WithInputPaths sets the inputPaths to lint. Note that these will be
+// filtered according to the ignore options.
+func (l Linter) WithInputPaths(paths []string) Linter {
+	l.inputPaths = paths
+
+	return l
+}
+
+// WithInputModules sets the input modules to lint. This is used for programmatic
+// access, where you don't necessarily want to lint *files*.
+func (l Linter) WithInputModules(input *rules.Input) Linter {
+	l.inputModules = input
+
+	return l
+}
+
 // WithAddedBundle adds a bundle of rules and data to include in evaluation.
 func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 	l.ruleBundles = append(l.ruleBundles, &b)
@@ -62,13 +80,13 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 }
 
 // WithUserConfig provides config overrides set by the user.
-func (l Linter) WithUserConfig(config map[string]any) Linter {
+func (l Linter) WithUserConfig(cfg config.Config) Linter {
 	l.configBundle = &bundle.Bundle{
 		Manifest: bundle.Manifest{
 			Roots:    &[]string{regalUserConfig},
 			Metadata: map[string]any{"name": regalUserConfig},
 		},
-		Data: map[string]any{regalUserConfig: config},
+		Data: map[string]any{regalUserConfig: config.ToMap(cfg)},
 	}
 
 	return l
@@ -126,25 +144,50 @@ func (l Linter) WithIgnore(ignore []string) Linter {
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
-func (l Linter) Lint(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	aggregate := report.Report{}
+
+	if len(l.inputPaths) == 0 && l.inputModules == nil {
+		return report.Report{}, errors.New("nothing provided to lint")
+	}
 
 	conf, err := l.mergedConfig()
 	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to load merged config: %w", err)
+		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	ignoreFiles := conf.Ignore.Files
-	if l.ignoreFiles != nil {
-		ignoreFiles = l.ignoreFiles
+	ignore := conf.Ignore.Files
+
+	if len(l.ignoreFiles) > 0 {
+		ignore = l.ignoreFiles
 	}
 
-	goInput, err := filterInputFiles(input, ignoreFiles)
+	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("error filtering input files: %w", err)
+		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
-	goReport, err := l.lintWithGoRules(ctx, goInput)
+	inputFromPaths, err := rules.InputFromPaths(filtered)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
+	}
+
+	input := inputFromPaths
+
+	if l.inputModules != nil {
+		filteredPaths, err := config.FilterIgnoredPaths(l.inputModules.FileNames, ignore, false)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)
+		}
+
+		for _, filename := range filteredPaths {
+			input.FileNames = append(input.FileNames, filename)
+			input.Modules[filename] = l.inputModules.Modules[filename]
+			input.FileContent[filename] = l.inputModules.FileContent[filename]
+		}
+	}
+
+	goReport, err := l.lintWithGoRules(ctx, input)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}

@@ -8,25 +8,27 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	rio "github.com/styrainc/regal/internal/io"
 )
 
 type Config struct {
-	Rules  map[string]Category `json:"rules"`
-	Ignore Ignore              `json:"ignore"`
+	Rules  map[string]Category `json:"rules"  yaml:"rules"`
+	Ignore Ignore              `json:"ignore" yaml:"ignore"`
 }
 
 type Category map[string]Rule
 
 type Ignore struct {
-	Files []string `json:"files"`
+	Files []string `json:"files" yaml:"files"`
 }
 
 type ExtraAttributes map[string]any
 
 type Rule struct {
 	Level  string
-	Ignore Ignore `json:"ignore"`
+	Ignore Ignore `json:"ignore" yaml:"ignore"`
 	Extra  ExtraAttributes
 }
 
@@ -92,6 +94,14 @@ func FromMap(confMap map[string]any) (Config, error) {
 	return conf, nil
 }
 
+func ToMap(config Config) map[string]any {
+	var confMap map[string]any
+
+	rio.MustJSONRoundTrip(config, &confMap)
+
+	return confMap
+}
+
 func (rule Rule) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 	result["level"] = rule.Level
@@ -112,6 +122,31 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}
 
+	return rule.mapToConfig(result)
+}
+
+func (rule *Rule) MarshalYAML() (interface{}, error) {
+	result := make(map[string]any)
+	result["level"] = rule.Level
+	result["ignore"] = rule.Ignore
+
+	for key, val := range rule.Extra {
+		result[key] = val
+	}
+
+	return yaml.Marshal(&result) //nolint:wrapcheck
+}
+
+func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
+	var result map[string]any
+	if err := value.Decode(&result); err != nil {
+		return fmt.Errorf("unmarshalling rule failed %w", err)
+	}
+
+	return rule.mapToConfig(result) //nolint:errcheck
+}
+
+func (rule *Rule) mapToConfig(result map[string]any) error {
 	level, ok := result["level"].(string)
 	if !ok {
 		return errLevelMustBeString

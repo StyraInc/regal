@@ -3,27 +3,26 @@ package linter
 import (
 	"context"
 	"path/filepath"
-	"strings"
 	"testing"
 
-	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/test"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 func TestLintBasic(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
+	input := test.InputPolicy("p.rego", `package p
 
 # TODO: fix this
 camelCase {
 	1 == input.one
 }
-`
+`)
 
-	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true)
+	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true).WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,25 +67,22 @@ camelCase {
 func TestLintWithUserConfig(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
+	input := test.InputPolicy("p.rego", `package p
 
 foo := input.bar[_]
 
 or := 1
-`
+`)
 
-	configRaw := `rules:
-  bugs:
-    rule-shadows-builtin:
-      level: ignore`
+	userConfig := config.Config{
+		Rules: map[string]config.Category{
+			"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
+		},
+	}
 
-	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
+	linter := NewLinter().WithUserConfig(userConfig).WithAddedBundle(test.GetRegalBundle(t)).WithInputModules(&input)
 
-	linter := NewLinter().
-		WithUserConfig(config).
-		WithAddedBundle(test.GetRegalBundle(t))
-
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +109,7 @@ or := 1
 `
 	tests := []struct {
 		name            string
-		configRaw       string
+		userConfig      *config.Config
 		filename        string
 		expViolations   []string
 		ignoreFilesFlag []string
@@ -125,39 +121,39 @@ or := 1
 		},
 		{
 			name: "ignore rule",
-			configRaw: `rules:
-  bugs:
-    rule-shadows-builtin:
-      level: ignore
-  style:
-    opa-fmt:
-      level: ignore`,
+			userConfig: &config.Config{Rules: map[string]config.Category{
+				"bugs":  {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
+				"style": {"opa-fmt": config.Rule{Level: "ignore"}},
+			}},
 			filename:      "p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
 			name: "rule level ignore files",
-			configRaw: `rules:
-  bugs:
-    rule-shadows-builtin:
-      level: error
-      ignore:
-        files:
-          - p.rego
-  style:
-    opa-fmt:
-      level: error
-      ignore:
-        files:
-          - p.rego`,
+			userConfig: &config.Config{Rules: map[string]config.Category{
+				"bugs": {"rule-shadows-builtin": config.Rule{
+					Level: "error",
+					Ignore: config.Ignore{
+						Files: []string{"p.rego"},
+					},
+				}},
+				"style": {"opa-fmt": config.Rule{
+					Level: "error",
+					Ignore: config.Ignore{
+						Files: []string{"p.rego"},
+					},
+				}},
+			}},
 			filename:      "p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
 			name: "user config global ignore files",
-			configRaw: `ignore:
-  files:
-    - p.rego`,
+			userConfig: &config.Config{
+				Ignore: config.Ignore{
+					Files: []string{"p.rego"},
+				},
+			},
 			filename:      "p.rego",
 			expViolations: []string{},
 		},
@@ -177,22 +173,29 @@ or := 1
 			linter := NewLinter().
 				WithAddedBundle(test.GetRegalBundle(t))
 
-			if tt.configRaw != "" {
-				config := rio.MustYAMLToMap(strings.NewReader(tt.configRaw))
-				linter = linter.WithUserConfig(config)
+			if tt.userConfig != nil {
+				linter = linter.WithUserConfig(*tt.userConfig)
 			}
 
 			if tt.ignoreFilesFlag != nil {
 				linter = linter.WithIgnore(tt.ignoreFilesFlag)
 			}
 
-			result, err := linter.Lint(context.Background(), test.InputPolicy(tt.filename, policy))
+			input := test.InputPolicy(tt.filename, policy)
+
+			linter = linter.WithInputModules(&input)
+
+			result, err := linter.Lint(context.Background())
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if len(result.Violations) != len(tt.expViolations) {
-				t.Fatalf("expected %d violation, got %d", len(tt.expViolations), len(result.Violations))
+				t.Fatalf("expected %d violation, got %d: %v",
+					len(tt.expViolations),
+					len(result.Violations),
+					result.Violations,
+				)
 			}
 
 			for idx, violation := range result.Violations {
@@ -207,15 +210,16 @@ or := 1
 func TestLintWithGoRule(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
-
- x := true
-`
+	input := test.InputPolicy("p.rego", `package p
+ 		x := true
+	`)
 
 	linter := NewLinter().
-		WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true)
+		WithAddedBundle(test.GetRegalBundle(t)).
+		WithEnableAll(true).
+		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,24 +236,20 @@ func TestLintWithGoRule(t *testing.T) {
 func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 	t.Parallel()
 
-	policy := `package p
+	userConfig := config.Config{Rules: map[string]config.Category{
+		"style": {"opa-fmt": config.Rule{Level: "ignore"}},
+	}}
 
- x := true
-`
-
-	configRaw := `rules:
-  style:
-    opa-fmt:
-      level: ignore
-`
-
-	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
+	input := test.InputPolicy("p.rego", `package p
+	 	x := true
+	`)
 
 	linter := NewLinter().
-		WithUserConfig(config).
-		WithAddedBundle(test.GetRegalBundle(t))
+		WithUserConfig(userConfig).
+		WithAddedBundle(test.GetRegalBundle(t)).
+		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,13 +262,14 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	policy := "package p\n"
+	input := test.InputPolicy("p.rego", "package p\n")
 
 	linter := NewLinter().
 		WithAddedBundle(test.GetRegalBundle(t)).
-		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
+		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
+		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -285,21 +286,19 @@ func TestLintWithCustomRule(t *testing.T) {
 func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 	t.Parallel()
 
-	policy := "package p\n"
+	input := test.InputPolicy("p.rego", "package p\n")
 
-	configRaw := `rules:
-  naming:
-    acme-corp-package:
-      level: ignore`
-
-	config := rio.MustYAMLToMap(strings.NewReader(configRaw))
+	userConfig := config.Config{Rules: map[string]config.Category{
+		"naming": {"acme-corp-package": config.Rule{Level: "ignore"}},
+	}}
 
 	linter := NewLinter().
-		WithUserConfig(config).
+		WithUserConfig(userConfig).
 		WithAddedBundle(test.GetRegalBundle(t)).
-		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")})
+		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
+		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background(), test.InputPolicy("p.rego", policy))
+	result, err := linter.Lint(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}

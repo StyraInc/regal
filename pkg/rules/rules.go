@@ -2,13 +2,9 @@ package rules
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"sort"
-	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader"
 
 	"github.com/styrainc/regal/internal/parse"
@@ -56,19 +52,14 @@ func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Inp
 	}
 }
 
-// InputFromPaths creates a new Input from a set of file or directory paths.
+// InputFromPaths creates a new Input from a set of file or directory paths. Note that this function assumes that the
+// paths point to valid Rego files. Use config.FilterIgnoredPaths to filter out unwanted content *before* calling this
+// function.
 func InputFromPaths(paths []string) (Input, error) {
-	policyPaths, err := loader.FilteredPaths(paths, func(_ string, info os.FileInfo, depth int) bool {
-		return !info.IsDir() && !strings.HasSuffix(info.Name(), bundle.RegoExt)
-	})
-	if err != nil {
-		return Input{}, fmt.Errorf("failed to load policy from provided args: %w", err)
-	}
+	fileContent := make(map[string]string, len(paths))
+	modules := make(map[string]*ast.Module, len(paths))
 
-	fileContent := make(map[string]string, len(policyPaths))
-	modules := make(map[string]*ast.Module, len(policyPaths))
-
-	for _, path := range policyPaths {
+	for _, path := range paths {
 		result, err := loader.RegoWithOpts(path, parse.ParserOptions())
 		if err != nil {
 			// TODO: Keep running and collect errors instead?

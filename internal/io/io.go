@@ -72,6 +72,13 @@ func JSONRoundTrip(from any, to any) error {
 	return json.Unmarshal(bs, to) //nolint:wrapcheck
 }
 
+// MustJSONRoundTrip convert any value to JSON and back again, exit on failure.
+func MustJSONRoundTrip(from any, to any) {
+	if err := JSONRoundTrip(from, to); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // MustYAMLToMap creates a map from reader, expecting YAML content, or fail.
 func MustYAMLToMap(from io.Reader) (m map[string]any) {
 	if err := yaml.NewDecoder(from).Decode(&m); err != nil {

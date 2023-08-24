@@ -7,4 +7,6 @@ const (
 	formatPretty = "pretty"
 	// formatCompact is the compact format value for the --format flag in various commands.
 	formatCompact = "compact"
+	// formatGitHub is the GitHub format value for the --format flag in various commands.
+	formatGitHub = "github"
 )

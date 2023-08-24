@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -33,6 +34,11 @@ type JSONReporter struct {
 	out io.Writer
 }
 
+// GitHubReporter reports violations in a format suitable for GitHub Actions.
+type GitHubReporter struct {
+	out io.Writer
+}
+
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
@@ -46,6 +52,11 @@ func NewCompactReporter(out io.Writer) CompactReporter {
 // NewJSONReporter creates a new JSONReporter.
 func NewJSONReporter(out io.Writer) JSONReporter {
 	return JSONReporter{out: out}
+}
+
+// NewGitHubReporter creates a new GitHubReporter.
+func NewGitHubReporter(out io.Writer) GitHubReporter {
+	return GitHubReporter{out: out}
 }
 
 // Publish prints a pretty report to the configured output.
@@ -135,7 +146,7 @@ func (tr CompactReporter) Publish(r report.Report) error {
 		table.AddRow(violation.Location.String(), violation.Description)
 	}
 
-	_, err := fmt.Fprintln(tr.out, table)
+	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(table.String(), " "))
 
 	return err //nolint:wrapcheck
 }
@@ -156,6 +167,77 @@ func (tr JSONReporter) Publish(r report.Report) error {
 	return err //nolint:wrapcheck
 }
 
+//nolint:nestif
+func (tr GitHubReporter) Publish(r report.Report) error {
+	if r.Violations == nil {
+		r.Violations = []report.Violation{}
+	}
+
+	for _, violation := range r.Violations {
+		_, err := fmt.Fprintf(tr.out,
+			"::%s file=%s,line=%d,col=%d::%s\n",
+			violation.Level,
+			violation.Location.File,
+			violation.Location.Row,
+			violation.Location.Column,
+			fmt.Sprintf("%s. To learn more, see: %s", violation.Description, getDocumentationURL(violation)),
+		)
+		if err != nil {
+			return err //nolint:wrapcheck
+		}
+	}
+
+	pluralScanned := ""
+	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
+		pluralScanned = "s"
+	}
+
+	// https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
+	if summaryFileLoc, ok := os.LookupEnv("GITHUB_STEP_SUMMARY"); ok && summaryFileLoc != "" {
+		summaryFile, err := os.OpenFile(summaryFileLoc, os.O_APPEND|os.O_WRONLY, 0o644)
+		if err != nil {
+			return err //nolint:wrapcheck
+		}
+
+		defer func() {
+			_ = summaryFile.Close()
+		}()
+
+		fmt.Fprintf(summaryFile, "### Regal Lint Report\n\n")
+
+		fmt.Fprintf(summaryFile, "%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
+
+		if r.Summary.NumViolations == 0 { //nolint:nestif
+			fmt.Fprintf(summaryFile, " No violations found")
+		} else {
+			pluralViolations := ""
+			if r.Summary.NumViolations > 1 {
+				pluralViolations = "s"
+			}
+
+			fmt.Fprintf(summaryFile, " %d violation%s found", r.Summary.NumViolations, pluralViolations)
+
+			if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
+				pluralFailed := ""
+				if r.Summary.FilesFailed > 1 {
+					pluralFailed = "s"
+				}
+
+				fmt.Fprintf(summaryFile, " in %d file%s.", r.Summary.FilesFailed, pluralFailed)
+				fmt.Fprintf(summaryFile, " See Files tab in PR for locations and details.\n\n")
+
+				fmt.Fprintf(summaryFile, "#### Violations\n\n")
+
+				for description, url := range getUniqueViolationURLs(r.Violations) {
+					fmt.Fprintf(summaryFile, "* [%s](%s)\n", description, url)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func getDocumentationURL(violation report.Violation) string {
 	for _, resource := range violation.RelatedResources {
 		if resource.Description == "documentation" {
@@ -164,4 +246,13 @@ func getDocumentationURL(violation report.Violation) string {
 	}
 
 	return ""
+}
+
+func getUniqueViolationURLs(violations []report.Violation) map[string]string {
+	urls := make(map[string]string)
+	for _, violation := range violations {
+		urls[violation.Description] = getDocumentationURL(violation)
+	}
+
+	return urls
 }

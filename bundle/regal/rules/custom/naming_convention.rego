@@ -32,8 +32,6 @@ report contains violation if {
 
 # target: rule
 report contains violation if {
-	cfg := config.for_rule({"custom": {"category": "custom"}, "title": "naming-convention"})
-
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -55,8 +53,6 @@ report contains violation if {
 
 # target: function
 report contains violation if {
-	cfg := config.for_rule({"custom": {"category": "custom"}, "title": "naming-convention"})
-
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -78,8 +74,6 @@ report contains violation if {
 
 # target: var
 report contains violation if {
-	cfg := config.for_rule({"custom": {"category": "custom"}, "title": "naming-convention"})
-
 	some convention in cfg.conventions
 	some target in convention.targets
 

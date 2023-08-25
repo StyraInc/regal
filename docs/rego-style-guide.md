@@ -52,7 +52,7 @@ determine whether the author has done, and both have valid use cases.
 ## Variables and Data Types
 
 - [x] Use `in` to check for membership
-- [ ] Prefer some .. in for iteration
+- [x] Prefer some .. in for iteration
 - [ ] Use every to express FOR ALL
 - [ ] Don't use unification operator for assignment or comparison
 - [x] Don't use undeclared variables

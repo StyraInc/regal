@@ -21,7 +21,7 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-_rule_names := {name | name := input.rules[_].head.name}
+_rule_names := {rule.head.name | some rule in input.rules}
 
 # regal ignore:external-reference
 illegal_value_ref(value) if not value in _rule_names

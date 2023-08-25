@@ -88,7 +88,7 @@ or := 1
 	}
 
 	if len(result.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
+		t.Fatalf("expected 1 violation, got %d - violations: %v", len(result.Violations), result.Violations)
 	}
 
 	if result.Violations[0].Title != "top-level-iteration" {

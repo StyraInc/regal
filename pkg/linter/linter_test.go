@@ -69,7 +69,7 @@ func TestLintWithUserConfig(t *testing.T) {
 
 	input := test.InputPolicy("p.rego", `package p
 
-foo := input.bar[_]
+boo := input.hoo[_]
 
 or := 1
 `)
@@ -101,7 +101,7 @@ func TestLintWithUserConfigTable(t *testing.T) {
 
 	policy := `package p
 
-foo := input.bar[_]
+boo := input.hoo[_]
 
  opa_fmt := "fail"
 

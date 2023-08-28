@@ -154,24 +154,25 @@ The following rules are currently available:
 | idiomatic | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)       | Use raw strings for regex patterns                        |
 | idiomatic | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                   | Use in to check for membership                            |
 | idiomatic | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars) | Use `some` to declare output variables                    |
-| imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
+| imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)         | Avoid importing input                                     |
 | imports   | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)   | Use explicit future keyword imports                       |
 | imports   | [import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import)         | Import shadows another import                             |
-| imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)         | Avoid importing input                                     |
+| imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
-| style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
+| style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |
 | style     | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)               | Function argument used for return value                   |
 | style     | [line-length](https://docs.styra.com/regal/rules/style/line-length)                               | Line too long                                             |
 | style     | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)           | Comment should start with whitespace                      |
-| style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)     | Prefer `some .. in` for iteration                         |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
 | style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |
+| testing   | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)       | Metasyntactic variable name                               |
 | testing   | [print-or-trace-call](https://docs.styra.com/regal/rules/testing/print-or-trace-call)             | Call to print or trace function                           |
 | testing   | [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package) | Test outside of test package                              |
 | testing   | [todo-test](https://docs.styra.com/regal/rules/testing/todo-test)                                 | TODO test encountered                                     |
@@ -346,15 +347,18 @@ If you want to embed Regal in another project or product, please reach out!
 
 ## Roadmap
 
-- [ ] More rules!
-- [x] Add `custom` (or `organizational`, `opinionated`, or..) category for built-in "custom", or
+The roadmap for Regal currently looks like this:
+
+- [ ] 50 rules!
+- [x] Add `custom` (or `organizational`, `opinionated`, or...) category for built-in "custom", or
       [organizational rules](https://github.com/StyraInc/regal/issues/48), to enforce things like naming conventions.
       The most common customizations should not require writing custom rules, but be made available in configuration.
 - [x] Simplify custom rules authoring by providing
       [command for scaffolding](https://github.com/StyraInc/regal/issues/206)
-- [ ] Make more rules consider nested AST nodes
+- [ ] Make more rules consider [nested](https://github.com/StyraInc/regal/issues/82) AST nodes
 - [ ] GitHub Action
-- [ ] VS Code extension
+
+The roadmap is updated when all the current items have been completed.
 
 ## Community
 

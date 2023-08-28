@@ -28,6 +28,18 @@ name(rule) := rule.head.name if {
 	rule.head.name
 } else := rule.head.ref[0].value
 
+named_refs(refs) := [ref |
+	some i, ref in refs
+	_is_name(ref, i)
+]
+
+_is_name(ref, 0) if ref.type == "var"
+
+_is_name(ref, pos) if {
+	pos > 0
+	ref.type == "string"
+}
+
 tests := [rule |
 	some rule in input.rules
 	not rule.head.args

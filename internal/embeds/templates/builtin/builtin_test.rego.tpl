@@ -4,6 +4,7 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.config
 
 import data.regal.rules.{{.Category}}{{.Name}} as rule
 
@@ -22,7 +23,7 @@ test_rule_named_foo_not_allowed {
 		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "foo := true"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://github.com/StyraInc/regal/blob/main/docs/rules/{{.Category}}/{{.NameOriginal}}.md"
+			"ref": config.docs.resolve_url("$baseUrl/$category/{{.NameOriginal}}", "{{.Category}}")"
 		}],
 		"title": "{{.NameOriginal}}"
 	}}

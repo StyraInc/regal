@@ -215,6 +215,9 @@ func templateValues(params newRuleCommandParams) TemplateValues {
 
 	if strings.Contains(params.name, "-") {
 		tmplNameValue = `["` + params.name + `"]`
+	} else if strings.Contains(params.name, "_") {
+		tempName := strings.ReplaceAll(params.name, "_", "-")
+		tmplNameValue = `["` + tempName + `"]`
 	} else {
 		tmplNameValue = "." + params.name
 	}
@@ -222,14 +225,17 @@ func templateValues(params newRuleCommandParams) TemplateValues {
 	var tmplNameTestValue string
 
 	if strings.Contains(params.name, "-") {
-		tmplNameTestValue = `["` + params.name + `_test"]`
+		tmplNameTestValue = `["` + params.name + `-test"]`
+	} else if strings.Contains(params.name, "_") {
+		tempNameTest := strings.ReplaceAll(params.name, "_", "-")
+		tmplNameTestValue = `["` + tempNameTest + `-test"]`
 	} else {
-		tmplNameTestValue = "." + params.name + "_test"
+		tmplNameTestValue = "." + params.name + "-test"
 	}
 
 	return TemplateValues{
 		Category:     params.category,
-		NameOriginal: params.name,
+		NameOriginal: strings.ReplaceAll(params.name, "_", "-"),
 		Name:         tmplNameValue,
 		NameTest:     tmplNameTestValue,
 	}

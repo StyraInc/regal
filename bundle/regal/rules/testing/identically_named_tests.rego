@@ -10,7 +10,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	test_names := [rule.head.name | some rule in ast.tests]
+	test_names := [ast.name(rule) | some rule in ast.tests]
 
 	some i, name in test_names
 

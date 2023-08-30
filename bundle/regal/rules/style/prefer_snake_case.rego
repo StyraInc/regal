@@ -12,7 +12,11 @@ import data.regal.util
 
 report contains violation if {
 	some rule in input.rules
-	not util.is_snake_case(rule.head.name)
+	some i, ref in rule.head.ref
+
+	_is_name(ref, i)
+
+	not util.is_snake_case(ref.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
@@ -22,4 +26,14 @@ report contains violation if {
 	not util.is_snake_case(var.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(var))
+}
+
+_is_name(ref, pos) if {
+	pos == 0
+	ref.type == "var"
+}
+
+_is_name(ref, pos) if {
+	pos > 0
+	ref.type == "string"
 }

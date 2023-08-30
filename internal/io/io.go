@@ -94,7 +94,7 @@ func CloseFileIgnore(file *os.File) {
 }
 
 func ExcludeTestFilter() filter.LoaderFilter {
-	return func(abspath string, info files.FileInfo, depth int) bool {
+	return func(_ string, info files.FileInfo, _ int) bool {
 		return strings.HasSuffix(info.Name(), "_test.rego") &&
 			// (anderseknert): This is an outlier, but not sure we need something
 			// more polished to deal with this for the time being.

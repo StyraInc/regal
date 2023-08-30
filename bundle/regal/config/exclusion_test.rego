@@ -64,7 +64,7 @@ rules_config_ignore_delta := {"rules": {"test": {"test-case": {"ignore": {"files
 config_ignore := {"ignore": {"files": ["p.rego"]}}
 
 test_excluded_file_default {
-	e := config.excluded_file(rule, "p.rego") with data.eval.params as params
+	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
 		with config.merged_config as rules_config_error
 
 	e == false
@@ -72,23 +72,26 @@ test_excluded_file_default {
 
 test_excluded_file_with_ignore {
 	c := object.union(rules_config_error, rules_config_ignore_delta)
-	e := config.excluded_file(rule, "p.rego") with data.eval.params as params
+	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
 		with config.merged_config as c
 	e == true
 }
 
 test_excluded_file_config {
-	e := config.excluded_file(rule, "p.rego") with config.merged_config as config_ignore
+	e := config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
 	e == true
 }
 
 test_excluded_file_cli_flag {
-	e := config.excluded_file(rule, "p.rego") with data.eval.params as object.union(params, {"ignore_files": ["p.rego"]})
+	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as object.union(
+		params,
+		{"ignore_files": ["p.rego"]},
+	)
 	e == true
 }
 
 test_excluded_file_cli_overrides_config {
-	e := config.excluded_file(rule, "p.rego") with config.merged_config as config_ignore
+	e := config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
 		with data.eval.params as object.union(params, {"ignore_files": [""]})
 	e == false
 }

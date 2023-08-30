@@ -1,9 +1,13 @@
 //nolint:gochecknoglobals
 package embeds
 
-import "embed"
+import (
+	"embed"
 
-var EmbedBundleFS embed.FS
+	"github.com/styrainc/regal/bundle"
+)
+
+var EmbedBundleFS = bundle.Bundle
 
 //go:embed templates
 var EmbedTemplatesFS embed.FS

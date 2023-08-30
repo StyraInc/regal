@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -172,14 +171,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 	}
 
-	// Create new fs from root of bundle, to avoid having to deal with
-	// "bundle" in paths (i.e. `data.bundle.regal`)
-	bfs, err := fs.Sub(embeds.EmbedBundleFS, "bundle")
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed reading embedded bundle %w", err)
-	}
-
-	regalRules := rio.MustLoadRegalBundleFS(bfs)
+	regalRules := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
 
 	var regalDir *os.File
 

@@ -71,6 +71,8 @@ rules:
       level: error
     identically-named-tests:
       level: error
+    metasyntactic-variable:
+      level: error
     print-or-trace-call:
       level: error
     test-outside-test-package:

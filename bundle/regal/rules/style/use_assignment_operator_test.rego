@@ -125,3 +125,13 @@ test_success_partial_rule if {
 	r := rule.report with input as ast.policy(`partial["works"] { 1 == 1 }`)
 	r == set()
 }
+
+test_success_using_if if {
+	r := rule.report with input as ast.with_future_keywords(`foo if 1 == 1`)
+	r == set()
+}
+
+test_success_ref_head_rule_if if {
+	r := rule.report with input as ast.with_future_keywords(`a.b.c if true`)
+	r == set()
+}

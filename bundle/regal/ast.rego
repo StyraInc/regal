@@ -18,13 +18,23 @@ package_name := concat(".", [path.value |
 	i > 0
 ])
 
+# METADATA
+# description: |
+#   returns the name of the rule, i.e. "foo" for "foo { ... }"
+#   note that what constitutes the "name" of a ref-head rule is
+#   ambiguous at best, i.e. a["b"][c] { ... } ... in those cases
+#   we currently return the first element of the ref, i.e. "a"
+name(rule) := rule.head.name if {
+	rule.head.name
+} else := rule.head.ref[0].value
+
 tests := [rule |
 	some rule in input.rules
 	not rule.head.args
-	startswith(rule.head.name, "test_")
+	startswith(name(rule), "test_")
 ]
 
-rule_names := {rule.head.name |
+rule_names := {name(rule) |
 	some rule in input.rules
 	not rule.head.args
 }
@@ -263,11 +273,11 @@ find_builtin_calls(node) := [value |
 # METADATA
 # description: |
 #   Returns custom functions declared in input policy in the same format as opa.builtins
-function_decls(rules) := {name: args |
+function_decls(rules) := {rule_name: args |
 	some rule in rules
 	rule.head.args
 
-	name := rule.head.name
+	rule_name := name(rule)
 
 	# ensure we only get one set of args, or we'll have a conflict
 	args := [{"args": [item |
@@ -275,7 +285,7 @@ function_decls(rules) := {name: args |
 		item := {"name": arg.value}
 	]} |
 		some rule in rules
-		rule.head.name == name
+		name(rule) == rule_name
 	][0]
 }
 
@@ -295,6 +305,23 @@ implicit_boolean_assignment(rule) if {
 	# note the missing location attribute here, which is how we distinguish
 	# between implicit and explicit assignments
 	rule.head.value == {"type": "boolean", "value": true}
+}
+
+implicit_boolean_assignment(rule) if {
+	# This handles the *quite* special case of
+	# `a.b if true`, which is "rewritten" to `a.b = true` *and*  where a location is still added to the value
+	# see https://github.com/open-policy-agent/opa/issues/6184 for details
+	#
+	# Do note that technically, it is possible to write a rule where the `true` value actually is on column 1, i.e.
+	#
+	# a.b =
+	# true
+	# if true
+	#
+	# If you write Rego like that — you're not going to use Regal anyway, are you? ¯\_(ツ)_/¯
+	rule.head.value.type == "boolean"
+	rule.head.value.value == true
+	rule.head.value.location.col == 1
 }
 
 all_functions := object.union(opa.builtins, function_decls(input.rules))

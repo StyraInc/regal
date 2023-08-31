@@ -167,7 +167,7 @@ func TestLintAllViolations(t *testing.T) {
 
 	for _, category := range cfg.Rules {
 		for ruleName, rule := range category {
-			if rule.Level != "ignore" {
+			if rule.Level != "ignore" && ruleName != "file-length" {
 				ruleNames[ruleName] = struct{}{}
 			}
 		}
@@ -231,19 +231,21 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		violationNames[violation.Title] = struct{}{}
 	}
 
-	if available, actual := len(ruleNames), len(violationNames); available != actual+1 {
-		t.Errorf("expected one rule to be missing from reported violations, but there were %d out of %d violations reported", actual, available)
+	if available, actual := len(ruleNames), len(violationNames); available != actual+2 {
+		t.Errorf("expected two rules to be missing from reported violations, but there were %d out of %d violations reported", actual, available)
 	}
 
-	ignoredRuleName := "prefer-snake-case"
+	ignoredRuleNames := []string{"prefer-snake-case", "file-length"}
 
-	if _, ok := violationNames[ignoredRuleName]; ok {
-		t.Errorf("expected violation for rule todo-comments to be ignored")
+	for _, ignoredRuleName := range ignoredRuleNames {
+		if _, ok := violationNames[ignoredRuleName]; ok {
+			t.Errorf("expected violation for rule prefer-snake-case to be ignored")
+		}
+
+		// Should be ignored, so exclude from below check
+		// also, this has specifically been checked to miss from violationNames above
+		delete(ruleNames, ignoredRuleName)
 	}
-
-	// Should be ignored, so exclude from below check
-	// also, this has specifically been checked to miss from violationNames above
-	delete(ruleNames, ignoredRuleName)
 
 	for ruleName := range ruleNames {
 		if _, ok := violationNames[ruleName]; !ok {

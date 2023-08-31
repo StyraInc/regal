@@ -1845,6 +1845,27 @@
       "type": "array[number]"
     }
   },
+  "numbers.range_step": {
+    "args": [
+      {
+        "name": "a",
+        "type": "number"
+      },
+      {
+        "name": "b",
+        "type": "number"
+      },
+      {
+        "name": "step",
+        "type": "number"
+      }
+    ],
+    "result": {
+      "description": "the range between `a` and `b` in `step` increments",
+      "name": "range",
+      "type": "array[number]"
+    }
+  },
   "object.filter": {
     "args": [
       {

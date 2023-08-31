@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.55.0](https://openpolicyagent.org/badge/v0.55.0)
+![OPA v0.56.0](https://openpolicyagent.org/badge/v0.56.0)
 
 Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
 Rego magnificent!
@@ -160,15 +160,16 @@ The following rules are currently available:
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
-| style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
+| style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |
+| style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                               | Max file length exceeded                                  |
 | style     | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)               | Function argument used for return value                   |
 | style     | [line-length](https://docs.styra.com/regal/rules/style/line-length)                               | Line too long                                             |
 | style     | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)           | Comment should start with whitespace                      |
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)     | Prefer `some .. in` for iteration                         |
-| style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
+| style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
 | style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |

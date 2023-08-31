@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"dario.cat/mergo"
 	"github.com/gobwas/glob"
-	"github.com/imdario/mergo"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"

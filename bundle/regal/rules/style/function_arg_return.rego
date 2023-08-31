@@ -11,7 +11,7 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	cfg := config.for_rule({"custom": {"category": "style"}, "title": "function-arg-return"})
+	cfg := config.for_rule("style", "function-arg-return")
 
 	except_functions := array.concat(
 		object.get(cfg, "except-functions", []),

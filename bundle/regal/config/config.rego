@@ -16,20 +16,25 @@ user_config := data.regal_user_config
 
 merged_config := object.union(data.regal.config.provided, user_config)
 
-for_rule(metadata) := _with_level(metadata, "ignore") if {
-	force_disabled(metadata)
-} else := _with_level(metadata, "error") if {
-	force_enabled(metadata)
+# METADATA
+# description: |
+#   Returns the configuration applied (i.e. the provided configuration
+#   merged with any user configuration and possibly command line overrides)
+#   to the rule matching the category and title.
+for_rule(category, title) := _with_level(category, title, "ignore") if {
+	force_disabled(category, title)
+} else := _with_level(category, title, "error") if {
+	force_enabled(category, title)
 } else := c if {
-	m := merged_config.rules[metadata.custom.category][metadata.title]
+	m := merged_config.rules[category][title]
 	c := object.union(m, {"level": rule_level(m)})
 } else := {"level": "error"} if {
 	# regal ignore:external-reference
-	not merged_config.rules[metadata.custom.category][metadata.title]
+	not merged_config.rules[category][title]
 }
 
-_with_level(metadata, level) := c if {
-	m := merged_config.rules[metadata.custom.category][metadata.title]
+_with_level(category, title, level) := c if {
+	m := merged_config.rules[category][title]
 	c := object.union(m, {"level": level})
 } else := {"level": level}
 
@@ -39,34 +44,30 @@ rule_level(cfg) := "error" if {
 
 rule_level(cfg) := cfg.level
 
-force_disabled(metadata) if {
-	metadata.title in data.eval.params.disable
-}
+force_disabled(_, title) if title in data.eval.params.disable
 
-force_disabled(metadata) if {
+force_disabled(category, title) if {
 	# regal ignore:external-reference
 	data.eval.params.disable_all
-	not metadata.custom.category in data.eval.params.enable_category
-	not metadata.title in data.eval.params.enable
+	not category in data.eval.params.enable_category
+	not title in data.eval.params.enable
 }
 
-force_disabled(metadata) if {
-	metadata.custom.category in data.eval.params.disable_category
-	not metadata.title in data.eval.params.enable
+force_disabled(category, title) if {
+	category in data.eval.params.disable_category
+	not title in data.eval.params.enable
 }
 
-force_enabled(metadata) if {
-	metadata.title in data.eval.params.enable
-}
+force_enabled(_, title) if title in data.eval.params.enable
 
-force_enabled(metadata) if {
+force_enabled(category, title) if {
 	# regal ignore:external-reference
 	data.eval.params.enable_all
-	not metadata.custom.category in data.eval.params.disable_category
-	not metadata.title in data.eval.params.disable
+	not category in data.eval.params.disable_category
+	not title in data.eval.params.disable
 }
 
-force_enabled(metadata) if {
-	metadata.custom.category in data.eval.params.enable_category
-	not metadata.title in data.eval.params.disable
+force_enabled(category, title) if {
+	category in data.eval.params.enable_category
+	not title in data.eval.params.disable
 }

@@ -10,7 +10,7 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
-cfg := config.for_rule({"custom": {"category": "style"}, "title": "prefer-some-in-iteration"})
+cfg := config.for_rule("style", "prefer-some-in-iteration")
 
 report contains violation if {
 	some rule in input.rules

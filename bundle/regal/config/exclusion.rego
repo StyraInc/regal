@@ -3,10 +3,10 @@ package regal.config
 import future.keywords.if
 import future.keywords.in
 
-excluded_file(metadata, file) if {
+excluded_file(category, title, file) if {
 	force_exclude_file(file)
 } else if {
-	rule_config := for_rule(metadata)
+	rule_config := for_rule(category, title)
 	ex := rule_config.ignore.files
 	is_array(ex)
 	some pattern in ex

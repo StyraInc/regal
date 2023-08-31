@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/open-policy-agent/opa/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"
@@ -70,4 +72,44 @@ func TestFindConfig(t *testing.T) {
 			t.Errorf("expected no config file to be found")
 		}
 	})
+}
+
+func TestMarshalConfig(t *testing.T) {
+	t.Parallel()
+
+	conf := Config{
+		Rules: map[string]Category{
+			"testing": {
+				"foo": Rule{
+					Level: "error",
+					Ignore: Ignore{
+						Files: []string{"foo.rego"},
+					},
+					Extra: ExtraAttributes{
+						"bar":    "baz",
+						"ignore": "this should be removed by the marshaller",
+					},
+				},
+			},
+		},
+	}
+
+	bs, err := yaml.Marshal(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `rules:
+    testing:
+        foo:
+            bar: baz
+            ignore:
+                files:
+                    - foo.rego
+            level: error
+`
+
+	if string(bs) != expect {
+		t.Errorf("expected %s, got %s", expect, string(bs))
+	}
 }

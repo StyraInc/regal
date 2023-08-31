@@ -14,21 +14,21 @@ import (
 )
 
 type Config struct {
-	Rules  map[string]Category `json:"rules"  yaml:"rules"`
-	Ignore Ignore              `json:"ignore" yaml:"ignore"`
+	Rules  map[string]Category `json:"rules"            yaml:"rules"`
+	Ignore Ignore              `json:"ignore,omitempty" yaml:"ignore,omitempty"`
 }
 
 type Category map[string]Rule
 
 type Ignore struct {
-	Files []string `json:"files" yaml:"files"`
+	Files []string `json:"files,omitempty" yaml:"files,omitempty"`
 }
 
 type ExtraAttributes map[string]any
 
 type Rule struct {
 	Level  string
-	Ignore Ignore `json:"ignore" yaml:"ignore"`
+	Ignore Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
 	Extra  ExtraAttributes
 }
 
@@ -125,16 +125,21 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 	return rule.mapToConfig(result)
 }
 
-func (rule *Rule) MarshalYAML() (interface{}, error) {
+func (rule Rule) MarshalYAML() (interface{}, error) {
 	result := make(map[string]any)
 	result["level"] = rule.Level
-	result["ignore"] = rule.Ignore
 
-	for key, val := range rule.Extra {
-		result[key] = val
+	if rule.Ignore.Files != nil {
+		result["ignore"] = rule.Ignore
 	}
 
-	return yaml.Marshal(&result) //nolint:wrapcheck
+	for key, val := range rule.Extra {
+		if key != "ignore" && key != "level" {
+			result[key] = val
+		}
+	}
+
+	return result, nil
 }
 
 func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
@@ -163,7 +168,7 @@ func (rule *Rule) mapToConfig(result map[string]any) error {
 		rule.Ignore = dst
 	}
 
-	delete(result, "enabled")
+	delete(result, "level")
 
 	rule.Level = level
 	rule.Extra = result

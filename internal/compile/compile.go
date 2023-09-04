@@ -9,18 +9,19 @@ import (
 
 func Capabilities() *ast.Capabilities {
 	caps := ast.CapabilitiesForThisVersion()
-	caps.Builtins = append(caps.Builtins, &ast.Builtin{
-		Name: builtins.RegalParseModuleMeta.Name,
-		Decl: builtins.RegalParseModuleMeta.Decl,
-	})
-	caps.Builtins = append(caps.Builtins, &ast.Builtin{
-		Name: builtins.RegalJSONPrettyMeta.Name,
-		Decl: builtins.RegalJSONPrettyMeta.Decl,
-	})
-	caps.Builtins = append(caps.Builtins, &ast.Builtin{
-		Name: builtins.RegalLastMeta.Name,
-		Decl: builtins.RegalLastMeta.Decl,
-	})
+	caps.Builtins = append(caps.Builtins,
+		&ast.Builtin{
+			Name: builtins.RegalParseModuleMeta.Name,
+			Decl: builtins.RegalParseModuleMeta.Decl,
+		},
+		&ast.Builtin{
+			Name: builtins.RegalJSONPrettyMeta.Name,
+			Decl: builtins.RegalJSONPrettyMeta.Decl,
+		},
+		&ast.Builtin{
+			Name: builtins.RegalLastMeta.Name,
+			Decl: builtins.RegalLastMeta.Decl,
+		})
 
 	return caps
 }

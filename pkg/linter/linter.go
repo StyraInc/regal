@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
 
 	"dario.cat/mergo"
 	"github.com/gobwas/glob"
+	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -33,6 +35,7 @@ type Linter struct {
 	configBundle     *bundle.Bundle
 	customRulesPaths []string
 	combinedConfig   *config.Config
+	debugMode        bool
 	disable          []string
 	disableAll       bool
 	disableCategory  []string
@@ -75,6 +78,13 @@ func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 // WithCustomRules adds custom rules for evaluation, from the Rego (and data) files provided at paths.
 func (l Linter) WithCustomRules(paths []string) Linter {
 	l.customRulesPaths = paths
+
+	return l
+}
+
+// WithDebugMode enables debug mode.
+func (l Linter) WithDebugMode(debugMode bool) Linter {
+	l.debugMode = debugMode
 
 	return l
 }
@@ -155,6 +165,8 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
 	}
+
+	l.combinedConfig = &conf
 
 	ignore := conf.Ignore.Files
 
@@ -364,13 +376,17 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	regoArgs = append(regoArgs,
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),
-		// TODO: Only enable when --debug (or similar) is provided, as some optimizations are disabled by this.
-		rego.EnablePrintStatements(true),
-		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalJSONPrettyMeta, builtins.RegalJSONPretty),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
+
+	if l.debugMode {
+		regoArgs = append(regoArgs,
+			rego.EnablePrintStatements(true),
+			rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+		)
+	}
 
 	if l.configBundle != nil {
 		regoArgs = append(regoArgs, rego.ParsedBundle(regalUserConfig, l.configBundle))
@@ -476,26 +492,35 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	return r, nil
 }
 
-func (l Linter) mergedConfig() (config.Config, error) {
-	if l.combinedConfig != nil {
-		return *l.combinedConfig, nil
-	}
-
+func (l Linter) readProvidedConfig() (map[string]any, error) {
 	regalBundle, err := l.getBundleByName("regal")
 	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
+		return nil, fmt.Errorf("failed to get regal bundle: %w", err)
 	}
 
 	path := []string{"regal", "config", "provided"}
 
 	bundled, err := util.SearchMap(regalBundle.Data, path)
 	if err != nil {
-		return config.Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
+		return nil, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
 	}
 
 	bundledConf, ok := bundled.(map[string]any)
 	if !ok {
-		return config.Config{}, errors.New("expected 'rules' of object type")
+		return nil, errors.New("expected 'rules' of object type")
+	}
+
+	return bundledConf, nil
+}
+
+func (l Linter) mergedConfig() (config.Config, error) {
+	if l.combinedConfig != nil {
+		return *l.combinedConfig, nil
+	}
+
+	providedConf, err := l.readProvidedConfig()
+	if err != nil {
+		return config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
 
 	userConfig := map[string]any{}
@@ -504,14 +529,29 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		userConfig = l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
 	}
 
-	mergedConf := util.CopyMap(bundledConf)
+	mergedConf := util.CopyMap(providedConf)
 
 	err = mergo.Merge(&mergedConf, userConfig, mergo.WithOverride)
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	return config.FromMap(mergedConf) //nolint:wrapcheck
+	combinedConf, err := config.FromMap(mergedConf)
+	if err != nil {
+		return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
+	}
+
+	if l.debugMode {
+		bs, err := yaml.Marshal(combinedConf)
+		if err != nil {
+			return config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
+		}
+
+		log.Println("merged provided and user config:")
+		log.Println(string(bs))
+	}
+
+	return combinedConf, nil
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {

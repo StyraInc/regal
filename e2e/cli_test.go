@@ -254,6 +254,29 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	}
 }
 
+func TestLintWithDebugOption(t *testing.T) {
+	t.Parallel()
+
+	cwd := must(os.Getwd)
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	err := regal(&stdout, &stderr)("lint", "--debug", "--config-file", cwd+"/testdata/configs/ignore_files_prefer_snake_case.yaml", cwd+"/testdata/violations")
+
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	if !strings.Contains(stdout.String(), "rules:") {
+		t.Errorf("expected stdout to print configuration, got %q", stdout.String())
+	}
+}
+
 func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	t.Parallel()
 

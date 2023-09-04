@@ -109,13 +109,12 @@ func opaTest(args []string) int {
 		Ignore: testParams.ignore,
 	}
 
-	var modules map[string]*ast.Module
-
-	var bundles map[string]*bundle.Bundle
-
-	var store storage.Store
-
-	var err error
+	var (
+		modules map[string]*ast.Module
+		bundles map[string]*bundle.Bundle
+		store   storage.Store
+		err     error
+	)
 
 	if testParams.bundleMode {
 		bundles, err = tester.LoadBundles(args, filter.Apply)
@@ -130,13 +129,7 @@ func opaTest(args []string) int {
 		return 1
 	}
 
-	regalRules := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
-
-	if bundles == nil {
-		bundles = make(map[string]*bundle.Bundle)
-	}
-
-	bundles["regal"] = &regalRules
+	regalBundle := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
 
 	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {
@@ -145,13 +138,20 @@ func opaTest(args []string) int {
 		return 1
 	}
 
+	if err := store.Write(ctx, txn, storage.AddOp,
+		storage.MustParsePath("/regal"),
+		regalBundle.Data["regal"]); err != nil {
+		panic(err)
+	}
+
 	defer store.Abort(ctx, txn)
 
 	compiler := compile.NewCompilerWithRegalBuiltins().
 		WithPathConflictsCheck(storage.NonEmpty(ctx, store, txn)).
 		WithEnablePrintStatements(!testParams.benchmark).
 		WithSchemas(compile.SchemaSet(embeds.ASTSchema)).
-		WithUseTypeCheckAnnotations(true)
+		WithUseTypeCheckAnnotations(true).
+		WithModuleLoader(moduleLoader(regalBundle))
 
 	if testParams.threshold > 0 && !testParams.coverage {
 		testParams.coverage = true
@@ -192,6 +192,32 @@ func opaTest(args []string) int {
 	}
 
 	return 0
+}
+
+func moduleLoader(regal bundle.Bundle) ast.ModuleLoader {
+	// We use the package declarations to know which modules we still need, and return
+	// those from the embedded regal bundle.
+	extra := make(map[string]struct{}, len(regal.Modules))
+
+	for _, mod := range regal.Modules {
+		extra[mod.Parsed.Package.Path.String()] = struct{}{}
+	}
+
+	return func(present map[string]*ast.Module) (map[string]*ast.Module, error) {
+		for _, mod := range present {
+			delete(extra, mod.Package.Path.String())
+		}
+
+		extraMods := map[string]*ast.Module{}
+
+		for id, mod := range regal.ParsedModules("bundle") {
+			if _, ok := extra[mod.Package.Path.String()]; ok {
+				extraMods[id] = mod
+			}
+		}
+
+		return extraMods, nil
+	}
 }
 
 func testReporter(cov *cover.Cover, modules map[string]*ast.Module) tester.Reporter {

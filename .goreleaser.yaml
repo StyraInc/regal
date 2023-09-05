@@ -77,7 +77,7 @@ release:
     name: regal
 
 brews:
-  - tap:
+  - repository:
       owner: StyraInc
       name: homebrew-packages
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"

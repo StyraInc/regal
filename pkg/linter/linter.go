@@ -249,9 +249,15 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 }
 
 func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
-	ignore := rule.Config().Ignore.Files
+	ignore := rule.Config().Ignore
 
-	return filterInputFiles(input, ignore)
+	var ignoreFiles []string
+
+	if ignore != nil {
+		ignoreFiles = ignore.Files
+	}
+
+	return filterInputFiles(input, ignoreFiles)
 }
 
 func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
@@ -492,25 +498,40 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	return r, nil
 }
 
-func (l Linter) readProvidedConfig() (map[string]any, error) {
+func (l Linter) readProvidedConfig() (config.Config, error) {
 	regalBundle, err := l.getBundleByName("regal")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get regal bundle: %w", err)
+		return config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
 	}
 
 	path := []string{"regal", "config", "provided"}
 
 	bundled, err := util.SearchMap(regalBundle.Data, path)
 	if err != nil {
-		return nil, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
+		return config.Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
 	}
 
 	bundledConf, ok := bundled.(map[string]any)
 	if !ok {
-		return nil, errors.New("expected 'rules' of object type")
+		return config.Config{}, errors.New("expected 'rules' of object type")
 	}
 
-	return bundledConf, nil
+	return config.FromMap(bundledConf) //nolint:wrapcheck
+}
+
+func (l Linter) readUserConfig() (config.Config, error) {
+	if l.configBundle != nil && l.configBundle.Data != nil {
+		userConfigMap := l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
+
+		userConfig, err := config.FromMap(userConfigMap)
+		if err != nil {
+			return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
+		}
+
+		return userConfig, nil
+	}
+
+	return config.Config{}, nil
 }
 
 func (l Linter) mergedConfig() (config.Config, error) {
@@ -518,31 +539,38 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		return *l.combinedConfig, nil
 	}
 
-	providedConf, err := l.readProvidedConfig()
+	mergedConf, err := l.readProvidedConfig()
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
 
-	userConfig := map[string]any{}
+	ruleLevels := providedConfLevels(mergedConf)
 
-	if l.configBundle != nil && l.configBundle.Data != nil {
-		userConfig = l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
+	userConf, err := l.readUserConfig()
+	if err != nil {
+		// Note that user config is optional — this will only happen if config is somehow invalid
+		return config.Config{}, fmt.Errorf("failed to read user config: %w", err)
 	}
 
-	mergedConf := util.CopyMap(providedConf)
-
-	err = mergo.Merge(&mergedConf, userConfig, mergo.WithOverride)
+	err = mergo.Merge(&mergedConf, userConf, mergo.WithOverride)
 	if err != nil {
 		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	combinedConf, err := config.FromMap(mergedConf)
-	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
+	// If the user configuration contains rules with the level unset, copy the level from the provided configuration
+	for categoryName, rulesByCategory := range mergedConf.Rules {
+		for ruleName, rule := range rulesByCategory {
+			if rule.Level == "" {
+				if providedLevel, ok := ruleLevels[ruleName]; ok {
+					rule.Level = providedLevel
+					mergedConf.Rules[categoryName][ruleName] = rule
+				}
+			}
+		}
 	}
 
 	if l.debugMode {
-		bs, err := yaml.Marshal(combinedConf)
+		bs, err := yaml.Marshal(mergedConf)
 		if err != nil {
 			return config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
 		}
@@ -551,7 +579,22 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		log.Println(string(bs))
 	}
 
-	return combinedConf, nil
+	return mergedConf, nil
+}
+
+// Copy the level of each rule from the provided configuration.
+func providedConfLevels(conf config.Config) map[string]string {
+	ruleLevels := make(map[string]string)
+
+	for categoryName, rulesByCategory := range conf.Rules {
+		for ruleName := range rulesByCategory {
+			// Note that this assumes all rules have unique names,
+			// which we'll likely always want for provided rules
+			ruleLevels[ruleName] = conf.Rules[categoryName][ruleName].Level
+		}
+	}
+
+	return ruleLevels
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {

@@ -82,7 +82,7 @@ func TestMarshalConfig(t *testing.T) {
 			"testing": {
 				"foo": Rule{
 					Level: "error",
-					Ignore: Ignore{
+					Ignore: &Ignore{
 						Files: []string{"foo.rego"},
 					},
 					Extra: ExtraAttributes{

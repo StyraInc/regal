@@ -222,9 +222,9 @@ func templateValues(params newRuleCommandParams) TemplateValues {
 	tmplNameTestValue := strings.ReplaceAll(params.name, "_", "-")
 
 	if strings.Contains(params.name, "-") {
-		tmplNameTestValue = `["` + params.name + `-test"]`
+		tmplNameTestValue = `["` + params.name + `_test"]`
 	} else {
-		tmplNameTestValue = "." + params.name + "-test"
+		tmplNameTestValue = "." + params.name + "_test"
 	}
 
 	return TemplateValues{

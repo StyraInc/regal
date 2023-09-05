@@ -211,25 +211,25 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 }
 
 func templateValues(params newRuleCommandParams) TemplateValues {
-	tmplNameValue := strings.ReplaceAll(params.name, "_", "-")
+	var tmplNameValue string
+	var tmplNameTestValue string
+	dashedNameValue := strings.ReplaceAll(params.name, "_", "-")
 
-	if strings.Contains(params.name, "-") {
-		tmplNameValue = `["` + params.name + `"]`
-	} else {
+	switch {
+	case strings.Contains(params.name, "-"):
+		tmplNameValue = `["` + dashedNameValue + `"]`
+		tmplNameTestValue = `["` + dashedNameValue + `_test"]`
+	case strings.Contains(params.name, "_"):
+		tmplNameValue = `["` + dashedNameValue + `"]`
+		tmplNameTestValue = `["` + dashedNameValue + `_test"]`
+	default:
 		tmplNameValue = "." + params.name
-	}
-
-	tmplNameTestValue := strings.ReplaceAll(params.name, "_", "-")
-
-	if strings.Contains(params.name, "-") {
-		tmplNameTestValue = `["` + params.name + `_test"]`
-	} else {
 		tmplNameTestValue = "." + params.name + "_test"
 	}
 
 	return TemplateValues{
 		Category:     params.category,
-		NameOriginal: strings.ReplaceAll(params.name, "_", "-"),
+		NameOriginal: params.name,
 		Name:         tmplNameValue,
 		NameTest:     tmplNameTestValue,
 	}

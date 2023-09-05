@@ -212,7 +212,9 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 
 func templateValues(params newRuleCommandParams) TemplateValues {
 	var tmplNameValue string
+
 	var tmplNameTestValue string
+
 	dashedNameValue := strings.ReplaceAll(params.name, "_", "-")
 
 	switch {

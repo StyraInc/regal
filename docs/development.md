@@ -18,12 +18,20 @@ Regal.
 
 ## Building
 
-1. Run the `fetch_builtin_data.sh` script from inside the `build` directory to populate the `data` directory with any data necessary for linting (such as the built-in function metadata from OPA)
-2. Build the `regal` executable by running `go build`
+Build the `regal` executable simply by running `go build`.
+
+Occasionally you may want to run the `fetch_builtin_data.sh` script from inside the `build` directory. This will
+populate the `data` directory with any data necessary for linting (such as the built-in function metadata from OPA).
 
 ## Testing
 
-To run all tests, including the Rego rules unit tests:
+To run all the Rego unit tests, you can run the `regal test` command targeting the `bundle` directory:
+
+```shell
+regal test bundle
+```
+
+To run all tests — Go and Rego:
 
 ```shell
 go test ./...

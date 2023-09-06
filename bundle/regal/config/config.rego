@@ -14,7 +14,29 @@ docs["resolve_url"](url, category) := replace(
 
 user_config := data.regal_user_config
 
-merged_config := object.union(data.regal.config.provided, user_config)
+config_union := object.union(data.regal.config.provided, user_config)
+
+merged_config["ignore"] := config_union.ignore
+
+merged_config["rules"] := merged_rules
+
+# Iterate over the unioned rules and check for any level set to "". This means the user has not provided
+# the level for this rule, so we should fall back on the provided level, i.e. that which was
+merged_rules[category] := rules if {
+	some category, _rules in config_union.rules
+	rules := {rule_name: empty_level_to_provided(category, rule_name, rule_conf) |
+		some rule_name, rule_conf in _rules
+	}
+}
+
+empty_level_to_provided(_, _, conf) := conf if conf.level != ""
+
+empty_level_to_provided(category, title, conf) := object.union(
+	conf,
+	{"level": data.regal.config.provided.rules[category][title].level},
+) if {
+	conf.level == ""
+} else := object.union(conf, {"level": "error"}) if conf.level == ""
 
 # METADATA
 # description: |

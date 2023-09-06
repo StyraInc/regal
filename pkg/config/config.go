@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ type ExtraAttributes map[string]any
 
 type Rule struct {
 	Level  string
-	Ignore Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+	Ignore *Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
 	Extra  ExtraAttributes
 }
 
@@ -95,9 +94,21 @@ func FromMap(confMap map[string]any) (Config, error) {
 }
 
 func ToMap(config Config) map[string]any {
-	var confMap map[string]any
+	confMap := make(map[string]any)
 
 	rio.MustJSONRoundTrip(config, &confMap)
+
+	// Not sure why `omitempty` doesn't do the trick here, but having `ignore: {}` in the config for each
+	// rule is annoying noice when printed from Rego.
+	for categoryName, category := range config.Rules {
+		for ruleName, rule := range category {
+			if rule.Ignore == nil {
+				// casts should be safe here as the structure is copied from the config struct
+				//nolint:forcetypeassert
+				delete(confMap["rules"].(map[string]any)[categoryName].(map[string]any)[ruleName].(map[string]any), "ignore")
+			}
+		}
+	}
 
 	return confMap
 }
@@ -114,8 +125,6 @@ func (rule Rule) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&result) //nolint:wrapcheck
 }
 
-var errLevelMustBeString = errors.New("value of 'level' must be string")
-
 func (rule *Rule) UnmarshalJSON(data []byte) error {
 	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
@@ -129,7 +138,7 @@ func (rule Rule) MarshalYAML() (interface{}, error) {
 	result := make(map[string]any)
 	result["level"] = rule.Level
 
-	if rule.Ignore.Files != nil {
+	if rule.Ignore != nil && len(rule.Ignore.Files) != 0 {
 		result["ignore"] = rule.Ignore
 	}
 
@@ -153,8 +162,8 @@ func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
 
 func (rule *Rule) mapToConfig(result map[string]any) error {
 	level, ok := result["level"].(string)
-	if !ok {
-		return errLevelMustBeString
+	if ok {
+		rule.Level = level
 	}
 
 	if ignore, ok := result["ignore"]; ok {
@@ -165,12 +174,9 @@ func (rule *Rule) mapToConfig(result map[string]any) error {
 			return fmt.Errorf("unmarshalling rule ignore failed: %w", err)
 		}
 
-		rule.Ignore = dst
+		rule.Ignore = &dst
 	}
 
-	delete(result, "level")
-
-	rule.Level = level
 	rule.Extra = result
 
 	return nil

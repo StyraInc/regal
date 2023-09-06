@@ -447,6 +447,23 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 	}
 }
 
+func TestMergeRuleConfigWithoutLevel(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := must(os.Getwd)
+
+	// No violations from the built-in configuration in the policy provided, but
+	// the user --config-file changes the max-file-length to 1, so this should fail
+	err := regal(&stdout, &stderr)("lint", "--config-file", cwd+"/testdata/configs/rule_without_level.yaml", cwd+"/testdata/custom_naming_convention")
+
+	if exp, act := 3, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+}
+
 func binary() string {
 	if b := os.Getenv("REGAL_BIN"); b != "" {
 		return b

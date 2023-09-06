@@ -133,13 +133,13 @@ or := 1
 			userConfig: &config.Config{Rules: map[string]config.Category{
 				"bugs": {"rule-shadows-builtin": config.Rule{
 					Level: "error",
-					Ignore: config.Ignore{
+					Ignore: &config.Ignore{
 						Files: []string{"p.rego"},
 					},
 				}},
 				"style": {"opa-fmt": config.Rule{
 					Level: "error",
-					Ignore: config.Ignore{
+					Ignore: &config.Ignore{
 						Files: []string{"p.rego"},
 					},
 				}},
@@ -305,5 +305,42 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
+	}
+}
+
+func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
+	t.Parallel()
+
+	// Note that the user configuration does not provide a level
+	userConfig := config.Config{Rules: map[string]config.Category{
+		"style": {"file-length": config.Rule{Extra: config.ExtraAttributes{"max-file-length": 1}}},
+	}}
+
+	input := test.InputPolicy("p.rego", `package p
+
+	x := 1
+	`)
+
+	linter := NewLinter().
+		WithUserConfig(userConfig).
+		WithAddedBundle(test.GetRegalBundle(t)).
+		WithInputModules(&input)
+
+	mergedConfig, err := linter.mergedConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Since no level was provided, "error" should be inherited from the provided configuration for the rule
+	if mergedConfig.Rules["style"]["file-length"].Level != "error" {
+		t.Errorf("expected level to be 'error', got %q", mergedConfig.Rules["style"]["file-length"].Level)
+	}
+
+	fileLength := mergedConfig.Rules["style"]["file-length"].Extra["max-file-length"]
+
+	// Ensure the extra attributes are still there. Note that the `any` value here has been made a float64
+	// rather than an int. Not sure why that is, but it doesn't really matter.
+	if fileLength != 1.0 {
+		t.Errorf("expected max-file-length to be 1, got %d", fileLength)
 	}
 }

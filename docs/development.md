@@ -19,6 +19,18 @@ for testing it. The code here will be a pretty simple template, but contains all
 rule. A good idea for learning more about what's needed is to take a look at some previous PRs adding new rules to
 Regal.
 
+### Guiding principles for new built-in rules
+
+- All rules should have succinct, descriptive names which are unique - even across categories
+- A rule that misses a few cases is better than no rule at all, but it's good to document any known edge cases 
+- False positives should however always be avoided
+- Add tests for as many cases as you can think of
+- Any new rule should have an example violation added in `e2e/testada/violations/most_violations.rego`
+- All the steps for building, testing and linting in this document should pass
+
+If you're struggling with any of the above points, or you're unsure of what to do, no worries! Just say so in your PR,
+or ask for advice in the `#regal` channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+
 ## Building
 
 Build the `regal` executable simply by running `go build`.

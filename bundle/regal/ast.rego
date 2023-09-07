@@ -335,6 +335,21 @@ all_functions := object.union(opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
 
+# METADATA
+# description: |
+#   true if rule head contains no identifier, but is a chained rule body immediately following the previous one:
+#   foo {
+#       input.bar
+#   } {	# <-- chained rule body
+#       input.baz
+#   }
+is_chained_rule_body(rule, lines) if {
+	row_text := lines[rule.head.location.row - 1]
+	col_text := substring(row_text, rule.head.location.col - 1, -1)
+
+	startswith(col_text, "{")
+}
+
 comments_decoded := [decoded |
 	some comment in input.comments
 	decoded := object.union(comment, {"Text": base64.decode(comment.Text)})

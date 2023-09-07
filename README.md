@@ -160,6 +160,7 @@ The following rules are currently available:
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                   | Avoid chaining rule bodies                                |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |
 | style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                               | Max file length exceeded                                  |

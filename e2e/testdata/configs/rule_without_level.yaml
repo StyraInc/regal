@@ -1,0 +1,4 @@
+rules:
+  style:
+    file-length:
+      max-file-length: 1

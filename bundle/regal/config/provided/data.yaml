@@ -51,6 +51,8 @@ rules:
       max-file-length: 500
     function-arg-return:
       level: error
+      except-functions:
+        - walk
     line-length:
       level: error
       max-line-length: 120

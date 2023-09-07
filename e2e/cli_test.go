@@ -5,6 +5,7 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -465,11 +466,19 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 }
 
 func binary() string {
+	location := "../regal"
+
 	if b := os.Getenv("REGAL_BIN"); b != "" {
-		return b
+		location = b
 	}
 
-	return "../regal"
+	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
+		log.Fatal("regal binary not found — make sure to run go build before running the e2e tests")
+	} else if err != nil {
+		log.Fatal(err)
+	}
+
+	return location
 }
 
 func regal(outs ...io.Writer) func(...string) error {

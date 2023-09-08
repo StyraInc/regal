@@ -34,7 +34,22 @@ has_email(user) if {
 Older Rego policies sometimes contain an unusual way to declare where the return value of a function call should be
 stored — the last argument of the function. True to it's Datalog roots, return values may be stored either using 
 assignment (i.e. `:=`) or by appending a variable name to the argument list of a function. While both forms are valid,
-using assignment `:=` consistently is preferred. 
+using assignment `:=` consistently is preferred.
+
+## Exceptions
+
+The `walk` built-in function is a special one, as it's the only one producing a *relation*. Therefore, it is okay to
+treat it as one even in style, and:
+
+```rego
+walk(object, [path, value])
+```
+
+is arguably more idiomatic than:
+
+```rego
+[path, value] := walk(object)
+```
 
 ## Configuration Options
 
@@ -47,7 +62,8 @@ rules:
       # one of "error", "warning", "ignore"
       level: error
       # list of function names to ignore
-      # note that `print` is always ignored as it does not return a value
+      # * by default, walk is excepted from this rule
+      # * note that `print` is always ignored as it does not return a value
       except-functions:
         - walk
 ```

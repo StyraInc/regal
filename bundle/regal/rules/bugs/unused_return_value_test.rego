@@ -32,3 +32,10 @@ test_success_return_value_assigned if {
 	r := rule.report with input as ast.with_future_keywords(`allow { x := indexof("s", "s") }`)
 	r == set()
 }
+
+test_success_function_arg_return_ignored if {
+	r := rule.report with input as ast.with_future_keywords(`allow {
+		indexof("s", "s", i)
+	}`)
+	r == set()
+}

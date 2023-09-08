@@ -12,7 +12,6 @@ import data.regal.result
 report contains violation if {
 	some rule in input.rules
 
-	# regal ignore:unused-return-value
 	walk(rule, [_, value])
 
 	value.type == "ref"

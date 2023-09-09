@@ -172,6 +172,7 @@ The following rules are currently available:
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
 | style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
+| testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)         | Dubious use of print and sprintf                          |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |
 | testing   | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)       | Metasyntactic variable name                               |
 | testing   | [print-or-trace-call](https://docs.styra.com/regal/rules/testing/print-or-trace-call)             | Call to print or trace function                           |

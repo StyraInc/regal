@@ -70,6 +70,8 @@ rules:
     use-assignment-operator:
       level: error
   testing:
+    dubious-print-sprintf:
+      level: error  
     file-missing-test-suffix:
       level: error
     identically-named-tests:

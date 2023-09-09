@@ -114,3 +114,8 @@ use_some_for_output_vars {
 
 # metasyntactic variable
 foo := "bar"
+
+# dubious print sprintf
+y {
+print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
+}

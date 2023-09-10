@@ -3,16 +3,20 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/styrainc/regal/internal/embeds"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 // The revive check will warn about using underscore in struct names, but it's seemingly not aware of keywords.
@@ -107,6 +111,11 @@ func scaffoldRule(params newRuleCommandParams) error {
 		params.output = mustGetWd()
 	}
 
+	// Call addToDataYAML for both custom and builtin rules
+	if err := addToDataYAML(params); err != nil {
+		return err
+	}
+
 	if params.type_ == "custom" {
 		return scaffoldCustomRule(params)
 	}
@@ -116,6 +125,64 @@ func scaffoldRule(params newRuleCommandParams) error {
 	}
 
 	return fmt.Errorf("unsupported type %v", params.type_)
+}
+
+func addToDataYAML(params newRuleCommandParams) error {
+	// Open data.yaml for reading and writing
+	dataFile, err := os.OpenFile("data.yaml", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer dataFile.Close()
+
+	// Decode the existing data.yaml content into a Config struct
+	var existingConfig config.Config
+	decoder := yaml.NewDecoder(dataFile)
+	if err := decoder.Decode(&existingConfig); err != nil {
+		if err != io.EOF {
+			return err
+		}
+	}
+
+	// Add the new entry to the Rules map within the Config struct
+	if existingConfig.Rules == nil {
+		existingConfig.Rules = make(map[string]config.Category)
+	}
+
+	// Create a new Rule value and set the Level field
+	vrule := config.Rule{
+		Level: "error",
+	}
+
+	// Assign the new Rule value to the Category map
+	existingConfig.Rules[params.category] = config.Category{
+		params.name: vrule, // Assign the rule to a key within the Category map
+	}
+
+	// Sort the map keys alphabetically
+	sortedKeys := make([]string, 0, len(existingConfig.Rules))
+	for key := range existingConfig.Rules {
+		sortedKeys = append(sortedKeys, key)
+	}
+	sort.Strings(sortedKeys)
+
+	// Create a new map with sorted keys
+	sortedRules := make(map[string]config.Category)
+	for _, key := range sortedKeys {
+		sortedRules[key] = existingConfig.Rules[key]
+	}
+
+	existingConfig.Rules = sortedRules
+
+	// Write the updated Config struct back to data.yaml
+	dataFile.Seek(0, 0)
+	dataFile.Truncate(0)
+	encoder := yaml.NewEncoder(dataFile)
+	if err := encoder.Encode(existingConfig); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {

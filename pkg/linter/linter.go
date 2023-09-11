@@ -211,7 +211,11 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	aggregate.Violations = append(aggregate.Violations, goReport.Violations...)
 
-	regoReport, err := l.lintWithRegoRules(ctx, input)
+	aggregates, err := l.collectAggregates(ctx, input)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
+	}
+	regoReport, err := l.lintWithRegoRules(ctx, input, aggregates)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
@@ -374,7 +378,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 	}
 }
 
-func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
+func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
 
 	roots := []string{"eval"}
@@ -421,11 +425,11 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	return regoArgs
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggregates []report.Aggregate) (report.Report, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs()
+	regoArgs := l.prepareRegoArgs(query)
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -453,7 +457,16 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 				return
 			}
-
+			if aggregates == nil {
+				// if the value is nil, inserting it "as is" will make it null-defined, and
+				// `count(input.aggregate) == 0` and `not input.aggregate` will not evaluate.
+				// For simplicity and to avoid error-prone code, ensure it's always defined as an array,
+				// so that authors can always check `count(input.aggregate)`
+				// not worrying about nil/null/undefined nuances.
+				enhancedAST["aggregate"] = []report.Aggregate{}
+			} else {
+				enhancedAST["aggregate"] = aggregates
+			}
 			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
@@ -470,6 +483,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 			mu.Lock()
 			aggregate.Violations = append(aggregate.Violations, result.Violations...)
+			aggregate.Aggregates = append(aggregate.Aggregates, result.Aggregates...)
 			mu.Unlock()
 		}(name)
 	}
@@ -680,4 +694,67 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 	}
 
 	return nil, fmt.Errorf("no regal bundle found")
+}
+
+func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]report.Aggregate, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	regoArgs := l.prepareRegoArgs(ast.MustParseBody("aggregates = data.regal.main.aggregate"))
+
+	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
+	if err != nil {
+		return []report.Aggregate{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	var result []report.Aggregate
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	errCh := make(chan error)
+	doneCh := make(chan bool)
+
+	for _, name := range input.FileNames {
+		wg.Add(1)
+
+		go func(name string) {
+			defer wg.Done()
+
+			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				errCh <- fmt.Errorf("failed preparing AST: %w", err)
+				return
+			}
+
+			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
+			if err != nil {
+				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+				return
+			}
+
+			ruleReport, err := resultSetToReport(resultSet)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+				return
+			}
+
+			mu.Lock()
+			result = append(result, ruleReport.Aggregates...)
+			mu.Unlock()
+		}(name)
+	}
+
+	go func() {
+		wg.Wait()
+		doneCh <- true
+	}()
+
+	select {
+	case <-ctx.Done():
+		return []report.Aggregate{}, fmt.Errorf("context cancelled: %w", ctx.Err())
+	case err := <-errCh:
+		return []report.Aggregate{}, fmt.Errorf("error encountered in rule evaluation %w", err)
+	case <-doneCh:
+		return result, nil
+	}
 }

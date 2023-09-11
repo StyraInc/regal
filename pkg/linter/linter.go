@@ -426,36 +426,20 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 }
 
 func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggregates []report.Aggregate) (report.Report, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	aggregate := report.Report{}
 
 	regoArgs := l.prepareRegoArgs(query)
-
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
-	aggregate := report.Report{}
-
-	var wg sync.WaitGroup
-
-	var mu sync.Mutex
-
-	errCh := make(chan error)
-	doneCh := make(chan bool)
-
-	for _, name := range input.FileNames {
-		wg.Add(1)
-
-		go func(name string) {
-			defer wg.Done()
-
+	err = l.evalAndCollect(ctx, input, linterQuery,
+		//input builder for each file eval
+		func(name string, content string, module *ast.Module) (map[string]any, error) {
 			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
-				errCh <- fmt.Errorf("failed preparing AST: %w", err)
-
-				return
+				return nil, err
 			}
 			if aggregates == nil {
 				// if the value is nil, inserting it "as is" will make it null-defined, and
@@ -467,40 +451,18 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggreg
 			} else {
 				enhancedAST["aggregate"] = aggregates
 			}
-			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
-			if err != nil {
-				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
-
-				return
-			}
-
-			result, err := resultSetToReport(resultSet)
-			if err != nil {
-				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
-
-				return
-			}
-
-			mu.Lock()
-			aggregate.Violations = append(aggregate.Violations, result.Violations...)
-			aggregate.Aggregates = append(aggregate.Aggregates, result.Aggregates...)
-			mu.Unlock()
-		}(name)
+			return enhancedAST, nil
+		},
+		// result collector
+		func(report report.Report) {
+			aggregate.Violations = append(aggregate.Violations, report.Violations...)
+			aggregate.Aggregates = append(aggregate.Aggregates, report.Aggregates...)
+		},
+	)
+	if err != nil {
+		return report.Report{}, err
 	}
-
-	go func() {
-		wg.Wait()
-		doneCh <- true
-	}()
-
-	select {
-	case <-ctx.Done():
-		return report.Report{}, fmt.Errorf("context cancelled: %w", ctx.Err())
-	case err := <-errCh:
-		return report.Report{}, fmt.Errorf("error encountered in rule evaluation %w", err)
-	case <-doneCh:
-		return aggregate, nil
-	}
+	return aggregate, nil
 }
 
 func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
@@ -697,20 +659,39 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 }
 
 func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]report.Aggregate, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	var result []report.Aggregate
 
 	regoArgs := l.prepareRegoArgs(ast.MustParseBody("aggregates = data.regal.main.aggregate"))
-
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		return []report.Aggregate{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
-	var result []report.Aggregate
+	err = l.evalAndCollect(ctx, input, linterQuery,
+		//input builder for each file eval
+		func(name string, content string, module *ast.Module) (map[string]any, error) {
+			return parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+		},
+		// result collector
+		func(report report.Report) {
+			result = append(result, report.Aggregates...)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// Process each file in input.Filenames in a goroutine, with the given Rego query and building the eval input using the
+// provided function. Collects the results via the provided collector. The collector is guaranteed to
+// run sequentially via a mutex.
+func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery, queryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error), reportCollector func(report report.Report)) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-
 	errCh := make(chan error)
 	doneCh := make(chan bool)
 
@@ -720,26 +701,25 @@ func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]rep
 		go func(name string) {
 			defer wg.Done()
 
-			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			queryInput, err := queryInputBuilder(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
-				errCh <- fmt.Errorf("failed preparing AST: %w", err)
+				errCh <- fmt.Errorf("failed building query input: %w", err)
 				return
 			}
-
-			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
+			resultSet, err := query.Eval(ctx, rego.EvalInput(queryInput))
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
 				return
 			}
 
-			ruleReport, err := resultSetToReport(resultSet)
+			result, err := resultSetToReport(resultSet)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
 				return
 			}
 
 			mu.Lock()
-			result = append(result, ruleReport.Aggregates...)
+			reportCollector(result)
 			mu.Unlock()
 		}(name)
 	}
@@ -751,10 +731,10 @@ func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]rep
 
 	select {
 	case <-ctx.Done():
-		return []report.Aggregate{}, fmt.Errorf("context cancelled: %w", ctx.Err())
+		return fmt.Errorf("context cancelled: %w", ctx.Err())
 	case err := <-errCh:
-		return []report.Aggregate{}, fmt.Errorf("error encountered in rule evaluation %w", err)
+		return fmt.Errorf("error encountered in rule evaluation %w", err)
 	case <-doneCh:
-		return result, nil
+		return nil
 	}
 }

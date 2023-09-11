@@ -1,6 +1,9 @@
 # Development
 
-If you'd like to contribute to Regal, here are some pointers to help get you started.
+If you'd like to contribute to Regal, here are some pointers to help get you started. 
+
+Before you start, the [architecture](./architecture) guide provides a useful overview of how Regal works, so you might
+want to read that before diving into the code!
 
 ## Contributing New Rules
 

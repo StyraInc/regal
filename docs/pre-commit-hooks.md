@@ -40,3 +40,8 @@ Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 
 - Downloads the latest `regal` binary from Github.
+
+## Community
+
+If you'd like to discuss the Regal pre-commit hooks, or just talk about Regal in general, please join us in the `#regal`
+channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!

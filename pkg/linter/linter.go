@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 
+	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
@@ -49,7 +50,11 @@ const regalUserConfig = "regal_user_config"
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
-	return Linter{}
+	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
+
+	return Linter{
+		ruleBundles: []*bundle.Bundle{&regalRules},
+	}
 }
 
 // WithInputPaths sets the inputPaths to lint. Note that these will be

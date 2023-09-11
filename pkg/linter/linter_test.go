@@ -9,7 +9,7 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
-func TestLintBasic(t *testing.T) {
+func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()
 
 	input := test.InputPolicy("p.rego", `package p
@@ -20,7 +20,7 @@ camelCase {
 }
 `)
 
-	linter := NewLinter().WithAddedBundle(test.GetRegalBundle(t)).WithEnableAll(true).WithInputModules(&input)
+	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
 
 	result, err := linter.Lint(context.Background())
 	if err != nil {

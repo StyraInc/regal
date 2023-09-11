@@ -1,7 +1,9 @@
 # Integration
 
-If you'd like to integrate Regal into a Go application, this guide contains some pointers.
+:warning: Using Regal from Go is currently experimental and subject to change. Please swing by
+[Slack](https://communityinviter.com/apps/styracommunity/signup) if you're keen to use Regal in a production system.
 
+If you'd like to integrate Regal into a Go application, this guide contains some pointers.
 
 ## Using Regal from Go
 

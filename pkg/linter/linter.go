@@ -215,6 +215,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
 	}
+
 	regoReport, err := l.lintWithRegoRules(ctx, input, aggregates)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
@@ -425,21 +426,28 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 	return regoArgs
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggregates []report.Aggregate) (report.Report, error) {
+func (l Linter) lintWithRegoRules(
+	ctx context.Context, input rules.Input, aggregates []report.Aggregate,
+) (report.Report, error) {
 	aggregate := report.Report{}
 
 	regoArgs := l.prepareRegoArgs(query)
-	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
-	if err != nil {
+
+	var linterQuery rego.PreparedEvalQuery
+
+	var err error
+
+	if linterQuery, err = rego.New(regoArgs...).PrepareForEval(ctx); err != nil {
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
 	err = l.evalAndCollect(ctx, input, linterQuery,
-		//input builder for each file eval
+
 		func(name string, content string, module *ast.Module) (map[string]any, error) {
 			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
-				return nil, err
+				return nil,
+					fmt.Errorf("could not enhance AST when buiding input during lint with Rego rules: %w", err)
 			}
 			if aggregates == nil {
 				// if the value is nil, inserting it "as is" will make it null-defined, and
@@ -451,6 +459,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggreg
 			} else {
 				enhancedAST["aggregate"] = aggregates
 			}
+
 			return enhancedAST, nil
 		},
 		// result collector
@@ -462,6 +471,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggreg
 	if err != nil {
 		return report.Report{}, err
 	}
+
 	return aggregate, nil
 }
 
@@ -662,37 +672,52 @@ func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]rep
 	var result []report.Aggregate
 
 	regoArgs := l.prepareRegoArgs(ast.MustParseBody("aggregates = data.regal.main.aggregate"))
-	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
-	if err != nil {
+
+	var linterQuery rego.PreparedEvalQuery
+
+	var err error
+
+	if linterQuery, err = rego.New(regoArgs...).PrepareForEval(ctx); err != nil {
 		return []report.Aggregate{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
-	err = l.evalAndCollect(ctx, input, linterQuery,
-		//input builder for each file eval
+	if err = l.evalAndCollect(ctx, input, linterQuery,
 		func(name string, content string, module *ast.Module) (map[string]any, error) {
-			return parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			result, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				return nil,
+					fmt.Errorf("could not enhance AST when buiding input during lint with Rego rules: %w", err)
+			}
+
+			return result, nil
 		},
 		// result collector
 		func(report report.Report) {
 			result = append(result, report.Aggregates...)
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
 // Process each file in input.Filenames in a goroutine, with the given Rego query and building the eval input using the
 // provided function. Collects the results via the provided collector. The collector is guaranteed to
 // run sequentially via a mutex.
-func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery, queryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error), reportCollector func(report report.Report)) error {
+func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery,
+	queryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error),
+	reportCollector func(report report.Report),
+) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	var wg sync.WaitGroup
+
 	var mu sync.Mutex
+
 	errCh := make(chan error)
+
 	doneCh := make(chan bool)
 
 	for _, name := range input.FileNames {
@@ -704,17 +729,21 @@ func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query reg
 			queryInput, err := queryInputBuilder(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
 				errCh <- fmt.Errorf("failed building query input: %w", err)
+
 				return
 			}
+
 			resultSet, err := query.Eval(ctx, rego.EvalInput(queryInput))
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+
 				return
 			}
 
 			result, err := resultSetToReport(resultSet)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+
 				return
 			}
 

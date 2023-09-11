@@ -80,7 +80,7 @@ or := 1
 		},
 	}
 
-	linter := NewLinter().WithUserConfig(userConfig).WithAddedBundle(test.GetRegalBundle(t)).WithInputModules(&input)
+	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
 
 	result, err := linter.Lint(context.Background())
 	if err != nil {
@@ -170,8 +170,7 @@ or := 1
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			linter := NewLinter().
-				WithAddedBundle(test.GetRegalBundle(t))
+			linter := NewLinter()
 
 			if tt.userConfig != nil {
 				linter = linter.WithUserConfig(*tt.userConfig)
@@ -215,7 +214,6 @@ func TestLintWithGoRule(t *testing.T) {
 	`)
 
 	linter := NewLinter().
-		WithAddedBundle(test.GetRegalBundle(t)).
 		WithEnableAll(true).
 		WithInputModules(&input)
 
@@ -246,7 +244,6 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 
 	linter := NewLinter().
 		WithUserConfig(userConfig).
-		WithAddedBundle(test.GetRegalBundle(t)).
 		WithInputModules(&input)
 
 	result, err := linter.Lint(context.Background())
@@ -265,7 +262,6 @@ func TestLintWithCustomRule(t *testing.T) {
 	input := test.InputPolicy("p.rego", "package p\n")
 
 	linter := NewLinter().
-		WithAddedBundle(test.GetRegalBundle(t)).
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
@@ -294,7 +290,6 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 
 	linter := NewLinter().
 		WithUserConfig(userConfig).
-		WithAddedBundle(test.GetRegalBundle(t)).
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
@@ -323,7 +318,6 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 
 	linter := NewLinter().
 		WithUserConfig(userConfig).
-		WithAddedBundle(test.GetRegalBundle(t)).
 		WithInputModules(&input)
 
 	mergedConfig, err := linter.mergedConfig()

@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -78,7 +77,7 @@ func InputFromPaths(paths []string) (Input, error) {
 func InputFromText(fileName, text string) (Input, error) {
 	mod, err := parse.Module(fileName, text)
 	if err != nil {
-		return Input{}, fmt.Errorf("failed to parse module: %w", err)
+		return Input{}, err //nolint:wrapcheck
 	}
 
 	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil

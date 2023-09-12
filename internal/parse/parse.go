@@ -41,12 +41,7 @@ func MustParseModule(policy string) *ast.Module {
 
 // Module works like ast.ParseModule but with the Regal parser options applied.
 func Module(filename, policy string) (*ast.Module, error) {
-	mod, err := ast.ParseModuleWithOpts(filename, policy, ParserOptions())
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse module: %w", err)
-	}
-
-	return mod, nil
+	return ast.ParseModuleWithOpts(filename, policy, ParserOptions()) // nolint:wrapcheck
 }
 
 // EnhanceAST TODO rename with https://github.com/StyraInc/regal/issues/86.

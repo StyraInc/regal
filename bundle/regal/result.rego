@@ -96,6 +96,8 @@ with_text(location) := {"location": object.union(location, {"text": input.regal.
 
 location(x) := with_text(x.location) if x.location
 
+location(x) := with_text(x[0].location) if is_array(x)
+
 # Special case for comments, where this typo sadly is hard to change at this point
 location(x) := with_text(x.Location) if x.Location
 

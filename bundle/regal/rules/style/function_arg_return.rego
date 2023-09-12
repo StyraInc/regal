@@ -14,11 +14,10 @@ cfg := config.for_rule("style", "function-arg-return")
 
 except_functions := array.concat(object.get(cfg, "except-functions", []), ["print"])
 
-part_to_string(ref) := ref.value if ref.type == "string"
-
-part_to_string(ref) := "$" if ref.type != "string"
-
 report contains violation if {
+	# note that traversing the ast.all_refs is not enough here,
+	# as we need the outer node to determine the arguments provided
+	# to the function call
 	walk(input.rules, [path, value])
 
 	regal.last(path) == "terms"
@@ -26,13 +25,7 @@ report contains violation if {
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 
-	fn_name_parts := array.concat([value[0].value[0].value], [s |
-		some i, part in value[0].value
-		i > 0
-		s := part_to_string(part)
-	])
-
-	fn_name := concat(".", fn_name_parts)
+	fn_name := ast.ref_to_string(value[0].value)
 
 	not contains(fn_name, "$")
 	not fn_name in except_functions

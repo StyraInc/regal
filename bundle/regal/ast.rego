@@ -269,6 +269,17 @@ all_refs := [value.value |
 	value.type == "ref"
 ]
 
+ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
+
+_ref_part_to_string(0, ref) := ref.value
+
+_ref_part_to_string(_, ref) := ref.value if ref.type == "string"
+
+_ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
+	ref.type != "string"
+	i > 0
+}
+
 # METADATA
 # description: provides a set of all built-in function calls made in input policy
 builtin_functions_called contains name if {

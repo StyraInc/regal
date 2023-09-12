@@ -16,6 +16,7 @@ report contains violation if {
 	not rule.head.assign
 	not rule.head.key
 	not ast.implicit_boolean_assignment(rule)
+	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule))
 }
@@ -45,6 +46,7 @@ report contains violation if {
 	rule.head.args
 	not rule.head.assign
 	not ast.implicit_boolean_assignment(rule)
+	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head.ref[0]))
 }

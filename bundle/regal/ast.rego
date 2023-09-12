@@ -73,7 +73,6 @@ import future.keywords.in
 ]))
 
 _find_nested_vars(obj) := [value |
-	# regal ignore:function-arg-return
 	walk(obj, [_, value])
 	value.type == "var"
 	indexof(value.value, "$") == -1
@@ -141,7 +140,6 @@ _find_every_vars(_, value) := var if {
 }
 
 _find_term_vars(term) := [value |
-	# regal ignore:function-arg-return
 	walk(term, [_, value])
 
 	value.type == "var"
@@ -191,7 +189,6 @@ _find_vars(_, value, _) := _find_object_comprehension_vars(value) if {
 }
 
 find_some_decl_vars(rule) := [var |
-	# regal ignore:function-arg-return
 	walk(rule, [path, value])
 
 	regal.last(path) == "symbols"
@@ -205,7 +202,6 @@ find_some_decl_vars(rule) := [var |
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some`, `every` and in comprehensions
 find_vars(node) := [var |
-	# regal ignore:function-arg-return
 	walk(node, [path, value])
 
 	some var in _find_vars(path, value, regal.last(path))
@@ -272,7 +268,6 @@ is_output_var(rule, ref, location) if {
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all calls to builtin functions
 find_builtin_calls(node) := [value |
-	# regal ignore:function-arg-return
 	walk(node, [path, value])
 
 	regal.last(path) == "terms"
@@ -339,6 +334,21 @@ implicit_boolean_assignment(rule) if {
 all_functions := object.union(opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
+
+# METADATA
+# description: |
+#   true if rule head contains no identifier, but is a chained rule body immediately following the previous one:
+#   foo {
+#       input.bar
+#   } {	# <-- chained rule body
+#       input.baz
+#   }
+is_chained_rule_body(rule, lines) if {
+	row_text := lines[rule.head.location.row - 1]
+	col_text := substring(row_text, rule.head.location.col - 1, -1)
+
+	startswith(col_text, "{")
+}
 
 comments_decoded := [decoded |
 	some comment in input.comments

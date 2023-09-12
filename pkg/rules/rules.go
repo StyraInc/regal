@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -71,6 +72,16 @@ func InputFromPaths(paths []string) (Input, error) {
 	}
 
 	return NewInput(fileContent, modules), nil
+}
+
+// InputFromText creates a new Input from raw Rego text.
+func InputFromText(fileName, text string) (Input, error) {
+	mod, err := parse.Module(fileName, text)
+	if err != nil {
+		return Input{}, fmt.Errorf("failed to parse module: %w", err)
+	}
+
+	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
 }
 
 func AllGoRules(conf config.Config) []Rule {

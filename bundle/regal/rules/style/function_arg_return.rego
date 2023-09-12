@@ -10,16 +10,11 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
+cfg := config.for_rule("style", "function-arg-return")
+
+except_functions := array.concat(object.get(cfg, "except-functions", []), ["print"])
+
 report contains violation if {
-	cfg := config.for_rule("style", "function-arg-return")
-
-	except_functions := array.concat(
-		object.get(cfg, "except-functions", []),
-		["print"],
-	)
-
-	# rule ignoring itself :)
-	# regal ignore:function-arg-return,unused-return-value
 	walk(input.rules, [path, value])
 
 	regal.last(path) == "terms"

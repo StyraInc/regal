@@ -22,7 +22,6 @@ re_pattern_functions := {
 }
 
 report contains violation if {
-	# regal ignore:unused-return-value,function-arg-return
 	walk(input.rules, [_, value])
 
 	value[0].type == "ref"

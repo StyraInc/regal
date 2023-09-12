@@ -17,7 +17,6 @@ report contains violation if {
 
 	node := filter_top_level_ref(rule)
 
-	# regal ignore:function-arg-return,unused-return-value
 	walk(node, [_, value])
 
 	value.type == "ref"

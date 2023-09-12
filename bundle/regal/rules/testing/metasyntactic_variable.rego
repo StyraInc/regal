@@ -32,6 +32,14 @@ report contains violation if {
 
 	lower(ref.value) in metasyntactic
 
+	# In case we have chained rule bodies — only flag the location where we have an actual name:
+	# foo {
+	#    input.x
+	# } {
+	#    input.y
+	# }
+	not ast.is_chained_rule_body(rule, input.regal.file.lines)
+
 	violation := result.fail(rego.metadata.chain(), result.location(location_of(ref, rule)))
 }
 

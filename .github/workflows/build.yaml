@@ -23,3 +23,4 @@ jobs:
       - run: chmod +x regal
       - run: ./regal lint --format github bundle
       - run: go test -tags e2e ./e2e
+      - run: go run main.go table --compare-to-readme bundle

@@ -18,6 +18,7 @@ import (
 
 	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/docs"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -84,7 +85,8 @@ func createTable(args []string, params tableCommandParams) error {
 	}
 
 	flattened := compiler.GetAnnotationSet().Flatten()
-	tableData := make([][]string, 0, len(flattened))
+
+	tableMap := map[string][][]string{}
 
 	traversedTitles := map[string]struct{}{}
 
@@ -114,26 +116,38 @@ func createTable(args []string, params tableCommandParams) error {
 
 		traversedTitles[title] = struct{}{}
 
-		tableData = append(tableData, []string{
+		tableMap[category] = append(tableMap[category], []string{
 			category,
 			"[" + title + "](" + docs.CreateDocsURL(category, title) + ")",
 			annotations.Description,
 		})
 	}
 
-	// We currently don't include the severity level sourced from the provided config in the
-	// table, as all rules default to error at this point. We might want to change that later.
 	for _, rule := range rules.AllGoRules(config.Config{}) {
-		tableData = append(tableData, []string{
+		tableMap[rule.Category()] = append(tableMap[rule.Category()], []string{
 			rule.Category(),
 			"[" + rule.Name() + "](" + rule.Documentation() + ")",
 			rule.Description(),
 		})
 	}
 
-	sort.Slice(tableData, func(i, j int) bool {
-		return tableData[i][0] < tableData[j][0]
-	})
+	// Sort the list of rules in each category by name
+	for category := range tableMap {
+		sort.Slice(tableMap[category], func(i, j int) bool {
+			return tableMap[category][i][1] < tableMap[category][j][1]
+		})
+	}
+
+	// And sort the categories themselves
+	categories := util.Keys(tableMap)
+
+	sort.Strings(categories)
+
+	tableData := make([][]string, 0, len(flattened))
+
+	for _, category := range categories {
+		tableData = append(tableData, tableMap[category]...)
+	}
 
 	return writeTable(tableData, params)
 }

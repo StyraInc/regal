@@ -23,7 +23,7 @@ test_rule_named_foo_not_allowed {
 		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "foo := true"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/{{.NameOriginal}}", "{{.Category}}")"
+			"ref": config.docs.resolve_url("$baseUrl/$category/{{.NameOriginal}}", "{{.Category}}"),
 		}],
 		"title": "{{.NameOriginal}}"
 	}}

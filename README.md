@@ -160,25 +160,26 @@ The following rules are currently available:
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)         | Redundant import of data                                  |
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)   | Avoid get_ and list_ prefix for rules and functions       |
-| style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
+| style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                   | Avoid chaining rule bodies                                |
+| style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                 | Reference to input, data or rule ref in function body     |
 | style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                               | Max file length exceeded                                  |
 | style     | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)               | Function argument used for return value                   |
 | style     | [line-length](https://docs.styra.com/regal/rules/style/line-length)                               | Line too long                                             |
 | style     | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)           | Comment should start with whitespace                      |
+| style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)     | Prefer `some .. in` for iteration                         |
-| style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                   | Detached metadata annotation                              |
+| style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
-| style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)         | Dubious use of print and sprintf                          |
+| testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix    |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |
 | testing   | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)       | Metasyntactic variable name                               |
 | testing   | [print-or-trace-call](https://docs.styra.com/regal/rules/testing/print-or-trace-call)             | Call to print or trace function                           |
 | testing   | [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package) | Test outside of test package                              |
 | testing   | [todo-test](https://docs.styra.com/regal/rules/testing/todo-test)                                 | TODO test encountered                                     |
-| testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix    |
 
 <!-- RULES_TABLE_END -->
 
@@ -328,7 +329,8 @@ are:
 ### Documentation
 
 - [Custom Rules](/docs/custom-rules.md) describes how to develop your own rules
-- [Development](/docs/development.md) for info about how to hack on Regal itself
+- [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
+- [Development](/docs/development.md) contains information about how to hack on Regal itself
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
 - [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks

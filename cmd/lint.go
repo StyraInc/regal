@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
@@ -174,8 +173,6 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 	}
 
-	regalRules := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
-
 	var regalDir *os.File
 
 	var customRulesDir string
@@ -206,7 +203,6 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	}
 
 	regal := linter.NewLinter().
-		WithAddedBundle(regalRules).
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).

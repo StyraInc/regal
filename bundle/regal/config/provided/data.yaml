@@ -42,6 +42,8 @@ rules:
   style:
     avoid-get-and-list-prefix:
       level: error
+    chained-rule-body:
+      level: error
     detached-metadata:
       level: error
     external-reference:
@@ -51,6 +53,8 @@ rules:
       max-file-length: 500
     function-arg-return:
       level: error
+      except-functions:
+        - walk
     line-length:
       level: error
       max-line-length: 120

@@ -10,6 +10,9 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
+	# skip expensive walk operation if no print calls are registered
+	"print" in ast.builtin_functions_called
+
 	walk(input.rules, [_, value])
 
 	value[0].type == "ref"

@@ -173,6 +173,7 @@ The following rules are currently available:
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
+| testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)         | Dubious use of print and sprintf                          |
 | testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix    |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |
 | testing   | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)       | Metasyntactic variable name                               |

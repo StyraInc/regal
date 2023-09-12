@@ -120,3 +120,8 @@ chained_rule_body {
 } {
 	input.y
 }
+
+# dubious print sprintf
+y {
+	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
+}

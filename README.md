@@ -328,9 +328,10 @@ are:
 
 ### Documentation
 
-- [Custom Rules](/docs/custom-rules.md) describes how to develop your own rules
+- [Custom Rules](/docs/custom-rules.md) describes how to develop your own linter rules
 - [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
 - [Development](/docs/development.md) contains information about how to hack on Regal itself
+- [Integration](/docs/integration.md) describes how to integrate Regal in your Go application
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
 - [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks

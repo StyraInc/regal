@@ -4,6 +4,7 @@ package cmd
 import (
 	"bytes"
 	"errors"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -24,12 +25,13 @@ import (
 )
 
 type tableCommandParams struct {
-	writeToReadme bool
+	compareToReadme bool
+	writeToReadme   bool
 }
 
 func init() {
 	params := tableCommandParams{}
-	parseCommand := &cobra.Command{
+	tableCommand := &cobra.Command{
 		Hidden: true,
 		Use:    "table <path> [path [...]]",
 		Long:   "Create a markdown table from rule annotations found in provided modules",
@@ -43,15 +45,28 @@ func init() {
 		},
 
 		Run: func(_ *cobra.Command, args []string) {
-			if err := createTable(args, params); err != nil {
-				log.SetOutput(os.Stderr)
-				log.Println(err)
-				os.Exit(1)
+			buf := must(createTable(args))
+
+			var err error
+			switch {
+			case params.writeToReadme:
+				err = writeToREADME(buf)
+			case params.compareToReadme:
+				err = compareToREADME(buf)
+			default:
+				_, err = os.Stdout.Write(must(io.ReadAll(buf)))
+			}
+
+			if err != nil {
+				log.Fatal(err)
 			}
 		},
 	}
-	parseCommand.Flags().BoolVar(&params.writeToReadme, "write-to-readme", false, "Write table to README.md")
-	RootCommand.AddCommand(parseCommand)
+	tableCommand.Flags().BoolVar(&params.compareToReadme, "compare-to-readme", false,
+		"Compare generated table to that in README.md, and exit with non-zero status if they differ")
+	tableCommand.Flags().BoolVar(&params.writeToReadme, "write-to-readme", false,
+		"Write table to README.md")
+	RootCommand.AddCommand(tableCommand)
 }
 
 func unquotedPath(path ast.Ref) []string {
@@ -63,12 +78,12 @@ func unquotedPath(path ast.Ref) []string {
 	return ret
 }
 
-func createTable(args []string, params tableCommandParams) error {
+func createTable(args []string) (io.Reader, error) {
 	result, err := loader.NewFileLoader().Filtered(args, func(abspath string, info fs.FileInfo, depth int) bool {
 		return false
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	modules := map[string]*ast.Module{}
@@ -81,7 +96,7 @@ func createTable(args []string, params tableCommandParams) error {
 	compiler.Compile(modules)
 
 	if compiler.Failed() {
-		return compiler.Errors
+		return nil, compiler.Errors
 	}
 
 	flattened := compiler.GetAnnotationSet().Flatten()
@@ -149,10 +164,10 @@ func createTable(args []string, params tableCommandParams) error {
 		tableData = append(tableData, tableMap[category]...)
 	}
 
-	return writeTable(tableData, params)
+	return renderTable(tableData), nil
 }
 
-func writeTable(tableData [][]string, params tableCommandParams) error {
+func renderTable(tableData [][]string) io.Reader {
 	var buf bytes.Buffer
 
 	table := tablewriter.NewWriter(&buf)
@@ -164,21 +179,46 @@ func writeTable(tableData [][]string, params tableCommandParams) error {
 	table.AppendBulk(tableData)
 	table.Render()
 
-	if !params.writeToReadme {
-		_, err := os.Stdout.Write(buf.Bytes())
+	return &buf
+}
 
-		return err
-	}
+func renderREADME(r io.Reader) string {
+	file := string(must(os.ReadFile("README.md")))
 
-	file, err := os.ReadFile("README.md")
-	if err != nil {
-		return err
-	}
+	first := strings.Split(file, "<!-- RULES_TABLE_START -->")[0]
+	last := strings.Split(file, "<!-- RULES_TABLE_END -->")[1]
 
-	first := strings.Split(string(file), "<!-- RULES_TABLE_START -->")[0]
-	last := strings.Split(string(file), "<!-- RULES_TABLE_END -->")[1]
+	table := must(io.ReadAll(r))
 
-	newReadme := first + "<!-- RULES_TABLE_START -->\n\n" + buf.String() + "\n<!-- RULES_TABLE_END -->" + last
+	newReadme := first + "<!-- RULES_TABLE_START -->\n\n" + string(table) + "\n<!-- RULES_TABLE_END -->" + last
+
+	return newReadme
+}
+
+func writeToREADME(r io.Reader) error {
+	newReadme := renderREADME(r)
 
 	return os.WriteFile("README.md", []byte(newReadme), 0o600)
+}
+
+func compareToREADME(r io.Reader) error {
+	oldReadme := must(os.ReadFile("README.md"))
+	newReadme := renderREADME(r)
+
+	if string(oldReadme) != newReadme {
+		return errors.New(
+			"table in README.md is out of date. Run `go run main.go table --write-to-readme` to have it updated, " +
+				"then include the change in your commit",
+		)
+	}
+
+	return nil
+}
+
+func must[V any](value V, err error) V {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return value
 }

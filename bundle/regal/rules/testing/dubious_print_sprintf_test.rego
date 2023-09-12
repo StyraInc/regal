@@ -9,19 +9,18 @@ import data.regal.config
 import data.regal.rules.testing["dubious-print-sprintf"] as rule
 
 test_fail_print_sprintf if {
-	test_policy := ast.policy(`
-y {
-print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
-}`)
+	module := ast.policy(`y {
+		print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
+	}`)
 
-	r := rule.report with input as test_policy
+	r := rule.report with input as module
 	r == {{
 		"category": "testing",
-		"description": "dubious use of print and sprintf",
+		"description": "Dubious use of print and sprintf",
 		"level": "error",
 		"location": {
-			"col": 7, "file": "policy.rego", "row": 5,
-			"text": "print(sprintf(\"name is: %s domain is: %s\", [input.name, input.domain]))",
+			"col": 9, "file": "policy.rego", "row": 4,
+			"text": "\t\tprint(sprintf(\"name is: %s domain is: %s\", [input.name, input.domain]))",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -32,20 +31,19 @@ print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 }
 
 test_fail_bodies_print_sprintf if {
-	test_policy := ast.policy(`
-y {
-comprehension := [x |
-x := input[_]
-print(sprintf("x is: %s", [x]))
-]
-}`)
+	module := ast.policy(`y {
+		comprehension := [x |
+			x := input[_]
+			print(sprintf("x is: %s", [x]))
+		]
+	}`)
 
-	r := rule.report with input as test_policy
+	r := rule.report with input as module
 	r == {{
 		"category": "testing",
-		"description": "dubious use of print and sprintf",
+		"description": "Dubious use of print and sprintf",
 		"level": "error",
-		"location": {"col": 7, "file": "policy.rego", "row": 7, "text": "print(sprintf(\"x is: %s\", [x]))"},
+		"location": {"col": 10, "file": "policy.rego", "row": 6, "text": "\t\t\tprint(sprintf(\"x is: %s\", [x]))"},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/dubious-print-sprintf", "testing"),

@@ -1,5 +1,5 @@
 # METADATA
-# description: dubious use of print and sprintf
+# description: Dubious use of print and sprintf
 package regal.rules.testing["dubious-print-sprintf"]
 
 import future.keywords.contains

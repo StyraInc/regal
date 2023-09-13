@@ -218,7 +218,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	var aggregates []report.Aggregate
 
 	if len(input.Modules) > 1 {
-		// No need to collect agregates if there's only one file
+		// No need to collect aggregates if there's only one file
 		aggregates, err = l.collectAggregates(ctx, input)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)

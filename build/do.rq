@@ -1,0 +1,57 @@
+#!/usr/bin/env rq
+# rq: query data.script.main
+# rq: output null
+import future.keywords
+
+what := rq.args()[0]
+main := do[what] { true }
+else := job[what]
+
+do.pull_request {
+	some x in ["test", "lint", "e2e", "check_readme"]
+	github("::group::", x)
+	job[x]
+	github("::endgroup::", x)
+}
+
+job.pr {
+	print("thanks for contributing")
+}
+
+job.test {
+	run("go test ./...")
+}
+
+job.lint {
+	build
+	run("./regal lint --format github bundle")
+}
+
+job.e2e {
+	build
+	run("go test -tags e2e ./e2e")
+}
+
+job.check_readme {
+	build
+	run("./regal table --compare-to-readme bundle")
+}
+
+build {
+	run("go build")
+}
+
+run(cmd) {
+	print(cmd)
+	args := split(cmd, " ")
+	out := rq.run(args, {})
+	{ rq.error(sprintf("stdout: %s; stderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
+	print(out.stdout)
+}
+
+github(what, j) {
+	is_github
+	print(what, j)
+} else := true
+
+is_github if rq.env().GITHUB_ACTION

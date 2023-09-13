@@ -1,0 +1,48 @@
+#!/usr/bin/env rq
+# rq: query data.script.main
+# rq: output null
+
+what := rq.args()[0]
+main := do[what] { true }
+else := job[what]
+
+do.pull_request {
+	job.test
+	job.lint
+	job.e2e
+	job.check_readme
+}
+
+job.pr {
+	print("thanks for contributing")
+}
+
+job.test {
+	run("go test ./...")
+}
+
+job.lint {
+	build
+	run("./regal lint --format github bundle")
+}
+
+job.e2e {
+	build
+	run("go test -tags e2e ./e2e")
+}
+
+job.check_readme {
+	build
+	run("./regal table --compare-to-readme bundle")
+}
+
+build {
+	run("go build")
+}
+
+run(cmd) {
+	print(cmd)
+	args := split(cmd, " ")
+	out := rq.run(args, {})
+	{ rq.error(sprintf("stdout: %s; stderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
+}

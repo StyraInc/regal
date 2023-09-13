@@ -46,6 +46,10 @@ type Linter struct {
 	ignoreFiles      []string
 }
 
+type QueryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error)
+
+type ReportCollector func(report report.Report)
+
 const regalUserConfig = "regal_user_config"
 
 // NewLinter creates a new Regal linter.
@@ -160,7 +164,7 @@ var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:go
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
-	aggregate := report.Report{}
+	aggregateReport := report.Report{}
 
 	if len(l.inputPaths) == 0 && l.inputModules == nil {
 		return report.Report{}, errors.New("nothing provided to lint")
@@ -209,11 +213,16 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, goReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, goReport.Violations...)
 
-	aggregates, err := l.collectAggregates(ctx, input)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
+	var aggregates []report.Aggregate
+
+	if len(input.Modules) > 1 {
+		// No need to collect agregates if there's only one file
+		aggregates, err = l.collectAggregates(ctx, input)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
+		}
 	}
 
 	regoReport, err := l.lintWithRegoRules(ctx, input, aggregates)
@@ -221,16 +230,16 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, regoReport.Violations...)
 
-	aggregate.Summary = report.Summary{
+	aggregateReport.Summary = report.Summary{
 		FilesScanned:  len(input.FileNames),
-		FilesFailed:   len(aggregate.ViolationsFileCount()),
+		FilesFailed:   len(aggregateReport.ViolationsFileCount()),
 		FilesSkipped:  0,
-		NumViolations: len(aggregate.Violations),
+		NumViolations: len(aggregateReport.Violations),
 	}
 
-	return aggregate, nil
+	return aggregateReport, nil
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
@@ -447,7 +456,7 @@ func (l Linter) lintWithRegoRules(
 			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
 				return nil,
-					fmt.Errorf("could not enhance AST when buiding input during lint with Rego rules: %w", err)
+					fmt.Errorf("could not enhance AST when building input during lint with Rego rules: %w", err)
 			}
 			if aggregates == nil {
 				// if the value is nil, inserting it "as is" will make it null-defined, and
@@ -706,8 +715,8 @@ func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]rep
 // provided function. Collects the results via the provided collector. The collector is guaranteed to
 // run sequentially via a mutex.
 func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery,
-	queryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error),
-	reportCollector func(report report.Report),
+	queryInputBuilder QueryInputBuilder,
+	reportCollector ReportCollector,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

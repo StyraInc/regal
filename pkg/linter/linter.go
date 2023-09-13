@@ -15,11 +15,13 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
+	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
@@ -44,6 +46,7 @@ type Linter struct {
 	enableAll        bool
 	enableCategory   []string
 	ignoreFiles      []string
+	metrics          metrics.Metrics
 }
 
 const regalUserConfig = "regal_user_config"
@@ -156,10 +159,19 @@ func (l Linter) WithIgnore(ignore []string) Linter {
 	return l
 }
 
+// WithMetrics enables metrics collection.
+func (l Linter) WithMetrics(m metrics.Metrics) Linter {
+	l.metrics = m
+
+	return l
+}
+
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
+	l.startTimer(regalmetrics.RegalLint)
+
 	aggregate := report.Report{}
 
 	if len(l.inputPaths) == 0 && l.inputModules == nil {
@@ -179,19 +191,28 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		ignore = l.ignoreFiles
 	}
 
+	l.startTimer(regalmetrics.RegalFilterIgnoredFiles)
+
 	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
+
+	l.stopTimer(regalmetrics.RegalFilterIgnoredFiles)
+	l.startTimer(regalmetrics.RegalInputParse)
 
 	inputFromPaths, err := rules.InputFromPaths(filtered)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
+	l.stopTimer(regalmetrics.RegalInputParse)
+
 	input := inputFromPaths
 
 	if l.inputModules != nil {
+		l.startTimer(regalmetrics.RegalFilterIgnoredModules)
+
 		filteredPaths, err := config.FilterIgnoredPaths(l.inputModules.FileNames, ignore, false)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)
@@ -202,6 +223,8 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			input.Modules[filename] = l.inputModules.Modules[filename]
 			input.FileContent[filename] = l.inputModules.FileContent[filename]
 		}
+
+		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
 	}
 
 	goReport, err := l.lintWithGoRules(ctx, input)
@@ -225,10 +248,19 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		NumViolations: len(aggregate.Violations),
 	}
 
+	if l.metrics != nil {
+		l.metrics.Timer(regalmetrics.RegalLint).Stop()
+
+		aggregate.Metrics = l.metrics.All()
+	}
+
 	return aggregate, nil
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	l.startTimer(regalmetrics.RegalLintGo)
+	defer l.stopTimer(regalmetrics.RegalLintGo)
+
 	goRules, err := l.enabledGoRules()
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
@@ -385,6 +417,7 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	}
 
 	regoArgs = append(regoArgs,
+		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
@@ -422,6 +455,9 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 }
 
 func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+	l.startTimer(regalmetrics.RegalLintRego)
+	defer l.stopTimer(regalmetrics.RegalLintRego)
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -454,7 +490,15 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				return
 			}
 
-			resultSet, err := linterQuery.Eval(ctx, rego.EvalInput(enhancedAST))
+			evalArgs := []rego.EvalOption{
+				rego.EvalInput(enhancedAST),
+			}
+
+			if l.metrics != nil {
+				evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
+			}
+
+			resultSet, err := linterQuery.Eval(ctx, evalArgs...)
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
 
@@ -680,4 +724,16 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 	}
 
 	return nil, fmt.Errorf("no regal bundle found")
+}
+
+func (l Linter) startTimer(name string) {
+	if l.metrics != nil {
+		l.metrics.Timer(name).Start()
+	}
+}
+
+func (l Linter) stopTimer(name string) {
+	if l.metrics != nil {
+		l.metrics.Timer(name).Stop()
+	}
 }

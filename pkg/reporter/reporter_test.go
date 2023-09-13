@@ -2,6 +2,7 @@ package reporter
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/styrainc/regal/pkg/report"
@@ -65,7 +66,7 @@ func TestPrettyReporterPublish(t *testing.T) {
 
 	pr := NewPrettyReporter(&buf)
 
-	err := pr.Publish(rep)
+	err := pr.Publish(context.Background(), rep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +85,7 @@ func TestPrettyReporterPublishNoViolations(t *testing.T) {
 
 	pr := NewPrettyReporter(&buf)
 
-	err := pr.Publish(report.Report{})
+	err := pr.Publish(context.Background(), report.Report{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +102,7 @@ func TestCompactReporterPublish(t *testing.T) {
 
 	cr := NewCompactReporter(&buf)
 
-	err := cr.Publish(rep)
+	err := cr.Publish(context.Background(), rep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +123,7 @@ func TestCompactReporterPublishNoViolations(t *testing.T) {
 
 	cr := NewCompactReporter(&buf)
 
-	err := cr.Publish(report.Report{})
+	err := cr.Publish(context.Background(), report.Report{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +140,7 @@ func TestJSONReporterPublish(t *testing.T) {
 
 	jr := NewJSONReporter(&buf)
 
-	err := jr.Publish(rep)
+	err := jr.Publish(context.Background(), rep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +204,7 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 
 	jr := NewJSONReporter(&buf)
 
-	err := jr.Publish(report.Report{})
+	err := jr.Publish(context.Background(), report.Report{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +232,7 @@ func TestGitHubReporterPublish(t *testing.T) {
 
 	cr := NewGitHubReporter(&buf)
 
-	err := cr.Publish(rep)
+	err := cr.Publish(context.Background(), rep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -255,7 +256,7 @@ func TestGitHubReporterPublishNoViolations(t *testing.T) {
 
 	cr := NewGitHubReporter(&buf)
 
-	err := cr.Publish(report.Report{})
+	err := cr.Publish(context.Background(), report.Report{})
 	if err != nil {
 		t.Fatal(err)
 	}

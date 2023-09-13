@@ -1,1 +1,2 @@
 *.rego.tpl linguist-language=rego
+*.rq linguist-language=rego

@@ -5,6 +5,21 @@ If you'd like to contribute to Regal, here are some pointers to help get you sta
 Before you start, the [architecture](./architecture) guide provides a useful overview of how Regal works, so you might
 want to read that before diving into the code!
 
+## Prerequisites
+
+The following tools are required to build, test and lint Regal:
+
+- The latest version of [Go](https://go.dev/doc/install)
+- The [golangci-lint](https://golangci-lint.run/usage/install/#local-installation) linter
+- The [gci](https://github.com/daixiang0/gci) import formatter
+- The [gofumpt](https://github.com/mvdan/gofumpt) formatter
+
+Recommended, but not required:
+
+- The [rq](https://git.sr.ht/~charles/rq) tool. This is used for automating and simplifying many of the tasks outlined
+  in this document, and is (ab)used as a Rego-based replacement for Make in this project. Check out the
+  [do.rq](../build/do.rq) file to see what that looks like, and for documentation on the available tasks.
+
 ## Contributing New Rules
 
 If you'd like to contribute a new built-in rule, the simplest way to get started is to run the `regal new rule` command.
@@ -33,7 +48,7 @@ or ask for advice in the `#regal` channel in the Styra Community [Slack](https:/
 
 ## Building
 
-Build the `regal` executable simply by running `go build`.
+Build the `regal` executable simply by running `go build`, or with `rq` installed, by running `build/do.rq build`.
 
 Occasionally you may want to run the `fetch_builtin_data.sh` script from inside the `build` directory. This will
 populate the `data` directory with any data necessary for linting (such as the built-in function metadata from OPA).
@@ -52,6 +67,12 @@ To run all tests — Go and Rego:
 go test ./...
 ```
 
+Or using `rq`:
+
+```shell
+build/do.rq test
+```
+
 ### E2E tests
 
 End-to-End (E2E) tests assert the behaviour of the `regal` binary called with certain configs, and test files.
@@ -60,6 +81,12 @@ locally via
 
 ```shell
 go test -tags e2e ./e2e
+```
+
+Alternatively, using `rq`:
+
+```shell
+build/do.rq e2e
 ```
 
 ## Linting
@@ -82,6 +109,18 @@ gci write \
   -s blank \
   -s dot .
 ```
+
+## Preparing a pull request
+
+Using `rq`, run all the required steps with:
+
+```shell
+build/do.rq pr
+```
+
+This will run all the formatters, linters and tests. Make sure all of them pass before submitting your PR. If there's
+anything you can't figure out, don't hesitate to ask for help in the `#regal` Slack channel (see `Community` below).
+
 ## Documentation
 
 The table in the [Rules](../README.md#rules) section of the README is generated with the following command:

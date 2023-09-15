@@ -56,6 +56,7 @@ do.pull_request {
 # title: tasks
 # description: Prints the name of all available tasks
 job.tasks {
+	build(false)
 	some task in tasks
 	print("-", sprintf("%-20s", [task[0]]), "\t", strings.replace_n({"\n": ""}, task[1]))
 }
@@ -92,7 +93,7 @@ job.test {
 # title: lint
 # description: Run `regal lint` on the Regal bundle
 job.lint {
-	build
+	build(true)
 	lint_ci
 }
 
@@ -100,7 +101,7 @@ job.lint {
 # title: e2e
 # description: Run the Regal end-to-end tests
 job.e2e {
-	build
+	build(true)
 	e2e
 }
 
@@ -108,7 +109,7 @@ job.e2e {
 # title: check_readme
 # description: Verify that the rules table in the README is up-to-date
 job.check_readme {
-	build
+	build(true)
 	check_readme
 }
 
@@ -127,9 +128,17 @@ job.fetch_metadata {
 	rq.write(out.stdout, spec)
 }
 
-build {
+build(true) {
 	run("go build")
 }
+build(false) {
+	not binary_present
+	run("go build")
+} else := true
+
+# any binary is good enough when calling `build(false)`, it doesn't need to be
+# built freshly
+binary_present := rq.run(["ls", "./regal"], {}).exitcode == 0
 
 test {
 	run("go test ./...")

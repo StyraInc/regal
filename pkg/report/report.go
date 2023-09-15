@@ -45,7 +45,7 @@ type Report struct {
 	Violations []Violation `json:"violations"`
 	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
 	// to avoid surfacing a null/empty field.
-	Aggregates []Aggregate `json:"-"`
+	Aggregates []Aggregate `json:"aggregates,omitempty"`
 	Summary    Summary     `json:"summary"`
 }
 

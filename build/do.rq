@@ -138,7 +138,11 @@ build(false) {
 
 # any binary is good enough when calling `build(false)`, it doesn't need to be
 # built freshly
-binary_present := rq.run(["ls", "./regal"], {}).exitcode == 0
+binary_present {
+	some f in rq.tree(".", {"maxdepth": 1})
+	f.base == "regal"
+	f.is_dir == false
+}
 
 test {
 	run("go test ./...")

@@ -1,1 +1,2 @@
-*.rego.tpl linguist-language=rego
+*.rego.tpl linguist-language=Open-Policy-Agent
+*.rq linguist-language=Open-Policy-Agent

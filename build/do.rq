@@ -1,0 +1,208 @@
+#!/usr/bin/env rq
+# rq: query data.script.main
+# rq: output /dev/null
+
+# METADATA
+# title: Regal build tasks
+# description: |
+#   This is the `rq` build tasks used by the Regal project. Note that `rq` is possibly not
+#   intended as a build tool, but if we can lint Rego with Rego, surely we can build Regal
+#   with Rego too?
+#
+#   To run one or more tasks, make sure to first have `rq` installed
+#   (https://git.sr.ht/~charles/rq), then from the project root directory, run:
+#
+#   build/do.rq <tasks>
+#
+#   For example, to run the `test` task, run:
+#
+#   build/do.rq test
+#
+# authors:
+#   - https://github.com/StyraInc/regal/graphs/contributors
+# related_resources:
+#   - description: rq
+#     ref: https://git.sr.ht/~charles/rq
+package script
+
+import future.keywords
+
+main contains do[what]  if some what in rq.args()
+main contains job[what] if some what in rq.args()
+main contains job.tasks if {
+	count(rq.args()) == 0
+	print("No task(s) provided. Available tasks:")
+	print()
+}
+
+main contains null if {
+	count(rq.args()) == 1
+	rq.args()[0] == "--help"
+
+	print(rego.metadata.chain()[1].annotations.description)
+}
+
+# METADATA
+# title: pull_request
+# description: Run all task to verify a pull request
+do.pull_request {
+	some x in ["test", "lint", "e2e", "check_readme"]
+	github("::group::", x)
+	job[x]
+	github("::endgroup::", x)
+}
+
+# METADATA
+# title: tasks
+# description: Prints the name of all available tasks
+job.tasks {
+	some task in tasks
+	print("-", sprintf("%-20s", [task[0]]), "\t", strings.replace_n({"\n": ""}, task[1]))
+}
+
+# METADATA
+# title: pr
+# description: |
+#   Run all recommended tasks before submitting a PR
+# related_resources:
+#   - https://github.com/daixiang0/gci
+#   - https://github.com/mvdan/gofumpt
+#   - https://github.com/golangci/golangci-lint
+#   - https://github.com/open-policy-agent/opa
+job.pr {
+	# format
+	fmt_all
+	write_readme
+
+	# verify
+	golangcilint
+	lint
+	test
+	e2e
+}
+
+# METADATA
+# title: test
+# description: Run all Regal unit tests (Go and Rego)
+job.test {
+	test
+}
+
+# METADATA
+# title: lint
+# description: Run `regal lint` on the Regal bundle
+job.lint {
+	build
+	lint_ci
+}
+
+# METADATA
+# title: e2e
+# description: Run the Regal end-to-end tests
+job.e2e {
+	build
+	e2e
+}
+
+# METADATA
+# title: check_readme
+# description: Verify that the rules table in the README is up-to-date
+job.check_readme {
+	build
+	check_readme
+}
+
+# METADATA
+# title: fetch_metadata
+# description: Fetch the built-in metadata definitions and store them in the bundle
+job.fetch_metadata {
+	out := rq.run([
+		"opa", "eval",
+		"--format", "pretty",
+		"--data", sprintf("%s/%s", [rq.dir(rq.scriptpath()), "builtin_metadata.rego"]),
+		"data.build.metadata.builtin_metadata"
+	], {})
+	spec := sprintf("raw:%s/../bundle/regal/opa/builtins/data.json", [rq.dir(rq.scriptpath())])
+
+	rq.write(out.stdout, spec)
+}
+
+build {
+	run("go build")
+}
+
+test {
+	run("go test ./...")
+}
+
+e2e {
+	run("go test -tags e2e ./e2e")
+}
+
+lint {
+	run("./regal lint --format pretty bundle")
+}
+
+lint_ci {
+	run("./regal lint --format github bundle")
+}
+
+check_readme {
+	run("./regal table --compare-to-readme bundle")
+}
+
+write_readme {
+	run("./regal table --write-to-readme bundle")
+}
+
+fmt_all {
+	gci
+	gofumpt
+	opafmt
+}
+
+gci {
+	run(concat(" ", [
+		"gci write",
+		"-s standard",
+		"-s default",
+		"-s prefix(github.com/open-policy-agent/opa)",
+		"-s prefix(github.com/styrainc/regal)",
+		"-s blank",
+		"-s dot",
+		".",
+	]))
+}
+
+gofumpt {
+	run("gofumpt -w .")
+}
+
+opafmt {
+	run("opa fmt --write bundle")
+}
+
+golangcilint {
+	run("golangci-lint run ./...")
+}
+
+tasks := sort([[annotation.title, annotation.description] |
+	# Right, like you never used the AST for reflection?
+	some annotation in json.unmarshal(rq.run(["./regal", "parse", rq.scriptpath()], {}).stdout).annotations
+	annotation.scope == "rule"
+])
+
+run(cmd) {
+	print(cmd)
+	args := split(cmd, " ")
+	out := rq.run(args, {})
+	{ rq.error(sprintf("\nstdout: %s\nstderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
+	print(out.stdout)
+}
+
+github(what, j) {
+	is_github
+	print(what, j)
+} else := true
+
+is_github if rq.env().GITHUB_ACTION

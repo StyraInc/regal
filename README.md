@@ -148,6 +148,7 @@ The following rules are currently available:
 | bugs      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)              | Rule name shadows built-in                                |
 | bugs      | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                | Iteration in top-level assignment                         |
 | bugs      | [unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value)                | Non-boolean return value unused                           |
+| custom    | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)      | Forbidden function call                                   |
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                  | Naming convention violation                               |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)           | Custom function may be replaced by `in` keyword           |

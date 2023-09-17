@@ -263,19 +263,38 @@ is_output_var(rule, ref, location) if {
 	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
 }
 
-# METADATA
-# description: |
-#   traverses all nodes under provided node (using `walk`), and returns an array with
-#   all calls to builtin functions
-find_builtin_calls(node) := [value |
-	walk(node, [path, value])
+all_refs := [value.value |
+	walk(input.rules, [_, value])
 
-	regal.last(path) == "terms"
-
-	value[0].type == "ref"
-	value[0].value[0].type == "var"
-	value[0].value[0].value in builtin_names
+	value.type == "ref"
 ]
+
+ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
+
+_ref_part_to_string(0, ref) := ref.value
+
+_ref_part_to_string(_, ref) := ref.value if ref.type == "string"
+
+_ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
+	ref.type != "string"
+	i > 0
+}
+
+# METADATA
+# description: provides a set of all built-in function calls made in input policy
+builtin_functions_called contains name if {
+	some ref in all_refs
+
+	ref[0].type == "var"
+	not ref[0].value in {"input", "data"}
+
+	name := concat(".", [value |
+		some part in ref
+		value := part.value
+	])
+
+	name in builtin_names
+}
 
 # METADATA
 # description: |

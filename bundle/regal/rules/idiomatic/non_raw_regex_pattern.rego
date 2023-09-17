@@ -6,6 +6,7 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.result
 
 # Mapping of regex.* functions and the position(s)
@@ -21,7 +22,26 @@ re_pattern_functions := {
 	"template_match": [1],
 }
 
+re_pattern_function_names := {
+	"regex.find_all_string_submatch_n",
+	"regex.find_n",
+	"regex.globs_match",
+	"regex.is_valid",
+	"regex.match",
+	"regex.replace",
+	"regex.split",
+	"regex.template_match",
+}
+
+any_regex_function_called if {
+	some name in re_pattern_function_names
+	name in ast.builtin_functions_called
+}
+
 report contains violation if {
+	# skip expensive walk if no builtin regex function calls are registered
+	any_regex_function_called
+
 	walk(input.rules, [_, value])
 
 	value[0].type == "ref"

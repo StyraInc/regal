@@ -2980,6 +2980,19 @@
       "type": "string"
     }
   },
+  "uuid.parse": {
+    "args": [
+      {
+        "name": "uuid",
+        "type": "string"
+      }
+    ],
+    "result": {
+      "description": "Properties of UUID if valid (version, variant, etc). Undefined otherwise.",
+      "name": "result",
+      "type": "object[string: any]"
+    }
+  },
   "uuid.rfc4122": {
     "args": [
       {

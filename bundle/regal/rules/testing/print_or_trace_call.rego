@@ -9,11 +9,19 @@ import future.keywords.in
 import data.regal.ast
 import data.regal.result
 
+print_or_trace_called if {
+	some name in {"print", "trace"}
+	name in ast.builtin_functions_called
+}
+
 report contains violation if {
-	some call in ast.find_builtin_calls(input)
+	# skip iteration of refs if no print or trace calls are registered
+	print_or_trace_called
 
-	name := call[0].value[0].value
-	name in {"print", "trace"}
+	some ref in ast.all_refs
 
-	violation := result.fail(rego.metadata.chain(), result.location(call[0].value[0]))
+	ref[0].type == "var"
+	ref[0].value in {"print", "trace"}
+
+	violation := result.fail(rego.metadata.chain(), result.location(ref[0]))
 }

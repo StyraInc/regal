@@ -148,6 +148,7 @@ The following rules are currently available:
 | bugs      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)              | Rule name shadows built-in                                |
 | bugs      | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                | Iteration in top-level assignment                         |
 | bugs      | [unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value)                | Non-boolean return value unused                           |
+| custom    | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)      | Forbidden function call                                   |
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                  | Naming convention violation                               |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)           | Custom function may be replaced by `in` keyword           |
@@ -173,6 +174,7 @@ The following rules are currently available:
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |
+| testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)         | Dubious use of print and sprintf                          |
 | testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)   | Files containing tests should have a _test.rego suffix    |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)     | Multiple tests with same name                             |
 | testing   | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)       | Metasyntactic variable name                               |
@@ -327,9 +329,10 @@ are:
 
 ### Documentation
 
-- [Custom Rules](/docs/custom-rules.md) describes how to develop your own rules
+- [Custom Rules](/docs/custom-rules.md) describes how to develop your own linter rules
 - [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
 - [Development](/docs/development.md) contains information about how to hack on Regal itself
+- [Integration](/docs/integration.md) describes how to integrate Regal in your Go application
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
 - [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks

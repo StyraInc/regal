@@ -2,9 +2,7 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -133,21 +131,17 @@ func scaffoldRule(params newRuleCommandParams) error {
 }
 
 func addToDataYAML(params newRuleCommandParams) error {
-	// Open data.yaml for reading and writing
-	dataFile, err := os.OpenFile("../bundle/regal/config/provided/data.yaml", os.O_RDWR|os.O_CREATE, 0o644)
+	// Read the YAML content from the file
+	yamlContent, err := os.ReadFile("bundle/regal/config/provided/data.yaml")
 	if err != nil {
 		return err
 	}
-	defer dataFile.Close()
 
-	// Decode the existing data.yaml content into a Config struct
 	var existingConfig config.Config
 
-	decoder := yaml.NewDecoder(dataFile)
-	if err := decoder.Decode(&existingConfig); err != nil {
-		if !errors.Is(err, io.EOF) {
-			return err
-		}
+	// Unmarshal the YAML content into a map
+	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
+		return err
 	}
 
 	// Add the new entry to the Rules map within the Config struct
@@ -165,38 +159,40 @@ func addToDataYAML(params newRuleCommandParams) error {
 		params.name: vrule, // Assign the rule to a key within the Category map
 	}
 
-	// Sort the map keys alphabetically
-	sortedKeys := make([]string, 0, len(existingConfig.Rules))
-	for key := range existingConfig.Rules {
-		sortedKeys = append(sortedKeys, key)
+	// Sort the map keys alphabetically (categories)
+	sortedCategories := make([]string, 0, len(existingConfig.Rules))
+	for cat := range existingConfig.Rules {
+		sortedCategories = append(sortedCategories, cat)
+	}
+	sort.Strings(sortedCategories)
+
+	// Sort rule names within each category alphabetically
+	for _, cat := range sortedCategories {
+		sortedRuleNames := make([]string, 0, len(existingConfig.Rules[cat]))
+		for ruleName := range existingConfig.Rules[cat] {
+			sortedRuleNames = append(sortedRuleNames, ruleName)
+		}
+		sort.Strings(sortedRuleNames)
+
+		sortedCategory := make(config.Category)
+		for _, ruleName := range sortedRuleNames {
+			sortedCategory[ruleName] = existingConfig.Rules[cat][ruleName]
+		}
+		existingConfig.Rules[cat] = sortedCategory
 	}
 
-	sort.Strings(sortedKeys)
-
-	// Create a new map with sorted keys
-	sortedRules := make(map[string]config.Category)
-	for _, key := range sortedKeys {
-		sortedRules[key] = existingConfig.Rules[key]
-	}
-
-	existingConfig.Rules = sortedRules
-
-	// Write the updated Config struct back to data.yaml
-	if _, err := dataFile.Seek(0, 0); err != nil {
+	// Marshal the Config struct into YAML
+	newYamlContent, err := yaml.Marshal(existingConfig)
+	if err != nil {
 		return err
 	}
 
-	if err := dataFile.Truncate(0); err != nil {
-		return err
-	}
-
-	encoder := yaml.NewEncoder(dataFile)
-
-	return encoder.Encode(existingConfig)
+	// Write the YAML content to the file
+	return os.WriteFile("bundle/regal/config/provided/data.yaml", newYamlContent, 0644)
 }
 
 func addRuleToREADME(params newRuleCommandParams) error {
-	readmePath := "../README.md"
+	readmePath := "README.md"
 	// Read the existing README.md content
 	readmeContent, err := os.ReadFile(readmePath)
 	if err != nil {
@@ -204,8 +200,8 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	}
 
 	// Define the start and end patterns for the table
-	startPattern := "<!-- RULES_TABLE_START -->"
-	endPattern := "<!-- RULES_TABLE_END -->"
+	startPattern := "|-----------|---------------------------------------------------------------------------------------------------|-----------------------------------------------------------|"
+	endPattern := "\n<!-- RULES_TABLE_END -->"
 
 	// Find the position to insert the new rule entry
 	startIndex := strings.Index(string(readmeContent), startPattern)
@@ -223,7 +219,7 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	existingRules := string(readmeContent[startIndex+len(startPattern) : endIndex])
 
 	// Define the new rule entry
-	newRule := fmt.Sprintf("|%-11s| [%-98s| %-60s|",
+	newRule := fmt.Sprintf("|%-11s| [%-97s| %-58s|",
 		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
 			params.name, params.category, params.name), "Place holder, description of the new rule")
 

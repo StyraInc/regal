@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -129,7 +130,7 @@ func scaffoldRule(params newRuleCommandParams) error {
 
 func addToDataYAML(params newRuleCommandParams) error {
 	// Open data.yaml for reading and writing
-	dataFile, err := os.OpenFile("data.yaml", os.O_RDWR|os.O_CREATE, 0644)
+	dataFile, err := os.OpenFile("../bundle/regal/config/provided/data.yaml", os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return err
 	}
@@ -137,9 +138,10 @@ func addToDataYAML(params newRuleCommandParams) error {
 
 	// Decode the existing data.yaml content into a Config struct
 	var existingConfig config.Config
+
 	decoder := yaml.NewDecoder(dataFile)
 	if err := decoder.Decode(&existingConfig); err != nil {
-		if err != io.EOF {
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -164,6 +166,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 	for key := range existingConfig.Rules {
 		sortedKeys = append(sortedKeys, key)
 	}
+
 	sort.Strings(sortedKeys)
 
 	// Create a new map with sorted keys
@@ -175,14 +178,17 @@ func addToDataYAML(params newRuleCommandParams) error {
 	existingConfig.Rules = sortedRules
 
 	// Write the updated Config struct back to data.yaml
-	dataFile.Seek(0, 0)
-	dataFile.Truncate(0)
-	encoder := yaml.NewEncoder(dataFile)
-	if err := encoder.Encode(existingConfig); err != nil {
+	if _, err := dataFile.Seek(0, 0); err != nil {
 		return err
 	}
 
-	return nil
+	if err := dataFile.Truncate(0); err != nil {
+		return err
+	}
+
+	encoder := yaml.NewEncoder(dataFile)
+
+	return encoder.Encode(existingConfig)
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {

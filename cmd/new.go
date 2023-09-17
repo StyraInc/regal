@@ -117,6 +117,10 @@ func scaffoldRule(params newRuleCommandParams) error {
 		return err
 	}
 
+	if err := addRuleToREADME(params); err != nil {
+		return err
+	}
+
 	if params.type_ == "custom" {
 		return scaffoldCustomRule(params)
 	}
@@ -189,6 +193,67 @@ func addToDataYAML(params newRuleCommandParams) error {
 	encoder := yaml.NewEncoder(dataFile)
 
 	return encoder.Encode(existingConfig)
+}
+
+func addRuleToREADME(params newRuleCommandParams) error {
+	readmePath := "../README.md"
+	// Read the existing README.md content
+	readmeContent, err := os.ReadFile(readmePath)
+	if err != nil {
+		return err
+	}
+
+	// Define the start and end patterns for the table
+	startPattern := "<!-- RULES_TABLE_START -->"
+	endPattern := "<!-- RULES_TABLE_END -->"
+
+	// Find the position to insert the new rule entry
+	startIndex := strings.Index(string(readmeContent), startPattern)
+	endIndex := strings.Index(string(readmeContent), endPattern)
+
+	if startIndex == -1 || endIndex == -1 {
+		return fmt.Errorf("failed to locate start or end pattern in README.md")
+	}
+
+	// Extract the content before and after the table
+	beforeTable := string(readmeContent[:startIndex+len(startPattern)])
+	afterTable := string(readmeContent[endIndex:])
+
+	// Extract the existing rule entries from the table
+	existingRules := string(readmeContent[startIndex+len(startPattern) : endIndex])
+
+	// Define the new rule entry
+	newRule := fmt.Sprintf("|%-11s| [%-98s| %-60s|",
+		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
+			params.name, params.category, params.name), "Place holder, description of the new rule")
+
+	// Combine the existing rules with the new rule and sort them
+	allRules := existingRules + "\n" + newRule
+	sortedRules := sortRulesTable(allRules)
+
+	// Create the updated content
+	newContent := beforeTable + sortedRules + afterTable
+
+	// Write the updated content back to README.md
+	err = os.WriteFile(readmePath, []byte(newContent), 0o600)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func sortRulesTable(rulesTable string) string {
+	// Split the table into lines
+	lines := strings.Split(rulesTable, "\n")
+
+	// Sort the lines (excluding the header line)
+	if len(lines) > 2 {
+		sort.Strings(lines[2:])
+	}
+
+	// Join the sorted lines back together
+	return strings.Join(lines, "\n")
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {

@@ -164,6 +164,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 	for cat := range existingConfig.Rules {
 		sortedCategories = append(sortedCategories, cat)
 	}
+
 	sort.Strings(sortedCategories)
 
 	// Sort rule names within each category alphabetically
@@ -172,12 +173,14 @@ func addToDataYAML(params newRuleCommandParams) error {
 		for ruleName := range existingConfig.Rules[cat] {
 			sortedRuleNames = append(sortedRuleNames, ruleName)
 		}
+
 		sort.Strings(sortedRuleNames)
 
 		sortedCategory := make(config.Category)
 		for _, ruleName := range sortedRuleNames {
 			sortedCategory[ruleName] = existingConfig.Rules[cat][ruleName]
 		}
+
 		existingConfig.Rules[cat] = sortedCategory
 	}
 
@@ -188,7 +191,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 	}
 
 	// Write the YAML content to the file
-	return os.WriteFile("bundle/regal/config/provided/data.yaml", newYamlContent, 0644)
+	return os.WriteFile("bundle/regal/config/provided/data.yaml", newYamlContent, 0o600)
 }
 
 func addRuleToREADME(params newRuleCommandParams) error {
@@ -200,7 +203,9 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	}
 
 	// Define the start and end patterns for the table
-	startPattern := "|-----------|---------------------------------------------------------------------------------------------------|-----------------------------------------------------------|"
+	startPattern := "|-----------" +
+		"|---------------------------------------------------------------------------------------------------" +
+		"|-----------------------------------------------------------|"
 	endPattern := "\n<!-- RULES_TABLE_END -->"
 
 	// Find the position to insert the new rule entry

@@ -192,6 +192,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 
 	yamlEncoder := yaml.NewEncoder(&b)
 	yamlEncoder.SetIndent(2)
+
 	err = yamlEncoder.Encode(existingConfig)
 	if err != nil {
 		return err

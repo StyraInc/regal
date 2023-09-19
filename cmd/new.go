@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -187,14 +188,17 @@ func addToDataYAML(params newRuleCommandParams) error {
 		existingConfig.Rules[cat] = sortedCategory
 	}
 
-	// Marshal the Config struct into YAML
-	newYamlContent, err := yaml.Marshal(existingConfig)
+	var b bytes.Buffer
+
+	yamlEncoder := yaml.NewEncoder(&b)
+	yamlEncoder.SetIndent(2)
+	err = yamlEncoder.Encode(existingConfig)
 	if err != nil {
 		return err
 	}
 
 	// Write the YAML content to the file
-	return os.WriteFile("bundle/regal/config/provided/data.yaml", newYamlContent, 0o600)
+	return os.WriteFile("bundle/regal/config/provided/data.yaml", b.Bytes(), 0o600)
 }
 
 func addRuleToREADME(params newRuleCommandParams) error {

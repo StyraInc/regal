@@ -1,6 +1,7 @@
 package reporter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,7 +17,7 @@ import (
 // Reporter releases linter reports in a format decided by the implementation.
 type Reporter interface {
 	// Publish releases a report to any appropriate target
-	Publish(report.Report) error
+	Publish(context.Context, report.Report) error
 }
 
 // PrettyReporter is a Reporter for representing reports as tables.
@@ -60,7 +61,7 @@ func NewGitHubReporter(out io.Writer) GitHubReporter {
 }
 
 // Publish prints a pretty report to the configured output.
-func (tr PrettyReporter) Publish(r report.Report) error {
+func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	table := buildPrettyViolationsTable(r.Violations)
 
 	pluralScanned := ""
@@ -137,7 +138,7 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 }
 
 // Publish prints a compact report to the configured output.
-func (tr CompactReporter) Publish(r report.Report) error {
+func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	table := uitable.New()
 	table.MaxColWidth = 80
 	table.Wrap = true
@@ -152,7 +153,7 @@ func (tr CompactReporter) Publish(r report.Report) error {
 }
 
 // Publish prints a JSON report to the configured output.
-func (tr JSONReporter) Publish(r report.Report) error {
+func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 	if r.Violations == nil {
 		r.Violations = []report.Violation{}
 	}
@@ -168,7 +169,7 @@ func (tr JSONReporter) Publish(r report.Report) error {
 }
 
 //nolint:nestif
-func (tr GitHubReporter) Publish(r report.Report) error {
+func (tr GitHubReporter) Publish(_ context.Context, r report.Report) error {
 	if r.Violations == nil {
 		r.Violations = []report.Violation{}
 	}

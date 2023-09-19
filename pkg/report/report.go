@@ -1,6 +1,8 @@
 package report
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // RelatedResource provides documentation on a violation.
 type RelatedResource struct {
@@ -36,8 +38,9 @@ type Summary struct {
 
 // Report aggregate of Violation as returned by a linter run.
 type Report struct {
-	Violations []Violation `json:"violations"`
-	Summary    Summary     `json:"summary"`
+	Violations []Violation    `json:"violations"`
+	Summary    Summary        `json:"summary"`
+	Metrics    map[string]any `json:"metrics,omitempty"`
 }
 
 // ViolationsFileCount returns the number of files containing violations.

@@ -37,6 +37,7 @@ type lintCommandParams struct {
 	debug           bool
 	enablePrint     bool
 	metrics         bool
+	profile         bool
 	disable         repeatedStringFlag
 	disableAll      bool
 	disableCategory repeatedStringFlag
@@ -141,6 +142,8 @@ func init() {
 		"enable print output from policy")
 	lintCommand.Flags().BoolVar(&params.metrics, "metrics", false,
 		"enable metrics reporting (currently supported only for JSON output format)")
+	lintCommand.Flags().BoolVar(&params.profile, "profile", false,
+		"enable profiling metrics to be added to reporting (currently supported only for JSON output format)")
 
 	lintCommand.Flags().VarP(&params.disable, "disable", "d",
 		"disable specific rule(s). This flag can be repeated.")
@@ -251,6 +254,10 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	if params.metrics {
 		regal = regal.WithMetrics(m)
 		m.Timer(regalmetrics.RegalConfigParse).Start()
+	}
+
+	if params.profile {
+		regal = regal.WithProfiling(true)
 	}
 
 	var userConfig config.Config

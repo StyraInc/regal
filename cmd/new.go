@@ -12,7 +12,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/styrainc/regal/internal/embeds"
 	"github.com/styrainc/regal/pkg/config"
@@ -154,10 +154,13 @@ func addToDataYAML(params newRuleCommandParams) error {
 		Level: "error",
 	}
 
-	// Assign the new Rule value to the Category map
-	existingConfig.Rules[params.category] = config.Category{
-		params.name: vrule, // Assign the rule to a key within the Category map
+	// Check if the category already exists in rules
+	if existingConfig.Rules[params.category] == nil {
+		existingConfig.Rules[params.category] = make(map[string]config.Rule)
 	}
+
+	// Assign the new Rule value to the Category map
+	existingConfig.Rules[params.category][params.name] = vrule
 
 	// Sort the map keys alphabetically (categories)
 	sortedCategories := make([]string, 0, len(existingConfig.Rules))
@@ -206,7 +209,7 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	startPattern := "|-----------" +
 		"|---------------------------------------------------------------------------------------------------" +
 		"|-----------------------------------------------------------|"
-	endPattern := "\n<!-- RULES_TABLE_END -->"
+	endPattern := "\n\n<!-- RULES_TABLE_END -->"
 
 	// Find the position to insert the new rule entry
 	startIndex := strings.Index(string(readmeContent), startPattern)
@@ -224,7 +227,7 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	existingRules := string(readmeContent[startIndex+len(startPattern) : endIndex])
 
 	// Define the new rule entry
-	newRule := fmt.Sprintf("|%-11s| [%-97s| %-58s|",
+	newRule := fmt.Sprintf("| %-10s| [%-97s| %-58s|",
 		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
 			params.name, params.category, params.name), "Place holder, description of the new rule")
 

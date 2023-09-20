@@ -203,6 +203,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 }
 
 func addRuleToREADME(params newRuleCommandParams) error {
+	var sortedRules string
 	readmePath := "README.md"
 	// Read the existing README.md content
 	readmeContent, err := os.ReadFile(readmePath)
@@ -236,9 +237,21 @@ func addRuleToREADME(params newRuleCommandParams) error {
 		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
 			params.name, params.category, params.name), "Place holder, description of the new rule")
 
-	// Combine the existing rules with the new rule and sort them
-	allRules := existingRules + "\n" + newRule
-	sortedRules := sortRulesTable(allRules)
+	// Create a regular expression pattern to match lines starting with "| %-10s|"
+	pattern := fmt.Sprintf(`\| %-10s\| \[%s\].*\n`, regexp.QuoteMeta(params.category), regexp.QuoteMeta(params.name))
+
+	// Compile the regular expression
+	re := regexp.MustCompile(pattern)
+	// Check if there's a match
+	if re.MatchString(existingRules) {
+		// Replace matching lines with the new rule
+		existingRules = re.ReplaceAllString(existingRules, newRule+"\n")
+		sortedRules = existingRules
+	} else {
+		// Combine the existing rules with the new rule and sort them
+		allRules := existingRules + "\n" + newRule
+		sortedRules = sortRulesTable(allRules)
+	}
 
 	// Create the updated content
 	newContent := beforeTable + sortedRules + afterTable

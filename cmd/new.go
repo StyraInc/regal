@@ -204,6 +204,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 
 func addRuleToREADME(params newRuleCommandParams) error {
 	var sortedRules string
+
 	readmePath := "README.md"
 	// Read the existing README.md content
 	readmeContent, err := os.ReadFile(readmePath)

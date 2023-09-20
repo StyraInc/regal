@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/metrics"
+	"github.com/open-policy-agent/opa/topdown"
 
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
@@ -34,6 +35,7 @@ type lintCommandParams struct {
 	rules           repeatedStringFlag
 	noColor         bool
 	debug           bool
+	enablePrint     bool
 	metrics         bool
 	disable         repeatedStringFlag
 	disableAll      bool
@@ -135,6 +137,8 @@ func init() {
 		"set timeout for linting (default unlimited)")
 	lintCommand.Flags().BoolVar(&params.debug, "debug", false,
 		"enable debug logging (including print output from custom policy)")
+	lintCommand.Flags().BoolVar(&params.enablePrint, "enable-print", false,
+		"enable print output from policy")
 	lintCommand.Flags().BoolVar(&params.metrics, "metrics", false,
 		"enable metrics reporting (currently supported only for JSON output format)")
 
@@ -227,6 +231,10 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		WithEnabledRules(params.enable.v...).
 		WithDebugMode(params.debug).
 		WithInputPaths(args)
+
+	if params.enablePrint {
+		regal = regal.WithPrintHook(topdown.NewPrintHook(os.Stderr))
+	}
 
 	if customRulesDir != "" {
 		regal = regal.WithCustomRules([]string{customRulesDir})

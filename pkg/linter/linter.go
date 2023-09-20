@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -39,6 +40,7 @@ type Linter struct {
 	customRulesPaths []string
 	combinedConfig   *config.Config
 	debugMode        bool
+	printHook        print.Hook
 	disable          []string
 	disableAll       bool
 	disableCategory  []string
@@ -162,6 +164,12 @@ func (l Linter) WithIgnore(ignore []string) Linter {
 // WithMetrics enables metrics collection.
 func (l Linter) WithMetrics(m metrics.Metrics) Linter {
 	l.metrics = m
+
+	return l
+}
+
+func (l Linter) WithPrintHook(printHook print.Hook) Linter {
+	l.printHook = printHook
 
 	return l
 }
@@ -425,10 +433,14 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
 
-	if l.debugMode {
+	if l.debugMode && l.printHook == nil {
+		l.printHook = topdown.NewPrintHook(os.Stderr)
+	}
+
+	if l.printHook != nil {
 		regoArgs = append(regoArgs,
 			rego.EnablePrintStatements(true),
-			rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+			rego.PrintHook(l.printHook),
 		)
 	}
 

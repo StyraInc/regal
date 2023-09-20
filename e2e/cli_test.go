@@ -133,7 +133,7 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 
 	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
-		"failed to filter paths: 1 error occurred during loading: stat "+td+"/what/ever: no such file or directory\n",
+		"failed to filter paths:\nstat "+td+"/what/ever: no such file or directory\n",
 		stdout.String(); exp != act {
 		t.Errorf("expected stdout %q, got %q", exp, act)
 	}

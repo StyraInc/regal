@@ -111,20 +111,19 @@ func scaffoldRule(params newRuleCommandParams) error {
 		params.output = mustGetWd()
 	}
 
-	// Call addToDataYAML for both custom and builtin rules
-	if err := addToDataYAML(params); err != nil {
-		return err
-	}
-
-	if err := addRuleToREADME(params); err != nil {
-		return err
-	}
-
 	if params.type_ == "custom" {
 		return scaffoldCustomRule(params)
 	}
 
 	if params.type_ == "builtin" {
+		if err := addToDataYAML(params); err != nil {
+			return err
+		}
+
+		if err := addRuleToREADME(params); err != nil {
+			return err
+		}
+
 		return scaffoldBuiltinRule(params)
 	}
 

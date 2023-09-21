@@ -1,9 +1,12 @@
 package linter
 
 import (
+	"bytes"
 	"context"
 	"path/filepath"
 	"testing"
+
+	"github.com/open-policy-agent/opa/topdown"
 
 	"github.com/styrainc/regal/internal/test"
 	"github.com/styrainc/regal/pkg/config"
@@ -336,5 +339,27 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 	// rather than an int. Not sure why that is, but it doesn't really matter.
 	if fileLength != 1.0 {
 		t.Errorf("expected max-file-length to be 1, got %d", fileLength)
+	}
+}
+
+func TestLintWithPrintHook(t *testing.T) {
+	t.Parallel()
+
+	input := test.InputPolicy("p.rego", `package p`)
+
+	var bb bytes.Buffer
+
+	linter := NewLinter().
+		WithCustomRules([]string{filepath.Join("testdata", "printer.rego")}).
+		WithPrintHook(topdown.NewPrintHook(&bb)).
+		WithInputModules(&input)
+
+	_, err := linter.Lint(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if bb.String() != "p.rego\n" {
+		t.Errorf("expected print hook to print file name 'p.rego' and newline, got %q", bb.String())
 	}
 }

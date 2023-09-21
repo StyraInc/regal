@@ -237,7 +237,7 @@ func addRuleToREADME(params newRuleCommandParams) error {
 		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
 			params.name, params.category, params.name), "Place holder, description of the new rule")
 
-	// Create a regular expression pattern to match lines starting with "| %-10s|"
+	// Create a regular expression pattern to match lines starting with params.category and params.name
 	pattern := fmt.Sprintf(`\| %-10s\| \[%s\].*\n`, regexp.QuoteMeta(params.category), regexp.QuoteMeta(params.name))
 
 	// Compile the regular expression
@@ -245,8 +245,7 @@ func addRuleToREADME(params newRuleCommandParams) error {
 	// Check if there's a match
 	if re.MatchString(existingRules) {
 		// Replace matching lines with the new rule
-		existingRules = re.ReplaceAllString(existingRules, newRule+"\n")
-		sortedRules = existingRules
+		sortedRules = re.ReplaceAllString(existingRules, newRule+"\n")
 	} else {
 		// Combine the existing rules with the new rule and sort them
 		allRules := existingRules + "\n" + newRule
@@ -269,10 +268,8 @@ func sortRulesTable(rulesTable string) string {
 	// Split the table into lines
 	lines := strings.Split(rulesTable, "\n")
 
-	// Sort the lines (excluding the header line)
-	if len(lines) > 2 {
-		sort.Strings(lines[2:])
-	}
+	// Sort the lines
+	sort.Strings(lines)
 
 	// Join the sorted lines back together
 	return strings.Join(lines, "\n")

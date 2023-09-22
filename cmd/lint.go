@@ -15,7 +15,11 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/metrics"
+	"github.com/open-policy-agent/opa/topdown"
+
 	rio "github.com/styrainc/regal/internal/io"
+	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
@@ -31,6 +35,8 @@ type lintCommandParams struct {
 	rules           repeatedStringFlag
 	noColor         bool
 	debug           bool
+	enablePrint     bool
+	metrics         bool
 	disable         repeatedStringFlag
 	disableAll      bool
 	disableCategory repeatedStringFlag
@@ -131,6 +137,10 @@ func init() {
 		"set timeout for linting (default unlimited)")
 	lintCommand.Flags().BoolVar(&params.debug, "debug", false,
 		"enable debug logging (including print output from custom policy)")
+	lintCommand.Flags().BoolVar(&params.enablePrint, "enable-print", false,
+		"enable print output from policy")
+	lintCommand.Flags().BoolVar(&params.metrics, "metrics", false,
+		"enable metrics reporting (currently supported only for JSON output format)")
 
 	lintCommand.Flags().VarP(&params.disable, "disable", "d",
 		"disable specific rule(s). This flag can be repeated.")
@@ -152,6 +162,7 @@ func init() {
 	RootCommand.AddCommand(lintCommand)
 }
 
+//nolint:gocognit
 func lint(args []string, params lintCommandParams) (report.Report, error) {
 	var err error
 
@@ -181,6 +192,11 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 	cwd, _ := os.Getwd()
 
+	m := metrics.New()
+	if params.metrics {
+		m.Timer(regalmetrics.RegalConfigSearch).Start()
+	}
+
 	if len(args) == 1 {
 		configSearchPath = args[0]
 		if !strings.HasPrefix(args[0], "/") {
@@ -202,6 +218,10 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 	}
 
+	if params.metrics {
+		m.Timer(regalmetrics.RegalConfigSearch).Stop()
+	}
+
 	regal := linter.NewLinter().
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
@@ -211,6 +231,10 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		WithEnabledRules(params.enable.v...).
 		WithDebugMode(params.debug).
 		WithInputPaths(args)
+
+	if params.enablePrint {
+		regal = regal.WithPrintHook(topdown.NewPrintHook(os.Stderr))
+	}
 
 	if customRulesDir != "" {
 		regal = regal.WithCustomRules([]string{customRulesDir})
@@ -222,6 +246,11 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 
 	if params.ignoreFiles.isSet {
 		regal = regal.WithIgnore(params.ignoreFiles.v)
+	}
+
+	if params.metrics {
+		regal = regal.WithMetrics(m)
+		m.Timer(regalmetrics.RegalConfigParse).Start()
 	}
 
 	var userConfig config.Config
@@ -247,6 +276,10 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		log.Println("no user-provided config file found, will use the default config")
 	}
 
+	if params.metrics {
+		m.Timer(regalmetrics.RegalConfigParse).Stop()
+	}
+
 	result, err := regal.Lint(ctx)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("error(s) encountered while linting: %w", err)
@@ -257,7 +290,7 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to get reporter: %w", err)
 	}
 
-	return result, rep.Publish(result) //nolint:wrapcheck
+	return result, rep.Publish(ctx, result) //nolint:wrapcheck
 }
 
 func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {

@@ -1,35 +1,63 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gobwas/glob"
 
 	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/loader"
 )
 
 func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool) ([]string, error) {
-	policyPaths := paths
-
 	if checkFileExists {
-		filteredPaths, err := loader.FilteredPaths(paths, func(_ string, info os.FileInfo, depth int) bool {
-			return !info.IsDir() && !strings.HasSuffix(info.Name(), bundle.RegoExt)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to filter paths: %w", err)
+		filtered := make([]string, 0, len(paths))
+
+		if err := walkPaths(paths, func(path string, info os.DirEntry, err error) error {
+			if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea") {
+				return filepath.SkipDir
+			}
+			if !info.IsDir() && strings.HasSuffix(path, bundle.RegoExt) {
+				filtered = append(filtered, path)
+			}
+
+			return err
+		}); err != nil {
+			return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 		}
 
-		policyPaths = filteredPaths
+		return filterPaths(filtered, ignore)
 	}
 
 	if len(ignore) == 0 {
-		return policyPaths, nil
+		return paths, nil
 	}
 
-	return filterPaths(policyPaths, ignore)
+	return filterPaths(paths, ignore)
+}
+
+func walkPaths(paths []string, filter func(path string, info os.DirEntry, err error) error) error {
+	var errs error
+
+	for _, path := range paths {
+		// We need to stat the initial set of paths, as filepath.WalkDir
+		// will panic on non-existent paths.
+		_, err := os.Stat(path)
+		if err != nil {
+			errs = errors.Join(errs, err)
+
+			continue
+		}
+
+		if err := filepath.WalkDir(path, filter); err != nil {
+			errs = errors.Join(errs, err)
+		}
+	}
+
+	return errs
 }
 
 func filterPaths(policyPaths []string, ignore []string) ([]string, error) {

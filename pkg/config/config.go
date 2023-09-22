@@ -160,6 +160,9 @@ func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
 	return rule.mapToConfig(result) //nolint:errcheck
 }
 
+// Note that this function will mutate the result map. This isn't a problem right now
+// as we only use this after unmarshalling, but if we use this for other purposes later
+// we need to make a copy of the map first.
 func (rule *Rule) mapToConfig(result map[string]any) error {
 	level, ok := result["level"].(string)
 	if ok {
@@ -178,6 +181,9 @@ func (rule *Rule) mapToConfig(result map[string]any) error {
 	}
 
 	rule.Extra = result
+
+	delete(rule.Extra, "level")
+	delete(rule.Extra, "ignore")
 
 	return nil
 }

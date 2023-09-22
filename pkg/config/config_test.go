@@ -113,3 +113,51 @@ func TestMarshalConfig(t *testing.T) {
 		t.Errorf("expected %s, got %s", expect, string(bs))
 	}
 }
+
+func TestUnmarshalConfig(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`rules:
+  testing:
+    foo:
+      bar: baz
+      ignore:
+        files:
+          - foo.rego
+      level: error
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	if conf.Rules["testing"]["foo"].Level != "error" {
+		t.Errorf("expected level to be error")
+	}
+
+	if conf.Rules["testing"]["foo"].Ignore == nil {
+		t.Errorf("expected ignore attribute to be set")
+	}
+
+	if len(conf.Rules["testing"]["foo"].Ignore.Files) != 1 {
+		t.Errorf("expected ignore files to be set")
+	}
+
+	if conf.Rules["testing"]["foo"].Ignore.Files[0] != "foo.rego" {
+		t.Errorf("expected ignore files to contain foo.rego")
+	}
+
+	if conf.Rules["testing"]["foo"].Extra["bar"] != "baz" {
+		t.Errorf("expected extra attribute 'bar' to be baz")
+	}
+
+	if conf.Rules["testing"]["foo"].Extra["ignore"] != nil {
+		t.Errorf("expected extra attribute 'ignore' to be removed")
+	}
+
+	if conf.Rules["testing"]["foo"].Extra["level"] != nil {
+		t.Errorf("expected extra attribute 'level' to be removed")
+	}
+}

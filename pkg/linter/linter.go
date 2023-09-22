@@ -277,7 +277,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	return aggregateReport, nil
-
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
@@ -481,7 +480,9 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 	return regoArgs
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggregates []report.Aggregate) (report.Report, error) {
+func (l Linter) lintWithRegoRules(
+	ctx context.Context, input rules.Input, aggregates []report.Aggregate,
+) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)
 
@@ -517,7 +518,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input, aggreg
 				return
 			}
 
-			if aggregates != nil && len(aggregates) > 0 {
+			if len(aggregates) > 0 {
 				enhancedAST["aggregate"] = aggregates
 			}
 

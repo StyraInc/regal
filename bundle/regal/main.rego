@@ -51,6 +51,13 @@ report contains violation if {
 	not ignored(violation, ignore_directives)
 }
 
+aggregate contains aggregate if {
+	some category, title
+	config.for_rule(category, title).level != "ignore"
+	not config.excluded_file(category, title, input.regal.file.name)
+	aggregate := data.custom.regal.rules[category][title].aggregate[_]
+}
+
 ignored(violation, directives) if {
 	ignored_rules := directives[violation.location.row]
 	violation.title in ignored_rules

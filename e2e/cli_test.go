@@ -448,6 +448,53 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 	}
 }
 
+func TestCreateNewBuiltinRuleYamlReadme(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	tmpDir := t.TempDir()
+
+	err := regal(&stdout, &stderr)("new", "rule", "--type", "builtin", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir)
+
+	if exp, act := 0, ExitStatus(err); exp != act {
+		t.Errorf("expected exit status %d, got %d", exp, act)
+	}
+
+	// Read the content of README.md
+	readmeContent, err := os.ReadFile("../README.md")
+	if err != nil {
+		t.Fatalf("failed to read README.md: %v", err)
+	}
+
+	// Define an expected entry for the new rule
+	expectedEntry := "| naming    | [foo-bar-baz](https://docs.styra.com/regal/rules/naming/foo-bar-baz)                             | Place holder, description of the new rule"
+
+	// Check if the expected entry exists in README.md
+	if !strings.Contains(string(readmeContent), expectedEntry) {
+		t.Errorf("expected entry not found in README.md:\n%s", expectedEntry)
+	}
+
+	// Read the content of data.yaml
+	yamlContent, err := os.ReadFile("../bundle/regal/config/provided/data.yaml")
+	if err != nil {
+		t.Fatalf("failed to read data.yaml: %v", err)
+	}
+
+	var existingConfig config.Config
+
+	// Unmarshal the YAML content into a Config struct
+	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
+		t.Fatalf("failed to unmarshal data.yaml: %v", err)
+	}
+
+	// Check if the new rule exists in the YAML structure
+	if _, exists := existingConfig.Rules["naming"]["foo-bar-baz"]; !exists {
+		t.Errorf("new rule not found in data.yaml")
+	}
+}
+
 func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	t.Parallel()
 

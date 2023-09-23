@@ -134,6 +134,11 @@ func addToDataYAML(params newRuleCommandParams) error {
 	// Read the YAML content from the file
 	yamlContent, err := os.ReadFile("bundle/regal/config/provided/data.yaml")
 	if err != nil {
+		// Check if the error is of type *os.PathError
+		if pathErr, ok := err.(*os.PathError); ok && os.IsNotExist(pathErr.Err) {
+			// Handle the case where the file does not exist
+			return fmt.Errorf("data.yaml file not found. Please run this command from the top-level directory of the Regal repository")
+		}
 		return err
 	}
 
@@ -142,11 +147,6 @@ func addToDataYAML(params newRuleCommandParams) error {
 	// Unmarshal the YAML content into a map
 	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
 		return err
-	}
-
-	// Add the new entry to the Rules map within the Config struct
-	if existingConfig.Rules == nil {
-		existingConfig.Rules = make(map[string]config.Category)
 	}
 
 	// Create a new Rule value and set the Level field

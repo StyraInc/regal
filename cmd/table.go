@@ -200,7 +200,7 @@ func renderREADME(r io.Reader) string {
 func writeToREADME(r io.Reader) error {
 	newReadme := renderREADME(r)
 
-	return os.WriteFile("/README.md", []byte(newReadme), 0o600)
+	return os.WriteFile("README.md", []byte(newReadme), 0o600)
 }
 
 func compareToREADME(r io.Reader) error {

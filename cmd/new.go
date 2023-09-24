@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -116,29 +117,41 @@ func scaffoldRule(params newRuleCommandParams) error {
 	}
 
 	if params.type_ == "builtin" {
+		if err := scaffoldBuiltinRule(params); err != nil {
+			return err
+		}
+
 		if err := addToDataYAML(params); err != nil {
 			return err
 		}
 
-		if err := addRuleToREADME(params); err != nil {
+		r, err := createTable([]string{filepath.Join(os.Getenv("EXECUTABLE_PATH"), "bundle", "regal")})
+		if err != nil {
 			return err
 		}
 
-		return scaffoldBuiltinRule(params)
+		newReadme := renderREADME(r)
+		readmePath := filepath.Join(params.output, "README.md")
+
+		return os.WriteFile(readmePath, []byte(newReadme), 0o600)
 	}
 
 	return fmt.Errorf("unsupported type %v", params.type_)
 }
 
 func addToDataYAML(params newRuleCommandParams) error {
-	// Read the YAML content from the file
-	yamlContent, err := os.ReadFile("bundle/regal/config/provided/data.yaml")
+	dataFilePath := filepath.Join(os.Getenv("EXECUTABLE_PATH"), "bundle", "regal", "config", "provided", "data.yaml")
+
+	yamlContent, err := os.ReadFile(dataFilePath)
 	if err != nil {
 		// Check if the error is of type *os.PathError
-		if pathErr, ok := err.(*os.PathError); ok && os.IsNotExist(pathErr.Err) {
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) && os.IsNotExist(pathErr.Err) {
 			// Handle the case where the file does not exist
-			return fmt.Errorf("data.yaml file not found. Please run this command from the top-level directory of the Regal repository")
+			return fmt.Errorf("data.yaml file not found. " +
+				"Please run this command from the top-level directory of the Regal repository")
 		}
+
 		return err
 	}
 
@@ -198,81 +211,12 @@ func addToDataYAML(params newRuleCommandParams) error {
 	}
 
 	// Write the YAML content to the file
-	return os.WriteFile("bundle/regal/config/provided/data.yaml", b.Bytes(), 0o600)
-}
-
-func addRuleToREADME(params newRuleCommandParams) error {
-	var sortedRules string
-
-	readmePath := "README.md"
-	// Read the existing README.md content
-	readmeContent, err := os.ReadFile(readmePath)
-	if err != nil {
+	dataYamlDir := filepath.Join(params.output, "bundle", "regal", "config", "provided")
+	if err := os.MkdirAll(dataYamlDir, 0o770); err != nil {
 		return err
 	}
 
-	// Define the start and end patterns for the table
-	startPattern := "|-----------" +
-		"|---------------------------------------------------------------------------------------------------" +
-		"|-----------------------------------------------------------|"
-	endPattern := "\n\n<!-- RULES_TABLE_END -->"
-
-	// Find the position to insert the new rule entry
-	startIndex := strings.Index(string(readmeContent), startPattern)
-	endIndex := strings.Index(string(readmeContent), endPattern)
-
-	if startIndex == -1 || endIndex == -1 {
-		return fmt.Errorf("failed to locate start or end pattern in README.md")
-	}
-
-	// Extract the content before and after the table
-	beforeTable := string(readmeContent[:startIndex+len(startPattern)])
-	afterTable := string(readmeContent[endIndex:])
-
-	// Extract the existing rule entries from the table
-	existingRules := string(readmeContent[startIndex+len(startPattern) : endIndex])
-
-	// Define the new rule entry
-	newRule := fmt.Sprintf("| %-10s| [%-97s| %-58s|",
-		params.category, fmt.Sprintf("%s](https://docs.styra.com/regal/rules/%s/%s)",
-			params.name, params.category, params.name), "Place holder, description of the new rule")
-
-	// Create a regular expression pattern to match lines starting with params.category and params.name
-	pattern := fmt.Sprintf(`\| %-10s\| \[%s\].*\n`, regexp.QuoteMeta(params.category), regexp.QuoteMeta(params.name))
-
-	// Compile the regular expression
-	re := regexp.MustCompile(pattern)
-	// Check if there's a match
-	if re.MatchString(existingRules) {
-		// Replace matching lines with the new rule
-		sortedRules = re.ReplaceAllString(existingRules, newRule+"\n")
-	} else {
-		// Combine the existing rules with the new rule and sort them
-		allRules := existingRules + "\n" + newRule
-		sortedRules = sortRulesTable(allRules)
-	}
-
-	// Create the updated content
-	newContent := beforeTable + sortedRules + afterTable
-
-	// Write the updated content back to README.md
-	err = os.WriteFile(readmePath, []byte(newContent), 0o600)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func sortRulesTable(rulesTable string) string {
-	// Split the table into lines
-	lines := strings.Split(rulesTable, "\n")
-
-	// Sort the lines
-	sort.Strings(lines)
-
-	// Join the sorted lines back together
-	return strings.Join(lines, "\n")
+	return os.WriteFile(filepath.Join(dataYamlDir, "data.yaml"), b.Bytes(), 0o600)
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {

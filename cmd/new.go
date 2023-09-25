@@ -125,7 +125,7 @@ func scaffoldRule(params newRuleCommandParams) error {
 			return err
 		}
 
-		r, err := createTable([]string{filepath.Join(os.Getenv("EXECUTABLE_PATH"), "bundle", "regal")})
+		r, err := createTable([]string{filepath.Join("bundle", "regal")})
 		if err != nil {
 			return err
 		}

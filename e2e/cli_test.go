@@ -324,11 +324,11 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	cwd := must(os.Getwd)
 	basedir := cwd + "/testdata/aggregates"
 
-	t.Run("Zero violations expected", func(t *testing.T) {
+	t.Run("two policies — no violations expected", func(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/two_policies")
 
 		if exp, act := 0, ExitStatus(err); exp != act {
 			t.Errorf("expected exit status %d, got %d", exp, act)
@@ -339,11 +339,26 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		}
 	})
 
-	t.Run("One violation expected", func(t *testing.T) {
+	t.Run("single policy — no aggregate violations expected", func(t *testing.T) {
+		stdout := bytes.Buffer{}
+		stderr := bytes.Buffer{}
+
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/two_policies/policy_1.rego")
+
+		if exp, act := 0, ExitStatus(err); exp != act {
+			t.Errorf("expected exit status %d, got %d", exp, act)
+		}
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+	})
+
+	t.Run("three policies - violation expected", func(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
 		// By sending a single file to the command, we skip the aggregates computation, so we expect one violation
-		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego/policy_1.rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/three_policies")
 
 		if exp, act := 3, ExitStatus(err); exp != act {
 			t.Errorf("expected exit status %d, got %d", exp, act)

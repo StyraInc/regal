@@ -38,6 +38,8 @@ rules:
       level: error
     import-shadows-import:
       level: error
+    prefer-package-imports:
+      level: error
     redundant-alias:
       level: error
     redundant-data-import:

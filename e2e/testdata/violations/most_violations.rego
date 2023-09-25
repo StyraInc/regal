@@ -22,6 +22,10 @@ import data.redundant.alias as alias
 # redundant-data-import
 import data
 
+# prefer-package-imports
+# aggregate rule, so will only fail if more than one file is linted
+import data.rule_named_if.allow
+
 ### Bugs ###
 
 constant_condition {

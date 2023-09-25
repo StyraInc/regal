@@ -9,4 +9,5 @@ const (
 	RegalLint                 = "regal_lint_total"
 	RegalLintGo               = "regal_lint_go"
 	RegalLintRego             = "regal_lint_rego"
+	RegalLintRegoAggregate    = "regal_lint_rego_aggregate"
 )

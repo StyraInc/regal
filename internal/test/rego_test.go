@@ -3,7 +3,6 @@ package test
 import (
 	"context"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -16,8 +15,11 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
+// nolint:paralleltest,tparallel
 func TestRunRegoUnitTests(t *testing.T) {
-	t.Parallel()
+	// TODO: Temporary until this requirement is removed from OPA
+	//       Once removed, re-add t.Parallel()
+	t.Setenv("EXPERIMENTAL_GENERAL_RULE_REFS", "true")
 
 	ctx := context.Background()
 	bdl := filepath.Join("..", "..", "bundle")
@@ -40,13 +42,8 @@ func TestRunRegoUnitTests(t *testing.T) {
 		store.Abort(ctx, txn)
 	})
 
-	schema, err := os.ReadFile("../embeds/schemas/regal-ast.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	compiler := compile.NewCompilerWithRegalBuiltins().
-		WithSchemas(compile.SchemaSet(schema)).
+		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
 		WithEnablePrintStatements(true)
 

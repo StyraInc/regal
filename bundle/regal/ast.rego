@@ -5,9 +5,7 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.opa
-
-builtin_names := object.keys(opa.builtins)
+builtin_names := object.keys(data.regal.opa.builtins)
 
 # METADATA
 # description: |
@@ -350,7 +348,7 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value.location.col == 1
 }
 
-all_functions := object.union(opa.builtins, function_decls(input.rules))
+all_functions := object.union(data.regal.opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
 

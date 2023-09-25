@@ -80,7 +80,7 @@ Can only be done by scanning the original code, as this is lost in the AST.
 ## Imports
 
 - [x] Use explicit imports for future keywords
-- [ ] Prefer importing packages over rules and functions
+- [x] Prefer importing packages over rules and functions
 - [x] Avoid importing input
 
 ### Notes

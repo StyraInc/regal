@@ -48,3 +48,13 @@ test_success_top_level_input_ref if {
 	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[input.y]`)
 	r == set()
 }
+
+test_success_top_level_const if {
+	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[4]`)
+	r == set()
+}
+
+test_success_top_level_param if {
+	r := rule.report with input as ast.with_future_keywords(`x(y) := input.foo.bar[y]`)
+	r == set()
+}

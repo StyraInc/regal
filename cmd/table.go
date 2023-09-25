@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -184,8 +183,7 @@ func renderTable(tableData [][]string) io.Reader {
 }
 
 func renderREADME(r io.Reader) string {
-	dataFilePath := filepath.Join(os.Getenv("EXECUTABLE_PATH"), "README.md")
-	file := string(must(os.ReadFile(dataFilePath)))
+	file := string(must(os.ReadFile("README.md")))
 
 	first := strings.Split(file, "<!-- RULES_TABLE_START -->")[0]
 	last := strings.Split(file, "<!-- RULES_TABLE_END -->")[1]

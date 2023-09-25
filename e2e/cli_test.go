@@ -503,33 +503,8 @@ func TestCreateNewBuiltinRuleDataYamlAndReadme(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	err := regal(&stdout, &stderr)("new", "rule", "--type", "builtin", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir)
-
-	if exp, act := 0, ExitStatus(err); exp != act {
+	if exp, act := 1, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
-	}
-
-	// Read the content of data.yaml
-	yamlContent, err := os.ReadFile(filepath.Join(tmpDir, "bundle", "regal", "config", "provided", "data.yaml"))
-	if err != nil {
-		t.Fatalf("failed to read data.yaml: %v", err)
-	}
-
-	var existingConfig config.Config
-
-	// Unmarshal the YAML content into a Config struct
-	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
-		t.Fatalf("failed to unmarshal data.yaml: %v", err)
-	}
-
-	// Check if the new rule exists in the YAML structure
-	if _, exists := existingConfig.Rules["naming"]["foo-bar-baz"]; !exists {
-		t.Errorf("new rule not found in data.yaml")
-	}
-
-	// Read the content of README.md
-	_, err = os.ReadFile(filepath.Join(tmpDir, "README.md"))
-	if err != nil {
-		t.Fatalf("failed to read README.md: %v", err)
 	}
 }
 

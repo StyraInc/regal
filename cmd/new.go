@@ -140,7 +140,7 @@ func scaffoldRule(params newRuleCommandParams) error {
 }
 
 func addToDataYAML(params newRuleCommandParams) error {
-	dataFilePath := filepath.Join(os.Getenv("EXECUTABLE_PATH"), "bundle", "regal", "config", "provided", "data.yaml")
+	dataFilePath := filepath.Join("bundle", "regal", "config", "provided", "data.yaml")
 
 	yamlContent, err := os.ReadFile(dataFilePath)
 	if err != nil {

@@ -29,6 +29,7 @@ linters:
     - funlen
     - nolintlint
     - depguard
+    - gomoddirectives # need replacements for wasip1
 linters-settings:
   tagliatelle:
     case:

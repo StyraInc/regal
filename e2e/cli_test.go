@@ -319,6 +319,52 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 }
 
+func TestAggregatesAreCollectedAndUsed(t *testing.T) {
+	t.Parallel()
+	cwd := must(os.Getwd)
+	basedir := cwd + "/testdata/aggregates"
+
+	t.Run("Zero violations expected", func(t *testing.T) {
+		stdout := bytes.Buffer{}
+		stderr := bytes.Buffer{}
+
+		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+
+		if exp, act := 0, ExitStatus(err); exp != act {
+			t.Errorf("expected exit status %d, got %d", exp, act)
+		}
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+	})
+
+	t.Run("One violation expected", func(t *testing.T) {
+		stdout := bytes.Buffer{}
+		stderr := bytes.Buffer{}
+		// By sending a single file to the command, we skip the aggregates computation, so we expect one violation
+		err := regal(&stdout, &stderr)("lint", "--format", "json", basedir+"/rego/policy_1.rego", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego")
+
+		if exp, act := 3, ExitStatus(err); exp != act {
+			t.Errorf("expected exit status %d, got %d", exp, act)
+		}
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+
+		var rep report.Report
+
+		if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
+			t.Fatalf("expected JSON response, got %v", stdout.String())
+		}
+
+		if rep.Summary.NumViolations != 1 {
+			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
+		}
+	})
+}
+
 func TestTestRegalBundledBundle(t *testing.T) {
 	t.Parallel()
 

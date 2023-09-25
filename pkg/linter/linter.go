@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -39,6 +40,7 @@ type Linter struct {
 	customRulesPaths []string
 	combinedConfig   *config.Config
 	debugMode        bool
+	printHook        print.Hook
 	disable          []string
 	disableAll       bool
 	disableCategory  []string
@@ -48,6 +50,10 @@ type Linter struct {
 	ignoreFiles      []string
 	metrics          metrics.Metrics
 }
+
+type QueryInputBuilder func(name string, content string, module *ast.Module) (map[string]any, error)
+
+type ReportCollector func(report report.Report)
 
 const regalUserConfig = "regal_user_config"
 
@@ -166,13 +172,19 @@ func (l Linter) WithMetrics(m metrics.Metrics) Linter {
 	return l
 }
 
+func (l Linter) WithPrintHook(printHook print.Hook) Linter {
+	l.printHook = printHook
+
+	return l
+}
+
 var query = ast.MustParseBody("violations = data.regal.main.report") //nolint:gochecknoglobals
 
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLint)
 
-	aggregate := report.Report{}
+	aggregateReport := report.Report{}
 
 	if len(l.inputPaths) == 0 && l.inputModules == nil {
 		return report.Report{}, errors.New("nothing provided to lint")
@@ -232,29 +244,39 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, goReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, goReport.Violations...)
 
-	regoReport, err := l.lintWithRegoRules(ctx, input)
+	var aggregates []report.Aggregate
+
+	if len(input.Modules) > 1 {
+		// No need to collect aggregates if there's only one file
+		aggregates, err = l.collectAggregates(ctx, input)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to collect aggregates using Rego rules: %w", err)
+		}
+	}
+
+	regoReport, err := l.lintWithRegoRules(ctx, input, aggregates)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
 
-	aggregate.Violations = append(aggregate.Violations, regoReport.Violations...)
+	aggregateReport.Violations = append(aggregateReport.Violations, regoReport.Violations...)
 
-	aggregate.Summary = report.Summary{
+	aggregateReport.Summary = report.Summary{
 		FilesScanned:  len(input.FileNames),
-		FilesFailed:   len(aggregate.ViolationsFileCount()),
+		FilesFailed:   len(aggregateReport.ViolationsFileCount()),
 		FilesSkipped:  0,
-		NumViolations: len(aggregate.Violations),
+		NumViolations: len(aggregateReport.Violations),
 	}
 
 	if l.metrics != nil {
 		l.metrics.Timer(regalmetrics.RegalLint).Stop()
 
-		aggregate.Metrics = l.metrics.All()
+		aggregateReport.Metrics = l.metrics.All()
 	}
 
-	return aggregate, nil
+	return aggregateReport, nil
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
@@ -406,7 +428,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 	}
 }
 
-func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
+func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 	var regoArgs []func(*rego.Rego)
 
 	roots := []string{"eval"}
@@ -425,10 +447,14 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
 
-	if l.debugMode {
+	if l.debugMode && l.printHook == nil {
+		l.printHook = topdown.NewPrintHook(os.Stderr)
+	}
+
+	if l.printHook != nil {
 		regoArgs = append(regoArgs,
 			rego.EnablePrintStatements(true),
-			rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+			rego.PrintHook(l.printHook),
 		)
 	}
 
@@ -454,14 +480,16 @@ func (l Linter) prepareRegoArgs() []func(*rego.Rego) {
 	return regoArgs
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) lintWithRegoRules(
+	ctx context.Context, input rules.Input, aggregates []report.Aggregate,
+) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs()
+	regoArgs := l.prepareRegoArgs(query)
 
 	linterQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -488,6 +516,10 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				errCh <- fmt.Errorf("failed preparing AST: %w", err)
 
 				return
+			}
+
+			if len(aggregates) > 0 {
+				enhancedAST["aggregate"] = aggregates
 			}
 
 			evalArgs := []rego.EvalOption{
@@ -724,6 +756,107 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 	}
 
 	return nil, fmt.Errorf("no regal bundle found")
+}
+
+func (l Linter) collectAggregates(ctx context.Context, input rules.Input) ([]report.Aggregate, error) {
+	var result []report.Aggregate
+
+	regoArgs := l.prepareRegoArgs(ast.MustParseBody("aggregates = data.regal.main.aggregate"))
+
+	var linterQuery rego.PreparedEvalQuery
+
+	var err error
+
+	if linterQuery, err = rego.New(regoArgs...).PrepareForEval(ctx); err != nil {
+		return []report.Aggregate{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	if err = l.evalAndCollect(ctx, input, linterQuery,
+		// query input builder
+		func(name string, content string, module *ast.Module) (map[string]any, error) {
+			result, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				return nil,
+					fmt.Errorf("could not enhance AST when buiding input during lint with Rego rules: %w", err)
+			}
+
+			return result, nil
+		},
+		// result collector
+		func(report report.Report) {
+			result = append(result, report.Aggregates...)
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// Process each file in input.Filenames in a goroutine, with the given Rego query and building the eval input using the
+// provided function. Collects the results via the provided collector. The collector is guaranteed to
+// run sequentially via a mutex.
+func (l Linter) evalAndCollect(ctx context.Context, input rules.Input, query rego.PreparedEvalQuery,
+	queryInputBuilder QueryInputBuilder,
+	reportCollector ReportCollector,
+) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	var mu sync.Mutex
+
+	errCh := make(chan error)
+
+	doneCh := make(chan bool)
+
+	for _, name := range input.FileNames {
+		wg.Add(1)
+
+		go func(name string) {
+			defer wg.Done()
+
+			queryInput, err := queryInputBuilder(name, input.FileContent[name], input.Modules[name])
+			if err != nil {
+				errCh <- fmt.Errorf("failed building query input: %w", err)
+
+				return
+			}
+
+			resultSet, err := query.Eval(ctx, rego.EvalInput(queryInput))
+			if err != nil {
+				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
+
+				return
+			}
+
+			result, err := resultSetToReport(resultSet)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
+
+				return
+			}
+
+			mu.Lock()
+			reportCollector(result)
+			mu.Unlock()
+		}(name)
+	}
+
+	go func() {
+		wg.Wait()
+		doneCh <- true
+	}()
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("context cancelled: %w", ctx.Err())
+	case err := <-errCh:
+		return fmt.Errorf("error encountered in rule evaluation %w", err)
+	case <-doneCh:
+		return nil
+	}
 }
 
 func (l Linter) startTimer(name string) {

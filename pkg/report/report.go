@@ -29,6 +29,12 @@ type Violation struct {
 	Location         Location          `json:"location,omitempty"`
 }
 
+// An Aggregate is data collected by some rule while processing a file AST, to be used later by other rules needing a
+// global context (i.e. broader than per-file)
+// Rule authors are expected to collect the minimum needed data, to avoid performance problems
+// while working with large Rego code repositories.
+type Aggregate map[string]any
+
 type Summary struct {
 	FilesScanned  int `json:"files_scanned"`
 	FilesFailed   int `json:"files_failed"`
@@ -38,7 +44,10 @@ type Summary struct {
 
 // Report aggregate of Violation as returned by a linter run.
 type Report struct {
-	Violations []Violation    `json:"violations"`
+	Violations []Violation `json:"violations"`
+	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
+	// to avoid surfacing a null/empty field.
+	Aggregates []Aggregate    `json:"aggregates,omitempty"`
 	Summary    Summary        `json:"summary"`
 	Metrics    map[string]any `json:"metrics,omitempty"`
 }

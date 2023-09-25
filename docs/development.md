@@ -129,6 +129,21 @@ The table in the [Rules](../README.md#rules) section of the README is generated 
 go run main.go table --write-to-readme bundle
 ```
 
+## Wasm (Experimental)
+
+Build with
+
+    GOOS=wasip1 GOARCH=wasm go build -o regal.wasm .
+
+Run with wasmtime regal.wasm and the like:
+
+    $ curl https://wasmtime.dev/install.sh -sSf | bash
+    # ...
+    $ wasmtime --version
+    wasmtime-cli 13.0.0
+    $ wasmtime --dir $(pwd) regal -- lint bundle
+    90 files linted. No violations found.
+
 ## Community
 
 If you'd like to discuss Regal development or just talk about Regal in general, please join us in the `#regal`

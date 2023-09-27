@@ -149,7 +149,7 @@ func opaTest(args []string) int {
 	compiler := compile.NewCompilerWithRegalBuiltins().
 		WithPathConflictsCheck(storage.NonEmpty(ctx, store, txn)).
 		WithEnablePrintStatements(!testParams.benchmark).
-		WithSchemas(compile.SchemaSet(embeds.ASTSchema)).
+		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
 		WithModuleLoader(moduleLoader(regalBundle))
 

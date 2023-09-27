@@ -3,14 +3,28 @@ package linter
 import (
 	"bytes"
 	"context"
+	"log"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown"
 
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/rules"
 )
+
+func TestMain(m *testing.M) {
+	// Temporary until this requirement is removed from OPA
+	if err := os.Setenv("EXPERIMENTAL_GENERAL_RULE_REFS", "true"); err != nil {
+		log.Fatal(err)
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()
@@ -361,5 +375,59 @@ func TestLintWithPrintHook(t *testing.T) {
 
 	if bb.String() != "p.rego\n" {
 		t.Errorf("expected print hook to print file name 'p.rego' and newline, got %q", bb.String())
+	}
+}
+
+func TestLintWithAggregateRule(t *testing.T) {
+	t.Parallel()
+
+	policies := make(map[string]string)
+	policies["foo.rego"] = `package foo
+		import data.bar
+
+		default allow := false
+	`
+	policies["bar.rego"] = `package bar
+		import data.foo.allow
+	`
+
+	modules := make(map[string]*ast.Module)
+
+	for filename, content := range policies {
+		modules[filename] = parse.MustParseModule(content)
+	}
+
+	input := rules.NewInput(policies, modules)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("prefer-package-imports").
+		WithInputModules(&input)
+
+	result, err := linter.Lint(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected no violation, got %d", len(result.Violations))
+	}
+
+	violation := result.Violations[0]
+
+	if violation.Title != "prefer-package-imports" {
+		t.Errorf("expected violation to be 'prefer-package-imports', got %q", violation.Title)
+	}
+
+	if violation.Location.Row != 2 {
+		t.Errorf("expected violation to be on line 2, got %d", violation.Location.Row)
+	}
+
+	if violation.Location.Column != 3 {
+		t.Errorf("expected violation to be on column 3, got %d", violation.Location.Column)
+	}
+
+	if *violation.Location.Text != "\t\timport data.foo.allow" {
+		t.Errorf("expected violation to be on 'import data.foo.allow', got %q", *violation.Location.Text)
 	}
 }

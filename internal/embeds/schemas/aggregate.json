@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/open-policy-agent/opa/ast/module",
+  "$ref": "#/$defs/aggregate_input",
+  "$defs": {
+    "aggregate_input": {
+      "properties": {
+        "aggregates_internal": {
+          "type": "object",
+          "description": "Internal mapping of rule -> aggregate entries — not exposed in the API"
+        },
+        "aggregate": {
+          "$ref": "#/$defs/aggregate"
+        },
+        "regal": {
+          "$ref": "#/$defs/regal"
+        }
+      },
+      "type": "object"
+    },
+    "aggregate": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "regal": {
+      "properties": {
+        "file": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "file"
+      ]
+    }
+  }
+}

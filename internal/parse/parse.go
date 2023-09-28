@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/ast/json"
 
 	rio "github.com/styrainc/regal/internal/io"
 )
@@ -13,9 +14,9 @@ import (
 func ParserOptions() ast.ParserOptions {
 	return ast.ParserOptions{
 		ProcessAnnotation: true,
-		JSONOptions: &ast.JSONOptions{
-			MarshalOptions: ast.JSONMarshalOptions{
-				IncludeLocation: ast.NodeToggle{
+		JSONOptions: &json.Options{
+			MarshalOptions: json.MarshalOptions{
+				IncludeLocation: json.NodeToggle{
 					Term:           true,
 					Package:        true,
 					Comment:        true,

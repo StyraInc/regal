@@ -15,11 +15,8 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
-// nolint:paralleltest,tparallel
 func TestRunRegoUnitTests(t *testing.T) {
-	// TODO: Temporary until this requirement is removed from OPA
-	//       Once removed, re-add t.Parallel()
-	t.Setenv("EXPERIMENTAL_GENERAL_RULE_REFS", "true")
+	t.Parallel()
 
 	ctx := context.Background()
 	bdl := filepath.Join("..", "..", "bundle")

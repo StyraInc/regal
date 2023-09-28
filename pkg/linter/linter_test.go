@@ -3,8 +3,6 @@ package linter
 import (
 	"bytes"
 	"context"
-	"log"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -16,15 +14,6 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
-
-func TestMain(m *testing.M) {
-	// Temporary until this requirement is removed from OPA
-	if err := os.Setenv("EXPERIMENTAL_GENERAL_RULE_REFS", "true"); err != nil {
-		log.Fatal(err)
-	}
-
-	os.Exit(m.Run())
-}
 
 func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()

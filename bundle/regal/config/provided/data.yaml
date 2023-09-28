@@ -72,6 +72,10 @@ rules:
     prefer-some-in-iteration:
       level: error
       ignore-nesting-level: 2
+    rule-length:
+      except-empty-body: true
+      level: error
+      max-rule-length: 30
     todo-comment:
       level: error
     unconditional-assignment:

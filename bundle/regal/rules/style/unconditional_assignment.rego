@@ -8,6 +8,7 @@ import future.keywords.in
 
 import data.regal.result
 
+# regal ignore:rule-length
 report contains violation if {
 	some rule in input.rules
 

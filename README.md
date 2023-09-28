@@ -172,6 +172,7 @@ The following rules are currently available:
 | style     | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                       | File should be formatted with `opa fmt`                   |
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                   | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)     | Prefer `some .. in` for iteration                         |
+| style     | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                               | Max rule length exceeded                                  |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                             | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)     | Unconditional assignment in rule body                     |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)       | Prefer := over = for assignment                           |

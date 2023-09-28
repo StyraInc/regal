@@ -30,6 +30,7 @@ func ParserOptions() ast.ParserOptions {
 					Annotations:    true,
 					AnnotationsRef: true,
 				},
+				IncludeLocationText: true,
 			},
 		},
 	}

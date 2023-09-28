@@ -38,6 +38,11 @@ rules:
       non-breakable-word-threshold: 100
 ```
 
+## Related Resources
+
+- Regal Docs: [file-length](https://docs.styra.com/regal/rules/style/file-length)
+- Regal Docs: [rule-length](https://docs.styra.com/regal/rules/style/rule-length)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

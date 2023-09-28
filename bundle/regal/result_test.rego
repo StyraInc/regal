@@ -83,6 +83,7 @@ test_related_resources_generated_by_result_fail_for_builtin_rule if {
 	}
 }
 
+# regal ignore:rule-length
 test_aggregate_function_builtin_rule if {
 	chain := [
 		{"path": ["regal", "rules", "testing", "aggregation", "report"]},
@@ -99,7 +100,6 @@ test_aggregate_function_builtin_rule if {
 		"regal": {"file": {"name": "policy.rego"}},
 		"package": {"path": [{"value": "data"}, {"value": "a"}, {"value": "b"}, {"value": "c"}]},
 	}
-
 	r == {
 		"rule": {
 			"category": "testing",
@@ -127,12 +127,10 @@ test_aggregate_function_custom_rule if {
 			"path": ["custom", "regal", "rules", "testing", "aggregation"],
 		},
 	]
-
 	r := result.aggregate(chain, {"foo": "bar", "baz": [1, 2, 3]}) with input as {
 		"regal": {"file": {"name": "policy.rego"}},
 		"package": {"path": [{"value": "data"}, {"value": "a"}, {"value": "b"}, {"value": "c"}]},
 	}
-
 	r == {
 		"rule": {
 			"category": "testing",

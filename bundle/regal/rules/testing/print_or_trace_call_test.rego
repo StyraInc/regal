@@ -15,27 +15,29 @@ test_fail_call_to_print_and_trace if {
 		x := [i | i = 0; trace("bar")]
 	}`)
 	r == {
-		{
-			"category": "testing",
-			"description": "Call to print or trace function",
-			"level": "error",
-			"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tprint(\"foo\")"},
-			"related_resources": [{
-				"description": "documentation",
-				"ref": config.docs.resolve_url("$baseUrl/$category/print-or-trace-call", "testing"),
-			}],
-			"title": "print-or-trace-call",
-		},
-		{
-			"category": "testing",
-			"description": "Call to print or trace function",
-			"level": "error",
-			"location": {"col": 20, "file": "policy.rego", "row": 6, "text": "\t\tx := [i | i = 0; trace(\"bar\")]"},
-			"related_resources": [{
-				"description": "documentation",
-				"ref": config.docs.resolve_url("$baseUrl/$category/print-or-trace-call", "testing"),
-			}],
-			"title": "print-or-trace-call",
-		},
+		expected_with_location({
+			"col": 3,
+			"file": "policy.rego",
+			"row": 4,
+			"text": "\t\tprint(\"foo\")",
+		}),
+		expected_with_location({
+			"col": 20,
+			"file": "policy.rego",
+			"row": 6,
+			"text": "\t\tx := [i | i = 0; trace(\"bar\")]",
+		}),
 	}
+}
+
+expected_with_location(location) := {
+	"category": "testing",
+	"description": "Call to print or trace function",
+	"level": "error",
+	"location": location,
+	"related_resources": [{
+		"description": "documentation",
+		"ref": config.docs.resolve_url("$baseUrl/$category/print-or-trace-call", "testing"),
+	}],
+	"title": "print-or-trace-call",
 }

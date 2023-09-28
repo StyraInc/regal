@@ -190,6 +190,16 @@ The following rules are currently available:
 
 By default, all rules except for those in the `custom` category are currently **enabled**.
 
+#### Aggregate Rules
+
+Most Regal rules will use data only from a single file at a time, with no consideration for other files. A few rules
+however require data from multiple files, and will therefore collect, or aggregate, data from all files provided for
+linting. These rules are called *aggregate rules*, and will only be run when there is more than one file to lint, such
+as when linting a directory or a whole policy repository. One example of such a rule is the `prefer-package-imports`
+rule, which will aggregate package names and imports from all provided policies in order to determine if any imports
+are pointing to rules or functions rather than packages. You normally won't need to care about this distinction other
+than being aware of the fact that some linter rules won't be run when linting a single file.
+
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
 request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules.md) page for more information on how to
 develop your own rules, for yourself or for inclusion in Regal.

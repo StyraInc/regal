@@ -164,6 +164,85 @@ Starting from top to bottom, these are the components comprising our custom rule
    will later be included in the final report provided by Regal.
 1. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 
+## Aggregate Rules
+
+Aggregate rules are a special type of rule that allows you to collect data from multiple files before making a decision.
+This is needed in some cases where a single policy file won't be enough for a linter rule to make a decision. For
+example, you may want to enforce that in a policy repository, there must be at least one package annotated with an
+`authors` attribute. This requires first collecting annotation data from all the provided policies, and then have the
+rule use this data to make a decision. The structure of an aggregate rule is similar to a regular rule, but with a few
+notable differences. The most significant one is that linting happens in two separate phases — one that aggregates data
+from files, and one that actually lints and reports violations using that data.
+
+```rego
+# METADATA
+# description: |
+#   There must be at least one boolean rule named `allow`, and it must
+#   have a default value of `false`
+# related_resources:
+# - description: documentation
+#   ref: https://www.acmecorp.example.org/docs/regal/aggregate-allow
+# schemas:
+# - input: schema.regal.ast
+package custom.regal.rules.organizational["at-least-one-allow"]
+
+import future.keywords.contains
+import future.keywords.if
+import future.keywords.in
+
+import data.regal.ast
+import data.regal.result
+
+aggregate contains entry if {
+    # ast.rules is input.rules with functions filtered out
+    some rule in ast.rules
+    
+    # search for rule named alllow
+    ast.name(rule) == "allow"
+    
+    # make sure it's a default assignemnt
+    # ideally we'll want more than that, but the *requiremnt* is only
+    # that such a rule exists...
+    rule["default"] == true
+    
+    # ...and that it defaults to false
+    rule.head.value.type == "boolean"
+    rule.head.value.value == false
+
+    # if found, collect the result into our aggregate collection
+    # we don't really need the location here, but showing for demonstration
+    entry := result.aggregate(rego.metadata.chain(), {
+        # optional metadata here
+        "package": input["package"],
+    })
+}
+
+# METADATA
+# description: |
+#   This is called once all aggregates have been collected. Note the use of a
+#   different schema here for type checking, as the input is no longer the AST
+#   of a Rego policy, but our collected data.
+# schemas:
+#   - input: schema.regal.aggregate
+aggregate_report contains violation if {
+    # input.aggregate contains only the entries collected by *this* aggregate rule,
+    # so you don't need to worry about counting entries from other sources here!
+    count(input.aggregate) == 0
+
+    # no aggregated data found, so we'll report a violation
+    # another rule may of course want to make use of the data collected in the aggregation
+    violation := result.fail(rego.metadata.chain(), {
+        "message": "At least one rule named `allow` must exist, and it must have a default value of `false`",
+    })
+}
+```
+As you can see, the aggregate rule is split into two parts — one that collects data (`aggregate`), and one that reports
+violations (`aggregate_report`).
+
+Use of helper functions like `result.aggregate` is optional, but **highly** recommended, as it will have any aggregate
+entry contain information like file, location and package, which is useful both for reporting, but also for debugging.
+Use a `print` or two in the `aggregate_report` rule to see exactly what's included!
+
 ## Parsing and Testing
 
 Regal provides a few tools mirrored from OPA in order to help test and debug custom rules. These are necessary since OPA

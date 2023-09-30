@@ -22,9 +22,7 @@ package_name := concat(".", [path.value |
 #   note that what constitutes the "name" of a ref-head rule is
 #   ambiguous at best, i.e. a["b"][c] { ... } ... in those cases
 #   we currently return the first element of the ref, i.e. "a"
-name(rule) := rule.head.name if {
-	rule.head.name
-} else := rule.head.ref[0].value
+name(rule) := rule.head.ref[0].value
 
 named_refs(refs) := [ref |
 	some i, ref in refs

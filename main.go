@@ -12,11 +12,6 @@ func main() {
 	// Evaluate options for logging later
 	log.SetFlags(0)
 
-	// TODO: Temporary until this requirement is removed from OPA
-	if err := os.Setenv("EXPERIMENTAL_GENERAL_RULE_REFS", "true"); err != nil {
-		log.Fatal(err)
-	}
-
 	if err := cmd.RootCommand.Execute(); err != nil {
 		os.Exit(1)
 	}

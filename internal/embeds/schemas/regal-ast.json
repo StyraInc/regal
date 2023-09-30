@@ -273,6 +273,9 @@
         },
         "col": {
           "type": "integer"
+        },
+        "text": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

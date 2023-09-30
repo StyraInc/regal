@@ -43,6 +43,8 @@ rules:
 ## Related Resources
 
 - Styra Blog: [Dynamic Policy Composition](https://www.styra.com/blog/dynamic-policy-composition-for-opa/)
+- Regal Docs: [line-length](https://docs.styra.com/regal/rules/style/line-length)
+- Regal Docs: [rule-length](https://docs.styra.com/regal/rules/style/rule-length)
 
 ## Community
 

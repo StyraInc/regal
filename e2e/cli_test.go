@@ -308,8 +308,8 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 
 	expectedViolations := []string{
-		`Naming convention violation: package name "this.fails" does not match pattern "^acmecorp\\.[a-z_\\.]+$"`,
-		`Naming convention violation: rule name "naming_convention_fail" does not match pattern "^_[a-z_]+$|^allow$"`,
+		`Naming convention violation: package name "this.fails" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
+		`Naming convention violation: rule name "naming_convention_fail" does not match pattern '^_[a-z_]+$|^allow$'`,
 	}
 
 	for _, violation := range rep.Violations {

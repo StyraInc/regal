@@ -143,6 +143,10 @@ rule_length {
 	input.x30
 }
 
+default_over_else := 1 {
+	input.x
+} else := 3
+
 ### Testing ###
 
 # this will also tringger the test-outside-test-package rule

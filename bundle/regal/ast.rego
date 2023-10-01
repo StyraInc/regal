@@ -5,6 +5,21 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
+scalar_types := {"boolean", "null", "number", "string"}
+
+# regal ignore:external-reference
+is_constant(value) if value.type in scalar_types
+
+is_constant(value) if {
+	value.type in {"array", "object"}
+	not has_var(value)
+}
+
+has_var(value) if {
+	walk(value.value, [_, term])
+	term.type == "var"
+}
+
 builtin_names := object.keys(data.regal.opa.builtins)
 
 # METADATA

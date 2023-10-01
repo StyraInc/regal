@@ -3,7 +3,6 @@ package regal.rules.style["rule-length_test"]
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.style["rule-length"] as rule

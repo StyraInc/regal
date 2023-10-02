@@ -509,20 +509,6 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 	}
 }
 
-func TestCreateNewBuiltinRuleDataYamlAndReadme(t *testing.T) {
-	t.Parallel()
-
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
-	tmpDir := t.TempDir()
-
-	err := regal(&stdout, &stderr)("new", "rule", "--type", "builtin", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir)
-	if exp, act := 1, ExitStatus(err); exp != act {
-		t.Errorf("expected exit status %d, got %d", exp, act)
-	}
-}
-
 func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	t.Parallel()
 

@@ -2,17 +2,22 @@
 package cmd
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/styrainc/regal/internal/embeds"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 // The revive check will warn about using underscore in struct names, but it's seemingly not aware of keywords.
@@ -112,10 +117,106 @@ func scaffoldRule(params newRuleCommandParams) error {
 	}
 
 	if params.type_ == "builtin" {
-		return scaffoldBuiltinRule(params)
+		if err := scaffoldBuiltinRule(params); err != nil {
+			return err
+		}
+
+		if err := addToDataYAML(params); err != nil {
+			return err
+		}
+
+		r, err := createTable([]string{filepath.Join("bundle", "regal")})
+		if err != nil {
+			return err
+		}
+
+		newReadme := renderREADME(r)
+		readmePath := filepath.Join(params.output, "README.md")
+
+		return os.WriteFile(readmePath, []byte(newReadme), 0o600)
 	}
 
 	return fmt.Errorf("unsupported type %v", params.type_)
+}
+
+func addToDataYAML(params newRuleCommandParams) error {
+	dataFilePath := filepath.Join("bundle", "regal", "config", "provided", "data.yaml")
+
+	yamlContent, err := os.ReadFile(dataFilePath)
+	if err != nil {
+		// Check if the error is of type *os.PathError
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) && os.IsNotExist(pathErr.Err) {
+			// Handle the case where the file does not exist
+			return fmt.Errorf("data.yaml file not found. " +
+				"Please run this command from the top-level directory of the Regal repository")
+		}
+
+		return err
+	}
+
+	var existingConfig config.Config
+
+	// Unmarshal the YAML content into a map
+	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
+		return err
+	}
+
+	// Create a new Rule value and set the Level field
+	vrule := config.Rule{
+		Level: "error",
+	}
+
+	// Check if the category already exists in rules
+	if existingConfig.Rules[params.category] == nil {
+		existingConfig.Rules[params.category] = make(map[string]config.Rule)
+	}
+
+	// Assign the new Rule value to the Category map
+	existingConfig.Rules[params.category][params.name] = vrule
+
+	// Sort the map keys alphabetically (categories)
+	sortedCategories := make([]string, 0, len(existingConfig.Rules))
+	for cat := range existingConfig.Rules {
+		sortedCategories = append(sortedCategories, cat)
+	}
+
+	sort.Strings(sortedCategories)
+
+	// Sort rule names within each category alphabetically
+	for _, cat := range sortedCategories {
+		sortedRuleNames := make([]string, 0, len(existingConfig.Rules[cat]))
+		for ruleName := range existingConfig.Rules[cat] {
+			sortedRuleNames = append(sortedRuleNames, ruleName)
+		}
+
+		sort.Strings(sortedRuleNames)
+
+		sortedCategory := make(config.Category)
+		for _, ruleName := range sortedRuleNames {
+			sortedCategory[ruleName] = existingConfig.Rules[cat][ruleName]
+		}
+
+		existingConfig.Rules[cat] = sortedCategory
+	}
+
+	var b bytes.Buffer
+
+	yamlEncoder := yaml.NewEncoder(&b)
+	yamlEncoder.SetIndent(2)
+
+	err = yamlEncoder.Encode(existingConfig)
+	if err != nil {
+		return err
+	}
+
+	// Write the YAML content to the file
+	dataYamlDir := filepath.Join(params.output, "bundle", "regal", "config", "provided")
+	if err := os.MkdirAll(dataYamlDir, 0o770); err != nil {
+		return err
+	}
+
+	return os.WriteFile(filepath.Join(dataYamlDir, "data.yaml"), b.Bytes(), 0o600)
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {

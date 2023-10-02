@@ -16,8 +16,8 @@ rules:
       level: error
   custom:
     forbidden-function-call:
-      level: ignore
       forbidden-functions: []
+      level: ignore
     naming-convention:
       level: ignore
   idiomatic:
@@ -62,9 +62,9 @@ rules:
       level: error
       max-file-length: 500
     function-arg-return:
-      level: error
       except-functions:
         - walk
+      level: error
     line-length:
       level: error
       max-line-length: 120
@@ -75,8 +75,8 @@ rules:
     prefer-snake-case:
       level: error
     prefer-some-in-iteration:
-      level: error
       ignore-nesting-level: 2
+      level: error
     rule-length:
       except-empty-body: true
       level: error

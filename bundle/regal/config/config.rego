@@ -38,6 +38,8 @@ empty_level_to_provided(category, title, conf) := object.union(
 	conf.level == ""
 } else := object.union(conf, {"level": "error"}) if conf.level == ""
 
+default for_rule(_, _) := {"level": "error"}
+
 # METADATA
 # description: |
 #   Returns the configuration applied (i.e. the provided configuration
@@ -50,9 +52,6 @@ for_rule(category, title) := _with_level(category, title, "ignore") if {
 } else := c if {
 	m := merged_config.rules[category][title]
 	c := object.union(m, {"level": rule_level(m)})
-} else := {"level": "error"} if {
-	# regal ignore:external-reference
-	not merged_config.rules[category][title]
 }
 
 _with_level(category, title, level) := c if {
@@ -60,9 +59,7 @@ _with_level(category, title, level) := c if {
 	c := object.union(m, {"level": level})
 } else := {"level": level}
 
-rule_level(cfg) := "error" if {
-	not cfg.level
-}
+default rule_level(_) := "error"
 
 rule_level(cfg) := cfg.level
 

@@ -49,6 +49,9 @@ rules:
       level: error
     chained-rule-body:
       level: error
+    default-over-else:
+      level: error
+      prefer-default-functions: false
     detached-metadata:
       level: error
     external-reference:

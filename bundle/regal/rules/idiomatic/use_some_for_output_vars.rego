@@ -10,6 +10,8 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
+	# can't use ast.all_refs here as we need to
+	# refer to the `rule` below
 	some rule in input.rules
 
 	walk(rule, [_, value])

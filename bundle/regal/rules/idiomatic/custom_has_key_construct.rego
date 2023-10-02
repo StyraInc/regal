@@ -6,13 +6,13 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
-	rule.head.args
+	some rule in ast.functions
 
-	arg_names := [arg.value | some arg in rule.head.args]
+	arg_names := ast.function_arg_names(rule)
 
 	count(rule.body) == 1
 

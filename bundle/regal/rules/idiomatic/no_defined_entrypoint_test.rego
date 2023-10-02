@@ -3,7 +3,6 @@ package regal.rules.idiomatic["no-defined-entrypoint_test"]
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.idiomatic["no-defined-entrypoint"] as rule

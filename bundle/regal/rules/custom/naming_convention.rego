@@ -58,9 +58,8 @@ report contains violation if {
 
 	target == "function"
 
-	some rule in input.rules
+	some rule in ast.functions
 
-	rule.head.args
 	not regex.match(convention.pattern, ast.name(rule))
 
 	violation := with_description(

@@ -24,9 +24,24 @@ test_fail_simple_constant_condition if {
 	}}
 }
 
-test_success_static_condition_probably_generated if {
-	r := rule.report with input as ast.policy(`allow { true }`)
+test_success_rule_without_body if {
+	r := rule.report with input as ast.policy(`allow := true`)
 	r == set()
+}
+
+test_fail_rule_with_body_looking_generated if {
+	r := rule.report with input as ast.policy(`allow { true }`)
+	r == {{
+		"category": "bugs",
+		"description": "Constant condition",
+		"location": {"col": 9, "file": "policy.rego", "row": 3, "text": "allow { true }"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
+		}],
+		"title": "constant-condition",
+		"level": "error",
+	}}
 }
 
 test_fail_operator_constant_condition if {

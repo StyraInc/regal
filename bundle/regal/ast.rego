@@ -51,16 +51,32 @@ _is_name(ref, pos) if {
 	ref.type == "string"
 }
 
+# i.e. allow {..}, or allow := true, which expands to allow = true { true }
+no_body(rule) if rule.body[0].location == rule.head.value.location
+
+no_body(rule) if rule["default"] == true
+
+rules := [rule |
+	some rule in input.rules
+	not rule.head.args
+]
+
 tests := [rule |
 	some rule in input.rules
 	not rule.head.args
 	startswith(name(rule), "test_")
 ]
 
-rule_names := {name(rule) |
+functions := [rule |
 	some rule in input.rules
-	not rule.head.args
-}
+	rule.head.args
+]
+
+function_arg_names(rule) := [arg.value | some arg in rule.head.args]
+
+rule_and_function_names := {name(rule) | some rule in input.rules}
+
+rule_names := {name(rule) | some rule in rules}
 
 # METADATA
 # description: parse provided snippet with a generic package declaration added
@@ -311,8 +327,7 @@ builtin_functions_called contains name if {
 # description: |
 #   Returns custom functions declared in input policy in the same format as opa.builtins
 function_decls(rules) := {rule_name: args |
-	some rule in rules
-	rule.head.args
+	some rule in functions
 
 	rule_name := name(rule)
 

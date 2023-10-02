@@ -22,22 +22,14 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-_rule_names := {ast.name(rule) | some rule in input.rules}
-
-_arg_names(rule) := {arg.value | some arg in rule.head.args}
-
 _path(loc) := concat(".", {l.value | some l in loc})
 
 illegal_value_ref(value, rule) if {
 	# regal ignore:external-reference
-	not value in _rule_names
+	not value in ast.rule_and_function_names
 	not is_arg_or_input(value, rule)
 }
 
-is_arg_or_input(value, rule) if {
-	value in _arg_names(rule)
-}
+is_arg_or_input(value, rule) if value in ast.function_arg_names(rule)
 
-is_arg_or_input(value, rule) if {
-	startswith(_path(value), "input.")
-}
+is_arg_or_input(value, _) if startswith(_path(value), "input.")

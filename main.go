@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Remove date and time from any `log.*` calls, as that doesn't add much of value here
-	// Evaluate options for logging later..
+	// Evaluate options for logging later
 	log.SetFlags(0)
 
 	if err := cmd.RootCommand.Execute(); err != nil {

@@ -71,6 +71,8 @@ job.tasks {
 #   - https://github.com/golangci/golangci-lint
 #   - https://github.com/open-policy-agent/opa
 job.pr {
+	build(true)
+
 	# format
 	fmt_all
 	write_readme

@@ -9,13 +9,15 @@ import future.keywords.in
 import data.regal.config
 import data.regal.result
 
-report contains violation if {
-	cfg := config.for_rule("style", "line-length")
+cfg := config.for_rule("style", "line-length")
 
+report contains violation if {
 	some i, line in input.regal.file.lines
 
 	line_length := count(line)
 	line_length > cfg["max-line-length"]
+
+	not has_word_above_threshold(line, cfg)
 
 	violation := result.fail(
 		rego.metadata.chain(),
@@ -26,4 +28,11 @@ report contains violation if {
 			"text": input.regal.file.lines[i],
 		}},
 	)
+}
+
+has_word_above_threshold(line, conf) if {
+	threshold := conf["non-breakable-word-threshold"]
+
+	some word in split(line, " ")
+	count(word) > threshold
 }

@@ -25,6 +25,8 @@ rules:
       level: error
     custom-in-construct:
       level: error
+    no-defined-entrypoint:
+      level: error
     non-raw-regex-pattern:
       level: error
     use-in-operator:
@@ -38,6 +40,8 @@ rules:
       level: error
     import-shadows-import:
       level: error
+    prefer-package-imports:
+      level: error
     redundant-alias:
       level: error
     redundant-data-import:
@@ -47,6 +51,9 @@ rules:
       level: error
     chained-rule-body:
       level: error
+    default-over-else:
+      level: error
+      prefer-default-functions: false
     detached-metadata:
       level: error
     external-reference:
@@ -70,6 +77,10 @@ rules:
     prefer-some-in-iteration:
       ignore-nesting-level: 2
       level: error
+    rule-length:
+      except-empty-body: true
+      level: error
+      max-rule-length: 30
     todo-comment:
       level: error
     unconditional-assignment:

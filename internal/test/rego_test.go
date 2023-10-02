@@ -3,7 +3,6 @@ package test
 import (
 	"context"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -40,13 +39,8 @@ func TestRunRegoUnitTests(t *testing.T) {
 		store.Abort(ctx, txn)
 	})
 
-	schema, err := os.ReadFile("../embeds/schemas/regal-ast.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	compiler := compile.NewCompilerWithRegalBuiltins().
-		WithSchemas(compile.SchemaSet(schema)).
+		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
 		WithEnablePrintStatements(true)
 

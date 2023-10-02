@@ -2,19 +2,20 @@
 # description: Collect data in aggregates and validate it
 package custom.regal.rules.testcase["aggregates"]
 
-import future.keywords
+import future.keywords.contains
+import future.keywords.if
+import future.keywords.in
+
 import data.regal.result
 
 aggregate contains entry if {
-    entry := { "file" : input.regal.file.name }
+    entry := result.aggregate(rego.metadata.chain(), {})
 }
 
-report contains violation if {
+aggregate_report contains violation if {
 	not two_files_processed
+
     violation := result.fail(rego.metadata.chain(), {})
 }
 
-two_files_processed {
-	files := [x | x = input.aggregate[_].file]
-	count(files) == 2
-}
+two_files_processed if count(input.aggregate) == 2

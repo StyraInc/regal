@@ -5,9 +5,22 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
-import data.regal.opa
+scalar_types := {"boolean", "null", "number", "string"}
 
-builtin_names := object.keys(opa.builtins)
+# regal ignore:external-reference
+is_constant(value) if value.type in scalar_types
+
+is_constant(value) if {
+	value.type in {"array", "object"}
+	not has_var(value)
+}
+
+has_var(value) if {
+	walk(value.value, [_, term])
+	term.type == "var"
+}
+
+builtin_names := object.keys(data.regal.opa.builtins)
 
 # METADATA
 # description: |
@@ -24,9 +37,7 @@ package_name := concat(".", [path.value |
 #   note that what constitutes the "name" of a ref-head rule is
 #   ambiguous at best, i.e. a["b"][c] { ... } ... in those cases
 #   we currently return the first element of the ref, i.e. "a"
-name(rule) := rule.head.name if {
-	rule.head.name
-} else := rule.head.ref[0].value
+name(rule) := rule.head.ref[0].value
 
 named_refs(refs) := [ref |
 	some i, ref in refs
@@ -350,7 +361,7 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value.location.col == 1
 }
 
-all_functions := object.union(opa.builtins, function_decls(input.rules))
+all_functions := object.union(data.regal.opa.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
 

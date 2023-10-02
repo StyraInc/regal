@@ -15,6 +15,13 @@ close to the maximum line length, consider refactoring your policy.
 
 The default maximum line length is 120 characters.
 
+## Exceptions
+
+On a few rare occasions, a single word — like a really long URL in a metadata annotation — can't possibly be made any 
+shorter. Using an ignore directive isn't an option in that context, and ignoring the whole file is rarely what you'll
+want. The `non-breakable-word-threshold` configuration option allows defining a threshold length for when a single word
+should be considered so long that the line length rule should ignore the line entirely.
+
 ## Configuration Options
 
 This linter rule provides the following configuration options:
@@ -27,7 +34,14 @@ rules:
       level: error
       # maximum line length
       max-line-length: 120
+      # if any single word on a line exceeds this length, ignore it
+      non-breakable-word-threshold: 100
 ```
+
+## Related Resources
+
+- Regal Docs: [file-length](https://docs.styra.com/regal/rules/style/file-length)
+- Regal Docs: [rule-length](https://docs.styra.com/regal/rules/style/rule-length)
 
 ## Community
 

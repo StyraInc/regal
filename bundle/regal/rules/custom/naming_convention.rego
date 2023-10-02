@@ -24,7 +24,7 @@ report contains violation if {
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(input["package"])),
 		sprintf(
-			"Naming convention violation: package name %q does not match pattern %q",
+			"Naming convention violation: package name %q does not match pattern '%s'",
 			[ast.package_name, convention.pattern],
 		),
 	)
@@ -45,7 +45,7 @@ report contains violation if {
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
-			"Naming convention violation: rule name %q does not match pattern %q",
+			"Naming convention violation: rule name %q does not match pattern '%s'",
 			[ast.name(rule), convention.pattern],
 		),
 	)
@@ -66,7 +66,7 @@ report contains violation if {
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
-			"Naming convention violation: function name %q does not match pattern %q",
+			"Naming convention violation: function name %q does not match pattern '%s'",
 			[ast.name(rule), convention.pattern],
 		),
 	)
@@ -86,7 +86,7 @@ report contains violation if {
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(var)),
 		sprintf(
-			"Naming convention violation: variable name %q does not match pattern %q",
+			"Naming convention violation: variable name %q does not match pattern '%s'",
 			[var.value, convention.pattern],
 		),
 	)

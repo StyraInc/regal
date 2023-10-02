@@ -5,6 +5,56 @@ import future.keywords.in
 
 import data.regal.config
 
+# METADATA
+# description: |
+#  The result.aggregate function works similarly to `result.fail`, but instead of producing
+#  a violation returns an entry to be aggregated for later evaluation. This is useful in
+#  aggregate rules (and only in aggregate rules) as it provides a uniform format for
+#  aggregate data entries. Example return value:
+#
+#  {
+#      "rule": {
+#          "category": "testing",
+#          "title": "aggregation",
+#      },
+#      "aggregate_source": {
+#          "file": "policy.rego",
+#          "package_path": ["a", "b", "c"],
+#      },
+#      "aggregate_data": {
+#          "foo": "bar",
+#          "baz": [1, 2, 3],
+#      },
+#  }
+#
+aggregate(chain, aggregate_data) := entry if {
+	is_array(chain)
+
+	some link in chain
+	link.annotations.scope == "package"
+
+	[category, title] := _category_title_from_path(link.path)
+
+	entry := {
+		"rule": {
+			"category": category,
+			"title": title,
+		},
+		"aggregate_source": {
+			"file": input.regal.file.name,
+			"package_path": [part.value |
+				some i, part in input["package"].path
+				i > 0
+			],
+		},
+		"aggregate_data": aggregate_data,
+	}
+}
+
+_category_title_from_path(path) := [category, title] if ["regal", "rules", category, title] = path
+
+_category_title_from_path(path) := [category, title] if ["custom", "regal", "rules", category, title] = path
+
 # Provided rules, i.e. regal.rules.category.title
 fail(chain, details) := violation if {
 	is_array(chain) # from rego.metadata.chain()

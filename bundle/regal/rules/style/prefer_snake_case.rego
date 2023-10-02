@@ -15,7 +15,7 @@ report contains violation if {
 	some ref in ast.named_refs(rule.head.ref)
 	not util.is_snake_case(ref.value)
 
-	violation := result.fail(rego.metadata.chain(), result.location(location_of(ref, rule)))
+	violation := result.fail(rego.metadata.chain(), result.location(ref))
 }
 
 report contains violation if {
@@ -24,10 +24,3 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.chain(), result.location(var))
 }
-
-# annoyingly, rule head refs are missing location when a rule.head.name is present,
-# or rather when there's only a single item in the ref.. this inconsistency should
-# probably be fixed in OPA, but until then, there's this.
-location_of(ref, rule) := ref if ref.location
-
-else := rule.head

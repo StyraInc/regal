@@ -7,7 +7,6 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
-import data.regal.opa
 import data.regal.result
 
 report contains violation if {
@@ -20,7 +19,7 @@ report contains violation if {
 	ref_name := expr.terms[0].value[0].value
 	ref_name in ast.builtin_names
 
-	opa.builtins[ref_name].result.type != "boolean"
+	data.regal.opa.builtins[ref_name].result.type != "boolean"
 
 	# no violation if the return value is declared as the last function argument
 	# see the function-arg-return rule for *that* violation

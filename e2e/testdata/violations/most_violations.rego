@@ -22,6 +22,10 @@ import data.redundant.alias as alias
 # redundant-data-import
 import data
 
+# prefer-package-imports
+# aggregate rule, so will only fail if more than one file is linted
+import data.rule_named_if.allow
+
 ### Bugs ###
 
 constant_condition {
@@ -53,6 +57,16 @@ custom_has_key_construct(map, key) {
 
 custom_in_construct(coll, item) {
 	item == coll[_]
+}
+
+use_some_for_output_vars {
+	input.foo[output_var]
+}
+
+non_raw_regex_pattern := regex.match("[0-9]", "1")
+
+use_in_operator {
+	"item" == input.coll[_]
 }
 
 ### Style ###
@@ -90,9 +104,50 @@ x := y {
 
 use_assignment = "oparator"
 
-use_in_operator {
-	"item" == input.coll[_]
+chained_rule_body {
+	input.x
+} {
+	input.y
 }
+
+rule_length {
+	input.x1
+	input.x2
+	input.x3
+	input.x4
+	input.x5
+	input.x6
+	input.x7
+	input.x8
+	input.x9
+	input.x10
+	input.x11
+	input.x12
+	input.x13
+	input.x14
+	input.x15
+	input.x16
+	input.x17
+	input.x18
+	input.x19
+	input.x20
+	input.x21
+	input.x22
+	input.x23
+	input.x24
+	input.x25
+	input.x26
+	input.x27
+	input.x28
+	input.x29
+	input.x30
+}
+
+default_over_else := 1 {
+	input.x
+} else := 3
+
+### Testing ###
 
 # this will also tringger the test-outside-test-package rule
 test_identically_named_tests := true
@@ -106,20 +161,8 @@ print_or_trace_call {
 	print("forbidden!")
 }
 
-non_raw_regex_pattern := regex.match("[0-9]", "1")
-
-use_some_for_output_vars {
-	input.foo[output_var]
-}
-
 # metasyntactic variable
 foo := "bar"
-
-chained_rule_body {
-	input.x
-} {
-	input.y
-}
 
 # dubious print sprintf
 y {

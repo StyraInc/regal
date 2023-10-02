@@ -12,6 +12,9 @@ lint.aggregates := aggregate
 
 lint_aggregate.violations := aggregate_report
 
+# METADATA
+# description: Runs all rules against an input AST and produces a report
+# entrypoint: true
 report contains violation if {
 	not is_object(input)
 
@@ -95,7 +98,7 @@ aggregate_report contains violation if {
 
 	key := concat("/", [category, title])
 	input_for_rule := object.remove(
-		object.union(input, {"aggregate": input.aggregates_internal[key]}),
+		object.union(input, {"aggregate": object.get(input, ["aggregates_internal", key], [])}),
 		["aggregates_internal"],
 	)
 

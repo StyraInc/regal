@@ -2,6 +2,12 @@ package report
 
 import (
 	"fmt"
+	"io"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 // RelatedResource provides documentation on a violation.
@@ -47,9 +53,109 @@ type Report struct {
 	Violations []Violation `json:"violations"`
 	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
 	// to avoid surfacing a null/empty field.
-	Aggregates map[string][]Aggregate `json:"aggregates,omitempty"`
-	Summary    Summary                `json:"summary"`
-	Metrics    map[string]any         `json:"metrics,omitempty"`
+	Aggregates       map[string][]Aggregate  `json:"aggregates,omitempty"`
+	Summary          Summary                 `json:"summary"`
+	Metrics          map[string]any          `json:"metrics,omitempty"`
+	AggregateProfile map[string]ProfileEntry `json:"-"`
+	Profile          []ProfileEntry          `json:"profile,omitempty"`
+}
+
+// ProfileEntry is a single entry of profiling information, keyed by location.
+// This data may have been aggregated across multiple runs.
+type ProfileEntry struct {
+	Location    string `json:"location"`
+	TotalTimeNs int64  `json:"total_time_ns"`
+	NumEval     int    `json:"num_eval"`
+	NumRedo     int    `json:"num_redo"`
+	NumGenExpr  int    `json:"num_gen_expr"`
+}
+
+func (r *Report) AddProfileEntries(prof map[string]ProfileEntry) {
+	if r.AggregateProfile == nil {
+		r.AggregateProfile = map[string]ProfileEntry{}
+	}
+
+	for loc, entry := range prof {
+		if _, ok := r.AggregateProfile[loc]; !ok {
+			r.AggregateProfile[loc] = entry
+		} else {
+			profCopy := prof[loc]
+			profCopy.NumEval += entry.NumEval
+			profCopy.NumRedo += entry.NumRedo
+			profCopy.NumGenExpr += entry.NumGenExpr
+			profCopy.TotalTimeNs += entry.TotalTimeNs
+			profCopy.Location = entry.Location
+			r.AggregateProfile[loc] = profCopy
+		}
+	}
+}
+
+func (r *Report) AggregateProfileToSortedProfile(numResults int) {
+	r.Profile = make([]ProfileEntry, 0, len(r.AggregateProfile))
+
+	for loc, rs := range r.AggregateProfile {
+		rs.Location = loc
+
+		r.Profile = append(r.Profile, r.AggregateProfile[loc])
+	}
+
+	sort.Slice(r.Profile, func(i, j int) bool {
+		return r.Profile[i].TotalTimeNs > r.Profile[j].TotalTimeNs
+	})
+
+	if numResults <= 0 || numResults > len(r.Profile) {
+		return
+	}
+
+	r.Profile = r.Profile[:numResults]
+}
+
+// TODO: This does not belong here and is only for internal testing purposes at this point in time. Profile reports are
+// currently only publicly available for the JSON reporter. Some variation of this will eventually be moved to the table
+// reporter. (this code borrowed from OPA).
+func (r Report) printProfile(w io.Writer) { //nolint:unused
+	tableProfile := generateTableProfile(w)
+
+	for i, rs := range r.Profile {
+		timeNs := time.Duration(rs.TotalTimeNs) * time.Nanosecond
+		line := []string{
+			timeNs.String(),
+			fmt.Sprintf("%d", rs.NumEval),
+			fmt.Sprintf("%d", rs.NumRedo),
+			fmt.Sprintf("%d", rs.NumGenExpr),
+			rs.Location,
+		}
+		tableProfile.Append(line)
+
+		if i == 0 {
+			tableProfile.SetFooter([]string{"", "", "", "", ""})
+		}
+	}
+
+	if tableProfile.NumLines() > 0 {
+		tableProfile.Render()
+	}
+}
+
+func generateTableWithKeys(writer io.Writer, keys ...string) *tablewriter.Table { //nolint:unused
+	table := tablewriter.NewWriter(writer)
+	aligns := make([]int, 0, len(keys))
+	hdrs := make([]string, 0, len(keys))
+
+	for _, k := range keys {
+		hdrs = append(hdrs, strings.Title(k)) //nolint:staticcheck // SA1019, no unicode here
+		aligns = append(aligns, tablewriter.ALIGN_LEFT)
+	}
+
+	table.SetHeader(hdrs)
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetColumnAlignment(aligns)
+
+	return table
+}
+
+func generateTableProfile(writer io.Writer) *tablewriter.Table { //nolint:unused
+	return generateTableWithKeys(writer, "Time", "Num Eval", "Num Redo", "Num Gen Expr", "Location")
 }
 
 // ViolationsFileCount returns the number of files containing violations.

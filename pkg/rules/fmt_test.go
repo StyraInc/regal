@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/styrainc/regal/internal/test"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -16,10 +17,7 @@ func TestFmtRuleFail(t *testing.T) {
 
 	policy := "  package p "
 
-	result, err := rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy))
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy)))(t)
 
 	if len(result.Violations) != 1 {
 		t.Errorf("expected 1 violation, got %d", len(result.Violations))
@@ -45,10 +43,7 @@ func TestFmtRuleSuccess(t *testing.T) {
 
 	policy := "package p\n"
 
-	result, err := rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy))
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy)))(t)
 
 	if len(result.Violations) != 0 {
 		t.Errorf("expected 0 violation, got %d", len(result.Violations))

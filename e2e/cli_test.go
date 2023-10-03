@@ -19,6 +19,7 @@ import (
 
 	"github.com/open-policy-agent/opa/tester"
 
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
@@ -27,7 +28,7 @@ import (
 func readProvidedConfig(t *testing.T) config.Config {
 	t.Helper()
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	configPath := filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml")
 	bs, err := os.ReadFile(configPath)
@@ -145,7 +146,7 @@ func TestLintAllViolations(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 	cfg := readProvidedConfig(t)
 
 	err := regal(&stdout, &stderr)("lint", "--format", "json", cwd+"/testdata/violations")
@@ -193,7 +194,7 @@ func TestLintAllViolations(t *testing.T) {
 func TestLintRuleIgnoreFiles(t *testing.T) {
 	t.Parallel()
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 	cfg := readProvidedConfig(t)
 
 	stdout := bytes.Buffer{}
@@ -258,7 +259,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 func TestLintWithDebugOption(t *testing.T) {
 	t.Parallel()
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
@@ -281,7 +282,7 @@ func TestLintWithDebugOption(t *testing.T) {
 func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	t.Parallel()
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
@@ -321,7 +322,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 
 func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Parallel()
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 	basedir := cwd + "/testdata/aggregates"
 
 	t.Run("two policies — no violations expected", func(t *testing.T) {
@@ -386,7 +387,7 @@ func TestTestRegalBundledBundle(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+"/../bundle")
 
@@ -412,7 +413,7 @@ func TestTestRegalBundledRules(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+"/testdata/custom_rules")
 
@@ -438,7 +439,7 @@ func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("test", cwd+"/testdata/ast_type_failure")
 
@@ -515,7 +516,7 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	cwd := must(os.Getwd)
+	cwd := testutil.Must(os.Getwd())(t)
 
 	// No violations from the built-in configuration in the policy provided, but
 	// the user --config-file changes the max-file-length to 1, so this should fail
@@ -578,15 +579,4 @@ func ExitStatus(err error) int {
 	}
 
 	panic("unreachable")
-}
-
-func must[R any](f func() (R, error)) R {
-	var r R
-
-	r, err := f()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return r
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/open-policy-agent/opa/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestFindRegalDirectory(t *testing.T) {
@@ -94,10 +95,7 @@ func TestMarshalConfig(t *testing.T) {
 		},
 	}
 
-	bs, err := yaml.Marshal(conf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	bs := testutil.Must(yaml.Marshal(conf))(t)
 
 	expect := `rules:
     testing:

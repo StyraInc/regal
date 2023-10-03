@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/gosuri/uitable v0.0.4
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-policy-agent/opa v0.57.0
+	github.com/open-policy-agent/opa v0.57.1-0.20231003111229-7fa6165c27bb
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	gopkg.in/yaml.v3 v3.0.1

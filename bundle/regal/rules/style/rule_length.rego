@@ -6,6 +6,7 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.config
 import data.regal.result
 
@@ -24,7 +25,5 @@ report contains violation if {
 
 empty_body_exception(conf, rule) if {
 	conf["except-empty-body"] == true
-	count(rule.body) == 1
-	rule.body[0].terms.type == "boolean"
-	rule.body[0].terms.value == true
+	ast.no_body(rule)
 }

@@ -17,15 +17,8 @@ _operators := {"equal", "gt", "gte", "lt", "lte", "neq"}
 
 _rules_with_bodies := [rule |
 	some rule in input.rules
-	not probably_no_body(rule)
+	not ast.no_body(rule)
 ]
-
-# i.e. allow {..}, or allow := true, which expands to allow = true { true }
-probably_no_body(rule) if {
-	count(rule.body) == 1
-	rule.body[0].terms.type == "boolean"
-	rule.body[0].terms.value == true
-}
 
 report contains violation if {
 	some rule in _rules_with_bodies

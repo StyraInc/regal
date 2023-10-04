@@ -86,6 +86,11 @@ func init() {
 		},
 
 		Run: func(_ *cobra.Command, args []string) {
+			// Allow setting debug mode via GitHub UI for failing actions
+			if os.Getenv("RUNNER_DEBUG") != "" {
+				params.debug = true
+			}
+
 			rep, err := lint(args, params)
 			if err != nil {
 				log.SetOutput(os.Stderr)

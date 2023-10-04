@@ -159,7 +159,7 @@ lint {
 }
 
 lint_ci {
-	run("./regal lint --format github bundle")
+	run_quiet("./regal lint --format github bundle")
 }
 
 check_readme {
@@ -213,6 +213,18 @@ run(cmd) {
 	out := rq.run(args, {})
 	{ rq.error(sprintf("\nstdout: %s\nstderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
 	print(out.stdout)
+}
+
+run_quiet(cmd) {
+	print(cmd)
+	args := split(cmd, " ")
+	out := rq.run(args, {})
+	print(out.stdout)
+	{true |
+		out.exitcode != 0
+		print(out.stderr)
+		rq.error("")
+	}
 }
 
 github(what, j) {

@@ -12,6 +12,7 @@ import (
 	"github.com/open-policy-agent/opa/tester"
 
 	"github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -21,19 +22,12 @@ func TestRunRegoUnitTests(t *testing.T) {
 	ctx := context.Background()
 	bdl := filepath.Join("..", "..", "bundle")
 
-	bundle, err := tester.LoadBundles([]string{bdl}, func(abspath string, info fs.FileInfo, depth int) bool {
+	bundle := testutil.Must(tester.LoadBundles([]string{bdl}, func(abspath string, info fs.FileInfo, depth int) bool {
 		return false
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	}))(t)
 
 	store := inmem.NewWithOpts(inmem.OptRoundTripOnWrite(false))
-
-	txn, err := store.NewTransaction(ctx, storage.WriteParams)
-	if err != nil {
-		t.Fatal(err)
-	}
+	txn := testutil.Must(store.NewTransaction(ctx, storage.WriteParams))(t)
 
 	t.Cleanup(func() {
 		store.Abort(ctx, txn)
@@ -52,10 +46,7 @@ func TestRunRegoUnitTests(t *testing.T) {
 		// TODO: Not needed?
 		AddCustomBuiltins(builtins.TestContextBuiltins())
 
-	ch, err := runner.RunTests(ctx, txn)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ch := testutil.Must(runner.RunTests(ctx, txn))(t)
 
 	for r := range ch {
 		rc := r

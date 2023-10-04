@@ -11,6 +11,7 @@ import (
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -28,10 +29,7 @@ camelCase {
 
 	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 2 {
 		t.Fatalf("expected 2 violations, got %d", len(result.Violations))
@@ -88,10 +86,7 @@ or := 1
 
 	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d - violations: %v", len(result.Violations), result.Violations)
@@ -190,10 +185,7 @@ or := 1
 
 			linter = linter.WithInputModules(&input)
 
-			result, err := linter.Lint(context.Background())
-			if err != nil {
-				t.Fatal(err)
-			}
+			result := testutil.Must(linter.Lint(context.Background()))(t)
 
 			if len(result.Violations) != len(tt.expViolations) {
 				t.Fatalf("expected %d violation, got %d: %v",
@@ -223,10 +215,7 @@ func TestLintWithGoRule(t *testing.T) {
 		WithEnableAll(true).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -252,10 +241,7 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
@@ -271,10 +257,7 @@ func TestLintWithCustomRule(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -299,10 +282,7 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
@@ -326,10 +306,7 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	mergedConfig, err := linter.mergedConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+	mergedConfig := testutil.Must(linter.mergedConfig())(t)
 
 	// Since no level was provided, "error" should be inherited from the provided configuration for the rule
 	if mergedConfig.Rules["style"]["file-length"].Level != "error" {
@@ -393,10 +370,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 		WithEnabledRules("prefer-package-imports").
 		WithInputModules(&input)
 
-	result, err := linter.Lint(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))

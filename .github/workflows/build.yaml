@@ -24,3 +24,19 @@ jobs:
       - uses: golangci/golangci-lint-action@v3
         with:
           version: v1.52.2
+  # lint-bundle is here to dogfood the setup-regal action from https://github.com/StyraInc/setup-regal
+  lint-bundle:
+    name: Lint Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Regal
+        uses: StyraInc/setup-regal@main
+        with:
+          version: latest
+
+      - name: Lint
+        run: |
+          regal lint --format=github ./bundle/regal 

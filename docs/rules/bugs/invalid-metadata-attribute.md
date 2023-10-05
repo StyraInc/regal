@@ -27,7 +27,7 @@ Metadata comments should follow the schema expected by
 [annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations). Custom attributes, like
 `category` above, should be placed under the `custom` key, which is a map of arbitrary key-value pairs.
 
-While arbitrary attributes is accepted, they will not be treated as metadata annotations but regular comments, and as
+While arbitrary attributes are accepted, they will not be treated as metadata annotations but regular comments, and as
 such won't be available to other tools that
 [process annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#accessing-annotations).
 These tools include built-in functions like

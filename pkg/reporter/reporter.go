@@ -1,3 +1,4 @@
+//nolint:wrapcheck
 package reporter
 
 import (
@@ -93,7 +94,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 
 	_, err := fmt.Fprint(tr.out, table+footer+".\n")
 
-	return err //nolint:wrapcheck
+	return err
 }
 
 func buildPrettyViolationsTable(violations []report.Violation) string {
@@ -149,7 +150,7 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 
 	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(table.String(), " "))
 
-	return err //nolint:wrapcheck
+	return err
 }
 
 // Publish prints a JSON report to the configured output.
@@ -165,11 +166,20 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 
 	_, err = fmt.Fprintln(tr.out, string(bs))
 
-	return err //nolint:wrapcheck
+	return err
 }
 
+// Publish first prints the pretty formatted report to console for easy access in the logs. It then goes on
+// to print the GitHub Actions annotations for each violation. Finally, it prints a summary of the report suitable
+// for the GitHub Actions UI.
+//
 //nolint:nestif
-func (tr GitHubReporter) Publish(_ context.Context, r report.Report) error {
+func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
+	err := NewPrettyReporter(tr.out).Publish(ctx, r)
+	if err != nil {
+		return err
+	}
+
 	if r.Violations == nil {
 		r.Violations = []report.Violation{}
 	}
@@ -184,7 +194,7 @@ func (tr GitHubReporter) Publish(_ context.Context, r report.Report) error {
 			fmt.Sprintf("%s. To learn more, see: %s", violation.Description, getDocumentationURL(violation)),
 		)
 		if err != nil {
-			return err //nolint:wrapcheck
+			return err
 		}
 	}
 
@@ -197,7 +207,7 @@ func (tr GitHubReporter) Publish(_ context.Context, r report.Report) error {
 	if summaryFileLoc, ok := os.LookupEnv("GITHUB_STEP_SUMMARY"); ok && summaryFileLoc != "" {
 		summaryFile, err := os.OpenFile(summaryFileLoc, os.O_APPEND|os.O_WRONLY, 0o644)
 		if err != nil {
-			return err //nolint:wrapcheck
+			return err
 		}
 
 		defer func() {

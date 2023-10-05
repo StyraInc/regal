@@ -3,6 +3,7 @@ package reporter
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/styrainc/regal/pkg/report"
@@ -237,13 +238,19 @@ func TestGitHubReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	expectTable := "Rule:         \tbreaking-the-law"
+
+	if !strings.Contains(buf.String(), expectTable) {
+		t.Errorf("expected table output %q, got %q", expectTable, buf.String())
+	}
+
 	//nolint:lll
-	expect := `::error file=a.rego,line=1,col=1::Rego must not break the law!. To learn more, see: https://example.com/illegal
+	expectGithub := `::error file=a.rego,line=1,col=1::Rego must not break the law!. To learn more, see: https://example.com/illegal
 ::warning file=b.rego,line=22,col=18::Questionable decision found. To learn more, see: https://example.com/questionable
 `
 
-	if buf.String() != expect {
-		t.Errorf("expected %q, got %q", expect, buf.String())
+	if !strings.Contains(buf.String(), expectGithub) {
+		t.Errorf("expected workflow command output %q, got %q", expectGithub, buf.String())
 	}
 }
 
@@ -261,7 +268,7 @@ func TestGitHubReporterPublishNoViolations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if buf.String() != "" {
+	if buf.String() != "0 files linted. No violations found.\n" {
 		t.Errorf("expected %q, got %q", "", buf.String())
 	}
 }

@@ -155,10 +155,12 @@ e2e {
 }
 
 lint {
+	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
 }
 
 lint_ci {
+	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
 }
 

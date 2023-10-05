@@ -124,6 +124,30 @@ Documentation:	https://docs.styra.com/regal/rules/style/use-assignment-operator
 > will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
 > `regal lint`.
 
+### GitHub Actions
+
+If you'd like to run Regal in GitHub actions, please consider using [`setup-regal`](https://github.com/StyraInc/setup-regal).
+A simple `.github/workflows/lint.yml` to run regal on PRs could look like this, where `policy` contains Rego files:
+
+```yaml
+name: Regal Lint
+on:
+  pull_request:
+jobs:
+  lint-rego:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: StyraInc/setup-regal@main
+      with:
+        version: latest
+
+    - name: Lint
+      run: regal lint --format=github ./policy 
+```
+
+Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
+
 ## Rules
 
 Regal comes with a set of built-in rules, grouped by category.

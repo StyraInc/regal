@@ -87,9 +87,9 @@ functions := [rule |
 
 function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
-rule_and_function_names := {name(rule) | some rule in input.rules}
+rule_and_function_names contains name(rule) if some rule in input.rules
 
-rule_names := {name(rule) | some rule in rules}
+rule_names contains name(rule) if some rule in rules
 
 # METADATA
 # description: parse provided snippet with a generic package declaration added

@@ -26,6 +26,21 @@ using the JSON representation of the Rego abstract syntax tree (AST) as input, a
 few additional custom built-in functions and some indexed data structures to help
 with linting.
 
+## What People Say About Regal
+
+> I really like that at each release of Regal I learn something new!
+> Of all the linters I'm exposed to, Regal is probably the most instructive one.
+
+— Leonardo Taccari, [NetBSD](https://www.netbsd.org/)
+
+> Reviewing the Regal rules documentation. Pure gold.
+
+— Dima Korolev, [Miro](https://miro.com/)
+
+> Such an awesome project!
+
+— Shawn McGuire, [Atlassian](https://www.atlassian.com/)
+
 ## Getting Started
 
 ### Download Regal
@@ -143,7 +158,7 @@ jobs:
         version: latest
 
     - name: Lint
-      run: regal lint --format=github ./policy 
+      run: regal lint --format=github ./policy
 ```
 
 Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.

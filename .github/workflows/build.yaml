@@ -27,19 +27,35 @@ jobs:
       - uses: golangci/golangci-lint-action@v3
         with:
           version: v1.52.2
-  # lint-bundle is here to dogfood the setup-regal action from https://github.com/StyraInc/setup-regal
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 1.20.1
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+      # rq doesn't work well on windows currently, or at least
+      # so it seemed, so until we've resolved that together with
+      # the rq maintainers, we'll just run the build steps directly
+      # on windows-latest
+      - run: go build
+      - run: go test ./...
+      - run: go test -tags e2e ./e2e
+      - run: opa check --strict --capabilities build/capabilities.json bundle
+      - run: ./regal lint --format github bundle
+      - run: ./regal table --compare-to-readme bundle
+  # lint-bundle is here to dogfood the setup-regal action
+  # from https://github.com/StyraInc/setup-regal
   lint-bundle:
-    name: Lint Bundle
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-
       - name: Setup Regal
         uses: StyraInc/setup-regal@main
         with:
           version: latest
-
-      - name: Lint
-        run: |
-          regal lint --format=github ./bundle/regal 
+      - run: regal lint --format github bundle/regal

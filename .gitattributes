@@ -1,2 +1,4 @@
+* text=auto
+
 *.rego.tpl linguist-language=Open-Policy-Agent
 *.rq linguist-language=Open-Policy-Agent

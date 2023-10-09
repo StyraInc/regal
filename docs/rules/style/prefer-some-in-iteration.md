@@ -43,7 +43,7 @@ some_condition if {
 ```
 
 Are we iterating users over a partial "other_rule" here, or checking if the set contains a user defined elsewhere?
-Or is other_rule a map generating rule, and we're checking for the existence of a key? We won't know without looking
+Or is `other_rule` a map-generating rule, and we're checking for the existence of a key? We won't know without looking
 elsewhere in the code. Using `some .. in` removes this ambiguity, and makes the intent clear without having to jump
 around in the policy.
 

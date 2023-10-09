@@ -62,7 +62,7 @@ func EnhanceAST(name string, content string, module *ast.Module) (map[string]any
 	enhancedAst["regal"] = map[string]any{
 		"file": map[string]any{
 			"name":  name,
-			"lines": strings.Split(content, "\n"),
+			"lines": strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"),
 		},
 	}
 

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -118,13 +119,17 @@ func TestLintEmptyDir(t *testing.T) {
 }
 
 func TestLintNonExistentDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("skipping on Windows as the error message is different")
+	}
+
 	t.Parallel()
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 	td := t.TempDir()
 
-	err := regal(&stdout, &stderr)("lint", td+"/what/ever")
+	err := regal(&stdout, &stderr)("lint", td+filepath.FromSlash("/what/ever"))
 	if exp, act := 1, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
 	}
@@ -134,7 +139,7 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 
 	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
-		"failed to filter paths:\nstat "+td+"/what/ever: no such file or directory\n",
+		"failed to filter paths:\nstat "+td+filepath.FromSlash("/what/ever")+": no such file or directory\n",
 		stdout.String(); exp != act {
 		t.Errorf("expected stdout %q, got %q", exp, act)
 	}
@@ -149,7 +154,7 @@ func TestLintAllViolations(t *testing.T) {
 	cwd := testutil.Must(os.Getwd())(t)
 	cfg := readProvidedConfig(t)
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", cwd+"/testdata/violations")
+	err := regal(&stdout, &stderr)("lint", "--format", "json", cwd+filepath.FromSlash("/testdata/violations"))
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
 	}
@@ -200,7 +205,9 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/ignore_files_prefer_snake_case.yaml", cwd+"/testdata/violations")
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
+		cwd+filepath.FromSlash("/testdata/violations"))
 
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -264,7 +271,9 @@ func TestLintWithDebugOption(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	err := regal(&stdout, &stderr)("lint", "--debug", "--config-file", cwd+"/testdata/configs/ignore_files_prefer_snake_case.yaml", cwd+"/testdata/violations")
+	err := regal(&stdout, &stderr)("lint", "--debug", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
+		cwd+filepath.FromSlash("/testdata/violations"))
 
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -287,7 +296,9 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file", cwd+"/testdata/configs/custom_naming_convention.yaml", cwd+"/testdata/custom_naming_convention")
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/custom_naming_convention.yaml"),
+		cwd+filepath.FromSlash("/testdata/custom_naming_convention"))
 
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -323,13 +334,15 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Parallel()
 	cwd := testutil.Must(os.Getwd())(t)
-	basedir := cwd + "/testdata/aggregates"
+	basedir := cwd + filepath.FromSlash("/testdata/aggregates")
 
 	t.Run("two policies — no violations expected", func(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/two_policies")
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/two_policies"))
 
 		if exp, act := 0, ExitStatus(err); exp != act {
 			t.Errorf("expected exit status %d, got %d", exp, act)
@@ -344,7 +357,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/two_policies/policy_1.rego")
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/two_policies/policy_1.rego"))
 
 		if exp, act := 0, ExitStatus(err); exp != act {
 			t.Errorf("expected exit status %d, got %d", exp, act)
@@ -359,7 +374,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
 		// By sending a single file to the command, we skip the aggregates computation, so we expect one violation
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules", basedir+"/rules/custom_rules_using_aggregates.rego", basedir+"/three_policies")
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/three_policies"))
 
 		if exp, act := 3, ExitStatus(err); exp != act {
 			t.Errorf("expected exit status %d, got %d", exp, act)
@@ -389,7 +406,7 @@ func TestTestRegalBundledBundle(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+"/../bundle")
+	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+filepath.FromSlash("/../bundle"))
 
 	if exp, act := 0, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -415,7 +432,8 @@ func TestTestRegalBundledRules(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+"/testdata/custom_rules")
+	err := regal(&stdout, &stderr)("test", "--format", "json",
+		cwd+filepath.FromSlash("/testdata/custom_rules"))
 
 	if exp, act := 0, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -441,7 +459,7 @@ func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("test", cwd+"/testdata/ast_type_failure")
+	err := regal(&stdout, &stderr)("test", cwd+filepath.FromSlash("/testdata/ast_type_failure"))
 
 	if exp, act := 1, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -520,7 +538,9 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 
 	// No violations from the built-in configuration in the policy provided, but
 	// the user --config-file changes the max-file-length to 1, so this should fail
-	err := regal(&stdout, &stderr)("lint", "--config-file", cwd+"/testdata/configs/rule_without_level.yaml", cwd+"/testdata/custom_naming_convention")
+	err := regal(&stdout, &stderr)("lint", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/rule_without_level.yaml"),
+		cwd+filepath.FromSlash("/testdata/custom_naming_convention"))
 
 	if exp, act := 3, ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d", exp, act)
@@ -528,7 +548,12 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 }
 
 func binary() string {
-	location := "../regal"
+	var location string
+	if runtime.GOOS == "windows" {
+		location = "../regal.exe"
+	} else {
+		location = "../regal"
+	}
 
 	if b := os.Getenv("REGAL_BIN"); b != "" {
 		location = b

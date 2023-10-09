@@ -50,8 +50,17 @@ func FindRegalDirectory(path string) (*os.File, error) {
 		dir = filepath.Dir(path)
 	}
 
+	// returns e.g. "C:" on windows, "" on other platforms
+	volume := filepath.VolumeName(dir)
+
 	for {
-		searchPath := filepath.Join(rio.PathSeparator, dir, regalDirName)
+		var searchPath string
+		if volume == "" {
+			searchPath = filepath.Join(rio.PathSeparator, dir, regalDirName)
+		} else {
+			searchPath = filepath.Join(dir, regalDirName)
+		}
+
 		regalDir, err := os.Open(searchPath)
 
 		if err == nil {
@@ -61,7 +70,7 @@ func FindRegalDirectory(path string) (*os.File, error) {
 			}
 		}
 
-		if searchPath == rio.PathSeparator+regalDirName {
+		if searchPath == volume+rio.PathSeparator+regalDirName {
 			// Stop traversing at the root path
 			return nil, fmt.Errorf("can't traverse past root directory %w", err)
 		}
@@ -69,6 +78,11 @@ func FindRegalDirectory(path string) (*os.File, error) {
 		// Move up one level in the directory tree
 		parts := strings.Split(dir, rio.PathSeparator)
 		parts = parts[:len(parts)-1]
+
+		if parts[0] == volume {
+			parts[0] = volume + rio.PathSeparator
+		}
+
 		dir = filepath.Join(parts...)
 	}
 }

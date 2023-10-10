@@ -8,12 +8,19 @@
 ```rego
 package policy
 
-full_name := name {
+import future.keywords.contains
+import future.keywords.if
+
+full_name := name if {
     name := concat(", ", [input.first_name, input.last_name])
 }
 
-divide_by_ten(x) := y {
+divide_by_ten(x) := y if {
     y := x / 10
+}
+
+names contains name if {
+    name := "Regal"
 }
 ```
 
@@ -21,9 +28,14 @@ divide_by_ten(x) := y {
 ```rego
 package policy
 
+import future.keywords.contains
+import future.keywords.if
+
 full_name := concat(", ", [input.first_name, input.last_name])
 
 divide_by_ten(x) := x / 10
+
+names contains "Regal"
 ```
 
 ## Rationale

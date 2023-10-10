@@ -71,8 +71,28 @@ test_fail_unification_in_default_assignment if {
 	}}
 }
 
+test_fail_unification_in_default_function_assignment if {
+	r := rule.report with input as ast.policy(`default x(_) = false`)
+	r == {{
+		"category": "style",
+		"description": "Prefer := over = for assignment",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
+		}],
+		"title": "use-assignment-operator",
+		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "default x(_) = false"},
+		"level": "error",
+	}}
+}
+
 test_success_assignment_in_default_assignment if {
 	r := rule.report with input as ast.policy(`default x := false`)
+	r == set()
+}
+
+test_success_assignment_in_default_function_assignment if {
+	r := rule.report with input as ast.policy(`default x(_) := false`)
 	r == set()
 }
 
@@ -133,5 +153,53 @@ test_success_using_if if {
 
 test_success_ref_head_rule_if if {
 	r := rule.report with input as ast.with_future_keywords(`a.b.c if true`)
+	r == set()
+}
+
+# regal ignore:rule-length
+test_fail_unification_in_else if {
+	r := rule.report with input as ast.with_future_keywords(`
+	allow if {
+		input.x
+	} else = true {
+		input.y
+	} else = false
+	`)
+	r == {
+		{
+			"category": "style",
+			"description": "Prefer := over = for assignment",
+			"related_resources": [{
+				"description": "documentation",
+				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
+			}],
+			"title": "use-assignment-operator",
+			"location": {"col": 4, "file": "policy.rego", "row": 11, "text": "\t} else = true {"},
+			"level": "error",
+		},
+		{
+			"category": "style",
+			"description": "Prefer := over = for assignment",
+			"related_resources": [{
+				"description": "documentation",
+				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
+			}],
+			"title": "use-assignment-operator",
+			"location": {"col": 4, "file": "policy.rego", "row": 13, "text": "\t} else = false"},
+			"level": "error",
+		},
+	}
+}
+
+test_success_assignment_in_else if {
+	r := rule.report with input as ast.with_future_keywords(`
+	allow if {
+		input.x
+	} else := true {
+		input.y
+	} else {
+		input.z
+	} else := false
+	`)
 	r == set()
 }

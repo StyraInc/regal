@@ -197,6 +197,7 @@ The following rules are currently available:
 | idiomatic | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars) | Use `some` to declare output variables                    |
 | imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)         | Avoid importing input                                     |
 | imports   | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)   | Use explicit future keyword imports                       |
+| imports   | [import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule)                 | Import declared after rule                                |
 | imports   | [import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import)         | Import shadows another import                             |
 | imports   | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)       | Prefer importing packages over rules                      |
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                     | Redundant alias                                           |

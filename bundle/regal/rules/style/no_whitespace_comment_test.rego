@@ -6,7 +6,7 @@ import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["no-whitespace-comment"] as rule
 
-test_no_leading_whitespace if {
+test_fail_no_leading_whitespace if {
 	r := rule.report with input as ast.policy(`#foo`)
 	r == {{
 		"category": "style",
@@ -21,7 +21,7 @@ test_no_leading_whitespace if {
 	}}
 }
 
-test_no_leading_whitespace_multiple_hashes if {
+test_fail_no_leading_whitespace_multiple_hashes if {
 	r := rule.report with input as ast.policy(`##foo`)
 	r == {{
 		"category": "style",
@@ -34,6 +34,11 @@ test_no_leading_whitespace_multiple_hashes if {
 		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "##foo"},
 		"level": "error",
 	}}
+}
+
+test_success_excepted_pattern if {
+	r := rule.report with input as ast.policy(`#-- foo`) with config.for_rule as {"except-pattern": "^--"}
+	r == set()
 }
 
 test_success_leading_whitespace if {

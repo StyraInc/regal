@@ -26,6 +26,10 @@ import data
 # aggregate rule, so will only fail if more than one file is linted
 import data.rule_named_if.allow
 
+rule := "here"
+
+import data.after.rule
+
 ### Bugs ###
 
 constant_condition {

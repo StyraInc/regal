@@ -38,6 +38,8 @@ rules:
       level: error
     implicit-future-keywords:
       level: error
+    import-after-rule:
+      level: error
     import-shadows-import:
       level: error
     prefer-package-imports:

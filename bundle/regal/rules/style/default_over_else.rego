@@ -39,4 +39,4 @@ report contains violation if {
 
 considered_rules := input.rules if cfg["prefer-default-functions"] == true
 
-considered_rules := [rule | some rule in input.rules; not rule.head.args] if not cfg["prefer-default-functions"]
+considered_rules := ast.rules if not cfg["prefer-default-functions"]

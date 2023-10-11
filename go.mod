@@ -39,10 +39,10 @@ require (
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/prometheus/client_golang v1.16.0 // indirect
+	github.com/prometheus/client_golang v1.16.1-0.20231010093810-60a85133edf7 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
@@ -59,9 +59,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-// https://github.com/prometheus/client_golang/pull/1350
-replace github.com/prometheus/client_golang => github.com/srenatus/client_golang v0.0.0-20230925115357-a671e547907a
 
 // wasip1 support isn't in a tagged version yet, remove for v1.9.4
 replace github.com/sirupsen/logrus => github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af

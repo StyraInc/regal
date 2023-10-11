@@ -48,6 +48,10 @@ rules:
     no-whitespace-comment:
       # one of "error", "warning", "ignore"
       level: error
+      # optional pattern to except from this rule
+      # this example would allow comments like "#--"
+      # use or (`|`) to separate multiple patterns  
+      except-pattern: '^--'
 ```
 
 ## Community

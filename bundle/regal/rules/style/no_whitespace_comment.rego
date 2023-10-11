@@ -7,7 +7,10 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.config
 import data.regal.result
+
+cfg := config.for_rule("style", "no-whitespace-comment")
 
 report contains violation if {
 	some comment in ast.comments_decoded
@@ -18,3 +21,5 @@ report contains violation if {
 }
 
 _whitespace_comment(text) if regex.match(`^(#*)(\s+.*|$)`, text)
+
+_whitespace_comment(text) if regex.match(cfg["except-pattern"], text)

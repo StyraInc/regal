@@ -416,7 +416,7 @@ The roadmap for Regal currently looks like this:
 - [x] Simplify custom rules authoring by providing
       [command for scaffolding](https://github.com/StyraInc/regal/issues/206)
 - [ ] Make more rules consider [nested](https://github.com/StyraInc/regal/issues/82) AST nodes
-- [ ] GitHub Action
+- [x] [GitHub Action](https://github.com/StyraInc/setup-regal)
 
 The roadmap is updated when all the current items have been completed.
 

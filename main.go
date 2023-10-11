@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -13,6 +14,11 @@ func main() {
 	log.SetFlags(0)
 
 	if err := cmd.RootCommand.Execute(); err != nil {
-		os.Exit(1)
+		code := 1
+		if e := (cmd.ExitError{}); errors.As(err, &e) {
+			code = e.Code()
+		}
+
+		os.Exit(code)
 	}
 }

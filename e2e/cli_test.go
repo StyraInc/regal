@@ -526,6 +526,30 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	expectExitCode(t, err, 3, &stdout, &stderr)
 }
 
+func TestLintPprof(t *testing.T) {
+	t.Parallel()
+
+	const pprofFile = "clock.pprof"
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	t.Cleanup(func() {
+		os.Remove(pprofFile)
+	})
+
+	err := regal(&stdout, &stderr)("lint", "--pprof", "clock", cwd+filepath.FromSlash("/testdata/violations"))
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+
+	_, err = os.Stat(pprofFile)
+	if err != nil {
+		t.Fatalf("expected to find %s, got error: %v", pprofFile, err)
+	}
+}
+
 func binary() string {
 	var location string
 	if runtime.GOOS == "windows" {

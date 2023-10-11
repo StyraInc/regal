@@ -1,4 +1,4 @@
-# file-missing-test-suffix
+# dubious-print-sprintf
 
 **Summary**: Dubious use of `print` and `sprintf`
 

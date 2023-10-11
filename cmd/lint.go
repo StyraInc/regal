@@ -85,7 +85,7 @@ func init() {
 			return nil
 		},
 
-		Run: func(_ *cobra.Command, args []string) {
+		RunE: wrapProfiling(func(args []string) error {
 			// Allow setting debug mode via GitHub UI for failing actions
 			if os.Getenv("RUNNER_DEBUG") != "" {
 				params.debug = true
@@ -95,7 +95,8 @@ func init() {
 			if err != nil {
 				log.SetOutput(os.Stderr)
 				log.Println(err)
-				os.Exit(1)
+
+				return exit(1)
 			}
 
 			errorsFound := 0
@@ -122,9 +123,12 @@ func init() {
 					exitCode = 2
 				}
 			}
+			if exitCode != 0 {
+				return exit(exitCode)
+			}
 
-			os.Exit(exitCode)
-		},
+			return nil
+		}),
 	}
 
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
@@ -166,6 +170,8 @@ func init() {
 
 	lintCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
 		"ignore all files matching a glob-pattern. This flag can be repeated.")
+
+	addPprofFlag(lintCommand.Flags())
 
 	RootCommand.AddCommand(lintCommand)
 }

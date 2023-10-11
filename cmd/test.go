@@ -80,9 +80,13 @@ rules.
 		return nil
 	},
 
-	Run: func(cmd *cobra.Command, args []string) {
-		os.Exit(opaTest(args))
-	},
+	RunE: wrapProfiling(func(args []string) error {
+		if c := opaTest(args); c != 0 {
+			return ExitError{code: c}
+		}
+
+		return nil
+	}),
 }
 
 func opaTest(args []string) int {
@@ -343,6 +347,7 @@ func init() {
 	testCommand.Flags().StringVarP(&testParams.runRegex, "run", "r", "",
 		"run only test cases matching the regular expression.")
 
+	addPprofFlag(testCommand.Flags())
 	addBundleModeFlag(testCommand.Flags(), &testParams.bundleMode, false)
 	addBenchmemFlag(testCommand.Flags(), &testParams.benchMem, true)
 	addCountFlag(testCommand.Flags(), &testParams.count, "test")
@@ -386,4 +391,9 @@ func addCountFlag(fs *pflag.FlagSet, count *int, cmdType string) {
 func addIgnoreFlag(fs *pflag.FlagSet, ignoreNames *[]string) {
 	fs.StringSliceVarP(ignoreNames, "ignore", "", []string{},
 		"set file and directory names to ignore during loading (e.g., '.*' excludes hidden files)")
+}
+
+func addPprofFlag(fs *pflag.FlagSet) {
+	fs.String("pprof", "",
+		"enable profiling (must be one of cpu, clock, mem_heap, mem_allocs, trace, goroutine, mutex, block, thread_creation)")
 }

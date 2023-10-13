@@ -17,7 +17,7 @@ _operators := {"equal", "gt", "gte", "lt", "lte", "neq"}
 
 _rules_with_bodies := [rule |
 	some rule in input.rules
-	not ast.no_body(rule)
+	not ast.generated_body(rule)
 ]
 
 report contains violation if {

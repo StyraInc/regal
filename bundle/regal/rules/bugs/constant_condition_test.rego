@@ -65,3 +65,8 @@ test_success_non_constant_condition if {
 	r := rule.report with input as ast.policy(`allow { 1 == input.one }`)
 	r == set()
 }
+
+test_success_adding_constant_to_set if {
+	r := rule.report with input as ast.with_future_keywords(`rule contains "message"`)
+	r == set()
+}

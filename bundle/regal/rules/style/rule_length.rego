@@ -18,12 +18,12 @@ report contains violation if {
 
 	count(lines) > cfg["max-rule-length"]
 
-	not empty_body_exception(cfg, rule)
+	not generated_body_exception(cfg, rule)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-empty_body_exception(conf, rule) if {
+generated_body_exception(conf, rule) if {
 	conf["except-empty-body"] == true
-	ast.no_body(rule)
+	ast.generated_body(rule)
 }

@@ -51,10 +51,20 @@ _is_name(ref, pos) if {
 	ref.type == "string"
 }
 
-# i.e. allow {..}, or allow := true, which expands to allow = true { true }
-no_body(rule) if rule.body[0].location == rule.head.value.location
+# allow := true, which expands to allow = true { true }
+generated_body(rule) if rule.body[0].location == rule.head.value.location
 
-no_body(rule) if rule["default"] == true
+generated_body(rule) if rule["default"] == true
+
+# rule["message"] or
+# rule contains "message"
+generated_body(rule) if {
+	rule.body[0].location.row == rule.head.key.location.row
+
+	# this is a quirk in the AST — the generated body will have a location
+	# set before the key, i.e. "message"
+	rule.body[0].location.col < rule.head.key.location.col
+}
 
 rules := [rule |
 	some rule in input.rules

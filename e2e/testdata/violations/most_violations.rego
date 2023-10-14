@@ -78,6 +78,8 @@ use_in_operator {
 
 prefer_set_or_object_rule := {x | some x in input; x == "violation"}
 
+equals_pattern_matching(x) := x == "x"
+
 ### Style ###
 
 # avoid-get-and-list-prefix

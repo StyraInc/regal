@@ -191,6 +191,7 @@ The following rules are currently available:
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                    | Naming convention violation                               |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)   | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)             | Custom function may be replaced by `in` keyword           |
+| idiomatic | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)     | Prefer pattern matching in function arguments             |
 | idiomatic | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)         | Missing entrypoint annotation                             |
 | idiomatic | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)         | Use raw strings for regex patterns                        |
 | idiomatic | [prefer-set-or-object-rule](https://docs.styra.com/regal/rules/idiomatic/prefer-set-or-object-rule) | Prefer set or object rule over comprehension              |

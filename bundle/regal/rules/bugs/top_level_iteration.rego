@@ -33,3 +33,10 @@ illegal_value_ref(value, rule) if {
 is_arg_or_input(value, rule) if value in ast.function_arg_names(rule)
 
 is_arg_or_input(value, _) if startswith(_path(value), "input.")
+
+# ideally would be able to just say
+# is_arg_or_input("input", _)
+# but the formatter rewrites that to
+# is_arg_or_input("input", _) = true
+# ...meh
+is_arg_or_input("input", _) := true

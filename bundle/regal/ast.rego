@@ -66,6 +66,9 @@ generated_body(rule) if {
 	rule.body[0].location.col < rule.head.key.location.col
 }
 
+# f("x")
+generated_body(rule) if rule.body[0].location == rule.head.location
+
 rules := [rule |
 	some rule in input.rules
 	not rule.head.args

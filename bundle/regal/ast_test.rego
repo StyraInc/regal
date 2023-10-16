@@ -257,3 +257,13 @@ test_find_some_decl_names_in_scope if {
 }
 
 var_names(vars) := {var.value | some var in vars}
+
+test_generated_body_function if {
+	policy := `package p
+
+	f("x")`
+
+	module := regal.parse_module("p.rego", policy)
+
+	ast.generated_body(module.rules[0])
+}

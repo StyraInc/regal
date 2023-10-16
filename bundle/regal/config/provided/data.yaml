@@ -40,6 +40,8 @@ rules:
       level: error
     import-after-rule:
       level: error
+    import-shadows-builtin:
+      level: error
     import-shadows-import:
       level: error
     prefer-package-imports:

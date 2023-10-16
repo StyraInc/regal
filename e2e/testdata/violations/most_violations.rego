@@ -22,6 +22,9 @@ import data.redundant.alias as alias
 # redundant-data-import
 import data
 
+# import-shadows-builtin
+import data.http
+
 # prefer-package-imports
 # aggregate rule, so will only fail if more than one file is linted
 import data.rule_named_if.allow

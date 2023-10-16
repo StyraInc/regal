@@ -44,6 +44,12 @@ test_success_top_level_known_var_ref if {
 	r == set()
 }
 
+# https://github.com/StyraInc/regal/issues/401
+test_success_top_level_input_assignment if {
+	r := rule.report with input as ast.with_future_keywords(`x := input`)
+	r == set()
+}
+
 test_success_top_level_input_ref if {
 	r := rule.report with input as ast.with_future_keywords(`x := input.foo.bar[input.y]`)
 	r == set()

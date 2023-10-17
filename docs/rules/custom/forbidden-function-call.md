@@ -45,8 +45,8 @@ rules:
 
 ## Related Resources
 
-- OPA docs: [Capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities)
-- OPA docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
+- OPA Docs: [Capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities)
+- OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
 
 ## Community
 

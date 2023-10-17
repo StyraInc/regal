@@ -57,7 +57,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide [Use raw strings for regex patterns](https://github.com/StyraInc/rego-style-guide#use-raw-strings-for-regex-patterns)
-- OPA docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/latest/policy-reference/#regex)
+- OPA Docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/latest/policy-reference/#regex)
 
 ## Community
 

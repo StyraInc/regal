@@ -81,7 +81,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Avoid importing `input`](https://github.com/StyraInc/rego-style-guide#avoid-importing-input)
-- OPA docs: [Terraform Tutorial](https://www.openpolicyagent.org/docs/latest/terraform)
+- OPA Docs: [Terraform Tutorial](https://www.openpolicyagent.org/docs/latest/terraform)
 
 ## Community
 

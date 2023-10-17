@@ -76,6 +76,8 @@ use_in_operator {
 	"item" == input.coll[_]
 }
 
+prefer_set_or_object_rule := {x | some x in input; x == "violation"}
+
 ### Style ###
 
 # avoid-get-and-list-prefix

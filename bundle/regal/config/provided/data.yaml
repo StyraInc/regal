@@ -29,6 +29,8 @@ rules:
       level: error
     non-raw-regex-pattern:
       level: error
+    prefer-set-or-object-rule:
+      level: error
     use-in-operator:
       level: error
     use-some-for-output-vars:

@@ -20,6 +20,8 @@ rules:
       level: ignore
     naming-convention:
       level: ignore
+    prefer-value-in-head:
+      level: ignore
   idiomatic:
     custom-has-key-construct:
       level: error

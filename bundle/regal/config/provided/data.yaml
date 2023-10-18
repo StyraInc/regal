@@ -14,6 +14,8 @@ rules:
       level: error
     unused-return-value:
       level: error
+    zero-arity-function:
+      level: error
   custom:
     forbidden-function-call:
       forbidden-functions: []
@@ -27,11 +29,11 @@ rules:
       level: error
     custom-in-construct:
       level: error
+    equals-pattern-matching:
+      level: error
     no-defined-entrypoint:
       level: error
     non-raw-regex-pattern:
-      level: error
-    equals-pattern-matching:
       level: error
     prefer-set-or-object-rule:
       level: error

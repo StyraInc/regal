@@ -56,6 +56,8 @@ unused_return_value {
 	indexof("foo", "o")
 }
 
+zero_arity_function() := true
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) {

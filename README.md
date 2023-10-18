@@ -187,6 +187,7 @@ The following rules are currently available:
 | bugs      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                | Rule name shadows built-in                                |
 | bugs      | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                  | Iteration in top-level assignment                         |
 | bugs      | [unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value)                  | Non-boolean return value unused                           |
+| bugs      | [zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function)                  | Avoid functions without args                              |
 | custom    | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)        | Forbidden function call                                   |
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                    | Naming convention violation                               |
 | custom    | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)              | Prefer value in rule head                                 |
@@ -413,7 +414,7 @@ If you want to embed Regal in another project or product, please reach out!
 
 The roadmap for Regal currently looks like this:
 
-- [ ] 50 rules!
+- [x] 50 rules!
 - [x] Add `custom` (or `organizational`, `opinionated`, or...) category for built-in "custom", or
       [organizational rules](https://github.com/StyraInc/regal/issues/48), to enforce things like naming conventions.
       The most common customizations should not require writing custom rules, but be made available in configuration.

@@ -189,6 +189,7 @@ The following rules are currently available:
 | bugs      | [unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value)                  | Non-boolean return value unused                           |
 | custom    | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)        | Forbidden function call                                   |
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                    | Naming convention violation                               |
+| custom    | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)              | Prefer value in rule head                                 |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)   | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)             | Custom function may be replaced by `in` keyword           |
 | idiomatic | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)     | Prefer pattern matching in function arguments             |

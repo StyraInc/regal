@@ -14,8 +14,8 @@ test_fail_identically_named_tests if {
 	test_foo { false }
 	test_foo { true }
 	`)
-	result := rule.report with input as ast
-	result == {{
+	r := rule.report with input as ast
+	r == {{
 		"category": "testing",
 		"description": "Multiple tests with same name",
 		"related_resources": [{
@@ -23,7 +23,7 @@ test_fail_identically_named_tests if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/identically-named-tests", "testing"),
 		}],
 		"title": "identically-named-tests",
-		"location": {"file": "foo_test.rego"},
+		"location": {"col": 2, "file": "foo_test.rego", "row": 5, "text": "\ttest_foo { true }"},
 		"level": "error",
 	}}
 }
@@ -36,6 +36,6 @@ test_success_differently_named_tests if {
 	test_bar { true }
 	test_baz { 1 == 1 }
 	`)
-	result := rule.report with input as ast
-	result == set()
+	r := rule.report with input as ast
+	r == set()
 }

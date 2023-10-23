@@ -18,7 +18,7 @@ Splitting up large rules into smaller ones, and liberally using helper rules and
 others to read and understand, and for yourself and your team to maintain.
 
 Note that this rule only counts the number of lines of a rule, and currently does not take into account the actual
-content inside of a rule. Neither does it try to analyze the complexity of the code in the rule.
+content inside of it. Neither does it try to analyze the complexity of the code in the rule.
 
 ## Configuration Options
 
@@ -36,7 +36,7 @@ rules:
       # likely an assignment of long values rather than a "rule"
       # with conditions:
       #
-      # users = [ 
+      # users := [
       #     {"username": "ted"},
       #     {"username": "alice"},
       #     {"username": "bob"},

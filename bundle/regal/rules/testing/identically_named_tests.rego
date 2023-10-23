@@ -16,7 +16,10 @@ report contains violation if {
 
 	name in array.slice(test_names, 0, i)
 
-	# We don't currently have location for rule heads, but this should
-	# change soon: https://github.com/open-policy-agent/opa/pull/5811
-	violation := result.fail(rego.metadata.chain(), {"location": {"file": input.regal.file.name}})
+	violation := result.fail(rego.metadata.chain(), result.location(rule_by_name(name, ast.tests)))
 }
+
+rule_by_name(name, rules) := regal.last([rule |
+	some rule in rules
+	rule.head.ref[0].value == name
+])

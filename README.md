@@ -190,6 +190,7 @@ The following rules are currently available:
 | bugs      | [zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function)                  | Avoid functions without args                              |
 | custom    | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)        | Forbidden function call                                   |
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                    | Naming convention violation                               |
+| custom    | [one-liner-rule](https://docs.styra.com/regal/rules/custom/one-liner-rule)                          | Rule body could be made a one-liner                       |
 | custom    | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)              | Prefer value in rule head                                 |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)   | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)             | Custom function may be replaced by `in` keyword           |
@@ -256,8 +257,9 @@ your project, team or organization. This typically includes things like naming c
 ensure that, for example, all package names adhere to an organizational standard, like having a prefix matching the
 organization name.
 
-Since these rules require configuration provided by the user, they are disabled by default. In order to enable them,
-see the configuration options available for each rule for how to configure them according to your requirements.
+Since these rules require configuration provided by the user, or are more opinionated than other rules, they are
+disabled by default. In order to enable them, see the configuration options available for each rule for how to configure
+them according to your requirements.
 
 For more advanced requirements, see the guide on writing [custom rules](/docs/custom-rules.md) in Rego.
 

@@ -44,9 +44,9 @@ several hundreds of lines.
 
 ## Exceptions
 
-Regal has no way of know whether an import points to a rule, function or some external data — only that it doesn't point
-to a package. Use the `ignore-import-paths` configuration option if you want to make exceptions for e.g. imports of
-external data, or use the various ignore options to ignore entire files.
+Regal has no way of knowing whether an import points to a rule, function or some external data — only that it doesn't
+point to a package. Use the `ignore-import-paths` configuration option if you want to make exceptions for e.g. imports
+of external data, or use the various ignore options to ignore entire files.
 
 ## Configuration Options
 

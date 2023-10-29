@@ -55,6 +55,20 @@ test_success_set_comprehension_array_to_set_conversion_ref_iteration if {
 	r == set()
 }
 
+test_success_set_comprehension_array_to_set_conversion_ref_nested_iteration if {
+	module := ast.with_future_keywords(`my_set := {s | s := a.b.c[_]}`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_set_comprehension_array_to_set_conversion_ref_nested_iteration_sub_attribute if {
+	module := ast.with_future_keywords(`my_set := {s | s := a.b.c[_].d}`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 test_success_set_comprehension_array_to_set_conversion_some_in if {
 	module := ast.with_future_keywords(`my_set := {s | some s in arr}`)
 

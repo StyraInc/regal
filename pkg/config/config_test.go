@@ -215,3 +215,41 @@ capabilities:
 		}
 	}
 }
+
+func TestUnmarshalConfigWithBuiltinsFile(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`rules: {}
+capabilities:
+  from:
+    file: "./fixtures/caps.json"
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	if exp, got := 1, len(conf.Capabilities.Builtins); exp != got {
+		t.Errorf("expected %d builtins, got %d", exp, got)
+	}
+
+	expectedBuiltins := []string{"wow"}
+
+	for _, expectedBuiltin := range expectedBuiltins {
+		expectedBuiltinFound := false
+
+		for _, bi := range conf.Capabilities.Builtins {
+			if bi.Name == expectedBuiltin {
+				expectedBuiltinFound = true
+
+				break
+			}
+		}
+
+		if !expectedBuiltinFound {
+			t.Errorf("expected builtin %s to be found", expectedBuiltin)
+		}
+	}
+}

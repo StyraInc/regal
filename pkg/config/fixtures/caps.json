@@ -1,0 +1,35 @@
+{
+  "builtins": [
+    {
+      "name": "wow",
+      "description": "Increases wow in Rego rule",
+      "categories": [
+        "special"
+      ],
+      "decl": {
+        "args": [
+          {
+            "name": "x",
+            "type": "number"
+          }
+        ],
+        "result": {
+          "description": "the wowness level for input `x`",
+          "name": "y",
+          "type": "number"
+        },
+        "type": "function"
+      }
+    }
+  ],
+  "future_keywords": [
+    "contains",
+    "every",
+    "if",
+    "in"
+  ],
+  "wasm_abi_versions": null,
+  "features": [
+    "rule_head_ref_string_prefixes"
+  ]
+}

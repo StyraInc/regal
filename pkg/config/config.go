@@ -30,6 +30,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 			From struct {
 				Engine  string `yaml:"engine"`
 				Version string `yaml:"version"`
+				File    string `yaml:"file"`
 			} `yaml:"from"`
 			Plus struct {
 				Builtins []*ast.Builtin `yaml:"builtins"`
@@ -49,7 +50,31 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	config.Rules = result.Rules
 	config.Ignore = result.Ignore
 
-	if result.Capabilities.From.Engine == capabilitiesEngineOPA {
+	capabilitiesFile := result.Capabilities.From.File
+	capabilitiesEngine := result.Capabilities.From.Engine
+	capabilitiesEngineVersion := result.Capabilities.From.Version
+
+	if capabilitiesFile != "" && capabilitiesEngine != "" {
+		return fmt.Errorf("capabilities from.file and from.engine are mutually exclusive")
+	}
+
+	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
+		return fmt.Errorf("please set the version for the engine from which to load capabilities from")
+	}
+
+	if capabilitiesFile != "" {
+		bs, err := os.ReadFile(capabilitiesFile)
+		if err != nil {
+			return fmt.Errorf("failed to load capabilities file: %w", err)
+		}
+
+		err = json.Unmarshal(bs, &config.Capabilities)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal capabilities file contents: %w", err)
+		}
+	}
+
+	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
 		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
 		if err != nil {
 			return fmt.Errorf("loading capabilities failed: %w", err)

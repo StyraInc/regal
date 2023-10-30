@@ -45,6 +45,10 @@ is_array_conversion(value) if {
 }
 
 # {s | s := arr[_]}
+# or
+# {s | s := arr[_].foo}
+# or
+# {s | s := arr[_].foo[_]}
 is_array_conversion(value) if {
 	value.type == "setcomprehension"
 	value.value.term.type == "var"
@@ -58,11 +62,16 @@ is_array_conversion(value) if {
 	body[0].terms[0].value[0].type == "var"
 	body[0].terms[0].value[0].value == "assign"
 
+	# Assignment to comprehension variable
 	body[0].terms[1].type == "var"
 	body[0].terms[1].value == var
 
+	# On the right hand side a ref with at least one wildcard
 	body[0].terms[2].type == "ref"
 	body[0].terms[2].value[0].type == "var"
-	body[0].terms[2].value[1].type == "var"
-	body[0].terms[2].value[1].value == "$0"
+
+	some ref_val in body[0].terms[2].value
+
+	ref_val.type == "var"
+	startswith(ref_val.value, "$")
 }

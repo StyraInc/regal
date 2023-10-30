@@ -17,9 +17,9 @@ import (
 const capabilitiesEngineOPA = "opa"
 
 type Config struct {
-	Rules        map[string]Category `json:"rules"            yaml:"rules"`
-	Ignore       Ignore              `json:"ignore,omitempty" yaml:"ignore,omitempty"`
-	Capabilities ast.Capabilities    `json:"capabilities,omitempty"     yaml:"capabilities,omitempty"`
+	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
+	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
+	Capabilities ast.Capabilities    `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {

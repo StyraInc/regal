@@ -201,9 +201,7 @@ _find_vars(path, value, last) := _find_assign_vars(path, value) if {
 	value[0].value[0].value == "assign"
 }
 
-_find_vars(_, value, _) := find_ref_vars(value) if {
-	value.type == "ref"
-}
+_find_vars(_, value, _) := find_ref_vars(value) if value.type == "ref"
 
 _find_vars(path, value, last) := _find_some_in_decl_vars(path, value) if {
 	last == "symbols"
@@ -224,9 +222,7 @@ _find_vars(_, value, _) := _find_set_or_array_comprehension_vars(value) if {
 	value.type in {"setcomprehension", "arraycomprehension"}
 }
 
-_find_vars(_, value, _) := _find_object_comprehension_vars(value) if {
-	value.type == "objectcomprehension"
-}
+_find_vars(_, value, _) := _find_object_comprehension_vars(value) if value.type == "objectcomprehension"
 
 find_some_decl_vars(rule) := [var |
 	walk(rule, [path, value])
@@ -264,9 +260,7 @@ find_vars_in_local_scope(rule, location) := [var |
 	_before_location(var, location)
 ]
 
-_before_location(var, location) if {
-	var.location.row < location.row
-}
+_before_location(var, location) if var.location.row < location.row
 
 _before_location(var, location) if {
 	var.location.row == location.row

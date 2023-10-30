@@ -96,7 +96,6 @@ expected := {
 	"category": "custom",
 	"description": "Prefer value in rule head",
 	"level": "error",
-	"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "foo := true"},
 	"related_resources": [{
 		"description": "documentation",
 		"ref": config.docs.resolve_url("$baseUrl/$category/prefer-value-in-head", "custom"),

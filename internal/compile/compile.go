@@ -9,8 +9,11 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
-func Capabilities() *ast.Capabilities {
-	caps := ast.CapabilitiesForThisVersion()
+func DefaultCapabilities() *ast.Capabilities {
+	return Capabilities(*ast.CapabilitiesForThisVersion())
+}
+
+func Capabilities(caps ast.Capabilities) *ast.Capabilities {
 	caps.Builtins = append(caps.Builtins,
 		&ast.Builtin{
 			Name: builtins.RegalParseModuleMeta.Name,
@@ -25,7 +28,7 @@ func Capabilities() *ast.Capabilities {
 			Decl: builtins.RegalLastMeta.Decl,
 		})
 
-	return caps
+	return &caps
 }
 
 func RegalSchemaSet() *ast.SchemaSet {
@@ -43,5 +46,5 @@ func RegalSchemaSet() *ast.SchemaSet {
 }
 
 func NewCompilerWithRegalBuiltins() *ast.Compiler {
-	return ast.NewCompiler().WithCapabilities(Capabilities())
+	return ast.NewCompiler().WithCapabilities(DefaultCapabilities())
 }

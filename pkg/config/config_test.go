@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"

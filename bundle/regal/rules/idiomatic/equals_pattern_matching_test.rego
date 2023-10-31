@@ -61,6 +61,15 @@ test_success_actually_pattern_matching if {
 	r == set()
 }
 
+test_success_skipped_on_else if {
+	module := ast.policy(`f(x) {
+		x == 1
+	} else := false`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 expected := {
 	"category": "idiomatic",
 	"description": "Prefer pattern matching in function arguments",

@@ -19,6 +19,8 @@ report contains violation if {
 	some fn in ast.functions
 	ast.generated_body(fn)
 
+	not fn["else"]
+
 	arg_var_names := {arg.value |
 		some arg in fn.head.args
 		arg.type == "var"
@@ -42,6 +44,8 @@ report contains violation if {
 report contains violation if {
 	some fn in ast.functions
 	not ast.generated_body(fn)
+
+	not fn["else"]
 
 	arg_var_names := {arg.value |
 		some arg in fn.head.args

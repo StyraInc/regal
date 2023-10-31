@@ -9,12 +9,97 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/ast"
+
 	rio "github.com/styrainc/regal/internal/io"
 )
 
+const capabilitiesEngineOPA = "opa"
+
 type Config struct {
-	Rules  map[string]Category `json:"rules"            yaml:"rules"`
-	Ignore Ignore              `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
+	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
+	Capabilities ast.Capabilities    `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+}
+
+func (config *Config) UnmarshalYAML(value *yaml.Node) error {
+	var result struct {
+		Rules        map[string]Category `yaml:"rules"`
+		Ignore       Ignore              `yaml:"ignore"`
+		Capabilities struct {
+			From struct {
+				Engine  string `yaml:"engine"`
+				Version string `yaml:"version"`
+				File    string `yaml:"file"`
+			} `yaml:"from"`
+			Plus struct {
+				Builtins []*ast.Builtin `yaml:"builtins"`
+			} `yaml:"plus"`
+			Minus struct {
+				Builtins []struct {
+					Name string `yaml:"name"`
+				} `yaml:"builtins"`
+			} `yaml:"minus"`
+		} `yaml:"capabilities"`
+	}
+
+	if err := value.Decode(&result); err != nil {
+		return fmt.Errorf("unmarshalling config failed %w", err)
+	}
+
+	config.Rules = result.Rules
+	config.Ignore = result.Ignore
+
+	capabilitiesFile := result.Capabilities.From.File
+	capabilitiesEngine := result.Capabilities.From.Engine
+	capabilitiesEngineVersion := result.Capabilities.From.Version
+
+	if capabilitiesFile != "" && capabilitiesEngine != "" {
+		return fmt.Errorf("capabilities from.file and from.engine are mutually exclusive")
+	}
+
+	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
+		return fmt.Errorf("please set the version for the engine from which to load capabilities from")
+	}
+
+	if capabilitiesFile != "" {
+		bs, err := os.ReadFile(capabilitiesFile)
+		if err != nil {
+			return fmt.Errorf("failed to load capabilities file: %w", err)
+		}
+
+		err = json.Unmarshal(bs, &config.Capabilities)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal capabilities file contents: %w", err)
+		}
+	}
+
+	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
+		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
+		if err != nil {
+			return fmt.Errorf("loading capabilities failed: %w", err)
+		}
+
+		config.Capabilities = *capabilities
+	}
+
+	// by default, use the capabilities from the current OPA
+	if capabilitiesEngine == "" && capabilitiesFile == "" {
+		config.Capabilities = *ast.CapabilitiesForThisVersion()
+	}
+
+	// remove any builtins referenced in the minus config
+	for i, builtin := range config.Capabilities.Builtins {
+		for _, minusBuiltin := range result.Capabilities.Minus.Builtins {
+			if minusBuiltin.Name == builtin.Name {
+				config.Capabilities.Builtins = append(config.Capabilities.Builtins[:i], config.Capabilities.Builtins[i+1:]...)
+			}
+		}
+	}
+
+	config.Capabilities.Builtins = append(config.Capabilities.Builtins, result.Capabilities.Plus.Builtins...)
+
+	return nil
 }
 
 type Category map[string]Rule

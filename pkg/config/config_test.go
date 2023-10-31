@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"
@@ -123,6 +124,22 @@ func TestUnmarshalConfig(t *testing.T) {
         files:
           - foo.rego
       level: error
+capabilities:
+  from:
+    engine: opa
+    version: v0.45.0
+  plus:
+    builtins:
+      - name: ldap.query
+        type: function
+        decl:
+          args:
+            - type: string
+        result:
+          type: object
+  minus:
+    builtins:
+      - name: http.send
 `)
 
 	var conf Config
@@ -157,5 +174,121 @@ func TestUnmarshalConfig(t *testing.T) {
 
 	if conf.Rules["testing"]["foo"].Extra["level"] != nil {
 		t.Errorf("expected extra attribute 'level' to be removed")
+	}
+
+	if exp, got := 183, len(conf.Capabilities.Builtins); exp != got {
+		t.Errorf("expected %d builtins, got %d", exp, got)
+	}
+
+	expectedBuiltins := []string{"regex.match", "ldap.query"}
+
+	for _, expectedBuiltin := range expectedBuiltins {
+		expectedBuiltinFound := false
+
+		for _, bi := range conf.Capabilities.Builtins {
+			if bi.Name == expectedBuiltin {
+				expectedBuiltinFound = true
+
+				break
+			}
+		}
+
+		if !expectedBuiltinFound {
+			t.Errorf("expected builtin %s to be found", expectedBuiltin)
+		}
+	}
+
+	unexpectedBuiltins := []string{"http.send"}
+
+	for _, unexpectedBuiltin := range unexpectedBuiltins {
+		unexpectedBuiltinFound := false
+
+		for _, bi := range conf.Capabilities.Builtins {
+			if bi.Name == unexpectedBuiltin {
+				unexpectedBuiltinFound = true
+
+				break
+			}
+		}
+
+		if unexpectedBuiltinFound {
+			t.Errorf("expected builtin %s to be removed", unexpectedBuiltin)
+		}
+	}
+}
+
+func TestUnmarshalConfigWithBuiltinsFile(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`rules: {}
+capabilities:
+  from:
+    file: "./fixtures/caps.json"
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	if exp, got := 1, len(conf.Capabilities.Builtins); exp != got {
+		t.Errorf("expected %d builtins, got %d", exp, got)
+	}
+
+	expectedBuiltins := []string{"wow"}
+
+	for _, expectedBuiltin := range expectedBuiltins {
+		expectedBuiltinFound := false
+
+		for _, bi := range conf.Capabilities.Builtins {
+			if bi.Name == expectedBuiltin {
+				expectedBuiltinFound = true
+
+				break
+			}
+		}
+
+		if !expectedBuiltinFound {
+			t.Errorf("expected builtin %s to be found", expectedBuiltin)
+		}
+	}
+}
+
+func TestUnmarshalConfigDefaultCapabilities(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`rules: {}
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	caps := ast.CapabilitiesForThisVersion()
+
+	if exp, got := len(caps.Builtins), len(conf.Capabilities.Builtins); exp != got {
+		t.Errorf("expected %d builtins, got %d", exp, got)
+	}
+
+	// choose the first built-ins to check for to keep the test fast
+	expectedBuiltins := []string{caps.Builtins[0].Name, caps.Builtins[1].Name}
+
+	for _, expectedBuiltin := range expectedBuiltins {
+		expectedBuiltinFound := false
+
+		for _, bi := range conf.Capabilities.Builtins {
+			if bi.Name == expectedBuiltin {
+				expectedBuiltinFound = true
+
+				break
+			}
+		}
+
+		if !expectedBuiltinFound {
+			t.Errorf("expected builtin %s to be found", expectedBuiltin)
+		}
 	}
 }

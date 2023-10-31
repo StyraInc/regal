@@ -83,11 +83,6 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		config.Capabilities = *capabilities
 	}
 
-	// by default, use the capabilities from the current OPA
-	if capabilitiesEngine == "" && capabilitiesFile == "" {
-		config.Capabilities = *ast.CapabilitiesForThisVersion()
-	}
-
 	// remove any builtins referenced in the minus config
 	for i, builtin := range config.Capabilities.Builtins {
 		for _, minusBuiltin := range result.Capabilities.Minus.Builtins {

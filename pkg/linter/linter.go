@@ -22,7 +22,6 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/compile"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/parse"
@@ -52,7 +51,6 @@ type Linter struct {
 	ignoreFiles      []string
 	metrics          metrics.Metrics
 	profiling        bool
-	capabilities     *ast.Capabilities
 }
 
 const regalUserConfig = "regal_user_config"
@@ -118,10 +116,6 @@ func (l Linter) WithUserConfig(cfg config.Config) Linter {
 			Metadata: map[string]any{"name": regalUserConfig},
 		},
 		Data: map[string]any{regalUserConfig: config.ToMap(cfg)},
-	}
-
-	if len(cfg.Capabilities.Builtins) > 0 {
-		l.capabilities = compile.Capabilities(cfg.Capabilities)
 	}
 
 	return l
@@ -467,12 +461,6 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 		rego.Function1(builtins.RegalJSONPrettyMeta, builtins.RegalJSONPretty),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	)
-
-	if l.capabilities != nil {
-		regoArgs = append(regoArgs, rego.Capabilities(l.capabilities))
-	} else {
-		regoArgs = append(regoArgs, rego.Capabilities(compile.DefaultCapabilities()))
-	}
 
 	if l.debugMode && l.printHook == nil {
 		l.printHook = topdown.NewPrintHook(os.Stderr)

@@ -17,7 +17,7 @@ func init() {
 		Short:  "Print the capabilities of Regal",
 		Long:   "Show capabilities for Regal",
 		RunE: func(*cobra.Command, []string) error {
-			bs, err := json.MarshalIndent(compile.DefaultCapabilities(), "", "  ")
+			bs, err := json.MarshalIndent(compile.Capabilities(), "", "  ")
 			if err != nil {
 				return fmt.Errorf("failed marshalling capabilities: %w", err)
 			}

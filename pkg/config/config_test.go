@@ -7,7 +7,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"
@@ -237,44 +236,6 @@ capabilities:
 	}
 
 	expectedBuiltins := []string{"wow"}
-
-	for _, expectedBuiltin := range expectedBuiltins {
-		expectedBuiltinFound := false
-
-		for _, bi := range conf.Capabilities.Builtins {
-			if bi.Name == expectedBuiltin {
-				expectedBuiltinFound = true
-
-				break
-			}
-		}
-
-		if !expectedBuiltinFound {
-			t.Errorf("expected builtin %s to be found", expectedBuiltin)
-		}
-	}
-}
-
-func TestUnmarshalConfigDefaultCapabilities(t *testing.T) {
-	t.Parallel()
-
-	bs := []byte(`rules: {}
-`)
-
-	var conf Config
-
-	if err := yaml.Unmarshal(bs, &conf); err != nil {
-		t.Fatal(err)
-	}
-
-	caps := ast.CapabilitiesForThisVersion()
-
-	if exp, got := len(caps.Builtins), len(conf.Capabilities.Builtins); exp != got {
-		t.Errorf("expected %d builtins, got %d", exp, got)
-	}
-
-	// choose the first built-ins to check for to keep the test fast
-	expectedBuiltins := []string{caps.Builtins[0].Name, caps.Builtins[1].Name}
 
 	for _, expectedBuiltin := range expectedBuiltins {
 		expectedBuiltinFound := false

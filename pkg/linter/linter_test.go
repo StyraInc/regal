@@ -27,9 +27,7 @@ camelCase {
 }
 `)
 
-	linter := NewLinter().
-		WithEnableAll(true).
-		WithInputModules(&input)
+	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)
 
@@ -86,9 +84,7 @@ or := 1
 		},
 	}
 
-	linter := NewLinter().
-		WithUserConfig(userConfig).
-		WithInputModules(&input)
+	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)
 

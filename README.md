@@ -6,13 +6,18 @@
 Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
 Rego magnificent!
 
+<img
+  src="/docs/assets/regal-banner.png"
+  alt="illustration of a viking representing the Regal logo"
+  width="150px"
+  width="200"/>
+
 > regal
 >
 > adj : of notable excellence or magnificence : splendid
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
-![illustration of a viking representing the Regal logo](/docs/assets/regal-banner.png)
 
 ## Goals
 

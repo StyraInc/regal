@@ -9,8 +9,7 @@ Rego magnificent!
 <img
   src="/docs/assets/regal-banner.png"
   alt="illustration of a viking representing the Regal logo"
-  width="150px"
-  width="200"/>
+  width="150px" />
 
 > regal
 >

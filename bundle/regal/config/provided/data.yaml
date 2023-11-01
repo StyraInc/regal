@@ -93,6 +93,7 @@ rules:
       ignore-nesting-level: 2
       level: error
     rule-length:
+      count-comments: false
       except-empty-body: true
       level: error
       max-rule-length: 30

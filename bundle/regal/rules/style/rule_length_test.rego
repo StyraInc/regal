@@ -21,6 +21,7 @@ test_fail_rule_longer_than_configured_max_length if {
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"max-rule-length": 3,
+		"count-comments": true,
 	}
 	r == {{
 		"category": "style",
@@ -49,6 +50,26 @@ test_success_rule_not_longer_than_configured_max_length if {
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"max-rule-length": 30,
+		"count-comments": true,
+	}
+	r == set()
+}
+
+test_success_rule_longer_than_configured_max_length_but_comments if {
+	module := regal.parse_module("policy.rego", `package p
+
+	my_short_rule {
+		# this rule is not longer than the configured max length
+		# which in this case is 30 lines
+		#
+		input.x
+	}
+	`)
+
+	r := rule.report with input as module with config.for_rule as {
+		"level": "error",
+		"max-rule-length": 2,
+		"count-comments": false,
 	}
 	r == set()
 }
@@ -62,6 +83,7 @@ test_success_rule_length_equals_max_length if {
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"max-rule-length": 1,
+		"count-comments": false,
 	}
 	r == set()
 }

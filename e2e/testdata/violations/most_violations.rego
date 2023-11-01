@@ -154,6 +154,7 @@ rule_length {
 	input.x28
 	input.x29
 	input.x30
+	input.x31
 }
 
 default_over_else := 1 {

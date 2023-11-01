@@ -32,6 +32,9 @@ rules:
       level: error
       # default limit is 30 lines
       max-rule-length: 30
+      # whether to count comments as lines
+      # by default, this is set to false
+      count-comments: false
       # except rules with empty bodies from this rule, as they're
       # likely an assignment of long values rather than a "rule"
       # with conditions:

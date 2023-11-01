@@ -16,7 +16,7 @@ report contains violation if {
 	some rule in input.rules
 	lines := split(base64.decode(rule.location.text), "\n")
 
-	count(lines) > cfg["max-rule-length"]
+	line_count(cfg, rule, lines) > cfg["max-rule-length"]
 
 	not generated_body_exception(cfg, rule)
 
@@ -26,4 +26,26 @@ report contains violation if {
 generated_body_exception(conf, rule) if {
 	conf["except-empty-body"] == true
 	ast.generated_body(rule)
+}
+
+line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
+
+line_count(cfg, rule, lines) := n if {
+	not cfg["count-comments"]
+
+	# Note that this assumes } on its own line
+	body_start := rule.location.row + 1
+	body_end := (body_start + count(lines)) - 3
+	body_total := (body_end - body_start) + 1
+
+	# This does not take into account comments that are
+	# on the same line as regular code
+	body_comments := sum([1 |
+		some comment in input.comments
+
+		comment.Location.row >= body_start
+		comment.Location.row <= body_end
+	])
+
+	n := body_total - body_comments
 }

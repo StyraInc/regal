@@ -34,3 +34,14 @@ test_success_future_keywords_import_specific_many if {
     `)
 	r == set()
 }
+
+test_has_notice_if_unmet_capability if {
+	r := rule.notices with config.capabilities as {"features": ["rego_v1_import"]}
+	r == {{
+		"category": "imports",
+		"description": "Rule made obsolete by rego.v1 capability",
+		"level": "notice",
+		"severity": "none",
+		"title": "implicit-future-keywords",
+	}}
+}

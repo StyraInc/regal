@@ -93,6 +93,23 @@ fail(chain, details) := violation if {
 	violation := _fail_annotated_custom(annotation, details)
 }
 
+notice(metadata) := result if {
+	is_array(metadata)
+	rule_meta := metadata[0]
+	annotations := rule_meta.annotations
+
+	some category, title
+	["regal", "rules", category, title, "notices"] = rule_meta.path
+
+	result := {
+		"category": category,
+		"description": annotations.description,
+		"level": "notice",
+		"title": title,
+		"severity": annotations.custom.severity,
+	}
+}
+
 _related_resources(annotations, _, _) := annotations.related_resources
 
 _related_resources(annotations, category, title) := rr if {

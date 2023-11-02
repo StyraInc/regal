@@ -61,3 +61,14 @@ test_fail_custom_has_key_multiple_wildcards if {
 		"title": "custom-has-key-construct",
 	}}
 }
+
+test_has_notice_if_unmet_capability if {
+	r := rule.notices with config.capabilities as {}
+	r == {{
+		"category": "idiomatic",
+		"description": "Missing capability for built-in function `object.keys`",
+		"level": "notice",
+		"severity": "warning",
+		"title": "custom-has-key-construct",
+	}}
+}

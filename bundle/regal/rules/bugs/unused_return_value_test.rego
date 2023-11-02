@@ -10,6 +10,7 @@ test_fail_unused_return_value if {
 	r := rule.report with input as ast.with_future_keywords(`allow {
 		indexof("s", "s")
 	}`)
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {{
 		"category": "bugs",
 		"description": "Non-boolean return value unused",
@@ -25,16 +26,19 @@ test_fail_unused_return_value if {
 
 test_success_unused_boolean_return_value if {
 	r := rule.report with input as ast.with_future_keywords(`allow { startswith("s", "s") }`)
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == set()
 }
 
 test_success_return_value_assigned if {
 	r := rule.report with input as ast.with_future_keywords(`allow { x := indexof("s", "s") }`)
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == set()
 }
 
 test_success_function_arg_return_ignored if {
-	r := rule.report with input as ast.with_future_keywords(`allow {
+	r := rule.report with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with input as ast.with_future_keywords(`allow {
 		indexof("s", "s", i)
 	}`)
 	r == set()

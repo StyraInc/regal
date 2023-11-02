@@ -19,87 +19,7 @@ const capabilitiesEngineOPA = "opa"
 type Config struct {
 	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
 	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
-	Capabilities ast.Capabilities    `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
-}
-
-func (config *Config) UnmarshalYAML(value *yaml.Node) error {
-	var result struct {
-		Rules        map[string]Category `yaml:"rules"`
-		Ignore       Ignore              `yaml:"ignore"`
-		Capabilities struct {
-			From struct {
-				Engine  string `yaml:"engine"`
-				Version string `yaml:"version"`
-				File    string `yaml:"file"`
-			} `yaml:"from"`
-			Plus struct {
-				Builtins []*ast.Builtin `yaml:"builtins"`
-			} `yaml:"plus"`
-			Minus struct {
-				Builtins []struct {
-					Name string `yaml:"name"`
-				} `yaml:"builtins"`
-			} `yaml:"minus"`
-		} `yaml:"capabilities"`
-	}
-
-	if err := value.Decode(&result); err != nil {
-		return fmt.Errorf("unmarshalling config failed %w", err)
-	}
-
-	config.Rules = result.Rules
-	config.Ignore = result.Ignore
-
-	capabilitiesFile := result.Capabilities.From.File
-	capabilitiesEngine := result.Capabilities.From.Engine
-	capabilitiesEngineVersion := result.Capabilities.From.Version
-
-	if capabilitiesFile != "" && capabilitiesEngine != "" {
-		return fmt.Errorf("capabilities from.file and from.engine are mutually exclusive")
-	}
-
-	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
-		return fmt.Errorf("please set the version for the engine from which to load capabilities from")
-	}
-
-	if capabilitiesFile != "" {
-		bs, err := os.ReadFile(capabilitiesFile)
-		if err != nil {
-			return fmt.Errorf("failed to load capabilities file: %w", err)
-		}
-
-		err = json.Unmarshal(bs, &config.Capabilities)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal capabilities file contents: %w", err)
-		}
-	}
-
-	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
-		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
-		if err != nil {
-			return fmt.Errorf("loading capabilities failed: %w", err)
-		}
-
-		config.Capabilities = *capabilities
-	}
-
-	// by default, use the capabilities from the current OPA
-	if capabilitiesEngine == "" && capabilitiesFile == "" {
-		config.Capabilities = *ast.CapabilitiesForThisVersion()
-	}
-
-	// remove any builtins referenced in the minus config
-	for i, builtin := range config.Capabilities.Builtins {
-		for _, minusBuiltin := range result.Capabilities.Minus.Builtins {
-			if minusBuiltin.Name == builtin.Name {
-				config.Capabilities.Builtins = append(config.Capabilities.Builtins[:i], config.Capabilities.Builtins[i+1:]...)
-			}
-		}
-	}
-
-	config.Capabilities.Builtins = append(config.Capabilities.Builtins, result.Capabilities.Plus.Builtins...)
-
-	return nil
+	Capabilities *Capabilities       `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
 }
 
 type Category map[string]Rule
@@ -114,6 +34,21 @@ type Rule struct {
 	Level  string
 	Ignore *Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
 	Extra  ExtraAttributes
+}
+
+type Capabilities struct {
+	Builtins       map[string]*Builtin `json:"builtins"        yaml:"builtins"`
+	FutureKeywords []string            `json:"future_keywords" yaml:"future_keywords"`
+	Features       []string            `json:"features"        yaml:"features"`
+}
+
+type Decl struct {
+	Args   []string `json:"args"   yaml:"args"`
+	Result string   `json:"result" yaml:"result"`
+}
+
+type Builtin struct {
+	Decl Decl `json:"decl" yaml:"decl"`
 }
 
 const (
@@ -190,6 +125,127 @@ func FromMap(confMap map[string]any) (Config, error) {
 	}
 
 	return conf, nil
+}
+
+func (config *Config) UnmarshalYAML(value *yaml.Node) error {
+	var result struct {
+		Rules        map[string]Category `yaml:"rules"`
+		Ignore       Ignore              `yaml:"ignore"`
+		Capabilities struct {
+			From struct {
+				Engine  string `yaml:"engine"`
+				Version string `yaml:"version"`
+				File    string `yaml:"file"`
+			} `yaml:"from"`
+			Plus struct {
+				Builtins []*ast.Builtin `yaml:"builtins"`
+			} `yaml:"plus"`
+			Minus struct {
+				Builtins []struct {
+					Name string `yaml:"name"`
+				} `yaml:"builtins"`
+			} `yaml:"minus"`
+		} `yaml:"capabilities"`
+	}
+
+	if err := value.Decode(&result); err != nil {
+		return fmt.Errorf("unmarshalling config failed %w", err)
+	}
+
+	config.Rules = result.Rules
+	config.Ignore = result.Ignore
+
+	capabilitiesFile := result.Capabilities.From.File
+	capabilitiesEngine := result.Capabilities.From.Engine
+	capabilitiesEngineVersion := result.Capabilities.From.Version
+
+	if capabilitiesFile != "" && capabilitiesEngine != "" {
+		return fmt.Errorf("capabilities from.file and from.engine are mutually exclusive")
+	}
+
+	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
+		return fmt.Errorf("please set the version for the engine from which to load capabilities from")
+	}
+
+	if capabilitiesFile != "" {
+		bs, err := os.ReadFile(capabilitiesFile)
+		if err != nil {
+			return fmt.Errorf("failed to load capabilities file: %w", err)
+		}
+
+		opaCaps := ast.Capabilities{}
+
+		err = json.Unmarshal(bs, &opaCaps)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal capabilities file contents: %w", err)
+		}
+
+		config.Capabilities = fromOPACapabilities(opaCaps)
+	}
+
+	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
+		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
+		if err != nil {
+			return fmt.Errorf("loading capabilities failed: %w", err)
+		}
+
+		config.Capabilities = fromOPACapabilities(*capabilities)
+	}
+
+	// by default, use the capabilities from the current OPA
+	if capabilitiesEngine == "" && capabilitiesFile == "" {
+		config.Capabilities = fromOPACapabilities(*ast.CapabilitiesForThisVersion())
+	}
+
+	// remove any builtins referenced in the minus config
+	for _, minusBuiltin := range result.Capabilities.Minus.Builtins {
+		delete(config.Capabilities.Builtins, minusBuiltin.Name)
+	}
+
+	// add any builtins referenced in the plus config
+	for _, plusBuiltin := range result.Capabilities.Plus.Builtins {
+		config.Capabilities.Builtins[plusBuiltin.Name] = fromOPABuiltin(*plusBuiltin)
+	}
+
+	return nil
+}
+
+// CapabilitiesForThisVersion returns the capabilities for the current OPA version Regal depends on.
+func CapabilitiesForThisVersion() *Capabilities {
+	return fromOPACapabilities(*ast.CapabilitiesForThisVersion())
+}
+
+func fromOPABuiltin(builtin ast.Builtin) *Builtin {
+	funcArgs := builtin.Decl.FuncArgs().Args
+	args := make([]string, len(funcArgs))
+
+	for i, arg := range funcArgs {
+		args[i] = arg.String()
+	}
+
+	rb := &Builtin{Decl: Decl{Args: args}}
+
+	if builtin.Decl != nil && builtin.Decl.Result() != nil {
+		// internal.print has no result
+		rb.Decl.Result = builtin.Decl.Result().String()
+	}
+
+	return rb
+}
+
+func fromOPACapabilities(capabilities ast.Capabilities) *Capabilities {
+	var result Capabilities
+
+	result.Builtins = make(map[string]*Builtin)
+
+	for _, builtin := range capabilities.Builtins {
+		result.Builtins[builtin.Name] = fromOPABuiltin(*builtin)
+	}
+
+	result.FutureKeywords = capabilities.FutureKeywords
+	result.Features = capabilities.Features
+
+	return &result
 }
 
 func ToMap(config Config) map[string]any {

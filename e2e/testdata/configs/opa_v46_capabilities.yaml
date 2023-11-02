@@ -1,0 +1,14 @@
+capabilities:
+  from:
+    engine: opa
+    # object.keys was included in v0.47.0,
+    # so we're using this to test that the
+    # custom-has-key-construct rule won't
+    # run given this version
+    version: v0.46.0
+rules:
+  idiomatic:
+    no-defined-entrypoint:
+      level: ignore
+    custom-has-key-construct:
+      level: error

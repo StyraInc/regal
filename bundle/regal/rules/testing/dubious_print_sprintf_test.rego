@@ -14,6 +14,7 @@ test_fail_print_sprintf if {
 	}`)
 
 	r := rule.report with input as module
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",
@@ -39,6 +40,7 @@ test_fail_bodies_print_sprintf if {
 	}`)
 
 	r := rule.report with input as module
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",

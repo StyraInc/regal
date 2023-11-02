@@ -7,10 +7,12 @@ linters:
     - golint
     - ifshort
     - interfacer
+    - inamedparam
     - maligned
     - nosnakecase
     - scopelint
     - structcheck
+    - tagliatelle
     - varcheck
     # does not work with generics (yet)
     - rowserrcheck

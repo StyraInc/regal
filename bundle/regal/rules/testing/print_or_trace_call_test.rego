@@ -14,6 +14,7 @@ test_fail_call_to_print_and_trace if {
 
 		x := [i | i = 0; trace("bar")]
 	}`)
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {
 		expected_with_location({
 			"col": 3,

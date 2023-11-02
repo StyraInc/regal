@@ -37,9 +37,10 @@ type Linter struct {
 	inputPaths       []string
 	inputModules     *rules.Input
 	ruleBundles      []*bundle.Bundle
-	configBundle     *bundle.Bundle
-	customRulesPaths []string
+	userConfig       *config.Config
 	combinedConfig   *config.Config
+	dataBundle       *bundle.Bundle
+	customRulesPaths []string
 	debugMode        bool
 	printHook        print.Hook
 	disable          []string
@@ -53,11 +54,14 @@ type Linter struct {
 	profiling        bool
 }
 
-const regalUserConfig = "regal_user_config"
-
 //nolint:gochecknoglobals
 var (
-	lintQuery               = ast.MustParseBody("lint := {\"violations\": data.regal.main.lint.violations}")
+	// Single file provided as input.
+	lintQuery = ast.MustParseBody(`lint := {
+		"violations": data.regal.main.lint.violations,
+		"notices": data.regal.main.lint.notices,
+	}`)
+	// More than one file provided as input.
 	lintAndCollectQuery     = ast.MustParseBody("lint := data.regal.main.lint")
 	lintWithAggregatesQuery = ast.MustParseBody("lint_aggregate := data.regal.main.lint_aggregate")
 )
@@ -110,13 +114,7 @@ func (l Linter) WithDebugMode(debugMode bool) Linter {
 
 // WithUserConfig provides config overrides set by the user.
 func (l Linter) WithUserConfig(cfg config.Config) Linter {
-	l.configBundle = &bundle.Bundle{
-		Manifest: bundle.Manifest{
-			Roots:    &[]string{regalUserConfig},
-			Metadata: map[string]any{"name": regalUserConfig},
-		},
-		Data: map[string]any{regalUserConfig: config.ToMap(cfg)},
-	}
+	l.userConfig = &cfg
 
 	return l
 }
@@ -207,6 +205,19 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	l.combinedConfig = &conf
 
+	l.dataBundle = &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{"internal"},
+			Metadata: map[string]any{"name": "internal"},
+		},
+		Data: map[string]any{
+			"internal": map[string]any{
+				"combined_config": config.ToMap(*l.combinedConfig),
+				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+			},
+		},
+	}
+
 	ignore := conf.Ignore.Files
 
 	if len(l.ignoreFiles) > 0 {
@@ -263,6 +274,18 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	finalReport.Violations = append(finalReport.Violations, regoReport.Violations...)
 
+	rulesSkippedCounter := 0
+
+	for _, notice := range regoReport.Notices {
+		if !util.Contains(finalReport.Notices, notice) {
+			finalReport.Notices = append(finalReport.Notices, notice)
+
+			if notice.Severity != "none" {
+				rulesSkippedCounter++
+			}
+		}
+	}
+
 	if len(input.FileNames) > 1 {
 		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, regoReport.Aggregates)
 		if err != nil {
@@ -275,7 +298,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	finalReport.Summary = report.Summary{
 		FilesScanned:  len(input.FileNames),
 		FilesFailed:   len(finalReport.ViolationsFileCount()),
-		FilesSkipped:  0,
+		RulesSkipped:  rulesSkippedCounter,
 		NumViolations: len(finalReport.Violations),
 	}
 
@@ -473,8 +496,8 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 		)
 	}
 
-	if l.configBundle != nil {
-		regoArgs = append(regoArgs, rego.ParsedBundle(regalUserConfig, l.configBundle))
+	if l.dataBundle != nil {
+		regoArgs = append(regoArgs, rego.ParsedBundle("internal", l.dataBundle))
 	}
 
 	if l.customRulesPaths != nil {
@@ -582,6 +605,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 			mu.Lock()
 			aggregate.Violations = append(aggregate.Violations, result.Violations...)
+			aggregate.Notices = append(aggregate.Notices, result.Notices...)
 
 			for k := range result.Aggregates {
 				aggregate.Aggregates[k] = append(aggregate.Aggregates[k], result.Aggregates[k]...)
@@ -705,21 +729,6 @@ func (l Linter) readProvidedConfig() (config.Config, error) {
 	return config.FromMap(bundledConf) //nolint:wrapcheck
 }
 
-func (l Linter) readUserConfig() (config.Config, error) {
-	if l.configBundle != nil && l.configBundle.Data != nil {
-		userConfigMap := l.configBundle.Data[regalUserConfig].(map[string]any) //nolint:forcetypeassert
-
-		userConfig, err := config.FromMap(userConfigMap)
-		if err != nil {
-			return config.Config{}, fmt.Errorf("failed to create config from map: %w", err)
-		}
-
-		return userConfig, nil
-	}
-
-	return config.Config{}, nil
-}
-
 func (l Linter) mergedConfig() (config.Config, error) {
 	if l.combinedConfig != nil {
 		return *l.combinedConfig, nil
@@ -732,15 +741,11 @@ func (l Linter) mergedConfig() (config.Config, error) {
 
 	ruleLevels := providedConfLevels(mergedConf)
 
-	userConf, err := l.readUserConfig()
-	if err != nil {
-		// Note that user config is optional — this will only happen if config is somehow invalid
-		return config.Config{}, fmt.Errorf("failed to read user config: %w", err)
-	}
-
-	err = mergo.Merge(&mergedConf, userConf, mergo.WithOverride)
-	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
+	if l.userConfig != nil {
+		err = mergo.Merge(&mergedConf, l.userConfig, mergo.WithOverride)
+		if err != nil {
+			return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
+		}
 	}
 
 	// If the user configuration contains rules with the level unset, copy the level from the provided configuration
@@ -753,6 +758,10 @@ func (l Linter) mergedConfig() (config.Config, error) {
 				}
 			}
 		}
+	}
+
+	if mergedConf.Capabilities == nil {
+		mergedConf.Capabilities = config.CapabilitiesForThisVersion()
 	}
 
 	if l.debugMode {

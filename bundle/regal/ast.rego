@@ -5,6 +5,8 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.config
+
 scalar_types := {"boolean", "null", "number", "string"}
 
 # regal ignore:external-reference
@@ -20,7 +22,7 @@ has_var(value) if {
 	term.type == "var"
 }
 
-builtin_names := object.keys(data.regal.opa.builtins)
+builtin_names := object.keys(config.capabilities.builtins)
 
 # METADATA
 # description: |
@@ -332,20 +334,22 @@ builtin_functions_called contains name if {
 
 # METADATA
 # description: |
-#   Returns custom functions declared in input policy in the same format as opa.builtins
-function_decls(rules) := {rule_name: args |
+#   Returns custom functions declared in input policy in the same format as builtin capabilities
+function_decls(rules) := {rule_name: decl |
 	some rule in functions
 
 	rule_name := name(rule)
 
 	# ensure we only get one set of args, or we'll have a conflict
-	args := [{"args": [item |
+	args := [[item |
 		some arg in rule.head.args
-		item := {"name": arg.value}
-	]} |
+		item := {"type": "any"}
+	] |
 		some rule in rules
 		name(rule) == rule_name
 	][0]
+
+	decl := {"decl": {"args": args, "result": {"type": "any"}}}
 }
 
 function_ret_in_args(fn_name, terms) if {
@@ -354,7 +358,7 @@ function_ret_in_args(fn_name, terms) if {
 	# for now, bail out of nested calls
 	not "call" in {term.type | some term in rest}
 
-	count(rest) > count(all_functions[fn_name].args)
+	count(rest) > count(all_functions[fn_name].decl.args)
 }
 
 # METADATA
@@ -383,7 +387,7 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value.location.col == 1
 }
 
-all_functions := object.union(data.regal.opa.builtins, function_decls(input.rules))
+all_functions := object.union(config.capabilities.builtins, function_decls(input.rules))
 
 all_function_names := object.keys(all_functions)
 

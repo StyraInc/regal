@@ -6,7 +6,14 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.config
 import data.regal.result
+
+# METADATA
+# description: Rule made obsolete by rego.v1 capability
+# custom:
+#   severity: none
+notices contains result.notice(rego.metadata.chain()) if "rego_v1_import" in config.capabilities.features
 
 report contains violation if {
 	some imported in input.imports

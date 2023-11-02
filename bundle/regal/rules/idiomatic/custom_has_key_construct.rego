@@ -7,7 +7,16 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.config
 import data.regal.result
+
+# METADATA
+# description: Missing capability for built-in function `object.keys`
+# custom:
+#   severity: warning
+notices contains result.notice(rego.metadata.chain()) if not has_object_keys
+
+has_object_keys if "object.keys" in object.keys(config.capabilities.builtins)
 
 report contains violation if {
 	some rule in ast.functions

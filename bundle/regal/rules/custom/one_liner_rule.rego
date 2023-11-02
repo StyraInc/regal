@@ -12,6 +12,17 @@ import data.regal.result
 
 cfg := config.for_rule("custom", "one-liner-rule")
 
+# METADATA
+# description: Missing capability for keyword `if`
+# custom:
+#   severity: warning
+notices contains result.notice(rego.metadata.chain()) if not has_if
+
+# if if if!
+has_if if "if" in config.capabilities.future_keywords
+
+has_if if "rego_v1_import" in config.capabilities.features
+
 # regal ignore:rule-length
 report contains violation if {
 	# No need to traverse rules here if we're not importing `if`

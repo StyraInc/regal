@@ -62,6 +62,15 @@ func MustLoadRegalBundlePath(path string) bundle.Bundle {
 	return regalBundle
 }
 
+// ToMap convert any value to map[string]any, or panics on failure.
+func ToMap(a any) map[string]any {
+	r := make(map[string]any)
+
+	MustJSONRoundTrip(a, &r)
+
+	return r
+}
+
 // JSONRoundTrip convert any value to JSON and back again.
 func JSONRoundTrip(from any, to any) error {
 	bs, err := json.Marshal(from)

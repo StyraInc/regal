@@ -28,6 +28,7 @@ import (
 	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 const (
@@ -145,6 +146,16 @@ func opaTest(args []string) int {
 	if err := store.Write(ctx, txn, storage.AddOp,
 		storage.MustParsePath("/regal"),
 		regalBundle.Data["regal"]); err != nil {
+		panic(err)
+	}
+
+	if err := store.Write(ctx, txn, storage.AddOp, []string{"internal"}, map[string]any{}); err != nil {
+		panic(err)
+	}
+
+	if err := store.Write(ctx, txn, storage.AddOp,
+		[]string{"internal", "capabilities"},
+		rio.ToMap(config.CapabilitiesForThisVersion())); err != nil {
 		panic(err)
 	}
 

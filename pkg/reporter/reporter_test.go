@@ -19,6 +19,7 @@ var rep = report.Report{
 		FilesScanned:  3,
 		NumViolations: 2,
 		FilesFailed:   2,
+		RulesSkipped:  1,
 	},
 	Violations: []report.Violation{
 		{
@@ -58,6 +59,22 @@ var rep = report.Report{
 			Level: "warning",
 		},
 	},
+	Notices: []report.Notice{
+		{
+			Title:       "rule-made-obsolete",
+			Description: "Rule made obsolete by capability foo",
+			Category:    "some-category",
+			Severity:    "none",
+			Level:       "notice",
+		},
+		{
+			Title:       "rule-missing-capability",
+			Description: "Rule missing capability bar",
+			Category:    "some-category",
+			Severity:    "warning",
+			Level:       "notice",
+		},
+	},
 }
 
 func TestPrettyReporterPublish(t *testing.T) {
@@ -73,9 +90,9 @@ func TestPrettyReporterPublish(t *testing.T) {
 	}
 
 	// TODO(anders): I cannot for the life of me get this to work using a raw string 🫠
-	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files.\n" //nolint: lll
+	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files. 1 rule skipped:\n- rule-missing-capability: Rule missing capability bar\n\n" //nolint: lll
 	if buf.String() != expect {
-		t.Errorf("expected %q, got %q", expect, buf.String())
+		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 
@@ -92,7 +109,7 @@ func TestPrettyReporterPublishNoViolations(t *testing.T) {
 	}
 
 	if buf.String() != "0 files linted. No violations found.\n" {
-		t.Errorf("expected %q, got %q", "Found 0 violations in 0 files\n\n", buf.String())
+		t.Errorf(`expected "0 files linted. No violations found.\n", got %q`, buf.String())
 	}
 }
 
@@ -185,10 +202,26 @@ func TestJSONReporterPublish(t *testing.T) {
       }
     }
   ],
+  "notices": [
+    {
+      "title": "rule-made-obsolete",
+      "description": "Rule made obsolete by capability foo",
+      "category": "some-category",
+      "level": "notice",
+      "severity": "none"
+    },
+    {
+      "title": "rule-missing-capability",
+      "description": "Rule missing capability bar",
+      "category": "some-category",
+      "level": "notice",
+      "severity": "warning"
+    }
+  ],
   "summary": {
     "files_scanned": 3,
     "files_failed": 2,
-    "files_skipped": 0,
+    "rules_skipped": 1,
     "num_violations": 2
   }
 }
@@ -215,7 +248,7 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
   "summary": {
     "files_scanned": 0,
     "files_failed": 0,
-    "files_skipped": 0,
+    "rules_skipped": 0,
     "num_violations": 0
   }
 }

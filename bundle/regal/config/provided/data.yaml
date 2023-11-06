@@ -101,6 +101,8 @@ rules:
       level: error
     unconditional-assignment:
       level: error
+    unnecessary-some:
+      level: error
     use-assignment-operator:
       level: error
   testing:

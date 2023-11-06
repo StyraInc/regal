@@ -402,6 +402,24 @@ is_chained_rule_body(rule, lines) if {
 	startswith(col_text, "{")
 }
 
+# METADATA
+# description: |
+#   returns whether a keyword is imported in the policy, either explicitly
+#   like "future.keywords.if" or implicitly like "future.keywords" or "rego.v1"
+imports_keyword(imports, keyword) if {
+	some imp in imports
+
+	_has_keyword(arr(imp), keyword)
+}
+
+arr(xs) := [y.value | some y in xs.path.value]
+
+_has_keyword(["future", "keywords"], _)
+
+_has_keyword(["future", "keywords", keyword], keyword)
+
+_has_keyword(["rego", "v1"], _)
+
 comments_decoded := [decoded |
 	some comment in input.comments
 	decoded := object.union(comment, {"Text": base64.decode(comment.Text)})

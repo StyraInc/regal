@@ -6,40 +6,16 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.config
 import data.regal.result
-
-# No need to traverse rules here if we're not importing `if`
-imports_if if {
-	some imp in input.imports
-
-	contains_if(imp)
-}
-
-contains_if(imp) if {
-	count(imp.path.value) == 2
-	imp.path.value[0].value == "future"
-	imp.path.value[1].value == "keywords"
-}
-
-contains_if(imp) if {
-	count(imp.path.value) == 3
-	imp.path.value[0].value == "future"
-	imp.path.value[1].value == "keywords"
-	imp.path.value[2].value == "if"
-}
-
-contains_if(imp) if {
-	count(imp.path.value) == 2
-	imp.path.value[0].value == "rego"
-	imp.path.value[1].value == "v1"
-}
 
 cfg := config.for_rule("custom", "one-liner-rule")
 
 # regal ignore:rule-length
 report contains violation if {
-	imports_if
+	# No need to traverse rules here if we're not importing `if`
+	ast.imports_keyword(input.imports, "if")
 
 	# Note: this covers both rules and functions, which is what we want here
 	some rule in input.rules

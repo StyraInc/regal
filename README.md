@@ -227,6 +227,7 @@ The following rules are currently available:
 | style     | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                                 | Max rule length exceeded                                  |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                               | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)       | Unconditional assignment in rule body                     |
+| style     | [unnecessary-some](https://docs.styra.com/regal/rules/style/unnecessary-some)                       | Unnecessary use of `some`                                 |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)         | Prefer := over = for assignment                           |
 | testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)           | Dubious use of print and sprintf                          |
 | testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)     | Files containing tests should have a _test.rego suffix    |

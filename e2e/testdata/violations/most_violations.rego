@@ -161,6 +161,10 @@ default_over_else := 1 {
 	input.x
 } else := 3
 
+unnecessary_some {
+	some "x" in ["x"]
+}
+
 ### Testing ###
 
 # this will also tringger the test-outside-test-package rule

@@ -229,6 +229,7 @@ The following rules are currently available:
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)       | Unconditional assignment in rule body                     |
 | style     | [unnecessary-some](https://docs.styra.com/regal/rules/style/unnecessary-some)                       | Unnecessary use of `some`                                 |
 | style     | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)         | Prefer := over = for assignment                           |
+| style     | [yoda-condition](https://docs.styra.com/regal/rules/style/yoda-condition)                           | Yoda condition                                            |
 | testing   | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)           | Dubious use of print and sprintf                          |
 | testing   | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)     | Files containing tests should have a _test.rego suffix    |
 | testing   | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)       | Multiple tests with same name                             |

@@ -23,7 +23,7 @@ func TestLintWithDefaultBundle(t *testing.T) {
 
 # TODO: fix this
 camelCase {
-	1 == input.one
+	input.one == 1
 }
 `)
 

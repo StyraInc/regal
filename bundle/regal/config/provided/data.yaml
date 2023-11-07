@@ -105,6 +105,8 @@ rules:
       level: error
     use-assignment-operator:
       level: error
+    yoda-condition:
+      level: error
   testing:
     dubious-print-sprintf:
       level: error

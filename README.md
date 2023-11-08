@@ -185,6 +185,7 @@ The following rules are currently available:
 | Category  |                                                Title                                                |                        Description                        |
 |-----------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | bugs      | [constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition)                    | Constant condition                                        |
+| bugs      | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                      | Inconsistently named function arguments                   |
 | bugs      | [invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute)    | Invalid attribute in metadata annotation                  |
 | bugs      | [not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop)                    | Use of != in loop                                         |
 | bugs      | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                              | Rule named "if"                                           |

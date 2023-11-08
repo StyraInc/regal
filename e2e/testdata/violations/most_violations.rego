@@ -58,6 +58,14 @@ unused_return_value {
 
 zero_arity_function() := true
 
+inconsistent_args(a, b) {
+	a == b
+}
+
+inconsistent_args(b, a) {
+	b == a
+}
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) {

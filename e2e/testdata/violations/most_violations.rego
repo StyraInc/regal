@@ -165,6 +165,10 @@ unnecessary_some {
 	some "x" in ["x"]
 }
 
+yoda_condition {
+	"foo" == input.bar
+}
+
 ### Testing ###
 
 # this will also tringger the test-outside-test-package rule

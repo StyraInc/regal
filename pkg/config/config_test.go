@@ -185,8 +185,8 @@ capabilities:
 	for _, expectedBuiltin := range expectedBuiltins {
 		expectedBuiltinFound := false
 
-		for _, bi := range conf.Capabilities.Builtins {
-			if bi.Name == expectedBuiltin {
+		for name := range conf.Capabilities.Builtins {
+			if name == expectedBuiltin {
 				expectedBuiltinFound = true
 
 				break
@@ -203,8 +203,8 @@ capabilities:
 	for _, unexpectedBuiltin := range unexpectedBuiltins {
 		unexpectedBuiltinFound := false
 
-		for _, bi := range conf.Capabilities.Builtins {
-			if bi.Name == unexpectedBuiltin {
+		for name := range conf.Capabilities.Builtins {
+			if name == unexpectedBuiltin {
 				unexpectedBuiltinFound = true
 
 				break
@@ -241,8 +241,8 @@ capabilities:
 	for _, expectedBuiltin := range expectedBuiltins {
 		expectedBuiltinFound := false
 
-		for _, bi := range conf.Capabilities.Builtins {
-			if bi.Name == expectedBuiltin {
+		for name := range conf.Capabilities.Builtins {
+			if name == expectedBuiltin {
 				expectedBuiltinFound = true
 
 				break
@@ -279,8 +279,8 @@ func TestUnmarshalConfigDefaultCapabilities(t *testing.T) {
 	for _, expectedBuiltin := range expectedBuiltins {
 		expectedBuiltinFound := false
 
-		for _, bi := range conf.Capabilities.Builtins {
-			if bi.Name == expectedBuiltin {
+		for name := range conf.Capabilities.Builtins {
+			if name == expectedBuiltin {
 				expectedBuiltinFound = true
 
 				break

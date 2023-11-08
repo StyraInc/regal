@@ -9,6 +9,7 @@ import data.regal.rules.style["function-arg-return"] as rule
 test_fail_function_arg_return_value if {
 	r := rule.report with input as ast.policy(`foo := i { indexof("foo", "o", i) }`)
 		with config.for_rule as {"level": "error"}
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {{
 		"category": "style",
 		"description": "Function argument used for return value",
@@ -25,6 +26,7 @@ test_fail_function_arg_return_value if {
 test_fail_function_arg_return_value_multi_part_ref if {
 	r := rule.report with input as ast.policy(`foo := r { regex.match("foo", "foo", r) }`)
 		with config.for_rule as {"level": "error"}
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == {{
 		"category": "style",
 		"description": "Function argument used for return value",
@@ -44,5 +46,6 @@ test_success_function_arg_return_value_except_function if {
 			"level": "error",
 			"except-functions": ["indexof"],
 		}
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
 	r == set()
 }

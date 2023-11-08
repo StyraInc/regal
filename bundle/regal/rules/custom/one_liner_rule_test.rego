@@ -139,6 +139,17 @@ test_success_already_a_one_liner if {
 	r == set()
 }
 
+test_has_notice_if_unmet_capability if {
+	r := rule.notices with config.capabilities as {}
+	r == {{
+		"category": "custom",
+		"description": "Missing capability for keyword `if`",
+		"level": "notice",
+		"severity": "warning",
+		"title": "one-liner-rule",
+	}}
+}
+
 expected := {
 	"category": "custom",
 	"description": "Rule body could be made a one-liner",

@@ -1,137 +1,139 @@
 package regal.main_test
 
-test_main_basic_input_success {
-	report := data.regal.main.report with input as regal.parse_module("p.rego", `package p`)
+import future.keywords.if
+
+import data.regal.config
+import data.regal.main
+
+test_main_basic_input_success if {
+	report := main.report with input as regal.parse_module("p.rego", `package p`)
 	report == set()
 }
 
-test_main_multiple_failures {
+test_main_multiple_failures if {
 	policy := `package p
 
 	# both camel case and unification operator
 	default camelCase = "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {
+			"prefer-snake-case": {"level": "error"},
+			"use-assignment-operator": {"level": "error"},
+		}}}
 
 	count(report) == 2
 }
 
-test_main_expect_failure {
+test_main_expect_failure if {
 	policy := `package p
 
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
 
 	count(report) == 1
 }
 
-test_main_ignore_rule_config {
+test_main_ignore_rule_config if {
 	policy := `package p
 
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "ignore"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "ignore"}}}}
 
 	count(report) == 0
 }
 
-test_main_ignore_directive_failure {
+test_main_ignore_directive_failure if {
 	policy := `package p
 
 	# regal ignore:todo-comment
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
 
 	count(report) == 1
 }
 
-test_main_ignore_directive_success {
+test_main_ignore_directive_success if {
 	policy := `package p
 
 	# regal ignore:prefer-snake-case
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
 
 	count(report) == 0
 }
 
-test_main_ignore_directive_multiple_success {
+test_main_ignore_directive_multiple_success if {
 	policy := `package p
 
 	# regal ignore:prefer-snake-case,use-assignment-operator
 	default camelCase = "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {
+			"prefer-snake-case": {"level": "error"},
+			"use-assignment-operator": {"level": "error"},
+		}}}
 
 	count(report) == 0
 }
 
-test_main_ignore_directive_multiple_mixed_success {
+test_main_ignore_directive_multiple_mixed_success if {
 	policy := `package p
 
 	# regal ignore:prefer-snake-case,todo-comment
 	default camelCase = "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {
+			"prefer-snake-case": {"level": "error"},
+			"use-assignment-operator": {"level": "error"},
+		}}}
 
 	count(report) == 1
 }
 
-test_main_exclude_files_rule_config {
+test_main_exclude_files_rule_config if {
 	policy := `package p
 
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error", "ignore": {"files": ["p.rego"]}}
+	cfg := {"rules": {"style": {"prefer-snake-case": {"level": "error", "ignore": {"files": ["p.rego"]}}}}}
+	report := main.report with input as regal.parse_module("p.rego", policy) with config.merged_config as cfg
 
 	count(report) == 0
 }
 
-test_main_force_exclude_file_eval_param {
+test_main_force_exclude_file_eval_param if {
 	policy := `package p
 
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
 		with data.eval.params.ignore_files as ["p.rego"]
 
 	count(report) == 0
 }
 
-test_main_force_exclude_file_user_config {
+test_main_force_exclude_file_config if {
 	policy := `package p
 
 	camelCase := "yes"
 	`
-	report := data.regal.main.report with input as regal.parse_module("p.rego", policy)
-		with data.regal.config.for_rule as {"level": "error"}
-		with data.regal.config.merged_config as {"ignore": {"files": ["p.rego"]}}
-
-	count(report) == 0
-}
-
-test_main_exclude_files_rule_config_integration {
-	policy := `package p
-
-	camelCase := "yes"
-	`
-	report := data.regal.main.report with input as regal.parse_module("/some/dir/p.rego", policy)
-		with data.regal_user_config as {"rules": {"style": {"prefer-snake-case": {
-			"level": "error",
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {
+			"rules": {"style": {"prefer-snake-case": {"level": "error"}}},
 			"ignore": {"files": ["p.rego"]},
-		}}}}
+		}
 
 	count(report) == 0
 }

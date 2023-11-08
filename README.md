@@ -283,12 +283,6 @@ more about it.
 
 **.regal/config.yaml**
 ```yaml
-# Files can be excluded from all lint
-# rules according to glob-patterns
-ignore:
-  files:
-    - file1.rego
-    - "*_tmp.rego"
 rules:
   style:
     todo-comment:
@@ -317,6 +311,21 @@ rules:
         - pattern: '^acmecorp\.[a-z_\.]+$|^system\.[a-z_\.]+$'
           targets:
             - package
+capabilities:
+  from:
+    # optionally configure Regal to target a specific version of OPA
+    # this will disable rules that has dependencies to e.g. built-in
+    # functions or features not supported by the given version
+    #
+    # if not provided, Regal will use the capabilities of the latest
+    # version of OPA available at the time of the Regal release
+    engine: opa
+    version: v0.58.0
+ignore:
+  # files can be excluded from all lint rules according to glob-patterns
+  files:
+    - file1.rego
+    - "*_tmp.rego"
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
@@ -325,6 +334,63 @@ reached. If no configuration file is found, Regal will use the default configura
 
 A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
 provided will be used to override the default configuration.
+
+## Capabilities
+
+By default, Regal will lint your policies using the
+[capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities) of the latest version of OPA
+known to Regal (i.e. the latest version of OPA at the time Regal was released). Sometimes you might want to tell Regal
+that some rules aren't applicable to your project (yet!). As an example, if you're running OPA v0.46.0, you likely won't
+be helped by the [custom-has-key](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) rule, as it
+suggests using the `object.keys` built-in function introduced in OPA v0.47.0. The opposite could also be true —
+sometimes new versions of OPA will invalidate rules that applied to older versions. An example of this is the upcoming
+introduction of `import rego.v1`, which will make
+[implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords) obsolete, as importing
+`rego.v1` automatically imports all "future" functions.
+
+Capabilities help you tell Regal which features to take into account, and rules with dependencies to capabilities
+not available or not applicable in the given version will be skipped.
+
+If you'd like to target a specific version of OPA, you can include a `capabilities` section in your configuration,
+providing either a specific `version` of an `engine` (currently only `opa` supported):
+
+```yaml
+capabilities:
+  from:
+    engine: opa
+    version: v0.58.0
+```
+
+You can also choose to import capabilities from a file:
+
+```yaml
+capabilities:
+  from:
+    file: build/capabilities.json
+```
+
+You can use `plus` and `minus` to add or remove built-in functions from the given set of capabilities:
+
+```yaml
+capabilities:
+  from:
+    engine: opa
+    version: v0.58.0
+  minus:
+    builtins:
+      # exclude rules that depend on the http.send built-in function
+      - name: http.send
+  plus:
+    builtins:
+      # make Regal aware of a custom "ldap.query" function
+      - name: ldap.query
+        type: function
+        decl:
+          args:
+            - type: string
+        result:
+          type: object
+```
 
 ### CLI flags
 

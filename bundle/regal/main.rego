@@ -6,11 +6,13 @@ import future.keywords.in
 
 import data.regal.config
 
-lint.violations := report
+lint.notices := notices
 
 lint.aggregates := aggregate
 
 lint_aggregate.violations := aggregate_report
+
+lint.violations := report
 
 # METADATA
 # description: Runs all rules against an input AST and produces a report
@@ -35,6 +37,20 @@ report contains violation if {
 	}
 }
 
+notices contains notice if {
+	some category, title
+	some notice in grouped_notices[category][title]
+}
+
+grouped_notices[category][title] contains notice if {
+	some category, title
+	config.merged_config.rules[category][title]
+
+	config.for_rule(category, title).level != "ignore"
+
+	notice := data.regal.rules[category][title].notices[_]
+}
+
 # Check bundled rules
 report contains violation if {
 	some category, title
@@ -42,6 +58,8 @@ report contains violation if {
 
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
+
+	count(object.get(grouped_notices, [category, title], [])) == 0
 
 	violation := data.regal.rules[category][title].report[_]
 

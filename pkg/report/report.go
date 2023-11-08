@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,6 +36,15 @@ type Violation struct {
 	Location         Location          `json:"location,omitempty"`
 }
 
+// Notice describes any notice found by Regal.
+type Notice struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Level       string `json:"level"`
+	Severity    string `json:"severity"`
+}
+
 // An Aggregate is data collected by some rule while processing a file AST, to be used later by other rules needing a
 // global context (i.e. broader than per-file)
 // Rule authors are expected to collect the minimum needed data, to avoid performance problems
@@ -44,7 +54,7 @@ type Aggregate map[string]any
 type Summary struct {
 	FilesScanned  int `json:"files_scanned"`
 	FilesFailed   int `json:"files_failed"`
-	FilesSkipped  int `json:"files_skipped"`
+	RulesSkipped  int `json:"rules_skipped"`
 	NumViolations int `json:"num_violations"`
 }
 
@@ -54,6 +64,7 @@ type Report struct {
 	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
 	// to avoid surfacing a null/empty field.
 	Aggregates       map[string][]Aggregate  `json:"aggregates,omitempty"`
+	Notices          []Notice                `json:"notices,omitempty"`
 	Summary          Summary                 `json:"summary"`
 	Metrics          map[string]any          `json:"metrics,omitempty"`
 	AggregateProfile map[string]ProfileEntry `json:"-"`
@@ -120,9 +131,9 @@ func (r Report) printProfile(w io.Writer) { //nolint:unused
 		timeNs := time.Duration(rs.TotalTimeNs) * time.Nanosecond
 		line := []string{
 			timeNs.String(),
-			fmt.Sprintf("%d", rs.NumEval),
-			fmt.Sprintf("%d", rs.NumRedo),
-			fmt.Sprintf("%d", rs.NumGenExpr),
+			strconv.Itoa(rs.NumEval),
+			strconv.Itoa(rs.NumRedo),
+			strconv.Itoa(rs.NumGenExpr),
 			rs.Location,
 		}
 		tableProfile.Append(line)

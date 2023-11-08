@@ -73,7 +73,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	footer := fmt.Sprintf("%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
 
 	if r.Summary.NumViolations == 0 { //nolint:nestif
-		footer += " No violations found"
+		footer += " No violations found."
 	} else {
 		pluralViolations := ""
 		if r.Summary.NumViolations > 1 {
@@ -88,11 +88,32 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 				pluralFailed = "s"
 			}
 
-			footer += fmt.Sprintf(" in %d file%s", r.Summary.FilesFailed, pluralFailed)
+			footer += fmt.Sprintf(" in %d file%s.", r.Summary.FilesFailed, pluralFailed)
+		} else {
+			footer += "."
 		}
 	}
 
-	_, err := fmt.Fprint(tr.out, table+footer+".\n")
+	if r.Summary.RulesSkipped > 0 {
+		pluralSkipped := ""
+		if r.Summary.RulesSkipped > 1 {
+			pluralSkipped = "s"
+		}
+
+		footer += fmt.Sprintf(
+			" %d rule%s skipped:\n",
+			r.Summary.RulesSkipped,
+			pluralSkipped,
+		)
+
+		for _, notice := range r.Notices {
+			if notice.Severity != "none" {
+				footer += fmt.Sprintf("- %s: %s\n", notice.Title, notice.Description)
+			}
+		}
+	}
+
+	_, err := fmt.Fprint(tr.out, table+footer+"\n")
 
 	return err
 }

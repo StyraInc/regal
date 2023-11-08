@@ -115,21 +115,6 @@ job.check_readme {
 	check_readme
 }
 
-# METADATA
-# title: fetch_metadata
-# description: Fetch the built-in metadata definitions and store them in the bundle
-job.fetch_metadata {
-	out := rq.run([
-		"opa", "eval",
-		"--format", "pretty",
-		"--data", sprintf("%s/%s", [rq.dir(rq.scriptpath()), "builtin_metadata.rego"]),
-		"data.build.metadata.builtin_metadata"
-	], {})
-	spec := sprintf("raw:%s/../bundle/regal/opa/builtins/data.json", [rq.dir(rq.scriptpath())])
-
-	rq.write(out.stdout, spec)
-}
-
 build(true) {
 	run("go build")
 }
@@ -148,6 +133,7 @@ binary_present {
 
 test {
 	run("go test ./...")
+	run("go run main.go test bundle")
 }
 
 e2e {

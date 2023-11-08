@@ -95,7 +95,7 @@ func TestLintEmptyDir(t *testing.T) {
 					t.Errorf("violations: expected %d, got %d", exp, act)
 				}
 				zero := float64(0)
-				exp := map[string]any{"files_scanned": zero, "files_failed": zero, "files_skipped": zero, "num_violations": zero}
+				exp := map[string]any{"files_scanned": zero, "files_failed": zero, "rules_skipped": zero, "num_violations": zero}
 				if diff := cmp.Diff(exp, s.Summary); diff != "" {
 					t.Errorf("unexpected summary (-want, +got):\n%s", diff)
 				}
@@ -524,6 +524,56 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 		cwd+filepath.FromSlash("/testdata/custom_naming_convention"))
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
+}
+
+func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
+	// use OPA v0.46.0 as a target (the `object.keys` built-in function was introduced in v0.47.0)
+	err := regal(&stdout, &stderr)("lint", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/opa_v46_capabilities.yaml"),
+		cwd+filepath.FromSlash("/testdata/capabilities/custom_has_key.rego"))
+
+	// This is only an informative warning — command should not fail
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	expectOut := "1 file linted. No violations found. 1 rule skipped:\n" +
+		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n"
+
+	if stdout.String() == expectOut {
+		t.Errorf("expected %s, got %s", expectOut, stdout.String())
+	}
+}
+
+func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
+	// use OPA v0.46.0 as a target (the `object.keys` built-in function was introduced in v0.47.0)
+	err := regal(&stdout, &stderr)("lint", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/opa_v46_capabilities.yaml"),
+		cwd+filepath.FromSlash("/testdata/capabilities/"))
+
+	// This is only an informative warning — command should not fail
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	expectOut := "1 file linted. No violations found. 1 rule skipped:\n" +
+		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n"
+
+	if stdout.String() == expectOut {
+		t.Errorf("expected %s, got %s", expectOut, stdout.String())
+	}
 }
 
 func TestLintPprof(t *testing.T) {

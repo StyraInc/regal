@@ -176,19 +176,3 @@ test_all_configured_rules_exist {
 
 	count(missing_rules - go_rules) == 0
 }
-
-test_merged_configuration_inherits_empty_user_level_from_provided_conf {
-	base_conf := {"rules": {"test": {"test-case": {"level": "error"}}}}
-	user_conf := {"rules": {"test": {"test-case": {"level": "", "foo": "bar"}}}}
-
-	merged := config.merged_config with config.user_config as user_conf
-		with data.regal.config.provided as base_conf
-
-	object_equals(merged, {"rules": {"test": {"test-case": {
-		"level": "error",
-		"foo": "bar",
-	}}}})
-}
-
-# begone, compile time type checker!
-object_equals(o, exp) := o == exp

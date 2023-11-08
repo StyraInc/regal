@@ -162,18 +162,15 @@ func addToDataYAML(params newRuleCommandParams) error {
 		return err
 	}
 
-	// Create a new Rule value and set the Level field
-	vrule := config.Rule{
-		Level: "error",
-	}
+	existingConfig.Capabilities = nil
 
 	// Check if the category already exists in rules
 	if existingConfig.Rules[params.category] == nil {
 		existingConfig.Rules[params.category] = make(map[string]config.Rule)
 	}
 
-	// Assign the new Rule value to the Category map
-	existingConfig.Rules[params.category][params.name] = vrule
+	// Assign a new rule/level value to the Category map
+	existingConfig.Rules[params.category][params.name] = config.Rule{Level: "error"}
 
 	// Sort the map keys alphabetically (categories)
 	sortedCategories := make([]string, 0, len(existingConfig.Rules))

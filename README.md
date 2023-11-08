@@ -430,21 +430,27 @@ If `--fail-level warning` is supplied, warnings will result in a non-zero exit c
 
 ## Inline Ignore Directives
 
-If you'd like to ignore a specific violation, you can add an ignore directive above the line in question:
+If you'd like to ignore a specific violation, you can add an ignore directive above the line in question, or
+alternatively on the same line to the right of the expression:
 
 ```rego
 package policy
 
 # regal ignore:prefer-snake-case
 camelCase := "yes"
+
+list_users contains user if { # regal ignore:avoid-get-and-list-prefix
+    some user in data.db.users
+    # ...
+}
 ```
 
 The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, where `<rule-name>` is the name of the
 rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
 
-Note that at this point in time, Regal only considers the line following the ignore directive, i.e. it does not ignore
-entire blocks of code (like rules, functions or even packages). See [configuration](#configuration) if you want to
-ignore certain rules altogether.
+Note that at this point in time, Regal only considers the same line or the line following the ignore directive, i.e. it
+does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration) if you want
+to ignore certain rules altogether.
 
 ## Output Formats
 

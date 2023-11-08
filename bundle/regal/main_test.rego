@@ -71,6 +71,17 @@ test_main_ignore_directive_success if {
 	count(report) == 0
 }
 
+test_main_ignore_directive_success_same_line if {
+	policy := `package p
+
+	camelCase := "yes" # regal ignore:prefer-snake-case
+	`
+	report := main.report with input as regal.parse_module("p.rego", policy)
+		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+
+	count(report) == 0
+}
+
 test_main_ignore_directive_multiple_success if {
 	policy := `package p
 

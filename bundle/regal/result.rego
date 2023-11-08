@@ -56,10 +56,10 @@ _category_title_from_path(path) := [category, title] if ["regal", "rules", categ
 _category_title_from_path(path) := [category, title] if ["custom", "regal", "rules", category, title] = path
 
 # Provided rules, i.e. regal.rules.category.title
-fail(chain, details) := violation if {
-	is_array(chain) # from rego.metadata.chain()
+fail(metadata, details) := violation if {
+	is_array(metadata) # from rego.metadata.chain()
 
-	some link in chain
+	some link in metadata
 	link.annotations.scope == "package"
 
 	some category, title
@@ -76,10 +76,10 @@ fail(chain, details) := violation if {
 }
 
 # Custom rules, i.e. custom.regal.rules.category.title
-fail(chain, details) := violation if {
-	is_array(chain) # from rego.metadata.chain()
+fail(metadata, details) := violation if {
+	is_array(metadata) # from rego.metadata.chain()
 
-	some link in chain
+	some link in metadata
 	link.annotations.scope == "package"
 
 	some category, title

@@ -2,6 +2,8 @@ rules:
   bugs:
     constant-condition:
       level: error
+    inconsistent-args:
+      level: error
     invalid-metadata-attribute:
       level: error
     not-equals-in-loop:

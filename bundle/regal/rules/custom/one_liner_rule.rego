@@ -23,7 +23,6 @@ has_if if "if" in config.capabilities.future_keywords
 
 has_if if "rego_v1_import" in config.capabilities.features
 
-# regal ignore:rule-length
 report contains violation if {
 	# No need to traverse rules here if we're not importing `if`
 	ast.imports_keyword(input.imports, "if")

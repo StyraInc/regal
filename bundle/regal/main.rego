@@ -48,7 +48,7 @@ grouped_notices[category][title] contains notice if {
 
 	config.for_rule(category, title).level != "ignore"
 
-	notice := data.regal.rules[category][title].notices[_]
+	some notice in data.regal.rules[category][title].notices
 }
 
 # Check bundled rules
@@ -61,7 +61,7 @@ report contains violation if {
 
 	count(object.get(grouped_notices, [category, title], [])) == 0
 
-	violation := data.regal.rules[category][title].report[_]
+	some violation in data.regal.rules[category][title].report
 
 	not ignored(violation, ignore_directives)
 }
@@ -86,7 +86,7 @@ aggregate[category_title] contains entry if {
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
 
-	entry := data.regal.rules[category][title].aggregate[_]
+	some entry in data.regal.rules[category][title].aggregate
 
 	category_title := concat("/", [category, title])
 }
@@ -98,7 +98,7 @@ aggregate[category_title] contains entry if {
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
 
-	entry := data.custom.regal.rules[category][title].aggregate[_]
+	some entry in data.custom.regal.rules[category][title].aggregate
 
 	category_title := concat("/", [category, title])
 }
@@ -120,7 +120,7 @@ aggregate_report contains violation if {
 		["aggregates_internal"],
 	)
 
-	violation := data.regal.rules[category][title].aggregate_report[_] with input as input_for_rule
+	some violation in data.regal.rules[category][title].aggregate_report with input as input_for_rule
 
 	not ignored(violation, ignore_directives)
 }
@@ -141,14 +141,18 @@ aggregate_report contains violation if {
 		["aggregates_internal"],
 	)
 
-	# regal ignore:prefer-some-in-iteration
-	violation := data.custom.regal.rules[category][title].aggregate_report[_] with input as input_for_rule
+	some violation in data.custom.regal.rules[category][title].aggregate_report with input as input_for_rule
 
 	not ignored(violation, ignore_directives)
 }
 
 ignored(violation, directives) if {
 	ignored_rules := directives[violation.location.row]
+	violation.title in ignored_rules
+}
+
+ignored(violation, directives) if {
+	ignored_rules := directives[violation.location.row + 1]
 	violation.title in ignored_rules
 }
 

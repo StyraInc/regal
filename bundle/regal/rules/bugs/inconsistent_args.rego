@@ -16,17 +16,11 @@ report contains violation if {
 	# to have block level scoped ignore directives...
 	function_args_by_name := {name: args_list |
 		some i
-
-		# regal ignore:prefer-some-in-iteration
-		name := ast.ref_to_string(ast.functions[i].head.ref)
+		name := ast.ref_to_string(ast.functions[i].head.ref) # regal ignore:prefer-some-in-iteration
 		args_list := [args |
 			some j
-
-			# regal ignore:prefer-some-in-iteration
-			ast.ref_to_string(ast.functions[j].head.ref) == name
-
-			# regal ignore:prefer-some-in-iteration
-			args := ast.functions[j].head.args
+			ast.ref_to_string(ast.functions[j].head.ref) == name # regal ignore:prefer-some-in-iteration
+			args := ast.functions[j].head.args # regal ignore:prefer-some-in-iteration
 		]
 		count(args_list) > 1
 	}

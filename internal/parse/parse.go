@@ -31,6 +31,7 @@ func ParserOptions() ast.ParserOptions {
 					AnnotationsRef: true,
 				},
 				IncludeLocationText: true,
+				ExcludeLocationFile: true,
 			},
 		},
 	}

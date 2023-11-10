@@ -544,10 +544,10 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
 	expectOut := "1 file linted. No violations found. 1 rule skipped:\n" +
-		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n"
+		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n\n"
 
-	if stdout.String() == expectOut {
-		t.Errorf("expected %s, got %s", expectOut, stdout.String())
+	if stdout.String() != expectOut {
+		t.Errorf("expected %q, got %q", expectOut, stdout.String())
 	}
 }
 
@@ -568,11 +568,11 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T
 	// This is only an informative warning — command should not fail
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	expectOut := "1 file linted. No violations found. 1 rule skipped:\n" +
-		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n"
+	expectOut := "2 files linted. No violations found. 1 rule skipped:\n" +
+		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n\n"
 
-	if stdout.String() == expectOut {
-		t.Errorf("expected %s, got %s", expectOut, stdout.String())
+	if stdout.String() != expectOut {
+		t.Errorf("expected %q, got %q", expectOut, stdout.String())
 	}
 }
 

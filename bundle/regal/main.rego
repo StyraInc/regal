@@ -37,6 +37,14 @@ report contains violation if {
 	}
 }
 
+rules_to_run[category][title] if {
+	some category, title
+	config.merged_config.rules[category][title]
+
+	config.for_rule(category, title).level != "ignore"
+	not config.excluded_file(category, title, input.regal.file.name)
+}
+
 notices contains notice if {
 	some category, title
 	some notice in grouped_notices[category][title]
@@ -44,9 +52,7 @@ notices contains notice if {
 
 grouped_notices[category][title] contains notice if {
 	some category, title
-	config.merged_config.rules[category][title]
-
-	config.for_rule(category, title).level != "ignore"
+	rules_to_run[category][title]
 
 	some notice in data.regal.rules[category][title].notices
 }
@@ -54,10 +60,7 @@ grouped_notices[category][title] contains notice if {
 # Check bundled rules
 report contains violation if {
 	some category, title
-	config.merged_config.rules[category][title]
-
-	config.for_rule(category, title).level != "ignore"
-	not config.excluded_file(category, title, input.regal.file.name)
+	rules_to_run[category][title]
 
 	count(object.get(grouped_notices, [category, title], [])) == 0
 
@@ -81,10 +84,7 @@ report contains violation if {
 # Collect aggregates in bundled rules
 aggregate[category_title] contains entry if {
 	some category, title
-	config.merged_config.rules[category][title]
-
-	config.for_rule(category, title).level != "ignore"
-	not config.excluded_file(category, title, input.regal.file.name)
+	rules_to_run[category][title]
 
 	some entry in data.regal.rules[category][title].aggregate
 
@@ -109,10 +109,7 @@ aggregate[category_title] contains entry if {
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
 	some category, title
-	config.merged_config.rules[category][title]
-
-	config.for_rule(category, title).level != "ignore"
-	not config.excluded_file(category, title, input.regal.file.name)
+	rules_to_run[category][title]
 
 	key := concat("/", [category, title])
 	input_for_rule := object.remove(

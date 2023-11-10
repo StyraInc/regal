@@ -10,19 +10,15 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
-	rule.head.args
+	some fn in ast.functions
 
-	named_args := {arg.value | some arg in rule.head.args; arg.type == "var"}
-	own_vars := {v.value | some v in ast.find_vars(rule.body)}
+	named_args := {arg.value | some arg in fn.head.args; arg.type == "var"}
+	own_vars := {v.value | some v in ast.find_vars(fn.body)}
 
 	allowed_refs := named_args | own_vars
 
-	some expr in rule.body
-
-	is_array(expr.terms)
-
-	some term in expr.terms
+	some expr in fn.body
+	some term in expr_terms(expr.terms)
 
 	term.type == "var"
 	not term.value in allowed_refs
@@ -31,23 +27,6 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(term))
 }
 
-report contains violation if {
-	some rule in input.rules
-	rule.head.args
+expr_terms(terms) := terms if is_array(terms)
 
-	named_args := {arg.value | some arg in rule.head.args; arg.type == "var"}
-	own_vars := {v.value | some v in ast.find_vars(rule.body)}
-
-	allowed_refs := named_args | own_vars
-
-	some expr in rule.body
-
-	is_object(expr.terms)
-
-	terms := expr.terms.value
-	terms[0].type == "var"
-	not terms[0].value in allowed_refs
-	not startswith(terms[0].value, "$")
-
-	violation := result.fail(rego.metadata.chain(), result.location(terms[0]))
-}
+expr_terms(terms) := [terms.value[0]] if is_object(terms)

@@ -10,9 +10,8 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	walk(input.rules, [_, value])
+	some value in ast.all_refs
 
-	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value in {"equal", "neq"} # perhaps add more operators here?
 	value[1].type in ast.scalar_types

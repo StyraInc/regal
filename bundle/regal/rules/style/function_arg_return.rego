@@ -18,9 +18,7 @@ report contains violation if {
 	# note that traversing the ast.all_refs is not enough here,
 	# as we need the outer node to determine the arguments provided
 	# to the function call
-	walk(input.rules, [path, value])
-
-	regal.last(path) == "terms"
+	walk(input.rules, [_, value])
 
 	value[0].type == "ref"
 	value[0].value[0].type == "var"

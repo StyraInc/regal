@@ -6,6 +6,7 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.result
 
 # For comments, OPA uses capital-cases Text and Location rather
@@ -17,9 +18,8 @@ todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
 todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
 
 report contains violation if {
-	some comment in input.comments
-	text := base64.decode(comment.Text)
-	regex.match(todo_pattern, text)
+	some comment in ast.comments_decoded
+	regex.match(todo_pattern, comment.Text)
 
 	violation := result.fail(rego.metadata.chain(), result.location(comment))
 }

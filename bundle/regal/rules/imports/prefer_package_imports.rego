@@ -16,8 +16,9 @@ aggregate contains entry if {
 		some _import in input.imports
 
 		_import.path.value[0].value == "data"
-		count(_import.path.value) > 1
-		path := [part.value | some part in array.slice(_import.path.value, 1, count(_import.path.value))]
+		len := count(_import.path.value)
+		len > 1
+		path := [part.value | some part in array.slice(_import.path.value, 1, len)]
 
 		imp := object.union(result.location(_import), {"path": path})
 	]

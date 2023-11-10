@@ -4,6 +4,7 @@ import future.keywords.contains
 import future.keywords.if
 import future.keywords.in
 
+import data.regal.ast
 import data.regal.config
 
 lint.notices := notices
@@ -154,8 +155,8 @@ ignored(violation, directives) if {
 }
 
 ignore_directives[row] := rules if {
-	some comment in input.comments
-	text := trim_space(base64.decode(comment.Text))
+	some comment in ast.comments_decoded
+	text := trim_space(comment.Text)
 
 	startswith(text, "regal")
 

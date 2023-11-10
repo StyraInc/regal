@@ -23,7 +23,7 @@ report contains violation if {
 
 	some ref in ast.all_refs
 
-	name := ast.ref_to_string(ref)
+	name := ast.ref_to_string(ref[0].value)
 	name in cfg["forbidden-functions"]
 
 	violation := result.fail(rego.metadata.chain(), result.location(ref))

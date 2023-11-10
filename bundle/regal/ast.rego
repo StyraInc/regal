@@ -299,10 +299,10 @@ is_output_var(rule, ref, location) if {
 	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
 }
 
-all_refs := [value.value |
+all_refs := [value |
 	walk(input.rules, [_, value])
 
-	value.type == "ref"
+	value[0].type == "ref"
 ]
 
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
@@ -319,13 +319,13 @@ _ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
 # METADATA
 # description: provides a set of all built-in function calls made in input policy
 builtin_functions_called contains name if {
-	some ref in all_refs
+	some value in all_refs
 
-	ref[0].type == "var"
-	not ref[0].value in {"input", "data"}
+	value[0].value[0].type == "var"
+	not value[0].value[0].value in {"input", "data"}
 
 	name := concat(".", [value |
-		some part in ref
+		some part in value[0].value
 		value := part.value
 	])
 

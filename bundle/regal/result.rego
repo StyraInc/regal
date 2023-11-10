@@ -157,7 +157,13 @@ resource_urls(related_resources, category) := [r |
 	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
 ]
 
-with_text(location) := {"location": object.union(location, {"text": input.regal.file.lines[location.row - 1]})} if {
+with_text(location) := {"location": object.union(
+	location,
+	{
+		"file": input.regal.file.name,
+		"text": input.regal.file.lines[location.row - 1],
+	},
+)} if {
 	location.row
 } else := {"location": location}
 

@@ -117,7 +117,7 @@ allow := true
 	blocks := ast.comment_blocks(module.comments)
 	blocks == [
 		[
-			{"Location": {"col": 1, "file": "p.rego", "row": 3, "text": "IyBNRVRBREFUQQ=="}, "Text": "IE1FVEFEQVRB"},
+			{"Location": {"col": 1, "row": 3, "text": "IyBNRVRBREFUQQ=="}, "Text": "IE1FVEFEQVRB"},
 			{"Location": {"col": 1, "file": "p.rego", "row": 4}, "Text": "IHRpdGxlOiBmb28="},
 			{"Location": {"col": 1, "file": "p.rego", "row": 5}, "Text": "IGJhcjogaW52YWxpZA=="},
 		],
@@ -183,10 +183,10 @@ test_find_vars_in_local_scope_complex_comprehension_term if {
 	allow_rule := module.rules[0]
 
 	ast.find_vars_in_local_scope(allow_rule, {"col": 10, "row": 10}) == [
-		{"location": {"col": 3, "file": "p.rego", "row": 7, "text": "YQ=="}, "type": "var", "value": "a"},
-		{"location": {"col": 15, "file": "p.rego", "row": 7, "text": "Yg=="}, "type": "var", "value": "b"},
-		{"location": {"col": 20, "file": "p.rego", "row": 7, "text": "Yw=="}, "type": "var", "value": "c"},
-		{"location": {"col": 31, "file": "p.rego", "row": 7, "text": "Yg=="}, "type": "var", "value": "b"},
+		{"location": {"col": 3, "row": 7, "text": "YQ=="}, "type": "var", "value": "a"},
+		{"location": {"col": 15, "row": 7, "text": "Yg=="}, "type": "var", "value": "b"},
+		{"location": {"col": 20, "row": 7, "text": "Yw=="}, "type": "var", "value": "c"},
+		{"location": {"col": 31, "row": 7, "text": "Yg=="}, "type": "var", "value": "b"},
 	]
 }
 

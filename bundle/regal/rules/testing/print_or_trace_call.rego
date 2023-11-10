@@ -20,8 +20,8 @@ report contains violation if {
 
 	some ref in ast.all_refs
 
-	ref[0].type == "var"
-	ref[0].value in {"print", "trace"}
+	ref[0].value[0].type == "var"
+	ref[0].value[0].value in {"print", "trace"}
 
 	violation := result.fail(rego.metadata.chain(), result.location(ref[0]))
 }

@@ -42,9 +42,8 @@ report contains violation if {
 	# skip expensive walk if no builtin regex function calls are registered
 	any_regex_function_called
 
-	walk(input.rules, [_, value])
+	some value in ast.all_refs
 
-	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "regex"
 

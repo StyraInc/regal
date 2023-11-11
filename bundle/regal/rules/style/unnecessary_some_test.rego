@@ -82,3 +82,10 @@ test_success_some_key_value_using_var_for_key if {
 	r := rule.report with input as module
 	r == set()
 }
+
+test_success_just_in_head if {
+	module := ast.with_future_keywords(`rule := [1 in []]`)
+
+	r := rule.report with input as module
+	r == set()
+}

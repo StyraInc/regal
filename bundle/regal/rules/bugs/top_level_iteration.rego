@@ -2,9 +2,7 @@
 # description: Iteration in top-level assignment
 package regal.rules.bugs["top-level-iteration"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

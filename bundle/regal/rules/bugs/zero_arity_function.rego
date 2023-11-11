@@ -2,9 +2,7 @@
 # description: Avoid functions without args
 package regal.rules.bugs["zero-arity-function"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

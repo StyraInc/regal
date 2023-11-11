@@ -2,9 +2,7 @@
 # description: Function argument used for return value
 package regal.rules.style["function-arg-return"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

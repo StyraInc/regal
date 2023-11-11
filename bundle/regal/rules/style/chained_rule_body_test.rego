@@ -1,7 +1,6 @@
 package regal.rules.style["chained-rule-body_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

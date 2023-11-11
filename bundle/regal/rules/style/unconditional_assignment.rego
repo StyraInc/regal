@@ -2,9 +2,7 @@
 # description: Unconditional assignment in rule body
 package regal.rules.style["unconditional-assignment"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

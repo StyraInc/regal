@@ -1,9 +1,6 @@
 package regal.ast
 
-import future.keywords.contains
-import future.keywords.every
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 
@@ -102,13 +99,10 @@ policy(snippet) := regal.parse_module("policy.rego", concat("", [
 
 # METADATA
 # description: parses provided policy with all future keywords imported. Primarily for testing.
-with_future_keywords(policy) := regal.parse_module("policy.rego", concat("", [
+with_rego_v1(policy) := regal.parse_module("policy.rego", concat("", [
 	`package policy
 
-import future.keywords.contains
-import future.keywords.every
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 `,
 	policy,

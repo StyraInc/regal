@@ -2,9 +2,7 @@
 # description: Use explicit future keyword imports
 package regal.rules.imports["implicit-future-keywords"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 import data.regal.result

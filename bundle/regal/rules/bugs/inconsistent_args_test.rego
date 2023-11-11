@@ -1,34 +1,33 @@
 package regal.rules.bugs["inconsistent-args_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 
 import data.regal.rules.bugs["inconsistent-args"] as rule
 
 test_fail_inconsistent_args if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	foo(a, b) if a == b
 	foo(b, a) if b > a
 
 	bar(b, a) if b > a
 	`)
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tfoo(b, a) if b > a"})
+	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 7, "text": "\tfoo(b, a) if b > a"})
 }
 
 test_fail_nested_inconsistent_args if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	a.b.foo(a, b) if a == b
 	a.b.foo(b, a) if b > a
 	`)
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\ta.b.foo(b, a) if b > a"})
+	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 7, "text": "\ta.b.foo(b, a) if b > a"})
 }
 
 test_success_not_inconsistent_args if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	foo(a, b) if a == b
 	foo(a, b) if a > b
 
@@ -42,7 +41,7 @@ test_success_not_inconsistent_args if {
 }
 
 test_success_using_wildcard if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	foo(a, b) if a == b
 	foo(_, b) if b.foo
 
@@ -53,7 +52,7 @@ test_success_using_wildcard if {
 }
 
 test_success_using_pattern_matching if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	foo(a, b) if a == b
 	foo(a, "foo") if a.foo
 

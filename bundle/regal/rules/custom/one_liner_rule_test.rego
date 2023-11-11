@@ -1,7 +1,6 @@
 package regal.rules.custom["one-liner-rule_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -11,7 +10,7 @@ import data.regal.rules.custom["one-liner-rule"] as rule
 test_fail_could_be_one_liner if {
 	module := ast.policy(`
 
-	import future.keywords.if
+	import rego.v1
 
 	allow if {
 		input.yes
@@ -25,7 +24,7 @@ test_fail_could_be_one_liner if {
 test_fail_could_be_one_liner_all_keywords if {
 	module := ast.policy(`
 
-	import future.keywords
+	import rego.v1
 
 	allow if {
 		input.yes
@@ -39,7 +38,7 @@ test_fail_could_be_one_liner_all_keywords if {
 test_fail_could_be_one_liner_allman_style if {
 	module := ast.policy(`
 
-	import future.keywords.if
+	import rego.v1
 
 	allow if
 	{
@@ -63,7 +62,7 @@ test_success_if_not_imported if {
 }
 
 test_success_too_long_for_a_one_liner if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	rule := "quite a long text up here" if {
 		some_really_long_rule_name_in_fact_53_characters_long == another_long_rule_but_only_45_characters_long
 	}
@@ -74,7 +73,7 @@ test_success_too_long_for_a_one_liner if {
 }
 
 test_success_too_long_for_a_one_liner_configured_line_length if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	rule if {
 		some_really_long_rule_name_in_fact_53_characters_long
 	}
@@ -85,7 +84,7 @@ test_success_too_long_for_a_one_liner_configured_line_length if {
 }
 
 test_success_no_one_liner_comment_in_rule_body if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	no_one_liner if {
 		# Surely one equals one
 		1 == 1
@@ -97,7 +96,7 @@ test_success_no_one_liner_comment_in_rule_body if {
 }
 
 test_success_no_one_liner_comment_in_rule_body_same_line if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	no_one_liner if {
 		1 == 1 # Surely one equals one
 	}
@@ -108,7 +107,7 @@ test_success_no_one_liner_comment_in_rule_body_same_line if {
 }
 
 test_success_no_one_liner_comment_in_rule_body_line_below if {
-	module := ast.with_future_keywords(`
+	module := ast.with_rego_v1(`
 	no_one_liner if {
 		1 == 1
 		# Surely one equals one
@@ -133,7 +132,7 @@ test_success_does_not_use_if if {
 }
 
 test_success_already_a_one_liner if {
-	module := ast.with_future_keywords(`allow if 1 == 1`)
+	module := ast.with_rego_v1(`allow if 1 == 1`)
 
 	r := rule.report with input as module with config.for_rule as {"level": "error"}
 	r == set()

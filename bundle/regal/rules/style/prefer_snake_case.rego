@@ -2,9 +2,7 @@
 # description: Prefer snake_case for names
 package regal.rules.style["prefer-snake-case"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

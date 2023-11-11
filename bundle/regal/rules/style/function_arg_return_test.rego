@@ -1,6 +1,6 @@
 package regal.rules.style["function-arg-return_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.capabilities
@@ -42,7 +42,7 @@ test_fail_function_arg_return_value_multi_part_ref if {
 }
 
 test_success_function_arg_return_value_except_function if {
-	r := rule.report with input as ast.with_future_keywords(`foo := i { indexof("foo", "o", i) }`)
+	r := rule.report with input as ast.with_rego_v1(`foo := i if { indexof("foo", "o", i) }`)
 		with config.for_rule as {
 			"level": "error",
 			"except-functions": ["indexof"],

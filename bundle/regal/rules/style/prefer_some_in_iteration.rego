@@ -2,9 +2,7 @@
 # description: Prefer `some .. in` for iteration
 package regal.rules.style["prefer-some-in-iteration"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

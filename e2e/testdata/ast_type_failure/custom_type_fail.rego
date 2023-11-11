@@ -4,8 +4,7 @@
 # - input: schema.regal.ast
 package custom.regal.rules.naming.type_fail
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 report contains foo if {
 	# There is no "foo" attrinbute in the AST,

@@ -2,9 +2,7 @@
 # description: Unnecessary use of `some`
 package regal.rules.style["unnecessary-some"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

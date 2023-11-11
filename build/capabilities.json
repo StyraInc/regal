@@ -6013,8 +6013,9 @@
     "if",
     "in"
   ],
-  "wasm_abi_versions": null,
   "features": [
-    "rule_head_ref_string_prefixes"
+    "rule_head_ref_string_prefixes",
+    "rule_head_refs",
+    "rego_v1_import"
   ]
 }

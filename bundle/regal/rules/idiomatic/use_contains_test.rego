@@ -1,7 +1,6 @@
 package regal.rules.idiomatic["use-contains_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -9,7 +8,10 @@ import data.regal.config
 import data.regal.rules.idiomatic["use-contains"] as rule
 
 test_fail_should_use_contains if {
-	module := ast.with_future_keywords(`rule[item] {
+	module := ast.policy(`
+	import future.keywords
+
+	rule[item] {
 		some item in input.items
 	}`)
 
@@ -18,7 +20,7 @@ test_fail_should_use_contains if {
 		"category": "idiomatic",
 		"description": "Use the `contains` keyword",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 8, "text": "rule[item] {"},
+		"location": {"col": 2, "file": "policy.rego", "row": 6, "text": "\trule[item] {"},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-contains", "idiomatic"),
@@ -28,7 +30,7 @@ test_fail_should_use_contains if {
 }
 
 test_success_uses_contains if {
-	module := ast.with_future_keywords(`rule contains item if {
+	module := ast.with_rego_v1(`rule contains item if {
 		some item in input.items
 	}`)
 
@@ -37,7 +39,7 @@ test_success_uses_contains if {
 }
 
 test_success_object_rule if {
-	module := ast.with_future_keywords(`rule[foo] := bar if {
+	module := ast.with_rego_v1(`rule[foo] := bar if {
 		foo := "bar"
 		bar := "baz"
 	}`)

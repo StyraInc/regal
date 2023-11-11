@@ -1,6 +1,6 @@
 package regal.rules.idiomatic["use-some-for-output-vars_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -81,27 +81,27 @@ test_success_uses_some if {
 }
 
 test_success_some_iteration if {
-	rule.report with input as ast.with_future_keywords(`allow {
+	rule.report with input as ast.with_rego_v1(`allow if {
 		some i in input
 		foo[i]
 	}`) == set()
 
-	rule.report with input as ast.with_future_keywords(`allow {
+	rule.report with input as ast.with_rego_v1(`allow if {
 		some i, x in input
 		input.user.roles[i]
 	}`) == set()
 
-	rule.report with input as ast.with_future_keywords(`allow {
+	rule.report with input as ast.with_rego_v1(`allow if {
 		some x, i in input
 		input.user.roles[i]
 	}`) == set()
 
-	rule.report with input as ast.with_future_keywords(`allow {
+	rule.report with input as ast.with_rego_v1(`allow if {
 		some x, i in input
 		input.user.roles[x][i]
 	}`) == set()
 
-	rule.report with input as ast.with_future_keywords(`allow {
+	rule.report with input as ast.with_rego_v1(`allow if {
 		some i in input
 		input.user.roles[_]
 	}`) == set()

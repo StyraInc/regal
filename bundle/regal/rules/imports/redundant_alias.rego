@@ -2,9 +2,7 @@
 # description: Redundant alias
 package regal.rules.imports["redundant-alias"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.result
 

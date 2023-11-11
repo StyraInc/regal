@@ -2,9 +2,7 @@
 # description: Avoid get_ and list_ prefix for rules and functions
 package regal.rules.style["avoid-get-and-list-prefix"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

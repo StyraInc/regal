@@ -1,7 +1,6 @@
 package regal.rules.custom["prefer-value-in-head_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -73,13 +72,13 @@ test_success_value_could_be_in_head_and_is_a_required_scalar if {
 }
 
 test_fail_value_could_be_in_head_multivalue_rule if {
-	module := ast.with_future_keywords(`violations contains violation if {
+	module := ast.with_rego_v1(`violations contains violation if {
 		input.bad
 		violation := "not good!"
 	}`)
 
 	r := rule.report with input as module with config.for_rule as {"level": "error"}
-	r == expected_with_location({"col": 3, "file": "policy.rego", "row": 10, "text": "\t\tviolation := \"not good!\""})
+	r == expected_with_location({"col": 3, "file": "policy.rego", "row": 7, "text": "\t\tviolation := \"not good!\""})
 }
 
 test_fail_value_could_be_in_head_object_rule if {

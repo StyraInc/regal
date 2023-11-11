@@ -2,9 +2,7 @@
 # description: Collect data in aggregates and validate it
 package custom.regal.rules.testcase["aggregates"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.result
 

@@ -2,9 +2,7 @@
 # description: Rule name shadows built-in
 package regal.rules.bugs["rule-shadows-builtin"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

@@ -2,9 +2,7 @@
 # description: Line too long
 package regal.rules.style["line-length"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 import data.regal.result

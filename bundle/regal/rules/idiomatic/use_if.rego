@@ -2,9 +2,7 @@
 # description: Use the `if` keyword
 package regal.rules.idiomatic["use-if"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.capabilities

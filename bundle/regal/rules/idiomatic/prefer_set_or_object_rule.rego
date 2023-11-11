@@ -2,9 +2,7 @@
 # description: Prefer set or object rule over comprehension
 package regal.rules.idiomatic["prefer-set-or-object-rule"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

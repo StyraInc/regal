@@ -1,6 +1,6 @@
 package custom_has_key
 
-import future.keywords.if
+import rego.v1
 
 has_key(map, key) if {
 	_ = map[key]

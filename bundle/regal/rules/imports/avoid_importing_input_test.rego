@@ -1,6 +1,6 @@
 package regal.rules.imports["avoid-importing-input_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

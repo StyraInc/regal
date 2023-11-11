@@ -1,6 +1,6 @@
 package regal.rules.style["detached-metadata_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

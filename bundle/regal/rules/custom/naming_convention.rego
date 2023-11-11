@@ -2,9 +2,7 @@
 # description: Naming convention violation
 package regal.rules.custom["naming-convention"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

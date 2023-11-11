@@ -1,6 +1,6 @@
 package regal.rules.idiomatic["use-in-operator_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -182,6 +182,6 @@ test_success_refs_both_sides if {
 }
 
 test_success_uses_in_operator if {
-	r := rule.report with input as ast.with_future_keywords(`allow { "admin" in input.user.roles }`)
+	r := rule.report with input as ast.with_rego_v1(`allow if { "admin" in input.user.roles }`)
 	r == set()
 }

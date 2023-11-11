@@ -1,6 +1,6 @@
 package regal.rules.bugs["rule-named-if_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

@@ -2,8 +2,7 @@ package regal.capabilities
 
 import data.regal.config
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 default provided := {}
 

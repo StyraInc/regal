@@ -21,7 +21,7 @@ jobs:
           go-version-file: go.mod
       - uses: open-policy-agent/setup-opa@v2
         with:
-          version: latest
+          version: edge
       - run: go install git.sr.ht/~charles/rq/cmd/rq@latest
       - run: build/do.rq pull_request
       - uses: golangci/golangci-lint-action@v3.7.0
@@ -36,7 +36,7 @@ jobs:
           go-version-file: go.mod
       - uses: open-policy-agent/setup-opa@v2
         with:
-          version: latest
+          version: edge
       # rq doesn't work well on windows currently, or at least
       # so it seemed, so until we've resolved that together with
       # the rq maintainers, we'll just run the build steps directly

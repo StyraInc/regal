@@ -1,7 +1,6 @@
 package regal.ast_test
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 
@@ -10,7 +9,7 @@ test_find_vars if {
 	policy := `
 	package p
 
-	import future.keywords
+	import rego.v1
 
 	global := "foo"
 
@@ -60,7 +59,7 @@ test_find_vars_comprehension_lhs if {
 	policy := `
 	package p
 
-	import future.keywords
+	import rego.v1
 
 	allow if {
 		a := [b | input[b]]
@@ -86,7 +85,7 @@ test_find_vars_comprehension_lhs if {
 test_function_decls_multiple_same_name if {
 	policy := `package p
 
-	import future.keywords.if
+	import rego.v1
 
 	f(x) := x if true
 	f(y) := y if false
@@ -134,11 +133,11 @@ test_find_vars_in_local_scope if {
 	policy := `
 	package p
 
-	import future.keywords
+	import rego.v1
 
 	global := "foo"
 
-	allow {
+	allow if {
 		a := global
 		b := [c | c := input[d]]
 
@@ -172,9 +171,9 @@ test_find_vars_in_local_scope_complex_comprehension_term if {
 	policy := `
 	package p
 
-	import future.keywords
+	import rego.v1
 
-	allow {
+	allow if {
 		a := [{"b": b} | c := input[b]]
 	}`
 
@@ -194,7 +193,7 @@ test_find_names_in_scope if {
 	policy := `
 	package p
 
-	import future.keywords
+	import rego.v1
 
 	bar := "baz"
 
@@ -202,7 +201,7 @@ test_find_names_in_scope if {
 
 	comp := [foo | foo := input[_]]
 
-	allow {
+	allow if {
 		a := global
 		b := [c | c := input[_]]
 
@@ -224,7 +223,9 @@ test_find_some_decl_vars if {
 	policy := `
 	package p
 
-	allow {
+	import rego.v1
+
+	allow if {
 		foo := 1
 		some x
 		input[x]
@@ -242,7 +243,9 @@ test_find_some_decl_vars if {
 test_find_some_decl_names_in_scope if {
 	policy := `package p
 
-	allow {
+	import rego.v1
+
+	allow if {
 		foo := 1
 		some x
 		input[x]
@@ -252,8 +255,8 @@ test_find_some_decl_names_in_scope if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 6}) == {"x"}
-	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) == {"x", "y", "z"}
+	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) == {"x"}
+	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 10}) == {"x", "y", "z"}
 }
 
 var_names(vars) := {var.value | some var in vars}

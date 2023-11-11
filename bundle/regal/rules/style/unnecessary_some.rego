@@ -17,12 +17,14 @@ report contains violation if {
 
 	walk(rule, [_, value])
 
-	value[0].type == "call"
-	value[0].value[0].type == "ref"
+	symbols := value.symbols
 
-	some_is_unnecessary(value)
+	symbols[0].type == "call"
+	symbols[0].value[0].type == "ref"
 
-	violation := result.fail(rego.metadata.chain(), result.location(value))
+	some_is_unnecessary(symbols)
+
+	violation := result.fail(rego.metadata.chain(), result.location(symbols))
 }
 
 some_is_unnecessary(value) if {

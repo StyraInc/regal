@@ -203,7 +203,7 @@ func TestLintFailsNonExistentConfigFile(t *testing.T) {
 	stderr := bytes.Buffer{}
 
 	err := regal(&stdout, &stderr)("lint", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/none_existent_test_file.yaml"),
+		cwd+filepath.FromSlash("/testdata/configs/non_existent_test_file.yaml"),
 		cwd+filepath.FromSlash("/testdata/violations"))
 
 	expectExitCode(t, err, 1, &stdout, &stderr)

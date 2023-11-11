@@ -7,6 +7,7 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 import data.regal.result
 
@@ -16,12 +17,7 @@ cfg := config.for_rule("custom", "one-liner-rule")
 # description: Missing capability for keyword `if`
 # custom:
 #   severity: warning
-notices contains result.notice(rego.metadata.chain()) if not has_if
-
-# if if if!
-has_if if "if" in config.capabilities.future_keywords
-
-has_if if "rego_v1_import" in config.capabilities.features
+notices contains result.notice(rego.metadata.chain()) if not capabilities.has_if
 
 report contains violation if {
 	# No need to traverse rules here if we're not importing `if`

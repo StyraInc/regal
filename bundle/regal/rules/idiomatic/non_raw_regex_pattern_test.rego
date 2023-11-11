@@ -3,13 +3,14 @@ package regal.rules.idiomatic["non-raw-regex-pattern_test"]
 import future.keywords.if
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 
 import data.regal.rules.idiomatic["non-raw-regex-pattern"] as rule
 
 test_fail_non_raw_rule_head if {
 	r := rule.report with input as ast.policy(`x := regex.match("[0-9]+", "1")`)
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
@@ -27,7 +28,7 @@ test_fail_non_raw_rule_body if {
 	r := rule.report with input as ast.policy(`allow {
 		regex.is_valid("[0-9]+")
 	}`)
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
@@ -43,7 +44,7 @@ test_fail_non_raw_rule_body if {
 
 test_fail_pattern_in_second_arg if {
 	r := rule.report with input as ast.policy(`r := regex.replace("a", "[a]", "b")`)
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
@@ -59,6 +60,6 @@ test_fail_pattern_in_second_arg if {
 
 test_success_when_using_raw_string if {
 	r := rule.report with input as ast.policy("v := regex.is_valid(`[0-9]+`)")
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }

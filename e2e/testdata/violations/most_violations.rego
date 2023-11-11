@@ -66,6 +66,8 @@ inconsistent_args(b, a) {
 	b == a
 }
 
+if_empty_object if {}
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) {

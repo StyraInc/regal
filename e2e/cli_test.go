@@ -194,6 +194,25 @@ func TestLintAllViolations(t *testing.T) {
 	}
 }
 
+func TestLintFailsNonExistentConfigFile(t *testing.T) {
+	t.Parallel()
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	err := regal(&stdout, &stderr)("lint", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/none_existent_test_file.yaml"),
+		cwd+filepath.FromSlash("/testdata/violations"))
+
+	expectExitCode(t, err, 1, &stdout, &stderr)
+
+	if !strings.Contains(stderr.String(), "The system cannot find the file specified.") {
+		t.Errorf("expected stderr to print, got %q", stderr.String())
+	}
+}
+
 func TestLintRuleIgnoreFiles(t *testing.T) {
 	t.Parallel()
 

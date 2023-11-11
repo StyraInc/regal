@@ -290,6 +290,8 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 
 		regal = regal.WithUserConfig(userConfig)
+	} else if params.configFile != "" {
+		return report.Report{}, fmt.Errorf("user-provided config file not found: %w", err)
 	} else if params.debug {
 		log.Println("no user-provided config file found, will use the default config")
 	}

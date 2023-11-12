@@ -274,7 +274,9 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 	var userConfig config.Config
 
 	userConfigFile, err := readUserConfig(params, regalDir)
-	if err == nil { //nolint:nestif
+
+	switch {
+	case err == nil:
 		defer rio.CloseFileIgnore(userConfigFile)
 
 		if params.debug {
@@ -290,7 +292,9 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		}
 
 		regal = regal.WithUserConfig(userConfig)
-	} else if params.debug {
+	case err != nil && params.configFile != "":
+		return report.Report{}, fmt.Errorf("user-provided config file not found: %w", err)
+	case params.debug:
 		log.Println("no user-provided config file found, will use the default config")
 	}
 

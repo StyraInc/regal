@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/loader"
@@ -60,15 +61,36 @@ func InputFromPaths(paths []string) (Input, error) {
 	fileContent := make(map[string]string, len(paths))
 	modules := make(map[string]*ast.Module, len(paths))
 
-	for _, path := range paths {
-		result, err := loader.RegoWithOpts(path, parse.ParserOptions())
-		if err != nil {
-			// TODO: Keep running and collect errors instead?
-			return Input{}, err //nolint:wrapcheck
-		}
+	var mu sync.Mutex
 
-		fileContent[result.Name] = string(result.Raw)
-		modules[result.Name] = result.Parsed
+	var wg sync.WaitGroup
+
+	wg.Add(len(paths))
+
+	errors := make([]error, 0, len(paths))
+
+	for _, path := range paths {
+		go func(path string) {
+			defer wg.Done()
+
+			result, err := loader.RegoWithOpts(path, parse.ParserOptions())
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			if err != nil {
+				errors = append(errors, err)
+			}
+
+			fileContent[result.Name] = string(result.Raw)
+			modules[result.Name] = result.Parsed
+		}(path)
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return Input{}, fmt.Errorf("failed to parse %d module(s) — first error: %w", len(errors), errors[0])
 	}
 
 	return NewInput(fileContent, modules), nil

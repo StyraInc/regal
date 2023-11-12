@@ -197,6 +197,13 @@ func TestLintAllViolations(t *testing.T) {
 func TestLintFailsNonExistentConfigFile(t *testing.T) {
 	t.Parallel()
 
+	var expected string
+	if runtime.GOOS == "windows" {
+		expected = "The system cannot find the file specified"
+	} else {
+		expected = "no such file or directory"
+	}
+
 	cwd := testutil.Must(os.Getwd())(t)
 
 	stdout := bytes.Buffer{}
@@ -208,7 +215,7 @@ func TestLintFailsNonExistentConfigFile(t *testing.T) {
 
 	expectExitCode(t, err, 1, &stdout, &stderr)
 
-	if !strings.Contains(stderr.String(), "The system cannot find the file specified.") {
+	if !strings.Contains(stderr.String(), expected) {
 		t.Errorf("expected stderr to print, got %q", stderr.String())
 	}
 }

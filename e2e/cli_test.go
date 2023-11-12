@@ -198,9 +198,10 @@ func TestLintFailsNonExistentConfigFile(t *testing.T) {
 	t.Parallel()
 
 	var expected string
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		expected = "The system cannot find the file specified"
-	} else {
+	default:
 		expected = "no such file or directory"
 	}
 

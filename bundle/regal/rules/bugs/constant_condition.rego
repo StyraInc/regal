@@ -21,8 +21,7 @@ _rules_with_bodies := [rule |
 ]
 
 report contains violation if {
-	some rule in _rules_with_bodies
-	some expr in rule.body
+	expr := _rules_with_bodies[_].body[_]
 
 	# We could probably include arrays and objects too, as a single compound value
 	# is not very useful, but it's not as clear cut as scalars, as you could have
@@ -34,8 +33,7 @@ report contains violation if {
 }
 
 report contains violation if {
-	some rule in _rules_with_bodies
-	some expr in rule.body
+	expr := _rules_with_bodies[_].body[_]
 
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value in _operators

@@ -14,6 +14,8 @@ cfg := config.for_rule("style", "line-length")
 report contains violation if {
 	some i, line in input.regal.file.lines
 
+	line != ""
+
 	line_length := count(line)
 	line_length > cfg["max-line-length"]
 

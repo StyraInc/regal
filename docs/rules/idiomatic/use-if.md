@@ -1,0 +1,69 @@
+# use-if
+
+**Summary**: Use the `if` keyword
+
+**Category**: Idiomatic
+
+**Avoid**
+```rego
+package policy
+
+import future.keywords.in
+
+is_admin {
+    "admin" in input.user.roles
+}
+```
+
+**Prefer**
+```rego
+package policy
+
+import future.keywords.if
+import future.keywords.in
+
+is_admin if {
+    "admin" in input.user.roles
+}
+
+# alternatively
+
+is_admin if "admin" in input.user.roles
+```
+
+## Rationale
+
+The `if` keyword helps communicate what Rego rules really are — conditional assignments. Using `if` in other words makes
+the rule read the same way in English as it will be interpreted by OPA, i.e: 
+
+```rego
+rule := "some value" if some_condition
+```
+
+**Note**: don't forget to `import future.keywords.if`! Or from OPA v0.59.0 and onwards, `import rego.v1`. 
+
+**Tip**: When either of the imports mentioned above are found in a Rego file, the `if` keyword will be inserted
+automatically at any applicable location by the `opa fmt` tool.
+
+## Configuration Options
+
+This linter rule provides the following configuration options:
+
+```yaml
+rules: 
+  idiomatic:
+    use-if:
+      # one of "error", "warning", "ignore"
+      level: error
+```
+
+## Related Resources
+
+- Regal Docs: [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)
+- OPA Docs [Future Keywords](https://www.openpolicyagent.org/docs/latest/policy-language/#future-keywords)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

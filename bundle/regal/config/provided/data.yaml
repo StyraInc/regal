@@ -44,6 +44,10 @@ rules:
       level: error
     prefer-set-or-object-rule:
       level: error
+    use-contains:
+      level: error
+    use-if:
+      level: error
     use-in-operator:
       level: error
     use-some-for-output-vars:

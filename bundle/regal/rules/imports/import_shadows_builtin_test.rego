@@ -4,6 +4,7 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 
 import data.regal.rules.imports["import-shadows-builtin"] as rule
@@ -12,7 +13,7 @@ test_fail_import_shadows_builtin_name if {
 	module := ast.policy(`import data.print`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "imports",
 		"description": "Import shadows built-in namespace",
@@ -30,7 +31,7 @@ test_fail_import_shadows_builtin_namespace if {
 	module := ast.policy(`import input.foo.http`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "imports",
 		"description": "Import shadows built-in namespace",
@@ -48,7 +49,7 @@ test_success_import_does_not_shadows_builtin_name if {
 	module := ast.policy(`import data.users`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
@@ -56,6 +57,6 @@ test_success_import_shadows_but_alias_does_not if {
 	module := ast.policy(`import data.http as http_attributes`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }

@@ -15,7 +15,7 @@ test_fail_forbidden_function if {
 		"level": "error",
 		"forbidden-functions": ["http.send"],
 	}
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": data.regal.capabilities.provided}
 
 	r == {{
 		"category": "custom",

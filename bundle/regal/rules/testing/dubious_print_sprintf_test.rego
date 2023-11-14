@@ -4,6 +4,7 @@ import future.keywords.if
 import future.keywords.in
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 
 import data.regal.rules.testing["dubious-print-sprintf"] as rule
@@ -14,7 +15,7 @@ test_fail_print_sprintf if {
 	}`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",
@@ -40,7 +41,7 @@ test_fail_bodies_print_sprintf if {
 	}`)
 
 	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities}
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",

@@ -2,6 +2,8 @@ rules:
   bugs:
     constant-condition:
       level: error
+    if-empty-object:
+      level: error
     inconsistent-args:
       level: error
     invalid-metadata-attribute:

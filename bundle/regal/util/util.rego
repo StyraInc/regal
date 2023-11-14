@@ -1,3 +1,5 @@
 package regal.util
 
-is_snake_case(str) := str == lower(str)
+import future.keywords.if
+
+is_snake_case(str) if str == lower(str)

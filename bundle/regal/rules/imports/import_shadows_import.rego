@@ -9,17 +9,12 @@ import future.keywords.in
 import data.regal.result
 
 # regular import
-_ident(imported) := regal.last(path).value if {
-	not imported.alias
-	path := imported.path.value
-}
+_ident(imported) := regal.last(imported.path.value).value if not imported.alias
 
 # aliased import
 _ident(imported) := imported.alias
 
-_identifiers := [_ident(imported) |
-	some imported in input.imports
-]
+_identifiers := [_ident(imported) | some imported in input.imports]
 
 report contains violation if {
 	some i, identifier in _identifiers

@@ -97,15 +97,16 @@ First, author some Rego!
 ```rego
 package authz
 
-import future.keywords
+import rego.v1
 
 default allow = false
 
-deny if {
-    "admin" != input.user.roles[_]
+allow if {
+    isEmployee
+    "developer" in input.user.roles
 }
 
-allow if not deny
+isEmployee if regex.match("@acmecorp\\.com$", input.user.email)
 ```
 
 Next, run `regal lint` pointed at one or more files or directories to have them linted.
@@ -116,19 +117,12 @@ regal lint policy/
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable MD010 -->
 ```text
-Rule:         	not-equals-in-loop
-Description:  	Use of != in loop
-Category:     	bugs
-Location:     	policy/authz.rego:8:10
-Text:         	"admin" != input.user.roles[_]
-Documentation:	https://docs.styra.com/regal/rules/bugs/not-equals-in-loop
-
-Rule:         	implicit-future-keywords
-Description:  	Use explicit future keyword imports
-Category:     	imports
-Location:     	policy/authz.rego:3:8
-Text:         	import future.keywords
-Documentation:	https://docs.styra.com/regal/rules/imports/implicit-future-keywords
+Rule:         	non-raw-regex-pattern
+Description:  	Use raw strings for regex patterns
+Category:     	idiomatic
+Location:     	policy/authz.rego:12:27
+Text:         	isEmployee if regex.match("@acmecorp\\.com$", input.user.email)
+Documentation:	https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern
 
 Rule:         	use-assignment-operator
 Description:  	Prefer := over = for assignment
@@ -136,6 +130,13 @@ Category:     	style
 Location:     	policy/authz.rego:5:1
 Text:         	default allow = false
 Documentation:	https://docs.styra.com/regal/rules/style/use-assignment-operator
+
+Rule:         	prefer-snake-case
+Description:  	Prefer snake_case for names
+Category:     	style
+Location:     	policy/authz.rego:12:1
+Text:         	isEmployee if regex.match("@acmecorp\\.com$", input.user.email)
+Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 
 1 file linted. 3 violations found.
 ```
@@ -224,6 +225,7 @@ The following rules are currently available:
 | imports   | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)         | Prefer importing packages over rules                      |
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                       | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)           | Redundant import of data                                  |
+| imports   | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                               | Use `import rego.v1`                                      |
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)     | Avoid `get_` and `list_` prefix for rules and functions   |
 | style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                     | Avoid chaining rule bodies                                |
 | style     | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                     | Prefer default assignment over fallback else              |

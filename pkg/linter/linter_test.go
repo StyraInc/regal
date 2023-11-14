@@ -22,7 +22,7 @@ func TestLintWithDefaultBundle(t *testing.T) {
 
 	input := test.InputPolicy("p.rego", `package p
 
-import future.keywords.if
+import rego.v1
 
 # TODO: fix this
 camelCase if {
@@ -78,6 +78,8 @@ func TestLintWithUserConfig(t *testing.T) {
 
 	input := test.InputPolicy("p.rego", `package p
 
+import rego.v1
+
 boo := input.hoo[_]
 
 or := 1
@@ -106,6 +108,8 @@ func TestLintWithUserConfigTable(t *testing.T) {
 	t.Parallel()
 
 	policy := `package p
+
+import rego.v1
 
 boo := input.hoo[_]
 
@@ -213,6 +217,8 @@ func TestLintWithGoRule(t *testing.T) {
 	t.Parallel()
 
 	input := test.InputPolicy("p.rego", `package p
+		import rego.v1
+
  		x := true
 	`)
 
@@ -239,6 +245,8 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 	}}
 
 	input := test.InputPolicy("p.rego", `package p
+		import rego.v1
+
 	 	x := true
 	`)
 
@@ -256,7 +264,7 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n")
+	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
 
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
@@ -279,7 +287,7 @@ var testLintWithCustomEmbeddedRulesFS embed.FS
 func TestLintWithCustomEmbeddedRules(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n")
+	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
 
 	linter := NewLinter().
 		WithCustomRulesFromFS(testLintWithCustomEmbeddedRulesFS, "testdata").
@@ -299,7 +307,7 @@ func TestLintWithCustomEmbeddedRules(t *testing.T) {
 func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n")
+	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
 
 	userConfig := config.Config{Rules: map[string]config.Category{
 		"naming": {"acme-corp-package": config.Rule{Level: "ignore"}},

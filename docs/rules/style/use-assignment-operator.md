@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 default allow = false
 
@@ -24,7 +24,7 @@ allow if {
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 default allow := false
 

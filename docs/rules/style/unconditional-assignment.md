@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 full_name := name if {
     name := concat(", ", [input.first_name, input.last_name])
@@ -28,8 +27,7 @@ names contains name if {
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 full_name := concat(", ", [input.first_name, input.last_name])
 
@@ -48,7 +46,7 @@ body adds unnecessary noise.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     unconditional-assignment:
       # one of "error", "warning", "ignore"

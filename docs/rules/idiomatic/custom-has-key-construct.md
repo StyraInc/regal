@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 mfa if has_key(input.claims, "mfa")
 
@@ -21,8 +21,7 @@ has_key(map, key) if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 mfa if "mfa" in object.keys(input.claims)
 ```

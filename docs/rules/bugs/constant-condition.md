@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if {
     1 == 1
@@ -32,7 +32,7 @@ harmless, it has no place in production policy, and should be replaced or remove
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     constant-condition:
       # one of "error", "warning", "ignore"

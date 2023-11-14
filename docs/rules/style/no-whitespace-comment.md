@@ -9,8 +9,7 @@
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 #Deny by default
 default allow := false
@@ -24,8 +23,7 @@ allow if "admin" in input.user.roles
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # Deny by default
 default allow := false
@@ -43,14 +41,14 @@ Comments should be preceded by a single space, as this makes them easier to read
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     no-whitespace-comment:
       # one of "error", "warning", "ignore"
       level: error
       # optional pattern to except from this rule
       # this example would allow comments like "#--"
-      # use or (`|`) to separate multiple patterns  
+      # use or (`|`) to separate multiple patterns
       except-pattern: '^--'
 ```
 

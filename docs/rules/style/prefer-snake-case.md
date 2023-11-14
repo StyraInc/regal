@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # camelCase rule name
 userIsAdmin if "admin" in input.user.roles
@@ -19,8 +18,7 @@ userIsAdmin if "admin" in input.user.roles
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # snake_case rule name
 user_is_admin if "admin" in input.user.roles

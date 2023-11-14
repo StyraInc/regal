@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 # "Old" way of checking for membership - iteration + comparison
 allow if {
@@ -20,8 +20,7 @@ allow if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 allow if {
     "admin" in input.user.roles
@@ -38,7 +37,7 @@ checking if something is **not** part of a collection.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   idiomatic:
     use-in-operator:
       # one of "error", "warning", "ignore"

@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if user.is_admin
 
@@ -22,7 +22,7 @@ allow if user.is_admin
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if user.is_admin
 

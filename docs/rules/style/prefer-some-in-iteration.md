@@ -20,7 +20,7 @@ engineers[employee] {
 ```rego
 package policy
 
-import future.keywords.in
+import rego.v1
 
 engineering_roles = {"engineer", "dba", "developer"}
 
@@ -54,8 +54,7 @@ Deeply nested iteration is often easier to read using the more compact form.
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # These rules are equivalent, but the more compact form is arguably easier to read
 

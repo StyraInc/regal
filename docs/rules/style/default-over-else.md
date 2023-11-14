@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 permisisions := ["read", "write"] if {
     input.user == "admin"
@@ -19,7 +19,7 @@ permisisions := ["read", "write"] if {
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 default permisisions := ["read"]
 

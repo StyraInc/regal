@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 has_email(user) if {
     indexof(user.email, "@", i)
@@ -21,7 +21,7 @@ has_email(user) if {
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 has_email(user) if {
     i := indexof(user.email, "@")

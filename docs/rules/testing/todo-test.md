@@ -8,7 +8,7 @@
 ```rego
 package policy_test
 
-import future.keywords
+import rego.v1
 
 import data.policy
 

@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 pin_as_number := val if {
     is_number(input.pin_code)
@@ -26,8 +25,7 @@ deny contains message if {
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 pin_as_number := to_number(input.pin_code) if is_number(input.pin_code)
 

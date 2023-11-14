@@ -15,7 +15,7 @@
 ```rego
 package negative
 
-import future.keywords.if
+import rego.v1
 
 fine if not not_fine
 
@@ -30,7 +30,7 @@ without_friends if count(input.friends) == 0
 ```rego
 package negative
 
-import future.keywords.if
+import rego.v1
 
 fine if input.fine == true
 

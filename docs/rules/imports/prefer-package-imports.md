@@ -10,14 +10,14 @@
 ```rego
 package policy
 
-import future.keywords.in
+import rego.v1
 
 # Rule imported directly
 import data.users.first_names
 
 has_waldo {
     # Not obvious where "first_names" comes from
-    "Waldo" in first_names 
+    "Waldo" in first_names
 }
 ```
 
@@ -25,14 +25,14 @@ has_waldo {
 ```rego
 package policy
 
-import future.keywords.in
+import rego.v1
 
 # Package imported rather than rule
 import data.users
 
 has_waldo {
     # Obvious where "first_names" comes from
-    "Waldo" in users.first_names 
+    "Waldo" in users.first_names
 }
 ```
 
@@ -53,7 +53,7 @@ of external data, or use the various ignore options to ignore entire files.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     prefer-package-imports:
       # one of "error", "warning", "ignore"

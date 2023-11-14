@@ -8,9 +8,7 @@
 ````rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # top level set comprehension
 developers := {developer |
@@ -30,9 +28,7 @@ user_roles_mapping := {user: roles |
 ````rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # set generating rule
 developers contains developer if {
@@ -73,9 +69,7 @@ or unconditionally.
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # Getting developers from input
 developers contains developer if {
@@ -105,9 +99,7 @@ than one rule contributing to a single key-value pair.
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 novels[title] := content if {
     some document in input.documents
@@ -138,7 +130,7 @@ This rule will also ignore simple comprehensions used solely for the purpose of 
 ```rego
 package policy
 
-import future.keywords.in
+import rego.v1
 
 # Convert set to array. This is fine.
 my_set := {item | some item in arr}

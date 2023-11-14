@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 is_developer if some "developer" in input.user.roles
 ```
@@ -19,8 +18,7 @@ is_developer if some "developer" in input.user.roles
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 is_developer if "developer" in input.user.roles
 ```
@@ -38,9 +36,7 @@ should match for the loop assignment to succeed. This is not commonly needed, bu
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 developers contains name if {
     # name will only be bound when the value is "developer"
@@ -53,7 +49,7 @@ developers contains name if {
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     unnecessary-some:
       # one of "error", "warning", "ignore"

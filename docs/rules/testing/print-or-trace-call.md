@@ -8,9 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 reasons contains sprintf("%q is a dog!", [user.name]) if {
     some user in input.users

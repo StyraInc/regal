@@ -21,9 +21,12 @@ func TestLintWithDefaultBundle(t *testing.T) {
 
 	input := test.InputPolicy("p.rego", `package p
 
+import future.keywords.if
+
 # TODO: fix this
-camelCase {
+camelCase if {
 	input.one == 1
+	input.two == 2
 }
 `)
 
@@ -39,7 +42,7 @@ camelCase {
 		t.Errorf("expected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
 	}
 
-	if result.Violations[0].Location.Row != 3 {
+	if result.Violations[0].Location.Row != 5 {
 		t.Errorf("expected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
 	}
 
@@ -55,7 +58,7 @@ camelCase {
 		t.Errorf("expected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
 	}
 
-	if result.Violations[1].Location.Row != 4 {
+	if result.Violations[1].Location.Row != 6 {
 		t.Errorf("expected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
 	}
 
@@ -63,8 +66,9 @@ camelCase {
 		t.Errorf("expected second violation to be on column 1, got %d", result.Violations[1].Location.Column)
 	}
 
-	if *result.Violations[1].Location.Text != "camelCase {" {
-		t.Errorf("expected second violation to be on 'camelCase {', got %s", *result.Violations[1].Location.Text)
+	if *result.Violations[1].Location.Text != "camelCase if {" {
+		t.Errorf("expected second violation to be on 'camelCase if {', got %s",
+			*result.Violations[1].Location.Text)
 	}
 }
 

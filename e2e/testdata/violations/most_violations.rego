@@ -35,7 +35,7 @@ import data.after.rule
 
 ### Bugs ###
 
-constant_condition {
+constant_condition if {
 	1 == 1
 }
 
@@ -43,7 +43,7 @@ constant_condition {
 # invalid-metadata-attribute: true
 should := "fail"
 
-not_equals_in_loop {
+not_equals_in_loop if {
 	"foo" != input.bar[_]
 }
 
@@ -52,17 +52,17 @@ contains := true
 
 top_level_iteration := input[_]
 
-unused_return_value {
+unused_return_value if {
 	indexof("foo", "o")
 }
 
 zero_arity_function() := true
 
-inconsistent_args(a, b) {
+inconsistent_args(a, b) if {
 	a == b
 }
 
-inconsistent_args(b, a) {
+inconsistent_args(b, a) if {
 	b == a
 }
 
@@ -70,27 +70,35 @@ if_empty_object if {}
 
 ### Idiomatic ###
 
-custom_has_key_construct(map, key) {
+custom_has_key_construct(map, key) if {
 	_ = map[key]
 }
 
-custom_in_construct(coll, item) {
+custom_in_construct(coll, item) if {
 	item == coll[_]
 }
 
-use_some_for_output_vars {
+use_some_for_output_vars if {
 	input.foo[output_var]
 }
 
 non_raw_regex_pattern := regex.match("[0-9]", "1")
 
-use_in_operator {
+use_in_operator if {
 	"item" == input.coll[_]
 }
 
 prefer_set_or_object_rule := {x | some x in input; x == "violation"}
 
 equals_pattern_matching(x) := x == "x"
+
+use_if {
+	data.foo
+}
+
+use_contains[item] {
+	some item in input.items
+}
 
 ### Style ###
 
@@ -102,11 +110,11 @@ get_foo(foo) := foo
 
 annotation := "detached"
 
-external_reference(_) {
+external_reference(_) if {
 	data.foo
 }
 
-function_arg_return {
+function_arg_return if {
 	indexof("foo", "o", i)
 	i == 1
 }
@@ -121,19 +129,19 @@ preferSnakeCase := "fail"
 
 # todo-comment
 
-x := y {
+x := y if {
 	y := 1
 }
 
 use_assignment = "oparator"
 
-chained_rule_body {
+chained_rule_body if {
 	input.x
 } {
 	input.y
 }
 
-rule_length {
+rule_length if {
 	input.x1
 	input.x2
 	input.x3
@@ -167,15 +175,15 @@ rule_length {
 	input.x31
 }
 
-default_over_else := 1 {
+default_over_else := 1 if {
 	input.x
 } else := 3
 
-unnecessary_some {
+unnecessary_some if {
 	some "x" in ["x"]
 }
 
-yoda_condition {
+yoda_condition if {
 	"foo" == input.bar
 }
 
@@ -185,11 +193,11 @@ yoda_condition {
 test_identically_named_tests := true
 test_identically_named_tests := true
 
-todo_test_bad {
+todo_test_bad if {
 	input.bad
 }
 
-print_or_trace_call {
+print_or_trace_call if {
 	print("forbidden!")
 }
 
@@ -197,6 +205,6 @@ print_or_trace_call {
 foo := "bar"
 
 # dubious print sprintf
-y {
+y if {
 	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 }

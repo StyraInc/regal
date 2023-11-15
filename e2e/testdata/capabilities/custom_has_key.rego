@@ -1,5 +1,7 @@
 package custom_has_key
 
-has_key(map, key) {
+import future.keywords.if
+
+has_key(map, key) if {
 	_ = map[key]
 }

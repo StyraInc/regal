@@ -19,4 +19,10 @@ has_object_keys if "object.keys" in object.keys(config.capabilities.builtins)
 # if if if!
 has_if if "if" in config.capabilities.future_keywords
 
-has_if if "rego_v1_import" in config.capabilities.features
+has_if if has_rego_v1_feature
+
+has_contains if "contains" in config.capabilities.future_keywords
+
+has_contains if has_rego_v1_feature
+
+has_rego_v1_feature if "rego_v1_import" in config.capabilities.features

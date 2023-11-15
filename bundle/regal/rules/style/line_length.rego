@@ -11,13 +11,17 @@ import data.regal.result
 
 cfg := config.for_rule("style", "line-length")
 
+default max_line_length := 120
+
+max_line_length := cfg["max-line-length"]
+
 report contains violation if {
 	some i, line in input.regal.file.lines
 
 	line != ""
 
 	line_length := count(line)
-	line_length > cfg["max-line-length"]
+	line_length > max_line_length
 
 	not has_word_above_threshold(line, cfg)
 

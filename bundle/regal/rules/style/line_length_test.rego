@@ -57,7 +57,31 @@ test_fail_line_too_long_but_below_breakable_word_threshold if {
 		},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/style/line-length",
+			"ref": config.docs.resolve_url("$baseUrl/$category/line-length", "style"),
+		}],
+		"title": "line-length",
+	}}
+}
+
+test_fail_line_exceeds_120_characters_even_if_not_in_config if {
+	# regal ignore:line-length
+	r := rule.report with input as ast.with_future_keywords(`# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened
+	allow := true
+	`)
+		with config.for_rule as {"level": "error"}
+	r == {{
+		"category": "style",
+		"description": "Line too long",
+		"level": "error",
+		"location": {
+			"col": 147,
+			"file": "policy.rego",
+			# regal ignore:line-length
+			"row": 8, "text": "# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/line-length", "style"),
 		}],
 		"title": "line-length",
 	}}

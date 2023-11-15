@@ -60,3 +60,18 @@ allow := true
 `)
 	r == set()
 }
+
+test_success_detached_document_scope_ok if {
+	r := rule.report with input as regal.parse_module("p.rego", `
+package p
+
+# METADATA
+# scope: document
+# descriptiom: allow allows
+
+# METADATA
+# title: allow
+allow := true
+`)
+	r == set()
+}

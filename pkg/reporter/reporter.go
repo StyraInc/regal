@@ -120,8 +120,6 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 
 func buildPrettyViolationsTable(violations []report.Violation) string {
 	table := uitable.New()
-	table.MaxColWidth = 120
-	table.Wrap = false
 
 	numViolations := len(violations)
 

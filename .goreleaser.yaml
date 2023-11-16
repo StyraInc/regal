@@ -75,6 +75,9 @@ release:
   github:
     owner: StyraInc
     name: regal
+  # draft is used to give us time to set/correct
+  # the release notes before publishing to watchers.
+  draft: true
 
 brews:
   - repository:

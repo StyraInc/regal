@@ -40,6 +40,9 @@ the rule read the same way in English as it will be interpreted by OPA, i.e:
 rule := "some value" if some_condition
 ```
 
+OPA version 1.0, which is planned for 2024, will make the `if` keyword mandatory. This rule helps you get ahead of the
+curve and start using it today.
+
 **Note**: don't forget to `import future.keywords.if`! Or from OPA v0.59.0 and onwards, `import rego.v1`. 
 
 **Tip**: When either of the imports mentioned above are found in a Rego file, the `if` keyword will be inserted

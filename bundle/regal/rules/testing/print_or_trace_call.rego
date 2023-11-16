@@ -2,9 +2,7 @@
 # description: Call to print or trace function
 package regal.rules.testing["print-or-trace-call"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

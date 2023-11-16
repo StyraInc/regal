@@ -2,9 +2,7 @@
 # description: Use raw strings for regex patterns
 package regal.rules.idiomatic["non-raw-regex-pattern"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

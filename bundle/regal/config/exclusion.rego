@@ -1,7 +1,6 @@
 package regal.config
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 excluded_file(category, title, file) if {
 	force_exclude_file(file)

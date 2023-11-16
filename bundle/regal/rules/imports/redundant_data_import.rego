@@ -2,9 +2,7 @@
 # description: Redundant import of data
 package regal.rules.imports["redundant-data-import"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.result
 

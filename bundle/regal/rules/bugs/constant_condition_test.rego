@@ -1,6 +1,6 @@
 package regal.rules.bugs["constant-condition_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -67,6 +67,6 @@ test_success_non_constant_condition if {
 }
 
 test_success_adding_constant_to_set if {
-	r := rule.report with input as ast.with_future_keywords(`rule contains "message"`)
+	r := rule.report with input as ast.with_rego_v1(`rule contains "message"`)
 	r == set()
 }

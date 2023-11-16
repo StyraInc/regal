@@ -2,9 +2,7 @@
 # description: Use of != in loop
 package regal.rules.bugs["not-equals-in-loop"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.result
 

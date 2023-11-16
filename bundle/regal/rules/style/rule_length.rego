@@ -2,9 +2,7 @@
 # description: Max rule length exceeded
 package regal.rules.style["rule-length"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

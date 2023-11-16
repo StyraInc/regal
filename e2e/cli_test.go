@@ -170,9 +170,15 @@ func TestLintAllViolations(t *testing.T) {
 
 	ruleNames := make(map[string]struct{})
 
+	excludedRules := map[string]struct{}{
+		"implicit-future-keywords": {},
+		"use-if":                   {},
+		"use-contains":             {},
+	}
+
 	for _, category := range cfg.Rules {
 		for ruleName, rule := range category {
-			if rule.Level != "ignore" && ruleName != "file-length" {
+			if _, isExcluded := excludedRules[ruleName]; !isExcluded && rule.Level != "ignore" {
 				ruleNames[ruleName] = struct{}{}
 			}
 		}
@@ -187,6 +193,53 @@ func TestLintAllViolations(t *testing.T) {
 
 	if len(ruleNames) != len(violationNames) {
 		for ruleName := range ruleNames {
+			if _, ok := violationNames[ruleName]; !ok {
+				t.Errorf("expected violation for rule %q", ruleName)
+			}
+		}
+	}
+}
+
+func TestLintNotRegoV1Violations(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/not_rego_v1.yaml"),
+		cwd+filepath.FromSlash("/testdata/not_rego_v1"))
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+
+	err = json.Unmarshal(stdout.Bytes(), &rep)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	expected := map[string]struct{}{
+		"implicit-future-keywords": {},
+		"use-if":                   {},
+		"use-contains":             {},
+	}
+
+	// Note that some violations occur more than one time.
+	violationNames := make(map[string]struct{})
+
+	for _, violation := range rep.Violations {
+		violationNames[violation.Title] = struct{}{}
+	}
+
+	if len(expected) != len(violationNames) {
+		for ruleName := range expected {
 			if _, ok := violationNames[ruleName]; !ok {
 				t.Errorf("expected violation for rule %q", ruleName)
 			}
@@ -225,7 +278,6 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	t.Parallel()
 
 	cwd := testutil.Must(os.Getwd())(t)
-	cfg := readProvidedConfig(t)
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
@@ -247,42 +299,14 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	ruleNames := make(map[string]struct{})
-
-	for _, category := range cfg.Rules {
-		for ruleName, rule := range category {
-			if rule.Level != "ignore" {
-				ruleNames[ruleName] = struct{}{}
-			}
-		}
-	}
-
 	violationNames := make(map[string]struct{})
 
 	for _, violation := range rep.Violations {
 		violationNames[violation.Title] = struct{}{}
 	}
 
-	if available, actual := len(ruleNames), len(violationNames); available != actual+2 {
-		t.Errorf("expected two rules to be missing from reported violations, but there were %d out of %d violations reported", actual, available)
-	}
-
-	ignoredRuleNames := []string{"prefer-snake-case", "file-length"}
-
-	for _, ignoredRuleName := range ignoredRuleNames {
-		if _, ok := violationNames[ignoredRuleName]; ok {
-			t.Errorf("expected violation for rule prefer-snake-case to be ignored")
-		}
-
-		// Should be ignored, so exclude from below check
-		// also, this has specifically been checked to miss from violationNames above
-		delete(ruleNames, ignoredRuleName)
-	}
-
-	for ruleName := range ruleNames {
-		if _, ok := violationNames[ruleName]; !ok {
-			t.Errorf("expected violation for rule %q", ruleName)
-		}
+	if _, ok := violationNames["prefer-snake-case"]; ok {
+		t.Errorf("did not expect violation for rule %q as it is ignored", "prefer-snake-case")
 	}
 }
 

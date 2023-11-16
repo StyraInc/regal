@@ -1,6 +1,6 @@
 package regal.rules.style["prefer-some-in-iteration_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -35,7 +35,7 @@ test_fail_simple_iteration_output_var_some_decl if {
 }
 
 test_success_some_in_var_input if {
-	policy := ast.with_future_keywords(`allow {
+	policy := ast.with_rego_v1(`allow if {
 		some x in input
 		input.foo[x] == 1
 	}`)

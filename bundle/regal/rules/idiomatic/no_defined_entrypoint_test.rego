@@ -1,7 +1,6 @@
 package regal.rules.idiomatic["no-defined-entrypoint_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 

@@ -2,9 +2,7 @@
 # description: Prefer default assignment over fallback else
 package regal.rules.style["default-over-else"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

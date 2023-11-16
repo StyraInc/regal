@@ -2,9 +2,7 @@
 # description: Dubious use of print and sprintf
 package regal.rules.testing["dubious-print-sprintf"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

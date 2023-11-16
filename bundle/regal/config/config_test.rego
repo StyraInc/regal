@@ -1,6 +1,6 @@
 package regal.config_test
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.config
 

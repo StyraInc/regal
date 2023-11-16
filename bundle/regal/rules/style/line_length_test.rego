@@ -1,13 +1,13 @@
 package regal.rules.style["line-length_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["line-length"] as rule
 
 test_fail_line_too_long if {
-	r := rule.report with input as ast.with_future_keywords(`allow {
+	r := rule.report with input as ast.with_rego_v1(`allow if {
 foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
 	}`)
 		with config.for_rule as {"level": "error", "max-line-length": 80}
@@ -20,7 +20,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 		}],
 		"title": "line-length",
 		"location": {
-			"col": 103, "file": "policy.rego", "row": 9,
+			"col": 103, "file": "policy.rego", "row": 6,
 			"text": `foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]`,
 		},
 		"level": "error",
@@ -28,7 +28,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 }
 
 test_success_line_too_long_but_non_breakable_word if {
-	r := rule.report with input as ast.with_future_keywords(`
+	r := rule.report with input as ast.with_rego_v1(`
 
 	# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened
 	allow := true
@@ -39,13 +39,12 @@ test_success_line_too_long_but_non_breakable_word if {
 }
 
 test_fail_line_too_long_but_below_breakable_word_threshold if {
-	r := rule.report with input as ast.with_future_keywords(`
+	r := rule.report with input as ast.with_rego_v1(`
 
 	# Long url: https://www.example.com/this/is/a/very/long
 	allow := true
 	`)
 		with config.for_rule as {"level": "error", "max-line-length": 40, "non-breakable-word-threshold": 60}
-
 	r == {{
 		"category": "style",
 		"description": "Line too long",
@@ -53,7 +52,7 @@ test_fail_line_too_long_but_below_breakable_word_threshold if {
 		"location": {
 			"col": 56,
 			"file": "policy.rego",
-			"row": 10, "text": "\t# Long url: https://www.example.com/this/is/a/very/long",
+			"row": 7, "text": "\t# Long url: https://www.example.com/this/is/a/very/long",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -65,7 +64,7 @@ test_fail_line_too_long_but_below_breakable_word_threshold if {
 
 test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 	# regal ignore:line-length
-	r := rule.report with input as ast.with_future_keywords(`# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened
+	r := rule.report with input as ast.with_rego_v1(`# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened
 	allow := true
 	`)
 		with config.for_rule as {"level": "error"}
@@ -77,7 +76,7 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 			"col": 147,
 			"file": "policy.rego",
 			# regal ignore:line-length
-			"row": 8, "text": "# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened",
+			"row": 5, "text": "# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened",
 		},
 		"related_resources": [{
 			"description": "documentation",

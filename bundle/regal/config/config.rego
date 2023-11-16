@@ -1,7 +1,6 @@
 package regal.config
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 docs["base_url"] := "https://docs.styra.com/regal/rules"
 

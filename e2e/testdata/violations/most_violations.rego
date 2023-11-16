@@ -5,13 +5,12 @@
 #   rule-named-if).
 package all_violations
 
+import rego.v1
+
 # Imports
 
 # avoid-importing-input
 import input
-
-# implict-future-keywords
-import future.keywords
 
 # import-shadows-import
 import data.foo
@@ -91,14 +90,6 @@ use_in_operator if {
 prefer_set_or_object_rule := {x | some x in input; x == "violation"}
 
 equals_pattern_matching(x) := x == "x"
-
-use_if {
-	data.foo
-}
-
-use_contains[item] {
-	some item in input.items
-}
 
 ### Style ###
 

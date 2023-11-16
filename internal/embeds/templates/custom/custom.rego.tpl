@@ -4,9 +4,7 @@
 # - input: schema.regal.ast
 package custom.regal.rules.{{.Category}}{{.Name}}
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

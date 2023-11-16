@@ -1,8 +1,6 @@
 package regal.rules.testing["file-missing-test-suffix_test"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 import data.regal.rules.testing["file-missing-test-suffix"] as rule

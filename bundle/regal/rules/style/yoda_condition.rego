@@ -2,9 +2,7 @@
 # description: Yoda condition
 package regal.rules.style["yoda-condition"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

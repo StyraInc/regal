@@ -1,6 +1,6 @@
 package custom_has_key_2
 
-import future.keywords.if
+import rego.v1
 
 # This is here to make sure we deal with multiple notices correctly,
 # and don't report duplicates multiple times.

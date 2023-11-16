@@ -1,7 +1,6 @@
 package regal.rules.idiomatic["equals-pattern-matching_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -48,10 +47,10 @@ test_fail_simple_body_comparison_could_be_matched_in_arg_eq_order if {
 }
 
 test_fail_simple_body_comparison_could_be_matched_using_if if {
-	module := ast.with_future_keywords(`f(x) := x if x == 1`)
+	module := ast.with_rego_v1(`f(x) := x if x == 1`)
 
 	r := rule.report with input as module
-	r == expected_with_location({"col": 1, "file": "policy.rego", "row": 8, "text": "f(x) := x if x == 1"})
+	r == expected_with_location({"col": 1, "file": "policy.rego", "row": 5, "text": "f(x) := x if x == 1"})
 }
 
 test_success_actually_pattern_matching if {

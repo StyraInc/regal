@@ -2,9 +2,7 @@
 # description: Invalid attribute in metadata annotation
 package regal.rules.bugs["invalid-metadata-attribute"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

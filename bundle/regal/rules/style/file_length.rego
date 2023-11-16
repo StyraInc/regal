@@ -2,9 +2,7 @@
 # description: Max file length exceeded
 package regal.rules.style["file-length"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 import data.regal.result

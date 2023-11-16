@@ -2,9 +2,7 @@
 # description: Use `some` to declare output variables
 package regal.rules.idiomatic["use-some-for-output-vars"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

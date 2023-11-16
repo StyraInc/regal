@@ -1,6 +1,6 @@
 package regal.rules.style["use-assignment-operator_test"]
 
-import future.keywords.if
+import rego.v1
 
 import data.regal.ast
 import data.regal.config
@@ -147,21 +147,21 @@ test_success_partial_rule if {
 }
 
 test_success_using_if if {
-	r := rule.report with input as ast.with_future_keywords(`foo if 1 == 1`)
+	r := rule.report with input as ast.with_rego_v1(`foo if 1 == 1`)
 	r == set()
 }
 
 test_success_ref_head_rule_if if {
-	r := rule.report with input as ast.with_future_keywords(`a.b.c if true`)
+	r := rule.report with input as ast.with_rego_v1(`a.b.c if true`)
 	r == set()
 }
 
 # regal ignore:rule-length
 test_fail_unification_in_else if {
-	r := rule.report with input as ast.with_future_keywords(`
+	r := rule.report with input as ast.with_rego_v1(`
 	allow if {
 		input.x
-	} else = true {
+	} else = true if {
 		input.y
 	} else = false
 	`)
@@ -174,7 +174,7 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 4, "file": "policy.rego", "row": 11, "text": "\t} else = true {"},
+			"location": {"col": 4, "file": "policy.rego", "row": 8, "text": "\t} else = true if {"},
 			"level": "error",
 		},
 		{
@@ -185,19 +185,19 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 4, "file": "policy.rego", "row": 13, "text": "\t} else = false"},
+			"location": {"col": 4, "file": "policy.rego", "row": 10, "text": "\t} else = false"},
 			"level": "error",
 		},
 	}
 }
 
 test_success_assignment_in_else if {
-	r := rule.report with input as ast.with_future_keywords(`
+	r := rule.report with input as ast.with_rego_v1(`
 	allow if {
 		input.x
-	} else := true {
+	} else := true if {
 		input.y
-	} else {
+	} else if {
 		input.z
 	} else := false
 	`)

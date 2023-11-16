@@ -2,9 +2,7 @@
 # description: Comment should start with whitespace
 package regal.rules.style["no-whitespace-comment"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

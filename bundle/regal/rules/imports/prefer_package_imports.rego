@@ -2,9 +2,7 @@
 # description: Prefer importing packages over rules
 package regal.rules.imports["prefer-package-imports"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.config
 import data.regal.result

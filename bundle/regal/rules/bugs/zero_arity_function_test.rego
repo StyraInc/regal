@@ -1,7 +1,6 @@
 package regal.rules.bugs["zero-arity-function_test"]
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.config

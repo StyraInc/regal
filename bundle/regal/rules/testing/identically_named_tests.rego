@@ -2,9 +2,7 @@
 # description: Multiple tests with same name
 package regal.rules.testing["identically-named-tests"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result

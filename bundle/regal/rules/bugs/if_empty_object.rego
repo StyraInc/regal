@@ -2,9 +2,7 @@
 # description: Empty object following `if`
 package regal.rules.bugs["if-empty-object"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.capabilities
 import data.regal.result

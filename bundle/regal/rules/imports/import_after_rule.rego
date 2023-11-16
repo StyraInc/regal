@@ -2,9 +2,7 @@
 # description: Import declared after rule
 package regal.rules.imports["import-after-rule"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.result
 

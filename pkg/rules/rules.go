@@ -80,6 +80,8 @@ func InputFromPaths(paths []string) (Input, error) {
 
 			if err != nil {
 				errors = append(errors, err)
+
+				return
 			}
 
 			fileContent[result.Name] = string(result.Raw)

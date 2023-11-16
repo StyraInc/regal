@@ -89,10 +89,31 @@ func TestPrettyReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// TODO(anders): I cannot for the life of me get this to work using a raw string 🫠
-	expect := "Rule:         \tbreaking-the-law                \nDescription:  \tRego must not break the law!    \nCategory:     \tlegal                           \nLocation:     \ta.rego:1:1                      \nText:         \tpackage illegal                 \nDocumentation:\thttps://example.com/illegal     \n              \nRule:         \tquestionable-decision           \nDescription:  \tQuestionable decision found     \nCategory:     \treally?                         \nLocation:     \tb.rego:22:18                    \nText:         \tdefault allow = true            \nDocumentation:\thttps://example.com/questionable\n\n3 files linted. 2 violations found in 2 files. 1 rule skipped:\n- rule-missing-capability: Rule missing capability bar\n\n" //nolint: lll
-	if buf.String() != expect {
-		t.Errorf("expected %s, got %s", expect, buf.String())
+	// The actual output has trailing tabs, which go fmt strips out,
+	// so we'll need to compare line by line with the trailing tabs removed
+	expectLines := strings.Split(`Rule:         	breaking-the-law
+Description:  	Rego must not break the law!
+Category:     	legal
+Location:     	a.rego:1:1
+Text:         	package illegal
+Documentation:	https://example.com/illegal
+
+Rule:         	questionable-decision
+Description:  	Questionable decision found
+Category:     	really?
+Location:     	b.rego:22:18
+Text:         	default allow = true
+Documentation:	https://example.com/questionable
+
+3 files linted. 2 violations found in 2 files. 1 rule skipped:
+- rule-missing-capability: Rule missing capability bar
+
+`, "\n")
+
+	for i, line := range strings.Split(buf.String(), "\n") {
+		if strings.TrimRight(line, " \t") != expectLines[i] {
+			t.Errorf("expected %q, got %q", expectLines[i], line)
+		}
 	}
 }
 
@@ -125,12 +146,17 @@ func TestCompactReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect := `a.rego:1:1  	Rego must not break the law!
-b.rego:22:18	Questionable decision found
+	expect := `+--------------+------------------------------+
+|   Location   |         Description          |
++--------------+------------------------------+
+| a.rego:1:1   | Rego must not break the law! |
+| b.rego:22:18 | Questionable decision found  |
++--------------+------------------------------+
+
 `
 
 	if buf.String() != expect {
-		t.Errorf("expected %q, got %q", expect, buf.String())
+		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 

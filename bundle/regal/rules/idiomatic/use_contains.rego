@@ -15,6 +15,9 @@ import data.regal.result
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_contains
 
 report contains violation if {
+	# if rego.v1 is imported, OPA will ensure this anyway
+	not ast.imports_has_path(ast.imports, ["rego", "v1"])
+
 	some rule in ast.rules
 
 	rule.head.key

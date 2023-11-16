@@ -42,6 +42,9 @@ The `contains` keyword helps to clearly distinguish *multi-value rules* (or "par
 single-value rules ("complete rules"). Just like the `if` keyword, `contains` additionally makes the rule read the same
 way in English as OPA interprets its meaning — a set that contains one or more values given some (optional) conditions.
 
+OPA version 1.0, which is planned for 2024, will make the `contains` keyword mandatory. This rule helps you get ahead of
+the curve and start using it today.
+
 **Note**: don't forget to `import future.keywords.contains`! Or from OPA v0.59.0 and onwards, `import rego.v1`.
 
 **Tip**: When either of the imports mentioned above are found in a Rego file, the `contains` keyword will be inserted

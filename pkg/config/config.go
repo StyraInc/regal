@@ -212,7 +212,12 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 
 // CapabilitiesForThisVersion returns the capabilities for the current OPA version Regal depends on.
 func CapabilitiesForThisVersion() *Capabilities {
-	return fromOPACapabilities(*ast.CapabilitiesForThisVersion())
+	caps, err := ast.LoadCapabilitiesVersion("v0.58.0")
+	if err != nil {
+		panic(fmt.Errorf("loading capabilities failed: %w", err))
+	}
+
+	return fromOPACapabilities(*caps)
 }
 
 func fromOPABuiltin(builtin ast.Builtin) *Builtin {

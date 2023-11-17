@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/gosuri/uitable"
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -119,9 +119,23 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 }
 
 func buildPrettyViolationsTable(violations []report.Violation) string {
-	table := uitable.New()
+	sb := &strings.Builder{}
+	table := tablewriter.NewWriter(sb)
+
+	table.SetNoWhiteSpace(true)
+	table.SetTablePadding("\t")
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetCenterSeparator("")
+	table.SetColumnSeparator("")
+	table.SetRowSeparator("")
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetAutoWrapText(false)
 
 	numViolations := len(violations)
+
+	// Note: it's tempting to use table.SetColumnColor here, but for whatever reason, that requires using
+	// table.SetHeader as well, and we don't want a header for this format.
 
 	yellow := color.New(color.FgYellow).SprintFunc()
 	cyan := color.New(color.FgCyan).SprintFunc()
@@ -133,41 +147,56 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 			description = yellow(violation.Description)
 		}
 
-		table.AddRow(yellow("Rule:"), violation.Title)
-		table.AddRow(yellow("Description:"), description)
-		table.AddRow(yellow("Category:"), violation.Category)
-		table.AddRow(yellow("Location:"), cyan(violation.Location.String()))
+		table.Append([]string{yellow("Rule:"), violation.Title})
+		table.Append([]string{yellow("Description:"), description})
+		table.Append([]string{yellow("Category:"), violation.Category})
+		table.Append([]string{yellow("Location:"), cyan(violation.Location.String())})
 
 		if violation.Location.Text != nil {
-			table.AddRow(yellow("Text:"), strings.TrimSpace(*violation.Location.Text))
+			table.Append([]string{yellow("Text:"), strings.TrimSpace(*violation.Location.Text)})
 		}
 
-		table.AddRow(yellow("Documentation:"), cyan(getDocumentationURL(violation)))
+		table.Append([]string{yellow("Documentation:"), cyan(getDocumentationURL(violation))})
 
 		if i+1 < numViolations {
-			table.AddRow("")
+			table.Append([]string{""})
 		}
 	}
 
 	end := ""
 	if numViolations > 0 {
-		end = "\n\n"
+		end = "\n"
 	}
 
-	return table.String() + end
+	table.Render()
+
+	return sb.String() + end
 }
 
 // Publish prints a compact report to the configured output.
 func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
-	table := uitable.New()
-	table.MaxColWidth = 80
-	table.Wrap = true
+	if len(r.Violations) == 0 {
+		_, err := fmt.Fprintln(tr.out)
 
-	for _, violation := range r.Violations {
-		table.AddRow(violation.Location.String(), violation.Description)
+		return err
 	}
 
-	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(table.String(), " "))
+	sb := &strings.Builder{}
+	table := tablewriter.NewWriter(sb)
+
+	table.SetHeader([]string{"Location", "Description"})
+	table.SetAutoFormatHeaders(false)
+
+	table.SetColWidth(80)
+	table.SetAutoWrapText(true)
+
+	for _, violation := range r.Violations {
+		table.Append([]string{violation.Location.String(), violation.Description})
+	}
+
+	table.Render()
+
+	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), " "))
 
 	return err
 }

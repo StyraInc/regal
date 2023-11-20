@@ -468,6 +468,23 @@ are:
   [job summary](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary)
   from the linter report
 
+## OPA Check and Strict Mode
+
+Linting with Regal assumes syntactically correct Rego, and if there are errors parsing any files during linting, the
+process is aborted with any errors from the parser logged similarly to OPA. OPA itself provides a "linter" of sorts,
+via the `opa check` comand and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
+but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations.
+
+It is recommended to run `opa check --strict` as part of your policy build process, and address any violations
+reported there before running Regal. Why both commands? Couldn't the strict mode checks be integrated in Regal?
+That would certainly be an option. However, most of the strict mode checks will be made default / mandatory as part
+of a future OPA 1.0 release, at which point they'd be made immediately obsolete as part of Regal. There are a few
+strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
+future.
+
+Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
+and test process.
+
 ## Resources
 
 ### Documentation
@@ -475,10 +492,11 @@ are:
 - [Custom Rules](/docs/custom-rules.md) describes how to develop your own linter rules
 - [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
 - [Development](/docs/development.md) contains information about how to hack on Regal itself
-- [Integration](/docs/integration.md) describes how to integrate Regal in your Go application
+- [Go Integration](/docs/integration.md) describes how to integrate Regal in your Go application
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
 - [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks
+- [Editor Support](/docs/editor-support.md) contains information about editor support for Regal
 
 ### Talks
 

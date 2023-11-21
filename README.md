@@ -470,17 +470,17 @@ are:
 
 ## OPA Check and Strict Mode
 
-Linting with Regal assumes syntactically correct Rego, and if there are errors parsing any files during linting, the
-process is aborted with any errors from the parser logged similarly to OPA. OPA itself provides a "linter" of sorts,
+Linting with Regal assumes syntactically correct Rego. If there are errors parsing any files during linting, the
+process is aborted and any parser errors are logged similarly to OPA. OPA itself provides a "linter" of sorts,
 via the `opa check` comand and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
 but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations.
 
-It is recommended to run `opa check --strict` as part of your policy build process, and address any violations
-reported there before running Regal. Why both commands? Couldn't the strict mode checks be integrated in Regal?
-That would certainly be an option. However, most of the strict mode checks will be made default / mandatory as part
-of a future OPA 1.0 release, at which point they'd be made immediately obsolete as part of Regal. There are a few
-strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
-future.
+> **Note** It is recommended to run `opa check --strict` as part of your policy build process, and address any violations
+> reported there before running Regal. Why both commands? Couldn't the strict mode checks be integrated in Regal?
+> That would certainly be an option. However, most of the strict mode checks will be made default / mandatory as part
+> of a future OPA 1.0 release, at which point they'd be made immediately obsolete as part of Regal. There are a few
+> strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
+> future.
 
 Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
 and test process.

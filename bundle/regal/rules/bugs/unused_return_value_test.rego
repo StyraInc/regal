@@ -44,3 +44,11 @@ test_success_function_arg_return_ignored if {
 	}`)
 	r == set()
 }
+
+test_success_not_triggered_by_print if {
+	r := rule.report with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with input as ast.with_rego_v1(`allow if {
+		print(lower("A"))
+	}`)
+	r == set()
+}

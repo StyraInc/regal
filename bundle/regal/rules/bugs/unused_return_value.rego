@@ -17,6 +17,9 @@ report contains violation if {
 	ref_name := expr.terms[0].value[0].value
 	ref_name in ast.builtin_names
 
+	# special case as the "result" of print is ""
+	ref_name != "print"
+
 	config.capabilities.builtins[ref_name].decl.result != "boolean"
 
 	# no violation if the return value is declared as the last function argument

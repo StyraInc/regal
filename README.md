@@ -482,8 +482,8 @@ but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/polic
 > strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
 > future.
 
-Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
-and test process.
+> Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
+> and test process.
 
 ## Resources
 

@@ -32,6 +32,8 @@ rules:
     prefer-value-in-head:
       level: ignore
   idiomatic:
+    boolean-assignment:
+      level: error
     custom-has-key-construct:
       level: error
     custom-in-construct:

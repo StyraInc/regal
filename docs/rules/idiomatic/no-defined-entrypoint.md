@@ -89,8 +89,8 @@ rules:
 
 ## Related Resources
 
-- OPA Docs [Metadata](https://www.openpolicyagent.org/docs/latest/policy-language/#metadata)
-- OPA Docs [Entrypoint](https://www.openpolicyagent.org/docs/latest/policy-language/#entrypoint)
+- OPA Docs: [Metadata](https://www.openpolicyagent.org/docs/latest/policy-language/#metadata)
+- OPA Docs: [Entrypoint](https://www.openpolicyagent.org/docs/latest/policy-language/#entrypoint)
 
 ## Community
 

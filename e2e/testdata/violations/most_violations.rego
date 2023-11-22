@@ -91,6 +91,8 @@ prefer_set_or_object_rule := {x | some x in input; x == "violation"}
 
 equals_pattern_matching(x) := x == "x"
 
+boolean_assignment := 1 < input.two
+
 ### Style ###
 
 # avoid-get-and-list-prefix

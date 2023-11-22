@@ -1,0 +1,65 @@
+# boolean-assignment
+
+**Summary**: Prefer `if` over boolean assignment
+
+**Category**: Idiomatic
+
+**Avoid**
+```rego
+package policy
+
+import rego.v1
+
+more_than_one_member := count(input.members) > 1
+```
+
+**Prefer**
+```rego
+package policy
+
+import rego.v1
+
+more_than_one_member if count(input.members) > 1
+```
+
+## Rationale
+
+Assigning the result of a boolean function is almost always redundant, as the boolean value returned by the expression
+rarely is used for anything but to determine whether to continue evaluation. Moving the condition to the body following
+an `if` will have the rule either evaluate to `true` or be undefined. For the few cases where `false` should be
+returned, using a `default` rule assignment is preferable, as it is guaranteed to be assigned a value even on undefined
+input:
+
+```rego
+package policy
+
+import rego.v1
+
+default more_than_one_member := false
+
+# will be assigned `false` even if input.members is undefined
+more_than_one_member if count(input.members) > 1
+```
+
+## Configuration Options
+
+This linter rule provides the following configuration options:
+
+```yaml
+rules:
+  idiomatic:
+    boolean-assignment:
+      # one of "error", "warning", "ignore"
+      level: error
+```
+
+## Related Resources
+
+- Styra Blog: [How to express OR in Rego](https://www.styra.com/blog/how-to-express-or-in-rego/)
+- Regal Docs: [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)
+
+## Community
+
+If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,
+or just talk about Regal in general, please join us in the `#regal` channel in the Styra Community
+[Slack](https://communityinviter.com/apps/styracommunity/signup)!

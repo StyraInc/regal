@@ -52,7 +52,7 @@ rules:
 
 ## Related Resources
 
-- Rego Style Guide [Prefer snake_case for rule names and variables](https://github.com/StyraInc/rego-style-guide#prefer-snake_case-for-rule-names-and-variables)
+- Rego Style Guide: [Prefer snake_case for rule names and variables](https://github.com/StyraInc/rego-style-guide#prefer-snake_case-for-rule-names-and-variables)
 
 ## Community
 

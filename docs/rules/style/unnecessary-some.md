@@ -62,7 +62,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs [Membership and iteration: `in`](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
+- OPA Docs: [Membership and iteration: `in`](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
 
 ## Community
 

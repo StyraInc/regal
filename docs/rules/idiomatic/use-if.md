@@ -63,7 +63,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)
-- OPA Docs [Future Keywords](https://www.openpolicyagent.org/docs/latest/policy-language/#future-keywords)
+- OPA Docs: [Future Keywords](https://www.openpolicyagent.org/docs/latest/policy-language/#future-keywords)
 
 ## Community
 

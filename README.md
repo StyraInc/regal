@@ -198,6 +198,7 @@ The following rules are currently available:
 | custom    | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                    | Naming convention violation                               |
 | custom    | [one-liner-rule](https://docs.styra.com/regal/rules/custom/one-liner-rule)                          | Rule body could be made a one-liner                       |
 | custom    | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)              | Prefer value in rule head                                 |
+| idiomatic | [boolean-assignment](https://docs.styra.com/regal/rules/idiomatic/boolean-assignment)               | Prefer `if` over boolean assignment                       |
 | idiomatic | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)   | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)             | Custom function may be replaced by `in` keyword           |
 | idiomatic | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)     | Prefer pattern matching in function arguments             |

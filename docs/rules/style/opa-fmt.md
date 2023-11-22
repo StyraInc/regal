@@ -42,7 +42,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs [CLI Reference `opa fmt`](https://www.openpolicyagent.org/docs/latest/cli/#opa-fmt)
+- OPA Docs: [CLI Reference `opa fmt`](https://www.openpolicyagent.org/docs/latest/cli/#opa-fmt)
 
 ## Community
 

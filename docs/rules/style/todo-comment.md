@@ -48,7 +48,7 @@ rules:
 
 ## Related Resources
 
-- [DEV Community: //TODO: Write a better comment](https://dev.to/adammc331/todo-write-a-better-comment-4c8c)
+- DEV Community: [//TODO: Write a better comment](https://dev.to/adammc331/todo-write-a-better-comment-4c8c)
 
 ## Community
 

@@ -118,6 +118,36 @@ test_success_complex_comprehension_term if {
 	r == set()
 }
 
+test_success_allow_if_subattribute if {
+	policy := ast.policy(`allow {
+		bar := input.foo[_].bar
+		bar == "baz"
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_fail_ignore_if_subattribute_disabled if {
+	policy := ast.policy(`allow {
+		bar := input.foo[_].bar
+		bar == "baz"
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": false,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == with_location({"col": 10, "file": "policy.rego", "row": 4, "text": "\t\tbar := input.foo[_].bar"})
+}
+
 allow_nesting(i) := {
 	"level": "error",
 	"ignore-nesting-level": i,

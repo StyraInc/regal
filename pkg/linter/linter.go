@@ -556,7 +556,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 		go func(name string) {
 			defer wg.Done()
 
-			enhancedAST, err := parse.EnhanceAST(name, input.FileContent[name], input.Modules[name])
+			enhancedAST, err := parse.PrepareAST(name, input.FileContent[name], input.Modules[name])
 			if err != nil {
 				errCh <- fmt.Errorf("failed preparing AST: %w", err)
 

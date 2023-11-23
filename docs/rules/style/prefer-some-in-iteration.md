@@ -103,6 +103,10 @@ rules:
       # except iteration if nested at or above the level i.e. setting of
       # '2' will allow `input[_].users[_]` but not `input[_]`
       ignore-nesting-level: 2
+      # except iteration over items with sub-attributes, like
+      # `name := input.users[_].name`
+      # default is true
+      ignore-if-sub-attribute: true
 ```
 
 ## Related Resources

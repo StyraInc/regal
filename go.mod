@@ -42,7 +42,8 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
+	// wasip1 support isn't in a tagged version yet, remove for v1.9.4
+	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -58,6 +59,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-// wasip1 support isn't in a tagged version yet, remove for v1.9.4
-replace github.com/sirupsen/logrus => github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af

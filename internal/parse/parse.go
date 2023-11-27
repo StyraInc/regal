@@ -52,20 +52,20 @@ func Module(filename, policy string) (*ast.Module, error) {
 	return mod, nil
 }
 
-// EnhanceAST TODO rename with https://github.com/StyraInc/regal/issues/86.
-func EnhanceAST(name string, content string, module *ast.Module) (map[string]any, error) {
-	var enhancedAst map[string]any
+// PrepareAST prepares the AST to be used as linter input.
+func PrepareAST(name string, content string, module *ast.Module) (map[string]any, error) {
+	var preparedAST map[string]any
 
-	if err := rio.JSONRoundTrip(module, &enhancedAst); err != nil {
+	if err := rio.JSONRoundTrip(module, &preparedAST); err != nil {
 		return nil, fmt.Errorf("JSON rountrip failed for module: %w", err)
 	}
 
-	enhancedAst["regal"] = map[string]any{
+	preparedAST["regal"] = map[string]any{
 		"file": map[string]any{
 			"name":  name,
 			"lines": strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"),
 		},
 	}
 
-	return enhancedAst, nil
+	return preparedAST, nil
 }

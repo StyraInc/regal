@@ -67,7 +67,7 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 		return nil, err
 	}
 
-	enhancedAST, err := parse.EnhanceAST(string(filenameStr), string(policyStr), module)
+	enhancedAST, err := parse.PrepareAST(string(filenameStr), string(policyStr), module)
 	if err != nil {
 		return nil, err
 	}

@@ -34,7 +34,22 @@ report contains violation if {
 	num_output_vars != 0
 	num_output_vars < cfg["ignore-nesting-level"]
 
+	not except_sub_attribute(value.value)
+
 	violation := result.fail(rego.metadata.chain(), result.location(value))
+}
+
+except_sub_attribute(ref) if {
+	cfg["ignore-if-sub-attribute"] == true
+	has_sub_attribute(ref)
+}
+
+has_sub_attribute(ref) if {
+	last_var_pos := regal.last([i |
+		some i, part in ref
+		part.type == "var"
+	])
+	last_var_pos < count(ref) - 1
 }
 
 # don't walk top level iteration refs:

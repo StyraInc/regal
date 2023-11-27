@@ -58,7 +58,7 @@ func parse(args []string) error {
 		return err
 	}
 
-	enhancedAST, err := rp.EnhanceAST(filename, content, module)
+	enhancedAST, err := rp.PrepareAST(filename, content, module)
 	if err != nil {
 		return err
 	}

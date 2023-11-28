@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/styrainc/regal/internal/novelty"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -41,6 +42,11 @@ type GitHubReporter struct {
 	out io.Writer
 }
 
+// FestiveReporter reports violations in a format suitable for the holidays.
+type FestiveReporter struct {
+	out io.Writer
+}
+
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
@@ -59,6 +65,11 @@ func NewJSONReporter(out io.Writer) JSONReporter {
 // NewGitHubReporter creates a new GitHubReporter.
 func NewGitHubReporter(out io.Writer) GitHubReporter {
 	return GitHubReporter{out: out}
+}
+
+// NewFestiveReporter creates a new FestiveReporter.
+func NewFestiveReporter(out io.Writer) FestiveReporter {
+	return FestiveReporter{out: out}
 }
 
 // Publish prints a pretty report to the configured output.
@@ -116,6 +127,20 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	_, err := fmt.Fprint(tr.out, table+footer+"\n")
 
 	return err
+}
+
+// Publish prints a festive report to the configured output.
+func (tr FestiveReporter) Publish(ctx context.Context, r report.Report) error {
+	if os.Getenv("CI") == "" && len(r.Violations) == 0 {
+		err := novelty.HappyHolidays()
+		if err != nil {
+			return fmt.Errorf("novelty message display failed: %w", err)
+		}
+	}
+
+	pretty := NewPrettyReporter(tr.out)
+
+	return pretty.Publish(ctx, r)
 }
 
 func buildPrettyViolationsTable(violations []report.Violation) string {

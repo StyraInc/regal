@@ -325,6 +325,8 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 		return reporter.NewJSONReporter(outputWriter), nil
 	case formatGitHub:
 		return reporter.NewGitHubReporter(outputWriter), nil
+	case formatFestive:
+		return reporter.NewFestiveReporter(outputWriter), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}

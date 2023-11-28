@@ -9,4 +9,6 @@ const (
 	formatCompact = "compact"
 	// formatGitHub is the GitHub format value for the --format flag in various commands.
 	formatGitHub = "github"
+	// formatFestive is the festive format value for the --format flag in various commands.
+	formatFestive = "festive"
 )

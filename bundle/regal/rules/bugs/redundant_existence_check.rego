@@ -13,7 +13,7 @@ report contains violation if {
 
 	expr.terms.type == "ref"
 
-	static_ref(expr.terms)
+	ast.static_ref(expr.terms)
 
 	ref_str := ast.ref_to_string(expr.terms.value)
 
@@ -24,10 +24,4 @@ report contains violation if {
 	ast.ref_to_string(term.value) == ref_str
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr))
-}
-
-static_ref(ref) if {
-	every t in array.slice(ref.value, 1, count(ref.value)) {
-		t.type == "string"
-	}
 }

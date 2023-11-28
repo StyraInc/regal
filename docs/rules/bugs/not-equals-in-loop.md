@@ -47,7 +47,7 @@ deny if {
 ```
 
 The body of the `deny` rule above roughly translates to "for any item in `input.user.roles`, return true if the item is
-not `admin`". This is almost never what the policy author intended. What the policy author likely intended was 
+not `admin`". This is almost never what the policy author intended. What the policy author likely intended was
 "deny if `admin` is not in `input.user.roles`". The above policy would thus **not** deny a user with the roles
 `["user", "admin"]` since the first item in the array is not "admin". This is almost never what the policy author
 intended.
@@ -61,7 +61,7 @@ currently only checks for wildcard iteration (`[_]`).
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     not-equals-in-loop:
       # one of "error", "warning", "ignore"

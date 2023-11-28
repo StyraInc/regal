@@ -78,7 +78,7 @@ The `ignore-nesting-level` configuration option allows setting the threshold for
 **equal or greater than** the threshold won't be considered a violation. The default setting of `2` allows all _nested_
 iteration, but not e.g. `my_array[x]`.
 
-**Note:** not all nesting is *iteration*! The following example is considered to have a nesting level of `1`, as only
+**Note:** not all nesting is _iteration_! The following example is considered to have a nesting level of `1`, as only
 one of the variables (including wildcards: `_`) is an output variable bound in iteration:
 
 ```rego

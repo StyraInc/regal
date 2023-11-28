@@ -1,6 +1,6 @@
 # Development
 
-If you'd like to contribute to Regal, here are some pointers to help get you started. 
+If you'd like to contribute to Regal, here are some pointers to help get you started.
 
 Before you start, the [architecture](./architecture) guide provides a useful overview of how Regal works, so you might
 want to read that before diving into the code!
@@ -13,6 +13,7 @@ The following tools are required to build, test and lint Regal:
 - The [golangci-lint](https://golangci-lint.run/usage/install/#local-installation) linter
 - The [gci](https://github.com/daixiang0/gci) import formatter
 - The [gofumpt](https://github.com/mvdan/gofumpt) formatter
+- The [markdownlint](https://github.com/DavidAnson/markdownlint) linter
 
 Recommended, but not required:
 
@@ -37,7 +38,7 @@ Regal.
 ### Guiding principles for new built-in rules
 
 - All rules should have succinct, descriptive names which are unique - even across categories
-- A rule that misses a few cases is better than no rule at all, but it's good to document any known edge cases 
+- A rule that misses a few cases is better than no rule at all, but it's good to document any known edge cases
 - False positives should however always be avoided
 - Add tests for as many cases as you can think of
 - Any new rule should have an example violation added in `e2e/testada/violations/most_violations.rego`
@@ -110,6 +111,14 @@ gci write \
   -s dot .
 ```
 
+In order to ensure consistent formatting in our markdown docs, we use the
+[markdownlint](https://github.com/DavidAnson/markdownlint) tool in CI. To run it yourself before submitting a PR,
+install it (`brew install markdownlint-cli`) and run:
+
+```shell
+markdownlint --config docs/.markdownlint.yaml README.md docs/
+```
+
 ## Preparing a pull request
 
 Using `rq`, run all the required steps with:
@@ -133,16 +142,20 @@ go run main.go table --write-to-readme bundle
 
 Build with
 
-    GOOS=wasip1 GOARCH=wasm go build -o regal.wasm .
+```shell
+GOOS=wasip1 GOARCH=wasm go build -o regal.wasm .
+```
 
 Run with wasmtime regal.wasm and the like:
 
-    $ curl https://wasmtime.dev/install.sh -sSf | bash
-    # ...
-    $ wasmtime --version
-    wasmtime-cli 13.0.0
-    $ wasmtime --dir $(pwd) regal -- lint bundle
-    90 files linted. No violations found.
+```shell
+$ curl https://wasmtime.dev/install.sh -sSf | bash
+# ...
+$ wasmtime --version
+wasmtime-cli 13.0.0
+$ wasmtime --dir $(pwd) regal -- lint bundle
+90 files linted. No violations found.
+```
 
 ## Community
 

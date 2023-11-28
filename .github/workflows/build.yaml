@@ -22,6 +22,7 @@ jobs:
       - uses: open-policy-agent/setup-opa@v2
         with:
           version: edge
+      - run: npm install -g markdownlint-cli
       - run: go install git.sr.ht/~charles/rq/cmd/rq@latest
       - run: build/do.rq pull_request
       - uses: golangci/golangci-lint-action@v3.7.0

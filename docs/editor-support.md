@@ -2,7 +2,8 @@
 
 ## Neovim via none-ls
 
-[none-ls](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a language server to inject LSP diagnostics, code actions, and more via Lua.
+[none-ls](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a language server to inject LSP diagnostics,
+code actions, and more via Lua.
 
 Minimal installation via [VimPlug](https://github.com/junegunn/vim-plug)
 

@@ -34,7 +34,7 @@ is_admin if "admin" in input.user.roles
 ## Rationale
 
 The `if` keyword helps communicate what Rego rules really are — conditional assignments. Using `if` in other words makes
-the rule read the same way in English as it will be interpreted by OPA, i.e: 
+the rule read the same way in English as it will be interpreted by OPA, i.e:
 
 ```rego
 rule := "some value" if some_condition
@@ -43,7 +43,7 @@ rule := "some value" if some_condition
 OPA version 1.0, which is planned for 2024, will make the `if` keyword mandatory. This rule helps you get ahead of the
 curve and start using it today.
 
-**Note**: don't forget to `import future.keywords.if`! Or from OPA v0.59.0 and onwards, `import rego.v1`. 
+**Note**: don't forget to `import future.keywords.if`! Or from OPA v0.59.0 and onwards, `import rego.v1`.
 
 **Tip**: When either of the imports mentioned above are found in a Rego file, the `if` keyword will be inserted
 automatically at any applicable location by the `opa fmt` tool.
@@ -53,7 +53,7 @@ automatically at any applicable location by the `opa fmt` tool.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   idiomatic:
     use-if:
       # one of "error", "warning", "ignore"

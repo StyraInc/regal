@@ -45,7 +45,7 @@ from production policy. This is easily done by placing tests in a separate packa
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   testing:
     test-outside-test-package:
       # one of "error", "warning", "ignore"

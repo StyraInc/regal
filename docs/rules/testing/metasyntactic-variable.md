@@ -27,7 +27,7 @@ roles := ["developer", "admin"]
 ## Rationale
 
 Using "foo", "bar", "baz" and other [metasyntactic variables](https://en.wikipedia.org/wiki/Metasyntactic_variable) is
-occasionally useful in examples, but should be avoided in production policy. 
+occasionally useful in examples, but should be avoided in production policy.
 
 This linter rules forbids any metasyntactic variable names, as listed by Wikipedia:
 
@@ -54,7 +54,7 @@ perhaps code meant to be used in examples. When using a
 simply configure an ignore pattern with the configuration of this rule:
 
 ```yaml
-rules: 
+rules:
   testing:
     metasyntactic-variable:
       level: error
@@ -71,7 +71,7 @@ If you'd rather use your own list of forbidden variable names or patterns, see t
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   testing:
     metasyntactic-variable:
       # one of "error", "warning", "ignore"

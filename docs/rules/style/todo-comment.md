@@ -31,7 +31,7 @@ To fix the problem, or use an issue tracker to track it.
 
 ## Rationale
 
-While TODO and FIXME comments are occasionally useful, they essentially provide a way to do issue tracking inside of 
+While TODO and FIXME comments are occasionally useful, they essentially provide a way to do issue tracking inside of
 the code rather than where issues belong — in your issue tracker.
 
 ## Configuration Options
@@ -39,7 +39,7 @@ the code rather than where issues belong — in your issue tracker.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     todo-comment:
       # one of "error", "warning", "ignore"

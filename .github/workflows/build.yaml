@@ -12,8 +12,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-matrix:
+    name: Matrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - windows-latest
+        - macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
@@ -28,23 +35,3 @@ jobs:
       - uses: golangci/golangci-lint-action@v3.7.0
         with:
           version: v1.55.2
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: go.mod
-      - uses: open-policy-agent/setup-opa@v2
-        with:
-          version: edge
-      # rq doesn't work well on windows currently, or at least
-      # so it seemed, so until we've resolved that together with
-      # the rq maintainers, we'll just run the build steps directly
-      # on windows-latest
-      - run: go build
-      - run: go test ./...
-      - run: go test -tags e2e ./e2e
-      - run: opa check --strict --capabilities build/capabilities.json bundle
-      - run: ./regal lint --format github bundle
-      - run: ./regal table --compare-to-readme bundle

@@ -1,0 +1,39 @@
+default: true
+
+# MD013/line-length
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md013.md
+MD013:
+  line_length: 120
+  heading_line_length: 80
+  code_blocks: false
+  tables: false
+  headings: true
+
+# MD024/no-duplicate-heading
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md024.md
+MD024:
+  siblings_only: true
+
+# MD026/no-trailing-punctuation
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md026.md
+MD026:
+  # Punctuation characters
+  punctuation: ".,;:，；：！"
+
+# MD031/blanks-around-fences
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md031.md
+MD031: false
+
+# MD033/no-inline-html
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md033.md
+MD033:
+  allowed_elements:
+    - br
+    - details
+    - img
+    - strong
+    - summary
+
+# MD036/no-emphasis-as-heading
+# https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md036.md
+MD036: false

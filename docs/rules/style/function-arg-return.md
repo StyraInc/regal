@@ -32,7 +32,7 @@ has_email(user) if {
 ## Rationale
 
 Older Rego policies sometimes contain an unusual way to declare where the return value of a function call should be
-stored — the last argument of the function. True to it's Datalog roots, return values may be stored either using 
+stored — the last argument of the function. True to it's Datalog roots, return values may be stored either using
 assignment (i.e. `:=`) or by appending a variable name to the argument list of a function. While both forms are valid,
 using assignment `:=` consistently is preferred.
 
@@ -56,7 +56,7 @@ is arguably more idiomatic than:
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     function-arg-return:
       # one of "error", "warning", "ignore"

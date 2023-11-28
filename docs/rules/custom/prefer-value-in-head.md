@@ -38,7 +38,7 @@ deny contains "user attribute missing from input" if not input.user
 
 Rules that return the value assigned in the last expression of the rule body may have the value, or the function
 returning the value, moved directly to the rule head. This creates more succinct rules, and often allows for rules to be
-expressed as "one-liners". This is not a general recommendation, but a style preference that a team or organization 
+expressed as "one-liners". This is not a general recommendation, but a style preference that a team or organization
 might want to standardize on. As such, it is placed in the custom category, and must be explicitly enabled in
 configuration.
 

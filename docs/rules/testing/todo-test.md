@@ -28,7 +28,7 @@ developing policy. They are however not to be committed, and should be removed b
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   testing:
     todo-test:
       # one of "error", "warning", "ignore"

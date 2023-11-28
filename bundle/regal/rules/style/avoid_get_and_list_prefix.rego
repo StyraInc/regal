@@ -1,5 +1,5 @@
 # METADATA
-# description: Avoid get_ and list_ prefix for rules and functions
+# description: Avoid `get_` and `list_` prefix for rules and functions
 package regal.rules.style["avoid-get-and-list-prefix"]
 
 import rego.v1

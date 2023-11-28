@@ -13,7 +13,7 @@ import future.keywords.if
 import future.keywords.in
 
 # top level set comprehension
-developers := {developer | 
+developers := {developer |
     some user in input.users
     "developer" in user.roles
     developer := user.name
@@ -35,7 +35,7 @@ import future.keywords.if
 import future.keywords.in
 
 # set generating rule
-developers contains developer if { 
+developers contains developer if {
     some user in input.users
     "developer" in user.roles
     developer := user.name
@@ -56,7 +56,7 @@ otherwise hard problems. However, when used as the value directly (and unconditi
 always better to use a rule that generates a set or object in the rule body rather than having a comprehension do so in
 the rule head. Why is that?
 
-### Readability 
+### Readability
 
 Rules that generate objects, and sets even more so, read more natural than comprehensions, and are generally more
 descriptive. While both constructs are easy to spot for a seasoned Rego author, anything that helps improve readability
@@ -81,14 +81,14 @@ import future.keywords.in
 developers contains developer if {
     some user in input.users
     "developer" in user.roles
-    developer := user.name 
+    developer := user.name
 }
 
 # *Also* getting developers from data
 developers contains developer if {
     some user in data.users
     "developer" in user.roles
-    developer := user.name 
+    developer := user.name
 }
 
 # Unconditionally adding a developer to the set
@@ -100,7 +100,7 @@ policy file using the same package, and have more rules added there that would c
 great opportunities for extensibility, and collaboration across developers and teams working on policy together.
 
 Objects differ somewhat from sets in that while several rules can be used to generate an object, there cannot be more
-than one rule contributing to a single key-value pair. 
+than one rule contributing to a single key-value pair.
 
 ```rego
 package policy

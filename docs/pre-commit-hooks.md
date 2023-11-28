@@ -13,9 +13,9 @@ To use Regal with pre-commit, add this to your `.pre-commit-config.yaml`
   # -   id: ...
 ```
 
-### Hooks Available
+## Hooks Available
 
-#### `regal-lint`
+### `regal-lint`
 
 ![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
 
@@ -25,7 +25,7 @@ Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 - will build and install the tagged version of Regal in an isolated `GOPATH`
 - ensures compatibility between versions
 
-#### `regal-lint-use-path`
+### `regal-lint-use-path`
 
 ![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
 
@@ -33,7 +33,7 @@ Runs Regal against all staged `.rego` files, aborting the commit if any fail.
 
 - requires the `regal` package is already installed and available on `$PATH`.
 
-#### `regal-download`
+### `regal-download`
 
 ![commit-msg hook](https://img.shields.io/badge/hook-pre--commit-informational?logo=git)
 

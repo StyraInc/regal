@@ -39,7 +39,7 @@ regoText := `package foo...`
 
 input, err := rules.InputFromText("policy.rego", regoText)
 if err != nil {
-	// handle error
+    // handle error
 }
 ```
 

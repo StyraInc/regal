@@ -27,7 +27,7 @@ When running Regal against a directory, like `regal lint my-policies/`, Regal do
   policy files and tests, the cost may be prohibitive. To alleviate this, Regal is implemented to process files
   concurrently to minimize the impact of IO bound tasks, and to make use of multiple cores when available.
 - The result of linting each file is eventually collected and compiled into a linter report, which is presented to the
-  user in one of the available [output formats](https://docs.styra.com/regal#output-formats). 
+  user in one of the available [output formats](https://docs.styra.com/regal#output-formats).
 
 ## Rego Rules Evaluation
 

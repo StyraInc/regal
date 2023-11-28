@@ -17,7 +17,6 @@ Rego magnificent!
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
-
 ## Goals
 
 - Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches
@@ -101,7 +100,7 @@ import future.keywords
 default allow = false
 
 deny if {
-	"admin" != input.user.roles[_]
+    "admin" != input.user.roles[_]
 }
 
 allow if not deny
@@ -112,6 +111,8 @@ Next, run `regal lint` pointed at one or more files or directories to have them 
 ```shell
 regal lint policy/
 ```
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable MD010 -->
 ```text
 Rule:         	not-equals-in-loop
 Description:  	Use of != in loop
@@ -136,6 +137,7 @@ Documentation:	https://docs.styra.com/regal/rules/style/use-assignment-operator
 
 1 file linted. 3 violations found.
 ```
+<!-- markdownlint-restore -->
 <br />
 
 > **Note**
@@ -217,7 +219,7 @@ The following rules are currently available:
 | imports   | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)         | Prefer importing packages over rules                      |
 | imports   | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                       | Redundant alias                                           |
 | imports   | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)           | Redundant import of data                                  |
-| style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)     | Avoid get_ and list_ prefix for rules and functions       |
+| style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)     | Avoid `get_` and `list_` prefix for rules and functions   |
 | style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                     | Avoid chaining rule bodies                                |
 | style     | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                     | Prefer default assignment over fallback else              |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                     | Detached metadata annotation                              |
@@ -247,7 +249,7 @@ The following rules are currently available:
 
 By default, all rules except for those in the `custom` category are currently **enabled**.
 
-#### Aggregate Rules
+**Aggregate Rules**
 
 Most Regal rules will use data only from a single file at a time, with no consideration for other files. A few rules
 however require data from multiple files, and will therefore collect, or aggregate, data from all files provided for
@@ -453,8 +455,8 @@ The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, 
 rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
 
 Note that at this point in time, Regal only considers the same line or the line following the ignore directive, i.e. it
-does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration) if you want
-to ignore certain rules altogether.
+does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration)
+if you want to ignore certain rules altogether.
 
 ## Output Formats
 
@@ -482,7 +484,7 @@ but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/polic
 > of a future OPA 1.0 release, at which point they'd be made immediately obsolete as part of Regal. There are a few
 > strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
 > future.
-
+>
 > Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
 > and test process.
 

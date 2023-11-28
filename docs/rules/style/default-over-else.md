@@ -75,7 +75,7 @@ example is **not** guaranteed to return a value of `"Unknown"`:
 fname := first_name(input.name)
 ```
 
-Whether deemed acceptable or not, this differs enough from default assignment of rules to make this preference opt-in 
+Whether deemed acceptable or not, this differs enough from default assignment of rules to make this preference opt-in
 rather than opt-out. Use the `prefer-default-functions` configuration option to control whether `default` assignment
 should be preferred over `else` fallbacks also for custom functions. The default value (no pun intended!) of this config
 option is `false`.

@@ -10,7 +10,7 @@ test_fail_rule_name_starts_with_get if {
 	r := rule.report with input as ast.policy(`get_foo := 1`)
 	r == {{
 		"category": "style",
-		"description": "Avoid get_ and list_ prefix for rules and functions",
+		"description": "Avoid `get_` and `list_` prefix for rules and functions",
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "style"),
@@ -25,7 +25,7 @@ test_fail_function_name_starts_with_list if {
 	r := rule.report with input as ast.policy(`list_users(datasource) := ["we", "have", "no", "users"]`)
 	r == {{
 		"category": "style",
-		"description": "Avoid get_ and list_ prefix for rules and functions",
+		"description": "Avoid `get_` and `list_` prefix for rules and functions",
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/avoid-get-and-list-prefix", "style"),

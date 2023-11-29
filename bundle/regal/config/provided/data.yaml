@@ -10,6 +10,8 @@ rules:
       level: error
     not-equals-in-loop:
       level: error
+    redundant-existence-check:
+      level: error
     rule-named-if:
       level: error
     rule-shadows-builtin:

@@ -191,6 +191,7 @@ The following rules are currently available:
 | bugs      | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                      | Inconsistently named function arguments                   |
 | bugs      | [invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute)    | Invalid attribute in metadata annotation                  |
 | bugs      | [not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop)                    | Use of != in loop                                         |
+| bugs      | [redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check)      | Redundant existence check                                 |
 | bugs      | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                              | Rule named "if"                                           |
 | bugs      | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                | Rule name shadows built-in                                |
 | bugs      | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                  | Iteration in top-level assignment                         |

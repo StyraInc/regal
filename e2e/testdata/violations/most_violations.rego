@@ -67,6 +67,11 @@ inconsistent_args(b, a) if {
 
 if_empty_object if {}
 
+redundant_existence_check if {
+	input.foo
+	startswith(input.foo, "bar")
+}
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

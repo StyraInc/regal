@@ -44,6 +44,8 @@ with linting.
 
 — Shawn McGuire, [Atlassian](https://www.atlassian.com/)
 
+See the [adopters](/docs/adopters.md) file for more Regal users.
+
 ## Getting Started
 
 ### Download Regal

@@ -77,3 +77,25 @@ test_success_aggregate_report_ignored_import_path if {
 
 	r == set()
 }
+
+test_aggregate_ignores_imports_of_regal_in_custom_rule if {
+	r := rule.aggregate with input as regal.parse_module("p.rego", `
+	package custom.regal.rules.foo.bar
+
+	import data.regal.ast
+
+	import data.a.b.c
+	`)
+
+	r == {{
+		"aggregate_data": {
+			"imports": [{
+				"location": {"col": 2, "file": "p.rego", "row": 6, "text": "\timport data.a.b.c"},
+				"path": ["a", "b", "c"],
+			}],
+			"package_path": ["custom", "regal", "rules", "foo", "bar"],
+		},
+		"aggregate_source": {"file": "p.rego", "package_path": ["custom", "regal", "rules", "foo", "bar"]},
+		"rule": {"category": "imports", "title": "prefer-package-imports"},
+	}}
+}

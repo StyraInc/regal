@@ -1,6 +1,6 @@
 module github.com/styrainc/regal
 
-go 1.21
+go 1.20 // any officially supported Golang version should be OK
 
 require (
 	dario.cat/mergo v1.0.0

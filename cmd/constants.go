@@ -11,4 +11,6 @@ const (
 	formatGitHub = "github"
 	// formatFestive is the festive format value for the --format flag in various commands.
 	formatFestive = "festive"
+	// formatSarif is the SARIF format value for the --format flag in various commands.
+	formatSarif = "sarif"
 )

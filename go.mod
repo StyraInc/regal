@@ -9,6 +9,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.58.1-0.20231115111619-bcf82eb40572
+	github.com/owenrumney/go-sarif/v2 v2.3.0
 	github.com/pdevine/go-asciisprite v0.1.6
 	github.com/pkg/profile v1.7.0
 	github.com/spf13/cobra v1.8.0

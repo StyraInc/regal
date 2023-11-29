@@ -11,6 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
+	"github.com/owenrumney/go-sarif/v2/sarif"
 
 	"github.com/styrainc/regal/internal/novelty"
 	"github.com/styrainc/regal/pkg/report"
@@ -47,6 +48,11 @@ type FestiveReporter struct {
 	out io.Writer
 }
 
+// SarifReporter reports violations in the SARIF (https://sarifweb.azurewebsites.net/) format.
+type SarifReporter struct {
+	out io.Writer
+}
+
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
@@ -70,6 +76,11 @@ func NewGitHubReporter(out io.Writer) GitHubReporter {
 // NewFestiveReporter creates a new FestiveReporter.
 func NewFestiveReporter(out io.Writer) FestiveReporter {
 	return FestiveReporter{out: out}
+}
+
+// NewSarifReporter creates a new SarifReporter.
+func NewSarifReporter(out io.Writer) SarifReporter {
+	return SarifReporter{out: out}
 }
 
 // Publish prints a pretty report to the configured output.
@@ -320,6 +331,62 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 	}
 
 	return nil
+}
+
+// Publish prints a SARIF report to the configured output.
+func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
+	rep, err := sarif.New(sarif.Version210)
+	if err != nil {
+		return err
+	}
+
+	run := sarif.NewRunWithInformationURI("Regal", "https://docs.styra.com/regal")
+
+	for _, violation := range r.Violations {
+		pb := sarif.NewPropertyBag()
+		pb.Add("category", violation.Category)
+
+		run.AddRule(violation.Title).
+			WithDescription(violation.Description).
+			WithHelpURI(getDocumentationURL(violation)).
+			WithProperties(pb.Properties)
+
+		run.AddDistinctArtifact(violation.Location.File)
+
+		run.CreateResultForRule(violation.Title).
+			WithLevel(violation.Level).
+			WithMessage(sarif.NewTextMessage(violation.Description)).
+			AddLocation(
+				sarif.NewLocationWithPhysicalLocation(
+					sarif.NewPhysicalLocation().
+						WithArtifactLocation(
+							sarif.NewSimpleArtifactLocation(violation.Location.File),
+						).WithRegion(
+						sarif.NewRegion().
+							WithStartLine(violation.Location.Row).
+							WithStartColumn(violation.Location.Column),
+					),
+				),
+			)
+	}
+
+	for _, notice := range r.Notices {
+		pb := sarif.NewPropertyBag()
+		pb.Add("category", notice.Category)
+
+		run.AddRule(notice.Title).
+			WithDescription(notice.Description).
+			WithProperties(pb.Properties)
+
+		run.CreateResultForRule(notice.Title).
+			WithKind("informational").
+			WithLevel(notice.Level).
+			WithMessage(sarif.NewTextMessage(notice.Description))
+	}
+
+	rep.AddRun(run)
+
+	return rep.PrettyWrite(tr.out)
 }
 
 func getDocumentationURL(violation report.Violation) string {

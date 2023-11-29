@@ -331,3 +331,185 @@ func TestGitHubReporterPublishNoViolations(t *testing.T) {
 		t.Errorf("expected %q, got %q", "", buf.String())
 	}
 }
+
+func TestSarifReporterPublish(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+
+	sr := NewSarifReporter(&buf)
+
+	err := sr.Publish(context.Background(), rep)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "informationUri": "https://docs.styra.com/regal",
+          "name": "Regal",
+          "rules": [
+            {
+              "id": "breaking-the-law",
+              "shortDescription": {
+                "text": "Rego must not break the law!"
+              },
+              "helpUri": "https://example.com/illegal",
+              "properties": {
+                "category": "legal"
+              }
+            },
+            {
+              "id": "questionable-decision",
+              "shortDescription": {
+                "text": "Questionable decision found"
+              },
+              "helpUri": "https://example.com/questionable",
+              "properties": {
+                "category": "really?"
+              }
+            },
+            {
+              "id": "rule-made-obsolete",
+              "shortDescription": {
+                "text": "Rule made obsolete by capability foo"
+              },
+              "properties": {
+                "category": "some-category"
+              }
+            },
+            {
+              "id": "rule-missing-capability",
+              "shortDescription": {
+                "text": "Rule missing capability bar"
+              },
+              "properties": {
+                "category": "some-category"
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "a.rego"
+          },
+          "length": -1
+        },
+        {
+          "location": {
+            "uri": "b.rego"
+          },
+          "length": -1
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "breaking-the-law",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Rego must not break the law!"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "a.rego"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "questionable-decision",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Questionable decision found"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "b.rego"
+                },
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 18
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "rule-made-obsolete",
+          "ruleIndex": 2,
+          "kind": "informational",
+          "level": "notice",
+          "message": {
+            "text": "Rule made obsolete by capability foo"
+          }
+        },
+        {
+          "ruleId": "rule-missing-capability",
+          "ruleIndex": 3,
+          "kind": "informational",
+          "level": "notice",
+          "message": {
+            "text": "Rule missing capability bar"
+          }
+        }
+      ]
+    }
+  ]
+}`
+
+	if buf.String() != expect {
+		t.Errorf("expected %s, got %s", expect, buf.String())
+	}
+}
+
+func TestSarifReporterPublishNoViolations(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+
+	sr := NewSarifReporter(&buf)
+
+	err := sr.Publish(context.Background(), report.Report{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "informationUri": "https://docs.styra.com/regal",
+          "name": "Regal",
+          "rules": []
+        }
+      },
+      "results": []
+    }
+  ]
+}`
+
+	if buf.String() != expect {
+		t.Errorf("expected %s, got %s", expect, buf.String())
+	}
+}

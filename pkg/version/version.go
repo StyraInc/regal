@@ -41,7 +41,7 @@ func (vi Info) String() string {
 			"Version:    " + vi.Version,
 			"Go Version: " + vi.GoVersion,
 			"Platform:   " + vi.Platform,
-			"Commit:        " + vi.Commit,
+			"Commit:     " + vi.Commit,
 			"Timestamp:  " + vi.Timestamp,
 			"Hostname:   " + vi.Hostname,
 		},

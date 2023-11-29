@@ -176,7 +176,41 @@ test_fail_use_in_operator_var_rhs if {
 	}}
 }
 
-test_success_refs_both_sides if {
+test_fail_use_in_operator_string_ref_lhs if {
+	r := rule.report with input as ast.policy(`allow {
+		data.roles.admin == input.user.roles[_]
+	}`)
+	r == {{
+		"category": "idiomatic",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 23, "file": "policy.rego", "row": 4, "text": "\t\tdata.roles.admin == input.user.roles[_]"},
+		"level": "error",
+	}}
+}
+
+test_fail_use_in_operator_string_ref_rhs if {
+	r := rule.report with input as ast.policy(`allow {
+		input.user.roles[_] == data.roles.admin
+	}`)
+	r == {{
+		"category": "idiomatic",
+		"description": "Use in to check for membership",
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
+		}],
+		"title": "use-in-operator",
+		"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.user.roles[_] == data.roles.admin"},
+		"level": "error",
+	}}
+}
+
+test_success_loop_refs_both_sides if {
 	r := rule.report with input as ast.policy(`allow { required_roles[_] == input.user.roles[_] }`)
 	r == set()
 }

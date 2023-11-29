@@ -310,6 +310,10 @@ _ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
 	i > 0
 }
 
+static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
+	t.type != "var"
+}
+
 # METADATA
 # description: provides a set of all built-in function calls made in input policy
 builtin_functions_called contains name if {

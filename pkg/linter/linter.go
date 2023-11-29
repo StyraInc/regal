@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -34,24 +36,26 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
-	inputPaths       []string
-	inputModules     *rules.Input
-	ruleBundles      []*bundle.Bundle
-	userConfig       *config.Config
-	combinedConfig   *config.Config
-	dataBundle       *bundle.Bundle
-	customRulesPaths []string
-	debugMode        bool
-	printHook        print.Hook
-	disable          []string
-	disableAll       bool
-	disableCategory  []string
-	enable           []string
-	enableAll        bool
-	enableCategory   []string
-	ignoreFiles      []string
-	metrics          metrics.Metrics
-	profiling        bool
+	inputPaths           []string
+	inputModules         *rules.Input
+	ruleBundles          []*bundle.Bundle
+	userConfig           *config.Config
+	combinedConfig       *config.Config
+	dataBundle           *bundle.Bundle
+	customRulesPaths     []string
+	customRuleFS         fs.FS
+	customRuleFSRootPath string
+	debugMode            bool
+	printHook            print.Hook
+	disable              []string
+	disableAll           bool
+	disableCategory      []string
+	enable               []string
+	enableAll            bool
+	enableCategory       []string
+	ignoreFiles          []string
+	metrics              metrics.Metrics
+	profiling            bool
 }
 
 //nolint:gochecknoglobals
@@ -101,6 +105,15 @@ func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
 // WithCustomRules adds custom rules for evaluation, from the Rego (and data) files provided at paths.
 func (l Linter) WithCustomRules(paths []string) Linter {
 	l.customRulesPaths = paths
+
+	return l
+}
+
+// WithCustomRulesFromFS adds custom rules for evaluation from a filesystem implementing the fs.FS interface.
+// A rootpath within the filesystem must also be specified. Note, _test.rego files will be ignored.
+func (l Linter) WithCustomRulesFromFS(f fs.FS, rootPath string) Linter {
+	l.customRuleFS = f
+	l.customRuleFSRootPath = rootPath
 
 	return l
 }
@@ -466,7 +479,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 	}
 }
 
-func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
+func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	var regoArgs []func(*rego.Rego)
 
 	roots := []string{"eval"}
@@ -504,6 +517,17 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 		regoArgs = append(regoArgs, rego.Load(l.customRulesPaths, rio.ExcludeTestFilter()))
 	}
 
+	if l.customRuleFS != nil && l.customRuleFSRootPath != "" {
+		files, err := loadModulesFromCustomRuleFS(l.customRuleFS, l.customRuleFSRootPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load custom rules from FS: %w", err)
+		}
+
+		for path, content := range files {
+			regoArgs = append(regoArgs, rego.Module(path, content))
+		}
+	}
+
 	if l.ruleBundles != nil {
 		for _, ruleBundle := range l.ruleBundles {
 			var bundleName string
@@ -515,7 +539,51 @@ func (l Linter) prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
 		}
 	}
 
-	return regoArgs
+	return regoArgs, nil
+}
+
+func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[string]string, error) {
+	files := make(map[string]string)
+	filter := rio.ExcludeTestFilter()
+
+	err := fs.WalkDir(customRuleFS, rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to walk custom rule FS: %w", err)
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("failed to get info for custom rule file: %w", err)
+		}
+
+		if filter("", info, 0) {
+			return nil
+		}
+
+		f, err := customRuleFS.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open custom rule file: %w", err)
+		}
+		defer f.Close()
+
+		bs, err := io.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("failed to read custom rule file: %w", err)
+		}
+
+		files[path] = string(bs)
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk custom rule FS: %w", err)
+	}
+
+	return files, nil
 }
 
 //nolint:gocognit
@@ -533,7 +601,10 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 		query = lintQuery
 	}
 
-	regoArgs := l.prepareRegoArgs(query)
+	regoArgs, err := l.prepareRegoArgs(query)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -643,7 +714,10 @@ func (l Linter) lintWithRegoAggregateRules(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	regoArgs := l.prepareRegoArgs(lintWithAggregatesQuery)
+	regoArgs, err := l.prepareRegoArgs(lintWithAggregatesQuery)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {

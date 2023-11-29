@@ -3,6 +3,7 @@ package linter
 import (
 	"bytes"
 	"context"
+	"embed"
 	"path/filepath"
 	"testing"
 
@@ -259,6 +260,29 @@ func TestLintWithCustomRule(t *testing.T) {
 
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
+		WithInputModules(&input)
+
+	result := testutil.Must(linter.Lint(context.Background()))(t)
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
+	}
+
+	if result.Violations[0].Title != "acme-corp-package" {
+		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
+	}
+}
+
+//go:embed testdata/*
+var testLintWithCustomEmbeddedRulesFS embed.FS
+
+func TestLintWithCustomEmbeddedRules(t *testing.T) {
+	t.Parallel()
+
+	input := test.InputPolicy("p.rego", "package p\n")
+
+	linter := NewLinter().
+		WithCustomRulesFromFS(testLintWithCustomEmbeddedRulesFS, "testdata").
 		WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)

@@ -134,7 +134,7 @@ func init() {
 	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
 		"set path of configuration file")
 	lintCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
-		"set output format (pretty, compact, json, github)")
+		"set output format (pretty, compact, json, github, sarif)")
 	lintCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
 		"set file to use for linting output, defaults to stdout")
 	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
@@ -327,6 +327,8 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 		return reporter.NewGitHubReporter(outputWriter), nil
 	case formatFestive:
 		return reporter.NewFestiveReporter(outputWriter), nil
+	case formatSarif:
+		return reporter.NewSarifReporter(outputWriter), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}

@@ -473,6 +473,8 @@ are:
   output, ideal for use in GitHub Actions. Annotates PRs and creates a
   [job summary](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary)
   from the linter report
+- `sarif` - [SARIF](https://sarifweb.azurewebsites.net/) JSON output, for consumption by tools processing code analysis
+  reports
 
 ## OPA Check and Strict Mode
 

@@ -194,7 +194,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 
 	// by default, use the capabilities from the current OPA
 	if capabilitiesEngine == "" && capabilitiesFile == "" {
-		config.Capabilities = fromOPACapabilities(*ast.CapabilitiesForThisVersion())
+		config.Capabilities = CapabilitiesForThisVersion()
 	}
 
 	// remove any builtins referenced in the minus config
@@ -212,12 +212,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 
 // CapabilitiesForThisVersion returns the capabilities for the current OPA version Regal depends on.
 func CapabilitiesForThisVersion() *Capabilities {
-	caps, err := ast.LoadCapabilitiesVersion("v0.58.0")
-	if err != nil {
-		panic(fmt.Errorf("loading capabilities failed: %w", err))
-	}
-
-	return fromOPACapabilities(*caps)
+	return fromOPACapabilities(*ast.CapabilitiesForThisVersion())
 }
 
 func fromOPABuiltin(builtin ast.Builtin) *Builtin {

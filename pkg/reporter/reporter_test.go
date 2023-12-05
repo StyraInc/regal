@@ -480,6 +480,96 @@ func TestSarifReporterPublish(t *testing.T) {
 	}
 }
 
+// https://github.com/StyraInc/regal/issues/514
+func TestSarifReporterViolationWithoutRegion(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+
+	sr := NewSarifReporter(&buf)
+
+	err := sr.Publish(context.Background(), report.Report{
+		Violations: []report.Violation{
+			{
+				Title:       "opa-fmt",
+				Description: "File should be formatted with `opa fmt`",
+				Category:    "style",
+				Location: report.Location{
+					File: "policy.rego",
+				},
+				RelatedResources: []report.RelatedResource{
+					{
+						Description: "documentation",
+						Reference:   "https://docs.styra.com/regal/rules/style/opa-fmt",
+					},
+				},
+				Level: "error",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "informationUri": "https://docs.styra.com/regal",
+          "name": "Regal",
+          "rules": [
+            {
+              "id": "opa-fmt",
+              "shortDescription": {
+                "text": "File should be formatted with ` + "`opa fmt`" + `"
+              },
+              "helpUri": "https://docs.styra.com/regal/rules/style/opa-fmt",
+              "properties": {
+                "category": "style"
+              }
+            }
+          ]
+        }
+      },
+      "artifacts": [
+        {
+          "location": {
+            "uri": "policy.rego"
+          },
+          "length": -1
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "opa-fmt",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "File should be formatted with ` + "`opa fmt`" + `"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "policy.rego"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}`
+
+	if buf.String() != expect {
+		t.Errorf("expected %s, got %s", expect, buf.String())
+	}
+}
+
 func TestSarifReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 

@@ -356,18 +356,7 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 		run.CreateResultForRule(violation.Title).
 			WithLevel(violation.Level).
 			WithMessage(sarif.NewTextMessage(violation.Description)).
-			AddLocation(
-				sarif.NewLocationWithPhysicalLocation(
-					sarif.NewPhysicalLocation().
-						WithArtifactLocation(
-							sarif.NewSimpleArtifactLocation(violation.Location.File),
-						).WithRegion(
-						sarif.NewRegion().
-							WithStartLine(violation.Location.Row).
-							WithStartColumn(violation.Location.Column),
-					),
-				),
-			)
+			AddLocation(getLocation(violation))
 	}
 
 	for _, notice := range r.Notices {
@@ -387,6 +376,23 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 	rep.AddRun(run)
 
 	return rep.PrettyWrite(tr.out)
+}
+
+func getLocation(violation report.Violation) *sarif.Location {
+	physicalLocation := sarif.NewPhysicalLocation().
+		WithArtifactLocation(
+			sarif.NewSimpleArtifactLocation(violation.Location.File),
+		)
+
+	if violation.Location.Row > 0 && violation.Location.Column > 0 {
+		physicalLocation = physicalLocation.WithRegion(
+			sarif.NewRegion().
+				WithStartLine(violation.Location.Row).
+				WithStartColumn(violation.Location.Column),
+		)
+	}
+
+	return sarif.NewLocationWithPhysicalLocation(physicalLocation)
 }
 
 func getDocumentationURL(violation report.Violation) string {

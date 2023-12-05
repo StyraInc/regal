@@ -293,11 +293,23 @@ is_output_var(rule, ref, location) if {
 	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
 }
 
-all_refs := [value |
+all_refs contains value if {
 	walk(input.rules, [_, value])
 
 	value[0].type == "ref"
-]
+}
+
+all_refs contains value if {
+	walk(input.rules, [_, value])
+
+	value.type == "ref"
+}
+
+all_refs contains value if {
+	walk(input.imports, [_, value])
+
+	value.type == "ref"
+}
 
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
 

@@ -270,3 +270,24 @@ test_generated_body_function if {
 
 	ast.generated_body(module.rules[0])
 }
+
+test_all_refs if {
+	policy := `package policy
+
+	import data.foo.bar
+
+    allow := data.foo.baz
+
+    deny[message] {
+		message := data.foo.bax
+    }
+    `
+
+	module := regal.parse_module("p.rego", policy)
+
+	r := ast.all_refs with input as module
+
+	text_refs := {base64.decode(ref.location.text) | some ref in r}
+
+	text_refs == {":=", "data.foo.bar", "data.foo.bax", "data.foo.baz"}
+}

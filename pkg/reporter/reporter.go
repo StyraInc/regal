@@ -356,21 +356,16 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 		run.CreateResultForRule(violation.Title).
 			WithLevel(violation.Level).
 			WithMessage(sarif.NewTextMessage(violation.Description)).
-			AddLocation(
-				sarif.NewLocationWithPhysicalLocation(
-					sarif.NewPhysicalLocation().
-						WithArtifactLocation(
-							sarif.NewSimpleArtifactLocation(violation.Location.File),
-						).WithRegion(
-						sarif.NewRegion().
-							WithStartLine(violation.Location.Row).
-							WithStartColumn(violation.Location.Column),
-					),
-				),
-			)
+			AddLocation(getLocation(violation))
 	}
 
 	for _, notice := range r.Notices {
+		if notice.Severity == "none" {
+			// no need to report on notices like rules skipped due to
+			// having been deprecated or made obsolete
+			continue
+		}
+
 		pb := sarif.NewPropertyBag()
 		pb.Add("category", notice.Category)
 
@@ -380,13 +375,30 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 
 		run.CreateResultForRule(notice.Title).
 			WithKind("informational").
-			WithLevel(notice.Level).
+			WithLevel("none").
 			WithMessage(sarif.NewTextMessage(notice.Description))
 	}
 
 	rep.AddRun(run)
 
 	return rep.PrettyWrite(tr.out)
+}
+
+func getLocation(violation report.Violation) *sarif.Location {
+	physicalLocation := sarif.NewPhysicalLocation().
+		WithArtifactLocation(
+			sarif.NewSimpleArtifactLocation(violation.Location.File),
+		)
+
+	if violation.Location.Row > 0 && violation.Location.Column > 0 {
+		physicalLocation = physicalLocation.WithRegion(
+			sarif.NewRegion().
+				WithStartLine(violation.Location.Row).
+				WithStartColumn(violation.Location.Column),
+		)
+	}
+
+	return sarif.NewLocationWithPhysicalLocation(physicalLocation)
 }
 
 func getDocumentationURL(violation report.Violation) string {

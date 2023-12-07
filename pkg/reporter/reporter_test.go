@@ -375,15 +375,6 @@ func TestSarifReporterPublish(t *testing.T) {
               }
             },
             {
-              "id": "rule-made-obsolete",
-              "shortDescription": {
-                "text": "Rule made obsolete by capability foo"
-              },
-              "properties": {
-                "category": "some-category"
-              }
-            },
-            {
               "id": "rule-missing-capability",
               "shortDescription": {
                 "text": "Rule missing capability bar"
@@ -453,19 +444,10 @@ func TestSarifReporterPublish(t *testing.T) {
           ]
         },
         {
-          "ruleId": "rule-made-obsolete",
+          "ruleId": "rule-missing-capability",
           "ruleIndex": 2,
           "kind": "informational",
-          "level": "notice",
-          "message": {
-            "text": "Rule made obsolete by capability foo"
-          }
-        },
-        {
-          "ruleId": "rule-missing-capability",
-          "ruleIndex": 3,
-          "kind": "informational",
-          "level": "notice",
+          "level": "none",
           "message": {
             "text": "Rule missing capability bar"
           }

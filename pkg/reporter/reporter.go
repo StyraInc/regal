@@ -360,6 +360,12 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 	}
 
 	for _, notice := range r.Notices {
+		if notice.Severity == "none" {
+			// no need to report on notices like rules skipped due to
+			// having been deprecated or made obsolete
+			continue
+		}
+
 		pb := sarif.NewPropertyBag()
 		pb.Add("category", notice.Category)
 
@@ -369,7 +375,7 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 
 		run.CreateResultForRule(notice.Title).
 			WithKind("informational").
-			WithLevel(notice.Level).
+			WithLevel("none").
 			WithMessage(sarif.NewTextMessage(notice.Description))
 	}
 

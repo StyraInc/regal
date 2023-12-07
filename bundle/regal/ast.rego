@@ -295,13 +295,9 @@ is_output_var(rule, ref, location) if {
 
 default is_ref(_) := false
 
-is_ref(value) if {
-	value.type == "ref"
-}
+is_ref(value) if value.type == "ref"
 
-is_ref(value) if {
-	value[0].type == "ref"
-}
+is_ref(value) if value[0].type == "ref"
 
 all_refs contains value if {
 	walk(input.rules, [_, value])

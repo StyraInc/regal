@@ -291,3 +291,18 @@ test_all_refs if {
 
 	text_refs == {":=", "data.foo.bar", "data.foo.bax", "data.foo.baz"}
 }
+
+test_static_rule_name_one_part if {
+	rule := {"head": {"ref": [{"type": "var", "value": "username"}]}}
+	ast.static_rule_name(rule) == "username"
+}
+
+test_static_rule_name_multi_part if {
+	rule := {"head": {"ref": [{"type": "var", "value": "user"}, {"type": "string", "value": "name"}]}}
+	ast.static_rule_name(rule) == "user.name"
+}
+
+test_static_rule_name_var_part if {
+	rule := {"head": {"ref": [{"type": "var", "value": "user"}, {"type": "var", "value": "name"}]}}
+	not ast.static_rule_name(rule)
+}

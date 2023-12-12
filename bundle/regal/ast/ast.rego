@@ -326,6 +326,24 @@ static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"
 }
 
+static_rule_ref(ref) if every t in array.slice(ref, 1, count(ref)) {
+	t.type != "var"
+}
+
+# METADATA
+# description: |
+#   return the name of a rule if, and only if it only has static parts with
+#   no vars. This could be "username", or "user.name", but not "user[name]"
+static_rule_name(rule) := rule.head.ref[0].value if count(rule.head.ref) == 1
+
+static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [ref.value |
+	some i, ref in rule.head.ref
+	i > 0
+])) if {
+	count(rule.head.ref) > 1
+	static_rule_ref(rule.head.ref)
+}
+
 # METADATA
 # description: provides a set of all built-in function calls made in input policy
 builtin_functions_called contains name if {
@@ -415,82 +433,3 @@ is_chained_rule_body(rule, lines) if {
 
 	startswith(col_text, "{")
 }
-
-default imports := []
-
-# METADATA
-# description: |
-#   same as input.imports but with a default value (`[]`), making
-#   it safe to refer to without risk of halting evaluation
-imports := input.imports
-
-imports_has_path(imports, path) if {
-	some imp in imports
-
-	_arr(imp) == path
-}
-
-# METADATA
-# description: |
-#   returns whether a keyword is imported in the policy, either explicitly
-#   like "future.keywords.if" or implicitly like "future.keywords" or "rego.v1"
-imports_keyword(imports, keyword) if {
-	some imp in imports
-
-	_has_keyword(_arr(imp), keyword)
-}
-
-_arr(xs) := [y.value | some y in xs.path.value]
-
-_has_keyword(["future", "keywords"], _)
-
-_has_keyword(["future", "keywords", keyword], keyword)
-
-_has_keyword(["rego", "v1"], _)
-
-comments_decoded := [decoded |
-	some comment in input.comments
-	decoded := object.union(comment, {"Text": base64.decode(comment.Text)})
-]
-
-comments["blocks"] := comment_blocks(comments_decoded)
-
-comments["metadata_attributes"] := {
-	"scope",
-	"title",
-	"description",
-	"related_resources",
-	"authors",
-	"organizations",
-	"schemas",
-	"entrypoint",
-	"custom",
-}
-
-comment_blocks(comments) := [partition |
-	rows := [row |
-		some comment in comments
-		row := comment.Location.row
-	]
-	breaks := _splits(rows)
-
-	some j, k in breaks
-	partition := array.slice(
-		comments,
-		breaks[j - 1] + 1,
-		k + 1,
-	)
-]
-
-_splits(xs) := array.concat(
-	array.concat(
-		# [-1] ++ [ all indices where there's a step larger than one ] ++ [length of xs]
-		# the -1 is because we're adding +1 in array.slice
-		[-1],
-		[i |
-			some i in numbers.range(0, count(xs) - 1)
-			xs[i + 1] != xs[i] + 1
-		],
-	),
-	[count(xs)],
-)

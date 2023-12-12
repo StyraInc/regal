@@ -177,6 +177,10 @@ default_over_else := 1 if {
 	input.x
 } else := 3
 
+default_over_not := input.foo
+
+default_over_not := "foo" if not input.foo
+
 unnecessary_some if {
 	some "x" in ["x"]
 }

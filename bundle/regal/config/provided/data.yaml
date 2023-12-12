@@ -81,6 +81,8 @@ rules:
     default-over-else:
       level: error
       prefer-default-functions: false
+    default-over-not:
+      level: error
     detached-metadata:
       level: error
     external-reference:

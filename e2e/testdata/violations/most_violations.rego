@@ -72,6 +72,8 @@ redundant_existence_check if {
 	startswith(input.foo, "bar")
 }
 
+deprecated_builtin := all([true])
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

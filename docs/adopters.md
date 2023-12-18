@@ -38,6 +38,7 @@ Companies and organizations using Regal (not counting organizations behind the o
 - [Atlassian](https://www.atlassian.com)
 - [Bankdata](https://www.bankdata.dk)
 - [Miro](https://miro.com)
+- [Stacklok](https://stacklok.com)
 - [Styra](https://www.styra.com)
 
 ## Community

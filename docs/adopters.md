@@ -16,6 +16,7 @@ Public open source projects integrating Regal for linting in their CI/CD pipelin
 - [Konstraint](https://github.com/plexsystems/konstraint)
 - [Kubescape](https://github.com/kubescape/regolibrary)
 - [Legitify](https://github.com/Legit-Labs/legitify)
+- [Minder](https://github.com/stacklok/minder)
 - [Modernisation Platform](https://github.com/ministryofjustice/modernisation-platform)
 - [OPA Library](https://github.com/open-policy-agent/library)
 - [Red Hat COP](https://github.com/redhat-cop/rego-policies)

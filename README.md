@@ -225,6 +225,7 @@ The following rules are currently available:
 | style     | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)     | Avoid `get_` and `list_` prefix for rules and functions   |
 | style     | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                     | Avoid chaining rule bodies                                |
 | style     | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                     | Prefer default assignment over fallback else              |
+| style     | [default-over-not](https://docs.styra.com/regal/rules/style/default-over-not)                       | Prefer default assignment over negated condition          |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                     | Detached metadata annotation                              |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                   | Reference to input, data or rule ref in function body     |
 | style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                                 | Max file length exceeded                                  |

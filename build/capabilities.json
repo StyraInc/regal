@@ -4878,6 +4878,41 @@
       }
     },
     {
+      "name": "strings.render_template",
+      "description": "Renders a templated string with given template variables injected. For a given templated string and key/value mapping, values will be injected into the template where they are referenced by key.\n\tFor examples of templating syntax, see https://pkg.go.dev/text/template",
+      "categories": [
+        "strings"
+      ],
+      "decl": {
+        "args": [
+          {
+            "description": "a templated string",
+            "name": "value",
+            "type": "string"
+          },
+          {
+            "description": "a mapping of template variable keys to values",
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "name": "vars",
+            "type": "object"
+          }
+        ],
+        "result": {
+          "description": "rendered template with template variables injected",
+          "name": "result",
+          "type": "string"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "strings.replace_n",
       "description": "Replaces a string from a list of old, new string pairs.\nReplacements are performed in the order they appear in the target string, without overlapping matches.\nThe old string comparisons are done in argument order.",
       "decl": {

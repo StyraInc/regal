@@ -7,7 +7,7 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-# For comments, OPA uses capital-cases Text and Location rather
+# For comments, OPA uses capital-cased Text and Location rather
 # than text and location. As fixing this would potentially break
 # things, we need to take it into consideration here.
 

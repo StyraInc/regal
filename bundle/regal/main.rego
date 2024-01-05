@@ -156,12 +156,10 @@ ignore_directives[row] := rules if {
 	some comment in ast.comments_decoded
 	text := trim_space(comment.Text)
 
-	startswith(text, "regal")
-
-	i := indexof(text, "ignore:")
+	i := indexof(text, "regal ignore:")
 	i != -1
 
-	list := regex.replace(substring(text, i + 7, -1), `\s`, "")
+	list := regex.replace(substring(text, i + 13, -1), `\s`, "")
 
 	row := comment.Location.row + 1
 	rules := split(list, ",")

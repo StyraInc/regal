@@ -190,6 +190,7 @@ The following rules are currently available:
 |-----------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | bugs      | [constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition)                    | Constant condition                                        |
 | bugs      | [deprecated-builtin](https://docs.styra.com/regal/rules/bugs/deprecated-builtin)                    | Avoid using deprecated built-in functions                 |
+| bugs      | [duplicate-rule](https://docs.styra.com/regal/rules/bugs/duplicate-rule)                            | Duplicate rule                                            |
 | bugs      | [if-empty-object](https://docs.styra.com/regal/rules/bugs/if-empty-object)                          | Empty object following `if`                               |
 | bugs      | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                      | Inconsistently named function arguments                   |
 | bugs      | [invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute)    | Invalid attribute in metadata annotation                  |

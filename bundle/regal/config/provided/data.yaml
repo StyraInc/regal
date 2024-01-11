@@ -4,6 +4,8 @@ rules:
       level: error
     deprecated-builtin:
       level: error
+    duplicate-rule:
+      level: error
     if-empty-object:
       level: error
     inconsistent-args:

@@ -38,6 +38,14 @@ constant_condition if {
 	1 == 1
 }
 
+duplicate_rule if {
+	input.foo
+}
+
+duplicate_rule if {
+	input.foo
+}
+
 # METADATA
 # invalid-metadata-attribute: true
 should := "fail"
@@ -193,9 +201,9 @@ yoda_condition if {
 
 ### Testing ###
 
-# this will also tringger the test-outside-test-package rule
+# this will also trigger the test-outside-test-package rule
 test_identically_named_tests := true
-test_identically_named_tests := true
+test_identically_named_tests := false
 
 todo_test_bad if {
 	input.bad

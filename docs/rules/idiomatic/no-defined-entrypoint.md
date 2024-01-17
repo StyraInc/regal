@@ -18,7 +18,7 @@ default allow := false
 # Nothing wrong with this rule, but an
 # entrypoint should be documented as such
 allow if user_is_admin
-allof if public_resource_read
+allow if public_resource_read
 
 user_is_admin if {
     some role in input.user.roles
@@ -44,7 +44,7 @@ default allow := false
 # description: Allow only admins, or reading public resources
 # entrypoint: true
 allow if user_is_admin
-allof if public_resource_read
+allow if public_resource_read
 
 user_is_admin if {
     some role in input.user.roles

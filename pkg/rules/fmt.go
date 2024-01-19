@@ -72,19 +72,19 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 	return result, nil
 }
 
-func (f *OpaFmtRule) Name() string {
+func (*OpaFmtRule) Name() string {
 	return title
 }
 
-func (f *OpaFmtRule) Category() string {
+func (*OpaFmtRule) Category() string {
 	return category
 }
 
-func (f *OpaFmtRule) Description() string {
+func (*OpaFmtRule) Description() string {
 	return description
 }
 
-func (f *OpaFmtRule) Documentation() string {
+func (*OpaFmtRule) Documentation() string {
 	return docs.CreateDocsURL(category, title)
 }
 

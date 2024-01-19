@@ -54,7 +54,7 @@ type repeatedStringFlag struct {
 	isSet bool
 }
 
-func (f *repeatedStringFlag) Type() string {
+func (*repeatedStringFlag) Type() string {
 	return stringType
 }
 

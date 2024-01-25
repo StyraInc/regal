@@ -755,6 +755,10 @@ func (l Linter) lintWithRegoAggregateRules(
 		return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
 	}
 
+	for i := range result.Violations {
+		result.Violations[i].IsAggregate = true
+	}
+
 	return result, nil
 }
 

@@ -34,6 +34,7 @@ type Violation struct {
 	Level            string            `json:"level"`
 	RelatedResources []RelatedResource `json:"related_resources,omitempty"`
 	Location         Location          `json:"location,omitempty"`
+	IsAggregate      bool              `json:"-"`
 }
 
 // Notice describes any notice found by Regal.

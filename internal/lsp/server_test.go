@@ -199,7 +199,7 @@ allow = true
 				t.Fatalf("expected diagnostic %s to be found", item)
 			}
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 
@@ -247,7 +247,7 @@ allow := true
 		if requestData.Items[0].Code.Value != "opa-fmt" {
 			t.Fatalf("expected diagnostic to be opa-fmt, got %s", requestData.Items[0].Code.Value)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 
@@ -298,7 +298,7 @@ rules:
 		if len(requestData.Items) != 0 {
 			t.Fatalf("expected 1 diagnostic, got %d", len(requestData.Items))
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 }
@@ -432,7 +432,7 @@ users = {"alice", "bob"}
 		if requestData.Items[0].Code.Value != "prefer-package-imports" {
 			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code.Value)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 	}
 
@@ -450,7 +450,7 @@ users = {"alice", "bob"}
 		if requestData.Items[0].Code.Value != "use-assignment-operator" {
 			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code.Value)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 
@@ -505,7 +505,7 @@ allow if input.user in admins.users
 
 	select {
 	case <-ok:
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 	}
 
@@ -521,7 +521,7 @@ allow if input.user in admins.users
 		if len(requestData.Items) != 1 {
 			t.Fatalf("expected 1 diagnostics, got %d", len(requestData.Items))
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 }

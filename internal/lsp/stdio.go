@@ -9,7 +9,6 @@ type StdOutReadWriteCloser struct{}
 
 func (StdOutReadWriteCloser) Read(p []byte) (int, error) {
 	c, err := os.Stdin.Read(p)
-
 	if err != nil {
 		return c, fmt.Errorf("failed to read from stdin: %w", err)
 	}
@@ -19,7 +18,6 @@ func (StdOutReadWriteCloser) Read(p []byte) (int, error) {
 
 func (StdOutReadWriteCloser) Write(p []byte) (int, error) {
 	c, err := os.Stdout.Write(p)
-
 	if err != nil {
 		return c, fmt.Errorf("failed to write to stdout: %w", err)
 	}

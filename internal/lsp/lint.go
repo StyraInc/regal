@@ -16,7 +16,7 @@ import (
 
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
-// URI instead
+// URI instead.
 func updateParse(cache *Cache, uri string) (bool, error) {
 	content, ok := cache.GetFileContents(uri)
 	if !ok {
@@ -38,6 +38,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 		}
 
 		diags := make([]Diagnostic, 0)
+
 		for _, astError := range astErrors {
 			itemLen := 1
 
@@ -111,6 +112,7 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 	}
 
 	diags := make([]Diagnostic, 0)
+
 	for _, item := range rpt.Violations {
 		itemLen := 0
 		if item.Location.Text != nil {
@@ -183,8 +185,7 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 
 	aggDiags := make(map[string][]Diagnostic)
 	fileDiags := make(map[string][]Diagnostic)
-	// violatingFiles will be used to track which files have violations from this linting run
-	var violatingFiles []string
+
 	for _, item := range rpt.Violations {
 		itemLen := 0
 		if item.Location.Text != nil {
@@ -236,15 +237,13 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 		// can just run all rules each time.
 		if item.IsAggregate {
 			if item.Location.File == "" {
-				aggDiags[detachedURI] = append(aggDiags[item.Location.File], diag)
+				aggDiags[detachedURI] = append(aggDiags[detachedURI], diag)
 			} else {
 				aggDiags[item.Location.File] = append(aggDiags[item.Location.File], diag)
 			}
 		} else {
 			fileDiags[item.Location.File] = append(fileDiags[item.Location.File], diag)
 		}
-
-		violatingFiles = append(violatingFiles, item.Location.File)
 	}
 
 	// this lint contains authoritative information about all files
@@ -261,12 +260,14 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 		if !ok {
 			ad = []Diagnostic{}
 		}
+
 		cache.SetAggregateDiagnostics(uri, ad)
 
 		fd, ok := fileDiags[uri]
 		if !ok {
 			fd = []Diagnostic{}
 		}
+
 		cache.SetFileDiagnostics(uri, fd)
 	}
 
@@ -275,12 +276,13 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 	if !ok {
 		ad = []Diagnostic{}
 	}
+
 	cache.SetAggregateDiagnostics(detachedURI, ad)
 
 	return nil
 }
 
-// astError is copied from OPA but drop details as I (charlieegan3) had issues unmarsalling the field
+// astError is copied from OPA but drop details as I (charlieegan3) had issues unmarsalling the field.
 type astError struct {
 	Code     string        `json:"code"`
 	Message  string        `json:"message"`

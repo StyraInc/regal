@@ -10,7 +10,7 @@ import (
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and
-// diagnostics for each file (including diagnostics gathered from linting files alongside other files)
+// diagnostics for each file (including diagnostics gathered from linting files alongside other files).
 type Cache struct {
 	// fileContents is a map of file URI to raw file contents received from the client
 	fileContents   map[string]string
@@ -77,6 +77,7 @@ func (c *Cache) GetFileContents(uri string) (string, bool) {
 	defer c.fileContentsMu.Unlock()
 
 	val, ok := c.fileContents[uri]
+
 	return val, ok
 }
 
@@ -99,6 +100,7 @@ func (c *Cache) GetModule(uri string) (*ast.Module, bool) {
 	defer c.moduleMu.Unlock()
 
 	val, ok := c.modules[uri]
+
 	return val, ok
 }
 
@@ -114,6 +116,7 @@ func (c *Cache) GetFileDiagnostics(uri string) ([]Diagnostic, bool) {
 	defer c.diagnosticsFileMu.Unlock()
 
 	val, ok := c.diagnosticsFile[uri]
+
 	return val, ok
 }
 
@@ -136,6 +139,7 @@ func (c *Cache) GetAggregateDiagnostics(uri string) ([]Diagnostic, bool) {
 	defer c.diagnosticsAggregateMu.Unlock()
 
 	val, ok := c.diagnosticsAggregate[uri]
+
 	return val, ok
 }
 
@@ -158,6 +162,7 @@ func (c *Cache) GetParseErrors(uri string) ([]Diagnostic, bool) {
 	defer c.diagnosticsParseMu.Unlock()
 
 	val, ok := c.diagnosticsParseErrors[uri]
+
 	return val, ok
 }
 
@@ -168,7 +173,7 @@ func (c *Cache) SetParseErrors(uri string, diags []Diagnostic) {
 	c.diagnosticsParseErrors[uri] = diags
 }
 
-// Delete removes all cached data for a given URI
+// Delete removes all cached data for a given URI.
 func (c *Cache) Delete(uri string) {
 	c.fileContentsMu.Lock()
 	delete(c.fileContents, uri)
@@ -191,29 +196,29 @@ func (c *Cache) Delete(uri string) {
 	c.diagnosticsParseMu.Unlock()
 }
 
-func updateCacheForURIFromDisk(cache *Cache, uri string) (string, bool, error) {
+func updateCacheForURIFromDisk(cache *Cache, uri string) (string, error) {
 	parsedURI, err := url.Parse(uri)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to parse URI: %w", err)
+		return "", fmt.Errorf("failed to parse URI: %w", err)
 	}
 
 	if parsedURI.Scheme != "file" {
-		return "", false, fmt.Errorf("only file:// URIs are supported, got %q", parsedURI.String())
+		return "", fmt.Errorf("only file:// URIs are supported, got %q", parsedURI.String())
 	}
 
 	content, err := os.ReadFile(parsedURI.Path)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to read file: %w", err)
+		return "", fmt.Errorf("failed to read file: %w", err)
 	}
 
 	currentContent := string(content)
 
 	cachedContent, ok := cache.GetFileContents(uri)
 	if ok && cachedContent == currentContent {
-		return cachedContent, false, nil
+		return cachedContent, nil
 	}
 
 	cache.SetFileContents(uri, currentContent)
 
-	return currentContent, true, nil
+	return currentContent, nil
 }

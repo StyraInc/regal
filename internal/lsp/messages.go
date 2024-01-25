@@ -185,6 +185,6 @@ type WorkspaceDiagnosticReport struct {
 type WorkspaceFullDocumentDiagnosticReport struct {
 	URI     string       `json:"uri"`
 	Version *uint        `json:"version"`
-	Kind    string       `json:"kind"` // Full
+	Kind    string       `json:"kind"`
 	Items   []Diagnostic `json:"items"`
 }

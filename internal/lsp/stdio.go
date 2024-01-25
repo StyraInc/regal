@@ -1,20 +1,32 @@
 package lsp
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type StdOutReadWriteCloser struct{}
 
 func (StdOutReadWriteCloser) Read(p []byte) (int, error) {
-	return os.Stdin.Read(p)
-}
+	c, err := os.Stdin.Read(p)
 
-func (c StdOutReadWriteCloser) Write(p []byte) (int, error) {
-	return os.Stdout.Write(p)
-}
-
-func (c StdOutReadWriteCloser) Close() error {
-	if err := os.Stdin.Close(); err != nil {
-		return err
+	if err != nil {
+		return c, fmt.Errorf("failed to read from stdin: %w", err)
 	}
-	return os.Stdout.Close()
+
+	return c, nil
+}
+
+func (StdOutReadWriteCloser) Write(p []byte) (int, error) {
+	c, err := os.Stdout.Write(p)
+
+	if err != nil {
+		return c, fmt.Errorf("failed to write to stdout: %w", err)
+	}
+
+	return c, nil
+}
+
+func (StdOutReadWriteCloser) Close() error {
+	return nil
 }

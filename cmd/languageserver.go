@@ -20,8 +20,8 @@ func init() {
 		Long:  `Start the Regal Language Server and listen on stdin/stdout for client editor messages.`,
 
 		RunE: wrapProfiling(func(args []string) error {
-
 			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
 			opts := &lsp.LanguageServerOptions{
 				ErrorLog:       os.Stderr,
@@ -37,7 +37,7 @@ func init() {
 			)
 
 			ls.SetConn(conn)
-			ls.StartDiagnosticsWorker(ctx)
+			go ls.StartDiagnosticsWorker(ctx)
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -45,10 +45,8 @@ func init() {
 			select {
 			case <-conn.DisconnectNotify():
 				fmt.Fprint(os.Stderr, "Connection closed\n")
-				cancel()
 			case sig := <-sigChan:
 				fmt.Fprint(os.Stderr, "signal: ", sig.String(), "\n")
-				cancel()
 			}
 
 			return nil

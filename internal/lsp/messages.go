@@ -185,6 +185,6 @@ type WorkspaceDiagnosticReport struct {
 type WorkspaceFullDocumentDiagnosticReport struct {
 	URI     string       `json:"uri"`
 	Version *uint        `json:"version"`
-	Kind    string       `json:"kind"`
+	Kind    string       `json:"kind"` // full, or incremental. We always use full
 	Items   []Diagnostic `json:"items"`
 }

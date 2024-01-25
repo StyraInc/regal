@@ -257,7 +257,7 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params TextDocumentDidOpenParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -285,7 +285,7 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params TextDocumentDidChangeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -304,7 +304,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params WorkspaceDidCreateFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -329,7 +329,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params WorkspaceDidDeleteFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -351,7 +351,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params WorkspaceDidRenameFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -379,7 +379,7 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	_ *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	workspaceReport := WorkspaceDiagnosticReport{
 		Items: make([]WorkspaceFullDocumentDiagnosticReport, 0),
 	}
@@ -400,7 +400,7 @@ func (l *LanguageServer) handleInitialize(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	var params InitializeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -522,7 +522,7 @@ func (l *LanguageServer) handleInitialized(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	_ *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	l.diagnosticRequestWorkspace <- "initialized"
 
 	return struct{}{}, nil
@@ -532,7 +532,7 @@ func (*LanguageServer) handleTextDocumentDiagnostic(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	_ *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	// this is a no-op. Because we accept the textDocument/didChange event, which contains the new content,
 	// we don't need to do anything here as once the new content has been parsed, the diagnostics will be sent
 	// on the channel regardless of this request.
@@ -543,7 +543,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result interface{}, err error) {
+) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}

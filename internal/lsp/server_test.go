@@ -56,6 +56,8 @@ func TestLanguageServerSingleFileWithConfig(t *testing.T) {
 	}
 
 	mainRegoContents := `package main
+
+import rego.v1
 allow = true
 `
 
@@ -180,7 +182,7 @@ allow = true
 		}
 
 		if len(requestData.Items) != 2 {
-			t.Fatalf("expected 2 diagnostics, got %d", len(requestData.Items))
+			t.Fatalf("expected 2 diagnostics, got %d, %v", len(requestData.Items), requestData)
 		}
 
 		expectedItems := map[string]bool{
@@ -212,6 +214,7 @@ allow = true
 		ContentChanges: []TextDocumentContentChangeEvent{
 			{
 				Text: `package main
+import rego.v1
 allow := true
 `,
 			},
@@ -332,6 +335,8 @@ allow if input.user in users
 `,
 		"admins.rego": `package admins
 
+import rego.v1
+
 users = {"alice", "bob"}
 `,
 	}
@@ -444,7 +449,7 @@ users = {"alice", "bob"}
 		}
 
 		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostics, got %d", len(requestData.Items))
+			t.Fatalf("expected 1 diagnostics, got %d, %v", len(requestData.Items), requestData)
 		}
 
 		if requestData.Items[0].Code.Value != "use-assignment-operator" {

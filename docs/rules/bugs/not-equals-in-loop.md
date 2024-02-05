@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 deny if {
     "admin" != input.user.roles[_]
@@ -19,8 +19,7 @@ deny if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 deny if {
     not "admin" in input.user.roles
@@ -39,7 +38,7 @@ day. If it doesn't mean "not in", what does it mean?
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 deny if {
     "admin" != input.user.roles[_]

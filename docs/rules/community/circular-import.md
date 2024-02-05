@@ -23,8 +23,7 @@ graph LR
 # authz.rego
 package authz
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.shared
 
@@ -71,8 +70,7 @@ graph LR
 # authz.rego
 package authz
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.shared
 

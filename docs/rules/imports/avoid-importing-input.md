@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.in
-import future.keywords.if
+import rego.v1
 
 # This is always redundant
 import input
@@ -28,8 +27,7 @@ allow if {
 ```rego
 package policy
 
-import future.keywords.in
-import future.keywords.if
+import rego.v1
 
 allow if "admin" in input.user.roles
 
@@ -51,7 +49,7 @@ like a Terraform plan. Aliasing of specific input attributes should however be a
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 # This is acceptable
 import input as tfplan

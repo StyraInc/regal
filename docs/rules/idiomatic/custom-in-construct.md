@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if has_value(input.user.roles, "admin")
 
@@ -23,8 +23,7 @@ has_value(arr, item) if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 allow if "admin" in input.user.roles
 ```
@@ -42,7 +41,7 @@ recommended.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   idiomatic:
     custom-in-construct:
       # one of "error", "warning", "ignore"

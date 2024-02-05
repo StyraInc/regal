@@ -10,8 +10,7 @@
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 default allow := false
 
@@ -35,8 +34,7 @@ public_resource_read if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 default allow := false
 

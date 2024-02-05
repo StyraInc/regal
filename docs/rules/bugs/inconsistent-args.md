@@ -8,8 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 find_vars(rule, node) if node in rule
 
@@ -24,8 +23,7 @@ find_vars(node, rule) if {
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 find_vars(rule, node) if node in rule
 
@@ -48,8 +46,7 @@ Using wildcards (`_`) in place of unused arguments is always allowed, and in fac
 ```rego
 package policy
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 find_vars(rule, node) if node in rule
 
@@ -68,7 +65,7 @@ also allowed.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     inconsistent-args:
       # one of "error", "warning", "ignore"

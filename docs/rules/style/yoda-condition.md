@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if {
     "GET" == input.request.method
@@ -20,7 +20,7 @@ allow if {
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if {
     input.request.method == "GET"
@@ -39,7 +39,7 @@ authors in the galaxy.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     yoda-condition:
       # one of "error", "warning", "ignore"

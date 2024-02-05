@@ -118,8 +118,7 @@ An example policy to implement this requirement might look something like this:
 # - input: schema.regal.ast
 package custom.regal.rules.naming["acme-corp-package"]
 
-import future.keywords.contains
-import future.keywords.if
+import rego.v1
 
 import data.regal.result
 
@@ -186,9 +185,7 @@ from files, and one that actually lints and reports violations using that data.
 # - input: schema.regal.ast
 package custom.regal.rules.organizational["at-least-one-allow"]
 
-import future.keywords.contains
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 import data.regal.ast
 import data.regal.result
@@ -196,15 +193,15 @@ import data.regal.result
 aggregate contains entry if {
     # ast.rules is input.rules with functions filtered out
     some rule in ast.rules
-    
+
     # search for rule named alllow
     ast.name(rule) == "allow"
-    
+
     # make sure it's a default assignemnt
     # ideally we'll want more than that, but the *requiremnt* is only
     # that such a rule exists...
     rule["default"] == true
-    
+
     # ...and that it defaults to false
     rule.head.value.type == "boolean"
     rule.head.value.value == false

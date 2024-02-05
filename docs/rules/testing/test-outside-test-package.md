@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords
+import rego.v1
 
 allow if {
     "admin" in input.user.roles
@@ -25,7 +25,7 @@ test_allow_if_admin {
 # Tests in separate package with _test suffix
 package policy_test
 
-import future.keywords
+import rego.v1
 
 import data.policy
 

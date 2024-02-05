@@ -8,10 +8,6 @@ import data.regal.ast
 import data.regal.capabilities
 import data.regal.result
 
-# Note: think more about what UX we want when import_rego_v1
-# capbility is available. Should we simply just recommend that
-# and silence this rule in that case? I'm inclined to say yes.
-
 # METADATA
 # description: Missing capability for keyword `if`
 # custom:

@@ -8,8 +8,7 @@
 ```rego
 package authz
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
  # METADATA
  # description: allow any requests by admin users
@@ -23,8 +22,7 @@ allow if {
 ```rego
 package authz
 
-import future.keywords.if
-import future.keywords.in
+import rego.v1
 
 # METADATA
 # description: allow any requests by admin users

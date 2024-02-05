@@ -39,7 +39,7 @@ longer form. Provided a simple policy like this:
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 import data.http
 

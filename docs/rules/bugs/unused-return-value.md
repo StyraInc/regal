@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-import future.keywords.if
+import rego.v1
 
 allow if {
     # return value unused
@@ -40,7 +40,7 @@ is almost certainly a mistake.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     unused-return-value:
       # one of "error", "warning", "ignore"

@@ -7,3 +7,5 @@
 # schemas:
 # - input: schema.regal.ast
 package regal
+
+import rego.v1

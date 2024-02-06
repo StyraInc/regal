@@ -59,7 +59,11 @@ func (l *LanguageServer) Handle(
 	conn *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	l.logInboundMessage(req.Method, string(*req.Params))
+	if req.Params == nil {
+		l.logInboundMessage(req.Method, "empty params")
+	} else {
+		l.logInboundMessage(req.Method, string(*req.Params))
+	}
 
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
@@ -88,6 +92,13 @@ func (l *LanguageServer) Handle(
 		return l.handleWorkspaceDidDeleteFiles(ctx, conn, req)
 	case "workspace/didCreateFiles":
 		return l.handleWorkspaceDidCreateFiles(ctx, conn, req)
+	case "shutdown":
+		err = conn.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to close connection: %w", err)
+		}
+
+		return struct{}{}, nil
 	}
 
 	return nil, &jsonrpc2.Error{

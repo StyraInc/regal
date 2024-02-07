@@ -12,8 +12,6 @@ jobs:
   update-docs:
     name: Update Docs
     runs-on: ubuntu-22.04
-    permissions:
-      actions: write
     steps:
       - name: Check out code
         uses: actions/checkout@v4

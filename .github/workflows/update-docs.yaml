@@ -21,6 +21,7 @@ jobs:
 
       - name: Save version
         run: |
+          mkdir -p versions
           echo "VERSION={{ env.GITHUB_REF }}" > versions/regal
 
       - name: Update docs

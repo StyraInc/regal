@@ -22,7 +22,7 @@ jobs:
       - name: Save version
         run: |
           mkdir -p versions
-          echo "VERSION={{ env.GITHUB_REF }}" > versions/regal
+          echo "${{ github.sha }}" > versions/regal
 
       - name: Update docs
         uses: leigholiver/commit-with-deploy-key@v1.0.3

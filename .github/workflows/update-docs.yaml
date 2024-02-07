@@ -4,8 +4,9 @@ name: Update Docs
 
 on:
   push:
-    branches:
-    - main
+    tags:
+    - v[0-9].**
+  workflow_dispatch:
 
 jobs:
   update-docs:

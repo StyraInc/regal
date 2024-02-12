@@ -162,8 +162,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: StyraInc/setup-regal@main
+    - uses: StyraInc/setup-regal@v1
       with:
+        # For production workflows, use a specific version, like v0.16.0
         version: latest
 
     - name: Lint

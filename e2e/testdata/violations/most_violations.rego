@@ -230,3 +230,9 @@ fine if not not_fine
 
 # rule name repeats package name
 all_violations := true
+
+### Performance
+
+with_outside_test if {
+	foo with input as {}
+}

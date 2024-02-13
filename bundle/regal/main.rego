@@ -116,6 +116,7 @@ aggregate_report contains violation if {
 		["aggregates_internal"],
 	)
 
+	# regal ignore:with-outside-test-context
 	some violation in data.regal.rules[category][title].aggregate_report with input as input_for_rule
 
 	not ignored(violation, ignore_directives)
@@ -137,6 +138,7 @@ aggregate_report contains violation if {
 		["aggregates_internal"],
 	)
 
+	# regal ignore:with-outside-test-context
 	some violation in data.custom.regal.rules[category][title].aggregate_report with input as input_for_rule
 
 	not ignored(violation, ignore_directives)

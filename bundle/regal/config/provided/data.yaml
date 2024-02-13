@@ -81,6 +81,9 @@ rules:
       level: error
     use-rego-v1:
       level: error
+  performance:
+    with-outside-test-context:
+      level: error
   style:
     avoid-get-and-list-prefix:
       level: error

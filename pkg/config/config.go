@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -160,11 +161,11 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	capabilitiesEngineVersion := result.Capabilities.From.Version
 
 	if capabilitiesFile != "" && capabilitiesEngine != "" {
-		return fmt.Errorf("capabilities from.file and from.engine are mutually exclusive")
+		return errors.New("capabilities from.file and from.engine are mutually exclusive")
 	}
 
 	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
-		return fmt.Errorf("please set the version for the engine from which to load capabilities from")
+		return errors.New("please set the version for the engine from which to load capabilities from")
 	}
 
 	if capabilitiesFile != "" {

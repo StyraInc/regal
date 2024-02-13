@@ -19,7 +19,7 @@ func init() {
 		Short: "Run the Regal Language Server",
 		Long:  `Start the Regal Language Server and listen on stdin/stdout for client editor messages.`,
 
-		RunE: wrapProfiling(func(args []string) error {
+		RunE: wrapProfiling(func([]string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 

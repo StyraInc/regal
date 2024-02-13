@@ -936,7 +936,7 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 	if l.ruleBundles == nil {
-		return nil, fmt.Errorf("no bundles loaded")
+		return nil, errors.New("no bundles loaded")
 	}
 
 	for _, ruleBundle := range l.ruleBundles {
@@ -947,7 +947,7 @@ func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no regal bundle found")
+	return nil, errors.New("no regal bundle found")
 }
 
 func (l Linter) startTimer(name string) {

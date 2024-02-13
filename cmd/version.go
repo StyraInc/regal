@@ -23,7 +23,7 @@ func init() {
 		Short: "Print the version of Regal",
 		Long:  "Show the version and other build-time metadata for the running Regal binary.",
 
-		PreRunE: func(_ *cobra.Command, args []string) error {
+		PreRunE: func(*cobra.Command, []string) error {
 			if params.format == "" {
 				params.format = "pretty"
 			} else if params.format != "json" && params.format != "pretty" {
@@ -33,7 +33,7 @@ func init() {
 			return nil
 		},
 
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(*cobra.Command, []string) {
 			vi := version.New()
 
 			switch params.format {

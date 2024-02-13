@@ -345,6 +345,7 @@ func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os
 		if regalDir != nil {
 			searchPath = regalDir.Name()
 		}
+
 		if searchPath != "" {
 			userConfig, err = config.FindConfig(searchPath)
 		}

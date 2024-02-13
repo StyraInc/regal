@@ -79,7 +79,7 @@ func unquotedPath(path ast.Ref) []string {
 }
 
 func createTable(args []string) (io.Reader, error) {
-	result, err := loader.NewFileLoader().Filtered(args, func(abspath string, info fs.FileInfo, depth int) bool {
+	result, err := loader.NewFileLoader().Filtered(args, func(_abspath string, _ fs.FileInfo, _depth int) bool {
 		return false
 	})
 	if err != nil {

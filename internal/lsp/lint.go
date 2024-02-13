@@ -149,7 +149,7 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 				},
 			},
 			Message: item.Description,
-			Source:  fmt.Sprintf("regal/%s", item.Category),
+			Source:  "regal/" + item.Category,
 			Code: DiagnosticCode{
 				Value: item.Title,
 				Target: fmt.Sprintf(
@@ -222,7 +222,7 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 				},
 			},
 			Message: item.Description,
-			Source:  fmt.Sprintf("regal/%s", item.Category),
+			Source:  "regal/" + item.Category,
 			Code: DiagnosticCode{
 				Value: item.Title,
 				Target: fmt.Sprintf(

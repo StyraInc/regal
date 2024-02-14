@@ -34,4 +34,4 @@ jobs:
       - run: build/do.rq pull_request
       - uses: golangci/golangci-lint-action@v4.0.0
         with:
-          version: v1.55.2
+          version: v1.56.1

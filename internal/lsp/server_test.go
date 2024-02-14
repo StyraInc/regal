@@ -83,7 +83,7 @@ allow = true
 	go ls.StartDiagnosticsWorker(ctx)
 
 	receivedMessages := make(chan jsonrpc2.Request, 1)
-	testHandler := func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+	testHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			receivedMessages <- *req
 
@@ -359,7 +359,7 @@ users = {"alice", "bob"}
 
 	authzFileMessages := make(chan FileDiagnostics, 1)
 	adminsFileMessages := make(chan FileDiagnostics, 1)
-	testHandler := func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+	testHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == "textDocument/publishDiagnostics" {
 			var requestData FileDiagnostics
 

@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -73,9 +74,9 @@ command is only meant to be used for testing of Regal rules, and should only be 
 rules.
 
 `,
-	PreRunE: func(Cmd *cobra.Command, args []string) error {
+	PreRunE: func(_ *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return fmt.Errorf("specify at least one file")
+			return errors.New("specify at least one file")
 		}
 
 		return nil
@@ -396,7 +397,7 @@ func addBenchmemFlag(fs *pflag.FlagSet, benchMem *bool, value bool) {
 }
 
 func addCountFlag(fs *pflag.FlagSet, count *int, cmdType string) {
-	fs.IntVar(count, "count", 1, fmt.Sprintf("number of times to repeat each %s", cmdType))
+	fs.IntVar(count, "count", 1, "number of times to repeat each "+cmdType)
 }
 
 func addIgnoreFlag(fs *pflag.FlagSet, ignoreNames *[]string) {

@@ -103,7 +103,7 @@ func (l *LanguageServer) Handle(
 
 	return nil, &jsonrpc2.Error{
 		Code:    jsonrpc2.CodeMethodNotFound,
-		Message: fmt.Sprintf("method not supported: %s", req.Method),
+		Message: "method not supported: " + req.Method,
 	}
 }
 
@@ -459,13 +459,14 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	// load the rego source files into the cache
-	err = filepath.Walk(folderURI.Path, func(path string, info os.FileInfo, _ error) error {
+	err = filepath.Walk(folderURI.Path, func(path string, _ os.FileInfo, _ error) error {
 		var err error
 
 		stat, err := os.Stat(path)
 		if err != nil {
 			return fmt.Errorf("failed to stat %q: %w", path, err)
 		}
+
 		if stat.IsDir() {
 			return nil
 		}
@@ -475,12 +476,12 @@ func (l *LanguageServer) handleInitialize(
 			return nil
 		}
 
-		_, err = updateCacheForURIFromDisk(l.cache, fmt.Sprintf("file://%s", path))
+		_, err = updateCacheForURIFromDisk(l.cache, "file://"+path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
 		}
 
-		_, err = updateParse(l.cache, fmt.Sprintf("file://%s", path))
+		_, err = updateParse(l.cache, "file://"+path)
 		if err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}

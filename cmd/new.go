@@ -65,31 +65,31 @@ Example:
 
 regal new rule --type custom --category naming --name camel-case`,
 
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(*cobra.Command, []string) error {
 			if params.type_ != "custom" && params.type_ != "builtin" {
 				return fmt.Errorf("type must be 'custom' or 'builtin', got %v", params.type_)
 			}
 
 			if params.category == "" {
-				return fmt.Errorf("category is required for rule")
+				return errors.New("category is required for rule")
 			}
 
 			if !categoryRegex.MatchString(params.category) {
-				return fmt.Errorf("category must be a single word, using lowercase letters only")
+				return errors.New("category must be a single word, using lowercase letters only")
 			}
 
 			if params.name == "" {
-				return fmt.Errorf("name is required for rule")
+				return errors.New("name is required for rule")
 			}
 
 			if !nameRegex.MatchString(params.name) {
-				return fmt.Errorf("name must consist only of lowercase letters, numbers, underscores and dashes")
+				return errors.New("name must consist only of lowercase letters, numbers, underscores and dashes")
 			}
 
 			return nil
 		},
 
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(*cobra.Command, []string) {
 			if err := scaffoldRule(params); err != nil {
 				log.SetOutput(os.Stderr)
 				log.Println(err)
@@ -148,7 +148,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 		var pathErr *os.PathError
 		if errors.As(err, &pathErr) && os.IsNotExist(pathErr.Err) {
 			// Handle the case where the file does not exist
-			return fmt.Errorf("data.yaml file not found. " +
+			return errors.New("data.yaml file not found. " +
 				"Please run this command from the top-level directory of the Regal repository")
 		}
 

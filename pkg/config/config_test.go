@@ -39,6 +39,7 @@ func TestFindRegalDirectory(t *testing.T) {
 
 	test.WithTempFS(fs, func(root string) {
 		path := filepath.Join(root, "/foo/bar/baz")
+
 		_, err := FindRegalDirectory(path)
 		if err == nil {
 			t.Errorf("expected no config file to be found")
@@ -56,6 +57,7 @@ func TestFindConfig(t *testing.T) {
 
 	test.WithTempFS(fs, func(root string) {
 		path := filepath.Join(root, "/foo/bar/baz")
+
 		_, err := FindConfig(path)
 		if err != nil {
 			t.Error(err)
@@ -69,6 +71,7 @@ func TestFindConfig(t *testing.T) {
 
 	test.WithTempFS(fs, func(root string) {
 		path := filepath.Join(root, "/foo/bar/baz")
+
 		_, err := FindConfig(path)
 		if err == nil {
 			t.Errorf("expected no config file to be found")

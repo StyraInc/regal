@@ -63,6 +63,8 @@ rules:
   imports:
     avoid-importing-input:
       level: error
+    circular-import:
+      level: error
     implicit-future-keywords:
       level: error
     import-after-rule:
@@ -117,6 +119,8 @@ rules:
       except-empty-body: true
       level: error
       max-rule-length: 30
+    rule-name-repeats-package:
+      level: error
     todo-comment:
       level: error
     unconditional-assignment:

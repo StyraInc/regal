@@ -7,6 +7,9 @@ package all_violations
 
 import rego.v1
 
+# creates a circular import
+import data.circular_import
+
 # Imports
 
 # avoid-importing-input
@@ -220,3 +223,6 @@ foo := "bar"
 y if {
 	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 }
+
+# rule name repeats package name
+all_violations := true

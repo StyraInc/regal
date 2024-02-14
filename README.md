@@ -219,6 +219,7 @@ The following rules are currently available:
 | idiomatic | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                     | Use in to check for membership                            |
 | idiomatic | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)   | Use `some` to declare output variables                    |
 | imports   | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)           | Avoid importing input                                     |
+| imports   | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                       | Circular import                                           |
 | imports   | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)     | Use explicit future keyword imports                       |
 | imports   | [import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule)                   | Import declared after rule                                |
 | imports   | [import-shadows-builtin](https://docs.styra.com/regal/rules/imports/import-shadows-builtin)         | Import shadows built-in namespace                         |
@@ -242,6 +243,7 @@ The following rules are currently available:
 | style     | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                     | Prefer snake_case for names                               |
 | style     | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)       | Prefer `some .. in` for iteration                         |
 | style     | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                                 | Max rule length exceeded                                  |
+| style     | [rule-name-repeats-package](https://docs.styra.com/regal/rules/style/rule-name-repeats-package)     | Rule name repeats package                                 |
 | style     | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                               | Avoid TODO comments                                       |
 | style     | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)       | Unconditional assignment in rule body                     |
 | style     | [unnecessary-some](https://docs.styra.com/regal/rules/style/unnecessary-some)                       | Unnecessary use of `some`                                 |

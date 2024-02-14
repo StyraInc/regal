@@ -7,6 +7,9 @@ package all_violations
 
 import rego.v1
 
+# creates a circular import
+import data.circular_import
+
 # Imports
 
 # avoid-importing-input
@@ -224,3 +227,6 @@ y if {
 # double negation
 not_fine := true
 fine if not not_fine
+
+# rule name repeats package name
+all_violations := true

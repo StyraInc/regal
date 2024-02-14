@@ -20,7 +20,7 @@ test_fail_double_negative if {
 		"location": {"col": 13, "file": "policy.rego", "row": 8, "text": "    fine if not not_fine"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/community/double-negative",
+			"ref": "https://docs.styra.com/regal/rules/style/double-negative",
 		}],
 		"title": "double-negative",
 		"level": "error",

@@ -1,15 +1,8 @@
 # circular-import
 
-> **Note:** This rule is currently only available as part of the
-> ✨ _Regal Festive Promotion_ ✨. If you'd like to take part,
-> and use this rule, please give [Regal](https://github.com/styraInc/regal)
-> a quick star on GitHub and join `#community` channel in the
-> [Styra Community Slack](https://communityinviter.com/apps/styracommunity/signup)
-> for more details.
-
 **Summary**: Avoid circular imports
 
-**Category**: Community
+**Category**: Imports
 
 **Avoid**
 
@@ -125,7 +118,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules: 
-  community:
+  imports:
     circular-import:
       # one of "error", "warning", "ignore"
       level: error

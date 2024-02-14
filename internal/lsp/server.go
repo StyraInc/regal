@@ -459,20 +459,13 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	// load the rego source files into the cache
-	err = filepath.Walk(folderURI.Path, func(path string, _ os.FileInfo, _ error) error {
-		var err error
-
-		stat, err := os.Stat(path)
+	err = filepath.WalkDir(folderURI.Path, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("failed to stat %q: %w", path, err)
-		}
-
-		if stat.IsDir() {
-			return nil
+			return fmt.Errorf("failed to walk workspace dir %q: %w", folderURI.Path, err)
 		}
 
 		// TODO(charlieegan3): make this configurable for things like .rq etc?
-		if !strings.HasSuffix(path, ".rego") {
+		if d.IsDir() || !strings.HasSuffix(path, ".rego") {
 			return nil
 		}
 

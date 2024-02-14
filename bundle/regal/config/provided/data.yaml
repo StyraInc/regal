@@ -93,6 +93,8 @@ rules:
       level: error
     detached-metadata:
       level: error
+    double-negative:
+      level: error
     external-reference:
       level: error
     file-length:

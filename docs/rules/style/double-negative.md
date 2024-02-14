@@ -1,12 +1,5 @@
 # double-negative
 
-> **Note:** This rule is currently only available as part of the
-> ✨ _Regal Festive Promotion_ ✨. If you'd like to take part,
-> and use this rule, please give [Regal](https://github.com/styraInc/regal)
-> a quick star on GitHub and join `#community` channel in the
-> [Styra Community Slack](https://communityinviter.com/apps/styracommunity/signup)
-> for more details.
-
 **Summary**: Avoid double negatives
 
 **Category**: Community

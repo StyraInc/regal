@@ -233,6 +233,7 @@ The following rules are currently available:
 | style     | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                     | Prefer default assignment over fallback else              |
 | style     | [default-over-not](https://docs.styra.com/regal/rules/style/default-over-not)                       | Prefer default assignment over negated condition          |
 | style     | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                     | Detached metadata annotation                              |
+| style     | [double-negative](https://docs.styra.com/regal/rules/style/double-negative)                         | Avoid double negatives                                    |
 | style     | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                   | Reference to input, data or rule ref in function body     |
 | style     | [file-length](https://docs.styra.com/regal/rules/style/file-length)                                 | Max file length exceeded                                  |
 | style     | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)                 | Function argument used for return value                   |

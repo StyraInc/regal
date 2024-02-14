@@ -224,5 +224,9 @@ y if {
 	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 }
 
+# double negation
+not_fine := true
+fine if not not_fine
+
 # rule name repeats package name
 all_violations := true

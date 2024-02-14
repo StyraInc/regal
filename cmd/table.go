@@ -207,7 +207,7 @@ func compareToREADME(r io.Reader) error {
 
 	if string(oldReadme) != newReadme {
 		return errors.New(
-			"table in README.md is out of date. Run `go run main.go table --write-to-readme` to have it updated, " +
+			"table in README.md is out of date. Run `go run main.go table --write-to-readme bundle` to have it updated, " +
 				"then include the change in your commit",
 		)
 	}

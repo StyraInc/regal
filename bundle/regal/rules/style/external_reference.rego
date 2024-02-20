@@ -11,7 +11,8 @@ report contains violation if {
 	some fn in ast.functions
 
 	named_args := {arg.value | some arg in fn.head.args; arg.type == "var"}
-	own_vars := {v.value | some v in ast.find_vars(fn.body)}
+	head_vars := {v.value | some v in ast.find_term_vars(fn.head.value)}
+	own_vars := head_vars | {v.value | some v in ast.find_vars(fn.body)}
 
 	allowed_refs := named_args | own_vars
 

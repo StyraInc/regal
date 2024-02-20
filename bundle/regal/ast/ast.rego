@@ -175,7 +175,11 @@ _find_every_vars(_, value) := var if {
 	var := array.concat(key_var, val_var)
 }
 
-_find_term_vars(term) := [value |
+# METADATA
+# description: |
+#   traverses all nodes in provided term (using `walk`), and returns an array with
+#   all variables declared in term, i,e [x, y] or {x: y}, etc.
+find_term_vars(term) := [value |
 	walk(term, [_, value])
 
 	value.type == "var"
@@ -183,7 +187,7 @@ _find_term_vars(term) := [value |
 
 _find_set_or_array_comprehension_vars(value) := [value.value.term] if {
 	value.value.term.type == "var"
-} else := _find_term_vars(value.value.term)
+} else := find_term_vars(value.value.term)
 
 _find_object_comprehension_vars(value) := array.concat(key, val) if {
 	key := [value.value.key | value.value.key.type == "var"]

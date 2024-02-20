@@ -82,3 +82,13 @@ test_success_function_references_only_own_vars_and_wildcard if {
 	r := rule.report with input as ast.policy(`f(x, y) { _ = x + y }`)
 	r == set()
 }
+
+test_success_function_references_return_var if {
+	r := rule.report with input as ast.policy(`f(x) := y { y = true }`)
+	r == set()
+}
+
+test_success_function_references_return_vars if {
+	r := rule.report with input as ast.policy(`f(x) := [x, y] { x = false; y = true }`)
+	r == set()
+}

@@ -67,5 +67,9 @@ invalid_some_context(rule, path) if {
 
 	node := object.get(rule, p, [])
 
-	node.type in {"array", "object", "set"}
+	impossible_some(node)
 }
+
+impossible_some(node) if node.type in {"array", "object", "set"}
+
+impossible_some(node) if node.key

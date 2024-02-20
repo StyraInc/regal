@@ -15,6 +15,15 @@ test_fail_simple_iteration if {
 	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[_] == \"bar\""})
 }
 
+test_fail_simple_iteration_comprehension if {
+	policy := ast.policy(`s := {p |
+		p := input.foo[_]
+	}`)
+
+	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
+	r == with_location({"col": 8, "file": "policy.rego", "row": 4, "text": "\t\tp := input.foo[_]"})
+}
+
 test_fail_simple_iteration_output_var if {
 	policy := ast.policy(`allow {
 		input.foo[x] == 1
@@ -176,6 +185,18 @@ test_success_allow_if_inside_set if {
 
 test_success_allow_if_inside_object if {
 	policy := ast.policy(`s := {foo: input.foo[_] == 1}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_success_allow_if_inside_rule_head_key if {
+	policy := ast.with_rego_v1(`s contains input.foo[_]`)
 
 	r := rule.report with config.for_rule as {
 		"level": "error",

@@ -318,8 +318,8 @@ rules:
       # not needed as error is the default, but
       # being explicit won't hurt
       level: error
-      # Files can be ignored.
-      # In this example, test files are ignored
+      # files can be ignored for any individual rule
+      # in this example, test files are ignored
       ignore:
         files:
           - "*_test.rego"
@@ -332,6 +332,7 @@ rules:
         - pattern: '^acmecorp\.[a-z_\.]+$|^system\.[a-z_\.]+$'
           targets:
             - package
+
 capabilities:
   from:
     # optionally configure Regal to target a specific version of OPA
@@ -342,6 +343,7 @@ capabilities:
     # version of OPA available at the time of the Regal release
     engine: opa
     version: v0.58.0
+
 ignore:
   # files can be excluded from all lint rules according to glob-patterns
   files:
@@ -355,6 +357,96 @@ reached. If no configuration file is found, Regal will use the default configura
 
 A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
 provided will be used to override the default configuration.
+
+## Ignoring Rules
+
+If some rule doesn't align with your team's preferences, don't worry! Regal is not meant to be the law, and some rules
+may not make sense for your project, or parts of it. Regal provides several different ways to ignore rules, either
+entirely, or with more granularity.
+
+### Ignoring a Rule Entirely
+
+If you want to ignore a rule entirely, set its level to `ignore` in the configuration file:
+
+```yaml
+rules:
+  style:
+    prefer-snake-case:
+      # At example.com, we use camel case to comply with our naming conventions
+      level: ignore
+```
+
+**Tip**: providing a comment on ignored rules is a good way to communicate why the decision was made.
+
+### Ignoring a Rule in Some Files
+
+You can use the `ignore` attribute inside any rule configuration to provide a list of files, or patterns, that should
+be ignored for that rule:
+
+```yaml
+rules:
+  style:
+    line-length:
+      level: error
+      ignore:
+        files:
+          # ignore line length in test files to accommodate messy test data
+          - "*_test.rego"
+          # specific file used only for testing
+          - "scratch.rego"
+```
+
+### Ignoring Files Globally
+
+If you want to ignore certain files for all rules, you can use the global ignore attribute in your configuration file:
+
+```yaml
+ignore:
+  files:
+    - file1.rego
+    - "*_tmp.rego"
+```
+
+### Inline Ignore Directives
+
+If you'd like to ignore a specific violation in a file, you can add an ignore directive above the line in question, or
+alternatively on the same line to the right of the expression:
+
+```rego
+package policy
+
+import rego.v1
+
+# regal ignore:prefer-snake-case
+camelCase := "yes"
+
+list_users contains user if { # regal ignore:avoid-get-and-list-prefix
+    some user in data.db.users
+    # ...
+}
+```
+
+The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, where `<rule-name>` is the name of the
+rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
+
+Note that at this point in time, Regal only considers the same line or the line following the ignore directive, i.e. it
+does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration)
+if you want to ignore certain rules altogether.
+
+### Ignoring Rules via CLI Flags
+
+For development and testing, rules or classes of rules may quickly be enabled or disabled using the relevant CLI flags
+for the `regal lint` command:
+
+- `--disable-all` disables **all** rules
+- `--disable-category` disables all rules in a category, overriding `--enable-all` (may be repeated)
+- `--disable` disables a specific rule, overriding `--enable-all` and `--enable-category` (may be repeated)
+- `--enable-all` enables **all** rules
+- `--enable-category` enables all rules in a category, overriding `--disable-all` (may be repeated)
+- `--enable` enables a specific rule, overriding `--disable-all` and `--disable-category` (may be repeated)
+- `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
+
+**Note:** all CLI flags override configuration provided in file.
 
 ## Capabilities
 
@@ -413,21 +505,6 @@ capabilities:
           type: object
 ```
 
-### CLI flags
-
-For development, rules may also quickly be enabled or disabled using the relevant CLI flags for the `regal lint`
-command.
-
-- `--disable-all` disables **all** rules
-- `--disable-category` disables all rules in a category, overriding `--enable-all` (may be repeated)
-- `--disable` disables a specific rule, overriding `--enable-all` and `--enable-category` (may be repeated)
-- `--enable-all` enables **all** rules
-- `--enable-category` enables all rules in a category, overriding `--disable-all` (may be repeated)
-- `--enable` enables a specific rule, overriding `--disable-all` and `--disable-category` (may be repeated)
-- `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
-
-All CLI flags override configuration provided in file.
-
 ## Exit Codes
 
 Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be
@@ -446,30 +523,6 @@ If `--fail-level warning` is supplied, warnings will result in a non-zero exit c
 - `0`: no errors or warnings were found
 - `2`: one or more warnings were found
 - `3`: one or more errors were found
-
-## Inline Ignore Directives
-
-If you'd like to ignore a specific violation, you can add an ignore directive above the line in question, or
-alternatively on the same line to the right of the expression:
-
-```rego
-package policy
-
-# regal ignore:prefer-snake-case
-camelCase := "yes"
-
-list_users contains user if { # regal ignore:avoid-get-and-list-prefix
-    some user in data.db.users
-    # ...
-}
-```
-
-The format of an ignore directive is `regal ignore:<rule-name>,<rule-name>...`, where `<rule-name>` is the name of the
-rule to ignore. Multiple rules may be added to the same ignore directive, separated by commas.
-
-Note that at this point in time, Regal only considers the same line or the line following the ignore directive, i.e. it
-does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration)
-if you want to ignore certain rules altogether.
 
 ## Output Formats
 

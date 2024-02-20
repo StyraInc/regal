@@ -148,6 +148,44 @@ test_fail_ignore_if_subattribute_disabled if {
 	r == with_location({"col": 10, "file": "policy.rego", "row": 4, "text": "\t\tbar := input.foo[_].bar"})
 }
 
+test_success_allow_if_inside_array if {
+	policy := ast.policy(`allow {
+		bar := [input.foo[_] == 1]
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_success_allow_if_inside_set if {
+	policy := ast.policy(`s := {input.foo[_] == 1}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_success_allow_if_inside_object if {
+	policy := ast.policy(`s := {foo: input.foo[_] == 1}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
 allow_nesting(i) := {
 	"level": "error",
 	"ignore-nesting-level": i,

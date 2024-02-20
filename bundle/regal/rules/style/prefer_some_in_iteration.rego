@@ -11,11 +11,11 @@ import data.regal.result
 cfg := config.for_rule("style", "prefer-some-in-iteration")
 
 report contains violation if {
-	some rule in input.rules
+	some i, rule in input.rules
 
 	node := filter_top_level_ref(rule)
 
-	walk(node, [_, value])
+	walk(node, [path, value])
 
 	value.type == "ref"
 
@@ -35,6 +35,7 @@ report contains violation if {
 	num_output_vars < cfg["ignore-nesting-level"]
 
 	not except_sub_attribute(value.value)
+	not invalid_some_context(input.rules[i], path)
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }
@@ -57,3 +58,14 @@ has_sub_attribute(ref) if {
 filter_top_level_ref(rule) := rule.body if {
 	rule.head.value.type == "ref"
 } else := rule
+
+all_paths(path) := [array.slice(path, 0, len) | some len in numbers.range(1, count(path))]
+
+# don't recommend `some .. in` if iteration occurs inside of arrays, objects, or sets
+invalid_some_context(rule, path) if {
+	some p in all_paths(path)
+
+	node := object.get(rule, p, [])
+
+	node.type in {"array", "object", "set"}
+}

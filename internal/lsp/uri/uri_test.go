@@ -36,7 +36,9 @@ func TestPathToURI_VSCode(t *testing.T) {
 
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
+
 			got := FromPath(clients.IdentifierVSCode, tt.path)
+
 			if got != tt.want {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}

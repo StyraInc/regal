@@ -421,11 +421,10 @@ func (l *LanguageServer) handleInitialize(
 	l.clientRootURI = params.RootURI
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
-	if l.clientIdentifier == clients.IdentifierUnknown {
-		l.logError(fmt.Errorf(
-			"unable to match client identifier for initializing client: %s",
-			params.ClientInfo.Name,
-		))
+	if l.clientIdentifier == clients.IdentifierGeneric {
+		l.log(
+			"Unable to match client identifier for initializing client, using generic functionality: " + params.ClientInfo.Name,
+		)
 	}
 
 	regoFilter := FileOperationFilter{
@@ -463,7 +462,6 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.clientRootURI)
-	l.logError(fmt.Errorf("workspaceRoot: %s", workspaceRootPath))
 
 	// load the rego source files into the cache
 	err = filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {

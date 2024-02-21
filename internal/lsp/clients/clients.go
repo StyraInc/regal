@@ -5,7 +5,7 @@ package clients
 type Identifier int
 
 const (
-	IdentifierUnknown Identifier = iota
+	IdentifierGeneric Identifier = iota
 	IdentifierVSCode
 )
 
@@ -14,5 +14,5 @@ func DetermineClientIdentifier(clientName string) Identifier {
 		return IdentifierVSCode
 	}
 
-	return IdentifierUnknown
+	return IdentifierGeneric
 }

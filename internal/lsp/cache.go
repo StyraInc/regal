@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"sync"
 
@@ -196,17 +195,8 @@ func (c *Cache) Delete(uri string) {
 	c.diagnosticsParseMu.Unlock()
 }
 
-func updateCacheForURIFromDisk(cache *Cache, uri string) (string, error) {
-	parsedURI, err := url.Parse(uri)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse URI: %w", err)
-	}
-
-	if parsedURI.Scheme != "file" {
-		return "", fmt.Errorf("only file:// URIs are supported, got %q", parsedURI.String())
-	}
-
-	content, err := os.ReadFile(parsedURI.Path)
+func updateCacheForURIFromDisk(cache *Cache, uri, path string) (string, error) {
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to read file: %w", err)
 	}

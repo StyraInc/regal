@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,8 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
+	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
 )
 
@@ -51,7 +52,16 @@ type LanguageServer struct {
 	diagnosticRequestFile      chan fileDiagnosticRequiredEvent
 	diagnosticRequestWorkspace chan string
 
-	clientRootURI string
+	clientRootURI    string
+	clientIdentifier clients.Identifier
+}
+
+// fileDiagnosticRequiredEvent is sent to the diagnosticRequestFile channel when
+// diagnostics are required for a file.
+type fileDiagnosticRequiredEvent struct {
+	Reason  string
+	URI     string
+	Content string
 }
 
 func (l *LanguageServer) Handle(
@@ -256,14 +266,6 @@ func (l *LanguageServer) logOutboundMessage(method string, message any) {
 	}
 }
 
-// fileDiagnosticRequiredEvent is sent to the diagnosticRequestFile channel when
-// diagnostics are required for a file.
-type fileDiagnosticRequiredEvent struct {
-	Reason  string
-	URI     string
-	Content string
-}
-
 func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -281,15 +283,6 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	}
 
 	return struct{}{}, nil
-}
-
-type TextDocumentDidChangeParams struct {
-	TextDocument   TextDocumentIdentifier           `json:"textDocument"`
-	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
-}
-
-type TextDocumentContentChangeEvent struct {
-	Text string `json:"text"`
 }
 
 func (l *LanguageServer) handleTextDocumentDidChange(
@@ -322,7 +315,11 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	}
 
 	for _, createOp := range params.Files {
-		_, err = updateCacheForURIFromDisk(l.cache, createOp.URI)
+		_, err = updateCacheForURIFromDisk(
+			l.cache,
+			uri.FromPath(l.clientIdentifier, createOp.URI),
+			uri.ToPath(l.clientIdentifier, createOp.URI),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", createOp.URI, err)
 		}
@@ -369,7 +366,11 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	}
 
 	for _, renameOp := range params.Files {
-		content, err := updateCacheForURIFromDisk(l.cache, renameOp.NewURI)
+		content, err := updateCacheForURIFromDisk(
+			l.cache,
+			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
+			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
 		}
@@ -418,6 +419,13 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	l.clientRootURI = params.RootURI
+	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
+
+	if l.clientIdentifier == clients.IdentifierGeneric {
+		l.log(
+			"Unable to match client identifier for initializing client, using generic functionality: " + params.ClientInfo.Name,
+		)
+	}
 
 	regoFilter := FileOperationFilter{
 		Scheme: "file",
@@ -453,15 +461,12 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
-	folderURI, err := url.Parse(l.clientRootURI)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse URI: %w", err)
-	}
+	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.clientRootURI)
 
 	// load the rego source files into the cache
-	err = filepath.WalkDir(folderURI.Path, func(path string, d os.DirEntry, err error) error {
+	err = filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("failed to walk workspace dir %q: %w", folderURI.Path, err)
+			return fmt.Errorf("failed to walk workspace dir %q: %w", d.Name(), err)
 		}
 
 		// TODO(charlieegan3): make this configurable for things like .rq etc?
@@ -469,12 +474,14 @@ func (l *LanguageServer) handleInitialize(
 			return nil
 		}
 
-		_, err = updateCacheForURIFromDisk(l.cache, "file://"+path)
+		fileURI := uri.FromPath(l.clientIdentifier, path)
+
+		_, err = updateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
 		}
 
-		_, err = updateParse(l.cache, "file://"+path)
+		_, err = updateParse(l.cache, fileURI)
 		if err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
@@ -482,7 +489,7 @@ func (l *LanguageServer) handleInitialize(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", folderURI.Path, err)
+		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
 	// attempt to load the config as it is found on disk

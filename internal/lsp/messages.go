@@ -120,6 +120,15 @@ type TextDocumentIdentifier struct {
 	URI string `json:"uri"`
 }
 
+type TextDocumentDidChangeParams struct {
+	TextDocument   TextDocumentIdentifier           `json:"textDocument"`
+	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
+}
+
+type TextDocumentContentChangeEvent struct {
+	Text string `json:"text"`
+}
+
 type Diagnostic struct {
 	Range    Range          `json:"range"`
 	Message  string         `json:"message"`

@@ -21,7 +21,7 @@ report contains violation if {
 	last.terms[1].type == "var"
 	last.terms[1].value == var
 
-	not configured_exception(cfg, last.terms[2])
+	not configured_exception(cfg, last.terms[2], ast.scalar_types)
 
 	violation := result.fail(rego.metadata.chain(), result.location(last))
 }
@@ -33,7 +33,7 @@ var_in_head(rule) := rule.head.key.value if {
 	rule.head.key.type == "var"
 }
 
-configured_exception(cfg, term) if {
+configured_exception(cfg, term, scalar_types) if {
 	cfg["only-scalars"] == true
-	term.type in ast.scalar_types
+	term.type in scalar_types
 }

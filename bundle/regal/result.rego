@@ -40,8 +40,10 @@ aggregate(chain, aggregate_data) := entry if {
 			"title": title,
 		},
 		"aggregate_source": {
+			# regal ignore:external-reference
 			"file": input.regal.file.name,
 			"package_path": [part.value |
+				# regal ignore:external-reference
 				some i, part in input["package"].path
 				i > 0
 			],
@@ -115,6 +117,7 @@ _related_resources(annotations, category, title) := rr if {
 	not annotations.related_resources
 	rr := [{
 		"description": "documentation",
+		# regal ignore:external-reference
 		"ref": sprintf("%s/%s/%s", [config.docs.base_url, category, title]),
 	}]
 }

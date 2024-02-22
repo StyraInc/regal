@@ -3,6 +3,7 @@ package regal.ast_test
 import rego.v1
 
 import data.regal.ast
+import data.regal.capabilities
 
 # regal ignore:rule-length
 test_find_vars if {
@@ -79,6 +80,26 @@ test_find_vars_comprehension_lhs if {
 	}
 
 	names == {"a", "b", "c", "d", "e", "f", "g"}
+}
+
+test_find_vars_function_ret_return_args if {
+	policy := `
+	package p
+
+	import rego.v1
+
+	allow if {
+		walk(input, [path, value])
+	}
+	`
+
+	module := regal.parse_module("p.rego", policy)
+
+	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with input.rules as []
+
+	names := {var.value | some var in vars; var.type == "var"}
+	names == {"path", "value"}
 }
 
 # https://github.com/StyraInc/regal/issues/168

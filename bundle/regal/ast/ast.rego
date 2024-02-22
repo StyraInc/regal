@@ -194,6 +194,19 @@ _find_object_comprehension_vars(value) := array.concat(key, val) if {
 	val := [value.value.value | value.value.value.type == "var"]
 }
 
+_find_vars(_, value, last) := find_term_vars(function_ret_args(fn_name, value)) if {
+	last == "terms"
+	value[0].type == "ref"
+	value[0].value[0].type == "var"
+	value[0].value[0].value != "assign"
+
+	fn_name := ref_to_string(value[0].value)
+
+	not contains(fn_name, "$")
+	fn_name in all_function_names # regal ignore:external-reference
+	function_ret_in_args(fn_name, value)
+}
+
 _find_vars(path, value, last) := _find_assign_vars(path, value) if {
 	last == "terms"
 	value[0].type == "ref"
@@ -383,6 +396,8 @@ function_decls(rules) := {rule_name: decl |
 
 	decl := {"decl": {"args": args, "result": {"type": "any"}}}
 }
+
+function_ret_args(fn_name, terms) := array.slice(terms, count(all_functions[fn_name].decl.args) + 1, count(terms))
 
 function_ret_in_args(fn_name, terms) if {
 	rest := array.slice(terms, 1, count(terms))

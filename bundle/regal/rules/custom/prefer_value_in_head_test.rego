@@ -51,24 +51,24 @@ test_success_value_is_in_head_eq if {
 	r == set()
 }
 
-test_fail_value_could_be_in_head_but_not_a_required_scalar if {
+test_fail_value_could_be_in_head_but_not_a_scalar if {
 	module := ast.policy(`value := x {
 		input.x
 		x := [i | i := input[_]]
 	}`)
 
 	r := rule.report with input as module with config.for_rule as {"level": "error", "only-scalars": true}
-	r == expected_with_location({"col": 3, "file": "policy.rego", "row": 5, "text": "\t\tx := [i | i := input[_]]"})
+	r == set()
 }
 
-test_success_value_could_be_in_head_and_is_a_required_scalar if {
+test_fail_value_could_be_in_head_and_is_a_scalar if {
 	module := ast.policy(`value := x {
 		input.x
 		x := 5
 	}`)
 
 	r := rule.report with input as module with config.for_rule as {"level": "error", "only-scalars": true}
-	r == set()
+	r == expected_with_location({"col": 3, "file": "policy.rego", "row": 5, "text": "\t\tx := 5"})
 }
 
 test_fail_value_could_be_in_head_multivalue_rule if {

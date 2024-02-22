@@ -40,13 +40,14 @@ expressed as "one-liners". This is not a general recommendation, but a style pre
 might want to standardize on. As such, it is placed in the custom category, and must be explicitly enabled in
 configuration.
 
-The `only-literals` configuration option may be used to only suggest moving literal values to the head, and not
-expressions or functions returning a value. With this option set to `true`, the following example would be flagged:
+The `only-scalars` configuration option may be used to only suggest moving scalar values (strings, numbers, booleans,
+null) to the head, and not expressions or functions returning a value. With this option set to `true`, the following
+example would be flagged:
 
 ```rego
 deny contains message if {
     not input.user
-    # value is a string literal
+    # value is a scalar
     message := "user attribute missing from input"
 }
 ```
@@ -56,7 +57,7 @@ But not:
 ```rego
 deny contains message if {
     not input.user
-    # value returned from a function call, not suggested if `only-literals` is set to `true`
+    # value returned from a function call, not suggested if `only-scalars` is set to `true`
     message := sprintf("user attribute missing from input: %v", [input])
 }
 ```
@@ -74,9 +75,9 @@ rules:
       #
       # one of "error", "warning", "ignore"
       level: error
-      # whether to only suggest moving literal values to the head, and not
-      # expressions or functions
-      only-literals: false
+      # whether to only suggest moving scalar values (strings, numbers, booleans, null)
+      # to the head, and not expressions or functions
+      only-scalars: false
 ```
 
 ## Community

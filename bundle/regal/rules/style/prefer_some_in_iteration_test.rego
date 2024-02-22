@@ -8,11 +8,11 @@ import data.regal.rules.style["prefer-some-in-iteration"] as rule
 
 test_fail_simple_iteration if {
 	policy := ast.policy(`allow {
-		input.foo[_] == "bar"
+		var := input.foo[_]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[_] == \"bar\""})
+	r == with_location({"col": 10, "file": "policy.rego", "row": 4, "text": "\t\tvar := input.foo[_]"})
 }
 
 test_fail_simple_iteration_comprehension if {
@@ -26,21 +26,21 @@ test_fail_simple_iteration_comprehension if {
 
 test_fail_simple_iteration_output_var if {
 	policy := ast.policy(`allow {
-		input.foo[x] == 1
+		input.foo[x]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[x] == 1"})
+	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[x]"})
 }
 
 test_fail_simple_iteration_output_var_some_decl if {
 	policy := ast.policy(`allow {
 		some x
-		input.foo[x] == 1
+		input.foo[x]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-	r == with_location({"col": 3, "file": "policy.rego", "row": 5, "text": "\t\tinput.foo[x] == 1"})
+	r == with_location({"col": 3, "file": "policy.rego", "row": 5, "text": "\t\tinput.foo[x]"})
 }
 
 test_success_some_in_var_input if {
@@ -55,8 +55,8 @@ test_success_some_in_var_input if {
 
 test_success_allow_nesting_zero if {
 	policy := ast.policy(`allow {
-		input.foo[_] == 1
-		input.foo[_].bar[_] == 2
+		input.foo[_]
+		input.foo[_].bar[_]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(0) with input as policy
@@ -65,7 +65,7 @@ test_success_allow_nesting_zero if {
 
 test_success_allow_nesting_one if {
 	policy := ast.policy(`allow {
-		input.foo[_] == 2
+		input.foo[_]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(1) with input as policy
@@ -74,7 +74,7 @@ test_success_allow_nesting_one if {
 
 test_success_allow_nesting_two if {
 	policy := ast.policy(`allow {
-		input.foo[_].bar[_] == 2
+		input.foo[_].bar[_]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
@@ -83,11 +83,11 @@ test_success_allow_nesting_two if {
 
 test_fail_allow_nesting_two if {
 	policy := ast.policy(`allow {
-		input.foo[_] == 2
+		input.foo[_]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[_] == 2"})
+	r == with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.foo[_]"})
 }
 
 test_success_not_output_vars if {
@@ -96,7 +96,7 @@ test_success_not_output_vars if {
 
 	allow {
 		y := 10
-		input.foo[x].bar[y] == 2
+		input.foo[x].bar[y]
 	}`)
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
@@ -201,6 +201,32 @@ test_success_allow_if_inside_rule_head_key if {
 	r := rule.report with config.for_rule as {
 		"level": "error",
 		"ignore-if-sub-attribute": true,
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_success_allow_if_contains_check_eq if {
+	policy := ast.with_rego_v1(`no_violation if {
+		"x" = input.foo[_]
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+	r == set()
+}
+
+test_success_allow_if_contains_check_equal if {
+	policy := ast.with_rego_v1(`no_violation if {
+		"x" == input.foo[_]
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
 		"ignore-nesting-level": 5,
 	}
 		with input as policy

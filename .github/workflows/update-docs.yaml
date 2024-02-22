@@ -27,6 +27,6 @@ jobs:
         uses: leigholiver/commit-with-deploy-key@9562ffd1c0965c6d4f264e2555a569bd33ac7d05
         with:
           source: versions
-          destination_folder: versions
+          destination_folder: imported/versions
           destination_repo: StyraInc/docs
           deploy_key: ${{ secrets.STYRA_DOCS_DEPLOY_KEY }}

@@ -26,7 +26,7 @@ eq_exprs_terms contains terms if {
 
 	terms[0].type == "ref"
 	terms[0].value[0].type == "var"
-	terms[0].value[0].value == "equal"
+	terms[0].value[0].value in {"eq", "equal"}
 }
 
 non_loop_term(terms) := [{"pos": i + 1, "term": term} |

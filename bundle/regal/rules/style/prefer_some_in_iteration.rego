@@ -73,3 +73,14 @@ invalid_some_context(rule, path) if {
 impossible_some(node) if node.type in {"array", "object", "set"}
 
 impossible_some(node) if node.key
+
+# technically this is not an _impossible_ some, as we could replace e.g. `"x" == input[_]`
+# with `some "x" in input`, but that'd be an `unnecessary-some` violation as `"x" in input`
+# would be the correct way to express that
+impossible_some(node) if {
+	node.terms[0].value[0].type == "var"
+	node.terms[0].value[0].value in {"eq", "equal"}
+
+	some term in node.terms
+	term.type in ast.scalar_types # regal ignore:external-reference
+}

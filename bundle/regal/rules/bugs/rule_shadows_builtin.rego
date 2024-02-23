@@ -9,7 +9,7 @@ import data.regal.result
 
 report contains violation if {
 	some rule in input.rules
-	ast.name(rule) in ast.builtin_names
+	ast.name(rule) in ast.builtin_namespaces
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

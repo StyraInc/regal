@@ -21,6 +21,11 @@ has_var(value) if {
 
 builtin_names := object.keys(config.capabilities.builtins)
 
+builtin_namespaces contains namespace if {
+	some name in builtin_names
+	namespace := split(name, ".")[0]
+}
+
 # METADATA
 # description: |
 #   provide the package name / path as originally declared in the

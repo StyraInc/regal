@@ -7,19 +7,13 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-builtin_namespaces contains namespace if {
-	some name in ast.builtin_names
-
-	namespace := split(name, ".")[0]
-}
-
 report contains violation if {
 	some imp in input.imports
 
 	imp.path.value[0].value in {"data", "input"}
 
 	name := significant_name(imp)
-	name in builtin_namespaces
+	name in ast.builtin_namespaces
 
 	# AST quirk: while we'd ideally provide the location of the *path component*,
 	# there is no location data provided for aliases. In order to be consistent,

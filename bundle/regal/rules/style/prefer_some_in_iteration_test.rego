@@ -3,6 +3,7 @@ package regal.rules.style["prefer-some-in-iteration_test"]
 import rego.v1
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 import data.regal.rules.style["prefer-some-in-iteration"] as rule
 
@@ -230,6 +231,32 @@ test_success_allow_if_contains_check_equal if {
 		"ignore-nesting-level": 5,
 	}
 		with input as policy
+	r == set()
+}
+
+test_success_iteration_in_args if {
+	policy := ast.with_rego_v1(`no_violation if {
+		startswith(input.foo[_], "f")
+	}`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r == set()
+}
+
+test_success_iteration_in_args_call_in_comprehension_head if {
+	policy := ast.with_rego_v1(`r := [f(obj[k], v) | some k, v in p]`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-nesting-level": 5,
+	}
+		with input as policy
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 

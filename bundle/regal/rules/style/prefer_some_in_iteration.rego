@@ -70,6 +70,24 @@ invalid_some_context(rule, path) if {
 	impossible_some(node)
 }
 
+# don't recommend `some .. in` if iteration occurs inside of a
+# function call args list, like `startswith(input.foo[_], "foo")`
+# this should honestly be a rule of its own, I think, but it's
+# not _directly_ replaceable by `some .. in`, so we'll leave it
+# be here
+invalid_some_context(rule, path) if {
+	some p in all_paths(path)
+
+	node := object.get(rule, p, [])
+
+	node.terms[0].type == "ref"
+	node.terms[0].value[0].type == "var"
+	node.terms[0].value[0].value in ast.all_function_names # regal ignore:external-reference
+}
+
+# if previous node is of type call, also don't recommend `some .. in`
+invalid_some_context(rule, path) if object.get(rule, array.slice(path, 0, count(path) - 2), {}).type == "call"
+
 impossible_some(node) if node.type in {"array", "object", "set"}
 
 impossible_some(node) if node.key

@@ -10,204 +10,133 @@ test_fail_use_in_operator_string_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	"admin" == input.user.roles[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 13, "file": "policy.rego", "row": 4, "text": "\t\"admin\" == input.user.roles[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({
+		"col": 13,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t\"admin\" == input.user.roles[_]",
+	})
 }
 
 test_fail_use_in_operator_number_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	1 == input.lucky_numbers[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 7, "file": "policy.rego", "row": 4, "text": "\t1 == input.lucky_numbers[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 7, "file": "policy.rego", "row": 4, "text": "\t1 == input.lucky_numbers[_]"})
 }
 
 test_fail_use_in_operator_array_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	[1] == input.arrays[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 9, "file": "policy.rego", "row": 4, "text": "\t[1] == input.arrays[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 9, "file": "policy.rego", "row": 4, "text": "\t[1] == input.arrays[_]"})
 }
 
 test_fail_use_in_operator_boolean_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	true == input.booleans[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 10, "file": "policy.rego", "row": 4, "text": "\ttrue == input.booleans[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 10, "file": "policy.rego", "row": 4, "text": "\ttrue == input.booleans[_]"})
 }
 
 test_fail_use_in_operator_object_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	{"x": "y"} == input.objects[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 16, "file": "policy.rego", "row": 4, "text": "\t{\"x\": \"y\"} == input.objects[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({
+		"col": 16,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t{\"x\": \"y\"} == input.objects[_]",
+	})
 }
 
 test_fail_use_in_operator_null_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	null == input.objects[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 10, "file": "policy.rego", "row": 4, "text": "\tnull == input.objects[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 10, "file": "policy.rego", "row": 4, "text": "\tnull == input.objects[_]"})
 }
 
 test_fail_use_in_operator_set_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	{"foo"} == input.objects[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 13, "file": "policy.rego", "row": 4, "text": "\t{\"foo\"} == input.objects[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 13, "file": "policy.rego", "row": 4, "text": "\t{\"foo\"} == input.objects[_]"})
 }
 
 test_fail_use_in_operator_var_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 	admin == input.user.roles[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 11, "file": "policy.rego", "row": 4, "text": "\tadmin == input.user.roles[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 11, "file": "policy.rego", "row": 4, "text": "\tadmin == input.user.roles[_]"})
 }
 
 test_fail_use_in_operator_string_rhs if {
 	r := rule.report with input as ast.policy(`allow {
 	input.user.roles[_] == "admin"
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\tinput.user.roles[_] == \"admin\""},
-		"level": "error",
-	}}
+	r == expected_with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\tinput.user.roles[_] == \"admin\"",
+	})
 }
 
 test_fail_use_in_operator_var_rhs if {
 	r := rule.report with input as ast.policy(`allow {
 		input.user.roles[_] == admin
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.user.roles[_] == admin"},
-		"level": "error",
-	}}
+	r == expected_with_location({"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.user.roles[_] == admin"})
 }
 
-test_fail_use_in_operator_string_ref_lhs if {
+test_fail_use_in_operator_ref_lhs if {
 	r := rule.report with input as ast.policy(`allow {
 		data.roles.admin == input.user.roles[_]
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 23, "file": "policy.rego", "row": 4, "text": "\t\tdata.roles.admin == input.user.roles[_]"},
-		"level": "error",
-	}}
+	r == expected_with_location({
+		"col": 23,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t\tdata.roles.admin == input.user.roles[_]",
+	})
 }
 
-test_fail_use_in_operator_string_ref_rhs if {
+test_fail_use_in_operator_ref_rhs if {
 	r := rule.report with input as ast.policy(`allow {
 		input.user.roles[_] == data.roles.admin
 	}`)
-	r == {{
-		"category": "idiomatic",
-		"description": "Use in to check for membership",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
-		}],
-		"title": "use-in-operator",
-		"location": {"col": 3, "file": "policy.rego", "row": 4, "text": "\t\tinput.user.roles[_] == data.roles.admin"},
-		"level": "error",
-	}}
+	r == expected_with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t\tinput.user.roles[_] == data.roles.admin",
+	})
+}
+
+test_fail_use_in_operator_scalar_eq_operator if {
+	r := rule.report with input as ast.policy(`allow {
+		input.user.roles[_] == data.roles.admin
+	}`)
+	r == expected_with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t\tinput.user.roles[_] == data.roles.admin",
+	})
+}
+
+test_fail_use_in_operator_ref_eq_operator if {
+	r := rule.report with input as ast.policy(`allow {
+		input.user.roles[_] = "foo"
+	}`)
+	r == expected_with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 4,
+		"text": "\t\tinput.user.roles[_] = \"foo\"",
+	})
 }
 
 test_success_loop_refs_both_sides if {
@@ -218,4 +147,23 @@ test_success_loop_refs_both_sides if {
 test_success_uses_in_operator if {
 	r := rule.report with input as ast.with_rego_v1(`allow if { "admin" in input.user.roles }`)
 	r == set()
+}
+
+expected := {
+	"category": "idiomatic",
+	"description": "Use in to check for membership",
+	"level": "error",
+	"related_resources": [{
+		"description": "documentation",
+		"ref": config.docs.resolve_url("$baseUrl/$category/use-in-operator", "idiomatic"),
+	}],
+	"title": "use-in-operator",
+}
+
+expected_with_location(location) := {object.union(expected, {"location": location})} if is_object(location)
+
+expected_with_location(location) := {object.union(expected, {"location": loc}) |
+	some loc in location
+} if {
+	is_set(location)
 }

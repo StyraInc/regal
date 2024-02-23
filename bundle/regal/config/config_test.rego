@@ -161,7 +161,7 @@ test_all_rules_are_in_provided_configuration if {
 		some category, title
 		data.regal.rules[category][title]
 		not endswith(title, "_test")
-		not data.regal.config.provided.rules[category][title]
+		not config.provided.rules[category][title]
 	}
 
 	count(missing_config) == 0
@@ -172,7 +172,7 @@ test_all_configured_rules_exist if {
 
 	missing_rules := {title |
 		some category, title
-		data.regal.config.provided.rules[category][title]
+		config.provided.rules[category][title]
 		not data.regal.rules[category][title]
 	}
 

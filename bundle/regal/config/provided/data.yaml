@@ -65,6 +65,8 @@ rules:
       level: error
     circular-import:
       level: error
+    ignored-import:
+      level: error
     implicit-future-keywords:
       level: error
     import-after-rule:

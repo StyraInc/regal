@@ -321,11 +321,13 @@ is_ref(value) if value.type == "ref"
 
 is_ref(value) if value[0].type == "ref"
 
-all_refs contains value if {
+all_rules_refs contains value if {
 	walk(input.rules, [_, value])
 
 	is_ref(value)
 }
+
+all_refs contains value if some value in all_rules_refs
 
 all_refs contains value if {
 	walk(input.imports, [_, value])

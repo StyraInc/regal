@@ -220,6 +220,7 @@ The following rules are currently available:
 | idiomatic   | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)     | Use `some` to declare output variables                    |
 | imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)             | Avoid importing input                                     |
 | imports     | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                         | Circular import                                           |
+| imports     | [ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import)                           | Reference ignores import                                  |
 | imports     | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)       | Use explicit future keyword imports                       |
 | imports     | [import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule)                     | Import declared after rule                                |
 | imports     | [import-shadows-builtin](https://docs.styra.com/regal/rules/imports/import-shadows-builtin)           | Import shadows built-in namespace                         |

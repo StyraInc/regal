@@ -118,7 +118,7 @@ test_import_graph_self_import if {
 }
 
 test_self_reachable if {
-	r := rule.self_reachable with data.regal.rules.imports["circular-import"].import_graph as {
+	r := rule.self_reachable with rule.import_graph as {
 		"data.policy.a": {"data.policy.b"},
 		"data.policy.b": {"data.policy.c"}, "data.policy.c": {"data.policy.a"},
 	}
@@ -127,7 +127,7 @@ test_self_reachable if {
 }
 
 test_groups if {
-	r := rule.groups with data.regal.rules.imports["circular-import"].import_graph as {
+	r := rule.groups with rule.import_graph as {
 		"data.policy.a": {"data.policy.b"},
 		"data.policy.b": {"data.policy.c"},
 		"data.policy.c": {"data.policy.a"},
@@ -145,7 +145,7 @@ test_groups if {
 }
 
 test_groups_empty_graph if {
-	r := rule.groups with data.custom.regal.rules.imports["circular-import"].import_graph as {"data.policy.a": {}}
+	r := rule.groups with rule.import_graph as {"data.policy.a": {}}
 
 	r == set()
 }

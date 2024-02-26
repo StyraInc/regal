@@ -54,6 +54,10 @@ type LanguageServer struct {
 
 	clientRootURI    string
 	clientIdentifier clients.Identifier
+
+	// workspaceMode is set to true when the ls is initialized with
+	// a clientRootURI.
+	workspaceMode bool
 }
 
 // fileDiagnosticRequiredEvent is sent to the diagnosticRequestFile channel when
@@ -396,6 +400,14 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 		Items: make([]WorkspaceFullDocumentDiagnosticReport, 0),
 	}
 
+	// if we're not in workspace mode, we can't show anything here
+	// since we don't have the URI of the workspace from initialize
+	if !l.workspaceMode {
+		l.logOutboundMessage("workspace/diagnostic", workspaceReport)
+
+		return workspaceReport, nil
+	}
+
 	workspaceReport.Items = append(workspaceReport.Items, WorkspaceFullDocumentDiagnosticReport{
 		URI:     l.clientRootURI,
 		Kind:    "full",
@@ -461,10 +473,31 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
+	if l.clientRootURI != "" {
+		l.log("running in workspace mode")
+		l.workspaceMode = true
+
+		err = l.loadWorkspaceContents()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
+		}
+
+		// attempt to load the config as it is found on disk
+		file, err := config.FindConfig(strings.TrimPrefix(l.clientRootURI, "file://"))
+		if err == nil {
+			l.reloadConfig(file, false)
+		}
+	}
+
+	l.logOutboundMessage("initialize", result)
+
+	return result, nil
+}
+
+func (l *LanguageServer) loadWorkspaceContents() error {
 	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.clientRootURI)
 
-	// load the rego source files into the cache
-	err = filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("failed to walk workspace dir %q: %w", d.Name(), err)
 		}
@@ -489,18 +522,10 @@ func (l *LanguageServer) handleInitialize(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+		return fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
-	// attempt to load the config as it is found on disk
-	file, err := config.FindConfig(strings.TrimPrefix(l.clientRootURI, "file://"))
-	if err == nil {
-		l.reloadConfig(file, false)
-	}
-
-	l.logOutboundMessage("initialize", result)
-
-	return result, nil
+	return nil
 }
 
 func (l *LanguageServer) reloadConfig(configReader io.Reader, runWorkspaceDiagnostics bool) {

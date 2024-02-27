@@ -1,11 +1,11 @@
-package regal.rules.bugs["unused-return-value_test"]
+package regal.rules.bugs["unassigned-return-value_test"]
 
 import rego.v1
 
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
-import data.regal.rules.bugs["unused-return-value"] as rule
+import data.regal.rules.bugs["unassigned-return-value"] as rule
 
 test_fail_unused_return_value if {
 	r := rule.report with input as ast.with_rego_v1(`allow if {
@@ -14,14 +14,14 @@ test_fail_unused_return_value if {
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "bugs",
-		"description": "Non-boolean return value unused",
+		"description": "Non-boolean return value unassigned",
 		"level": "error",
 		"location": {"col": 3, "file": "policy.rego", "row": 6, "text": "\t\tindexof(\"s\", \"s\")"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/unused-return-value", "bugs"),
+			"ref": config.docs.resolve_url("$baseUrl/$category/unassigned-return-value", "bugs"),
 		}],
-		"title": "unused-return-value",
+		"title": "unassigned-return-value",
 	}}
 }
 

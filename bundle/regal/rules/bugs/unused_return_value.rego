@@ -1,6 +1,6 @@
 # METADATA
-# description: Non-boolean return value unused
-package regal.rules.bugs["unused-return-value"]
+# description: Non-boolean return value unassigned
+package regal.rules.bugs["unassigned-return-value"]
 
 import rego.v1
 

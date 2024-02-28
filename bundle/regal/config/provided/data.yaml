@@ -22,7 +22,7 @@ rules:
       level: error
     top-level-iteration:
       level: error
-    unused-return-value:
+    unassigned-return-value:
       level: error
     zero-arity-function:
       level: error

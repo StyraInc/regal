@@ -62,9 +62,7 @@ contains := true
 
 top_level_iteration := input[_]
 
-unused_return_value if {
-	indexof("foo", "o")
-}
+unassigned_return_value if indexof("foo", "o")
 
 zero_arity_function() := true
 

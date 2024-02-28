@@ -201,7 +201,7 @@ The following rules are currently available:
 | bugs        | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                                | Rule named "if"                                           |
 | bugs        | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                  | Rule name shadows built-in                                |
 | bugs        | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                    | Iteration in top-level assignment                         |
-| bugs        | [unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value)                    | Non-boolean return value unused                           |
+| bugs        | [unassigned-return-value](https://docs.styra.com/regal/rules/bugs/unassigned-return-value)            | Non-boolean return value unassigned                       |
 | bugs        | [zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function)                    | Avoid functions without args                              |
 | custom      | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)          | Forbidden function call                                   |
 | custom      | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                      | Naming convention violation                               |

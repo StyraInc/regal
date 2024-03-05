@@ -21,9 +21,26 @@ type Config struct {
 	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
 	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
 	Capabilities *Capabilities       `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+
+	// Defaults state is loaded from configuration under rules and so is not (un)marshalled
+	// in the same way.
+	Defaults Defaults `json:"-"     yaml:"-"`
 }
 
 type Category map[string]Rule
+
+// Defaults is used to store information about global and category
+// defaults for rules.
+type Defaults struct {
+	Global     Default
+	Categories map[string]Default
+}
+
+// Default represents global or category settings for rules,
+// currently only the level is supported.
+type Default struct {
+	Level string `json:"level" yaml:"level"`
+}
 
 type Ignore struct {
 	Files []string `json:"files,omitempty" yaml:"files,omitempty"`
@@ -128,10 +145,38 @@ func FromMap(confMap map[string]any) (Config, error) {
 	return conf, nil
 }
 
+func (config Config) MarshalYAML() (any, error) {
+
+	var unstructuredConfig map[string]any
+	err := rio.JSONRoundTrip(config, &unstructuredConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to created unstructured config: %w", err)
+	}
+
+	fmt.Println(unstructuredConfig)
+
+	// place the global defaults at the top level under rules
+	if config.Defaults.Global.Level != "" {
+		unstructuredConfig["rules"].(map[string]any)["default"] = config.Defaults.Global
+	}
+
+	// place the category defaults under the respective category
+	for categoryName, categoryDefault := range config.Defaults.Categories {
+		unstructuredConfig["rules"].(map[string]any)[categoryName].(map[string]any)["default"] =
+			categoryDefault
+	}
+
+	if _, ok := unstructuredConfig["ignore"]; ok {
+		delete(unstructuredConfig, "ignore")
+	}
+
+	return unstructuredConfig, nil
+}
+
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	var result struct {
-		Rules        map[string]Category `yaml:"rules"`
-		Ignore       Ignore              `yaml:"ignore"`
+		Rules        map[string]any `yaml:"rules"`
+		Ignore       Ignore         `yaml:"ignore"`
 		Capabilities struct {
 			From struct {
 				Engine  string `yaml:"engine"`
@@ -153,7 +198,48 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("unmarshalling config failed %w", err)
 	}
 
-	config.Rules = result.Rules
+	// in order to support wildcard 'default' configs, we
+	// have some hooks in this unmarshalling process to load these.
+	categoryMap := make(map[string]Category)
+	config.Defaults.Categories = make(map[string]Default)
+	for key, val := range result.Rules {
+		if key == "default" {
+			var defaults Default
+			err := rio.JSONRoundTrip(val, &defaults)
+			if err != nil {
+				return fmt.Errorf("unmarshalling defaults failed: %w", err)
+			}
+
+			config.Defaults.Global = defaults
+			continue
+		}
+
+		// default configs are also supported within
+		ruleMap := make(map[string]Rule)
+		for ruleName, ruleData := range val.(map[string]any) {
+			if ruleName == "default" {
+				var defaults Default
+				err := rio.JSONRoundTrip(ruleData, &defaults)
+				if err != nil {
+					return fmt.Errorf("unmarshalling defaults failed: %w", err)
+				}
+
+				config.Defaults.Categories[key] = defaults
+				continue
+			}
+
+			var rule Rule
+			err := rio.JSONRoundTrip(ruleData, &rule)
+			if err != nil {
+				return fmt.Errorf("unmarshalling rule failed: %w", err)
+			}
+			ruleMap[ruleName] = rule
+		}
+
+		categoryMap[key] = ruleMap
+	}
+
+	config.Rules = categoryMap
 	config.Ignore = result.Ignore
 
 	capabilitiesFile := result.Capabilities.From.File
@@ -270,12 +356,10 @@ func ToMap(config Config) map[string]any {
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {
-	result := make(map[string]any)
-	result["level"] = rule.Level
-	result["ignore"] = rule.Ignore
+	result, err := rule.MarshalYAML()
 
-	for key, val := range rule.Extra {
-		result[key] = val
+	if err != nil {
+		return nil, fmt.Errorf("marshalling rule failed %w", err)
 	}
 
 	return json.Marshal(&result) //nolint:wrapcheck

@@ -122,6 +122,7 @@ or := 1
 		userConfig      *config.Config
 		filename        string
 		expViolations   []string
+		expLevels       []string
 		ignoreFilesFlag []string
 	}{
 		{
@@ -151,7 +152,7 @@ or := 1
 			expViolations: []string{},
 		},
 		{
-			name: "ignore some",
+			name: "ignore all but bugs",
 			userConfig: &config.Config{
 				Defaults: config.Defaults{
 					Global: config.Default{
@@ -167,6 +168,39 @@ or := 1
 			},
 			filename:      "p.rego",
 			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "ignore style, no global default",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Categories: map[string]config.Default{
+						"bugs":  {Level: "error"},
+						"style": {Level: "ignore"},
+					},
+				},
+				Rules: map[string]config.Category{
+					"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
+				},
+			},
+			filename:      "p.rego",
+			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "set level to warning",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Global: config.Default{
+						Level: "warning", // will apply to all but style
+					},
+					Categories: map[string]config.Default{
+						"style": {Level: "error"},
+					},
+				},
+				Rules: map[string]config.Category{},
+			},
+			filename:      "p.rego",
+			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
+			expLevels:     []string{"error", "warning", "warning"},
 		},
 		{
 			name: "rule level ignore files",
@@ -237,6 +271,14 @@ or := 1
 			for idx, violation := range result.Violations {
 				if violation.Title != tt.expViolations[idx] {
 					t.Errorf("expected first violation to be '%s', got %s", tt.expViolations[idx], result.Violations[0].Title)
+				}
+			}
+
+			if len(tt.expLevels) > 0 {
+				for idx, violation := range result.Violations {
+					if violation.Level != tt.expLevels[idx] {
+						t.Errorf("expected first violation to be '%s', got %s", tt.expLevels[idx], result.Violations[0].Level)
+					}
 				}
 			}
 		})

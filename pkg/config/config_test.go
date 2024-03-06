@@ -14,6 +14,8 @@ import (
 	"github.com/styrainc/regal/internal/testutil"
 )
 
+const levelError = "error"
+
 func TestFindRegalDirectory(t *testing.T) {
 	t.Parallel()
 
@@ -83,6 +85,10 @@ func TestMarshalConfig(t *testing.T) {
 	t.Parallel()
 
 	conf := Config{
+		// ignore is empty and so should not be marshalled
+		Ignore: Ignore{
+			Files: []string{},
+		},
 		Rules: map[string]Category{
 			"testing": {
 				"foo": Rule{
@@ -147,19 +153,17 @@ rules:
 		t.Errorf("erroneous rule parsed, bugs.default should not exist")
 	}
 
-	if originalConfig.Defaults.Categories["bugs"].Level != "error" {
+	if originalConfig.Defaults.Categories["bugs"].Level != levelError {
 		t.Errorf("expected bugs default to be level error")
 	}
 
-	if originalConfig.Rules["testing"]["print-or-trace-call"].Level != "error" {
+	if originalConfig.Rules["testing"]["print-or-trace-call"].Level != levelError {
 		t.Errorf("expected for testing.print-or-trace-call to be level error")
 	}
 
 	originalConfig.Capabilities = nil
 
 	marshalledConfigBs := testutil.Must(yaml.Marshal(originalConfig))(t)
-
-	t.Log(string(marshalledConfigBs))
 
 	var roundTrippedConfig Config
 	if err := yaml.Unmarshal(marshalledConfigBs, &roundTrippedConfig); err != nil {
@@ -170,7 +174,7 @@ rules:
 		t.Errorf("expected global default to be level ignore")
 	}
 
-	if roundTrippedConfig.Defaults.Categories["bugs"].Level != "error" {
+	if roundTrippedConfig.Defaults.Categories["bugs"].Level != levelError {
 		t.Errorf("expected bugs default to be level error")
 	}
 }

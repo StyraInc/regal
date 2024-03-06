@@ -817,46 +817,17 @@ func (l Linter) mergedConfig() (config.Config, error) {
 		return config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
 
-	ruleLevels := providedConfLevels(mergedConf)
+	providedRuleLevels := providedConfLevels(mergedConf)
 
 	if l.userConfig != nil {
 		err = mergo.Merge(&mergedConf, l.userConfig, mergo.WithOverride)
 		if err != nil {
 			return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
 		}
-	}
 
-	// If the user configuration contains rules with the level unset, copy the level from the provided configuration
-	for categoryName, rulesByCategory := range mergedConf.Rules {
-		for ruleName, rule := range rulesByCategory {
-			if providedLevel, ok := ruleLevels[ruleName]; ok {
-				// use the level from the provided configuration as the fallback
-				selectedRuleLevel := providedLevel
-
-				var userHasConfiguredRule bool
-				if l.userConfig != nil {
-					if _, ok := l.userConfig.Rules[categoryName]; ok {
-						_, userHasConfiguredRule = l.userConfig.Rules[categoryName][ruleName]
-					}
-				}
-
-				if userHasConfiguredRule && l.userConfig.Rules[categoryName][ruleName].Level != "" {
-					// if the user config has a level for the rule, use that
-					selectedRuleLevel = l.userConfig.Rules[categoryName][ruleName].Level
-				} else if categoryDefault, ok := mergedConf.Defaults.Categories[categoryName]; ok {
-					// if the config has a default level for the category, use that
-					if categoryDefault.Level != "" {
-						selectedRuleLevel = categoryDefault.Level
-					}
-				} else if mergedConf.Defaults.Global.Level != "" {
-					// if the config has a global default level, use that
-					selectedRuleLevel = mergedConf.Defaults.Global.Level
-				}
-
-				rule.Level = selectedRuleLevel
-				mergedConf.Rules[categoryName][ruleName] = rule
-			}
-		}
+		// adopt user rule levels based on config and defaults
+		// If the user configuration contains rules with the level unset, copy the level from the provided configuration
+		extractUserRuleLevels(l.userConfig, &mergedConf, providedRuleLevels)
 	}
 
 	if mergedConf.Capabilities == nil {
@@ -874,6 +845,47 @@ func (l Linter) mergedConfig() (config.Config, error) {
 	}
 
 	return mergedConf, nil
+}
+
+// extractUserRuleLevels uses defaulting config and per-rule levels from user configuration to set the level for each
+// rule.
+func extractUserRuleLevels(userConfig *config.Config, mergedConf *config.Config, providedRuleLevels map[string]string) {
+	for categoryName, rulesByCategory := range mergedConf.Rules {
+		for ruleName, rule := range rulesByCategory {
+			var providedLevel string
+
+			var ok bool
+
+			if providedLevel, ok = providedRuleLevels[ruleName]; !ok {
+				continue
+			}
+
+			// use the level from the provided configuration as the fallback
+			selectedRuleLevel := providedLevel
+
+			var userHasConfiguredRule bool
+
+			if _, ok := userConfig.Rules[categoryName]; ok {
+				_, userHasConfiguredRule = userConfig.Rules[categoryName][ruleName]
+			}
+
+			if userHasConfiguredRule && userConfig.Rules[categoryName][ruleName].Level != "" {
+				// if the user config has a level for the rule, use that
+				selectedRuleLevel = userConfig.Rules[categoryName][ruleName].Level
+			} else if categoryDefault, ok := mergedConf.Defaults.Categories[categoryName]; ok {
+				// if the config has a default level for the category, use that
+				if categoryDefault.Level != "" {
+					selectedRuleLevel = categoryDefault.Level
+				}
+			} else if mergedConf.Defaults.Global.Level != "" {
+				// if the config has a global default level, use that
+				selectedRuleLevel = mergedConf.Defaults.Global.Level
+			}
+
+			rule.Level = selectedRuleLevel
+			mergedConf.Rules[categoryName][ruleName] = rule
+		}
+	}
 }
 
 // Copy the level of each rule from the provided configuration.

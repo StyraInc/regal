@@ -15,16 +15,15 @@ report contains violation if {
 	last := regal.last(rule.head.value.value)
 
 	last.type == "var"
-	illegal_value_ref(last.value, rule)
+	illegal_value_ref(last.value, rule, ast.identifiers)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 _path(loc) := concat(".", {l.value | some l in loc})
 
-illegal_value_ref(value, rule) if {
-	# regal ignore:external-reference
-	not value in ast.rule_and_function_names
+illegal_value_ref(value, rule, identifiers) if {
+	not value in identifiers
 	not is_arg_or_input(value, rule)
 }
 
@@ -32,9 +31,4 @@ is_arg_or_input(value, rule) if value in ast.function_arg_names(rule)
 
 is_arg_or_input(value, _) if startswith(_path(value), "input.")
 
-# ideally would be able to just say
-# is_arg_or_input("input", _)
-# but the formatter rewrites that to
-# is_arg_or_input("input", _) = true
-# ...meh
-is_arg_or_input("input", _) := true
+is_arg_or_input("input", _)

@@ -10,6 +10,20 @@ default imports := []
 #   it safe to refer to without risk of halting evaluation
 imports := input.imports
 
+# METADATA
+# description: |
+#   set of all names imported in the input module, meaning commonly the last part of any
+#   imported ref, like "bar" in "data.foo.bar", or an alias like "baz" in "data.foo.bar as baz".
+imported_identifiers contains imported_identifier(imp) if {
+	some imp in imports
+
+	imp.path.value[0].value in {"input", "data"}
+}
+
+imported_identifier(imp) := imp.alias
+
+imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
+
 imports_has_path(imports, path) if {
 	some imp in imports
 

@@ -361,13 +361,34 @@ provided will be used to override the default configuration.
 
 ## Ignoring Rules
 
-If some rule doesn't align with your team's preferences, don't worry! Regal is not meant to be the law, and some rules
-may not make sense for your project, or parts of it. Regal provides several different ways to ignore rules, either
-entirely, or with more granularity.
+If one of Regal's rules doesn't align with your team's preferences, don't worry! Regal is not meant to be the law,
+and some rules may not make sense for your project, or parts of it.
+Regal provides several different methods to ignore rules with varying precedence.
+The available methods are (ranked highest to lowest precedence):
 
-### Ignoring a Rule Entirely
+- [Inline Ignore Directives](#inline-ignore-directives) cannot be overridden by any other method.
+- Enabling or Disabling Rules with CLI flags.
+  - Enabling or Disabling Rules with `--enable` and `--disable` CLI flags.
+  - Enabling or Disabling Rules with `--enable-category` and `--disable-category` CLI flags.
+  - Enabling or Disabling All Rules with `--enable-all` and `--disable-all` CLI flags.
+  - See [Ignoring Rules via CLI Flags](#ignoring-rules-via-cli-flags) for more details.
+- [Ignoring a Rule In Config](#ignoring-a-rule-in-config)
+- [Ignoring a Category In Config](#ignoring-a-category-in-config)
+- [Ignoring All Rules In Config](#ignoring-all-rules-in-config)
 
-If you want to ignore a rule entirely, set its level to `ignore` in the configuration file:
+In summary, the CLI flags will override any configuration provided in the file, and inline ignore directives for a
+specific line will override any other method.
+
+It's also possible to ignore messages on a per-file basis. The available methods are (ranked High to Lowest precedence):
+
+- Using the `--ignore-files` CLI flag.
+  See [Ignoring Rules via CLI Flags](#ignoring-rules-via-cli-flags).
+- [Ignoring Files Globally](#ignoring-files-globally) or
+  [Ignoring a Rule in Some Files](#ignoring-a-rule-in-some-files).
+
+### Ignoring a Rule In Config
+
+If you want to ignore a rule, set its level to `ignore` in the configuration file:
 
 ```yaml
 rules:
@@ -375,6 +396,34 @@ rules:
     prefer-snake-case:
       # At example.com, we use camel case to comply with our naming conventions
       level: ignore
+```
+
+### Ignoring a Category In Config
+
+If you want to ignore a category of rules, set its default level to `ignore` in the configuration file:
+
+```yaml
+rules:
+  style:
+    default:
+      level: ignore
+```
+
+### Ignoring All Rules In Config
+
+If you want to ignore all rules, set the default level to `ignore` in the configuration file:
+
+```yaml
+rules:
+  default:
+    level: ignore
+  # then you can re-enable specific rules or categories
+  testing:
+    default:
+      level: error
+  style:
+    opa-fmt:
+      level: error
 ```
 
 **Tip**: providing a comment on ignored rules is a good way to communicate why the decision was made.

@@ -14,6 +14,8 @@ import (
 	"github.com/styrainc/regal/internal/testutil"
 )
 
+const levelError = "error"
+
 func TestFindRegalDirectory(t *testing.T) {
 	t.Parallel()
 
@@ -83,6 +85,10 @@ func TestMarshalConfig(t *testing.T) {
 	t.Parallel()
 
 	conf := Config{
+		// ignore is empty and so should not be marshalled
+		Ignore: Ignore{
+			Files: []string{},
+		},
 		Rules: map[string]Category{
 			"testing": {
 				"foo": Rule{
@@ -112,7 +118,64 @@ func TestMarshalConfig(t *testing.T) {
 `
 
 	if string(bs) != expect {
-		t.Errorf("expected %s, got %s", expect, string(bs))
+		t.Errorf("expected:\n%sgot:\n%s", expect, string(bs))
+	}
+}
+
+func TestUnmarshalMarshalConfigWithDefaultRuleConfigs(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`
+rules:
+  default:
+    level: ignore
+  bugs:
+    default:
+      level: error
+    constant-condition:
+      level: ignore
+  testing:
+    print-or-trace-call:
+      level: error
+`)
+
+	var originalConfig Config
+
+	if err := yaml.Unmarshal(bs, &originalConfig); err != nil {
+		t.Fatal(err)
+	}
+
+	if originalConfig.Defaults.Global.Level != "ignore" {
+		t.Errorf("expected global default to be level ignore")
+	}
+
+	if _, unexpected := originalConfig.Rules["bugs"]["default"]; unexpected {
+		t.Errorf("erroneous rule parsed, bugs.default should not exist")
+	}
+
+	if originalConfig.Defaults.Categories["bugs"].Level != levelError {
+		t.Errorf("expected bugs default to be level error")
+	}
+
+	if originalConfig.Rules["testing"]["print-or-trace-call"].Level != levelError {
+		t.Errorf("expected for testing.print-or-trace-call to be level error")
+	}
+
+	originalConfig.Capabilities = nil
+
+	marshalledConfigBs := testutil.Must(yaml.Marshal(originalConfig))(t)
+
+	var roundTrippedConfig Config
+	if err := yaml.Unmarshal(marshalledConfigBs, &roundTrippedConfig); err != nil {
+		t.Fatal(err)
+	}
+
+	if roundTrippedConfig.Defaults.Global.Level != "ignore" {
+		t.Errorf("expected global default to be level ignore")
+	}
+
+	if roundTrippedConfig.Defaults.Categories["bugs"].Level != levelError {
+		t.Errorf("expected bugs default to be level error")
 	}
 }
 

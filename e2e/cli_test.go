@@ -577,6 +577,80 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	expectExitCode(t, err, 3, &stdout, &stderr)
 }
 
+func TestConfigDefaultingWithDisableDirective(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--disable-category=testing",
+		"--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/defaulting.yaml"),
+		cwd+filepath.FromSlash("/testdata/defaulting"),
+	)
+
+	// ignored by flag ignore directive
+	if strings.Contains(stdout.String(), "print-or-trace-call") {
+		t.Errorf("expected stdout to not contain print-or-trace-call")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	// ignored by config
+	if strings.Contains(stdout.String(), "opa-fmt") {
+		t.Errorf("expected stdout to not contain print-or-trace-call")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	// this error should not be ignored
+	if !strings.Contains(stdout.String(), "top-level-iteration") {
+		t.Errorf("expected stdout to contain top-level-iteration")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+}
+
+func TestConfigDefaultingWithEnableDirective(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--enable-all",
+		"--config-file",
+		cwd+filepath.FromSlash("/testdata/configs/defaulting.yaml"),
+		cwd+filepath.FromSlash("/testdata/defaulting"),
+	)
+
+	// re-enabled by flag enable directive
+	if !strings.Contains(stdout.String(), "print-or-trace-call") {
+		t.Errorf("expected stdout to contain print-or-trace-call")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	// re-enabled by flag enable directive
+	if !strings.Contains(stdout.String(), "opa-fmt") {
+		t.Errorf("expected stdout to contain opa-fmt")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	// this error should not be ignored
+	if !strings.Contains(stdout.String(), "top-level-iteration") {
+		t.Errorf("expected stdout to contain top-level-iteration")
+		t.Log("stdout:\n", stdout.String())
+	}
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+}
+
 func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 	t.Parallel()
 

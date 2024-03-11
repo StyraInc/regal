@@ -15,15 +15,50 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 )
 
-const capabilitiesEngineOPA = "opa"
+const (
+	capabilitiesEngineOPA = "opa"
+	keyIgnore             = "ignore"
+	keyLevel              = "level"
+)
 
 type Config struct {
 	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
 	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
 	Capabilities *Capabilities       `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+
+	// Defaults state is loaded from configuration under rules and so is not (un)marshalled
+	// in the same way.
+	Defaults Defaults `json:"-" yaml:"-"`
 }
 
 type Category map[string]Rule
+
+// Defaults is used to store information about global and category
+// defaults for rules.
+type Defaults struct {
+	Global     Default
+	Categories map[string]Default
+}
+
+// Default represents global or category settings for rules,
+// currently only the level is supported.
+type Default struct {
+	Level string `json:"level" yaml:"level"`
+}
+
+func (d *Default) mapToConfig(result any) error {
+	resultMap, ok := result.(map[string]any)
+	if !ok {
+		return errors.New("result was not a map")
+	}
+
+	level, ok := resultMap[keyLevel].(string)
+	if ok {
+		d.Level = level
+	}
+
+	return nil
+}
 
 type Ignore struct {
 	Files []string `json:"files,omitempty" yaml:"files,omitempty"`
@@ -128,32 +163,88 @@ func FromMap(confMap map[string]any) (Config, error) {
 	return conf, nil
 }
 
-func (config *Config) UnmarshalYAML(value *yaml.Node) error {
-	var result struct {
-		Rules        map[string]Category `yaml:"rules"`
-		Ignore       Ignore              `yaml:"ignore"`
-		Capabilities struct {
-			From struct {
-				Engine  string `yaml:"engine"`
-				Version string `yaml:"version"`
-				File    string `yaml:"file"`
-			} `yaml:"from"`
-			Plus struct {
-				Builtins []*ast.Builtin `yaml:"builtins"`
-			} `yaml:"plus"`
-			Minus struct {
-				Builtins []struct {
-					Name string `yaml:"name"`
-				} `yaml:"builtins"`
-			} `yaml:"minus"`
-		} `yaml:"capabilities"`
+func (config Config) MarshalYAML() (any, error) {
+	var unstructuredConfig map[string]any
+
+	err := rio.JSONRoundTrip(config, &unstructuredConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to created unstructured config: %w", err)
 	}
+
+	// place the global defaults at the top level under rules
+	if config.Defaults.Global.Level != "" {
+		r, ok := unstructuredConfig["rules"].(map[string]any)
+		if !ok {
+			return nil, errors.New("rules in config were not a map")
+		}
+
+		r["default"] = config.Defaults.Global
+	}
+
+	// place the category defaults under the respective category
+	for categoryName, categoryDefault := range config.Defaults.Categories {
+		rawRuleMap, ok := unstructuredConfig["rules"].(map[string]any)
+		if !ok {
+			return nil, errors.New("rules in config were not a map")
+		}
+
+		rawCategoryMap, ok := rawRuleMap[categoryName].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("category %s was not a map", categoryName)
+		}
+
+		rawCategoryMap["default"] = categoryDefault
+	}
+
+	if len(config.Ignore.Files) == 0 {
+		delete(unstructuredConfig, keyIgnore)
+	}
+
+	return unstructuredConfig, nil
+}
+
+// unmarshallingIntermediary is used to contain config data in a format that is used during unmarshalling.
+// The internally loaded config data layout differs from the user-defined YAML.
+type marshallingIntermediary struct {
+	// rules are unmarshalled as any since the defaulting needs to be extracted from here
+	// and configured elsewhere in the struct.
+	Rules        map[string]any `yaml:"rules"`
+	Ignore       Ignore         `yaml:"ignore"`
+	Capabilities struct {
+		From struct {
+			Engine  string `yaml:"engine"`
+			Version string `yaml:"version"`
+			File    string `yaml:"file"`
+		} `yaml:"from"`
+		Plus struct {
+			Builtins []*ast.Builtin `yaml:"builtins"`
+		} `yaml:"plus"`
+		Minus struct {
+			Builtins []struct {
+				Name string `yaml:"name"`
+			} `yaml:"builtins"`
+		} `yaml:"minus"`
+	} `yaml:"capabilities"`
+}
+
+func (config *Config) UnmarshalYAML(value *yaml.Node) error {
+	var result marshallingIntermediary
 
 	if err := value.Decode(&result); err != nil {
 		return fmt.Errorf("unmarshalling config failed %w", err)
 	}
 
-	config.Rules = result.Rules
+	// this call will walk the rule config and load and defaults into the config
+	err := extractDefaults(config, &result)
+	if err != nil {
+		return fmt.Errorf("extracting defaults failed: %w", err)
+	}
+
+	err = extractRules(config, &result)
+	if err != nil {
+		return fmt.Errorf("extracting rules failed: %w", err)
+	}
+
 	config.Ignore = result.Ignore
 
 	capabilitiesFile := result.Capabilities.From.File
@@ -206,6 +297,81 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	// add any builtins referenced in the plus config
 	for _, plusBuiltin := range result.Capabilities.Plus.Builtins {
 		config.Capabilities.Builtins[plusBuiltin.Name] = fromOPABuiltin(*plusBuiltin)
+	}
+
+	return nil
+}
+
+// extractRules is a helper to load rules from the raw config data.
+func extractRules(config *Config, result *marshallingIntermediary) error {
+	// in order to support wildcard 'default' configs, we
+	// have some hooks in this unmarshalling process to load these.
+	categoryMap := make(map[string]Category)
+
+	for key, val := range result.Rules {
+		if key == "default" {
+			continue
+		}
+
+		rawRuleMap, ok := val.(map[string]any)
+		if !ok {
+			return fmt.Errorf("rules for category %s were not a map", key)
+		}
+
+		ruleMap := make(map[string]Rule)
+
+		for ruleName, ruleData := range rawRuleMap {
+			if ruleName == "default" {
+				continue
+			}
+
+			var r Rule
+
+			err := r.mapToConfig(ruleData)
+			if err != nil {
+				return fmt.Errorf("unmarshalling rule failed: %w", err)
+			}
+
+			ruleMap[ruleName] = r
+		}
+
+		categoryMap[key] = ruleMap
+	}
+
+	config.Rules = categoryMap
+
+	return nil
+}
+
+// extractDefaults is a helper to load both global and category defaults from the raw config data.
+func extractDefaults(c *Config, result *marshallingIntermediary) error {
+	c.Defaults.Categories = make(map[string]Default)
+
+	rawGlobalDefault, ok := result.Rules["default"]
+	if ok {
+		err := c.Defaults.Global.mapToConfig(rawGlobalDefault)
+		if err != nil {
+			return fmt.Errorf("unmarshalling global defaults failed: %w", err)
+		}
+	}
+
+	for key, val := range result.Rules {
+		rawRuleMap, ok := val.(map[string]any)
+		if !ok {
+			return fmt.Errorf("rules for category %s were not a map", key)
+		}
+
+		rawCategoryDefault, ok := rawRuleMap["default"]
+		if ok {
+			var categoryDefault Default
+
+			err := categoryDefault.mapToConfig(rawCategoryDefault)
+			if err != nil {
+				return fmt.Errorf("unmarshalling category defaults failed: %w", err)
+			}
+
+			c.Defaults.Categories[key] = categoryDefault
+		}
 	}
 
 	return nil
@@ -270,12 +436,9 @@ func ToMap(config Config) map[string]any {
 }
 
 func (rule Rule) MarshalJSON() ([]byte, error) {
-	result := make(map[string]any)
-	result["level"] = rule.Level
-	result["ignore"] = rule.Ignore
-
-	for key, val := range rule.Extra {
-		result[key] = val
+	result, err := rule.MarshalYAML()
+	if err != nil {
+		return nil, fmt.Errorf("marshalling rule failed %w", err)
 	}
 
 	return json.Marshal(&result) //nolint:wrapcheck
@@ -292,14 +455,14 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 
 func (rule Rule) MarshalYAML() (interface{}, error) {
 	result := make(map[string]any)
-	result["level"] = rule.Level
+	result[keyLevel] = rule.Level
 
 	if rule.Ignore != nil && len(rule.Ignore.Files) != 0 {
-		result["ignore"] = rule.Ignore
+		result[keyIgnore] = rule.Ignore
 	}
 
 	for key, val := range rule.Extra {
-		if key != "ignore" && key != "level" {
+		if key != keyIgnore && key != keyLevel {
 			result[key] = val
 		}
 	}
@@ -319,13 +482,18 @@ func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
 // Note that this function will mutate the result map. This isn't a problem right now
 // as we only use this after unmarshalling, but if we use this for other purposes later
 // we need to make a copy of the map first.
-func (rule *Rule) mapToConfig(result map[string]any) error {
-	level, ok := result["level"].(string)
+func (rule *Rule) mapToConfig(result any) error {
+	ruleMap, ok := result.(map[string]any)
+	if !ok {
+		return errors.New("result was not a map")
+	}
+
+	level, ok := ruleMap[keyLevel].(string)
 	if ok {
 		rule.Level = level
 	}
 
-	if ignore, ok := result["ignore"]; ok {
+	if ignore, ok := ruleMap[keyIgnore]; ok {
 		var dst Ignore
 
 		err := rio.JSONRoundTrip(ignore, &dst)
@@ -336,10 +504,10 @@ func (rule *Rule) mapToConfig(result map[string]any) error {
 		rule.Ignore = &dst
 	}
 
-	rule.Extra = result
+	rule.Extra = ruleMap
 
-	delete(rule.Extra, "level")
-	delete(rule.Extra, "ignore")
+	delete(rule.Extra, keyLevel)
+	delete(rule.Extra, keyIgnore)
 
 	return nil
 }

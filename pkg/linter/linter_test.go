@@ -122,6 +122,7 @@ or := 1
 		userConfig      *config.Config
 		filename        string
 		expViolations   []string
+		expLevels       []string
 		ignoreFilesFlag []string
 	}{
 		{
@@ -137,6 +138,69 @@ or := 1
 			}},
 			filename:      "p.rego",
 			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "ignore all",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Global: config.Default{
+						Level: "ignore",
+					},
+				},
+			},
+			filename:      "p.rego",
+			expViolations: []string{},
+		},
+		{
+			name: "ignore all but bugs",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Global: config.Default{
+						Level: "ignore",
+					},
+					Categories: map[string]config.Default{
+						"bugs": {Level: "error"},
+					},
+				},
+				Rules: map[string]config.Category{
+					"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
+				},
+			},
+			filename:      "p.rego",
+			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "ignore style, no global default",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Categories: map[string]config.Default{
+						"bugs":  {Level: "error"},
+						"style": {Level: "ignore"},
+					},
+				},
+				Rules: map[string]config.Category{
+					"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
+				},
+			},
+			filename:      "p.rego",
+			expViolations: []string{"top-level-iteration"},
+		},
+		{
+			name: "set level to warning",
+			userConfig: &config.Config{
+				Defaults: config.Defaults{
+					Global: config.Default{
+						Level: "warning", // will apply to all but style
+					},
+					Categories: map[string]config.Default{
+						"style": {Level: "error"},
+					},
+				},
+				Rules: map[string]config.Category{},
+			},
+			filename:      "p.rego",
+			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
+			expLevels:     []string{"error", "warning", "warning"},
 		},
 		{
 			name: "rule level ignore files",
@@ -207,6 +271,14 @@ or := 1
 			for idx, violation := range result.Violations {
 				if violation.Title != tt.expViolations[idx] {
 					t.Errorf("expected first violation to be '%s', got %s", tt.expViolations[idx], result.Violations[0].Title)
+				}
+			}
+
+			if len(tt.expLevels) > 0 {
+				for idx, violation := range result.Violations {
+					if violation.Level != tt.expLevels[idx] {
+						t.Errorf("expected first violation to be '%s', got %s", tt.expLevels[idx], result.Violations[0].Level)
+					}
 				}
 			}
 		})
@@ -354,6 +426,53 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 	// Ensure the extra attributes are still there.
 	if fileLength.(int) != 1 { // nolint: forcetypeassert
 		t.Errorf("expected max-file-length to be 1, got %d %T", fileLength, fileLength)
+	}
+}
+
+func TestLintMergedConfigUsesProvidedDefaults(t *testing.T) {
+	t.Parallel()
+
+	userConfig := config.Config{
+		Defaults: config.Defaults{
+			Global: config.Default{
+				Level: "ignore",
+			},
+			Categories: map[string]config.Default{
+				"style": {Level: "error"},
+				"bugs":  {Level: "warning"},
+			},
+		},
+		Rules: map[string]config.Category{
+			"style": {"opa-fmt": config.Rule{Level: "warning"}},
+		},
+	}
+
+	input := test.InputPolicy("p.rego", `package p`)
+
+	linter := NewLinter().
+		WithUserConfig(userConfig).
+		WithInputModules(&input)
+
+	mergedConfig := testutil.Must(linter.mergedConfig())(t)
+
+	// specifically configured rule should not be affected by the default
+	if mergedConfig.Rules["style"]["opa-fmt"].Level != "warning" {
+		t.Errorf("expected level to be 'warning', got %q", mergedConfig.Rules["style"]["opa-fmt"].Level)
+	}
+
+	// other rule in style should have the default level for the category
+	if mergedConfig.Rules["style"]["chained-rule-body"].Level != "error" {
+		t.Errorf("expected level to be 'error', got %q", mergedConfig.Rules["style"]["chained-rule-body"].Level)
+	}
+
+	// rule in bugs should have the default level for the category
+	if mergedConfig.Rules["bugs"]["constant-condition"].Level != "warning" {
+		t.Errorf("expected level to be 'warning', got %q", mergedConfig.Rules["bugs"]["constant-condition"].Level)
+	}
+
+	// rule in unconfigured category should have the global default level
+	if mergedConfig.Rules["imports"]["avoid-importing-input"].Level != "ignore" {
+		t.Errorf("expected level to be 'ignore', got %q", mergedConfig.Rules["imports"]["avoid-importing-input"].Level)
 	}
 }
 

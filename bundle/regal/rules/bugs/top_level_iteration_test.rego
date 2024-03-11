@@ -64,3 +64,11 @@ test_success_top_level_param if {
 	r := rule.report with input as ast.with_rego_v1(`x(y) := input.foo.bar[y]`)
 	r == set()
 }
+
+test_success_top_level_import if {
+	r := rule.report with input as ast.with_rego_v1(`
+	import data.x
+
+	y := input[x]`)
+	r == set()
+}

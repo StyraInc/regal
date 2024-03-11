@@ -93,6 +93,8 @@ function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
 rule_and_function_names contains name(rule) if some rule in input.rules
 
+identifiers := rule_and_function_names | imported_identifiers
+
 rule_names contains name(rule) if some rule in rules
 
 # METADATA
@@ -294,7 +296,7 @@ find_names_in_scope(rule, location) := names if {
 	var_names := {var.value | some var in find_vars_in_local_scope(rule, location)}
 
 	# parens below added by opa-fmt :)
-	names := (rule_names | fn_arg_names) | var_names
+	names := ((rule_names | imported_identifiers) | fn_arg_names) | var_names
 }
 
 # METADATA

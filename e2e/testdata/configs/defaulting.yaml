@@ -1,0 +1,11 @@
+rules:
+  default:
+    level: ignore
+  bugs:
+    default:
+      level: error
+    rule-shadows-builtin:
+      level: ignore
+  testing:
+    print-or-trace-call:
+      level: error

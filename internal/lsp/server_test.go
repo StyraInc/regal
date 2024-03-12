@@ -193,7 +193,7 @@ allow = true
 		for _, item := range requestData.Items {
 			t.Log(item.Code)
 
-			expectedItems[item.Code.Value] = true
+			expectedItems[item.Code] = true
 		}
 
 		for item, found := range expectedItems {
@@ -247,8 +247,8 @@ allow := true
 			t.Fatalf("expected 1 diagnostic, got %d", len(requestData.Items))
 		}
 
-		if requestData.Items[0].Code.Value != "opa-fmt" {
-			t.Fatalf("expected diagnostic to be opa-fmt, got %s", requestData.Items[0].Code.Value)
+		if requestData.Items[0].Code != "opa-fmt" {
+			t.Fatalf("expected diagnostic to be opa-fmt, got %s", requestData.Items[0].Code)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for file diagnostics to be sent")
@@ -434,8 +434,8 @@ users = {"alice", "bob"}
 			t.Fatalf("expected 1 diagnostics, got %d", len(requestData.Items))
 		}
 
-		if requestData.Items[0].Code.Value != "prefer-package-imports" {
-			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code.Value)
+		if requestData.Items[0].Code != "prefer-package-imports" {
+			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
@@ -452,8 +452,8 @@ users = {"alice", "bob"}
 			t.Fatalf("expected 1 diagnostics, got %d, %v", len(requestData.Items), requestData)
 		}
 
-		if requestData.Items[0].Code.Value != "use-assignment-operator" {
-			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code.Value)
+		if requestData.Items[0].Code != "use-assignment-operator" {
+			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")

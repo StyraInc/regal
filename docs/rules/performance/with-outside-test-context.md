@@ -43,7 +43,7 @@ verified := io.jwt.verify_rs256(input.token, data.keys.verification_key)
 allowed_user(user) := user if {
     # this expensive rule will be evaluated only once
     verified
-    "admin" in input.user.roles
+    "admin" in user.roles
 }
 ```
 

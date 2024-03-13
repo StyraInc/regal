@@ -129,11 +129,16 @@ type TextDocumentContentChangeEvent struct {
 }
 
 type Diagnostic struct {
-	Range    Range          `json:"range"`
-	Message  string         `json:"message"`
-	Severity uint           `json:"severity"`
-	Source   string         `json:"source"`
-	Code     DiagnosticCode `json:"code"`
+	Range           Range           `json:"range"`
+	Message         string          `json:"message"`
+	Severity        uint            `json:"severity"`
+	Source          string          `json:"source"`
+	Code            string          `json:"code"`
+	CodeDescription CodeDescription `json:"codeDescription"`
+}
+
+type CodeDescription struct {
+	Href string `json:"href"`
 }
 
 type DiagnosticCode struct {

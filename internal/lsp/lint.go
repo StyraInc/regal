@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
 
@@ -53,7 +54,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 			}
 
 			diags = append(diags, Diagnostic{
-				Severity: 0, // parse errors are always errors
+				Severity: 1, // parse errors are the only error Diagnostic the server sends
 				Range: Range{
 					Start: Position{
 						Line:      uint(line),
@@ -66,10 +67,9 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 				},
 				Message: astError.Message,
 				Source:  "regal/parse",
-				Code: DiagnosticCode{
-					Value: astError.Code,
-					// TODO(charlieegan3): link directly to a specific error using matching
-					Target: "https://docs.styra.com/opa/category/rego-parse-error",
+				Code:    strings.ReplaceAll(astError.Code, "_", "-"),
+				CodeDescription: CodeDescription{
+					Href: "https://docs.styra.com/opa/category/rego-parse-error",
 				},
 			})
 		}
@@ -150,9 +150,9 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 			},
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
-			Code: DiagnosticCode{
-				Value: item.Title,
-				Target: fmt.Sprintf(
+			Code:    item.Title,
+			CodeDescription: CodeDescription{
+				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
 					item.Title,
@@ -223,9 +223,9 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 			},
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
-			Code: DiagnosticCode{
-				Value: item.Title,
-				Target: fmt.Sprintf(
+			Code:    item.Title,
+			CodeDescription: CodeDescription{
+				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
 					item.Title,

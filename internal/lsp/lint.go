@@ -25,65 +25,79 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 	}
 
 	module, err := rparse.Module(uri, content)
-	if err != nil {
-		unwrappedError := errors.Unwrap(err)
+	if err == nil {
+		// if the parse was ok, clear the parse errors
+		cache.SetParseErrors(uri, []Diagnostic{})
+		cache.SetModule(uri, module)
 
+		return true, nil
+	}
+
+	unwrappedError := errors.Unwrap(err)
+
+	// if the module is empty, then the unwrapped error is a single parse ast.Error
+	// otherwise it's a slice of ast.Error.
+	// When a user has an empty file, we still want to show this single error.
+	var astErrors []astError
+
+	var parseError *ast.Error
+
+	if errors.As(unwrappedError, &parseError) {
+		astErrors = append(astErrors, astError{
+			Code:     parseError.Code,
+			Message:  parseError.Message,
+			Location: parseError.Location,
+		})
+	} else {
 		jsonErrors, err := json.Marshal(unwrappedError)
 		if err != nil {
 			return false, fmt.Errorf("failed to marshal parse errors: %w", err)
 		}
 
-		var astErrors []astError
 		if err := json.Unmarshal(jsonErrors, &astErrors); err != nil {
 			return false, fmt.Errorf("failed to unmarshal parse errors: %w", err)
 		}
-
-		diags := make([]Diagnostic, 0)
-
-		for _, astError := range astErrors {
-			itemLen := 1
-
-			line := astError.Location.Row - 1
-			if line < 0 {
-				line = 0
-			}
-
-			char := astError.Location.Col - 1
-			if char < 0 {
-				char = 0
-			}
-
-			diags = append(diags, Diagnostic{
-				Severity: 1, // parse errors are the only error Diagnostic the server sends
-				Range: Range{
-					Start: Position{
-						Line:      uint(line),
-						Character: uint(char),
-					},
-					End: Position{
-						Line:      uint(line),
-						Character: uint(char + itemLen),
-					},
-				},
-				Message: astError.Message,
-				Source:  "regal/parse",
-				Code:    strings.ReplaceAll(astError.Code, "_", "-"),
-				CodeDescription: CodeDescription{
-					Href: "https://docs.styra.com/opa/category/rego-parse-error",
-				},
-			})
-		}
-
-		cache.SetParseErrors(uri, diags)
-
-		return false, nil
 	}
 
-	// if the parse was ok, clear the parse errors
-	cache.SetParseErrors(uri, []Diagnostic{})
-	cache.SetModule(uri, module)
+	diags := make([]Diagnostic, 0)
 
-	return true, nil
+	for _, astError := range astErrors {
+		itemLen := 1
+
+		line := astError.Location.Row - 1
+		if line < 0 {
+			line = 0
+		}
+
+		char := astError.Location.Col - 1
+		if char < 0 {
+			char = 0
+		}
+
+		diags = append(diags, Diagnostic{
+			Severity: 1, // parse errors are the only error Diagnostic the server sends
+			Range: Range{
+				Start: Position{
+					Line:      uint(line),
+					Character: uint(char),
+				},
+				End: Position{
+					Line:      uint(line),
+					Character: uint(char + itemLen),
+				},
+			},
+			Message: astError.Message,
+			Source:  "regal/parse",
+			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
+			CodeDescription: CodeDescription{
+				Href: "https://docs.styra.com/opa/category/rego-parse-error",
+			},
+		})
+	}
+
+	cache.SetParseErrors(uri, diags)
+
+	return false, nil
 }
 
 func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *config.Config, uri string) error {

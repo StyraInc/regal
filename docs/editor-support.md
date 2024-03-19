@@ -11,6 +11,16 @@ and open a workspace with Rego files.
 The plugin will automatically find and use
 [Regal config](https://docs.styra.com/regal#configuration).
 
+## Neovim via nvim-lspconfig
+
+[nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) has native support for the 
+Regal language server. Provided that you already have the `regal` binary installed,
+use the configuration below to enable LSP features in [Neovim](https://neovim.io).
+
+```lua
+require('lspconfig').regal.setup()
+```
+
 ## Neovim via none-ls
 
 [none-ls](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a language server to inject LSP diagnostics,
@@ -38,6 +48,6 @@ package test
 default allowRbac := true
 ```
 
-diagnostics may look like this.
+Example of the diagnostics in as shown in the UI:
 
 ![regal in none-ls](./assets/editors-neovim.png)

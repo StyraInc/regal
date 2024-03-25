@@ -30,6 +30,9 @@ type Cache struct {
 	// diagnosticsParseErrors is a map of file URI to parse errors for that file
 	diagnosticsParseErrors map[string][]Diagnostic
 	diagnosticsParseMu     sync.Mutex
+
+	builtinPositionsFile map[string]map[uint][]BuiltinPosition
+	builtinPositionsMu   sync.Mutex
 }
 
 func NewCache() *Cache {
@@ -40,6 +43,8 @@ func NewCache() *Cache {
 		diagnosticsFile:        make(map[string][]Diagnostic),
 		diagnosticsAggregate:   make(map[string][]Diagnostic),
 		diagnosticsParseErrors: make(map[string][]Diagnostic),
+
+		builtinPositionsFile: make(map[string]map[uint][]BuiltinPosition),
 	}
 }
 
@@ -172,6 +177,22 @@ func (c *Cache) SetParseErrors(uri string, diags []Diagnostic) {
 	c.diagnosticsParseErrors[uri] = diags
 }
 
+func (c *Cache) GetBuiltinPositions(uri string) (map[uint][]BuiltinPosition, bool) {
+	c.builtinPositionsMu.Lock()
+	defer c.builtinPositionsMu.Unlock()
+
+	val, ok := c.builtinPositionsFile[uri]
+
+	return val, ok
+}
+
+func (c *Cache) SetBuiltinPositions(uri string, positions map[uint][]BuiltinPosition) {
+	c.builtinPositionsMu.Lock()
+	defer c.builtinPositionsMu.Unlock()
+
+	c.builtinPositionsFile[uri] = positions
+}
+
 // Delete removes all cached data for a given URI.
 func (c *Cache) Delete(uri string) {
 	c.fileContentsMu.Lock()
@@ -193,6 +214,10 @@ func (c *Cache) Delete(uri string) {
 	c.diagnosticsParseMu.Lock()
 	delete(c.diagnosticsParseErrors, uri)
 	c.diagnosticsParseMu.Unlock()
+
+	c.builtinPositionsMu.Lock()
+	delete(c.builtinPositionsFile, uri)
+	c.builtinPositionsMu.Unlock()
 }
 
 func updateCacheForURIFromDisk(cache *Cache, uri, path string) (string, error) {

@@ -80,6 +80,7 @@ type ServerCapabilities struct {
 	TextDocumentSyncOptions TextDocumentSyncOptions `json:"textDocumentSync"`
 	DiagnosticProvider      DiagnosticOptions       `json:"diagnosticProvider"`
 	Workspace               WorkspaceOptions        `json:"workspace"`
+	HoverProvider           bool                    `json:"hoverProvider"`
 }
 
 type WorkspaceOptions struct {
@@ -156,6 +157,11 @@ type Position struct {
 	Character uint `json:"character"`
 }
 
+type MarkupContent struct {
+	Kind  string `json:"kind"`
+	Value string `json:"value"`
+}
+
 type TextDocumentDidOpenParams struct {
 	TextDocument TextDocumentItem `json:"textDocument"`
 }
@@ -166,6 +172,12 @@ type TextDocumentItem struct {
 	URI        string `json:"uri"`
 	Version    uint   `json:"version"`
 }
+
+type TextDocumentHoverParams struct {
+	Position     Position               `json:"position"`
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
 type WorkspaceDidCreateFilesParams struct {
 	Files []WorkspaceDidCreateFilesParamsCreatedFile `json:"files"`
 }

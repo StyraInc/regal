@@ -27,17 +27,30 @@ test_aggregate_collects_imports_with_location if {
 	}}
 }
 
-test_fail_aggregate_report_on_import_without_matching_package if {
-	r := rule.aggregate_report with input.aggregate as {{"aggregate_data": {
-		"package_path": ["a"],
-		"imports": [{"path": ["b"], "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b"}}],
-	}}}
+test_fail_aggregate_report_on_imported_rule if {
+	r := rule.aggregate_report with input.aggregate as {
+		{"aggregate_data": {
+			"package_path": ["a"],
+			"imports": [
+				{
+					# likely import of rule — should fail
+					"path": ["b", "c"],
+					"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b.c"},
+				},
+				# import of package, should not fail
+				{"path": ["b"], "location": {"col": 1, "file": "policy.rego", "row": 4, "text": "import data.b"}},
+				# unresolved import, should not fail
+				{"path": ["c"], "location": {"col": 1, "file": "policy.rego", "row": 5, "text": "import data.c"}},
+			],
+		}},
+		{"aggregate_data": {"package_path": ["b"], "imports": []}},
+	}
 
 	r == {{
 		"category": "imports",
 		"description": "Prefer importing packages over rules",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b"},
+		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b.c"},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/prefer-package-imports", "imports"),
@@ -57,6 +70,26 @@ test_success_aggregate_report_on_import_with_matching_package if {
 		}},
 		{"aggregate_data": {
 			"package_path": ["b"],
+			"imports": [],
+		}},
+	}
+
+	r == set()
+}
+
+# unresolved imports should be flagged by an `unresoled-import`
+# rule instead. see https://github.com/StyraInc/regal/issues/300
+test_success_aggregate_report_on_import_with_unresolved_path if {
+	r := rule.aggregate_report with input.aggregate as {
+		{"aggregate_data": {
+			"package_path": ["a"],
+			"imports": [{
+				"path": ["foo"],
+				"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b"},
+			}],
+		}},
+		{"aggregate_data": {
+			"package_path": ["bar"],
 			"imports": [],
 		}},
 	}

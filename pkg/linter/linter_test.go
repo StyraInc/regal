@@ -527,7 +527,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 	result := testutil.Must(linter.Lint(context.Background()))(t)
 
 	if len(result.Violations) != 1 {
-		t.Fatalf("expected no violation, got %d", len(result.Violations))
+		t.Fatalf("expected one violation, got %d", len(result.Violations))
 	}
 
 	violation := result.Violations[0]

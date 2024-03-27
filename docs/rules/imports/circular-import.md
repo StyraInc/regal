@@ -21,16 +21,16 @@ import rego.v1
 import data.shared
 
 admins := {
-  "anna",
-  "bob",
+    "anna",
+    "bob",
 }
 
 allow if {
-  input.role in shared.roles
+    input.role in shared.roles
 }
 
 allow if {
-  input.user in admins
+    input.user in admins
 }
 ```
 
@@ -43,8 +43,8 @@ import data.authz # circular import!
 roles := { "admin", "editor", "viewer" }
 
 users := authz.admins | {
-  "chloe",
-  "dave",
+    "chloe",
+    "dave",
 }
 ```
 
@@ -68,11 +68,11 @@ import rego.v1
 import data.shared
 
 allow if {
-  input.role in shared.roles
+    input.role in shared.roles
 }
 
 allow if {
-  input.user in shared.users
+    input.user in shared.users
 }
 ```
 
@@ -81,8 +81,8 @@ allow if {
 package admins
 
 admins := {
-  "anna",
-  "bob",
+    "anna",
+    "bob",
 }
 ```
 
@@ -95,8 +95,8 @@ import data.admins
 roles := {"admin", "editor", "viewer"}
 
 users := admins.admins | {
-  "chloe",
-  "david",
+    "chloe",
+    "david",
 }
 ```
 

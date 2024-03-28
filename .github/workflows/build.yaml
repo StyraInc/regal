@@ -14,13 +14,19 @@ on:
 jobs:
   build-matrix:
     name: Matrix
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         os:
-        - ubuntu-latest
-        - windows-latest
-        - macos-latest
+        - runner: ubuntu-latest
+          name: linux
+          static: true
+        - runner: macos-latest
+          name: macos-intel
+          static: false
+        - runner: macos-14
+          name: macos-arm64
+          static: true
+    runs-on: ${{ matrix.os.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -29,9 +35,15 @@ jobs:
       - uses: open-policy-agent/setup-opa@v2
         with:
           version: edge
+          static: ${{ matrix.os.static }}
       - run: npm install -g markdownlint-cli
       - run: go install git.sr.ht/~charles/rq/cmd/rq@latest
       - run: build/do.rq pull_request
       - uses: golangci/golangci-lint-action@v4.0.0
+        if: matrix.os.name == 'linux'
         with:
           version: v1.56.1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regal-${{ matrix.os.name }}
+          path: regal

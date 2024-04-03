@@ -100,7 +100,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 	return false, nil
 }
 
-func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *config.Config, uri string) error {
+func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *config.Config, uri, rootDir string) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		// then there must have been a parse error
@@ -114,7 +114,9 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 
 	input := rules.NewInput(map[string]string{uri: contents}, map[string]*ast.Module{uri: module})
 
-	regalInstance := linter.NewLinter().WithInputModules(&input)
+	regalInstance := linter.NewLinter().
+		WithInputModules(&input).
+		WithRootDir(rootDir)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
@@ -186,7 +188,7 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 
 	input := rules.NewInput(files, modules)
 
-	regalInstance := linter.NewLinter().WithInputModules(&input)
+	regalInstance := linter.NewLinter().WithInputModules(&input).WithRootDir(detachedURI)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)

@@ -150,7 +150,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 
 			// otherwise, lint the file and send the diagnostics
-			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI)
+			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.clientRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
 			}

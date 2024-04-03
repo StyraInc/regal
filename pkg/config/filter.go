@@ -12,7 +12,12 @@ import (
 	"github.com/open-policy-agent/opa/bundle"
 )
 
-func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool) ([]string, error) {
+func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir string) ([]string, error) {
+	// if set, rootDir is normalized to end with a platform appropriate separator
+	if rootDir != "" && !strings.HasSuffix(rootDir, string(filepath.Separator)) {
+		rootDir += string(filepath.Separator)
+	}
+
 	if checkFileExists {
 		filtered := make([]string, 0, len(paths))
 
@@ -29,14 +34,14 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool) ([]string,
 			return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 		}
 
-		return filterPaths(filtered, ignore)
+		return filterPaths(filtered, ignore, rootDir)
 	}
 
 	if len(ignore) == 0 {
 		return paths, nil
 	}
 
-	return filterPaths(paths, ignore)
+	return filterPaths(paths, ignore, rootDir)
 }
 
 func walkPaths(paths []string, filter func(path string, info os.DirEntry, err error) error) error {
@@ -60,7 +65,7 @@ func walkPaths(paths []string, filter func(path string, info os.DirEntry, err er
 	return errs
 }
 
-func filterPaths(policyPaths []string, ignore []string) ([]string, error) {
+func filterPaths(policyPaths []string, ignore []string, rootDir string) ([]string, error) {
 	filtered := make([]string, 0, len(policyPaths))
 
 outer:
@@ -70,7 +75,7 @@ outer:
 				continue
 			}
 
-			excluded, err := excludeFile(pattern, f)
+			excluded, err := excludeFile(pattern, f, rootDir)
 			if err != nil {
 				return nil, fmt.Errorf("failed to check for exclusion using pattern %s: %w", pattern, err)
 			}
@@ -88,8 +93,12 @@ outer:
 
 // excludeFile imitates the pattern matching of .gitignore files
 // See `exclusion.rego` for details on the implementation.
-func excludeFile(pattern string, filename string) (bool, error) {
+func excludeFile(pattern, filename, rootDir string) (bool, error) {
 	n := len(pattern)
+
+	if rootDir != "" {
+		filename = strings.TrimPrefix(filename, rootDir)
+	}
 
 	// Internal slashes means path is relative to root, otherwise it can
 	// appear anywhere in the directory (--> **/)

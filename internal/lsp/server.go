@@ -30,8 +30,9 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 	ls := &LanguageServer{
 		cache:                      NewCache(),
 		errorLog:                   opts.ErrorLog,
-		diagnosticRequestFile:      make(chan fileDiagnosticRequiredEvent, 10),
+		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
 		diagnosticRequestWorkspace: make(chan string, 10),
+		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		verboseLogging:             opts.VerboseLogging,
 	}
 
@@ -49,8 +50,10 @@ type LanguageServer struct {
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
 
-	diagnosticRequestFile      chan fileDiagnosticRequiredEvent
+	diagnosticRequestFile      chan fileUpdateEvent
 	diagnosticRequestWorkspace chan string
+
+	builtinsPositionFile chan fileUpdateEvent
 
 	clientRootURI    string
 	clientIdentifier clients.Identifier
@@ -60,9 +63,8 @@ type LanguageServer struct {
 	workspaceMode bool
 }
 
-// fileDiagnosticRequiredEvent is sent to the diagnosticRequestFile channel when
-// diagnostics are required for a file.
-type fileDiagnosticRequiredEvent struct {
+// fileUpdateEvent is sent to a channel when an update is required for a file.
+type fileUpdateEvent struct {
 	Reason  string
 	URI     string
 	Content string
@@ -96,6 +98,8 @@ func (l *LanguageServer) Handle(
 		return struct{}{}, nil
 	case "textDocument/didChange":
 		return l.handleTextDocumentDidChange(ctx, conn, req)
+	case "textDocument/hover":
+		return l.handleHover(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
 		return l.handleWorkspaceDidChangeWatchedFiles(ctx, conn, req)
 	case "workspace/diagnostic":
@@ -182,6 +186,22 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 	}
 }
 
+func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case evt := <-l.builtinsPositionFile:
+			l.log(fmt.Sprintf("builtin positions request for %s: %q", evt.URI, evt.Reason))
+
+			_, err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
+			}
+		}
+	}
+}
+
 // processTextContentUpdate updates the cache with the new content for the file at the given URI, attempts to parse the
 // file, and returns whether the parse was successful. If it was not successful, the parse errors will be sent
 // on the diagnostic channel.
@@ -212,6 +232,27 @@ func (l *LanguageServer) processTextContentUpdate(
 	}
 
 	return false, nil
+}
+
+func (l *LanguageServer) processBuiltinsUpdate(
+	_ context.Context,
+	uri string,
+	content string,
+) (bool, error) {
+	l.cache.SetFileContents(uri, content)
+
+	success, err := updateParse(l.cache, uri)
+	if err != nil {
+		return false, fmt.Errorf("failed to update parse: %w", err)
+	}
+
+	if !success {
+		return false, nil
+	}
+
+	err = updateBuiltinPositions(l.cache, uri)
+
+	return err == nil, err
 }
 
 func (l *LanguageServer) logError(err error) {
@@ -270,6 +311,46 @@ func (l *LanguageServer) logOutboundMessage(method string, message any) {
 	}
 }
 
+type HoverResponse struct {
+	Contents MarkupContent `json:"contents"`
+	Range    Range         `json:"range"`
+}
+
+func (l *LanguageServer) handleHover(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params TextDocumentHoverParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	builtinsOnLine, ok := l.cache.GetBuiltinPositions(params.TextDocument.URI)
+	if !ok {
+		return struct{}{}, fmt.Errorf("could not get builtins for uri %q", params.TextDocument.URI)
+	}
+
+	for _, bp := range builtinsOnLine[params.Position.Line+1] {
+		if params.Position.Character >= bp.Start-1 && params.Position.Character <= bp.End-1 {
+			contents := createHoverContent(bp.Builtin)
+
+			return HoverResponse{
+				Contents: MarkupContent{
+					Kind:  "markdown",
+					Value: contents,
+				},
+				Range: Range{
+					Start: Position{Line: bp.Line - 1, Character: bp.Start - 1},
+					End:   Position{Line: bp.Line - 1, Character: bp.End - 1},
+				},
+			}, nil
+		}
+	}
+
+	return struct{}{}, nil
+}
+
 func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -280,11 +361,14 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	l.diagnosticRequestFile <- fileDiagnosticRequiredEvent{
+	evt := fileUpdateEvent{
 		Reason:  "textDocument/didOpen",
 		URI:     params.TextDocument.URI,
 		Content: params.TextDocument.Text,
 	}
+
+	l.diagnosticRequestFile <- evt
+	l.builtinsPositionFile <- evt
 
 	return struct{}{}, nil
 }
@@ -299,11 +383,14 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	l.diagnosticRequestFile <- fileDiagnosticRequiredEvent{
+	evt := fileUpdateEvent{
 		Reason:  "textDocument/didChange",
 		URI:     params.TextDocument.URI,
 		Content: params.ContentChanges[0].Text,
 	}
+
+	l.diagnosticRequestFile <- evt
+	l.builtinsPositionFile <- evt
 
 	return struct{}{}, nil
 }
@@ -328,10 +415,13 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", createOp.URI, err)
 		}
 
-		l.diagnosticRequestFile <- fileDiagnosticRequiredEvent{
+		evt := fileUpdateEvent{
 			Reason: "textDocument/didCreate",
 			URI:    createOp.URI,
 		}
+
+		l.diagnosticRequestFile <- evt
+		l.builtinsPositionFile <- evt
 	}
 
 	return struct{}{}, nil
@@ -350,10 +440,13 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	for _, deleteOp := range params.Files {
 		l.cache.Delete(deleteOp.URI)
 
-		l.diagnosticRequestFile <- fileDiagnosticRequiredEvent{
+		evt := fileUpdateEvent{
 			Reason: "textDocument/didDelete",
 			URI:    deleteOp.URI,
 		}
+
+		l.diagnosticRequestFile <- evt
+		l.builtinsPositionFile <- evt
 	}
 
 	return struct{}{}, nil
@@ -381,11 +474,14 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.cache.Delete(renameOp.OldURI)
 
-		l.diagnosticRequestFile <- fileDiagnosticRequiredEvent{
+		evt := fileUpdateEvent{
 			Reason:  "textDocument/didRename",
 			URI:     renameOp.NewURI,
 			Content: content,
 		}
+
+		l.diagnosticRequestFile <- evt
+		l.builtinsPositionFile <- evt
 	}
 
 	return struct{}{}, nil
@@ -470,6 +566,7 @@ func (l *LanguageServer) handleInitialize(
 					},
 				},
 			},
+			HoverProvider: true,
 		},
 	}
 
@@ -612,7 +709,8 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	}
 
 	if len(regoFiles) > 0 {
-		l.diagnosticRequestWorkspace <- fmt.Sprintf("workspace/didChangeWatchedFiles (%s)", strings.Join(regoFiles, ", "))
+		l.diagnosticRequestWorkspace <- fmt.Sprintf(
+			"workspace/didChangeWatchedFiles (%s)", strings.Join(regoFiles, ", "))
 	}
 
 	return struct{}{}, nil

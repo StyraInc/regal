@@ -100,6 +100,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentDidChange(ctx, conn, req)
 	case "textDocument/hover":
 		return l.handleHover(ctx, conn, req)
+	case "textDocument/inlayHint":
+		return l.handleInlayHint(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
 		return l.handleWorkspaceDidChangeWatchedFiles(ctx, conn, req)
 	case "workspace/diagnostic":
@@ -355,6 +357,26 @@ func (l *LanguageServer) handleHover(
 	return struct{}{}, nil
 }
 
+func (l *LanguageServer) handleInlayHint(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params TextDocumentInlayHintParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	module, ok := l.cache.GetModule(params.TextDocument.URI)
+	if !ok {
+		l.log(fmt.Sprintf("failed to get module for uri %q", params.TextDocument.URI))
+
+		return []InlayHint{}, nil
+	}
+
+	return getInlayHints(module), nil
+}
+
 func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -569,6 +591,9 @@ func (l *LanguageServer) handleInitialize(
 						Filters: []FileOperationFilter{regoFilter},
 					},
 				},
+			},
+			InlayHintProvider: InlayHintOptions{
+				ResolveProvider: false,
 			},
 			HoverProvider: true,
 		},

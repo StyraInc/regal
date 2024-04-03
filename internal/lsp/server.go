@@ -327,8 +327,12 @@ func (l *LanguageServer) handleHover(
 	}
 
 	builtinsOnLine, ok := l.cache.GetBuiltinPositions(params.TextDocument.URI)
+	// when no builtins are found, we can't return a useful hover response.
+	// log the error, but return an empty struct to avoid an error being shown in the client.
 	if !ok {
-		return struct{}{}, fmt.Errorf("could not get builtins for uri %q", params.TextDocument.URI)
+		l.logError(fmt.Errorf("could not get builtins for uri %q", params.TextDocument.URI))
+
+		return struct{}{}, nil
 	}
 
 	for _, bp := range builtinsOnLine[params.Position.Line+1] {

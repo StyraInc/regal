@@ -80,6 +80,7 @@ type ServerCapabilities struct {
 	TextDocumentSyncOptions TextDocumentSyncOptions `json:"textDocumentSync"`
 	DiagnosticProvider      DiagnosticOptions       `json:"diagnosticProvider"`
 	Workspace               WorkspaceOptions        `json:"workspace"`
+	InlayHintProvider       InlayHintOptions        `json:"inlayHintProvider"`
 	HoverProvider           bool                    `json:"hoverProvider"`
 }
 
@@ -109,6 +110,24 @@ type DiagnosticOptions struct {
 	Identifier            string `json:"identifier"`
 	InterFileDependencies bool   `json:"interFileDependencies"`
 	WorkspaceDiagnostics  bool   `json:"workspaceDiagnostics"`
+}
+
+type InlayHintOptions struct {
+	ResolveProvider bool `json:"resolveProvider"`
+}
+
+type InlayHint struct {
+	Position     Position      `json:"position"`
+	Label        string        `json:"label"`
+	Kind         uint          `json:"kind"`
+	PaddingLeft  bool          `json:"paddingLeft"`
+	PaddingRight bool          `json:"paddingRight"`
+	Tooltip      MarkupContent `json:"tooltip"`
+}
+
+type TextDocumentInlayHintParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
 }
 
 type TextDocumentSyncOptions struct {

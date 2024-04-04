@@ -150,23 +150,16 @@ func updateBuiltinPositions(cache *Cache, uri string) error {
 
 	builtinsOnLine := map[uint][]BuiltinPosition{}
 
-	ast.WalkTerms(module, func(t *ast.Term) bool {
-		if call, ok := t.Value.(ast.Call); ok {
-			name := call[0].Value.String()
-			line := uint(call[0].Location.Row)
+	for _, call := range AllBuiltinCalls(module) {
+		line := uint(call.Location.Row)
 
-			if b, ok := builtins[name]; ok {
-				builtinsOnLine[line] = append(builtinsOnLine[line], BuiltinPosition{
-					Builtin: b,
-					Line:    line,
-					Start:   uint(call[0].Location.Col),
-					End:     uint(call[0].Location.Col + len(name)),
-				})
-			}
-		}
-
-		return false
-	})
+		builtinsOnLine[line] = append(builtinsOnLine[line], BuiltinPosition{
+			Builtin: call.Builtin,
+			Line:    line,
+			Start:   uint(call.Location.Col),
+			End:     uint(call.Location.Col + len(call.Builtin.Name)),
+		})
+	}
 
 	cache.SetBuiltinPositions(uri, builtinsOnLine)
 

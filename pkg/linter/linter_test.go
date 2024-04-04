@@ -124,6 +124,7 @@ or := 1
 		expViolations   []string
 		expLevels       []string
 		ignoreFilesFlag []string
+		rootDir         string
 	}{
 		{
 			name:          "baseline",
@@ -232,6 +233,28 @@ or := 1
 			expViolations: []string{},
 		},
 		{
+			name: "user config global ignore files with rootDir",
+			userConfig: &config.Config{
+				Ignore: config.Ignore{
+					Files: []string{"foo/*"},
+				},
+			},
+			filename:      "file:///wow/foo/p.rego",
+			expViolations: []string{},
+			rootDir:       "file:///wow",
+		},
+		{
+			name: "user config global ignore files with rootDir, not ignored",
+			userConfig: &config.Config{
+				Ignore: config.Ignore{
+					Files: []string{"bar/*"},
+				},
+			},
+			filename:      "file:///wow/foo/p.rego",
+			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
+			rootDir:       "file:///wow",
+		},
+		{
 			name:            "CLI flag ignore files",
 			filename:        "p.rego",
 			expViolations:   []string{},
@@ -245,6 +268,8 @@ or := 1
 			t.Parallel()
 
 			linter := NewLinter()
+
+			linter = linter.WithRootDir(tt.rootDir)
 
 			if tt.userConfig != nil {
 				linter = linter.WithUserConfig(*tt.userConfig)

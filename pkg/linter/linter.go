@@ -38,6 +38,7 @@ import (
 type Linter struct {
 	inputPaths           []string
 	inputModules         *rules.Input
+	rootDir              string
 	ruleBundles          []*bundle.Bundle
 	userConfig           *config.Config
 	combinedConfig       *config.Config
@@ -201,6 +202,15 @@ func (l Linter) WithProfiling(enabled bool) Linter {
 	return l
 }
 
+// WithRootDir sets the root directory for the linter.
+// A door directory or prefix can be use to resolve relative paths
+// referenced in the linter configuration with absolute file paths or URIs.
+func (l Linter) WithRootDir(rootDir string) Linter {
+	l.rootDir = rootDir
+
+	return l
+}
+
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLint)
@@ -239,7 +249,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	l.startTimer(regalmetrics.RegalFilterIgnoredFiles)
 
-	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true)
+	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true, l.rootDir)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -259,7 +269,12 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	if l.inputModules != nil {
 		l.startTimer(regalmetrics.RegalFilterIgnoredModules)
 
-		filteredPaths, err := config.FilterIgnoredPaths(l.inputModules.FileNames, ignore, false)
+		filteredPaths, err := config.FilterIgnoredPaths(
+			l.inputModules.FileNames,
+			ignore,
+			false,
+			l.rootDir,
+		)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)
 		}

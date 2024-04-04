@@ -311,7 +311,7 @@ rules:
 // workspace diagnostics are run, this test validates that the correct diagnostics are sent to the client in this
 // scenario.
 //
-//nolint:gocognit,maintidx
+//nolint:gocognit,maintidx,gocyclo
 func TestLanguageServerMultipleFiles(t *testing.T) {
 	t.Parallel()
 
@@ -321,6 +321,7 @@ func TestLanguageServerMultipleFiles(t *testing.T) {
 	tempDir := t.TempDir()
 	authzRegoURI := fileURIScheme + tempDir + "/authz.rego"
 	adminsRegoURI := fileURIScheme + tempDir + "/admins.rego"
+	ignoredRegoURI := fileURIScheme + tempDir + "/ignored/foo.rego"
 
 	files := map[string]string{
 		"authz.rego": `package authz
@@ -339,6 +340,25 @@ import rego.v1
 
 users = {"alice", "bob"}
 `,
+		"ignored/foo.rego": `package ignored
+
+foo = 1
+`,
+		".regal/config.yaml": `
+ignore:
+  files:
+    - ignored/*.rego
+`,
+	}
+
+	err = os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755)
+	if err != nil {
+		t.Fatalf("failed to create .regal directory: %s", err)
+	}
+
+	err = os.MkdirAll(filepath.Join(tempDir, "ignored"), 0o755)
+	if err != nil {
+		t.Fatalf("failed to create ignored directory: %s", err)
 	}
 
 	for f, fc := range files {
@@ -359,6 +379,7 @@ users = {"alice", "bob"}
 
 	authzFileMessages := make(chan FileDiagnostics, 1)
 	adminsFileMessages := make(chan FileDiagnostics, 1)
+	ignoredFileMessages := make(chan FileDiagnostics, 1)
 	testHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == "textDocument/publishDiagnostics" {
 			var requestData FileDiagnostics
@@ -374,6 +395,10 @@ users = {"alice", "bob"}
 
 			if requestData.URI == adminsRegoURI {
 				adminsFileMessages <- requestData
+			}
+
+			if requestData.URI == ignoredRegoURI {
+				ignoredFileMessages <- requestData
 			}
 
 			return struct{}{}, nil
@@ -457,6 +482,20 @@ users = {"alice", "bob"}
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
+	}
+
+	select {
+	case requestData := <-ignoredFileMessages:
+		if requestData.URI != ignoredRegoURI {
+			t.Fatalf("expected diagnostics to be sent for ignored/foo.rego, got %s", requestData.URI)
+		}
+
+		// this file is ignored, so there should be no diagnostics
+		if len(requestData.Items) != 0 {
+			t.Fatalf("expected 0 diagnostics, got %d, %v", len(requestData.Items), requestData)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatalf("timed out waiting for ignored/foo.rego diagnostics to be sent")
 	}
 
 	// 3. Client sends textDocument/didChange notification with new contents for main.rego

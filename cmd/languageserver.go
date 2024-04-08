@@ -14,6 +14,8 @@ import (
 )
 
 func init() {
+	verboseLogging := false
+
 	languageServerCommand := &cobra.Command{
 		Use:   "language-server",
 		Short: "Run the Regal Language Server",
@@ -25,7 +27,7 @@ func init() {
 
 			opts := &lsp.LanguageServerOptions{
 				ErrorLog:       os.Stderr,
-				VerboseLogging: true,
+				VerboseLogging: verboseLogging,
 			}
 
 			ls := lsp.NewLanguageServer(opts)
@@ -53,6 +55,8 @@ func init() {
 			return nil
 		}),
 	}
+
+	languageServerCommand.Flags().BoolVarP(&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
 
 	RootCommand.AddCommand(languageServerCommand)
 }

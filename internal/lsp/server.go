@@ -14,6 +14,9 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/util"
+
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
@@ -90,6 +93,8 @@ func (l *LanguageServer) Handle(
 		return l.handleInitialize(ctx, conn, req)
 	case "initialized":
 		return l.handleInitialized(ctx, conn, req)
+	case "textDocument/codeAction":
+		return l.handleTextDocumentCodeAction(ctx, conn, req)
 	case "textDocument/diagnostic":
 		return l.handleTextDocumentDiagnostic(ctx, conn, req)
 	case "textDocument/didOpen":
@@ -99,9 +104,9 @@ func (l *LanguageServer) Handle(
 	case "textDocument/didChange":
 		return l.handleTextDocumentDidChange(ctx, conn, req)
 	case "textDocument/hover":
-		return l.handleHover(ctx, conn, req)
+		return l.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/inlayHint":
-		return l.handleInlayHint(ctx, conn, req)
+		return l.handleTextDocumentInlayHint(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
 		return l.handleWorkspaceDidChangeWatchedFiles(ctx, conn, req)
 	case "workspace/diagnostic":
@@ -112,6 +117,8 @@ func (l *LanguageServer) Handle(
 		return l.handleWorkspaceDidDeleteFiles(ctx, conn, req)
 	case "workspace/didCreateFiles":
 		return l.handleWorkspaceDidCreateFiles(ctx, conn, req)
+	case "workspace/executeCommand":
+		return l.handleWorkspaceExecuteCommand(ctx, conn, req)
 	case "shutdown":
 		err = conn.Close()
 		if err != nil {
@@ -120,6 +127,8 @@ func (l *LanguageServer) Handle(
 
 		return struct{}{}, nil
 	}
+
+	fmt.Fprintf(l.errorLog, "%s\n", string(util.MustMarshalJSON(req)))
 
 	return nil, &jsonrpc2.Error{
 		Code:    jsonrpc2.CodeMethodNotFound,
@@ -318,7 +327,7 @@ type HoverResponse struct {
 	Range    Range         `json:"range"`
 }
 
-func (l *LanguageServer) handleHover(
+func (l *LanguageServer) handleTextDocumentHover(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
@@ -357,7 +366,98 @@ func (l *LanguageServer) handleHover(
 	return struct{}{}, nil
 }
 
-func (l *LanguageServer) handleInlayHint(
+func (l *LanguageServer) handleTextDocumentCodeAction(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params CodeActionParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	actions := make([]CodeAction, 0)
+
+	for _, diag := range params.Context.Diagnostics {
+		switch diag.Code {
+		case "opa-fmt":
+			actions = append(actions, CodeAction{
+				Title:       "Format using opa fmt",
+				Kind:        "quickfix",
+				Diagnostics: []Diagnostic{diag},
+				IsPreferred: true,
+				Command:     FmtCommand([]string{params.TextDocument.URI}),
+			})
+		}
+	}
+
+	bs := util.MustMarshalJSON(actions)
+
+	l.logOutboundMessage("textDocument/codeAction", string(bs))
+
+	return actions, nil
+}
+
+func (l *LanguageServer) handleWorkspaceExecuteCommand(
+	ctx context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params ExecuteCommandParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if len(params.Arguments) == 0 {
+		return nil, fmt.Errorf("no arguments provided")
+	}
+
+	switch params.Command {
+	case "regal.fmt":
+		target, ok := params.Arguments[0].(string)
+		if !ok {
+			return nil, fmt.Errorf("expected argument to be a string")
+		}
+
+		oldContent, ok := l.cache.GetFileContents(target)
+		if !ok {
+			return nil, fmt.Errorf("could not get file contents for uri %q", target)
+		}
+
+		newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, format.Opts{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to format file: %w", err)
+		}
+
+		edits := ComputeEdits(oldContent, newContent)
+
+		editParams := ApplyWorkspaceEditParams{
+			Label: "Format using opa fmt",
+			Edit: WorkspaceEdit{
+				DocumentChanges: []TextDocumentEdit{
+					{
+						TextDocument: TextDocumentIdentifier{URI: target},
+						Edits:        edits,
+					},
+				},
+			},
+		}
+
+		l.logOutboundMessage("workspace/applyEdit", editParams)
+
+		fmt.Fprintf(l.errorLog, "%s\n", string(util.MustMarshalJSON(editParams)))
+
+		err = l.conn.Notify(ctx, "workspace/applyEdit", editParams)
+
+		if err != nil {
+			l.log(fmt.Sprintf("failed workspace/applyEdit notify: %v", err.Error()))
+		}
+	}
+
+	return struct{}{}, nil
+}
+
+func (l *LanguageServer) handleTextDocumentInlayHint(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
@@ -374,7 +474,11 @@ func (l *LanguageServer) handleInlayHint(
 		return []InlayHint{}, nil
 	}
 
-	return getInlayHints(module), nil
+	inlayHints := getInlayHints(module)
+
+	l.logOutboundMessage("textDocument/inlayHint", inlayHints)
+
+	return inlayHints, nil
 }
 
 func (l *LanguageServer) handleTextDocumentDidOpen(
@@ -596,6 +700,12 @@ func (l *LanguageServer) handleInitialize(
 				ResolveProvider: false,
 			},
 			HoverProvider: true,
+			CodeActionProvider: CodeActionOptions{
+				CodeActionKinds: []string{"quickfix"},
+			},
+			ExecuteCommandProvider: ExecuteCommandOptions{
+				Commands: []string{"regal.fmt"},
+			},
 		},
 	}
 

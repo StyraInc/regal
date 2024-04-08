@@ -82,10 +82,71 @@ type ServerCapabilities struct {
 	Workspace               WorkspaceOptions        `json:"workspace"`
 	InlayHintProvider       InlayHintOptions        `json:"inlayHintProvider"`
 	HoverProvider           bool                    `json:"hoverProvider"`
+	CodeActionProvider      CodeActionOptions       `json:"codeActionProvider"`
+	ExecuteCommandProvider  ExecuteCommandOptions   `json:"executeCommandProvider"`
 }
 
 type WorkspaceOptions struct {
 	FileOperations FileOperationsServerCapabilities `json:"fileOperations"`
+}
+
+type CodeActionOptions struct {
+	CodeActionKinds []string `json:"codeActionKinds"`
+}
+
+type CodeActionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
+	Context      CodeActionContext      `json:"context"`
+}
+
+type CodeActionContext struct {
+	Diagnostics []Diagnostic `json:"diagnostics"`
+}
+
+type CodeAction struct {
+	Title       string       `json:"title"`
+	Kind        string       `json:"kind"`
+	Diagnostics []Diagnostic `json:"diagnostics"`
+	IsPreferred bool         `json:"isPreferred"`
+	Command     Command      `json:"command"`
+}
+
+type Command struct {
+	Title     string `json:"title"`
+	Tooltip   string `json:"tooltip"`
+	Command   string `json:"command"`
+	Arguments []any  `json:"arguments"`
+}
+
+type ExecuteCommandOptions struct {
+	Commands []string `json:"commands"`
+}
+
+type ExecuteCommandParams struct {
+	Command   string `json:"command"`
+	Arguments []any  `json:"arguments"`
+}
+
+type ApplyWorkspaceEditParams struct {
+	Label string        `json:"label"`
+	Edit  WorkspaceEdit `json:"edit"`
+}
+
+type WorkspaceEdit struct {
+	DocumentChanges []TextDocumentEdit `json:"documentChanges"`
+}
+
+type TextDocumentEdit struct {
+	// TextDocument is the document to change. Not that this could be versioned,
+	// (OptionalVersionedTextDocumentIdentifier) but we currently don't use that.
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Edits        []TextEdit             `json:"edits"`
+}
+
+type TextEdit struct {
+	Range   Range  `json:"range"`
+	NewText string `json:"newText"`
 }
 
 type FileOperationsServerCapabilities struct {

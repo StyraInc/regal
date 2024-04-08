@@ -1,0 +1,4 @@
+ignore:
+  files:
+    - e2e/*
+    - pkg/*

@@ -625,7 +625,7 @@ func (l *LanguageServer) loadWorkspaceContents() error {
 
 	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("failed to walk workspace dir %q: %w", d.Name(), err)
+			return fmt.Errorf("failed to walk workspace dir %q: %w", path, err)
 		}
 
 		// TODO(charlieegan3): make this configurable for things like .rq etc?

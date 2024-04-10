@@ -172,8 +172,8 @@ func buildRecvHandler(
 				result, _ := json.Marshal(resp.Result)
 				logger.Printf("--> response #%s: %s: %s\n", resp.ID, method, result)
 			case resp.Error != nil:
-				err, _ := json.Marshal(resp.Error)
-				logger.Printf("--> response error #%s: %s: %s\n", resp.ID, method, err)
+				errBs, _ := json.Marshal(resp.Error)
+				logger.Printf("--> response error #%s: %s: %s\n", resp.ID, method, errBs)
 			}
 		}
 	}
@@ -216,8 +216,8 @@ func buildSendHandler(
 				result, _ := json.Marshal(resp.Result)
 				logger.Printf("<-- response #%s: %s: %s\n", resp.ID, method, result)
 			} else {
-				err, _ := json.Marshal(resp.Error)
-				logger.Printf("<-- response error #%s: %s: %s\n", resp.ID, method, err)
+				errBs, _ := json.Marshal(resp.Error)
+				logger.Printf("<-- response error #%s: %s: %s\n", resp.ID, method, errBs)
 			}
 		}
 	}

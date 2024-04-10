@@ -77,13 +77,14 @@ type InitializeResult struct {
 }
 
 type ServerCapabilities struct {
-	TextDocumentSyncOptions TextDocumentSyncOptions `json:"textDocumentSync"`
-	DiagnosticProvider      DiagnosticOptions       `json:"diagnosticProvider"`
-	Workspace               WorkspaceOptions        `json:"workspace"`
-	InlayHintProvider       InlayHintOptions        `json:"inlayHintProvider"`
-	HoverProvider           bool                    `json:"hoverProvider"`
-	CodeActionProvider      CodeActionOptions       `json:"codeActionProvider"`
-	ExecuteCommandProvider  ExecuteCommandOptions   `json:"executeCommandProvider"`
+	TextDocumentSyncOptions    TextDocumentSyncOptions `json:"textDocumentSync"`
+	DiagnosticProvider         DiagnosticOptions       `json:"diagnosticProvider"`
+	Workspace                  WorkspaceOptions        `json:"workspace"`
+	InlayHintProvider          InlayHintOptions        `json:"inlayHintProvider"`
+	HoverProvider              bool                    `json:"hoverProvider"`
+	CodeActionProvider         CodeActionOptions       `json:"codeActionProvider"`
+	ExecuteCommandProvider     ExecuteCommandOptions   `json:"executeCommandProvider"`
+	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 }
 
 type WorkspaceOptions struct {
@@ -147,6 +148,19 @@ type TextDocumentEdit struct {
 type TextEdit struct {
 	Range   Range  `json:"range"`
 	NewText string `json:"newText"`
+}
+
+type DocumentFormattingParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Options      FormattingOptions      `json:"options"`
+}
+
+type FormattingOptions struct {
+	TabSize                uint `json:"tabSize"`
+	InsertSpaces           bool `json:"insertSpaces"`
+	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace"`
+	InsertFinalNewline     bool `json:"insertFinalNewline"`
+	TrimFinalNewlines      bool `json:"trimFinalNewline"`
 }
 
 type FileOperationsServerCapabilities struct {

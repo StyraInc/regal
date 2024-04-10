@@ -27,10 +27,7 @@ const (
 )
 
 type LanguageServerOptions struct {
-	ErrorLog *os.File
-
-	// Deprecated: VerboseLogging is deprecated and will be removed in a future release.
-	VerboseLogging bool
+	ErrorLog io.Writer
 }
 
 func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
@@ -51,7 +48,7 @@ type LanguageServer struct {
 
 	conn *jsonrpc2.Conn
 
-	errorLog *os.File
+	errorLog io.Writer
 
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex

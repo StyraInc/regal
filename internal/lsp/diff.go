@@ -48,24 +48,30 @@ func operations(a, b []string) []*operation {
 	M, N := len(a), len(b)
 
 	var i int
+
 	solution := make([]*operation, len(a)+len(b))
 
 	add := func(op *operation, i2, j2 int) {
 		if op == nil {
 			return
 		}
+
 		op.I2 = uint(i2)
 		if op.Kind == Insert {
 			op.Content = b[op.J1:j2]
 		}
+
 		solution[i] = op
 		i++
 	}
+
 	x, y := 0, 0
+
 	for _, snake := range snakes {
 		if len(snake) < 2 {
 			continue
 		}
+
 		var op *operation
 		// delete (horizontal)
 		for snake[0]-snake[1] > x-y {
@@ -76,6 +82,7 @@ func operations(a, b []string) []*operation {
 					J1:   uint(y),
 				}
 			}
+
 			x++
 			if x == M {
 				break
@@ -92,6 +99,7 @@ func operations(a, b []string) []*operation {
 					J1:   uint(y),
 				}
 			}
+
 			y++
 		}
 		add(op, x, y)
@@ -101,10 +109,12 @@ func operations(a, b []string) []*operation {
 			x++
 			y++
 		}
+
 		if x >= M && y >= N {
 			break
 		}
 	}
+
 	return solution[:i]
 }
 
@@ -114,11 +124,13 @@ func operations(a, b []string) []*operation {
 func backtrack(trace [][]int, x, y, offset int) [][]int {
 	snakes := make([][]int, len(trace))
 	d := len(trace) - 1
+
 	for ; x > 0 && y > 0 && d > 0; d-- {
 		V := trace[d]
 		if len(V) == 0 {
 			continue
 		}
+
 		snakes[d] = []int{x, y}
 
 		k := x - y
@@ -133,10 +145,13 @@ func backtrack(trace [][]int, x, y, offset int) [][]int {
 		x = V[kPrev+offset]
 		y = x - kPrev
 	}
+
 	if x < 0 || y < 0 {
 		return snakes
 	}
+
 	snakes[d] = []int{x, y}
+
 	return snakes
 }
 
@@ -178,6 +193,7 @@ func shortestEditSequence(a, b []string) ([][]int, int) {
 				// Makes sure to save the state of the array before returning.
 				copy(copyV, V)
 				trace[d] = copyV
+
 				return trace, offset
 			}
 		}
@@ -186,6 +202,7 @@ func shortestEditSequence(a, b []string) ([][]int, int) {
 		copy(copyV, V)
 		trace[d] = copyV
 	}
+
 	return nil, 0
 }
 
@@ -194,5 +211,6 @@ func splitLines(text string) []string {
 	if lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
+
 	return lines
 }

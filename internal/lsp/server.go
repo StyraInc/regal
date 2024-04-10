@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/open-policy-agent/opa/format"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/format"
 	"github.com/open-policy-agent/opa/util"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
@@ -22,8 +22,10 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
-const methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
-const methodWorkspaceApplyEdit = "workspace/applyEdit"
+const (
+	methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
+	methodWorkspaceApplyEdit             = "workspace/applyEdit"
+)
 
 type LanguageServerOptions struct {
 	ErrorLog       *os.File
@@ -227,24 +229,28 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 			case "regal.fmt":
 				if len(params.Arguments) == 0 {
 					l.logError(fmt.Errorf("expected at least one argument in command %v", params.Arguments))
+
 					break
 				}
 
 				target, ok := params.Arguments[0].(string)
 				if !ok {
 					l.logError(fmt.Errorf("expected argument to be a string in command %v", params.Command))
+
 					break
 				}
 
 				oldContent, ok := l.cache.GetFileContents(target)
 				if !ok {
 					l.logError(fmt.Errorf("could not get file contents for uri %q", target))
+
 					break
 				}
 
 				newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, format.Opts{})
 				if err != nil {
 					l.logError(fmt.Errorf("failed to format file: %w", err))
+
 					break
 				}
 
@@ -447,8 +453,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 	actions := make([]CodeAction, 0)
 
 	for _, diag := range params.Context.Diagnostics {
-		switch diag.Code {
-		case "opa-fmt":
+		if diag.Code == "opa-fmt" {
 			actions = append(actions, CodeAction{
 				Title:       "Format using opa fmt",
 				Kind:        "quickfix",
@@ -467,7 +472,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 }
 
 func (l *LanguageServer) handleWorkspaceExecuteCommand(
-	ctx context.Context,
+	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {

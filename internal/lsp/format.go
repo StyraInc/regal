@@ -11,16 +11,17 @@ import (
 func Format(path, contents string, opts format.Opts) (string, error) {
 	formatted, err := format.SourceWithOpts(filepath.Base(path), []byte(contents), opts)
 	if err != nil {
-		return "", fmt.Errorf("failed to format Rego source file: %v", err)
+		return "", fmt.Errorf("failed to format Rego source file: %w", err)
 	}
 
 	return string(formatted), nil
 }
 
-// ComputeEdits computes diff edits from 2 string inputs
+// ComputeEdits computes diff edits from 2 string inputs.
 func ComputeEdits(before, after string) []TextEdit {
 	ops := operations(splitLines(before), splitLines(after))
 	edits := make([]TextEdit, 0, len(ops))
+
 	for _, op := range ops {
 		switch op.Kind {
 		case Delete:
@@ -43,5 +44,6 @@ func ComputeEdits(before, after string) []TextEdit {
 		case Equal:
 		}
 	}
+
 	return edits
 }

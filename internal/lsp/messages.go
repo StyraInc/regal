@@ -140,8 +140,8 @@ type WorkspaceEdit struct {
 type TextDocumentEdit struct {
 	// TextDocument is the document to change. Not that this could be versioned,
 	// (OptionalVersionedTextDocumentIdentifier) but we currently don't use that.
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
-	Edits        []TextEdit             `json:"edits"`
+	TextDocument OptionalVersionedTextDocumentIdentifier `json:"textDocument"`
+	Edits        []TextEdit                              `json:"edits"`
 }
 
 type TextEdit struct {
@@ -197,6 +197,10 @@ type TextDocumentSyncOptions struct {
 }
 
 type TextDocumentIdentifier struct {
+	URI string `json:"uri"`
+}
+
+type OptionalVersionedTextDocumentIdentifier struct {
 	URI string `json:"uri"`
 	// Version is optional (i.e. it can be null), but it cannot be undefined when used in some requests
 	// (see workspace/applyEdit).

@@ -259,7 +259,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					Edit: WorkspaceEdit{
 						DocumentChanges: []TextDocumentEdit{
 							{
-								TextDocument: TextDocumentIdentifier{URI: target},
+								TextDocument: OptionalVersionedTextDocumentIdentifier{URI: target},
 								Edits:        edits,
 							},
 						},

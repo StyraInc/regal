@@ -136,6 +136,10 @@ func TestURIToPath_VSCode(t *testing.T) {
 			uri:  "file:///c%3A/foo/bar",
 			want: "c:/foo/bar",
 		},
+		"unix encoded with space in path": {
+			uri:  "file:///Users/foo/bar%20baz",
+			want: "/Users/foo/bar baz",
+		},
 		// these other examples shouldn't happen, but we should handle them
 		"windows not encoded": {
 			uri:  "file://c:/foo/bar",

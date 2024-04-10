@@ -31,6 +31,10 @@ with linting.
 
 ## What People Say About Regal
 
+> I am really impressed with Regal. It has helped me write more expressive and deterministic Rego.
+
+— Jimmy Ray, [Boeing](https://www.boeing.com/)
+
 > I really like that at each release of Regal I learn something new!
 > Of all the linters I'm exposed to, Regal is probably the most instructive one.
 

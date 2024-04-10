@@ -19,6 +19,8 @@ type BuiltinPosition struct {
 
 var builtins = builtinMap() //nolint:gochecknoglobals
 
+var builtinHoverCache = make(map[*ast.Builtin]string) //nolint:gochecknoglobals
+
 func builtinMap() map[string]*ast.Builtin {
 	m := make(map[string]*ast.Builtin)
 	for _, b := range ast.CapabilitiesForThisVersion().Builtins {
@@ -73,6 +75,10 @@ func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 }
 
 func createHoverContent(builtin *ast.Builtin) string {
+	if content, ok := builtinHoverCache[builtin]; ok {
+		return content
+	}
+
 	title := fmt.Sprintf(
 		"[%s](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s)",
 		builtin.Name,
@@ -139,7 +145,11 @@ func createHoverContent(builtin *ast.Builtin) string {
 
 	sb.WriteString("\n")
 
-	return sb.String()
+	result := sb.String()
+
+	builtinHoverCache[builtin] = result
+
+	return result
 }
 
 func updateBuiltinPositions(cache *Cache, uri string) error {

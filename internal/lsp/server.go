@@ -15,7 +15,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/format"
-	"github.com/open-policy-agent/opa/util"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
@@ -28,7 +27,9 @@ const (
 )
 
 type LanguageServerOptions struct {
-	ErrorLog       *os.File
+	ErrorLog *os.File
+
+	// Deprecated: VerboseLogging is deprecated and will be removed in a future release.
 	VerboseLogging bool
 }
 
@@ -40,7 +41,6 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		commandRequest:             make(chan ExecuteCommandParams, 10),
-		verboseLogging:             opts.VerboseLogging,
 	}
 
 	return ls
@@ -51,8 +51,7 @@ type LanguageServer struct {
 
 	conn *jsonrpc2.Conn
 
-	errorLog       *os.File
-	verboseLogging bool
+	errorLog *os.File
 
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
@@ -84,12 +83,6 @@ func (l *LanguageServer) Handle(
 	conn *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	if req.Params == nil {
-		l.logInboundMessage(req.Method, "empty params")
-	} else {
-		l.logInboundMessage(req.Method, string(*req.Params))
-	}
-
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -150,8 +143,6 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
-			l.log(fmt.Sprintf("diagnostic request for %s: %q", evt.URI, evt.Reason))
-
 			// if there is new content, we need to update the parse errors or module first
 			success, err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
@@ -181,9 +172,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			if ok && len(aggDiags) > 0 {
 				l.diagnosticRequestWorkspace <- fmt.Sprintf("file %q with aggregate violation changed", evt.URI)
 			}
-		case reason := <-l.diagnosticRequestWorkspace:
-			l.log(fmt.Sprintf("diagnostic request workspace: %q", reason))
-
+		case <-l.diagnosticRequestWorkspace:
 			// results will be sent in response to the next workspace/diagnostics request
 			err := updateAllDiagnostics(ctx, l.cache, l.loadedConfig, l.clientRootURI)
 			if err != nil {
@@ -207,8 +196,6 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.builtinsPositionFile:
-			l.log(fmt.Sprintf("builtin positions request for %s: %q", evt.URI, evt.Reason))
-
 			_, err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
@@ -265,8 +252,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 						},
 					},
 				}
-
-				l.logOutboundMessage(methodWorkspaceApplyEdit, editParams)
 
 				// note, here conn.Call is used as the workspace/applyEdit message is a request, not a notification
 				// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
@@ -344,56 +329,6 @@ func (l *LanguageServer) logError(err error) {
 	}
 }
 
-func (l *LanguageServer) log(msg string) {
-	if l.errorLog != nil {
-		fmt.Fprintf(l.errorLog, "%s\n", msg)
-	}
-}
-
-func (l *LanguageServer) logInboundMessage(method string, message any) {
-	if !l.verboseLogging {
-		return
-	}
-
-	strMessage, ok := message.(string)
-	if !ok {
-		bs, err := json.Marshal(message)
-		if err != nil {
-			l.logError(fmt.Errorf("failed to marshal request: %w", err))
-
-			return
-		}
-
-		strMessage = string(bs)
-	}
-
-	if l.errorLog != nil {
-		fmt.Fprintf(l.errorLog, "->(%s): %s\n", method, strMessage)
-	}
-}
-
-func (l *LanguageServer) logOutboundMessage(method string, message any) {
-	if !l.verboseLogging {
-		return
-	}
-
-	strMessage, ok := message.(string)
-	if !ok {
-		bs, err := json.Marshal(message)
-		if err != nil {
-			l.logError(fmt.Errorf("failed to marshal response: %w", err))
-
-			return
-		}
-
-		strMessage = string(bs)
-	}
-
-	if l.errorLog != nil {
-		fmt.Fprintf(l.errorLog, "<-(%s): %s\n", method, strMessage)
-	}
-}
-
 type HoverResponse struct {
 	Contents MarkupContent `json:"contents"`
 	Range    Range         `json:"range"`
@@ -438,7 +373,7 @@ func (l *LanguageServer) handleTextDocumentHover(
 	return struct{}{}, nil
 }
 
-func (l *LanguageServer) handleTextDocumentCodeAction(
+func (*LanguageServer) handleTextDocumentCodeAction(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
@@ -461,10 +396,6 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 			})
 		}
 	}
-
-	bs := util.MustMarshalJSON(actions)
-
-	l.logOutboundMessage("textDocument/codeAction", string(bs))
 
 	return actions, nil
 }
@@ -501,14 +432,12 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.log(fmt.Sprintf("failed to get module for uri %q", params.TextDocument.URI))
+		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
 
 		return []InlayHint{}, nil
 	}
 
 	inlayHints := getInlayHints(module)
-
-	l.logOutboundMessage("textDocument/inlayHint", inlayHints)
 
 	return inlayHints, nil
 }
@@ -661,8 +590,6 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 	// if we're not in workspace mode, we can't show anything here
 	// since we don't have the URI of the workspace from initialize
 	if !l.workspaceMode {
-		l.logOutboundMessage("workspace/diagnostic", workspaceReport)
-
 		return workspaceReport, nil
 	}
 
@@ -672,8 +599,6 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 		Version: nil,
 		Items:   l.cache.GetAllDiagnosticsForURI(l.clientRootURI),
 	})
-
-	l.logOutboundMessage("workspace/diagnostic", workspaceReport)
 
 	return workspaceReport, nil
 }
@@ -692,8 +617,9 @@ func (l *LanguageServer) handleInitialize(
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
-		l.log(
-			"Unable to match client identifier for initializing client, using generic functionality: " + params.ClientInfo.Name,
+		l.logError(
+			fmt.Errorf("unable to match client identifier for initializing client, using generic functionality: %s",
+				params.ClientInfo.Name),
 		)
 	}
 
@@ -742,7 +668,6 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	if l.clientRootURI != "" {
-		l.log("running in workspace mode")
 		l.workspaceMode = true
 
 		err = l.loadWorkspaceContents()
@@ -756,8 +681,6 @@ func (l *LanguageServer) handleInitialize(
 			l.reloadConfig(file, false)
 		}
 	}
-
-	l.logOutboundMessage("initialize", result)
 
 	return result, nil
 }
@@ -892,8 +815,6 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, uri string) er
 		Items: l.cache.GetAllDiagnosticsForURI(uri),
 		URI:   uri,
 	}
-
-	l.logOutboundMessage(methodTextDocumentPublishDiagnostics, resp)
 
 	err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp)
 	if err != nil {

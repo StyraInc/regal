@@ -30,18 +30,12 @@ func init() {
 
 			ls := lsp.NewLanguageServer(opts)
 
-			loggingCfg := lsp.ConnectionLoggingConfig{
-				Writer:      os.Stderr,
-				LogInbound:  false,
-				LogOutbound: false,
-			}
-			if verboseLogging {
-				loggingCfg.LogInbound = true
-				loggingCfg.LogOutbound = true
-			}
-
 			conn := lsp.NewConnectionFromLanguageServer(ctx, ls.Handle, &lsp.ConnectionOptions{
-				LoggingConfig: loggingCfg,
+				LoggingConfig: lsp.ConnectionLoggingConfig{
+					Writer:      os.Stderr,
+					LogInbound:  verboseLogging,
+					LogOutbound: verboseLogging,
+				},
 			})
 
 			ls.SetConn(conn)

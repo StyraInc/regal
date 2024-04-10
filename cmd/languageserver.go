@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sourcegraph/jsonrpc2"
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/internal/lsp"
@@ -26,19 +25,21 @@ func init() {
 			defer cancel()
 
 			opts := &lsp.LanguageServerOptions{
-				ErrorLog:       os.Stderr,
-				VerboseLogging: verboseLogging,
+				ErrorLog: os.Stderr,
 			}
 
 			ls := lsp.NewLanguageServer(opts)
 
-			conn := jsonrpc2.NewConn(
-				ctx,
-				jsonrpc2.NewBufferedStream(lsp.StdOutReadWriteCloser{}, jsonrpc2.VSCodeObjectCodec{}),
-				jsonrpc2.HandlerWithError(ls.Handle),
-			)
+			conn := lsp.NewConnectionFromLanguageServer(ctx, ls.Handle, &lsp.ConnectionOptions{
+				LoggingConfig: lsp.ConnectionLoggingConfig{
+					Writer:      os.Stderr,
+					LogInbound:  verboseLogging,
+					LogOutbound: verboseLogging,
+				},
+			})
 
 			ls.SetConn(conn)
+
 			go ls.StartDiagnosticsWorker(ctx)
 			go ls.StartHoverWorker(ctx)
 			go ls.StartCommandWorker(ctx)

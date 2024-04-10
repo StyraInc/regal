@@ -198,6 +198,9 @@ type TextDocumentSyncOptions struct {
 
 type TextDocumentIdentifier struct {
 	URI string `json:"uri"`
+	// Version is optional (i.e. it can be null), but it cannot be undefined when used in some requests
+	// (see workspace/applyEdit).
+	Version *uint `json:"version"`
 }
 
 type TextDocumentDidChangeParams struct {

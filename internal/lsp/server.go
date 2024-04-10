@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/open-policy-agent/opa/format"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/format"
 	"github.com/open-policy-agent/opa/util"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
@@ -23,6 +23,7 @@ import (
 )
 
 const methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
+const methodWorkspaceApplyEdit = "workspace/applyEdit"
 
 type LanguageServerOptions struct {
 	ErrorLog       *os.File
@@ -36,6 +37,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
+		commandRequest:             make(chan ExecuteCommandParams, 10),
 		verboseLogging:             opts.VerboseLogging,
 	}
 
@@ -57,6 +59,8 @@ type LanguageServer struct {
 	diagnosticRequestWorkspace chan string
 
 	builtinsPositionFile chan fileUpdateEvent
+
+	commandRequest chan ExecuteCommandParams
 
 	clientRootURI    string
 	clientIdentifier clients.Identifier
@@ -208,6 +212,70 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 			_, err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
+			}
+		}
+	}
+}
+
+func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case params := <-l.commandRequest:
+			switch params.Command {
+			case "regal.fmt":
+				if len(params.Arguments) == 0 {
+					l.logError(fmt.Errorf("expected at least one argument in command %v", params.Arguments))
+					break
+				}
+
+				target, ok := params.Arguments[0].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected argument to be a string in command %v", params.Command))
+					break
+				}
+
+				oldContent, ok := l.cache.GetFileContents(target)
+				if !ok {
+					l.logError(fmt.Errorf("could not get file contents for uri %q", target))
+					break
+				}
+
+				newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, format.Opts{})
+				if err != nil {
+					l.logError(fmt.Errorf("failed to format file: %w", err))
+					break
+				}
+
+				edits := ComputeEdits(oldContent, newContent)
+
+				editParams := ApplyWorkspaceEditParams{
+					Label: "Format using opa fmt",
+					Edit: WorkspaceEdit{
+						DocumentChanges: []TextDocumentEdit{
+							{
+								TextDocument: TextDocumentIdentifier{URI: target},
+								Edits:        edits,
+							},
+						},
+					},
+				}
+
+				l.logOutboundMessage(methodWorkspaceApplyEdit, editParams)
+
+				// note, here conn.Call is used as the workspace/applyEdit message is a request, not a notification
+				// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
+				// receive responses too.
+				err = l.conn.Call(
+					ctx,
+					methodWorkspaceApplyEdit,
+					editParams,
+					nil, // however, the response content is not important
+				)
+				if err != nil {
+					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
 			}
 		}
 	}
@@ -408,52 +476,13 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	if len(params.Arguments) == 0 {
-		return nil, fmt.Errorf("no arguments provided")
-	}
+	// this must not block so we send the request to the worker on a buffered channel.
+	// the response to the workspace/executeCommand request must be sent before the command is executed
+	// so that the client can complete the request and be ready to receive the follow-on request for
+	// workspace/applyEdit.
+	l.commandRequest <- params
 
-	switch params.Command {
-	case "regal.fmt":
-		target, ok := params.Arguments[0].(string)
-		if !ok {
-			return nil, fmt.Errorf("expected argument to be a string")
-		}
-
-		oldContent, ok := l.cache.GetFileContents(target)
-		if !ok {
-			return nil, fmt.Errorf("could not get file contents for uri %q", target)
-		}
-
-		newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, format.Opts{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to format file: %w", err)
-		}
-
-		edits := ComputeEdits(oldContent, newContent)
-
-		editParams := ApplyWorkspaceEditParams{
-			Label: "Format using opa fmt",
-			Edit: WorkspaceEdit{
-				DocumentChanges: []TextDocumentEdit{
-					{
-						TextDocument: TextDocumentIdentifier{URI: target},
-						Edits:        edits,
-					},
-				},
-			},
-		}
-
-		l.logOutboundMessage("workspace/applyEdit", editParams)
-
-		fmt.Fprintf(l.errorLog, "%s\n", string(util.MustMarshalJSON(editParams)))
-
-		err = l.conn.Notify(ctx, "workspace/applyEdit", editParams)
-
-		if err != nil {
-			l.log(fmt.Sprintf("failed workspace/applyEdit notify: %v", err.Error()))
-		}
-	}
-
+	// however, the contents of the response is not important
 	return struct{}{}, nil
 }
 

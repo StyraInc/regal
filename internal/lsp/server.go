@@ -14,6 +14,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
@@ -201,6 +202,38 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 	}
 }
 
+func getTargetURIFromParams(params ExecuteCommandParams) (string, error) {
+	if len(params.Arguments) == 0 {
+		return "", fmt.Errorf("expected at least one argument in command %v", params.Arguments)
+	}
+
+	target, ok := params.Arguments[0].(string)
+	if !ok {
+		return "", fmt.Errorf("expected argument to be a string in command %v", params.Command)
+	}
+
+	return target, nil
+}
+
+func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.Opts) ([]TextEdit, string, error) {
+	target, err := getTargetURIFromParams(params)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get target uri: %w", err)
+	}
+
+	oldContent, ok := l.cache.GetFileContents(target)
+	if !ok {
+		return nil, target, fmt.Errorf("could not get file contents for uri %q", target)
+	}
+
+	newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, opts)
+	if err != nil {
+		return nil, target, fmt.Errorf("failed to format file: %w", err)
+	}
+
+	return ComputeEdits(oldContent, newContent), target, nil
+}
+
 func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 	for {
 		select {
@@ -209,37 +242,47 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 		case params := <-l.commandRequest:
 			switch params.Command {
 			case "regal.fmt":
-				if len(params.Arguments) == 0 {
-					l.logError(fmt.Errorf("expected at least one argument in command %v", params.Arguments))
-
-					break
-				}
-
-				target, ok := params.Arguments[0].(string)
-				if !ok {
-					l.logError(fmt.Errorf("expected argument to be a string in command %v", params.Command))
-
-					break
-				}
-
-				oldContent, ok := l.cache.GetFileContents(target)
-				if !ok {
-					l.logError(fmt.Errorf("could not get file contents for uri %q", target))
-
-					break
-				}
-
-				newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, format.Opts{})
+				edits, target, err := l.formatToEdits(params, format.Opts{})
 				if err != nil {
-					l.logError(fmt.Errorf("failed to format file: %w", err))
+					l.logError(err)
 
 					break
 				}
-
-				edits := ComputeEdits(oldContent, newContent)
 
 				editParams := ApplyWorkspaceEditParams{
 					Label: "Format using opa fmt",
+					Edit: WorkspaceEdit{
+						DocumentChanges: []TextDocumentEdit{
+							{
+								TextDocument: OptionalVersionedTextDocumentIdentifier{URI: target},
+								Edits:        edits,
+							},
+						},
+					},
+				}
+
+				// note, here conn.Call is used as the workspace/applyEdit message is a request, not a notification
+				// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
+				// receive responses too.
+				err = l.conn.Call(
+					ctx,
+					methodWorkspaceApplyEdit,
+					editParams,
+					nil, // however, the response content is not important
+				)
+				if err != nil {
+					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
+			case "regal.fmt.v1":
+				edits, target, err := l.formatToEdits(params, format.Opts{RegoVersion: ast.RegoV0CompatV1})
+				if err != nil {
+					l.logError(err)
+
+					break
+				}
+
+				editParams := ApplyWorkspaceEditParams{
+					Label: "Format for Rego v1 using opa fmt",
 					Edit: WorkspaceEdit{
 						DocumentChanges: []TextDocumentEdit{
 							{
@@ -383,13 +426,22 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 	actions := make([]CodeAction, 0)
 
 	for _, diag := range params.Context.Diagnostics {
-		if diag.Code == "opa-fmt" {
+		switch diag.Code {
+		case "opa-fmt":
 			actions = append(actions, CodeAction{
 				Title:       "Format using opa fmt",
 				Kind:        "quickfix",
 				Diagnostics: []Diagnostic{diag},
 				IsPreferred: true,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
+			})
+		case "use-rego-v1":
+			actions = append(actions, CodeAction{
+				Title:       "Format for Rego v1 using opa fmt",
+				Kind:        "quickfix",
+				Diagnostics: []Diagnostic{diag},
+				IsPreferred: true,
+				Command:     FmtV1Command([]string{params.TextDocument.URI}),
 			})
 		}
 
@@ -424,7 +476,7 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	// this must not block so we send the request to the worker on a buffered channel.
+	// this must not block, so we send the request to the worker on a buffered channel.
 	// the response to the workspace/executeCommand request must be sent before the command is executed
 	// so that the client can complete the request and be ready to receive the follow-on request for
 	// workspace/applyEdit.
@@ -676,7 +728,7 @@ func (l *LanguageServer) handleInitialize(
 				CodeActionKinds: []string{"quickfix"},
 			},
 			ExecuteCommandProvider: ExecuteCommandOptions{
-				Commands: []string{"regal.fmt"},
+				Commands: []string{"regal.fmt", "regal.fmt.v1"},
 			},
 		},
 	}

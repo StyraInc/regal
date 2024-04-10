@@ -370,7 +370,7 @@ func (l *LanguageServer) handleTextDocumentHover(
 	return struct{}{}, nil
 }
 
-func (*LanguageServer) handleTextDocumentCodeAction(
+func (l *LanguageServer) handleTextDocumentCodeAction(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
@@ -390,6 +390,23 @@ func (*LanguageServer) handleTextDocumentCodeAction(
 				Diagnostics: []Diagnostic{diag},
 				IsPreferred: true,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
+			})
+		}
+
+		if l.clientIdentifier == clients.IdentifierVSCode {
+			// always show the docs link
+			txt := "Show documentation for " + diag.Code
+			actions = append(actions, CodeAction{
+				Title:       txt,
+				Kind:        "quickfix",
+				Diagnostics: []Diagnostic{diag},
+				IsPreferred: true,
+				Command: Command{
+					Title:     txt,
+					Command:   "vscode.open",
+					Tooltip:   txt,
+					Arguments: []any{diag.CodeDescription.Href},
+				},
 			})
 		}
 	}

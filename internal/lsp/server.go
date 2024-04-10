@@ -134,8 +134,6 @@ func (l *LanguageServer) Handle(
 		return struct{}{}, nil
 	}
 
-	fmt.Fprintf(l.errorLog, "%s\n", string(util.MustMarshalJSON(req)))
-
 	return nil, &jsonrpc2.Error{
 		Code:    jsonrpc2.CodeMethodNotFound,
 		Message: "method not supported: " + req.Method,

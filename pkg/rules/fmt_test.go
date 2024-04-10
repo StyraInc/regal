@@ -34,6 +34,18 @@ func TestFmtRuleFail(t *testing.T) {
 	if result.Violations[0].Location.File != "p.rego" {
 		t.Errorf("expected violation location file to be 'p.rego', got %s", result.Violations[0].Location.File)
 	}
+
+	if result.Violations[0].Location.Row != 1 {
+		t.Errorf("expected violation location row to be 1, got %d", result.Violations[0].Location.Row)
+	}
+
+	if result.Violations[0].Location.Column != 1 {
+		t.Errorf("expected violation location column to be 1, got %d", result.Violations[0].Location.Column)
+	}
+
+	if *result.Violations[0].Location.Text != "  package p " {
+		t.Errorf("expected violation location text to be '  package p ', got %q", *result.Violations[0].Location.Text)
+	}
 }
 
 func TestFmtRuleSuccess(t *testing.T) {

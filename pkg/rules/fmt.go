@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/open-policy-agent/opa/format"
 
@@ -52,9 +51,11 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 			}
 
 			if !bytes.Equal(formatted, unformatted) {
-				txt := strings.TrimSuffix(string(unformatted), "\n")
-				if lines := bytes.SplitN(unformatted, []byte("\n"), 1); len(lines) > 0 {
-					txt = string(lines[0])
+				row := module.Package.Location.Row
+				txt := module.Package.String()
+
+				if lines := bytes.SplitN(unformatted, []byte("\n"), row+1); len(lines) > row {
+					txt = string(lines[row-1])
 				}
 
 				violation := report.Violation{
@@ -67,7 +68,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 					}},
 					Location: report.Location{
 						File:   filename,
-						Row:    1,
+						Row:    row,
 						Column: 1,
 						Text:   &txt,
 					},

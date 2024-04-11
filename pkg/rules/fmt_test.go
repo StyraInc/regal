@@ -15,36 +15,72 @@ func TestFmtRuleFail(t *testing.T) {
 
 	ctx := context.Background()
 
-	policy := "  package p "
+	testCases := map[string]struct {
+		policy string
+		expRow int
+		expCol int
+		expTxt string
+	}{
+		"simple": {
+			policy: " package p\n",
+			expRow: 1,
+			expCol: 1,
+			expTxt: " package p",
+		},
+		"metadata": {
+			//nolint:dupword
+			policy: `# METADATA
+# scope: package
+# description: A note for the package
+   package     p
 
-	result := testutil.Must(rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", policy)))(t)
 
-	if len(result.Violations) != 1 {
-		t.Errorf("expected 1 violation, got %d", len(result.Violations))
+ allow =  true
+`,
+			expRow: 4,
+			expCol: 1,
+			expTxt: "   package     p",
+		},
 	}
 
-	if result.Violations[0].Title != "opa-fmt" {
-		t.Errorf("expected violation title to be 'opa-fmt', got %s", result.Violations[0].Title)
-	}
+	for name, tc := range testCases {
+		tc := tc
 
-	if result.Violations[0].Category != "style" {
-		t.Errorf("expected violation category to be 'style', got %s", result.Violations[0].Category)
-	}
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-	if result.Violations[0].Location.File != "p.rego" {
-		t.Errorf("expected violation location file to be 'p.rego', got %s", result.Violations[0].Location.File)
-	}
+			result := testutil.Must(
+				rules.NewOpaFmtRule(config.Config{}).Run(ctx, test.InputPolicy("p.rego", tc.policy)),
+			)(t)
 
-	if result.Violations[0].Location.Row != 1 {
-		t.Errorf("expected violation location row to be 1, got %d", result.Violations[0].Location.Row)
-	}
+			if len(result.Violations) != 1 {
+				t.Errorf("expected 1 violation, got %d", len(result.Violations))
+			}
 
-	if result.Violations[0].Location.Column != 1 {
-		t.Errorf("expected violation location column to be 1, got %d", result.Violations[0].Location.Column)
-	}
+			if result.Violations[0].Title != "opa-fmt" {
+				t.Errorf("expected violation title to be 'opa-fmt', got %s", result.Violations[0].Title)
+			}
 
-	if *result.Violations[0].Location.Text != "  package p " {
-		t.Errorf("expected violation location text to be '  package p ', got %q", *result.Violations[0].Location.Text)
+			if result.Violations[0].Category != "style" {
+				t.Errorf("expected violation category to be 'style', got %s", result.Violations[0].Category)
+			}
+
+			if result.Violations[0].Location.File != "p.rego" {
+				t.Errorf("expected violation location file to be 'p.rego', got %s", result.Violations[0].Location.File)
+			}
+
+			if result.Violations[0].Location.Row != tc.expRow {
+				t.Errorf("expected violation location row to be 1, got %d", result.Violations[0].Location.Row)
+			}
+
+			if result.Violations[0].Location.Column != tc.expCol {
+				t.Errorf("expected violation location column to be 1, got %d", result.Violations[0].Location.Column)
+			}
+
+			if *result.Violations[0].Location.Text != tc.expTxt {
+				t.Errorf("expected violation location text to be '  package p ', got %q", *result.Violations[0].Location.Text)
+			}
+		})
 	}
 }
 

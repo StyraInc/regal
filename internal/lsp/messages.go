@@ -160,7 +160,7 @@ type FormattingOptions struct {
 	InsertSpaces           bool `json:"insertSpaces"`
 	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace"`
 	InsertFinalNewline     bool `json:"insertFinalNewline"`
-	TrimFinalNewlines      bool `json:"trimFinalNewline"`
+	TrimFinalNewlines      bool `json:"trimFinalNewlines"`
 }
 
 type FileOperationsServerCapabilities struct {

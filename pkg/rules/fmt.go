@@ -51,6 +51,13 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 			}
 
 			if !bytes.Equal(formatted, unformatted) {
+				row := module.Package.Location.Row
+				txt := module.Package.String()
+
+				if lines := bytes.SplitN(unformatted, []byte("\n"), row+1); len(lines) > row {
+					txt = string(lines[row-1])
+				}
+
 				violation := report.Violation{
 					Title:       title,
 					Description: description,
@@ -60,7 +67,10 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 						Reference:   f.Documentation(),
 					}},
 					Location: report.Location{
-						File: filename,
+						File:   filename,
+						Row:    row,
+						Column: 1,
+						Text:   &txt,
 					},
 					Level: f.ruleConfig.Level,
 				}

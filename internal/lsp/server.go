@@ -125,6 +125,11 @@ func (l *LanguageServer) Handle(
 		}
 
 		return struct{}{}, nil
+	case "$/cancelRequest":
+		// TODO: this is a no-op, but is something that we should implement
+		// if we want to support longer running, client-triggered operations
+		// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#dollarRequests
+		return struct{}{}, nil
 	}
 
 	return nil, &jsonrpc2.Error{

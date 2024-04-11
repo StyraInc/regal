@@ -570,7 +570,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
-		fmt.Fprintf(os.Stderr, "formatting params validation warnings: %v", warnings)
+		fmt.Fprintf(l.errorLog, "formatting params validation warnings: %v\n", warnings)
 	}
 
 	oldContent, ok := l.cache.GetFileContents(params.TextDocument.URI)
@@ -764,7 +764,7 @@ func (l *LanguageServer) handleInitialize(
 			ExecuteCommandProvider: ExecuteCommandOptions{
 				Commands: []string{"regal.fmt", "regal.fmt.v1"},
 			},
-			DocumentFormattingProvider: false,
+			DocumentFormattingProvider: true,
 		},
 	}
 

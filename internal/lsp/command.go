@@ -17,3 +17,12 @@ func FmtCommand(args []string) Command {
 		Arguments: toAnySlice(args),
 	}
 }
+
+func FmtV1Command(args []string) Command {
+	return Command{
+		Title:     "Format for Rego v1 using opa-fmt",
+		Command:   "regal.fmt.v1",
+		Tooltip:   "Format for Rego v1 using opa-fmt",
+		Arguments: toAnySlice(args),
+	}
+}

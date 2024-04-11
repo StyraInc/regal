@@ -100,6 +100,8 @@ func (l *LanguageServer) Handle(
 		return struct{}{}, nil
 	case "textDocument/didChange":
 		return l.handleTextDocumentDidChange(ctx, conn, req)
+	case "textDocument/formatting":
+		return l.handleTextDocumentFormatting(ctx, conn, req)
 	case "textDocument/hover":
 		return l.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/inlayHint":
@@ -552,6 +554,33 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	return struct{}{}, nil
 }
 
+func (l *LanguageServer) handleTextDocumentFormatting(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params DocumentFormattingParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
+		fmt.Fprintf(os.Stderr, "formatting params validation warnings: %v", warnings)
+	}
+
+	oldContent, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
+	}
+
+	newContent, err := Format(params.TextDocument.URI, oldContent, format.Opts{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to format file: %w", err)
+	}
+
+	return ComputeEdits(oldContent, newContent), nil
+}
+
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -730,6 +759,7 @@ func (l *LanguageServer) handleInitialize(
 			ExecuteCommandProvider: ExecuteCommandOptions{
 				Commands: []string{"regal.fmt", "regal.fmt.v1"},
 			},
+			DocumentFormattingProvider: false,
 		},
 	}
 

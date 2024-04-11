@@ -71,3 +71,31 @@ func ComputeEdits(before, after string) []TextEdit {
 
 	return edits
 }
+
+// The opa fmt command does not allow configuration options, so we will have
+// to ignore them if provided by the client. We can however log the warnings
+// so that the caller has some chance to be made aware of why their options
+// aren't applied.
+func validateFormattingOptions(opts FormattingOptions) []string {
+	warnings := make([]string, 0)
+
+	if opts.InsertSpaces {
+		warnings = append(warnings, "opa fmt: only tabs supported for indentation")
+	}
+
+	if !opts.TrimTrailingWhitespace {
+		warnings = append(warnings, "opa fmt: trailing whitespace always trimmed")
+	}
+
+	if !opts.InsertFinalNewline {
+		warnings = append(warnings, "opa fmt: final newline always inserted")
+	}
+
+	if !opts.TrimFinalNewlines {
+		warnings = append(warnings, "opa fmt: final newlines always trimmed")
+	}
+
+	// opts.TabSize ignored as we don't support using spaces
+
+	return warnings
+}

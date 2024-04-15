@@ -2,7 +2,7 @@
 
 **Summary**: Avoid double negatives
 
-**Category**: Community
+**Category**: Style
 
 **Avoid**
 ```rego
@@ -50,7 +50,7 @@ This linter rule provides the following configuration options:
 
 ```yaml
 rules:
-  community:
+  style:
     double-negative:
       # one of "error", "warning", "ignore"
       level: error

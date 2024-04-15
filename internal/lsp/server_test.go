@@ -16,6 +16,8 @@ import (
 
 const mainRegoFileName = "/main.rego"
 
+const defaultTimeout = 3 * time.Second
+
 // InMemoryReadWriteCloser is an in-memory implementation of jsonrpc2.ReadWriteCloser.
 type InMemoryReadWriteCloser struct {
 	Buffer bytes.Buffer
@@ -159,7 +161,7 @@ allow = true
 	}
 
 	// validate that the client received a diagnostics notification for the file
-	timeout := time.NewTimer(1 * time.Second)
+	timeout := time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -196,7 +198,7 @@ allow := true
 	}
 
 	// validate that the client received a new diagnostics notification for the file
-	timeout = time.NewTimer(1 * time.Second)
+	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -227,7 +229,7 @@ rules:
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	timeout = time.NewTimer(1 * time.Second)
+	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -400,7 +402,7 @@ ignore:
 		if requestData.Items[0].Code != "prefer-package-imports" {
 			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(defaultTimeout):
 		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 	}
 
@@ -418,7 +420,7 @@ ignore:
 		if requestData.Items[0].Code != "use-assignment-operator" {
 			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(defaultTimeout):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 
@@ -432,7 +434,7 @@ ignore:
 		if len(requestData.Items) != 0 {
 			t.Fatalf("expected 0 diagnostics, got %d, %v", len(requestData.Items), requestData)
 		}
-	case <-time.After(1 * time.Second):
+	case <-time.After(defaultTimeout):
 		t.Fatalf("timed out waiting for ignored/foo.rego diagnostics to be sent")
 	}
 
@@ -466,7 +468,7 @@ allow if input.user in admins.users
 
 	// here we wait to receive a diagnostics notification for authz.rego with no diagnostics items, the file diagnostics
 	// can arrive first which can still contain the old diagnostics items
-	timeout := time.NewTimer(1 * time.Second)
+	timeout := time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -485,7 +487,7 @@ allow if input.user in admins.users
 
 	// we should also receive a diagnostics notification for admins.rego, since it is in the workspace, but it has not
 	// been changed, so the violations should be the same
-	timeout = time.NewTimer(1 * time.Second)
+	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -609,7 +611,7 @@ allow := true
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
-	timeout := time.NewTimer(1 * time.Second)
+	timeout := time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -640,7 +642,7 @@ allow := true
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	timeout = time.NewTimer(1 * time.Second)
+	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {

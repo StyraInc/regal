@@ -134,13 +134,41 @@ func TestLintNonExistentDir(t *testing.T) {
 	expectExitCode(t, err, 1, &stdout, &stderr)
 
 	if exp, act := "", stdout.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
+		t.Errorf("expected stdout %q, got %q", exp, act)
 	}
 
 	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
 		"failed to filter paths:\nstat "+td+filepath.FromSlash("/what/ever")+": no such file or directory\n",
 		stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+}
+
+func TestLintAndFix(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	// only violation is for the opa-fmt rule
+	unformattedContents := []byte("package test\nimport rego.v1\nallow := true")
+	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
+	if err != nil {
+		t.Fatalf("failed to write main.rego: %v", err)
+	}
+
+	err = regal(&stdout, &stderr)("lint", "--fix", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	if exp, act := "1 file linted. No violations found.\n", stdout.String(); exp != act {
 		t.Errorf("expected stdout %q, got %q", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
 }
 

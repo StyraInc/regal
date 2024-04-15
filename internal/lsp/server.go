@@ -21,6 +21,7 @@ import (
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
 
 const (
@@ -239,12 +240,19 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 		return nil, target, fmt.Errorf("could not get file contents for uri %q", target)
 	}
 
-	newContent, err := Format(uri.ToPath(l.clientIdentifier, target), oldContent, opts)
+	fixed, formattedContent, err := fixes.Fmt([]byte(oldContent), &fixes.FmtOptions{
+		Filename:   uri.ToPath(l.clientIdentifier, target),
+		OPAFmtOpts: opts,
+	})
 	if err != nil {
 		return nil, target, fmt.Errorf("failed to format file: %w", err)
 	}
 
-	return ComputeEdits(oldContent, newContent), target, nil
+	if !fixed {
+		return []TextEdit{}, target, nil
+	}
+
+	return ComputeEdits(oldContent, string(formattedContent)), target, nil
 }
 
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
@@ -633,12 +641,18 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
-	newContent, err := Format(params.TextDocument.URI, oldContent, format.Opts{})
+	fixed, formattedContent, err := fixes.Fmt([]byte(oldContent), &fixes.FmtOptions{
+		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to format file: %w", err)
 	}
 
-	return ComputeEdits(oldContent, newContent), nil
+	if !fixed {
+		return []TextEdit{}, nil
+	}
+
+	return ComputeEdits(oldContent, string(formattedContent)), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(

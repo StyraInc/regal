@@ -21,6 +21,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/fixer"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/reporter"
@@ -38,6 +40,7 @@ type lintCommandParams struct {
 	enablePrint     bool
 	metrics         bool
 	profile         bool
+	fix             bool
 	disable         repeatedStringFlag
 	disableAll      bool
 	disableCategory repeatedStringFlag
@@ -153,6 +156,8 @@ func init() {
 		"enable metrics reporting (currently supported only for JSON output format)")
 	lintCommand.Flags().BoolVar(&params.profile, "profile", false,
 		"enable profiling metrics to be added to reporting (currently supported only for JSON output format)")
+	lintCommand.Flags().BoolVar(&params.fix, "fix", false,
+		"enable automatic fixing of violations where supported")
 
 	lintCommand.Flags().VarP(&params.disable, "disable", "d",
 		"disable specific rule(s). This flag can be repeated.")
@@ -307,6 +312,13 @@ func lint(args []string, params lintCommandParams) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("error(s) encountered while linting: %w", err)
 	}
 
+	if params.fix {
+		err = fixReport(&result)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("error(s) encountered while fixing: %w", err)
+		}
+	}
+
 	rep, err := getReporter(params.format, outputWriter)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to get reporter: %w", err)
@@ -382,4 +394,43 @@ func getWriterForOutputFile(filename string) (io.Writer, error) {
 	}
 
 	return f, nil
+}
+
+func fixReport(rep *report.Report) error {
+	fileReaders := make(map[string]io.Reader)
+
+	for _, v := range rep.Violations {
+		f, err := os.Open(v.Location.File)
+		if err != nil {
+			return fmt.Errorf("failed to open file for fixing %s: %w", v.Location.File, err)
+		}
+
+		defer f.Close()
+
+		fileReaders[v.Location.File] = f
+	}
+
+	fixResult, err := fixer.Fix(rep, fileReaders, fixes.Options{})
+	if err != nil {
+		return fmt.Errorf("error encountered while fixing: %w", err)
+	}
+
+	for file, content := range fixResult {
+		f, err := os.OpenFile(file, os.O_RDWR|os.O_TRUNC, 0o755)
+		if err != nil {
+			return fmt.Errorf("failed to open file %s: %w", file, err)
+		}
+
+		_, err = f.Write(content)
+		if err != nil {
+			return fmt.Errorf("failed to write to file %s: %w", file, err)
+		}
+
+		err = f.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close file %s: %w", file, err)
+		}
+	}
+
+	return nil
 }

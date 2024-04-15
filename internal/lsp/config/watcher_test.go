@@ -39,7 +39,7 @@ foo: bar
 
 	select {
 	case <-watcher.Reload:
-	case <-time.After(100 * time.Second):
+	case <-time.After(5 * time.Second):
 		t.Fatal("timeout waiting for initial config event")
 	}
 

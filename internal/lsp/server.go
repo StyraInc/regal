@@ -27,7 +27,8 @@ const (
 	methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
 	methodWorkspaceApplyEdit             = "workspace/applyEdit"
 
-	ruleNameOPAFmt = "opa-fmt"
+	ruleNameOPAFmt    = "opa-fmt"
+	ruleNameUseRegoV1 = "use-rego-v1"
 )
 
 type LanguageServerOptions struct {
@@ -496,7 +497,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				IsPreferred: true,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
 			})
-		case "use-rego-v1":
+		case ruleNameUseRegoV1:
 			actions = append(actions, CodeAction{
 				Title:       "Format for Rego v1 using opa fmt",
 				Kind:        "quickfix",

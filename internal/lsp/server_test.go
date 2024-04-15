@@ -85,10 +85,17 @@ allow = true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan jsonrpc2.Request, 1)
+	receivedMessages := make(chan FileDiagnostics, 1)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
-			receivedMessages <- *req
+			var requestData FileDiagnostics
+
+			err = json.Unmarshal(*req.Params, &requestData)
+			if err != nil {
+				t.Fatalf("failed to unmarshal diagnostics: %s", err)
+			}
+
+			receivedMessages <- requestData
 
 			return struct{}{}, nil
 		}
@@ -152,44 +159,21 @@ allow = true
 	}
 
 	// validate that the client received a diagnostics notification for the file
-	select {
-	case request := <-receivedMessages:
-		if request.Method != methodTextDocumentPublishDiagnostics {
-			t.Fatalf("expected diagnostics to be sent, got %v", request)
+	timeout := time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{"opa-fmt", "use-assignment-operator"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		// validate that the diagnostics are correct
-		var requestData FileDiagnostics
-
-		err = json.Unmarshal(*request.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		if success {
+			break
 		}
-
-		if requestData.URI != mainRegoURI {
-			t.Fatalf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
-		}
-
-		if len(requestData.Items) != 2 {
-			t.Fatalf("expected 2 diagnostics, got %d, %v", len(requestData.Items), requestData)
-		}
-
-		expectedItems := map[string]bool{
-			"opa-fmt":                 false,
-			"use-assignment-operator": false,
-		}
-
-		for _, item := range requestData.Items {
-			expectedItems[item.Code] = true
-		}
-
-		for item, found := range expectedItems {
-			if !found {
-				t.Fatalf("expected diagnostic %s to be found", item)
-			}
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 
 	// 3. Client sends textDocument/didChange notification with new contents for main.rego
@@ -212,33 +196,21 @@ allow := true
 	}
 
 	// validate that the client received a new diagnostics notification for the file
-	select {
-	case request := <-receivedMessages:
-		if request.Method != methodTextDocumentPublishDiagnostics {
-			t.Fatalf("expected diagnostics to be sent, got %v", request)
+	timeout = time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{"opa-fmt"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		// validate that the diagnostics are correct
-		var requestData FileDiagnostics
-
-		err = json.Unmarshal(*request.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		if success {
+			break
 		}
-
-		if requestData.URI != mainRegoURI {
-			t.Fatalf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
-		}
-
-		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostic, got %d", len(requestData.Items))
-		}
-
-		if requestData.Items[0].Code != "opa-fmt" {
-			t.Fatalf("expected diagnostic to be opa-fmt, got %s", requestData.Items[0].Code)
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 
 	// 4. Client sends workspace/didChangeWatchedFiles notification with new config
@@ -255,29 +227,33 @@ rules:
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	select {
-	case request := <-receivedMessages:
-		if request.Method != methodTextDocumentPublishDiagnostics {
-			t.Fatalf("expected diagnostics to be sent, got %v", request)
+	timeout = time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			if requestData.URI != mainRegoURI {
+				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+
+				break
+			}
+
+			if len(requestData.Items) != 0 {
+				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+
+				break
+			}
+
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		// validate that the diagnostics are correct
-		var requestData FileDiagnostics
-
-		err = json.Unmarshal(*request.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		if success {
+			break
 		}
-
-		if requestData.URI != mainRegoURI {
-			t.Fatalf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
-		}
-
-		if len(requestData.Items) != 0 {
-			t.Fatalf("expected 0 diagnostic, got %d", len(requestData.Items))
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 }
 
@@ -424,7 +400,7 @@ ignore:
 		if requestData.Items[0].Code != "prefer-package-imports" {
 			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code)
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(1 * time.Second):
 		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 	}
 
@@ -442,7 +418,7 @@ ignore:
 		if requestData.Items[0].Code != "use-assignment-operator" {
 			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code)
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(1 * time.Second):
 		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 
@@ -456,7 +432,7 @@ ignore:
 		if len(requestData.Items) != 0 {
 			t.Fatalf("expected 0 diagnostics, got %d, %v", len(requestData.Items), requestData)
 		}
-	case <-time.After(3 * time.Second):
+	case <-time.After(1 * time.Second):
 		t.Fatalf("timed out waiting for ignored/foo.rego diagnostics to be sent")
 	}
 
@@ -490,45 +466,40 @@ allow if input.user in admins.users
 
 	// here we wait to receive a diagnostics notification for authz.rego with no diagnostics items, the file diagnostics
 	// can arrive first which can still contain the old diagnostics items
-	ok := make(chan bool, 1)
+	timeout := time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
 
-	go func() {
-		for {
-			requestData := <-authzFileMessages
-			if requestData.URI != authzRegoURI {
-				t.Logf("expected diagnostics to be sent for authz.rego, got %s", requestData.URI)
-			}
-
-			if len(requestData.Items) != 0 {
-				continue
-			}
-
-			ok <- true
-
-			return
+	for {
+		var success bool
+		select {
+		case diags := <-authzFileMessages:
+			success = testRequestDataCodes(t, diags, authzRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
-	}()
 
-	select {
-	case <-ok:
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
+		if success {
+			break
+		}
 	}
 
 	// we should also receive a diagnostics notification for admins.rego, since it is in the workspace, but it has not
 	// been changed, so the violations should be the same
-	select {
-	case requestData := <-adminsFileMessages:
-		if requestData.URI != adminsRegoURI {
-			t.Fatalf("expected diagnostics to be sent for admins.rego, got %s", requestData.URI)
+	timeout = time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-adminsFileMessages:
+			success = testRequestDataCodes(t, requestData, adminsRegoURI, []string{"use-assignment-operator"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		// this file is unchanged
-		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostics, got %d", len(requestData.Items))
+		if success {
+			break
 		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 }
 
@@ -589,10 +560,17 @@ allow := true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan jsonrpc2.Request, 1)
+	receivedMessages := make(chan FileDiagnostics, 1)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
-			receivedMessages <- *req
+			var requestData FileDiagnostics
+
+			err = json.Unmarshal(*req.Params, &requestData)
+			if err != nil {
+				t.Fatalf("failed to unmarshal diagnostics: %s", err)
+			}
+
+			receivedMessages <- requestData
 
 			return struct{}{}, nil
 		}
@@ -631,30 +609,21 @@ allow := true
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
-	// validate that the client received a diagnostics notification for the file
-	select {
-	case request := <-receivedMessages:
-		// validate that the diagnostics are correct
-		var requestData FileDiagnostics
+	timeout := time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
 
-		err = json.Unmarshal(*request.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			success = testRequestDataCodes(t, requestData, mainRegoFileURI, []string{"opa-fmt"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		if requestData.URI != mainRegoFileURI {
-			t.Fatalf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+		if success {
+			break
 		}
-
-		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostics, got %d, %v", len(requestData.Items), requestData)
-		}
-
-		if requestData.Items[0].Code != "opa-fmt" {
-			t.Fatalf("expected diagnostic to be opa-fmt, got %s", requestData.Items[0].Code)
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
 
 	// User updates config file contents in parent directory that is not
@@ -671,26 +640,61 @@ allow := true
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	select {
-	case request := <-receivedMessages:
-		// validate that the diagnostics are correct
-		var requestData FileDiagnostics
+	timeout = time.NewTimer(1 * time.Second)
+	defer timeout.Stop()
 
-		err = json.Unmarshal(*request.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			success = testRequestDataCodes(t, requestData, mainRegoFileURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
 
-		if requestData.URI != mainRegoFileURI {
-			t.Fatalf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+		if success {
+			break
 		}
-
-		if len(requestData.Items) != 0 {
-			t.Fatalf("expected 0 diagnostic, got %d", len(requestData.Items))
-		}
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for file diagnostics to be sent")
 	}
+}
+
+func testRequestDataCodes(t *testing.T, requestData FileDiagnostics, uri string, codes []string) bool {
+	t.Helper()
+
+	if requestData.URI != uri {
+		t.Log("expected diagnostics to be sent for", uri, "got", requestData.URI)
+
+		return false
+	}
+
+	if len(requestData.Items) != len(codes) {
+		t.Log("expected", len(codes), "diagnostics, got", len(requestData.Items))
+
+		return false
+	}
+
+	for _, v := range codes {
+		found := false
+		foundItems := make([]string, 0, len(requestData.Items))
+
+		for _, i := range requestData.Items {
+			foundItems = append(foundItems, i.Code)
+
+			if i.Code == v {
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			t.Log("expected diagnostic", v, "not found in", foundItems)
+
+			return false
+		}
+	}
+
+	return true
 }
 
 func createConnections(

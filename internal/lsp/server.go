@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/format"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
+	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
 )
@@ -25,6 +26,9 @@ import (
 const (
 	methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
 	methodWorkspaceApplyEdit             = "workspace/applyEdit"
+
+	ruleNameOPAFmt    = "opa-fmt"
+	ruleNameUseRegoV1 = "use-rego-v1"
 )
 
 type LanguageServerOptions struct {
@@ -39,6 +43,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		commandRequest:             make(chan ExecuteCommandParams, 10),
+		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
 	}
 
 	return ls
@@ -51,6 +56,7 @@ type LanguageServer struct {
 
 	errorLog io.Writer
 
+	configWatcher    *lsconfig.Watcher
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
 
@@ -185,8 +191,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 
 			// send diagnostics for all files
-			for uri := range l.cache.GetAllFiles() {
-				err = l.sendFileDiagnostics(ctx, uri)
+			for fileURI := range l.cache.GetAllFiles() {
+				err = l.sendFileDiagnostics(ctx, fileURI)
 				if err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 				}
@@ -239,6 +245,55 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 	}
 
 	return ComputeEdits(oldContent, newContent), target, nil
+}
+
+func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
+	err := l.configWatcher.Start(ctx)
+	if err != nil {
+		l.logError(fmt.Errorf("failed to start config watcher: %w", err))
+
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case path := <-l.configWatcher.Reload:
+			configFile, err := os.Open(path)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to open config file: %w", err))
+
+				continue
+			}
+
+			var loadedConfig config.Config
+
+			err = yaml.NewDecoder(configFile).Decode(&loadedConfig)
+			if err != nil && !errors.Is(err, io.EOF) {
+				l.logError(fmt.Errorf("failed to reload config: %w", err))
+
+				return
+			}
+
+			// if the config is now blank, then we need to clear it
+			l.loadedConfigLock.Lock()
+			if errors.Is(err, io.EOF) {
+				l.loadedConfig = nil
+			} else {
+				l.loadedConfig = &loadedConfig
+			}
+			l.loadedConfigLock.Unlock()
+
+			l.diagnosticRequestWorkspace <- "config file changed"
+		case <-l.configWatcher.Drop:
+			l.loadedConfigLock.Lock()
+			l.loadedConfig = nil
+			l.loadedConfigLock.Unlock()
+
+			l.diagnosticRequestWorkspace <- "config file dropped"
+		}
+	}
 }
 
 func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
@@ -434,7 +489,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 
 	for _, diag := range params.Context.Diagnostics {
 		switch diag.Code {
-		case "opa-fmt":
+		case ruleNameOPAFmt:
 			actions = append(actions, CodeAction{
 				Title:       "Format using opa fmt",
 				Kind:        "quickfix",
@@ -442,7 +497,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				IsPreferred: true,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
 			})
-		case "use-rego-v1":
+		case ruleNameUseRegoV1:
 			actions = append(actions, CodeAction{
 				Title:       "Format for Rego v1 using opa fmt",
 				Kind:        "quickfix",
@@ -776,10 +831,9 @@ func (l *LanguageServer) handleInitialize(
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
 
-		// attempt to load the config as it is found on disk
-		file, err := config.FindConfig(strings.TrimPrefix(l.clientRootURI, "file://"))
+		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.clientRootURI))
 		if err == nil {
-			l.reloadConfig(file, false)
+			l.configWatcher.Watch(configFile.Name())
 		}
 	}
 
@@ -820,39 +874,16 @@ func (l *LanguageServer) loadWorkspaceContents() error {
 	return nil
 }
 
-func (l *LanguageServer) reloadConfig(configReader io.Reader, runWorkspaceDiagnostics bool) {
-	l.loadedConfigLock.Lock()
-	defer l.loadedConfigLock.Unlock()
-
-	var loadedConfig config.Config
-
-	err := yaml.NewDecoder(configReader).Decode(&loadedConfig)
-	if err != nil && !errors.Is(err, io.EOF) {
-		l.logError(fmt.Errorf("failed to reload config: %w", err))
-
-		return
-	}
-
-	// if the config is now blank, then we need to clear it
-	if errors.Is(err, io.EOF) {
-		l.loadedConfig = nil
-	} else {
-		l.loadedConfig = &loadedConfig
-	}
-
-	// this can be set to false by callers to disable the running of diagnostics for the whole workspace.
-	// this is intended to be used at start up when a workspace run is already going to be taking place.
-	if runWorkspaceDiagnostics {
-		l.diagnosticRequestWorkspace <- "config file changed"
-	}
-}
-
 func (l *LanguageServer) handleInitialized(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	_ *jsonrpc2.Request,
 ) (result any, err error) {
-	l.diagnosticRequestWorkspace <- "initialized"
+	// if running without config, then we should send the diagnostic request now
+	// otherwise it'll happen when the config is loaded
+	if !l.configWatcher.IsWatching() {
+		l.diagnosticRequestWorkspace <- "initialized"
+	}
 
 	return struct{}{}, nil
 }
@@ -887,16 +918,6 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 
 	for _, change := range params.Changes {
 		if change.URI == "" {
-			continue
-		}
-
-		if strings.HasSuffix(change.URI, "/.regal/config.yaml") {
-			// attempt to load the config as it is found on disk
-			file, err := os.Open(strings.TrimPrefix(change.URI, "file://"))
-			if err == nil {
-				l.reloadConfig(file, true)
-			}
-
 			continue
 		}
 

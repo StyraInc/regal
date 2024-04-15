@@ -7,9 +7,14 @@ type Identifier int
 const (
 	IdentifierGeneric Identifier = iota
 	IdentifierVSCode
+	IdentifierGoTest
 )
 
 func DetermineClientIdentifier(clientName string) Identifier {
+	if clientName == "go test" {
+		return IdentifierGoTest
+	}
+
 	if clientName == "Visual Studio Code" {
 		return IdentifierVSCode
 	}

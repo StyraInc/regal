@@ -41,9 +41,7 @@ func NewWatcher(opts *WatcherOpts) *Watcher {
 }
 
 func (w *Watcher) Start(ctx context.Context) error {
-	var err error
-
-	err = w.Stop()
+	err := w.Stop()
 	if err != nil {
 		return fmt.Errorf("failed to stop existing watcher: %w", err)
 	}
@@ -61,19 +59,17 @@ func (w *Watcher) Start(ctx context.Context) error {
 }
 
 func (w *Watcher) loop(ctx context.Context) {
-	var err error
-
 	for {
 		select {
 		case path := <-w.pathUpdates:
 			if w.path != "" {
-				err = w.fsWatcher.Remove(w.path)
+				err := w.fsWatcher.Remove(w.path)
 				if err != nil {
 					fmt.Fprintf(w.errorWriter, "failed to remove existing watch: %v\n", err)
 				}
 			}
 
-			err = w.fsWatcher.Add(path)
+			err := w.fsWatcher.Add(path)
 			if err != nil {
 				fmt.Fprintf(w.errorWriter, "failed to add watch: %v\n", err)
 			}
@@ -97,10 +93,10 @@ func (w *Watcher) loop(ctx context.Context) {
 				w.path = ""
 				w.Drop <- struct{}{}
 			}
-		case err = <-w.fsWatcher.Errors:
+		case err := <-w.fsWatcher.Errors:
 			fmt.Fprintf(w.errorWriter, "config watcher error: %v\n", err)
 		case <-ctx.Done():
-			err = w.Stop()
+			err := w.Stop()
 			if err != nil {
 				fmt.Fprintf(w.errorWriter, "failed to stop watcher: %v\n", err)
 			}

@@ -170,6 +170,16 @@ func TestLintAndFix(t *testing.T) {
 	if exp, act := "", stderr.String(); exp != act {
 		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
+
+	// check that the file was formatted
+	bs, err := os.ReadFile(filepath.Join(td, "main.rego"))
+	if err != nil {
+		t.Fatalf("failed to read main.rego: %v", err)
+	}
+
+	if exp, act := "package test\n\nimport rego.v1\n\nallow := true\n", string(bs); exp != act {
+		t.Errorf("expected %q, got %q", exp, act)
+	}
 }
 
 func TestLintAllViolations(t *testing.T) {

@@ -99,6 +99,7 @@ func NewDefaultFixes() []fixes.Fix {
 				RegoVersion: ast.RegoV0CompatV1,
 			},
 		},
+		&fixes.UseAssignmentOperator{},
 	}
 }
 

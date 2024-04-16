@@ -240,9 +240,12 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 		return nil, target, fmt.Errorf("could not get file contents for uri %q", target)
 	}
 
-	fixed, formattedContent, err := fixes.Fmt([]byte(oldContent), &fixes.FmtOptions{
-		Filename:   uri.ToPath(l.clientIdentifier, target),
-		OPAFmtOpts: opts,
+	f := &fixes.Fmt{OPAFmtOpts: opts}
+
+	fixed, formattedContent, err := f.Fix([]byte(oldContent), &fixes.RuntimeOptions{
+		Metadata: fixes.RuntimeMetadata{
+			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, target)),
+		},
 	})
 	if err != nil {
 		return nil, target, fmt.Errorf("failed to format file: %w", err)
@@ -641,8 +644,12 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
-	fixed, formattedContent, err := fixes.Fmt([]byte(oldContent), &fixes.FmtOptions{
-		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
+	f := &fixes.Fmt{OPAFmtOpts: format.Opts{}}
+
+	fixed, formattedContent, err := f.Fix([]byte(oldContent), &fixes.RuntimeOptions{
+		Metadata: fixes.RuntimeMetadata{
+			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to format file: %w", err)

@@ -11,7 +11,8 @@ func TestFmt(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		fixOptions *FmtOptions
+		fmt            *Fmt
+		runtimeOptions *RuntimeOptions
 
 		beforeFix []byte
 		afterFix  []byte
@@ -22,14 +23,34 @@ func TestFmt(t *testing.T) {
 			beforeFix:   []byte("package testutil\n"),
 			afterFix:    []byte("package testutil\n"),
 			fixExpected: false,
+			fmt:         &Fmt{},
+			runtimeOptions: &RuntimeOptions{
+				Metadata: RuntimeMetadata{
+					Filename: "test.rego",
+				},
+			},
 		},
 		"add a new line": {
 			beforeFix: []byte("package testutil"),
 			afterFix:  []byte("package testutil\n"),
+			fmt:       &Fmt{},
+			runtimeOptions: &RuntimeOptions{
+				Metadata: RuntimeMetadata{
+					Filename: "test.rego",
+				},
+			},
+			fixExpected: true,
 		},
 		"add a new line before rule": {
 			beforeFix: []byte("package testutil\nallow := true"),
 			afterFix:  []byte("package testutil\n\nallow := true\n"),
+			fmt:       &Fmt{},
+			runtimeOptions: &RuntimeOptions{
+				Metadata: RuntimeMetadata{
+					Filename: "test.rego",
+				},
+			},
+			fixExpected: true,
 		},
 		"rego v1": {
 			beforeFix: []byte("package testutil\nallow := true"),
@@ -39,12 +60,17 @@ import rego.v1
 
 allow := true
 `),
-			fixOptions: &FmtOptions{
-				Filename: "foo.rego",
+			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
 				},
 			},
+			runtimeOptions: &RuntimeOptions{
+				Metadata: RuntimeMetadata{
+					Filename: "test.rego",
+				},
+			},
+			fixExpected: true,
 		},
 	}
 
@@ -54,7 +80,7 @@ allow := true
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			fixed, fixedContent, err := Fmt(tc.beforeFix, tc.fixOptions)
+			fixed, fixedContent, err := tc.fmt.Fix(tc.beforeFix, tc.runtimeOptions)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

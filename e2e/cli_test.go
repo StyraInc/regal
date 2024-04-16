@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -141,44 +142,6 @@ func TestLintNonExistentDir(t *testing.T) {
 		"failed to filter paths:\nstat "+td+filepath.FromSlash("/what/ever")+": no such file or directory\n",
 		stderr.String(); exp != act {
 		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-}
-
-func TestLintAndFix(t *testing.T) {
-	t.Parallel()
-
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-	td := t.TempDir()
-
-	// only violation is for the opa-fmt rule
-	unformattedContents := []byte("package test\nimport rego.v1\nallow := true")
-	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
-	if err != nil {
-		t.Fatalf("failed to write main.rego: %v", err)
-	}
-
-	err = regal(&stdout, &stderr)("lint", "--fix", td)
-
-	// 0 exit status is expected as all violations should have been fixed
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	if exp, act := "1 file linted. No violations found.\n", stdout.String(); exp != act {
-		t.Errorf("expected stdout %q, got %q", exp, act)
-	}
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
-	// check that the file was formatted
-	bs, err := os.ReadFile(filepath.Join(td, "main.rego"))
-	if err != nil {
-		t.Fatalf("failed to read main.rego: %v", err)
-	}
-
-	if exp, act := "package test\n\nimport rego.v1\n\nallow := true\n", string(bs); exp != act {
-		t.Errorf("expected %q, got %q", exp, act)
 	}
 }
 
@@ -762,6 +725,49 @@ func TestLintPprof(t *testing.T) {
 	_, err = os.Stat(pprofFile)
 	if err != nil {
 		t.Fatalf("expected to find %s, got error: %v", pprofFile, err)
+	}
+}
+
+func TestFix(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	// only violation is for the opa-fmt rule
+	unformattedContents := []byte("package test\nimport rego.v1\nallow := true")
+	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
+	if err != nil {
+		t.Fatalf("failed to write main.rego: %v", err)
+	}
+
+	err = regal(&stdout, &stderr)("fix", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	exp := fmt.Sprintf(`1 fix applied:
+%s/main.rego:
+- opa-fmt
+`, td)
+
+	if act := stdout.String(); exp != act {
+		t.Errorf("expected stdout:\n%s\ngot:\n%s", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	// check that the file was formatted
+	bs, err := os.ReadFile(filepath.Join(td, "main.rego"))
+	if err != nil {
+		t.Fatalf("failed to read main.rego: %v", err)
+	}
+
+	if exp, act := "package test\n\nimport rego.v1\n\nallow := true\n", string(bs); exp != act {
+		t.Errorf("expected\n%s, got\n%s", exp, act)
 	}
 }
 

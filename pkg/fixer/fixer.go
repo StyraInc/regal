@@ -3,6 +3,7 @@ package fixer
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
@@ -11,79 +12,162 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
-func Fix(rep *report.Report, readers map[string]io.Reader, _ fixes.Options) (map[string][]byte, error) {
-	fixableViolations := map[string]struct{}{
-		"opa-fmt":     {},
-		"use-rego-v1": {},
+type Report struct {
+	totalFixes          int
+	fileFixedViolations map[string]map[string]struct{}
+	fileContents        map[string][]byte
+}
+
+func NewReport() *Report {
+	return &Report{
+		fileFixedViolations: make(map[string]map[string]struct{}),
+		fileContents:        make(map[string][]byte),
+	}
+}
+
+func (r *Report) SetFileContents(file string, content []byte) {
+	r.fileContents[file] = content
+}
+
+func (r *Report) SetFileFixedViolation(file string, violation string) {
+	if _, ok := r.fileFixedViolations[file]; !ok {
+		r.fileFixedViolations[file] = make(map[string]struct{})
 	}
 
-	filesToFix, err := computeFilesToFix(rep, readers, fixableViolations)
+	_, ok := r.fileFixedViolations[file][violation]
+	if !ok {
+		r.fileFixedViolations[file][violation] = struct{}{}
+		r.totalFixes++
+	}
+}
+
+func (r *Report) FileContents() map[string][]byte {
+	return r.fileContents
+}
+
+func (r *Report) FixedFiles() []string {
+	fixedFiles := make([]string, 0)
+	for file := range r.fileContents {
+		fixedFiles = append(fixedFiles, file)
+	}
+
+	slices.Sort(fixedFiles)
+
+	return fixedFiles
+}
+
+func (r *Report) FixedViolationsForFile(file string) []string {
+	fixedViolations := make([]string, 0)
+	for violation := range r.fileFixedViolations[file] {
+		fixedViolations = append(fixedViolations, violation)
+	}
+
+	slices.Sort(fixedViolations)
+
+	return fixedViolations
+}
+
+func (r *Report) TotalFixes() int {
+	return r.totalFixes
+}
+
+type FixToggles struct {
+	OPAFmt       bool
+	OPAFmtRegoV1 bool
+}
+
+func (f *FixToggles) IsEnabled(key string) bool {
+	if f == nil {
+		return false
+	}
+
+	switch key {
+	case "opa-fmt":
+		return f.OPAFmt
+	case "use-rego-v1":
+		return f.OPAFmtRegoV1
+	}
+
+	return false
+}
+
+func NewDefaultFixes() []fixes.Fix {
+	return []fixes.Fix{
+		&fixes.Fmt{},
+		&fixes.Fmt{
+			OPAFmtOpts: format.Opts{
+				RegoVersion: ast.RegoV0CompatV1,
+			},
+		},
+	}
+}
+
+type Fixer struct {
+	registeredFixes map[string]any
+}
+
+func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
+	if f.registeredFixes == nil {
+		f.registeredFixes = make(map[string]any)
+	}
+
+	for _, fix := range fixes {
+		f.registeredFixes[fix.Key()] = fix
+	}
+}
+
+func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
+	fix, ok := f.registeredFixes[key]
+	if !ok {
+		return nil, false
+	}
+
+	fixInstance, ok := fix.(fixes.Fix)
+	if !ok {
+		return nil, false
+	}
+
+	return fixInstance, true
+}
+
+func (f *Fixer) Fix(rep *report.Report, readers map[string]io.Reader) (*Report, error) {
+	filesToFix, err := computeFilesToFix(f, rep, readers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine files to fix: %w", err)
 	}
 
-	fixResults := make(map[string][]byte)
-
-	var fixedViolations []int
+	fixReport := NewReport()
 
 	for file, content := range filesToFix {
-		for i, violation := range rep.Violations {
-			_, ok := fixableViolations[violation.Title]
+		for _, violation := range rep.Violations {
+			fixInstance, ok := f.GetFixForKey(violation.Title)
 			if !ok {
 				continue
 			}
 
-			fixed := true
-
-			switch violation.Title {
-			case "opa-fmt":
-				fixed, fixedContent, err := fixes.Fmt(content, &fixes.FmtOptions{
+			fixed, fixedContent, err := fixInstance.Fix(content, &fixes.RuntimeOptions{
+				Metadata: fixes.RuntimeMetadata{
 					Filename: file,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
-				}
-
-				if fixed {
-					fixResults[file] = fixedContent
-				}
-			case "use-rego-v1":
-				fixed, fixedContent, err := fixes.Fmt(content, &fixes.FmtOptions{
-					Filename: file,
-					OPAFmtOpts: format.Opts{
-						RegoVersion: ast.RegoV0CompatV1,
-					},
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
-				}
-
-				if fixed {
-					fixResults[file] = fixedContent
-				}
-			default:
-				fixed = false
+				},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to fix %s: %w", file, err)
 			}
 
 			if fixed {
-				fixedViolations = append(fixedViolations, i)
+				fixReport.SetFileContents(file, fixedContent)
+				fixReport.SetFileFixedViolation(file, violation.Title)
 			}
 		}
 	}
 
-	for i := len(fixedViolations) - 1; i >= 0; i-- {
-		rep.Violations = append(rep.Violations[:fixedViolations[i]], rep.Violations[fixedViolations[i]+1:]...)
-	}
-
-	rep.Summary.NumViolations = len(rep.Violations)
-
-	return fixResults, nil
+	return fixReport, nil
 }
 
 func computeFilesToFix(
+	f *Fixer,
 	rep *report.Report,
 	readers map[string]io.Reader,
-	fixableViolations map[string]struct{},
 ) (map[string][]byte, error) {
 	filesToFix := make(map[string][]byte)
 
@@ -96,8 +180,8 @@ func computeFilesToFix(
 			continue
 		}
 
-		// skip violations that are not fixable
-		if _, ok := fixableViolations[violation.Title]; !ok {
+		// skip violations that are not enabled
+		if _, ok := f.registeredFixes[violation.Title]; !ok {
 			continue
 		}
 

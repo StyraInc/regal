@@ -12,6 +12,8 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
+// Report contains updated file contents and summary information about the fixes that were applied
+// during a fix operation.
 type Report struct {
 	totalFixes          int
 	fileFixedViolations map[string]map[string]struct{}
@@ -57,6 +59,7 @@ func (r *Report) FixedFiles() []string {
 		fixedFiles = append(fixedFiles, file)
 	}
 
+	// sort the files for deterministic output
 	slices.Sort(fixedFiles)
 
 	return fixedFiles
@@ -68,15 +71,19 @@ func (r *Report) FixedViolationsForFile(file string) []string {
 		fixedViolations = append(fixedViolations, violation)
 	}
 
+	// sort the violations for deterministic output
 	slices.Sort(fixedViolations)
 
 	return fixedViolations
 }
 
 func (r *Report) TotalFixes() int {
+	// totalFixes is incremented for each unique violation that is fixed
 	return r.totalFixes
 }
 
+// NewDefaultFixes returns a list of default fixes that are applied by the fix command.
+// When a new fix is added, it should be added to this list.
 func NewDefaultFixes() []fixes.Fix {
 	return []fixes.Fix{
 		&fixes.Fmt{},
@@ -119,6 +126,9 @@ func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
+// OrderedFixes returns the fixes in the order they should be applied.
+// Fixes that are marked as WholeFile are applied last since they
+// can add new lines that would affect the fixes for line based violations.
 func (f *Fixer) OrderedFixes() []fixes.Fix {
 	orderedFixes := make([]fixes.Fix, 0)
 	wholeFileFixes := make([]fixes.Fix, 0)
@@ -188,6 +198,7 @@ func (f *Fixer) Fix(rep *report.Report, readers map[string]io.Reader) (*Report, 
 	return fixReport, nil
 }
 
+// computeFilesToFix determines which files need to be fixed based on the violations in the report.
 func computeFilesToFix(
 	f *Fixer,
 	rep *report.Report,
@@ -204,8 +215,8 @@ func computeFilesToFix(
 			continue
 		}
 
-		// skip violations that are not enabled
-		if _, ok := f.registeredFixes[violation.Title]; !ok {
+		// skip violations that the fixer has no fix for
+		if _, ok := f.GetFixForKey(violation.Title); !ok {
 			continue
 		}
 

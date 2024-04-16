@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// Reporter writes a summary of the fixes applied to the output writer.
 func Reporter(outputWriter io.Writer, fixReport *Report) {
 	if fixReport.TotalFixes() == 0 {
 		fmt.Fprintln(outputWriter, "No fixes applied.")

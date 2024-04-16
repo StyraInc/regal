@@ -21,10 +21,12 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
+// fixCommandParams is similar to the lint params, but with some fields such as profiling removed.
+// It is intended that it is compatible with the same command line flags as the lint command to
+// control the behavior of lint rules used.
 type fixCommandParams struct {
 	timeout         time.Duration
 	configFile      string
-	format          string
 	outputFile      string
 	rules           repeatedStringFlag
 	noColor         bool
@@ -77,8 +79,6 @@ func init() {
 
 	fixCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
 		"set path of configuration file")
-	fixCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
-		"set output format (pretty, compact, json, github, sarif)")
 	fixCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
 		"set file to use for fixing output, defaults to stdout")
 	fixCommand.Flags().BoolVar(&params.noColor, "no-color", false,

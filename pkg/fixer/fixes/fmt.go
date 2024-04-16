@@ -9,6 +9,8 @@ import (
 )
 
 type Fmt struct {
+	// KeyOverride allows this fix config to also be registered under another key, see note
+	// in Key().
 	KeyOverride string
 	// OPAFmtOpts are the options to pass to OPA's format.SourceWithOpts
 	// function.

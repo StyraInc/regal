@@ -9,6 +9,8 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
+// configFileParams supports extracting the config file path from various command
+// param types. This allows readUserConfig to be shared.
 type configFileParams interface {
 	getConfigFile() string
 }
@@ -33,6 +35,8 @@ func readUserConfig(params configFileParams, regalDir *os.File) (userConfig *os.
 	return userConfig, err //nolint:wrapcheck
 }
 
+// timeoutParams supports extracting the timeout duration from various command
+// param types. This allows getLinterContext to be shared.
 type timeoutParams interface {
 	getTimeout() time.Duration
 }

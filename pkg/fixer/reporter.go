@@ -16,6 +16,10 @@ func Reporter(outputWriter io.Writer, fixReport *Report) {
 		fmt.Fprintln(outputWriter, "1 fix applied:")
 	}
 
+	if fixReport.TotalFixes() > 1 {
+		fmt.Fprintf(outputWriter, "%d fixes applied:\n", fixReport.TotalFixes())
+	}
+
 	for _, file := range fixReport.FixedFiles() {
 		fmt.Fprintf(outputWriter, "%s:\n", file)
 

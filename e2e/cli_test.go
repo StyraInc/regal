@@ -736,7 +736,14 @@ func TestFix(t *testing.T) {
 	td := t.TempDir()
 
 	// only violation is for the opa-fmt rule
-	unformattedContents := []byte("package test\nimport rego.v1\nallow := true")
+	unformattedContents := []byte(`package wow
+
+#comment
+
+allow = 1 {
+	input.foo == true
+}
+`)
 	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
 	if err != nil {
 		t.Fatalf("failed to write main.rego: %v", err)
@@ -747,9 +754,11 @@ func TestFix(t *testing.T) {
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`1 fix applied:
+	exp := fmt.Sprintf(`3 fixes applied:
 %s/main.rego:
-- opa-fmt
+- no-whitespace-comment
+- use-assignment-operator
+- use-rego-v1
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -766,8 +775,19 @@ func TestFix(t *testing.T) {
 		t.Fatalf("failed to read main.rego: %v", err)
 	}
 
-	if exp, act := "package test\n\nimport rego.v1\n\nallow := true\n", string(bs); exp != act {
-		t.Errorf("expected\n%s, got\n%s", exp, act)
+	expectedContent := `package wow
+
+import rego.v1
+
+# comment
+
+allow := 1 if {
+	input.foo == true
+}
+`
+
+	if act := string(bs); expectedContent != act {
+		t.Errorf("expected\n%s, got\n%s", expectedContent, act)
 	}
 }
 

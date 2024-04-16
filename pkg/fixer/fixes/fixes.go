@@ -4,6 +4,7 @@ import "github.com/open-policy-agent/opa/ast"
 
 type Fix interface {
 	Key() string
+	WholeFile() bool
 	Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error)
 }
 

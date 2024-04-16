@@ -4,17 +4,17 @@ import (
 	"bytes"
 )
 
-type UseAssignmentOperator struct{}
+type NoWhitespaceComment struct{}
 
-func (*UseAssignmentOperator) Key() string {
-	return "use-assignment-operator"
+func (*NoWhitespaceComment) Key() string {
+	return "no-whitespace-comment"
 }
 
-func (*UseAssignmentOperator) WholeFile() bool {
+func (*NoWhitespaceComment) WholeFile() bool {
 	return false
 }
 
-func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error) {
+func (*NoWhitespaceComment) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error) {
 	lines := bytes.Split(in, []byte("\n"))
 
 	// this fix must have locations
@@ -34,7 +34,9 @@ func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte
 
 		line := lines[loc.Row-1]
 
-		lines[loc.Row-1] = bytes.Replace(line, []byte("="), []byte(":="), 1)
+		if bytes.HasPrefix(line, []byte("#")) && !bytes.HasPrefix(line, []byte("# ")) {
+			lines[loc.Row-1] = bytes.Replace(line, []byte("#"), []byte("# "), 1)
+		}
 	}
 
 	return true, bytes.Join(lines, []byte("\n")), nil

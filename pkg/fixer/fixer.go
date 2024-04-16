@@ -29,6 +29,12 @@ func (r *Report) SetFileContents(file string, content []byte) {
 	r.fileContents[file] = content
 }
 
+func (r *Report) GetFileContents(file string) ([]byte, bool) {
+	content, ok := r.fileContents[file]
+
+	return content, ok
+}
+
 func (r *Report) SetFileFixedViolation(file string, violation string) {
 	if _, ok := r.fileFixedViolations[file]; !ok {
 		r.fileFixedViolations[file] = make(map[string]struct{})
@@ -71,35 +77,17 @@ func (r *Report) TotalFixes() int {
 	return r.totalFixes
 }
 
-type FixToggles struct {
-	OPAFmt       bool
-	OPAFmtRegoV1 bool
-}
-
-func (f *FixToggles) IsEnabled(key string) bool {
-	if f == nil {
-		return false
-	}
-
-	switch key {
-	case "opa-fmt":
-		return f.OPAFmt
-	case "use-rego-v1":
-		return f.OPAFmtRegoV1
-	}
-
-	return false
-}
-
 func NewDefaultFixes() []fixes.Fix {
 	return []fixes.Fix{
 		&fixes.Fmt{},
 		&fixes.Fmt{
+			KeyOverride: "use-rego-v1",
 			OPAFmtOpts: format.Opts{
 				RegoVersion: ast.RegoV0CompatV1,
 			},
 		},
 		&fixes.UseAssignmentOperator{},
+		&fixes.NoWhitespaceComment{},
 	}
 }
 
@@ -131,6 +119,28 @@ func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
+func (f *Fixer) OrderedFixes() []fixes.Fix {
+	orderedFixes := make([]fixes.Fix, 0)
+	wholeFileFixes := make([]fixes.Fix, 0)
+
+	for _, fix := range f.registeredFixes {
+		fixInstance, ok := fix.(fixes.Fix)
+		if !ok {
+			continue
+		}
+
+		if fixInstance.WholeFile() {
+			wholeFileFixes = append(wholeFileFixes, fixInstance)
+
+			continue
+		}
+
+		orderedFixes = append(orderedFixes, fixInstance)
+	}
+
+	return append(orderedFixes, wholeFileFixes...)
+}
+
 func (f *Fixer) Fix(rep *report.Report, readers map[string]io.Reader) (*Report, error) {
 	filesToFix, err := computeFilesToFix(f, rep, readers)
 	if err != nil {
@@ -139,25 +149,38 @@ func (f *Fixer) Fix(rep *report.Report, readers map[string]io.Reader) (*Report, 
 
 	fixReport := NewReport()
 
-	for file, content := range filesToFix {
-		for _, violation := range rep.Violations {
-			fixInstance, ok := f.GetFixForKey(violation.Title)
-			if !ok {
-				continue
-			}
+	for _, fixInstance := range f.OrderedFixes() {
+		// fix by line
+		for file, content := range filesToFix {
+			for _, violation := range rep.Violations {
+				if violation.Title != fixInstance.Key() {
+					continue
+				}
 
-			fixed, fixedContent, err := fixInstance.Fix(content, &fixes.RuntimeOptions{
-				Metadata: fixes.RuntimeMetadata{
-					Filename: file,
-				},
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to fix %s: %w", file, err)
-			}
+				// if the file has been fixed, use the fixed content from other fixes
+				if fixedContent, ok := fixReport.GetFileContents(file); ok {
+					content = fixedContent
+				}
 
-			if fixed {
-				fixReport.SetFileContents(file, fixedContent)
-				fixReport.SetFileFixedViolation(file, violation.Title)
+				fixed, fixedContent, err := fixInstance.Fix(content, &fixes.RuntimeOptions{
+					Metadata: fixes.RuntimeMetadata{
+						Filename: file,
+					},
+					Locations: []ast.Location{
+						{
+							Row: violation.Location.Row,
+							Col: violation.Location.Column,
+						},
+					},
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+				}
+
+				if fixed {
+					fixReport.SetFileContents(file, fixedContent)
+					fixReport.SetFileFixedViolation(file, violation.Title)
+				}
 			}
 		}
 	}

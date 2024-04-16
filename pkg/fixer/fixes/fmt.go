@@ -25,6 +25,10 @@ func (f *Fmt) Key() string {
 	return "opa-fmt"
 }
 
+func (*Fmt) WholeFile() bool {
+	return true
+}
+
 func (f *Fmt) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error) {
 	filename := ""
 

@@ -6,7 +6,7 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 )
 
-func TestUseAssignmentOperator(t *testing.T) {
+func TestNoWhitespaceComment(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -17,26 +17,26 @@ func TestUseAssignmentOperator(t *testing.T) {
 
 		fixExpected bool
 	}{
-		"no change": {
+		"no change needed": {
 			beforeFix: []byte(`package test\n
 
-allow := true
+# this is a comment
 `),
 			afterFix: []byte(`package test\n
 
-allow := true
+# this is a comment
 `),
 			fixExpected:    false,
 			runtimeOptions: &RuntimeOptions{},
 		},
-		"no change because no location": {
+		"no change made because no location": {
 			beforeFix: []byte(`package test\n
 
-allow = true
+#this is a comment
 `),
 			afterFix: []byte(`package test\n
 
-allow = true
+#this is a comment
 `),
 			fixExpected:    false,
 			runtimeOptions: &RuntimeOptions{},
@@ -44,11 +44,11 @@ allow = true
 		"single change": {
 			beforeFix: []byte(`package test\n
 
-allow = true
+#this is a comment
 `),
 			afterFix: []byte(`package test\n
 
-allow := true
+# this is a comment
 `),
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
@@ -63,21 +63,25 @@ allow := true
 		"many changes": {
 			beforeFix: []byte(`package test\n
 
-allow = true if { u = 1 }
-
-allow = true if { u = 2 }
+#this is a comment
+#this is a comment
+#this is a comment
 `),
 			afterFix: []byte(`package test\n
 
-allow := true if { u = 1 }
-
-allow := true if { u = 2 }
+# this is a comment
+# this is a comment
+# this is a comment
 `),
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
 					{
 						Row: 3,
+						Col: 1,
+					},
+					{
+						Row: 4,
 						Col: 1,
 					},
 					{
@@ -92,12 +96,12 @@ allow := true if { u = 2 }
 	for testName, tc := range testCases {
 		tc := tc
 
+		nwc := NoWhitespaceComment{}
+
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			uas := UseAssignmentOperator{}
-
-			fixed, fixedContent, err := uas.Fix(tc.beforeFix, tc.runtimeOptions)
+			fixed, fixedContent, err := nwc.Fix(tc.beforeFix, tc.runtimeOptions)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

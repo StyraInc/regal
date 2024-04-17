@@ -55,7 +55,7 @@ allow := true
 				Locations: []ast.Location{
 					{
 						Row: 3,
-						Col: 1, // this is what the rule outputs at the moment
+						Col: 7,
 					},
 				},
 			},
@@ -78,11 +78,42 @@ allow := true if { u = 2 }
 				Locations: []ast.Location{
 					{
 						Row: 3,
-						Col: 1,
+						Col: 7,
 					},
 					{
 						Row: 5,
-						Col: 1,
+						Col: 7,
+					},
+				},
+			},
+		},
+		"different columns": {
+			beforeFix: []byte(`package test\n
+
+allow = true
+ wow = true
+  wowallow = true
+`),
+			afterFix: []byte(`package test\n
+
+allow := true
+ wow := true
+  wowallow := true
+`),
+			fixExpected: true,
+			runtimeOptions: &RuntimeOptions{
+				Locations: []ast.Location{
+					{
+						Row: 3,
+						Col: 7,
+					},
+					{
+						Row: 4,
+						Col: 6,
+					},
+					{
+						Row: 5,
+						Col: 12,
 					},
 				},
 			},

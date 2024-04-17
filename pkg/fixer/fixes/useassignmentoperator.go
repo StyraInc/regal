@@ -2,6 +2,7 @@ package fixes
 
 import (
 	"bytes"
+	"slices"
 )
 
 type UseAssignmentOperator struct{}
@@ -27,14 +28,14 @@ func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte
 			return false, nil, nil
 		}
 
-		if loc.Col != 1 {
-			// current impl only understands the first column
-			return false, nil, nil
-		}
-
 		line := lines[loc.Row-1]
 
-		lines[loc.Row-1] = bytes.Replace(line, []byte("="), []byte(":="), 1)
+		// unexpected character at location column, skipping
+		if line[loc.Col-1] != byte('=') {
+			continue
+		}
+
+		lines[loc.Row-1] = slices.Concat(line[0:loc.Col-1], []byte(":"), line[loc.Col-1:])
 	}
 
 	return true, bytes.Join(lines, []byte("\n")), nil

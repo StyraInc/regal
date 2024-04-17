@@ -17,7 +17,7 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
-	fp2 "github.com/styrainc/regal/pkg/fixer/fp"
+	"github.com/styrainc/regal/pkg/fixer/fp"
 	"github.com/styrainc/regal/pkg/linter"
 )
 
@@ -216,9 +216,9 @@ func fix(args []string, params *fixCommandParams) error {
 	f := fixer.Fixer{}
 	f.RegisterFixes(fixer.NewDefaultFixes()...)
 
-	fp := fp2.NewFSFileProvider(args...)
+	fileProvider := fp.NewFSFileProvider(args...)
 
-	fixReport, err := f.Fix(ctx, &l, fp)
+	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {
 		return fmt.Errorf("failed to fix: %w", err)
 	}

@@ -31,7 +31,7 @@ func (*Fmt) WholeFile() bool {
 	return true
 }
 
-func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
+func (f *Fmt) Fix(fc *FixCandidate, _ *RuntimeOptions) ([]FixResult, error) {
 	if fc.Filename == "" {
 		return nil, errors.New("filename is required when formatting")
 	}

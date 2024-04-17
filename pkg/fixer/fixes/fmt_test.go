@@ -11,50 +11,32 @@ func TestFmt(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		fmt            *Fmt
-		runtimeOptions *RuntimeOptions
-
-		beforeFix []byte
-		afterFix  []byte
-
-		fixExpected bool
+		fmt             *Fmt
+		contentAfterFix []byte
+		fc              *FixCandidate
+		fixExpected     bool
 	}{
 		"no change": {
-			beforeFix:   []byte("package testutil\n"),
-			afterFix:    []byte("package testutil\n"),
-			fixExpected: false,
-			fmt:         &Fmt{},
-			runtimeOptions: &RuntimeOptions{
-				Metadata: RuntimeMetadata{
-					Filename: "test.rego",
-				},
-			},
+			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n")},
+			contentAfterFix: []byte("package testutil\n"),
+			fixExpected:     false,
+			fmt:             &Fmt{},
 		},
 		"add a new line": {
-			beforeFix: []byte("package testutil"),
-			afterFix:  []byte("package testutil\n"),
-			fmt:       &Fmt{},
-			runtimeOptions: &RuntimeOptions{
-				Metadata: RuntimeMetadata{
-					Filename: "test.rego",
-				},
-			},
-			fixExpected: true,
+			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n")},
+			contentAfterFix: []byte("package testutil\n"),
+			fmt:             &Fmt{},
+			fixExpected:     true,
 		},
 		"add a new line before rule": {
-			beforeFix: []byte("package testutil\nallow := true"),
-			afterFix:  []byte("package testutil\n\nallow := true\n"),
-			fmt:       &Fmt{},
-			runtimeOptions: &RuntimeOptions{
-				Metadata: RuntimeMetadata{
-					Filename: "test.rego",
-				},
-			},
-			fixExpected: true,
+			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\nallow := true")},
+			contentAfterFix: []byte("package testutil\n\nallow := true\n"),
+			fmt:             &Fmt{},
+			fixExpected:     true,
 		},
 		"rego v1": {
-			beforeFix: []byte("package testutil\nallow := true"),
-			afterFix: []byte(`package testutil
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\nallow := true")},
+			contentAfterFix: []byte(`package testutil
 
 import rego.v1
 
@@ -63,11 +45,6 @@ allow := true
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
-				},
-			},
-			runtimeOptions: &RuntimeOptions{
-				Metadata: RuntimeMetadata{
-					Filename: "test.rego",
 				},
 			},
 			fixExpected: true,
@@ -80,7 +57,7 @@ allow := true
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			fixed, fixedContent, err := tc.fmt.Fix(tc.beforeFix, tc.runtimeOptions)
+			fixed, fixedContent, err := tc.fmt.Fix(tc.fc, &RuntimeOptions{})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -89,10 +66,10 @@ allow := true
 				t.Fatalf("expected fix to be applied")
 			}
 
-			if string(fixedContent) != string(tc.afterFix) {
+			if string(fixedContent) != string(tc.contentAfterFix) {
 				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",
 					string(fixedContent),
-					string(tc.afterFix))
+					string(tc.contentAfterFix))
 			}
 		})
 	}

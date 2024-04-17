@@ -155,10 +155,12 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fp.FileProvider) (
 				return nil, fmt.Errorf("failed to get file %s: %w", violation.Location.File, err)
 			}
 
-			fixed, fixedContent, err := fixInstance.Fix(fc, &fixes.RuntimeOptions{
-				Metadata: fixes.RuntimeMetadata{
-					Filename: violation.Location.File,
-				},
+			fixCandidate := fixes.FixCandidate{
+				Filename: violation.Location.File,
+				Contents: fc,
+			}
+
+			fixed, fixedContent, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
 				Locations: []ast.Location{
 					{
 						Row: violation.Location.Row,

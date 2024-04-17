@@ -15,8 +15,8 @@ func (*UseAssignmentOperator) WholeFile() bool {
 	return false
 }
 
-func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error) {
-	lines := bytes.Split(in, []byte("\n"))
+func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) (bool, []byte, error) {
+	lines := bytes.Split(fc.Contents, []byte("\n"))
 
 	// this fix must have locations
 	if len(opts.Locations) == 0 {

@@ -31,18 +31,12 @@ func (*Fmt) WholeFile() bool {
 	return true
 }
 
-func (f *Fmt) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error) {
-	filename := ""
-
-	if opts != nil && opts.Metadata.Filename != "" {
-		filename = opts.Metadata.Filename
-	}
-
-	if filename == "" {
+func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) (bool, []byte, error) {
+	if fc.Filename == "" {
 		return false, nil, errors.New("filename is required when formatting")
 	}
 
-	formatted, err := format.SourceWithOpts(filepath.Base(filename), in, f.OPAFmtOpts)
+	formatted, err := format.SourceWithOpts(filepath.Base(fc.Filename), fc.Contents, f.OPAFmtOpts)
 	if err != nil {
 		return false, nil, fmt.Errorf("failed to format: %w", err)
 	}

@@ -242,11 +242,10 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 
 	f := &fixes.Fmt{OPAFmtOpts: opts}
 
-	fixed, formattedContent, err := f.Fix([]byte(oldContent), &fixes.RuntimeOptions{
-		Metadata: fixes.RuntimeMetadata{
-			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, target)),
-		},
-	})
+	fixed, formattedContent, err := f.Fix(&fixes.FixCandidate{
+		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, target)),
+		Contents: []byte(oldContent),
+	}, nil)
 	if err != nil {
 		return nil, target, fmt.Errorf("failed to format file: %w", err)
 	}
@@ -646,11 +645,10 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	f := &fixes.Fmt{OPAFmtOpts: format.Opts{}}
 
-	fixed, formattedContent, err := f.Fix([]byte(oldContent), &fixes.RuntimeOptions{
-		Metadata: fixes.RuntimeMetadata{
-			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
-		},
-	})
+	fixed, formattedContent, err := f.Fix(&fixes.FixCandidate{
+		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
+		Contents: []byte(oldContent),
+	}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to format file: %w", err)
 	}

@@ -10,19 +10,17 @@ func TestUseAssignmentOperator(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		runtimeOptions *RuntimeOptions
-
-		beforeFix []byte
-		afterFix  []byte
-
-		fixExpected bool
+		contentAfterFix []byte
+		fc              *FixCandidate
+		fixExpected     bool
+		runtimeOptions  *RuntimeOptions
 	}{
 		"no change": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
 
 allow := true
-`),
-			afterFix: []byte(`package test
+`)},
+			contentAfterFix: []byte(`package test
 
 allow := true
 `),
@@ -30,11 +28,11 @@ allow := true
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"no change because no location": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
 
 allow = true
-`),
-			afterFix: []byte(`package test
+`)},
+			contentAfterFix: []byte(`package test
 
 allow = true
 `),
@@ -42,11 +40,11 @@ allow = true
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"single change": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
 
 allow = true
-`),
-			afterFix: []byte(`package test
+`)},
+			contentAfterFix: []byte(`package test
 
 allow := true
 `),
@@ -61,11 +59,14 @@ allow := true
 			},
 		},
 		"bad change": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package test
 
 allow = true
 `),
-			afterFix: []byte(`package test
+			},
+			contentAfterFix: []byte(`package test
 
 allow = true
 `),
@@ -80,13 +81,16 @@ allow = true
 			},
 		},
 		"many changes": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package test
 
 allow = true if { u = 1 }
 
 allow = true if { u = 2 }
 `),
-			afterFix: []byte(`package test
+			},
+			contentAfterFix: []byte(`package test
 
 allow := true if { u = 1 }
 
@@ -107,13 +111,16 @@ allow := true if { u = 2 }
 			},
 		},
 		"different columns": {
-			beforeFix: []byte(`package test
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package test
 
 allow = true
  wow = true
   wowallow = true
 `),
-			afterFix: []byte(`package test
+			},
+			contentAfterFix: []byte(`package test
 
 allow := true
  wow := true
@@ -147,7 +154,7 @@ allow := true
 
 			uas := UseAssignmentOperator{}
 
-			fixed, fixedContent, err := uas.Fix(tc.beforeFix, tc.runtimeOptions)
+			fixed, fixedContent, err := uas.Fix(tc.fc, tc.runtimeOptions)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -156,10 +163,10 @@ allow := true
 				t.Fatalf("unexpected fixed value, got: %t, expected: %t", fixed, tc.fixExpected)
 			}
 
-			if tc.fixExpected && string(fixedContent) != string(tc.afterFix) {
+			if tc.fixExpected && string(fixedContent) != string(tc.contentAfterFix) {
 				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",
 					string(fixedContent),
-					string(tc.afterFix))
+					string(tc.contentAfterFix))
 			}
 		})
 	}

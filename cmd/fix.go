@@ -25,11 +25,7 @@ import (
 // It is intended that it is compatible with the same command line flags as the lint command to
 // control the behavior of lint rules used.
 type fixCommandParams struct {
-	timeout         time.Duration
 	configFile      string
-	outputFile      string
-	rules           repeatedStringFlag
-	noColor         bool
 	debug           bool
 	disable         repeatedStringFlag
 	disableAll      bool
@@ -37,7 +33,12 @@ type fixCommandParams struct {
 	enable          repeatedStringFlag
 	enableAll       bool
 	enableCategory  repeatedStringFlag
+	format          string
 	ignoreFiles     repeatedStringFlag
+	noColor         bool
+	outputFile      string
+	rules           repeatedStringFlag
+	timeout         time.Duration
 }
 
 func (p *fixCommandParams) getConfigFile() string {
@@ -79,6 +80,8 @@ func init() {
 
 	fixCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
 		"set path of configuration file")
+	fixCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
+		"set output format (pretty is the only supported format)")
 	fixCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
 		"set file to use for fixing output, defaults to stdout")
 	fixCommand.Flags().BoolVar(&params.noColor, "no-color", false,
@@ -221,7 +224,15 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("error(s) encountered while fixing: %w", err)
 	}
 
-	fixer.Reporter(outputWriter, fixReport)
+	reporter, err := fixer.ReporterForFormat(params.format, outputWriter)
+	if err != nil {
+		return fmt.Errorf("failed to get reporter for format %s: %w", params.format, err)
+	}
+
+	err = reporter.Report(fixReport)
+	if err != nil {
+		return fmt.Errorf("failed to output fix report: %w", err)
+	}
 
 	return nil
 }

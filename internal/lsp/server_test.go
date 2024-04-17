@@ -18,6 +18,8 @@ const mainRegoFileName = "/main.rego"
 
 const defaultTimeout = 3 * time.Second
 
+const defaultBufferedChannelSize = 5
+
 // InMemoryReadWriteCloser is an in-memory implementation of jsonrpc2.ReadWriteCloser.
 type InMemoryReadWriteCloser struct {
 	Buffer bytes.Buffer
@@ -87,7 +89,7 @@ allow = true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan FileDiagnostics, 1)
+	receivedMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData FileDiagnostics
@@ -331,9 +333,9 @@ ignore:
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	authzFileMessages := make(chan FileDiagnostics, 1)
-	adminsFileMessages := make(chan FileDiagnostics, 1)
-	ignoredFileMessages := make(chan FileDiagnostics, 1)
+	authzFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
+	adminsFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
+	ignoredFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == "textDocument/publishDiagnostics" {
 			var requestData FileDiagnostics
@@ -562,7 +564,7 @@ allow := true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan FileDiagnostics, 1)
+	receivedMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData FileDiagnostics

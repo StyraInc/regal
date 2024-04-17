@@ -23,6 +23,8 @@ func (*NoWhitespaceComment) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, 
 		return false, nil, nil
 	}
 
+	fixed := false
+
 	for _, loc := range opts.Locations {
 		// unexpected line in file, skipping
 		if loc.Row > len(lines) {
@@ -37,7 +39,8 @@ func (*NoWhitespaceComment) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, 
 		}
 
 		lines[loc.Row-1] = slices.Concat(line[0:loc.Col], []byte(" "), line[loc.Col:])
+		fixed = true
 	}
 
-	return true, bytes.Join(lines, []byte("\n")), nil
+	return fixed, bytes.Join(lines, []byte("\n")), nil
 }

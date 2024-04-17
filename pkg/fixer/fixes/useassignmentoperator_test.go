@@ -18,11 +18,11 @@ func TestUseAssignmentOperator(t *testing.T) {
 		fixExpected bool
 	}{
 		"no change": {
-			beforeFix: []byte(`package test\n
+			beforeFix: []byte(`package test
 
 allow := true
 `),
-			afterFix: []byte(`package test\n
+			afterFix: []byte(`package test
 
 allow := true
 `),
@@ -30,11 +30,11 @@ allow := true
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"no change because no location": {
-			beforeFix: []byte(`package test\n
+			beforeFix: []byte(`package test
 
 allow = true
 `),
-			afterFix: []byte(`package test\n
+			afterFix: []byte(`package test
 
 allow = true
 `),
@@ -42,11 +42,11 @@ allow = true
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"single change": {
-			beforeFix: []byte(`package test\n
+			beforeFix: []byte(`package test
 
 allow = true
 `),
-			afterFix: []byte(`package test\n
+			afterFix: []byte(`package test
 
 allow := true
 `),
@@ -60,14 +60,33 @@ allow := true
 				},
 			},
 		},
+		"bad change": {
+			beforeFix: []byte(`package test
+
+allow = true
+`),
+			afterFix: []byte(`package test
+
+allow = true
+`),
+			fixExpected: false,
+			runtimeOptions: &RuntimeOptions{
+				Locations: []ast.Location{
+					{
+						Row: 1,
+						Col: 1,
+					},
+				},
+			},
+		},
 		"many changes": {
-			beforeFix: []byte(`package test\n
+			beforeFix: []byte(`package test
 
 allow = true if { u = 1 }
 
 allow = true if { u = 2 }
 `),
-			afterFix: []byte(`package test\n
+			afterFix: []byte(`package test
 
 allow := true if { u = 1 }
 
@@ -88,13 +107,13 @@ allow := true if { u = 2 }
 			},
 		},
 		"different columns": {
-			beforeFix: []byte(`package test\n
+			beforeFix: []byte(`package test
 
 allow = true
  wow = true
   wowallow = true
 `),
-			afterFix: []byte(`package test\n
+			afterFix: []byte(`package test
 
 allow := true
  wow := true
@@ -133,8 +152,8 @@ allow := true
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tc.fixExpected && !fixed {
-				t.Fatalf("expected fix to be applied")
+			if tc.fixExpected != fixed {
+				t.Fatalf("unexpected fixed value, got: %t, expected: %t", fixed, tc.fixExpected)
 			}
 
 			if tc.fixExpected && string(fixedContent) != string(tc.afterFix) {

@@ -23,6 +23,8 @@ func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte
 		return false, nil, nil
 	}
 
+	fixed := false
+
 	for _, loc := range opts.Locations {
 		if loc.Row > len(lines) {
 			return false, nil, nil
@@ -36,7 +38,8 @@ func (*UseAssignmentOperator) Fix(in []byte, opts *RuntimeOptions) (bool, []byte
 		}
 
 		lines[loc.Row-1] = slices.Concat(line[0:loc.Col-1], []byte(":"), line[loc.Col-1:])
+		fixed = true
 	}
 
-	return true, bytes.Join(lines, []byte("\n")), nil
+	return fixed, bytes.Join(lines, []byte("\n")), nil
 }

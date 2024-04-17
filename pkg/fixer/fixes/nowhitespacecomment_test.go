@@ -55,7 +55,26 @@ func TestNoWhitespaceComment(t *testing.T) {
 				Locations: []ast.Location{
 					{
 						Row: 3,
-						Col: 1, // this is what the rule outputs at the moment
+						Col: 1,
+					},
+				},
+			},
+		},
+		"bad change": {
+			beforeFix: []byte(`package test\n
+
+#this is a comment
+`),
+			afterFix: []byte(`package test\n
+
+#this is a comment
+`),
+			fixExpected: false,
+			runtimeOptions: &RuntimeOptions{
+				Locations: []ast.Location{
+					{
+						Row: 3,
+						Col: 9, // this is wrong and should not be fixed
 					},
 				},
 			},
@@ -137,8 +156,8 @@ func TestNoWhitespaceComment(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tc.fixExpected && !fixed {
-				t.Fatalf("expected fix to be applied")
+			if tc.fixExpected != fixed {
+				t.Fatalf("unexpected fixed value, got: %t, expected: %t", fixed, tc.fixExpected)
 			}
 
 			if tc.fixExpected && string(fixedContent) != string(tc.afterFix) {

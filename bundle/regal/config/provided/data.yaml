@@ -81,6 +81,8 @@ rules:
       level: error
     redundant-data-import:
       level: error
+    unresolved-import:
+      level: error
     use-rego-v1:
       level: error
   performance:

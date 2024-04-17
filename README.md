@@ -232,6 +232,7 @@ The following rules are currently available:
 | imports     | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)           | Prefer importing packages over rules                      |
 | imports     | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                         | Redundant alias                                           |
 | imports     | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)             | Redundant import of data                                  |
+| imports     | [unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import)                     | Unresolved import                                         |
 | imports     | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                                 | Use `import rego.v1`                                      |
 | performance | [with-outside-test-context](https://docs.styra.com/regal/rules/performance/with-outside-test-context) | `with` used outside test context                          |
 | style       | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)       | Avoid `get_` and `list_` prefix for rules and functions   |

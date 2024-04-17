@@ -1,6 +1,25 @@
 package fixes
 
-import "github.com/open-policy-agent/opa/ast"
+import (
+	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/format"
+)
+
+// NewDefaultFixes returns a list of default fixes that are applied by the fix command.
+// When a new fix is added, it should be added to this list.
+func NewDefaultFixes() []Fix {
+	return []Fix{
+		&Fmt{},
+		&Fmt{
+			KeyOverride: "use-rego-v1",
+			OPAFmtOpts: format.Opts{
+				RegoVersion: ast.RegoV0CompatV1,
+			},
+		},
+		&UseAssignmentOperator{},
+		&NoWhitespaceComment{},
+	}
+}
 
 // Fix is the interface that must be implemented by all fixes.
 type Fix interface {

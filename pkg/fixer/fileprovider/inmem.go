@@ -1,4 +1,4 @@
-package fp
+package fileprovider
 
 import (
 	"fmt"

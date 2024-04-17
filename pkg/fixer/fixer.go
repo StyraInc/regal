@@ -3,84 +3,16 @@ package fixer
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/fixer/fp"
 	"github.com/styrainc/regal/pkg/linter"
 )
 
-// Report contains updated file contents and summary information about the fixes that were applied
-// during a fix operation.
-type Report struct {
-	totalFixes          int
-	fileFixedViolations map[string]map[string]struct{}
-}
-
-func NewReport() *Report {
-	return &Report{
-		fileFixedViolations: make(map[string]map[string]struct{}),
-	}
-}
-
-func (r *Report) SetFileFixedViolation(file string, violation string) {
-	if _, ok := r.fileFixedViolations[file]; !ok {
-		r.fileFixedViolations[file] = make(map[string]struct{})
-	}
-
-	_, ok := r.fileFixedViolations[file][violation]
-	if !ok {
-		r.fileFixedViolations[file][violation] = struct{}{}
-		r.totalFixes++
-	}
-}
-
-func (r *Report) FixedViolationsForFile(file string) []string {
-	fixedViolations := make([]string, 0)
-	for violation := range r.fileFixedViolations[file] {
-		fixedViolations = append(fixedViolations, violation)
-	}
-
-	// sort the violations for deterministic output
-	slices.Sort(fixedViolations)
-
-	return fixedViolations
-}
-
-func (r *Report) FixedFiles() []string {
-	fixedFiles := make([]string, 0)
-	for file := range r.fileFixedViolations {
-		fixedFiles = append(fixedFiles, file)
-	}
-
-	// sort the files for deterministic output
-	slices.Sort(fixedFiles)
-
-	return fixedFiles
-}
-
-func (r *Report) TotalFixes() int {
-	// totalFixes is incremented for each unique violation that is fixed
-	return r.totalFixes
-}
-
-// NewDefaultFixes returns a list of default fixes that are applied by the fix command.
-// When a new fix is added, it should be added to this list.
-func NewDefaultFixes() []fixes.Fix {
-	return []fixes.Fix{
-		&fixes.Fmt{},
-		&fixes.Fmt{
-			KeyOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
-			},
-		},
-		&fixes.UseAssignmentOperator{},
-		&fixes.NoWhitespaceComment{},
-	}
+func NewFixer() *Fixer {
+	return &Fixer{}
 }
 
 type Fixer struct {
@@ -111,8 +43,8 @@ func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
-func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fp.FileProvider) (*Report, error) {
-	enabledRules, err := l.EnabledRules(ctx)
+func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileProvider) (*Report, error) {
+	enabledRules, err := l.DetermineEnabledRules(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine enabled rules: %w", err)
 	}

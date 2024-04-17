@@ -346,7 +346,10 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	return finalReport, nil
 }
 
-func (l Linter) EnabledRules(ctx context.Context) ([]string, error) {
+// DetermineEnabledRules returns the list of rules that are enabled based on the supplied configuration.
+// This makes use of the Rego and Go rule settings to produce a single list of the rules that are to be run
+// on this linter instance.
+func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 	enabledRules := make([]string, 0)
 
 	goRules, err := l.enabledGoRules()

@@ -5,10 +5,12 @@ import (
 	"io"
 )
 
+// Reporter is responsible for outputting a fix report in a specific format.
 type Reporter interface {
 	Report(*Report) error
 }
 
+// ReporterForFormat returns a suitable Reporter for outputting a fix report in the given format.
 func ReporterForFormat(format string, outputWriter io.Writer) (Reporter, error) {
 	switch format {
 	case "pretty":
@@ -18,6 +20,7 @@ func ReporterForFormat(format string, outputWriter io.Writer) (Reporter, error) 
 	}
 }
 
+// PrettyReporter outputs a fix report in a human-readable format.
 type PrettyReporter struct {
 	outputWriter io.Writer
 }

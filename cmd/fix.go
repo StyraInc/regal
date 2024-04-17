@@ -17,7 +17,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
-	"github.com/styrainc/regal/pkg/fixer/fp"
+	"github.com/styrainc/regal/pkg/fixer/fileprovider"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 )
 
@@ -213,10 +214,10 @@ func fix(args []string, params *fixCommandParams) error {
 		log.Println("no user-provided config file found, will use the default config")
 	}
 
-	f := fixer.Fixer{}
-	f.RegisterFixes(fixer.NewDefaultFixes()...)
+	f := fixer.NewFixer()
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
 
-	fileProvider := fp.NewFSFileProvider(args...)
+	fileProvider := fileprovider.NewFSFileProvider(args...)
 
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {

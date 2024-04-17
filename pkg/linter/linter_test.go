@@ -581,7 +581,7 @@ func TestEnabledRules(t *testing.T) {
 		WithDisableAll(true).
 		WithEnabledRules("opa-fmt", "no-whitespace-comment")
 
-	enabledRules, err := linter.EnabledRules(context.Background())
+	enabledRules, err := linter.DetermineEnabledRules(context.Background())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

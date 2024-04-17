@@ -6,7 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/styrainc/regal/pkg/fixer/fp"
+	"github.com/styrainc/regal/pkg/fixer/fileprovider"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 )
 
@@ -24,7 +25,7 @@ deny = true
 `),
 	}
 
-	memfp := fp.NewInMemoryFileProvider(policies)
+	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
 	input, err := memfp.ToInput()
 	if err != nil {
@@ -35,8 +36,8 @@ deny = true
 		WithEnableAll(true).
 		WithInputModules(&input)
 
-	f := Fixer{}
-	f.RegisterFixes(NewDefaultFixes()...)
+	f := NewFixer()
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
 
 	fixReport, err := f.Fix(context.Background(), &l, memfp)
 	if err != nil {

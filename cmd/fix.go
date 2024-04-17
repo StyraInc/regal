@@ -250,23 +250,28 @@ func fixLintReport(rep *report.Report) (*fixer.Report, error) {
 
 	fixReport, err := f.Fix(rep, fileReaders)
 	if err != nil {
-		return fixReport, fmt.Errorf("error encountered while fixing: %w", err)
+		return nil, fmt.Errorf("error encountered while fixing: %w", err)
 	}
 
 	for file, content := range fixReport.FileContents() {
-		f, err := os.OpenFile(file, os.O_RDWR|os.O_TRUNC, 0o755)
+		stat, err := os.Stat(file)
 		if err != nil {
-			return fixReport, fmt.Errorf("failed to open file %s: %w", file, err)
+			return nil, fmt.Errorf("failed to get file info for file %s: %w", file, err)
+		}
+
+		f, err := os.OpenFile(file, os.O_RDWR|os.O_TRUNC, stat.Mode())
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file %s: %w", file, err)
 		}
 
 		_, err = f.Write(content)
 		if err != nil {
-			return fixReport, fmt.Errorf("failed to write to file %s: %w", file, err)
+			return nil, fmt.Errorf("failed to write to file %s: %w", file, err)
 		}
 
 		err = f.Close()
 		if err != nil {
-			return fixReport, fmt.Errorf("failed to close file %s: %w", file, err)
+			return nil, fmt.Errorf("failed to close file %s: %w", file, err)
 		}
 	}
 

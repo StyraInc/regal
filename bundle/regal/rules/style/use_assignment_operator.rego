@@ -18,7 +18,9 @@ report contains violation if {
 	not ast.implicit_boolean_assignment(rule)
 	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule))
+	loc := result.location(rule)
+
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
 }
 
 report contains violation if {
@@ -28,7 +30,9 @@ report contains violation if {
 	rule.head.value
 	not rule.head.assign
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.head.ref[0]))
+	loc := result.location(result.location(rule.head.ref[0]))
+
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
 }
 
 report contains violation if {
@@ -51,5 +55,14 @@ report contains violation if {
 	text := base64.decode(value["else"].head.location.text)
 	regex.match(`^else\s*=`, text)
 
-	violation := result.fail(rego.metadata.chain(), result.location(value["else"].head))
+	loc := result.location(value["else"].head)
+
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
+}
+
+default eq_col(_) := 1
+
+eq_col(loc) := pos if {
+	pos := indexof(loc.location.text, "=")
+	pos != -1
 }

@@ -2,6 +2,7 @@ package fixes
 
 import (
 	"bytes"
+	"slices"
 )
 
 type NoWhitespaceComment struct{}
@@ -23,20 +24,19 @@ func (*NoWhitespaceComment) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, 
 	}
 
 	for _, loc := range opts.Locations {
+		// unexpected line in file, skipping
 		if loc.Row > len(lines) {
-			return false, nil, nil
-		}
-
-		if loc.Col != 1 {
-			// current impl only understands the first column
-			return false, nil, nil
+			continue
 		}
 
 		line := lines[loc.Row-1]
 
-		if bytes.HasPrefix(line, []byte("#")) && !bytes.HasPrefix(line, []byte("# ")) {
-			lines[loc.Row-1] = bytes.Replace(line, []byte("#"), []byte("# "), 1)
+		// unexpected character at location column, skipping
+		if line[loc.Col-1] != byte('#') {
+			continue
 		}
+
+		lines[loc.Row-1] = slices.Concat(line[0:loc.Col], []byte(" "), line[loc.Col:])
 	}
 
 	return true, bytes.Join(lines, []byte("\n")), nil

@@ -91,6 +91,37 @@ func TestNoWhitespaceComment(t *testing.T) {
 				},
 			},
 		},
+		"many changes, different columns": {
+			beforeFix: []byte(`package test\n
+
+#this is a comment
+ #this is a comment
+  #this is a comment
+`),
+			afterFix: []byte(`package test\n
+
+# this is a comment
+ # this is a comment
+  # this is a comment
+`),
+			fixExpected: true,
+			runtimeOptions: &RuntimeOptions{
+				Locations: []ast.Location{
+					{
+						Row: 3,
+						Col: 1,
+					},
+					{
+						Row: 4,
+						Col: 2,
+					},
+					{
+						Row: 5,
+						Col: 3,
+					},
+				},
+			},
+		},
 	}
 
 	for testName, tc := range testCases {

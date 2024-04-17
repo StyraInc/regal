@@ -64,7 +64,7 @@ func init() {
 			return nil
 		},
 
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: wrapProfiling(func(args []string) error {
 			err := fix(args, params)
 			if err != nil {
 				log.SetOutput(os.Stderr)
@@ -74,7 +74,7 @@ func init() {
 			}
 
 			return nil
-		},
+		}),
 	}
 
 	fixCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",

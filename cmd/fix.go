@@ -230,6 +230,11 @@ func fixLintReport(rep *report.Report) (*fixer.Report, error) {
 	fileReaders := make(map[string]io.Reader)
 
 	for _, v := range rep.Violations {
+		// if the file has already been opened, skip it
+		if _, ok := fileReaders[v.Location.File]; ok {
+			continue
+		}
+
 		f, err := os.Open(v.Location.File)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file for fixing %s: %w", v.Location.File, err)

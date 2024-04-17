@@ -1,15 +1,16 @@
 package fixer
 
 import (
+	"context"
 	"fmt"
-	"io"
 	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
 	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/fixer/fp"
+	"github.com/styrainc/regal/pkg/linter"
 )
 
 // Report contains updated file contents and summary information about the fixes that were applied
@@ -17,24 +18,12 @@ import (
 type Report struct {
 	totalFixes          int
 	fileFixedViolations map[string]map[string]struct{}
-	fileContents        map[string][]byte
 }
 
 func NewReport() *Report {
 	return &Report{
 		fileFixedViolations: make(map[string]map[string]struct{}),
-		fileContents:        make(map[string][]byte),
 	}
-}
-
-func (r *Report) SetFileContents(file string, content []byte) {
-	r.fileContents[file] = content
-}
-
-func (r *Report) GetFileContents(file string) ([]byte, bool) {
-	content, ok := r.fileContents[file]
-
-	return content, ok
 }
 
 func (r *Report) SetFileFixedViolation(file string, violation string) {
@@ -49,22 +38,6 @@ func (r *Report) SetFileFixedViolation(file string, violation string) {
 	}
 }
 
-func (r *Report) FileContents() map[string][]byte {
-	return r.fileContents
-}
-
-func (r *Report) FixedFiles() []string {
-	fixedFiles := make([]string, 0)
-	for file := range r.fileContents {
-		fixedFiles = append(fixedFiles, file)
-	}
-
-	// sort the files for deterministic output
-	slices.Sort(fixedFiles)
-
-	return fixedFiles
-}
-
 func (r *Report) FixedViolationsForFile(file string) []string {
 	fixedViolations := make([]string, 0)
 	for violation := range r.fileFixedViolations[file] {
@@ -75,6 +48,18 @@ func (r *Report) FixedViolationsForFile(file string) []string {
 	slices.Sort(fixedViolations)
 
 	return fixedViolations
+}
+
+func (r *Report) FixedFiles() []string {
+	fixedFiles := make([]string, 0)
+	for file := range r.fileFixedViolations {
+		fixedFiles = append(fixedFiles, file)
+	}
+
+	// sort the files for deterministic output
+	slices.Sort(fixedFiles)
+
+	return fixedFiles
 }
 
 func (r *Report) TotalFixes() int {
@@ -126,111 +111,81 @@ func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
-// OrderedFixes returns the fixes in the order they should be applied.
-// Fixes that are marked as WholeFile are applied last since they
-// can add new lines that would affect the fixes for line based violations.
-func (f *Fixer) OrderedFixes() []fixes.Fix {
-	orderedFixes := make([]fixes.Fix, 0)
-	wholeFileFixes := make([]fixes.Fix, 0)
-
-	for _, fix := range f.registeredFixes {
-		fixInstance, ok := fix.(fixes.Fix)
-		if !ok {
-			continue
-		}
-
-		if fixInstance.WholeFile() {
-			wholeFileFixes = append(wholeFileFixes, fixInstance)
-
-			continue
-		}
-
-		orderedFixes = append(orderedFixes, fixInstance)
+func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fp.FileProvider) (*Report, error) {
+	enabledRules, err := l.EnabledRules(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine enabled rules: %w", err)
 	}
 
-	return append(orderedFixes, wholeFileFixes...)
-}
+	var fixableEnabledRules []string
 
-func (f *Fixer) Fix(rep *report.Report, readers map[string]io.Reader) (*Report, error) {
-	filesToFix, err := computeFilesToFix(f, rep, readers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine files to fix: %w", err)
+	for _, rule := range enabledRules {
+		if _, ok := f.GetFixForKey(rule); ok {
+			fixableEnabledRules = append(fixableEnabledRules, rule)
+		}
 	}
 
 	fixReport := NewReport()
 
-	for _, fixInstance := range f.OrderedFixes() {
-		// fix by line
-		for file, content := range filesToFix {
-			for _, violation := range rep.Violations {
-				if violation.Title != fixInstance.Key() {
-					continue
-				}
+	for {
+		fixMadeInIteration := false
 
-				// if the file has been fixed, use the fixed content from other fixes
-				if fixedContent, ok := fixReport.GetFileContents(file); ok {
-					content = fixedContent
-				}
+		in, err := fp.ToInput()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate linter input: %w", err)
+		}
 
-				fixed, fixedContent, err := fixInstance.Fix(content, &fixes.RuntimeOptions{
-					Metadata: fixes.RuntimeMetadata{
-						Filename: file,
-					},
-					Locations: []ast.Location{
-						{
-							Row: violation.Location.Row,
-							Col: violation.Location.Column,
-						},
-					},
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
-				}
+		fixLinter := l.WithDisableAll(true).
+			WithEnabledRules(fixableEnabledRules...).
+			WithInputModules(&in)
 
-				if fixed {
-					fixReport.SetFileContents(file, fixedContent)
-					fixReport.SetFileFixedViolation(file, violation.Title)
-				}
+		rep, err := fixLinter.Lint(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to lint before fixing: %w", err)
+		}
+
+		for _, violation := range rep.Violations {
+			fixInstance, ok := f.GetFixForKey(violation.Title)
+			if !ok {
+				return nil, fmt.Errorf("no fix for violation %s", violation.Title)
 			}
+
+			fc, err := fp.GetFile(violation.Location.File)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get file %s: %w", violation.Location.File, err)
+			}
+
+			fixed, fixedContent, err := fixInstance.Fix(fc, &fixes.RuntimeOptions{
+				Metadata: fixes.RuntimeMetadata{
+					Filename: violation.Location.File,
+				},
+				Locations: []ast.Location{
+					{
+						Row: violation.Location.Row,
+						Col: violation.Location.Column,
+					},
+				},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to fix %s: %w", violation.Location.File, err)
+			}
+
+			if fixed {
+				err = fp.PutFile(violation.Location.File, fixedContent)
+				if err != nil {
+					return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
+				}
+
+				fixReport.SetFileFixedViolation(violation.Location.File, violation.Title)
+
+				fixMadeInIteration = true
+			}
+		}
+
+		if !fixMadeInIteration {
+			break
 		}
 	}
 
 	return fixReport, nil
-}
-
-// computeFilesToFix determines which files need to be fixed based on the violations in the report.
-func computeFilesToFix(
-	f *Fixer,
-	rep *report.Report,
-	readers map[string]io.Reader,
-) (map[string][]byte, error) {
-	filesToFix := make(map[string][]byte)
-
-	// determine which files need to be fixed
-	for _, violation := range rep.Violations {
-		file := violation.Location.File
-
-		// skip files already marked for fixing
-		if _, ok := filesToFix[file]; ok {
-			continue
-		}
-
-		// skip violations that the fixer has no fix for
-		if _, ok := f.GetFixForKey(violation.Title); !ok {
-			continue
-		}
-
-		if _, ok := readers[file]; !ok {
-			return nil, fmt.Errorf("no reader for fixable file %s", file)
-		}
-
-		bs, err := io.ReadAll(readers[file])
-		if err != nil {
-			return nil, fmt.Errorf("failed to read file %s: %w", file, err)
-		}
-
-		filesToFix[violation.Location.File] = bs
-	}
-
-	return filesToFix, nil
 }

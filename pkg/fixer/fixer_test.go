@@ -2,135 +2,50 @@ package fixer
 
 import (
 	"bytes"
-	"io"
+	"context"
+	"slices"
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
-
-	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/fixer/fp"
+	"github.com/styrainc/regal/pkg/linter"
 )
 
-func TestFixer_OPAFmtOnly(t *testing.T) {
+func TestFixer(t *testing.T) {
 	t.Parallel()
 
-	rep := &report.Report{
-		Violations: []report.Violation{
-			{
-				Title:       "opa-fmt",
-				Description: "File should be formatted with `opa fmt`",
-				Category:    "style",
-				Location: report.Location{
-					File:   "main.rego",
-					Row:    1,
-					Column: 1,
-				},
-			},
-		},
-	}
-
-	fileContents := map[string]io.Reader{
-		"main.rego": bytes.NewReader([]byte("package test\nimport rego.v1\nallow := true")),
-	}
-	expectedFileFixedViolations := map[string]map[string]struct{}{
-		"main.rego": {
-			"opa-fmt": {},
-		},
-	}
-	expectedFileContents := map[string][]byte{
+	policies := map[string][]byte{
 		"main.rego": []byte(`package test
 
-import rego.v1
-
-allow := true
-`),
-	}
-	f := Fixer{}
-	f.RegisterFixes(&fixes.Fmt{})
-
-	fixReport, err := f.Fix(rep, fileContents)
-	if err != nil {
-		t.Fatalf("failed to fix: %v", err)
-	}
-
-	if got, exp := len(fixReport.fileContents), len(expectedFileContents); got != exp {
-		t.Fatalf("expected %d fixed files, got %d", exp, got)
-	}
-
-	for file, content := range fixReport.fileContents {
-		expectedContent, ok := expectedFileContents[file]
-		if !ok {
-			t.Fatalf("unexpected file %s", file)
-		}
-
-		if !bytes.Equal(content, expectedContent) {
-			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
-				file,
-				string(content),
-				string(expectedContent))
-		}
-	}
-
-	if got, exp := len(fixReport.fileFixedViolations), len(expectedFileFixedViolations); got != exp {
-		t.Fatalf("expected %d fixed files, got %d", exp, got)
-	}
-
-	for file, violations := range fixReport.fileFixedViolations {
-		expectedViolations, ok := expectedFileFixedViolations[file]
-		if !ok {
-			t.Fatalf("unexpected file %s", file)
-		}
-
-		if got, exp := len(violations), len(expectedViolations); got != exp {
-			t.Fatalf("expected %d fixed violations, got %d", exp, got)
-		}
-
-		for violation := range violations {
-			if _, ok := expectedViolations[violation]; !ok {
-				t.Fatalf("unexpected fixed violation %s", violation)
-			}
-		}
-	}
-
-	if got, exp := fixReport.TotalFixes(), 1; got != exp {
-		t.Fatalf("expected %d total loadedFixes, got %d", exp, got)
-	}
+allow {
+true #no space
 }
 
-func TestFixer_OPAFmtAndRegoV1(t *testing.T) {
-	t.Parallel()
-
-	rep := &report.Report{
-		Violations: []report.Violation{
-			{
-				Title: "opa-fmt",
-				Location: report.Location{
-					File:   "main.rego",
-					Row:    1,
-					Column: 1,
-				},
-			},
-			{
-				Title: "use-rego-v1",
-				Location: report.Location{
-					File:   "main.rego",
-					Row:    1,
-					Column: 1,
-				},
-			},
-		},
+deny = true
+`),
 	}
 
-	fileContents := map[string]io.Reader{
-		"main.rego": bytes.NewReader([]byte("package test\nimport rego.v1\nallow := true")),
+	memfp := fp.NewInMemoryFileProvider(policies)
+
+	input, err := memfp.ToInput()
+	if err != nil {
+		t.Fatalf("failed to create input: %v", err)
 	}
 
-	expectedFileFixedViolations := map[string]map[string]struct{}{
-		"main.rego": {
-			"opa-fmt":     {},
-			"use-rego-v1": {},
-		},
+	l := linter.NewLinter().
+		WithEnableAll(true).
+		WithInputModules(&input)
+
+	f := Fixer{}
+	f.RegisterFixes(NewDefaultFixes()...)
+
+	fixReport, err := f.Fix(context.Background(), &l, memfp)
+	if err != nil {
+		t.Fatalf("failed to fix: %v", err)
+	}
+
+	expectedFileFixedViolations := map[string][]string{
+		// use-assignment-operator is not expected since use-rego-v1 also addresses this in this example
+		"main.rego": {"no-whitespace-comment", "opa-fmt", "use-rego-v1"},
 	}
 	expectedFileContents := map[string][]byte{
 		"main.rego": []byte(`package test
@@ -138,33 +53,32 @@ func TestFixer_OPAFmtAndRegoV1(t *testing.T) {
 import rego.v1
 
 allow := true
+
+# no space
+
+deny := true
 `),
 	}
 
-	f := Fixer{}
-	f.RegisterFixes(
-		&fixes.Fmt{},
-		&fixes.Fmt{
-			KeyOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
-			},
-		},
-	)
-
-	fixReport, err := f.Fix(rep, fileContents)
-	if err != nil {
-		t.Fatalf("failed to fix: %v", err)
-	}
-
-	if got, exp := len(fixReport.fileContents), len(expectedFileContents); got != exp {
+	if got, exp := fixReport.TotalFixes(), 3; got != exp {
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 
-	for file, content := range fixReport.fileContents {
+	fpFiles, err := memfp.ListFiles()
+	if err != nil {
+		t.Fatalf("failed to list files: %v", err)
+	}
+
+	for _, file := range fpFiles {
+		// check that the content is correct
 		expectedContent, ok := expectedFileContents[file]
 		if !ok {
 			t.Fatalf("unexpected file %s", file)
+		}
+
+		content, err := memfp.GetFile(file)
+		if err != nil {
+			t.Fatalf("failed to get file %s: %v", file, err)
 		}
 
 		if !bytes.Equal(content, expectedContent) {
@@ -173,30 +87,17 @@ allow := true
 				string(content),
 				string(expectedContent))
 		}
-	}
 
-	if got, exp := len(fixReport.fileFixedViolations), len(expectedFileFixedViolations); got != exp {
-		t.Fatalf("expected %d fixed files, got %d", exp, got)
-	}
+		// check that the fixed violations are correct
+		fixedViolations := fixReport.FixedViolationsForFile(file)
 
-	for file, violations := range fixReport.fileFixedViolations {
 		expectedViolations, ok := expectedFileFixedViolations[file]
 		if !ok {
-			t.Fatalf("unexpected file %s", file)
+			t.Fatalf("unexpected file waas fixed %s", file)
 		}
 
-		if got, exp := len(violations), len(expectedViolations); got != exp {
-			t.Fatalf("expected %d fixed violations, got %d", exp, got)
+		if !slices.Equal(fixedViolations, expectedViolations) {
+			t.Fatalf("unexpected fixed violations for %s:\ngot: %v\nexpected: %v", file, fixedViolations, expectedViolations)
 		}
-
-		for violation := range violations {
-			if _, ok := expectedViolations[violation]; !ok {
-				t.Fatalf("unexpected fixed violation %s", violation)
-			}
-		}
-	}
-
-	if got, exp := fixReport.TotalFixes(), 2; got != exp {
-		t.Fatalf("expected %d total loadedFixes, got %d", exp, got)
 	}
 }

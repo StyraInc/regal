@@ -31,6 +31,10 @@ func (*NoWhitespaceComment) Fix(in []byte, opts *RuntimeOptions) (bool, []byte, 
 			continue
 		}
 
+		if loc.Col > len(lines[loc.Row-1]) || loc.Col < 1 {
+			continue
+		}
+
 		line := lines[loc.Row-1]
 
 		// unexpected character at location column, skipping

@@ -7,9 +7,6 @@ type Fix interface {
 	// Key returns the unique key for the fix, this should correlate with the
 	// violation that the fix is meant to address.
 	Key() string
-	// WholeFile returns true if the fix operates on the whole file,
-	// false if it operates on specific locations.
-	WholeFile() bool
 	Fix(in []byte, opts *RuntimeOptions) (bool, []byte, error)
 }
 

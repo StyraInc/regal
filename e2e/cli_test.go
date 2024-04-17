@@ -738,10 +738,12 @@ func TestFix(t *testing.T) {
 	// only violation is for the opa-fmt rule
 	unformattedContents := []byte(`package wow
 
+import rego.v1
+
 #comment
 
-allow = 1 {
-	input.foo == true
+allow if {
+	true
 }
 `)
 	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
@@ -757,8 +759,8 @@ allow = 1 {
 	exp := fmt.Sprintf(`3 fixes applied:
 %s/main.rego:
 - no-whitespace-comment
+- opa-fmt
 - use-assignment-operator
-- use-rego-v1
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -781,9 +783,7 @@ import rego.v1
 
 # comment
 
-allow := 1 if {
-	input.foo == true
-}
+allow := true
 `
 
 	if act := string(bs); expectedContent != act {

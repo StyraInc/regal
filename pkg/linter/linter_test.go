@@ -573,3 +573,28 @@ func TestLintWithAggregateRule(t *testing.T) {
 		t.Errorf("expected violation to be on 'import data.foo.allow', got %q", *violation.Location.Text)
 	}
 }
+
+func TestEnabledRules(t *testing.T) {
+	t.Parallel()
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("opa-fmt", "no-whitespace-comment")
+
+	enabledRules, err := linter.EnabledRules(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(enabledRules) != 2 {
+		t.Fatalf("expected 2 enabled rules, got %d", len(enabledRules))
+	}
+
+	if enabledRules[0] != "no-whitespace-comment" {
+		t.Errorf("expected first enabled rule to be 'no-whitespace-comment', got %q", enabledRules[0])
+	}
+
+	if enabledRules[1] != "opa-fmt" {
+		t.Errorf("expected first enabled rule to be 'opa-fmt', got %q", enabledRules[1])
+	}
+}

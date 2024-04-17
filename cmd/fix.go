@@ -17,8 +17,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
+	fp2 "github.com/styrainc/regal/pkg/fixer/fp"
 	"github.com/styrainc/regal/pkg/linter"
-	"github.com/styrainc/regal/pkg/report"
 )
 
 // fixCommandParams is similar to the lint params, but with some fields such as profiling removed.
@@ -165,26 +165,25 @@ func fix(args []string, params *fixCommandParams) error {
 		}
 	}
 
-	regal := linter.NewLinter().
+	l := linter.NewLinter().
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).
 		WithEnableAll(params.enableAll).
 		WithEnabledCategories(params.enableCategory.v...).
 		WithEnabledRules(params.enable.v...).
-		WithDebugMode(params.debug).
-		WithInputPaths(args)
+		WithDebugMode(params.debug)
 
 	if customRulesDir != "" {
-		regal = regal.WithCustomRules([]string{customRulesDir})
+		l = l.WithCustomRules([]string{customRulesDir})
 	}
 
 	if params.rules.isSet {
-		regal = regal.WithCustomRules(params.rules.v)
+		l = l.WithCustomRules(params.rules.v)
 	}
 
 	if params.ignoreFiles.isSet {
-		regal = regal.WithIgnore(params.ignoreFiles.v)
+		l = l.WithIgnore(params.ignoreFiles.v)
 	}
 
 	var userConfig config.Config
@@ -207,84 +206,32 @@ func fix(args []string, params *fixCommandParams) error {
 			return fmt.Errorf("failed to decode user config: %w", err)
 		}
 
-		regal = regal.WithUserConfig(userConfig)
+		l = l.WithUserConfig(userConfig)
 	case err != nil && params.configFile != "":
 		return fmt.Errorf("user-provided config file not found: %w", err)
 	case params.debug:
 		log.Println("no user-provided config file found, will use the default config")
 	}
 
-	lintReport, err := regal.Lint(ctx)
+	f := fixer.Fixer{}
+	f.RegisterFixes(fixer.NewDefaultFixes()...)
+
+	fp := fp2.NewFSFileProvider(args...)
+
+	fixReport, err := f.Fix(ctx, &l, fp)
 	if err != nil {
-		return fmt.Errorf("error(s) encountered while linting: %w", err)
+		return fmt.Errorf("failed to fix: %w", err)
 	}
 
-	fixReport, err := fixLintReport(&lintReport)
+	r, err := fixer.ReporterForFormat(params.format, outputWriter)
 	if err != nil {
-		return fmt.Errorf("error(s) encountered while fixing: %w", err)
+		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
 	}
 
-	reporter, err := fixer.ReporterForFormat(params.format, outputWriter)
-	if err != nil {
-		return fmt.Errorf("failed to get reporter for format %s: %w", params.format, err)
-	}
-
-	err = reporter.Report(fixReport)
+	err = r.Report(fixReport)
 	if err != nil {
 		return fmt.Errorf("failed to output fix report: %w", err)
 	}
 
 	return nil
-}
-
-func fixLintReport(rep *report.Report) (*fixer.Report, error) {
-	fileReaders := make(map[string]io.Reader)
-
-	for _, v := range rep.Violations {
-		// if the file has already been opened, skip it
-		if _, ok := fileReaders[v.Location.File]; ok {
-			continue
-		}
-
-		f, err := os.Open(v.Location.File)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open file for fixing %s: %w", v.Location.File, err)
-		}
-
-		defer f.Close()
-
-		fileReaders[v.Location.File] = f
-	}
-
-	f := fixer.Fixer{}
-	f.RegisterFixes(fixer.NewDefaultFixes()...)
-
-	fixReport, err := f.Fix(rep, fileReaders)
-	if err != nil {
-		return nil, fmt.Errorf("error encountered while fixing: %w", err)
-	}
-
-	for file, content := range fixReport.FileContents() {
-		stat, err := os.Stat(file)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get file info for file %s: %w", file, err)
-		}
-
-		f, err := os.OpenFile(file, os.O_RDWR|os.O_TRUNC, stat.Mode())
-		if err != nil {
-			return nil, fmt.Errorf("failed to open file %s: %w", file, err)
-		}
-
-		_, err = f.Write(content)
-		if err != nil {
-			return nil, fmt.Errorf("failed to write to file %s: %w", file, err)
-		}
-
-		err = f.Close()
-		if err != nil {
-			return nil, fmt.Errorf("failed to close file %s: %w", file, err)
-		}
-	}
-
-	return fixReport, nil
 }

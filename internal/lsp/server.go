@@ -242,7 +242,7 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 
 	f := &fixes.Fmt{OPAFmtOpts: opts}
 
-	fixed, formattedContent, err := f.Fix(&fixes.FixCandidate{
+	fixResults, err := f.Fix(&fixes.FixCandidate{
 		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, target)),
 		Contents: []byte(oldContent),
 	}, nil)
@@ -250,11 +250,11 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 		return nil, target, fmt.Errorf("failed to format file: %w", err)
 	}
 
-	if !fixed {
+	if len(fixResults) == 0 {
 		return []TextEdit{}, target, nil
 	}
 
-	return ComputeEdits(oldContent, string(formattedContent)), target, nil
+	return ComputeEdits(oldContent, string(fixResults[0].Contents)), target, nil
 }
 
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
@@ -645,7 +645,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	f := &fixes.Fmt{OPAFmtOpts: format.Opts{}}
 
-	fixed, formattedContent, err := f.Fix(&fixes.FixCandidate{
+	fixResults, err := f.Fix(&fixes.FixCandidate{
 		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
 		Contents: []byte(oldContent),
 	}, nil)
@@ -653,11 +653,11 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to format file: %w", err)
 	}
 
-	if !fixed {
+	if len(fixResults) == 0 {
 		return []TextEdit{}, nil
 	}
 
-	return ComputeEdits(oldContent, string(formattedContent)), nil
+	return ComputeEdits(oldContent, string(fixResults[0].Contents)), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(

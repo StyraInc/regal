@@ -31,17 +31,25 @@ func (*Fmt) WholeFile() bool {
 	return true
 }
 
-func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) (bool, []byte, error) {
+func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	if fc.Filename == "" {
-		return false, nil, errors.New("filename is required when formatting")
+		return nil, errors.New("filename is required when formatting")
 	}
 
 	formatted, err := format.SourceWithOpts(filepath.Base(fc.Filename), fc.Contents, f.OPAFmtOpts)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to format: %w", err)
+		return nil, fmt.Errorf("failed to format: %w", err)
+	}
+
+	if string(formatted) == string(fc.Contents) {
+		return nil, nil
 	}
 
 	// we always return true because the fix still completed successfully, and
 	// then we can say that the violation with this instance's key was fixed too.
-	return true, formatted, nil
+	return []FixResult{
+		{
+			Contents: formatted,
+		},
+	}, nil
 }

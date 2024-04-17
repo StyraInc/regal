@@ -167,14 +167,20 @@ func TestNoWhitespaceComment(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			fixed, fixedContent, err := nwc.Fix(tc.fc, tc.runtimeOptions)
+			fixResults, err := nwc.Fix(tc.fc, tc.runtimeOptions)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tc.fixExpected != fixed {
-				t.Fatalf("unexpected fixed value, got: %t, expected: %t", fixed, tc.fixExpected)
+			if !tc.fixExpected && len(fixResults) != 0 {
+				t.Fatalf("unexpected fix applied")
 			}
+
+			if !tc.fixExpected {
+				return
+			}
+
+			fixedContent := fixResults[0].Contents
 
 			if tc.fixExpected && string(fixedContent) != string(tc.contentAfterFix) {
 				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",

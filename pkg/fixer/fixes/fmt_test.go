@@ -23,7 +23,7 @@ func TestFmt(t *testing.T) {
 			fmt:             &Fmt{},
 		},
 		"add a new line": {
-			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n")},
+			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil")},
 			contentAfterFix: []byte("package testutil\n"),
 			fmt:             &Fmt{},
 			fixExpected:     true,
@@ -57,14 +57,20 @@ allow := true
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			fixed, fixedContent, err := tc.fmt.Fix(tc.fc, &RuntimeOptions{})
+			fixResults, err := tc.fmt.Fix(tc.fc, &RuntimeOptions{})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tc.fixExpected && !fixed {
-				t.Fatalf("expected fix to be applied")
+			if !tc.fixExpected && len(fixResults) != 0 {
+				t.Fatalf("unexpected fix applied")
 			}
+
+			if !tc.fixExpected {
+				return
+			}
+
+			fixedContent := fixResults[0].Contents
 
 			if string(fixedContent) != string(tc.contentAfterFix) {
 				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",

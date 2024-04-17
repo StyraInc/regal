@@ -154,14 +154,20 @@ allow := true
 
 			uas := UseAssignmentOperator{}
 
-			fixed, fixedContent, err := uas.Fix(tc.fc, tc.runtimeOptions)
+			fixResults, err := uas.Fix(tc.fc, tc.runtimeOptions)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tc.fixExpected != fixed {
-				t.Fatalf("unexpected fixed value, got: %t, expected: %t", fixed, tc.fixExpected)
+			if !tc.fixExpected && len(fixResults) != 0 {
+				t.Fatalf("unexpected fix applied")
 			}
+
+			if !tc.fixExpected {
+				return
+			}
+
+			fixedContent := fixResults[0].Contents
 
 			if tc.fixExpected && string(fixedContent) != string(tc.contentAfterFix) {
 				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",

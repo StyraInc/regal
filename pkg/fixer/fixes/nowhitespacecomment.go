@@ -15,12 +15,12 @@ func (*NoWhitespaceComment) WholeFile() bool {
 	return false
 }
 
-func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) (bool, []byte, error) {
+func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 
 	// this fix must have locations
 	if len(opts.Locations) == 0 {
-		return false, nil, nil
+		return nil, nil
 	}
 
 	fixed := false
@@ -46,5 +46,9 @@ func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) (bool, [
 		fixed = true
 	}
 
-	return fixed, bytes.Join(lines, []byte("\n")), nil
+	if !fixed {
+		return nil, nil
+	}
+
+	return []FixResult{{Contents: bytes.Join(lines, []byte("\n"))}}, nil
 }

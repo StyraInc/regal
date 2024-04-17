@@ -160,7 +160,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fp.FileProvider) (
 				Contents: fc,
 			}
 
-			fixed, fixedContent, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
+			fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
 				Locations: []ast.Location{
 					{
 						Row: violation.Location.Row,
@@ -172,8 +172,11 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fp.FileProvider) (
 				return nil, fmt.Errorf("failed to fix %s: %w", violation.Location.File, err)
 			}
 
-			if fixed {
-				err = fp.PutFile(violation.Location.File, fixedContent)
+			if len(fixResults) > 0 {
+				// Note: Only one content update fix result is currently supported
+				fixResult := fixResults[0]
+
+				err = fp.PutFile(violation.Location.File, fixResult.Contents)
 				if err != nil {
 					return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
 				}

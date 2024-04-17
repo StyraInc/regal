@@ -62,7 +62,7 @@ report contains violation if {
 
 default eq_col(_) := 1
 
-eq_col(loc) := pos if {
+eq_col(loc) := pos + 1 if {
 	pos := indexof(loc.location.text, "=")
 	pos != -1
 }

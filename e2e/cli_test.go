@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -134,13 +135,13 @@ func TestLintNonExistentDir(t *testing.T) {
 	expectExitCode(t, err, 1, &stdout, &stderr)
 
 	if exp, act := "", stdout.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
+		t.Errorf("expected stdout %q, got %q", exp, act)
 	}
 
 	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
 		"failed to filter paths:\nstat "+td+filepath.FromSlash("/what/ever")+": no such file or directory\n",
 		stderr.String(); exp != act {
-		t.Errorf("expected stdout %q, got %q", exp, act)
+		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
 }
 
@@ -724,6 +725,69 @@ func TestLintPprof(t *testing.T) {
 	_, err = os.Stat(pprofFile)
 	if err != nil {
 		t.Fatalf("expected to find %s, got error: %v", pprofFile, err)
+	}
+}
+
+func TestFix(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	// only violation is for the opa-fmt rule
+	unformattedContents := []byte(`package wow
+
+import rego.v1
+
+#comment
+
+allow if {
+	true
+}
+`)
+	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
+	if err != nil {
+		t.Fatalf("failed to write main.rego: %v", err)
+	}
+
+	err = regal(&stdout, &stderr)("fix", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	exp := fmt.Sprintf(`3 fixes applied:
+%s/main.rego:
+- no-whitespace-comment
+- opa-fmt
+- use-assignment-operator
+`, td)
+
+	if act := stdout.String(); exp != act {
+		t.Errorf("expected stdout:\n%s\ngot:\n%s", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	// check that the file was formatted
+	bs, err := os.ReadFile(filepath.Join(td, "main.rego"))
+	if err != nil {
+		t.Fatalf("failed to read main.rego: %v", err)
+	}
+
+	expectedContent := `package wow
+
+import rego.v1
+
+# comment
+
+allow := true
+`
+
+	if act := string(bs); expectedContent != act {
+		t.Errorf("expected\n%s, got\n%s", expectedContent, act)
 	}
 }
 

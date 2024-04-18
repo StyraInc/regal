@@ -25,21 +25,8 @@
 package lsp
 
 import (
-	"fmt"
-	"path/filepath"
 	"strings"
-
-	"github.com/open-policy-agent/opa/format"
 )
-
-func Format(path, contents string, opts format.Opts) (string, error) {
-	formatted, err := format.SourceWithOpts(filepath.Base(path), []byte(contents), opts)
-	if err != nil {
-		return "", fmt.Errorf("failed to format Rego source file: %w", err)
-	}
-
-	return string(formatted), nil
-}
 
 // ComputeEdits computes diff edits from 2 string inputs.
 func ComputeEdits(before, after string) []TextEdit {

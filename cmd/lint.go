@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -47,6 +46,14 @@ type lintCommandParams struct {
 	ignoreFiles     repeatedStringFlag
 }
 
+func (p *lintCommandParams) getConfigFile() string {
+	return p.configFile
+}
+
+func (p *lintCommandParams) getTimeout() time.Duration {
+	return p.timeout
+}
+
 const stringType = "string"
 
 type repeatedStringFlag struct {
@@ -70,7 +77,7 @@ func (f *repeatedStringFlag) Set(s string) error {
 }
 
 func init() {
-	params := lintCommandParams{}
+	params := &lintCommandParams{}
 
 	lintCommand := &cobra.Command{
 		Use:   "lint <path> [path [...]]",
@@ -177,7 +184,7 @@ func init() {
 }
 
 //nolint:gocognit
-func lint(args []string, params lintCommandParams) (report.Report, error) {
+func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	var err error
 
 	ctx, cancel := getLinterContext(params)
@@ -332,38 +339,6 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}
-}
-
-func readUserConfig(params lintCommandParams, regalDir *os.File) (userConfig *os.File, err error) {
-	if params.configFile != "" {
-		userConfig, err = os.Open(params.configFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open config file %w", err)
-		}
-	} else {
-		searchPath, _ := os.Getwd()
-		if regalDir != nil {
-			searchPath = regalDir.Name()
-		}
-
-		if searchPath != "" {
-			userConfig, err = config.FindConfig(searchPath)
-		}
-	}
-
-	return userConfig, err //nolint:wrapcheck
-}
-
-func getLinterContext(params lintCommandParams) (context.Context, func()) {
-	ctx := context.Background()
-
-	cancel := func() {}
-
-	if params.timeout != 0 {
-		ctx, cancel = context.WithTimeout(ctx, params.timeout)
-	}
-
-	return ctx, cancel
 }
 
 func getWriterForOutputFile(filename string) (io.Writer, error) {

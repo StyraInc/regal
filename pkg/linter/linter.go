@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 
@@ -343,6 +344,59 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	return finalReport, nil
+}
+
+// DetermineEnabledRules returns the list of rules that are enabled based on the supplied configuration.
+// This makes use of the Rego and Go rule settings to produce a single list of the rules that are to be run
+// on this linter instance.
+func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
+	enabledRules := make([]string, 0)
+
+	goRules, err := l.enabledGoRules()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get enabled Go rules: %w", err)
+	}
+
+	for _, rule := range goRules {
+		enabledRules = append(enabledRules, rule.Name())
+	}
+
+	query := ast.MustParseBody(`[rule|
+data.regal.rules[cat][rule]
+data.regal.config.for_rule(cat, rule).level != "ignore"
+]`)
+
+	regoArgs, err := l.prepareRegoArgs(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query: %w", err)
+	}
+
+	rs, err := rego.New(regoArgs...).Eval(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query: %w", err)
+	}
+
+	if len(rs) != 1 || len(rs[0].Expressions) != 1 {
+		return nil, fmt.Errorf("expected exactly one expression, got %d", len(rs[0].Expressions))
+	}
+
+	list, ok := rs[0].Expressions[0].Value.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected list, got %T", rs[0].Expressions[0].Value)
+	}
+
+	for _, item := range list {
+		rule, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string, got %T", item)
+		}
+
+		enabledRules = append(enabledRules, rule)
+	}
+
+	slices.Sort(enabledRules)
+
+	return enabledRules, nil
 }
 
 func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/open-policy-agent/opa/format"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/commands"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
@@ -217,49 +219,6 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 	}
 }
 
-func getTargetURIFromParams(params types.ExecuteCommandParams) (string, error) {
-	if len(params.Arguments) == 0 {
-		return "", fmt.Errorf("expected at least one argument in command %v", params.Arguments)
-	}
-
-	target, ok := params.Arguments[0].(string)
-	if !ok {
-		return "", fmt.Errorf("expected argument to be a string in command %v", params.Command)
-	}
-
-	return target, nil
-}
-
-func (l *LanguageServer) formatToEdits(
-	params types.ExecuteCommandParams, opts format.Opts,
-) ([]types.TextEdit, string, error) {
-	target, err := getTargetURIFromParams(params)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to get target uri: %w", err)
-	}
-
-	oldContent, ok := l.cache.GetFileContents(target)
-	if !ok {
-		return nil, target, fmt.Errorf("could not get file contents for uri %q", target)
-	}
-
-	f := &fixes.Fmt{OPAFmtOpts: opts}
-
-	fixResults, err := f.Fix(&fixes.FixCandidate{
-		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, target)),
-		Contents: []byte(oldContent),
-	}, nil)
-	if err != nil {
-		return nil, target, fmt.Errorf("failed to format file: %w", err)
-	}
-
-	if len(fixResults) == 0 {
-		return []types.TextEdit{}, target, nil
-	}
-
-	return ComputeEdits(oldContent, string(fixResults[0].Contents)), target, nil
-}
-
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 	err := l.configWatcher.Start(ctx)
 	if err != nil {
@@ -310,79 +269,117 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 }
 
 func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
+	// note, in this function conn.Call is used as the workspace/applyEdit message is a request, not a notification
+	// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
+	// receive responses too.
+	// Note however that the responses from the client are not needed by the server.
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case params := <-l.commandRequest:
+			var editParams *types.ApplyWorkspaceEditParams
+
+			var err error
+
+			var fixed bool
+
 			switch params.Command {
 			case "regal.fmt":
-				edits, target, err := l.formatToEdits(params, format.Opts{})
-				if err != nil {
-					l.logError(err)
-
-					break
-				}
-
-				editParams := types.ApplyWorkspaceEditParams{
-					Label: "Format using opa fmt",
-					Edit: types.WorkspaceEdit{
-						DocumentChanges: []types.TextDocumentEdit{
-							{
-								TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: target},
-								Edits:        edits,
-							},
-						},
-					},
-				}
-
-				// note, here conn.Call is used as the workspace/applyEdit message is a request, not a notification
-				// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
-				// receive responses too.
-				err = l.conn.Call(
-					ctx,
-					methodWorkspaceApplyEdit,
-					editParams,
-					nil, // however, the response content is not important
+				fixed, editParams, err = l.fixEditParams(
+					"Format using opa fmt",
+					&fixes.Fmt{OPAFmtOpts: format.Opts{}},
+					commands.ParseOptions{TargetArgIndex: 0},
+					params,
 				)
-				if err != nil {
-					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
-				}
 			case "regal.fmt.v1":
-				edits, target, err := l.formatToEdits(params, format.Opts{RegoVersion: ast.RegoV0CompatV1})
-				if err != nil {
-					l.logError(err)
-
-					break
-				}
-
-				editParams := types.ApplyWorkspaceEditParams{
-					Label: "Format for Rego v1 using opa fmt",
-					Edit: types.WorkspaceEdit{
-						DocumentChanges: []types.TextDocumentEdit{
-							{
-								TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: target},
-								Edits:        edits,
-							},
-						},
-					},
-				}
-
-				// note, here conn.Call is used as the workspace/applyEdit message is a request, not a notification
-				// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
-				// receive responses too.
-				err = l.conn.Call(
-					ctx,
-					methodWorkspaceApplyEdit,
-					editParams,
-					nil, // however, the response content is not important
+				fixed, editParams, err = l.fixEditParams(
+					"Format for Rego v1 using opa-fmt",
+					&fixes.Fmt{OPAFmtOpts: format.Opts{RegoVersion: ast.RegoV0CompatV1}},
+					commands.ParseOptions{TargetArgIndex: 0},
+					params,
 				)
+			case "regal.use-assignment-operator":
+				fixed, editParams, err = l.fixEditParams(
+					"Replace = with := in assignment",
+					&fixes.UseAssignmentOperator{},
+					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
+					params,
+				)
+			case "regal.no-whitespace-comment":
+				fixed, editParams, err = l.fixEditParams(
+					"Format comment to have leading whitespace",
+					&fixes.NoWhitespaceComment{},
+					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
+					params,
+				)
+			}
+
+			if err != nil {
+				l.logError(err)
+
+				break
+			}
+
+			if fixed {
+				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil)
 				if err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 				}
 			}
 		}
 	}
+}
+
+func (l *LanguageServer) fixEditParams(
+	label string,
+	fix fixes.Fix,
+	commandParseOpts commands.ParseOptions,
+	params types.ExecuteCommandParams,
+) (bool, *types.ApplyWorkspaceEditParams, error) {
+	pr, err := commands.Parse(params, commandParseOpts)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to parse command params: %w", err)
+	}
+
+	oldContent, ok := l.cache.GetFileContents(pr.Target)
+	if !ok {
+		return false, nil, fmt.Errorf("could not get file contents for uri %q", pr.Target)
+	}
+
+	var rto *fixes.RuntimeOptions
+	if pr.Location != nil {
+		rto = &fixes.RuntimeOptions{Locations: []ast.Location{*pr.Location}}
+	}
+
+	fixResults, err := fix.Fix(
+		&fixes.FixCandidate{
+			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, pr.Target)),
+			Contents: []byte(oldContent),
+		},
+		rto,
+	)
+	if err != nil {
+		return false, nil, fmt.Errorf("failed to fix: %w", err)
+	}
+
+	if len(fixResults) == 0 {
+		return false, &types.ApplyWorkspaceEditParams{}, nil
+	}
+
+	editParams := &types.ApplyWorkspaceEditParams{
+		Label: label,
+		Edit: types.WorkspaceEdit{
+			DocumentChanges: []types.TextDocumentEdit{
+				{
+					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: pr.Target},
+					Edits:        ComputeEdits(oldContent, string(fixResults[0].Contents)),
+				},
+			},
+		},
+	}
+
+	return true, editParams, nil
 }
 
 // processTextContentUpdate updates the cache with the new content for the file at the given URI, attempts to parse the
@@ -517,6 +514,30 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: true,
 				Command:     FmtV1Command([]string{params.TextDocument.URI}),
+			})
+		case "use-assignment-operator":
+			actions = append(actions, types.CodeAction{
+				Title:       "Replace = with := in assignment",
+				Kind:        "quickfix",
+				Diagnostics: []types.Diagnostic{diag},
+				IsPreferred: true,
+				Command: UseAssignmentOperatorCommand([]string{
+					params.TextDocument.URI,
+					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
+					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
+				}),
+			})
+		case "no-whitespace-comment":
+			actions = append(actions, types.CodeAction{
+				Title:       "Format comment to have leading whitespace",
+				Kind:        "quickfix",
+				Diagnostics: []types.Diagnostic{diag},
+				IsPreferred: true,
+				Command: NoWhiteSpaceCommentCommand([]string{
+					params.TextDocument.URI,
+					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
+					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
+				}),
 			})
 		}
 
@@ -839,7 +860,12 @@ func (l *LanguageServer) handleInitialize(
 				CodeActionKinds: []string{"quickfix"},
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
-				Commands: []string{"regal.fmt", "regal.fmt.v1"},
+				Commands: []string{
+					"regal.fmt",
+					"regal.fmt.v1",
+					"regal.use-assignment-operator",
+					"regal.no-whitespace-comment",
+				},
 			},
 			DocumentFormattingProvider: true,
 		},

@@ -2,6 +2,7 @@ package fixes
 
 import (
 	"bytes"
+	"errors"
 	"slices"
 )
 
@@ -14,9 +15,8 @@ func (*UseAssignmentOperator) Name() string {
 func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 
-	// this fix must have locations
-	if len(opts.Locations) == 0 {
-		return nil, nil
+	if opts == nil {
+		return nil, errors.New("missing runtime options")
 	}
 
 	fixed := false

@@ -28,3 +28,21 @@ func FmtV1Command(args []string) types.Command {
 		Arguments: toAnySlice(args),
 	}
 }
+
+func UseAssignmentOperatorCommand(args []string) types.Command {
+	return types.Command{
+		Title:     "Replace = with := in assignment",
+		Command:   "regal.use-assignment-operator",
+		Tooltip:   "Replace = with := in assignment",
+		Arguments: toAnySlice(args),
+	}
+}
+
+func NoWhiteSpaceCommentCommand(args []string) types.Command {
+	return types.Command{
+		Title:     "Format comment to have leading whitespace",
+		Command:   "regal.no-whitespace-comment",
+		Tooltip:   "Format comment to have leading whitespace",
+		Arguments: toAnySlice(args),
+	}
+}

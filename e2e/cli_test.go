@@ -746,7 +746,7 @@ allow if {
 	true
 }
 `)
-	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0644)
+	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0o644)
 	if err != nil {
 		t.Fatalf("failed to write main.rego: %v", err)
 	}

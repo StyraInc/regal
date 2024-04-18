@@ -85,6 +85,7 @@ type ServerCapabilities struct {
 	CodeActionProvider         CodeActionOptions       `json:"codeActionProvider"`
 	ExecuteCommandProvider     ExecuteCommandOptions   `json:"executeCommandProvider"`
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
+	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
 }
 
 type WorkspaceOptions struct {
@@ -153,6 +154,18 @@ type TextEdit struct {
 type DocumentFormattingParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Options      FormattingOptions      `json:"options"`
+}
+
+type FoldingRangeParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type FoldingRange struct {
+	StartLine      uint   `json:"startLine"`
+	StartCharacter *uint  `json:"startCharacter,omitempty"`
+	EndLine        uint   `json:"endLine"`
+	EndCharacter   *uint  `json:"endCharacter,omitempty"`
+	Kind           string `json:"kind"`
 }
 
 type FormattingOptions struct {

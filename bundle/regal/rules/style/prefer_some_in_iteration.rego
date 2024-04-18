@@ -7,6 +7,7 @@ import rego.v1
 import data.regal.ast
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 cfg := config.for_rule("style", "prefer-some-in-iteration")
 
@@ -59,11 +60,9 @@ filter_top_level_ref(rule) := rule.body if {
 	rule.head.value.type == "ref"
 } else := rule
 
-all_paths(path) := [array.slice(path, 0, len) | some len in numbers.range(1, count(path))]
-
 # don't recommend `some .. in` if iteration occurs inside of arrays, objects, or sets
 invalid_some_context(rule, path) if {
-	some p in all_paths(path)
+	some p in util.all_paths(path)
 
 	node := object.get(rule, p, [])
 
@@ -76,7 +75,7 @@ invalid_some_context(rule, path) if {
 # not _directly_ replaceable by `some .. in`, so we'll leave it
 # be here
 invalid_some_context(rule, path) if {
-	some p in all_paths(path)
+	some p in util.all_paths(path)
 
 	node := object.get(rule, p, [])
 

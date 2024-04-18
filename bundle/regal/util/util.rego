@@ -18,3 +18,9 @@ find_duplicates(arr) := {indices |
 
 	count(indices) > 1
 }
+
+# METADATA
+# description: |
+#   returns an array of arrays built from all parts of the provided path array,
+#   so e.g. [1, 2, 3] would return [[1], [1, 2], [1, 2, 3]]
+all_paths(path) := [array.slice(path, 0, len) | some len in numbers.range(1, count(path))]

@@ -390,57 +390,61 @@ ignore:
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
-	// validate that the client received a diagnostics notification authz.rego
-	select {
-	case requestData := <-authzFileMessages:
-		if requestData.URI != authzRegoURI {
-			t.Fatalf("expected diagnostics to be sent for authz.rego, got %s", requestData.URI)
+	// validate that the client received a diagnostics notification for authz.rego
+	timeout := time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case diags := <-authzFileMessages:
+			success = testRequestDataCodes(t, diags, authzRegoURI, []string{"prefer-package-imports"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 		}
 
-		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostics, got %d", len(requestData.Items))
+		if success {
+			break
 		}
-
-		if requestData.Items[0].Code != "prefer-package-imports" {
-			t.Fatalf("expected diagnostic to be prefer-package-imports, got %s", requestData.Items[0].Code)
-		}
-	case <-time.After(defaultTimeout):
-		t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 	}
 
 	// validate that the client received a diagnostics notification admins.rego
-	select {
-	case requestData := <-adminsFileMessages:
-		if requestData.URI != adminsRegoURI {
-			t.Fatalf("expected diagnostics to be sent for admins.rego, got %s", requestData.URI)
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case diags := <-adminsFileMessages:
+			success = testRequestDataCodes(t, diags, adminsRegoURI, []string{"use-assignment-operator"})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 		}
 
-		if len(requestData.Items) != 1 {
-			t.Fatalf("expected 1 diagnostics, got %d, %v", len(requestData.Items), requestData)
+		if success {
+			break
 		}
-
-		if requestData.Items[0].Code != "use-assignment-operator" {
-			t.Fatalf("expected diagnostic to be use-assignment-operator, got %s", requestData.Items[0].Code)
-		}
-	case <-time.After(defaultTimeout):
-		t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 	}
 
-	select {
-	case requestData := <-ignoredFileMessages:
-		if requestData.URI != ignoredRegoURI {
-			t.Fatalf("expected diagnostics to be sent for ignored/foo.rego, got %s", requestData.URI)
+	// validate that the client received empty diagnostics for the ignored file
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case diags := <-ignoredFileMessages:
+			success = testRequestDataCodes(t, diags, ignoredRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for empty ignored file diagnostics to be sent")
 		}
 
-		// this file is ignored, so there should be no diagnostics
-		if len(requestData.Items) != 0 {
-			t.Fatalf("expected 0 diagnostics, got %d, %v", len(requestData.Items), requestData)
+		if success {
+			break
 		}
-	case <-time.After(defaultTimeout):
-		t.Fatalf("timed out waiting for ignored/foo.rego diagnostics to be sent")
 	}
 
-	// 3. Client sends textDocument/didChange notification with new contents for main.rego
+	// 3. Client sends textDocument/didChange notification with new contents for authz.rego
 	// no response to the call is expected
 	err = connClient.Call(ctx, "textDocument/didChange", TextDocumentDidChangeParams{
 		TextDocument: TextDocumentIdentifier{
@@ -465,12 +469,8 @@ allow if input.user in admins.users
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
-	// validate that diagnostics are sent for both files since the change was made to a file with an aggregate
-	// violation
-
-	// here we wait to receive a diagnostics notification for authz.rego with no diagnostics items, the file diagnostics
-	// can arrive first which can still contain the old diagnostics items
-	timeout := time.NewTimer(defaultTimeout)
+	// authz.rego should now have no violations
+	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
 	for {
@@ -488,7 +488,7 @@ allow if input.user in admins.users
 	}
 
 	// we should also receive a diagnostics notification for admins.rego, since it is in the workspace, but it has not
-	// been changed, so the violations should be the same
+	// been changed, so the violations should be the same.
 	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 

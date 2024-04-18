@@ -25,12 +25,12 @@ func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 	}
 
 	for _, fix := range fixes {
-		f.registeredFixes[fix.Key()] = fix
+		f.registeredFixes[fix.Name()] = fix
 	}
 }
 
-func (f *Fixer) GetFixForKey(key string) (fixes.Fix, bool) {
-	fix, ok := f.registeredFixes[key]
+func (f *Fixer) GetFixForName(name string) (fixes.Fix, bool) {
+	fix, ok := f.registeredFixes[name]
 	if !ok {
 		return nil, false
 	}
@@ -52,7 +52,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 	var fixableEnabledRules []string
 
 	for _, rule := range enabledRules {
-		if _, ok := f.GetFixForKey(rule); ok {
+		if _, ok := f.GetFixForName(rule); ok {
 			fixableEnabledRules = append(fixableEnabledRules, rule)
 		}
 	}
@@ -77,7 +77,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 
 		for _, violation := range rep.Violations {
-			fixInstance, ok := f.GetFixForKey(violation.Title)
+			fixInstance, ok := f.GetFixForName(violation.Title)
 			if !ok {
 				return nil, fmt.Errorf("no fix for violation %s", violation.Title)
 			}

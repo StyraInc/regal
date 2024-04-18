@@ -7,7 +7,7 @@ import (
 
 type NoWhitespaceComment struct{}
 
-func (*NoWhitespaceComment) Key() string {
+func (*NoWhitespaceComment) Name() string {
 	return "no-whitespace-comment"
 }
 

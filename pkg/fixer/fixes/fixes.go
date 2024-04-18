@@ -11,7 +11,7 @@ func NewDefaultFixes() []Fix {
 	return []Fix{
 		&Fmt{},
 		&Fmt{
-			KeyOverride: "use-rego-v1",
+			NameOverride: "use-rego-v1",
 			OPAFmtOpts: format.Opts{
 				RegoVersion: ast.RegoV0CompatV1,
 			},
@@ -23,9 +23,9 @@ func NewDefaultFixes() []Fix {
 
 // Fix is the interface that must be implemented by all fixes.
 type Fix interface {
-	// Key returns the unique key for the fix, this should correlate with the
-	// violation that the fix is meant to address.
-	Key() string
+	// Name returns the unique name for the fix, this should correlate with the
+	// violation title & rule name that the fix is meant to address.
+	Name() string
 	Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error)
 }
 

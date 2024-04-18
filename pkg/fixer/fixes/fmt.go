@@ -9,19 +9,19 @@ import (
 )
 
 type Fmt struct {
-	// KeyOverride allows this fix config to also be registered under another key, see note
-	// in Key().
-	KeyOverride string
+	// NameOverride allows this fix config to also be registered under another name, see note
+	// in Name().
+	NameOverride string
 	// OPAFmtOpts are the options to pass to OPA's format.SourceWithOpts
 	// function.
 	OPAFmtOpts format.Opts
 }
 
-func (f *Fmt) Key() string {
-	// this allows this fix config to also be registered under another key so that different
-	// configurations can be registered under other linter rule keys.
-	if f.KeyOverride != "" {
-		return f.KeyOverride
+func (f *Fmt) Name() string {
+	// this allows this fix config to also be registered under another name so that different
+	// configurations can be registered under other linter rule names.
+	if f.NameOverride != "" {
+		return f.NameOverride
 	}
 
 	return "opa-fmt"
@@ -41,8 +41,6 @@ func (f *Fmt) Fix(fc *FixCandidate, _ *RuntimeOptions) ([]FixResult, error) {
 		return nil, nil
 	}
 
-	// we always return true because the fix still completed successfully, and
-	// then we can say that the violation with this instance's key was fixed too.
 	return []FixResult{
 		{
 			Contents: formatted,

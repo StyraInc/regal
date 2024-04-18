@@ -7,7 +7,7 @@ import (
 
 type UseAssignmentOperator struct{}
 
-func (*UseAssignmentOperator) Key() string {
+func (*UseAssignmentOperator) Name() string {
 	return "use-assignment-operator"
 }
 

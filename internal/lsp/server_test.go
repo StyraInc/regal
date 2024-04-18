@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
+
+	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 const mainRegoFileName = "/main.rego"
@@ -89,10 +91,10 @@ allow = true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
+	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
-			var requestData FileDiagnostics
+			var requestData types.FileDiagnostics
 
 			err = json.Unmarshal(*req.Params, &requestData)
 			if err != nil {
@@ -115,12 +117,12 @@ allow = true
 	ls.SetConn(connServer)
 
 	// 1. Client sends initialize request
-	request := InitializeParams{
+	request := types.InitializeParams{
 		RootURI:    fileURIScheme + tempDir,
-		ClientInfo: Client{Name: "go test"},
+		ClientInfo: types.Client{Name: "go test"},
 	}
 
-	var response InitializeResult
+	var response types.InitializeResult
 
 	err = connClient.Call(ctx, "initialize", request, &response)
 	if err != nil {
@@ -182,11 +184,11 @@ allow = true
 
 	// 3. Client sends textDocument/didChange notification with new contents for main.rego
 	// no response to the call is expected
-	err = connClient.Call(ctx, "textDocument/didChange", TextDocumentDidChangeParams{
-		TextDocument: TextDocumentIdentifier{
+	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
-		ContentChanges: []TextDocumentContentChangeEvent{
+		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
 				Text: `package main
 import rego.v1
@@ -333,12 +335,12 @@ ignore:
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	authzFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
-	adminsFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
-	ignoredFileMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
+	authzFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
+	adminsFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
+	ignoredFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == "textDocument/publishDiagnostics" {
-			var requestData FileDiagnostics
+			var requestData types.FileDiagnostics
 
 			err = json.Unmarshal(*req.Params, &requestData)
 			if err != nil {
@@ -371,12 +373,12 @@ ignore:
 	ls.SetConn(connServer)
 
 	// 1. Client sends initialize request
-	request := InitializeParams{
+	request := types.InitializeParams{
 		RootURI:    fileURIScheme + tempDir,
-		ClientInfo: Client{Name: "go test"},
+		ClientInfo: types.Client{Name: "go test"},
 	}
 
-	var response InitializeResult
+	var response types.InitializeResult
 
 	err = connClient.Call(ctx, "initialize", request, &response)
 	if err != nil {
@@ -446,11 +448,11 @@ ignore:
 
 	// 3. Client sends textDocument/didChange notification with new contents for authz.rego
 	// no response to the call is expected
-	err = connClient.Call(ctx, "textDocument/didChange", TextDocumentDidChangeParams{
-		TextDocument: TextDocumentIdentifier{
+	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+		TextDocument: types.TextDocumentIdentifier{
 			URI: authzRegoURI,
 		},
-		ContentChanges: []TextDocumentContentChangeEvent{
+		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
 				Text: `package authz
 
@@ -564,10 +566,10 @@ allow := true
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
-	receivedMessages := make(chan FileDiagnostics, defaultBufferedChannelSize)
+	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
-			var requestData FileDiagnostics
+			var requestData types.FileDiagnostics
 
 			err = json.Unmarshal(*req.Params, &requestData)
 			if err != nil {
@@ -590,12 +592,12 @@ allow := true
 	ls.SetConn(connServer)
 
 	// Client sends initialize request
-	request := InitializeParams{
+	request := types.InitializeParams{
 		RootURI:    fileURIScheme + childDir,
-		ClientInfo: Client{Name: "go test"},
+		ClientInfo: types.Client{Name: "go test"},
 	}
 
-	var response InitializeResult
+	var response types.InitializeResult
 
 	err = connClient.Call(ctx, "initialize", request, &response)
 	if err != nil {
@@ -662,7 +664,7 @@ allow := true
 	}
 }
 
-func testRequestDataCodes(t *testing.T, requestData FileDiagnostics, uri string, codes []string) bool {
+func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, uri string, codes []string) bool {
 	t.Helper()
 
 	if requestData.URI != uri {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
@@ -27,7 +28,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 	module, err := rparse.Module(uri, content)
 	if err == nil {
 		// if the parse was ok, clear the parse errors
-		cache.SetParseErrors(uri, []Diagnostic{})
+		cache.SetParseErrors(uri, []types.Diagnostic{})
 		cache.SetModule(uri, module)
 
 		return true, nil
@@ -59,7 +60,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 		}
 	}
 
-	diags := make([]Diagnostic, 0)
+	diags := make([]types.Diagnostic, 0)
 
 	for _, astError := range astErrors {
 		itemLen := 1
@@ -74,14 +75,14 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 			char = 0
 		}
 
-		diags = append(diags, Diagnostic{
+		diags = append(diags, types.Diagnostic{
 			Severity: 1, // parse errors are the only error Diagnostic the server sends
-			Range: Range{
-				Start: Position{
+			Range: types.Range{
+				Start: types.Position{
 					Line:      uint(line),
 					Character: uint(char),
 				},
-				End: Position{
+				End: types.Position{
 					Line:      uint(line),
 					Character: uint(char + itemLen),
 				},
@@ -89,7 +90,7 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 			Message: astError.Message,
 			Source:  "regal/parse",
 			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
-			CodeDescription: CodeDescription{
+			CodeDescription: types.CodeDescription{
 				Href: "https://docs.styra.com/opa/category/rego-parse-error",
 			},
 		})
@@ -127,7 +128,7 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	diags := make([]Diagnostic, 0)
+	diags := make([]types.Diagnostic, 0)
 
 	for _, item := range rpt.Violations {
 		itemLen := 0
@@ -152,14 +153,14 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 			severity = 3
 		}
 
-		diags = append(diags, Diagnostic{
+		diags = append(diags, types.Diagnostic{
 			Severity: severity,
-			Range: Range{
-				Start: Position{
+			Range: types.Range{
+				Start: types.Position{
 					Line:      uint(line),
 					Character: uint(char),
 				},
-				End: Position{
+				End: types.Position{
 					Line:      uint(line),
 					Character: uint(char + itemLen + 1),
 				},
@@ -167,7 +168,7 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: CodeDescription{
+			CodeDescription: types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
@@ -199,8 +200,8 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	aggDiags := make(map[string][]Diagnostic)
-	fileDiags := make(map[string][]Diagnostic)
+	aggDiags := make(map[string][]types.Diagnostic)
+	fileDiags := make(map[string][]types.Diagnostic)
 
 	for _, item := range rpt.Violations {
 		itemLen := 0
@@ -225,14 +226,14 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 			severity = 3
 		}
 
-		diag := Diagnostic{
+		diag := types.Diagnostic{
 			Severity: severity,
-			Range: Range{
-				Start: Position{
+			Range: types.Range{
+				Start: types.Position{
 					Line:      uint(line),
 					Character: uint(char),
 				},
-				End: Position{
+				End: types.Position{
 					Line:      uint(line),
 					Character: uint(char + itemLen + 1),
 				},
@@ -240,7 +241,7 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: CodeDescription{
+			CodeDescription: types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
@@ -274,14 +275,14 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 
 		ad, ok := aggDiags[uri]
 		if !ok {
-			ad = []Diagnostic{}
+			ad = []types.Diagnostic{}
 		}
 
 		cache.SetAggregateDiagnostics(uri, ad)
 
 		fd, ok := fileDiags[uri]
 		if !ok {
-			fd = []Diagnostic{}
+			fd = []types.Diagnostic{}
 		}
 
 		cache.SetFileDiagnostics(uri, fd)
@@ -290,7 +291,7 @@ func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config
 	// handle the diagnostics for the workspace, under the detachedURI
 	ad, ok := aggDiags[detachedURI]
 	if !ok {
-		ad = []Diagnostic{}
+		ad = []types.Diagnostic{}
 	}
 
 	cache.SetAggregateDiagnostics(detachedURI, ad)

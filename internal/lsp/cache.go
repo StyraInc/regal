@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and
@@ -20,15 +22,15 @@ type Cache struct {
 	moduleMu sync.Mutex
 
 	// diagnosticsFile is a map of file URI to diagnostics for that file
-	diagnosticsFile   map[string][]Diagnostic
+	diagnosticsFile   map[string][]types.Diagnostic
 	diagnosticsFileMu sync.Mutex
 
 	// diagnosticsAggregate is a map of file URI to aggregate diagnostics for that file
-	diagnosticsAggregate   map[string][]Diagnostic
+	diagnosticsAggregate   map[string][]types.Diagnostic
 	diagnosticsAggregateMu sync.Mutex
 
 	// diagnosticsParseErrors is a map of file URI to parse errors for that file
-	diagnosticsParseErrors map[string][]Diagnostic
+	diagnosticsParseErrors map[string][]types.Diagnostic
 	diagnosticsParseMu     sync.Mutex
 
 	builtinPositionsFile map[string]map[uint][]BuiltinPosition
@@ -40,21 +42,21 @@ func NewCache() *Cache {
 		fileContents: make(map[string]string),
 		modules:      make(map[string]*ast.Module),
 
-		diagnosticsFile:        make(map[string][]Diagnostic),
-		diagnosticsAggregate:   make(map[string][]Diagnostic),
-		diagnosticsParseErrors: make(map[string][]Diagnostic),
+		diagnosticsFile:        make(map[string][]types.Diagnostic),
+		diagnosticsAggregate:   make(map[string][]types.Diagnostic),
+		diagnosticsParseErrors: make(map[string][]types.Diagnostic),
 
 		builtinPositionsFile: make(map[string]map[uint][]BuiltinPosition),
 	}
 }
 
-func (c *Cache) GetAllDiagnosticsForURI(uri string) []Diagnostic {
+func (c *Cache) GetAllDiagnosticsForURI(uri string) []types.Diagnostic {
 	parseDiags, ok := c.GetParseErrors(uri)
 	if ok && len(parseDiags) > 0 {
 		return parseDiags
 	}
 
-	allDiags := make([]Diagnostic, 0)
+	allDiags := make([]types.Diagnostic, 0)
 
 	aggDiags, ok := c.GetAggregateDiagnostics(uri)
 	if ok {
@@ -115,7 +117,7 @@ func (c *Cache) SetModule(uri string, module *ast.Module) {
 	c.modules[uri] = module
 }
 
-func (c *Cache) GetFileDiagnostics(uri string) ([]Diagnostic, bool) {
+func (c *Cache) GetFileDiagnostics(uri string) ([]types.Diagnostic, bool) {
 	c.diagnosticsFileMu.Lock()
 	defer c.diagnosticsFileMu.Unlock()
 
@@ -124,7 +126,7 @@ func (c *Cache) GetFileDiagnostics(uri string) ([]Diagnostic, bool) {
 	return val, ok
 }
 
-func (c *Cache) SetFileDiagnostics(uri string, diags []Diagnostic) {
+func (c *Cache) SetFileDiagnostics(uri string, diags []types.Diagnostic) {
 	c.diagnosticsFileMu.Lock()
 	defer c.diagnosticsFileMu.Unlock()
 
@@ -135,10 +137,10 @@ func (c *Cache) ClearFileDiagnostics() {
 	c.diagnosticsFileMu.Lock()
 	defer c.diagnosticsFileMu.Unlock()
 
-	c.diagnosticsFile = make(map[string][]Diagnostic)
+	c.diagnosticsFile = make(map[string][]types.Diagnostic)
 }
 
-func (c *Cache) GetAggregateDiagnostics(uri string) ([]Diagnostic, bool) {
+func (c *Cache) GetAggregateDiagnostics(uri string) ([]types.Diagnostic, bool) {
 	c.diagnosticsAggregateMu.Lock()
 	defer c.diagnosticsAggregateMu.Unlock()
 
@@ -147,7 +149,7 @@ func (c *Cache) GetAggregateDiagnostics(uri string) ([]Diagnostic, bool) {
 	return val, ok
 }
 
-func (c *Cache) SetAggregateDiagnostics(uri string, diags []Diagnostic) {
+func (c *Cache) SetAggregateDiagnostics(uri string, diags []types.Diagnostic) {
 	c.diagnosticsAggregateMu.Lock()
 	defer c.diagnosticsAggregateMu.Unlock()
 
@@ -158,10 +160,10 @@ func (c *Cache) ClearAggregateDiagnostics() {
 	c.diagnosticsAggregateMu.Lock()
 	defer c.diagnosticsAggregateMu.Unlock()
 
-	c.diagnosticsAggregate = make(map[string][]Diagnostic)
+	c.diagnosticsAggregate = make(map[string][]types.Diagnostic)
 }
 
-func (c *Cache) GetParseErrors(uri string) ([]Diagnostic, bool) {
+func (c *Cache) GetParseErrors(uri string) ([]types.Diagnostic, bool) {
 	c.diagnosticsParseMu.Lock()
 	defer c.diagnosticsParseMu.Unlock()
 
@@ -170,7 +172,7 @@ func (c *Cache) GetParseErrors(uri string) ([]Diagnostic, bool) {
 	return val, ok
 }
 
-func (c *Cache) SetParseErrors(uri string, diags []Diagnostic) {
+func (c *Cache) SetParseErrors(uri string, diags []types.Diagnostic) {
 	c.diagnosticsParseMu.Lock()
 	defer c.diagnosticsParseMu.Unlock()
 

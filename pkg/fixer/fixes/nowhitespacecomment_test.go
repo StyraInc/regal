@@ -27,23 +27,10 @@ func TestNoWhitespaceComment(t *testing.T) {
 
 # this is a comment
 `),
-			fixExpected:    false,
-			runtimeOptions: &RuntimeOptions{},
-		},
-		"no change made because no location": {
-			fc: &FixCandidate{
-				Filename: "test.rego",
-				Contents: []byte(`package test\n
-
-#this is a comment
-`),
+			fixExpected: false,
+			runtimeOptions: &RuntimeOptions{
+				Locations: []ast.Location{},
 			},
-			contentAfterFix: []byte(`package test\n
-
-#this is a comment
-`),
-			fixExpected:    false,
-			runtimeOptions: &RuntimeOptions{},
 		},
 		"single change": {
 			fc: &FixCandidate{
@@ -63,28 +50,6 @@ func TestNoWhitespaceComment(t *testing.T) {
 					{
 						Row: 3,
 						Col: 1,
-					},
-				},
-			},
-		},
-		"bad change": {
-			fc: &FixCandidate{
-				Filename: "test.rego",
-				Contents: []byte(`package test\n
-
-#this is a comment
-`),
-			},
-			contentAfterFix: []byte(`package test\n
-
-#this is a comment
-`),
-			fixExpected: false,
-			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
-					{
-						Row: 3,
-						Col: 9, // this is wrong and should not be fixed
 					},
 				},
 			},

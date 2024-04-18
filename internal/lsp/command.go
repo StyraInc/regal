@@ -14,7 +14,7 @@ func toAnySlice(a []string) []any {
 func FmtCommand(args []string) types.Command {
 	return types.Command{
 		Title:     "Format using opa-fmt",
-		Command:   "regal.fmt",
+		Command:   "regal.fix.opa-fmt",
 		Tooltip:   "Format using opa-fmt",
 		Arguments: toAnySlice(args),
 	}
@@ -23,8 +23,26 @@ func FmtCommand(args []string) types.Command {
 func FmtV1Command(args []string) types.Command {
 	return types.Command{
 		Title:     "Format for Rego v1 using opa-fmt",
-		Command:   "regal.fmt.v1",
+		Command:   "regal.fix.use-rego-v1",
 		Tooltip:   "Format for Rego v1 using opa-fmt",
+		Arguments: toAnySlice(args),
+	}
+}
+
+func UseAssignmentOperatorCommand(args []string) types.Command {
+	return types.Command{
+		Title:     "Replace = with := in assignment",
+		Command:   "regal.fix.use-assignment-operator",
+		Tooltip:   "Replace = with := in assignment",
+		Arguments: toAnySlice(args),
+	}
+}
+
+func NoWhiteSpaceCommentCommand(args []string) types.Command {
+	return types.Command{
+		Title:     "Format comment to have leading whitespace",
+		Command:   "regal.fix.no-whitespace-comment",
+		Tooltip:   "Format comment to have leading whitespace",
 		Arguments: toAnySlice(args),
 	}
 }

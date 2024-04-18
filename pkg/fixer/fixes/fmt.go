@@ -27,10 +27,6 @@ func (f *Fmt) Key() string {
 	return "opa-fmt"
 }
 
-func (*Fmt) WholeFile() bool {
-	return true
-}
-
 func (f *Fmt) Fix(fc *FixCandidate, _ *RuntimeOptions) ([]FixResult, error) {
 	if fc.Filename == "" {
 		return nil, errors.New("filename is required when formatting")

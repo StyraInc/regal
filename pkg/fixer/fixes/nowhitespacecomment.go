@@ -11,10 +11,6 @@ func (*NoWhitespaceComment) Key() string {
 	return "no-whitespace-comment"
 }
 
-func (*NoWhitespaceComment) WholeFile() bool {
-	return false
-}
-
 func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 

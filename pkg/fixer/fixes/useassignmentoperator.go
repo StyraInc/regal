@@ -11,10 +11,6 @@ func (*UseAssignmentOperator) Key() string {
 	return "use-assignment-operator"
 }
 
-func (*UseAssignmentOperator) WholeFile() bool {
-	return false
-}
-
 func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 

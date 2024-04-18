@@ -19,6 +19,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
+	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
@@ -43,7 +44,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
-		commandRequest:             make(chan ExecuteCommandParams, 10),
+		commandRequest:             make(chan types.ExecuteCommandParams, 10),
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
 	}
 
@@ -66,7 +67,7 @@ type LanguageServer struct {
 
 	builtinsPositionFile chan fileUpdateEvent
 
-	commandRequest chan ExecuteCommandParams
+	commandRequest chan types.ExecuteCommandParams
 
 	clientRootURI    string
 	clientIdentifier clients.Identifier
@@ -216,7 +217,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 	}
 }
 
-func getTargetURIFromParams(params ExecuteCommandParams) (string, error) {
+func getTargetURIFromParams(params types.ExecuteCommandParams) (string, error) {
 	if len(params.Arguments) == 0 {
 		return "", fmt.Errorf("expected at least one argument in command %v", params.Arguments)
 	}
@@ -229,7 +230,9 @@ func getTargetURIFromParams(params ExecuteCommandParams) (string, error) {
 	return target, nil
 }
 
-func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.Opts) ([]TextEdit, string, error) {
+func (l *LanguageServer) formatToEdits(
+	params types.ExecuteCommandParams, opts format.Opts,
+) ([]types.TextEdit, string, error) {
 	target, err := getTargetURIFromParams(params)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get target uri: %w", err)
@@ -251,7 +254,7 @@ func (l *LanguageServer) formatToEdits(params ExecuteCommandParams, opts format.
 	}
 
 	if len(fixResults) == 0 {
-		return []TextEdit{}, target, nil
+		return []types.TextEdit{}, target, nil
 	}
 
 	return ComputeEdits(oldContent, string(fixResults[0].Contents)), target, nil
@@ -321,12 +324,12 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
-				editParams := ApplyWorkspaceEditParams{
+				editParams := types.ApplyWorkspaceEditParams{
 					Label: "Format using opa fmt",
-					Edit: WorkspaceEdit{
-						DocumentChanges: []TextDocumentEdit{
+					Edit: types.WorkspaceEdit{
+						DocumentChanges: []types.TextDocumentEdit{
 							{
-								TextDocument: OptionalVersionedTextDocumentIdentifier{URI: target},
+								TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: target},
 								Edits:        edits,
 							},
 						},
@@ -353,12 +356,12 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
-				editParams := ApplyWorkspaceEditParams{
+				editParams := types.ApplyWorkspaceEditParams{
 					Label: "Format for Rego v1 using opa fmt",
-					Edit: WorkspaceEdit{
-						DocumentChanges: []TextDocumentEdit{
+					Edit: types.WorkspaceEdit{
+						DocumentChanges: []types.TextDocumentEdit{
 							{
-								TextDocument: OptionalVersionedTextDocumentIdentifier{URI: target},
+								TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: target},
 								Edits:        edits,
 							},
 						},
@@ -442,8 +445,8 @@ func (l *LanguageServer) logError(err error) {
 }
 
 type HoverResponse struct {
-	Contents MarkupContent `json:"contents"`
-	Range    Range         `json:"range"`
+	Contents types.MarkupContent `json:"contents"`
+	Range    types.Range         `json:"range"`
 }
 
 func (l *LanguageServer) handleTextDocumentHover(
@@ -451,7 +454,7 @@ func (l *LanguageServer) handleTextDocumentHover(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params TextDocumentHoverParams
+	var params types.TextDocumentHoverParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -470,13 +473,13 @@ func (l *LanguageServer) handleTextDocumentHover(
 			contents := createHoverContent(bp.Builtin)
 
 			return HoverResponse{
-				Contents: MarkupContent{
+				Contents: types.MarkupContent{
 					Kind:  "markdown",
 					Value: contents,
 				},
-				Range: Range{
-					Start: Position{Line: bp.Line - 1, Character: bp.Start - 1},
-					End:   Position{Line: bp.Line - 1, Character: bp.End - 1},
+				Range: types.Range{
+					Start: types.Position{Line: bp.Line - 1, Character: bp.Start - 1},
+					End:   types.Position{Line: bp.Line - 1, Character: bp.End - 1},
 				},
 			}, nil
 		}
@@ -490,28 +493,28 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params CodeActionParams
+	var params types.CodeActionParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	actions := make([]CodeAction, 0)
+	actions := make([]types.CodeAction, 0)
 
 	for _, diag := range params.Context.Diagnostics {
 		switch diag.Code {
 		case ruleNameOPAFmt:
-			actions = append(actions, CodeAction{
+			actions = append(actions, types.CodeAction{
 				Title:       "Format using opa fmt",
 				Kind:        "quickfix",
-				Diagnostics: []Diagnostic{diag},
+				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: true,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
 			})
 		case ruleNameUseRegoV1:
-			actions = append(actions, CodeAction{
+			actions = append(actions, types.CodeAction{
 				Title:       "Format for Rego v1 using opa fmt",
 				Kind:        "quickfix",
-				Diagnostics: []Diagnostic{diag},
+				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: true,
 				Command:     FmtV1Command([]string{params.TextDocument.URI}),
 			})
@@ -520,12 +523,12 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 		if l.clientIdentifier == clients.IdentifierVSCode {
 			// always show the docs link
 			txt := "Show documentation for " + diag.Code
-			actions = append(actions, CodeAction{
+			actions = append(actions, types.CodeAction{
 				Title:       txt,
 				Kind:        "quickfix",
-				Diagnostics: []Diagnostic{diag},
+				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: true,
-				Command: Command{
+				Command: types.Command{
 					Title:     txt,
 					Command:   "vscode.open",
 					Tooltip:   txt,
@@ -543,7 +546,7 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params ExecuteCommandParams
+	var params types.ExecuteCommandParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -563,7 +566,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params TextDocumentInlayHintParams
+	var params types.TextDocumentInlayHintParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -572,7 +575,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	if !ok {
 		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
 
-		return []InlayHint{}, nil
+		return []types.InlayHint{}, nil
 	}
 
 	inlayHints := getInlayHints(module)
@@ -585,7 +588,7 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params TextDocumentDidOpenParams
+	var params types.TextDocumentDidOpenParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -607,7 +610,7 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params TextDocumentDidChangeParams
+	var params types.TextDocumentDidChangeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -629,7 +632,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params DocumentFormattingParams
+	var params types.DocumentFormattingParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -654,7 +657,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	if len(fixResults) == 0 {
-		return []TextEdit{}, nil
+		return []types.TextEdit{}, nil
 	}
 
 	return ComputeEdits(oldContent, string(fixResults[0].Contents)), nil
@@ -665,7 +668,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params WorkspaceDidCreateFilesParams
+	var params types.WorkspaceDidCreateFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -697,7 +700,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params WorkspaceDidDeleteFilesParams
+	var params types.WorkspaceDidDeleteFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -722,7 +725,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params WorkspaceDidRenameFilesParams
+	var params types.WorkspaceDidRenameFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -757,8 +760,8 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 	_ *jsonrpc2.Conn,
 	_ *jsonrpc2.Request,
 ) (result any, err error) {
-	workspaceReport := WorkspaceDiagnosticReport{
-		Items: make([]WorkspaceFullDocumentDiagnosticReport, 0),
+	workspaceReport := types.WorkspaceDiagnosticReport{
+		Items: make([]types.WorkspaceFullDocumentDiagnosticReport, 0),
 	}
 
 	// if we're not in workspace mode, we can't show anything here
@@ -767,7 +770,7 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 		return workspaceReport, nil
 	}
 
-	workspaceReport.Items = append(workspaceReport.Items, WorkspaceFullDocumentDiagnosticReport{
+	workspaceReport.Items = append(workspaceReport.Items, types.WorkspaceFullDocumentDiagnosticReport{
 		URI:     l.clientRootURI,
 		Kind:    "full",
 		Version: nil,
@@ -782,7 +785,7 @@ func (l *LanguageServer) handleInitialize(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	var params InitializeParams
+	var params types.InitializeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -797,45 +800,45 @@ func (l *LanguageServer) handleInitialize(
 		)
 	}
 
-	regoFilter := FileOperationFilter{
+	regoFilter := types.FileOperationFilter{
 		Scheme: "file",
-		Pattern: FileOperationPattern{
+		Pattern: types.FileOperationPattern{
 			Glob: "**/*.rego",
 		},
 	}
 
-	result = InitializeResult{
-		Capabilities: ServerCapabilities{
-			TextDocumentSyncOptions: TextDocumentSyncOptions{
+	result = types.InitializeResult{
+		Capabilities: types.ServerCapabilities{
+			TextDocumentSyncOptions: types.TextDocumentSyncOptions{
 				OpenClose: true,
 				Change:    1, // TODO: write logic to use 2, for incremental updates
 			},
-			DiagnosticProvider: DiagnosticOptions{
+			DiagnosticProvider: types.DiagnosticOptions{
 				Identifier:            "rego",
 				InterFileDependencies: true,
 				WorkspaceDiagnostics:  true,
 			},
-			Workspace: WorkspaceOptions{
-				FileOperations: FileOperationsServerCapabilities{
-					DidCreate: FileOperationRegistrationOptions{
-						Filters: []FileOperationFilter{regoFilter},
+			Workspace: types.WorkspaceOptions{
+				FileOperations: types.FileOperationsServerCapabilities{
+					DidCreate: types.FileOperationRegistrationOptions{
+						Filters: []types.FileOperationFilter{regoFilter},
 					},
-					DidRename: FileOperationRegistrationOptions{
-						Filters: []FileOperationFilter{regoFilter},
+					DidRename: types.FileOperationRegistrationOptions{
+						Filters: []types.FileOperationFilter{regoFilter},
 					},
-					DidDelete: FileOperationRegistrationOptions{
-						Filters: []FileOperationFilter{regoFilter},
+					DidDelete: types.FileOperationRegistrationOptions{
+						Filters: []types.FileOperationFilter{regoFilter},
 					},
 				},
 			},
-			InlayHintProvider: InlayHintOptions{
+			InlayHintProvider: types.InlayHintOptions{
 				ResolveProvider: false,
 			},
 			HoverProvider: true,
-			CodeActionProvider: CodeActionOptions{
+			CodeActionProvider: types.CodeActionOptions{
 				CodeActionKinds: []string{"quickfix"},
 			},
-			ExecuteCommandProvider: ExecuteCommandOptions{
+			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{"regal.fmt", "regal.fmt.v1"},
 			},
 			DocumentFormattingProvider: true,
@@ -927,7 +930,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
 
-	var params WorkspaceDidChangeWatchedFilesParams
+	var params types.WorkspaceDidChangeWatchedFilesParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -952,7 +955,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 }
 
 func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, uri string) error {
-	resp := FileDiagnostics{
+	resp := types.FileDiagnostics{
 		Items: l.cache.GetAllDiagnosticsForURI(uri),
 		URI:   uri,
 	}

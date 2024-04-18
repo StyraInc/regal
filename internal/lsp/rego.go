@@ -1,6 +1,10 @@
 package lsp
 
-import "github.com/open-policy-agent/opa/ast"
+import (
+	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/lsp/types"
+)
 
 type BuiltInCall struct {
 	Builtin  *ast.Builtin
@@ -8,8 +12,8 @@ type BuiltInCall struct {
 	Args     []*ast.Term
 }
 
-func positionFromLocation(loc *ast.Location) Position {
-	return Position{
+func positionFromLocation(loc *ast.Location) types.Position {
+	return types.Position{
 		Line:      uint(loc.Row - 1),
 		Character: uint(loc.Col - 1),
 	}

@@ -1,5 +1,7 @@
 package lsp
 
+import "github.com/styrainc/regal/internal/lsp/types"
+
 func toAnySlice(a []string) []any {
 	b := make([]any, len(a))
 	for i := range a {
@@ -9,8 +11,8 @@ func toAnySlice(a []string) []any {
 	return b
 }
 
-func FmtCommand(args []string) Command {
-	return Command{
+func FmtCommand(args []string) types.Command {
+	return types.Command{
 		Title:     "Format using opa-fmt",
 		Command:   "regal.fmt",
 		Tooltip:   "Format using opa-fmt",
@@ -18,8 +20,8 @@ func FmtCommand(args []string) Command {
 	}
 }
 
-func FmtV1Command(args []string) Command {
-	return Command{
+func FmtV1Command(args []string) types.Command {
+	return types.Command{
 		Title:     "Format for Rego v1 using opa-fmt",
 		Command:   "regal.fmt.v1",
 		Tooltip:   "Format for Rego v1 using opa-fmt",

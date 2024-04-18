@@ -26,28 +26,30 @@ package lsp
 
 import (
 	"strings"
+
+	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 // ComputeEdits computes diff edits from 2 string inputs.
-func ComputeEdits(before, after string) []TextEdit {
+func ComputeEdits(before, after string) []types.TextEdit {
 	ops := operations(splitLines(before), splitLines(after))
-	edits := make([]TextEdit, 0, len(ops))
+	edits := make([]types.TextEdit, 0, len(ops))
 
 	for _, op := range ops {
 		switch op.Kind {
 		case Delete:
 			// Delete: unformatted[i1:i2] is deleted.
-			edits = append(edits, TextEdit{Range: Range{
-				Start: Position{Line: op.I1, Character: 0},
-				End:   Position{Line: op.I2, Character: 0},
+			edits = append(edits, types.TextEdit{Range: types.Range{
+				Start: types.Position{Line: op.I1, Character: 0},
+				End:   types.Position{Line: op.I2, Character: 0},
 			}})
 		case Insert:
 			// Insert: formatted[j1:j2] is inserted at unformatted[i1:i1].
 			if content := strings.Join(op.Content, ""); content != "" {
-				edits = append(edits, TextEdit{
-					Range: Range{
-						Start: Position{Line: op.I1, Character: 0},
-						End:   Position{Line: op.I2, Character: 0},
+				edits = append(edits, types.TextEdit{
+					Range: types.Range{
+						Start: types.Position{Line: op.I1, Character: 0},
+						End:   types.Position{Line: op.I2, Character: 0},
 					},
 					NewText: content,
 				})
@@ -63,7 +65,7 @@ func ComputeEdits(before, after string) []TextEdit {
 // to ignore them if provided by the client. We can however log the warnings
 // so that the caller has some chance to be made aware of why their options
 // aren't applied.
-func validateFormattingOptions(opts FormattingOptions) []string {
+func validateFormattingOptions(opts types.FormattingOptions) []string {
 	warnings := make([]string, 0)
 
 	if opts.InsertSpaces {

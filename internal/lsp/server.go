@@ -285,28 +285,28 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 			var fixed bool
 
 			switch params.Command {
-			case "regal.fmt":
+			case "regal.fix.opa-fmt":
 				fixed, editParams, err = l.fixEditParams(
 					"Format using opa fmt",
 					&fixes.Fmt{OPAFmtOpts: format.Opts{}},
 					commands.ParseOptions{TargetArgIndex: 0},
 					params,
 				)
-			case "regal.fmt.v1":
+			case "regal.fix.use-rego-v1":
 				fixed, editParams, err = l.fixEditParams(
 					"Format for Rego v1 using opa-fmt",
 					&fixes.Fmt{OPAFmtOpts: format.Opts{RegoVersion: ast.RegoV0CompatV1}},
 					commands.ParseOptions{TargetArgIndex: 0},
 					params,
 				)
-			case "regal.use-assignment-operator":
+			case "regal.fix.use-assignment-operator":
 				fixed, editParams, err = l.fixEditParams(
 					"Replace = with := in assignment",
 					&fixes.UseAssignmentOperator{},
 					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 					params,
 				)
-			case "regal.no-whitespace-comment":
+			case "regal.fix.no-whitespace-comment":
 				fixed, editParams, err = l.fixEditParams(
 					"Format comment to have leading whitespace",
 					&fixes.NoWhitespaceComment{},
@@ -861,10 +861,10 @@ func (l *LanguageServer) handleInitialize(
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
-					"regal.fmt",
-					"regal.fmt.v1",
-					"regal.use-assignment-operator",
-					"regal.no-whitespace-comment",
+					"regal.fix.opa-fmt",
+					"regal.fix.use-rego-v1",
+					"regal.fix.use-assignment-operator",
+					"regal.fix.no-whitespace-comment",
 				},
 			},
 			DocumentFormattingProvider: true,

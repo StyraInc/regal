@@ -61,3 +61,7 @@ linters-settings:
       - prefix(github.com/styrainc/regal)
       - blank
       - dot
+
+issues:
+  exclude-dirs:
+    - internal/lsp/opa

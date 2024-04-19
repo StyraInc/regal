@@ -110,6 +110,8 @@ func (l *LanguageServer) Handle(
 		return struct{}{}, nil
 	case "textDocument/didChange":
 		return l.handleTextDocumentDidChange(ctx, conn, req)
+	case "textDocument/foldingRange":
+		return l.handleTextDocumentFoldingRange(ctx, conn, req)
 	case "textDocument/formatting":
 		return l.handleTextDocumentFormatting(ctx, conn, req)
 	case "textDocument/hover":
@@ -648,6 +650,29 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	return struct{}{}, nil
 }
 
+func (l *LanguageServer) handleTextDocumentFoldingRange(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.FoldingRangeParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	module, ok := l.cache.GetModule(params.TextDocument.URI)
+	if !ok {
+		return []types.FoldingRange{}, nil
+	}
+
+	text, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return []types.FoldingRange{}, nil
+	}
+
+	return findFoldingRanges(text, module), nil
+}
+
 func (l *LanguageServer) handleTextDocumentFormatting(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -868,6 +893,7 @@ func (l *LanguageServer) handleInitialize(
 				},
 			},
 			DocumentFormattingProvider: true,
+			FoldingRangeProvider:       true,
 		},
 	}
 

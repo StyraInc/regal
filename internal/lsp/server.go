@@ -21,6 +21,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
+	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/config"
@@ -102,6 +103,8 @@ func (l *LanguageServer) Handle(
 		return l.handleInitialized(ctx, conn, req)
 	case "textDocument/codeAction":
 		return l.handleTextDocumentCodeAction(ctx, conn, req)
+	case "textDocument/definition":
+		return l.handleTextDocumentDefinition(ctx, conn, req)
 	case "textDocument/diagnostic":
 		return l.handleTextDocumentDiagnostic(ctx, conn, req)
 	case "textDocument/didOpen":
@@ -608,6 +611,46 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	return inlayHints, nil
 }
 
+func (l *LanguageServer) handleTextDocumentDefinition(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.DefinitionParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
+	}
+
+	orc := oracle.New()
+	query := oracle.DefinitionQuery{
+		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
+		Pos:      positionToOffset(contents, params.Position),
+		Modules:  l.cache.GetAllModules(),
+		Buffer:   []byte(contents),
+	}
+
+	definition, err := orc.FindDefinition(query)
+	if err != nil {
+		// fail silently — the user could have clicked anywhere
+		return struct{}{}, nil //nolint:nilerr
+	}
+
+	loc := types.Location{
+		URI: uri.FromPath(l.clientIdentifier, definition.Result.File),
+		Range: types.Range{
+			Start: types.Position{Line: uint(definition.Result.Row - 1), Character: uint(definition.Result.Col - 1)},
+			End:   types.Position{Line: uint(definition.Result.Row - 1), Character: uint(definition.Result.Col - 1)},
+		},
+	}
+
+	return loc, nil
+}
+
 func (l *LanguageServer) handleTextDocumentDidOpen(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -921,6 +964,7 @@ func (l *LanguageServer) handleInitialize(
 			},
 			DocumentFormattingProvider: true,
 			FoldingRangeProvider:       true,
+			DefinitionProvider:         true,
 			DocumentSymbolProvider:     true,
 		},
 	}
@@ -1046,4 +1090,23 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, uri string) er
 	}
 
 	return nil
+}
+
+func positionToOffset(text string, p types.Position) int {
+	bytesRead := 0
+	lines := strings.Split(text, "\n")
+
+	for i, line := range lines {
+		if line == "" {
+			bytesRead++
+		} else {
+			bytesRead += len(line) + 1
+		}
+
+		if i == int(p.Line)-1 {
+			return bytesRead + int(p.Character)
+		}
+	}
+
+	return -1
 }

@@ -1,5 +1,7 @@
 package types
 
+import "github.com/styrainc/regal/internal/lsp/types/symbols"
+
 type FileDiagnostics struct {
 	URI   string       `json:"uri"`
 	Items []Diagnostic `json:"diagnostics"`
@@ -86,6 +88,7 @@ type ServerCapabilities struct {
 	ExecuteCommandProvider     ExecuteCommandOptions   `json:"executeCommandProvider"`
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
+	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
 }
 
 type WorkspaceOptions struct {
@@ -154,6 +157,19 @@ type TextEdit struct {
 type DocumentFormattingParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Options      FormattingOptions      `json:"options"`
+}
+
+type DocumentSymbolParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type DocumentSymbol struct {
+	Name           string             `json:"name"`
+	Detail         *string            `json:"detail,omitempty"`
+	Kind           symbols.SymbolKind `json:"kind"`
+	Range          Range              `json:"range"`
+	SelectionRange Range              `json:"selectionRange"`
+	Children       *[]DocumentSymbol  `json:"children,omitempty"`
 }
 
 type FoldingRangeParams struct {

@@ -108,6 +108,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentDidOpen(ctx, conn, req)
 	case "textDocument/didClose":
 		return struct{}{}, nil
+	case "textDocument/documentSymbol":
+		return l.handleTextDocumentDocumentSymbol(ctx, conn, req)
 	case "textDocument/didChange":
 		return l.handleTextDocumentDidChange(ctx, conn, req)
 	case "textDocument/foldingRange":
@@ -650,6 +652,29 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	return struct{}{}, nil
 }
 
+func (l *LanguageServer) handleTextDocumentDocumentSymbol(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.DocumentSymbolParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
+	}
+
+	module, ok := l.cache.GetModule(params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI)
+	}
+
+	return documentSymbols(contents, module), nil
+}
+
 func (l *LanguageServer) handleTextDocumentFoldingRange(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -894,6 +919,7 @@ func (l *LanguageServer) handleInitialize(
 			},
 			DocumentFormattingProvider: true,
 			FoldingRangeProvider:       true,
+			DocumentSymbolProvider:     true,
 		},
 	}
 

@@ -598,7 +598,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
+		l.logError(fmt.Errorf("failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI))
 
 		return []types.InlayHint{}, nil
 	}

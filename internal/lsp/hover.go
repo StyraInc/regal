@@ -155,7 +155,7 @@ func createHoverContent(builtin *ast.Builtin) string {
 func updateBuiltinPositions(cache *Cache, uri string) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
-		return fmt.Errorf("failed to get module for uri %q", uri)
+		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
 	}
 
 	builtinsOnLine := map[uint][]BuiltinPosition{}

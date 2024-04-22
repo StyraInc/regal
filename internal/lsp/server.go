@@ -724,7 +724,9 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		Contents: []byte(oldContent),
 	}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to format file: %w", err)
+		l.logError(fmt.Errorf("failed to format file: %w", err))
+
+		return struct{}{}, nil
 	}
 
 	if len(fixResults) == 0 {

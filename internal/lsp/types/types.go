@@ -89,6 +89,7 @@ type ServerCapabilities struct {
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
 	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
+	DefinitionProvider         bool                    `json:"definitionProvider"`
 }
 
 type WorkspaceOptions struct {
@@ -301,6 +302,16 @@ type TextDocumentItem struct {
 	Text       string `json:"text"`
 	URI        string `json:"uri"`
 	Version    uint   `json:"version"`
+}
+
+type DefinitionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
+}
+
+type Location struct {
+	URI   string `json:"uri"`
+	Range Range  `json:"range"`
 }
 
 type TextDocumentHoverParams struct {

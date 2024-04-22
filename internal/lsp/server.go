@@ -598,7 +598,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
+		l.logError(fmt.Errorf("failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI))
 
 		return []types.InlayHint{}, nil
 	}
@@ -709,7 +709,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
-		fmt.Fprintf(l.errorLog, "formatting params validation warnings: %v\n", warnings)
+		l.logError(fmt.Errorf("formatting params validation warnings: %v", warnings))
 	}
 
 	oldContent, ok := l.cache.GetFileContents(params.TextDocument.URI)
@@ -724,7 +724,9 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		Contents: []byte(oldContent),
 	}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to format file: %w", err)
+		l.logError(fmt.Errorf("failed to format file: %w", err))
+
+		return struct{}{}, nil
 	}
 
 	if len(fixResults) == 0 {

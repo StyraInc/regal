@@ -709,7 +709,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
-		fmt.Fprintf(l.errorLog, "formatting params validation warnings: %v\n", warnings)
+		l.logError(fmt.Errorf("formatting params validation warnings: %v", warnings))
 	}
 
 	oldContent, ok := l.cache.GetFileContents(params.TextDocument.URI)

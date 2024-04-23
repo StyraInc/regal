@@ -3,8 +3,8 @@
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
 ![OPA v0.63.0](https://openpolicyagent.org/badge/v0.63.0)
 
-Regal is a linter for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), with the goal of making your
-Rego magnificent!
+Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), helping
+you write better policies and have fun while doing it!
 
 <img
   src="/docs/assets/regal-banner.png"
@@ -31,10 +31,6 @@ with linting.
 
 ## What People Say About Regal
 
-> I am really impressed with Regal. It has helped me write more expressive and deterministic Rego.
-
-— Jimmy Ray, [Boeing](https://www.boeing.com/)
-
 > I really like that at each release of Regal I learn something new!
 > Of all the linters I'm exposed to, Regal is probably the most instructive one.
 
@@ -47,6 +43,10 @@ with linting.
 > Such an awesome project!
 
 — Shawn McGuire, [Atlassian](https://www.atlassian.com/)
+
+> I am really impressed with Regal. It has helped me write more expressive and deterministic Rego.
+
+— Jimmy Ray, [Boeing](https://www.boeing.com/)
 
 See the [adopters](/docs/adopters.md) file for more Regal users.
 
@@ -610,6 +610,33 @@ but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/polic
 >
 > Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
 > and test process.
+
+## Regal Language Server
+
+In order to support linting directly in editors and IDE's, Regal implements parts of the
+[Language Server Protocol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
+(LSP). With Regal installed and available on your `$PATH`, editors like VS Code (using the
+[OPA extension](https://github.com/open-policy-agent/vscode-opa)) can leverage Regal for diagnostics, i.e. linting,
+and have the results displayed directly in your editor as you work on your Rego policies. The Regal LSP implementation
+doesn't stop at linting though — it'll also provide features like tooltips on hover, go to definition, and document
+symbols helping you easily navigate the Rego code in your workspace.
+
+The Regal language server currently supports the following LSP features:
+
+- [x] Diagnostics (linting)
+- [x] Hover (for inline docs on built-in functions)
+- [x] Go to definition (ctrl/cmd + click on a reference to go to definition)
+- [x] Folding ranges (expand/collapse blocks, imports, comments)
+- [x] Document and workspace symbols (navigate to rules, functions, packages)
+- [x] Inlay hints (show names of built-in function arguments next to their values)
+- [x] Formatting
+- [x] Code actions (quick fixes for linting issues)
+  - [x] [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)
+  - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
+  - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
+  - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+
+See the [editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
 
 ## Resources
 

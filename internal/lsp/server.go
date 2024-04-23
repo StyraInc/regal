@@ -135,6 +135,8 @@ func (l *LanguageServer) Handle(
 		return l.handleWorkspaceDidCreateFiles(ctx, conn, req)
 	case "workspace/executeCommand":
 		return l.handleWorkspaceExecuteCommand(ctx, conn, req)
+	case "workspace/symbol":
+		return l.handleWorkspaceSymbol(ctx, conn, req)
 	case "shutdown":
 		err = conn.Close()
 		if err != nil {
@@ -611,6 +613,37 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	return inlayHints, nil
 }
 
+func (l *LanguageServer) handleWorkspaceSymbol(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.WorkspaceSymbolParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	symbols := make([]types.WorkspaceSymbol, 0)
+	contents := l.cache.GetAllFiles()
+
+	// Note: currently ignoring params.Query, as the client seems to do a good
+	// job of filtering anyway, and that would merely be an optimization here.
+	// But perhaps a good one to do at some point, and I'm not sure all clients
+	// do this filtering.
+
+	for moduleURL, module := range l.cache.GetAllModules() {
+		content := contents[moduleURL]
+		docSyms := documentSymbols(content, module)
+		wrkSyms := make([]types.WorkspaceSymbol, 0)
+
+		toWorkspaceSymbols(docSyms, moduleURL, &wrkSyms)
+
+		symbols = append(symbols, wrkSyms...)
+	}
+
+	return symbols, nil
+}
+
 func (l *LanguageServer) handleTextDocumentDefinition(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -966,6 +999,7 @@ func (l *LanguageServer) handleInitialize(
 			FoldingRangeProvider:       true,
 			DefinitionProvider:         true,
 			DocumentSymbolProvider:     true,
+			WorkspaceSymbolProvider:    true,
 		},
 	}
 

@@ -267,3 +267,28 @@ func isConstant(rule *ast.Rule) bool {
 		rule.Body.Equal(ast.NewBody(ast.NewExpr(ast.BooleanTerm(true)))) &&
 		rule.Else == nil
 }
+
+func toWorkspaceSymbol(docSym types.DocumentSymbol, docURL string) types.WorkspaceSymbol {
+	return types.WorkspaceSymbol{
+		Name: docSym.Name,
+		Kind: docSym.Kind,
+		Location: types.Location{
+			URI:   docURL,
+			Range: docSym.Range,
+		},
+	}
+}
+
+func toWorkspaceSymbols(docSym []types.DocumentSymbol, docURL string, symbols *[]types.WorkspaceSymbol) {
+	for _, sym := range docSym {
+		// Only include the "main" symbol for incremental rules and functions
+		// as numeric items isn't very useful in the workspace symbol list.
+		if !strings.HasPrefix(sym.Name, "#") {
+			*symbols = append(*symbols, toWorkspaceSymbol(sym, docURL))
+
+			if sym.Children != nil {
+				toWorkspaceSymbols(*sym.Children, docURL, symbols)
+			}
+		}
+	}
+}

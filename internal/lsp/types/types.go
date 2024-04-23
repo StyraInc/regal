@@ -89,6 +89,7 @@ type ServerCapabilities struct {
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
 	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
+	WorkspaceSymbolProvider    bool                    `json:"workspaceSymbolProvider"`
 	DefinitionProvider         bool                    `json:"definitionProvider"`
 }
 
@@ -171,6 +172,17 @@ type DocumentSymbol struct {
 	Range          Range              `json:"range"`
 	SelectionRange Range              `json:"selectionRange"`
 	Children       *[]DocumentSymbol  `json:"children,omitempty"`
+}
+
+type WorkspaceSymbolParams struct {
+	Query string `json:"query"`
+}
+
+type WorkspaceSymbol struct {
+	Name          string             `json:"name"`
+	Kind          symbols.SymbolKind `json:"kind"`
+	Location      Location           `json:"location"`
+	ContainerName *string            `json:"containerName,omitempty"`
 }
 
 type FoldingRangeParams struct {

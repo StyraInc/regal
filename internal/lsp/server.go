@@ -92,7 +92,8 @@ func (l *LanguageServer) Handle(
 	conn *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
-	if req.Params == nil {
+	// null params are allowed, but only for certain methods
+	if req.Params == nil && req.Method != "shutdown" && req.Method != "exit" {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
 
@@ -138,7 +139,12 @@ func (l *LanguageServer) Handle(
 	case "workspace/symbol":
 		return l.handleWorkspaceSymbol(ctx, conn, req)
 	case "shutdown":
-		err = conn.Close()
+		// no-op as we wait for the exit signal before closing channel
+		return struct{}{}, nil
+	case "exit":
+		// now we can close the channel, this will cause the program to exit and the
+		// context for all workers to be cancelled
+		err := l.conn.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to close connection: %w", err)
 		}

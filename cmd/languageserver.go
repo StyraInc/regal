@@ -37,9 +37,9 @@ func init() {
 					LogOutbound: verboseLogging,
 				},
 			})
+			defer conn.Close()
 
 			ls.SetConn(conn)
-
 			go ls.StartDiagnosticsWorker(ctx)
 			go ls.StartHoverWorker(ctx)
 			go ls.StartCommandWorker(ctx)
@@ -50,9 +50,9 @@ func init() {
 
 			select {
 			case <-conn.DisconnectNotify():
-				fmt.Fprint(os.Stderr, "Connection closed\n")
+				fmt.Fprintln(os.Stderr, "Connection closed")
 			case sig := <-sigChan:
-				fmt.Fprint(os.Stderr, "signal: ", sig.String(), "\n")
+				fmt.Fprintln(os.Stderr, "signal: ", sig.String())
 			}
 
 			return nil

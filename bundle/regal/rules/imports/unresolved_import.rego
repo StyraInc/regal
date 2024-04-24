@@ -74,7 +74,7 @@ custom_regal_package_and_import(pkg_path, path) if {
 # the package part will always be included exported refs
 # but if we have a rule like foo.bar.baz
 # we'll want to include both foo.bar and foo.bar.baz
-to_paths(pkg_path, ref) := [to_path(pkg_path, ref)] if count(ref) < 3
+to_paths(pkg_path, ref) := util.all_paths(to_path(pkg_path, ref)) if count(ref) < 3
 
 to_paths(pkg_path, ref) := paths if {
 	count(ref) > 2

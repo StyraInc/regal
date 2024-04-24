@@ -746,12 +746,16 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 
 	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
 	if !ok {
-		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
+		l.logError(fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI))
+
+		return []types.DocumentSymbol{}, nil
 	}
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		return nil, fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI)
+		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
+
+		return []types.DocumentSymbol{}, nil
 	}
 
 	return documentSymbols(contents, module), nil

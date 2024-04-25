@@ -75,6 +75,24 @@ test_success_resolved_import_in_middle_of_explicit_paths if {
 	r == set()
 }
 
+test_success_map_rule_resolves if {
+	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
+	import data.bar.x
+	`)
+
+	agg2 := rule.aggregate with input as regal.parse_module("p2.rego", `package bar
+	import rego.v1
+
+	x[y] := z if {
+		some y in input.ys
+		z := {"foo": y + 1}
+	}
+	`)
+
+	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+	r == set()
+}
+
 test_success_map_rule_may_resolve_so_allow if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 	import data.bar.x.y

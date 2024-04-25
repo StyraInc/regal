@@ -133,6 +133,12 @@ func FindRegalDirectory(path string) (*os.File, error) {
 
 		// Move up one level in the directory tree
 		parts := strings.Split(dir, rio.PathSeparator)
+		if len(parts) == 0 {
+			// See https://github.com/StyraInc/regal/issues/682
+			// Not sure how we could get here, but we need to stop if we do
+			return nil, errors.New("stopping as dir is empty string")
+		}
+
 		parts = parts[:len(parts)-1]
 
 		if parts[0] == volume {

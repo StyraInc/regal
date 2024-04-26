@@ -48,7 +48,7 @@ const fileURIScheme = "file://"
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
 // language server my making updates to both and validating that the correct diagnostics are sent to the client.
 //
-//nolint:gocognit,gocyclo,maintidx
+//nolint:gocyclo,maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
 	t.Parallel()
 
@@ -268,7 +268,7 @@ rules:
 // workspace diagnostics are run, this test validates that the correct diagnostics are sent to the client in this
 // scenario.
 //
-//nolint:gocognit,maintidx,gocyclo
+// nolint:maintidx,gocyclo
 func TestLanguageServerMultipleFiles(t *testing.T) {
 	t.Parallel()
 
@@ -506,6 +506,33 @@ allow if input.user in admins.users
 		if success {
 			break
 		}
+	}
+}
+
+// https://github.com/StyraInc/regal/issues/679
+func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
+	t.Parallel()
+
+	ls := LanguageServer{
+		cache: NewCache(),
+	}
+
+	err := ls.processBuiltinsUpdate(context.Background(), "file://missing.rego", "foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(ls.cache.builtinPositionsFile) != 0 {
+		t.Errorf("expected builtin positions to be empty, got %v", ls.cache.builtinPositionsFile)
+	}
+
+	contents, ok := ls.cache.GetFileContents("file://missing.rego")
+	if ok {
+		t.Errorf("expected file contents to be empty, got %s", contents)
+	}
+
+	if len(ls.cache.GetAllFiles()) != 0 {
+		t.Errorf("expected files to be empty, got %v", ls.cache.GetAllFiles())
 	}
 }
 

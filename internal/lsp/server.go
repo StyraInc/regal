@@ -84,6 +84,7 @@ type LanguageServer struct {
 type fileUpdateEvent struct {
 	Reason  string
 	URI     string
+	OldURI  string
 	Content string
 }
 
@@ -173,6 +174,25 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
+			// if file has been deleted, clear diagnostics in the client
+			if evt.Reason == "textDocument/didDelete" {
+				err := l.sendFileDiagnostics(ctx, evt.URI)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+				}
+
+				continue
+			}
+
+			if evt.Reason == "textDocument/didRename" && evt.OldURI != "" {
+				err := l.sendFileDiagnostics(ctx, evt.OldURI)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+				}
+
+				continue
+			}
+
 			// if there is new content, we need to update the parse errors or module first
 			success, err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
@@ -226,7 +246,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.builtinsPositionFile:
-			_, err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
+			err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
 			}
@@ -429,25 +449,26 @@ func (l *LanguageServer) processTextContentUpdate(
 	return false, nil
 }
 
-func (l *LanguageServer) processBuiltinsUpdate(
-	_ context.Context,
-	uri string,
-	content string,
-) (bool, error) {
+func (l *LanguageServer) processBuiltinsUpdate(_ context.Context, uri string, content string) error {
+	if _, ok := l.cache.GetFileContents(uri); !ok {
+		// If the file is not in the cache, exit early or else
+		// we might accidentally put it in the cache after it's been
+		// deleted: https://github.com/StyraInc/regal/issues/679
+		return nil
+	}
+
 	l.cache.SetFileContents(uri, content)
 
 	success, err := updateParse(l.cache, uri)
 	if err != nil {
-		return false, fmt.Errorf("failed to update parse: %w", err)
+		return fmt.Errorf("failed to update parse: %w", err)
 	}
 
 	if !success {
-		return false, nil
+		return nil
 	}
 
-	err = updateBuiltinPositions(l.cache, uri)
-
-	return err == nil, err
+	return updateBuiltinPositions(l.cache, uri)
 }
 
 func (l *LanguageServer) logError(err error) {
@@ -873,7 +894,6 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 		}
 
 		l.diagnosticRequestFile <- evt
-		l.builtinsPositionFile <- evt
 	}
 
 	return struct{}{}, nil
@@ -904,6 +924,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		evt := fileUpdateEvent{
 			Reason:  "textDocument/didRename",
 			URI:     renameOp.NewURI,
+			OldURI:  renameOp.OldURI,
 			Content: content,
 		}
 

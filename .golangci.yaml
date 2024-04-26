@@ -18,6 +18,7 @@ linters:
     - rowserrcheck
     - wastedassign
     # annoying
+    - gocognit
     - goerr113
     - varnamelen
     - nonamedreturns

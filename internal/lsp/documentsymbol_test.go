@@ -83,7 +83,7 @@ func TestRefToString(t *testing.T) {
 	}
 }
 
-//nolint:gocognit,nestif
+//nolint:nestif
 func TestDocumentSymbols(t *testing.T) {
 	t.Parallel()
 

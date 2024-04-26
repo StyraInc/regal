@@ -8,3 +8,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      # update OPA manually to bump version in README too
+      - dependency-name: "github.com/open-policy-agent/opa"

@@ -139,6 +139,10 @@ func FindRegalDirectory(path string) (*os.File, error) {
 			return nil, errors.New("stopping as dir is empty string")
 		}
 
+		if len(parts) < 2 {
+			return nil, errors.New("stopping as dir is root directory")
+		}
+
 		parts = parts[:len(parts)-1]
 
 		if parts[0] == volume {

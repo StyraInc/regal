@@ -655,7 +655,6 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 	return files, nil
 }
 
-//nolint:gocognit
 func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)

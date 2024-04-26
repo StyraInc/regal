@@ -183,7 +183,6 @@ func init() {
 	RootCommand.AddCommand(lintCommand)
 }
 
-//nolint:gocognit
 func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	var err error
 

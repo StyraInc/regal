@@ -20,7 +20,7 @@ jobs:
         - runner: ubuntu-latest
           name: linux
           static: true
-        - runner: macos-latest
+        - runner: macos-13
           name: macos-intel
           static: false
         - runner: macos-14

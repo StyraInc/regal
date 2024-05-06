@@ -39,7 +39,7 @@ jobs:
       - run: npm install -g markdownlint-cli
       - run: go install git.sr.ht/~charles/rq/cmd/rq@latest
       - run: build/do.rq pull_request
-      - uses: golangci/golangci-lint-action@v5.1.0
+      - uses: golangci/golangci-lint-action@v5.3.0
         if: matrix.os.name == 'linux'
         with:
           version: v1.57.2

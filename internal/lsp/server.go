@@ -655,25 +655,25 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 }
 
 func partialInlayHints(parseErrors []types.Diagnostic, contents, uri string) []types.InlayHint {
-	lastValidLine := uint(0)
+	firstErrorLine := uint(0)
 	for _, parseError := range parseErrors {
-		if parseError.Range.Start.Line > lastValidLine {
-			lastValidLine = parseError.Range.Start.Line
+		if parseError.Range.Start.Line > firstErrorLine {
+			firstErrorLine = parseError.Range.Start.Line
 		}
 	}
 
-	if lastValidLine == 0 {
+	if firstErrorLine == 0 {
 		// if there are parse errors from line 0, we skip doing anything
 		return []types.InlayHint{}
 	}
 
-	if lastValidLine > uint(len(strings.Split(contents, "\n"))) {
+	if firstErrorLine > uint(len(strings.Split(contents, "\n"))) {
 		// if the last valid line is beyond the end of the file, we exit as something is up
 		return []types.InlayHint{}
 	}
 
 	// select the lines from the contents up to the first parse error
-	lines := strings.Join(strings.Split(contents, "\n")[:lastValidLine], "\n")
+	lines := strings.Join(strings.Split(contents, "\n")[:firstErrorLine], "\n")
 
 	// parse the part of the module that might work
 	module, err := rparse.Module(uri, lines)

@@ -191,8 +191,6 @@ func getRuleDetail(rule *ast.Rule) string {
 
 	if rule.Head.Key != nil {
 		detail += "map "
-	} else if isConstant(rule) {
-		detail += "constant "
 	}
 
 	detail += "rule"

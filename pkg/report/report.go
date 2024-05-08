@@ -91,12 +91,11 @@ func (r *Report) AddProfileEntries(prof map[string]ProfileEntry) {
 		if _, ok := r.AggregateProfile[loc]; !ok {
 			r.AggregateProfile[loc] = entry
 		} else {
-			profCopy := prof[loc]
+			profCopy := r.AggregateProfile[loc]
 			profCopy.NumEval += entry.NumEval
 			profCopy.NumRedo += entry.NumRedo
 			profCopy.NumGenExpr += entry.NumGenExpr
 			profCopy.TotalTimeNs += entry.TotalTimeNs
-			profCopy.Location = entry.Location
 			r.AggregateProfile[loc] = profCopy
 		}
 	}

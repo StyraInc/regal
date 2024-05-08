@@ -52,5 +52,8 @@ func ToPath(client clients.Identifier, uri string) string {
 		}
 	}
 
+	// Convert path to use system separators
+	path = filepath.FromSlash(path)
+
 	return path
 }

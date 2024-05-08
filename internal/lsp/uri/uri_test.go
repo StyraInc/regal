@@ -1,6 +1,7 @@
 package uri
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
@@ -91,15 +92,15 @@ func TestURIToPath(t *testing.T) {
 	}{
 		"unix unprefixed": {
 			uri:  "/foo/bar",
-			want: "/foo/bar",
+			want: filepath.FromSlash("/foo/bar"),
 		},
 		"unix simple": {
 			uri:  "file:///foo/bar",
-			want: "/foo/bar",
+			want: filepath.FromSlash("/foo/bar"),
 		},
 		"windows not encoded": {
 			uri:  "file://c:/foo/bar",
-			want: "c:/foo/bar",
+			want: filepath.FromSlash("c:/foo/bar"),
 		},
 	}
 
@@ -126,32 +127,32 @@ func TestURIToPath_VSCode(t *testing.T) {
 	}{
 		"unix unprefixed": {
 			uri:  "/foo/bar",
-			want: "/foo/bar",
+			want: filepath.FromSlash("/foo/bar"),
 		},
 		"unix simple": {
 			uri:  "file:///foo/bar",
-			want: "/foo/bar",
+			want: filepath.FromSlash("/foo/bar"),
 		},
 		"windows encoded": {
 			uri:  "file:///c%3A/foo/bar",
-			want: "c:/foo/bar",
+			want: filepath.FromSlash("c:/foo/bar"),
 		},
 		"unix encoded with space in path": {
 			uri:  "file:///Users/foo/bar%20baz",
-			want: "/Users/foo/bar baz",
+			want: filepath.FromSlash("/Users/foo/bar baz"),
 		},
 		// these other examples shouldn't happen, but we should handle them
 		"windows not encoded": {
 			uri:  "file://c:/foo/bar",
-			want: "c:/foo/bar",
+			want: filepath.FromSlash("c:/foo/bar"),
 		},
 		"windows not prefixed": {
 			uri:  "c:/foo/bar",
-			want: "c:/foo/bar",
+			want: filepath.FromSlash("c:/foo/bar"),
 		},
 		"windows not prefixed, but encoded": {
 			uri:  "c%3A/foo/bar",
-			want: "c:/foo/bar",
+			want: filepath.FromSlash("c:/foo/bar"),
 		},
 	}
 

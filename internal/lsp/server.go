@@ -24,6 +24,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
@@ -628,6 +629,19 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// when a file cannot be parsed, we do a best effort attempt to provide inlay hints
+	// by finding the location of the first parse error and attempting to parse up to that point
+	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
+	if ok && len(parseErrors) > 0 {
+		contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
+		if !ok {
+			// if there is no content, we can't even do a partial parse
+			return []types.InlayHint{}, nil
+		}
+
+		return partialInlayHints(parseErrors, contents, params.TextDocument.URI), nil
+	}
+
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
 		l.logError(fmt.Errorf("failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI))
@@ -638,6 +652,37 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	inlayHints := getInlayHints(module)
 
 	return inlayHints, nil
+}
+
+func partialInlayHints(parseErrors []types.Diagnostic, contents, uri string) []types.InlayHint {
+	lastValidLine := uint(0)
+	for _, parseError := range parseErrors {
+		if parseError.Range.Start.Line > lastValidLine {
+			lastValidLine = parseError.Range.Start.Line
+		}
+	}
+
+	if lastValidLine == 0 {
+		// if there are parse errors from line 0, we skip doing anything
+		return []types.InlayHint{}
+	}
+
+	if lastValidLine > uint(len(strings.Split(contents, "\n"))) {
+		// if the last valid line is beyond the end of the file, we exit as something is up
+		return []types.InlayHint{}
+	}
+
+	// select the lines from the contents up to the first parse error
+	lines := strings.Join(strings.Split(contents, "\n")[:lastValidLine], "\n")
+
+	// parse the part of the module that might work
+	module, err := rparse.Module(uri, lines)
+	if err != nil {
+		// if we still can't parse the bit we hoped was valid, we exit as this is 'too hard'
+		return []types.InlayHint{}
+	}
+
+	return getInlayHints(module)
 }
 
 func (l *LanguageServer) handleWorkspaceSymbol(

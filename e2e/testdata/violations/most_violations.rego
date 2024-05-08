@@ -83,6 +83,12 @@ redundant_existence_check if {
 
 deprecated_builtin := all([true])
 
+partial contains "foo"
+
+impossible_not if {
+	not partial
+}
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

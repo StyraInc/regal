@@ -46,7 +46,6 @@ aggregate contains entry if {
 aggregate_report contains violation if {
 	all_known_refs := {path |
 		some entry in input.aggregate
-
 		some path in entry.aggregate_data.exported_refs
 	}
 

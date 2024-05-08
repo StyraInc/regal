@@ -8,6 +8,8 @@ rules:
       level: error
     if-empty-object:
       level: error
+    impossible-not:
+      level: error
     inconsistent-args:
       level: error
     invalid-metadata-attribute:

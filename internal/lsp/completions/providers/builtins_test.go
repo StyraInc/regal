@@ -1,64 +1,27 @@
 package providers
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
-func TestPackage(t *testing.T) {
+func TestBuiltIns_if(t *testing.T) {
 	t.Parallel()
 
 	c := cache.NewCache()
 
 	fileURI := "file:///foo/bar/file.rego"
-	fileContents := "\n"
+	fileContents := `package foo
+
+allow if c`
 
 	c.SetFileContents(fileURI, fileContents)
 
-	p := &Package{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
-		},
-		Position: types.Position{
-			Line:      0,
-			Character: 0,
-		},
-	}
-
-	completions, err := p.Run(c, completionParams)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if len(completions) != 1 {
-		t.Fatalf("Expected exactly one completion, got: %v", completions)
-	}
-
-	comp := completions[0]
-	if comp.Label != "package" {
-		t.Fatalf("Expected label to be 'package', got: %v", comp.Label)
-	}
-}
-
-func TestPackageAfterComment(t *testing.T) {
-	t.Parallel()
-
-	c := cache.NewCache()
-
-	fileURI := "file:///foo/bar/file.rego"
-	fileContents := `
-# this is a comment before the package statement
-p
-
-`
-
-	c.SetFileContents(fileURI, fileContents)
-
-	p := &Package{}
+	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
@@ -66,7 +29,7 @@ p
 		},
 		Position: types.Position{
 			Line:      2,
-			Character: 1,
+			Character: 10, // is the c char that triggered the request
 		},
 	}
 
@@ -75,35 +38,34 @@ p
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if len(completions) != 1 {
-		t.Fatalf("Expected exactly one completion, got: %v", completions)
-	}
+	labels := completionLabels(completions)
 
-	comp := completions[0]
-	if comp.Label != "package" {
-		t.Fatalf("Expected label to be 'package', got: %v", comp.Label)
+	if !slices.Contains(labels, "count") {
+		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
 }
 
-func TestPackageNotLaterLines(t *testing.T) {
+func TestBuiltIns_afterAssignment(t *testing.T) {
 	t.Parallel()
 
 	c := cache.NewCache()
 
 	fileURI := "file:///foo/bar/file.rego"
-	fileContents := "package foo\n\n"
+	fileContents := `package foo
+
+allow := c`
 
 	c.SetFileContents(fileURI, fileContents)
 
-	p := &Package{}
+	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURI,
 		},
 		Position: types.Position{
-			Line:      1,
-			Character: 0,
+			Line:      2,
+			Character: 10, // is the c char that triggered the request
 		},
 	}
 
@@ -112,7 +74,53 @@ func TestPackageNotLaterLines(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if len(completions) != 0 {
-		t.Fatalf("Expected no completions, got: %v", completions)
+	labels := completionLabels(completions)
+
+	if !slices.Contains(labels, "count") {
+		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
+}
+
+func TestBuiltIns_inRuleBody(t *testing.T) {
+	c := cache.NewCache()
+
+	fileURI := "file:///foo/bar/file.rego"
+	fileContents := `package foo
+
+allow if {
+  c
+}`
+
+	c.SetFileContents(fileURI, fileContents)
+
+	p := &BuiltIns{}
+
+	completionParams := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: fileURI,
+		},
+		Position: types.Position{
+			Line:      3,
+			Character: 3, // is the c char that triggered the request
+		},
+	}
+
+	completions, err := p.Run(c, completionParams)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	labels := completionLabels(completions)
+
+	if !slices.Contains(labels, "count") {
+		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
+	}
+}
+
+func completionLabels(completions []types.CompletionItem) []string {
+	labels := make([]string, len(completions))
+	for i, c := range completions {
+		labels[i] = c.Label
+	}
+	return labels
 }

@@ -8,6 +8,8 @@ import (
 )
 
 func TestPackageName(t *testing.T) {
+	t.Parallel()
+
 	c := cache.NewCache()
 
 	fileURI := "file:///foo/bar/file.rego"
@@ -43,6 +45,8 @@ func TestPackageName(t *testing.T) {
 }
 
 func TestPackageNameWithPackageComment(t *testing.T) {
+	t.Parallel()
+
 	c := cache.NewCache()
 
 	fileURI := "file:///bar/foo/file.rego"
@@ -82,6 +86,8 @@ package `
 }
 
 func TestPackageNameWithErroneousPackageStatements(t *testing.T) {
+	t.Parallel()
+
 	c := cache.NewCache()
 
 	fileURI := "file:///foo/bar/file.rego"

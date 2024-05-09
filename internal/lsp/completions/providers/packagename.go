@@ -14,9 +14,9 @@ import (
 // PackageName will return completions for the package name when starting a new file based on the file's URI.
 type PackageName struct{}
 
-func (p *PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
-
+func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
+
 	fileContents, ok := c.GetFileContents(fileURI)
 	if !ok {
 		// if the file contents is missing then we can't provide completions

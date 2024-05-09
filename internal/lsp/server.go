@@ -23,6 +23,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/commands"
 	"github.com/styrainc/regal/internal/lsp/completions"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
+	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
@@ -480,7 +481,7 @@ func (l *LanguageServer) processBuiltinsUpdate(_ context.Context, uri string, co
 		return nil
 	}
 
-	return updateBuiltinPositions(l.cache, uri)
+	return hover.UpdateBuiltinPositions(l.cache, uri)
 }
 
 func (l *LanguageServer) logError(err error) {
@@ -515,7 +516,7 @@ func (l *LanguageServer) handleTextDocumentHover(
 
 	for _, bp := range builtinsOnLine[params.Position.Line+1] {
 		if params.Position.Character >= bp.Start-1 && params.Position.Character <= bp.End-1 {
-			contents := createHoverContent(bp.Builtin)
+			contents := hover.CreateHoverContent(bp.Builtin)
 
 			return HoverResponse{
 				Contents: types.MarkupContent{

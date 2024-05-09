@@ -29,6 +29,8 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 
 	m.RegisterProvider(&providers.Package{})
 	m.RegisterProvider(&providers.PackageName{})
+	m.RegisterProvider(&providers.BuiltIns{})
+	m.RegisterProvider(&providers.RegoV1{})
 
 	return m
 }
@@ -41,6 +43,7 @@ func (m *Manager) Run(params types.CompletionParams) ([]types.CompletionItem, er
 		if err != nil {
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}
+
 		if len(providerCompletions) > 0 {
 			completions = append(completions, providerCompletions...)
 		}

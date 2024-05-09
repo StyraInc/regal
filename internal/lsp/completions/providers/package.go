@@ -12,9 +12,9 @@ import (
 // Package will return completions for the package keyword when starting a new file.
 type Package struct{}
 
-func (p *Package) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
-
+func (*Package) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
+
 	fileContents, ok := c.GetFileContents(fileURI)
 	if !ok {
 		// if the file contents is missing then we can't provide completions

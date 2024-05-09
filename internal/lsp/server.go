@@ -18,8 +18,10 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
+	"github.com/styrainc/regal/internal/lsp/completions"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -43,21 +45,23 @@ type LanguageServerOptions struct {
 }
 
 func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
+	c := cache.NewCache()
 	ls := &LanguageServer{
-		cache:                      NewCache(),
+		cache:                      c,
 		errorLog:                   opts.ErrorLog,
 		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		commandRequest:             make(chan types.ExecuteCommandParams, 10),
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
+		completionsManager:         completions.NewDefaultManager(c),
 	}
 
 	return ls
 }
 
 type LanguageServer struct {
-	cache *Cache
+	cache *cache.Cache
 
 	conn *jsonrpc2.Conn
 
@@ -80,6 +84,8 @@ type LanguageServer struct {
 	// workspaceMode is set to true when the ls is initialized with
 	// a clientRootURI.
 	workspaceMode bool
+
+	completionsManager *completions.Manager
 }
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.
@@ -129,6 +135,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/inlayHint":
 		return l.handleTextDocumentInlayHint(ctx, conn, req)
+	case "textDocument/completion":
+		return l.handleTextDocumentCompletion(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
 		return l.handleWorkspaceDidChangeWatchedFiles(ctx, conn, req)
 	case "workspace/diagnostic":
@@ -657,6 +665,33 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	return inlayHints, nil
 }
 
+func (l *LanguageServer) handleTextDocumentCompletion(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.CompletionParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	bs, err := json.MarshalIndent(params, "", "  ")
+	l.logError(fmt.Errorf("completion params: %s", bs))
+
+	items, err := l.completionsManager.Run(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find completions: %w", err)
+	}
+
+	bs, err = json.MarshalIndent(items, "", "  ")
+	l.logError(fmt.Errorf("completion items: %s", bs))
+
+	return types.CompletionList{
+		IsIncomplete: false,
+		Items:        items,
+	}, nil
+}
+
 func partialInlayHints(parseErrors []types.Diagnostic, contents, uri string) []types.InlayHint {
 	firstErrorLine := uint(0)
 	for _, parseError := range parseErrors {
@@ -952,7 +987,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	}
 
 	for _, createOp := range params.Files {
-		_, err = updateCacheForURIFromDisk(
+		_, err = cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, createOp.URI),
 			uri.ToPath(l.clientIdentifier, createOp.URI),
@@ -1008,7 +1043,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	}
 
 	for _, renameOp := range params.Files {
-		content, err := updateCacheForURIFromDisk(
+		content, err := cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
 			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
@@ -1132,6 +1167,12 @@ func (l *LanguageServer) handleInitialize(
 			DefinitionProvider:         true,
 			DocumentSymbolProvider:     true,
 			WorkspaceSymbolProvider:    true,
+			CompletionProvider: types.CompletionOptions{
+				ResolveProvider: false,
+				CompletionItem: types.CompletionItemOptions{
+					LabelDetailsSupport: true,
+				},
+			},
 		},
 	}
 
@@ -1167,7 +1208,7 @@ func (l *LanguageServer) loadWorkspaceContents() error {
 
 		fileURI := uri.FromPath(l.clientIdentifier, path)
 
-		_, err = updateCacheForURIFromDisk(l.cache, fileURI, path)
+		_, err = cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
 		}

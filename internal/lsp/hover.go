@@ -8,14 +8,10 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/types"
-)
 
-type BuiltinPosition struct {
-	Builtin *ast.Builtin
-	Line    uint
-	Start   uint
-	End     uint
-}
+	"github.com/styrainc/regal/internal/lsp/cache"
+	types2 "github.com/styrainc/regal/internal/lsp/types"
+)
 
 var builtins = builtinMap() //nolint:gochecknoglobals
 
@@ -152,18 +148,18 @@ func createHoverContent(builtin *ast.Builtin) string {
 	return result
 }
 
-func updateBuiltinPositions(cache *Cache, uri string) error {
+func updateBuiltinPositions(cache *cache.Cache, uri string) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
 	}
 
-	builtinsOnLine := map[uint][]BuiltinPosition{}
+	builtinsOnLine := map[uint][]types2.BuiltinPosition{}
 
 	for _, call := range AllBuiltinCalls(module) {
 		line := uint(call.Location.Row)
 
-		builtinsOnLine[line] = append(builtinsOnLine[line], BuiltinPosition{
+		builtinsOnLine[line] = append(builtinsOnLine[line], types2.BuiltinPosition{
 			Builtin: call.Builtin,
 			Line:    line,
 			Start:   uint(call.Location.Col),

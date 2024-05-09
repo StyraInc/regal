@@ -96,6 +96,48 @@ type ServerCapabilities struct {
 	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
 	WorkspaceSymbolProvider    bool                    `json:"workspaceSymbolProvider"`
 	DefinitionProvider         bool                    `json:"definitionProvider"`
+	CompletionProvider         CompletionOptions       `json:"completionProvider"`
+}
+
+type CompletionOptions struct {
+	CompletionItem  CompletionItemOptions `json:"completionItem"`
+	ResolveProvider bool                  `json:"resolveProvider"`
+}
+
+type CompletionItemOptions struct {
+	LabelDetailsSupport bool `json:"labelDetailsSupport"`
+}
+
+type CompletionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
+	Context      CompletionContext      `json:"context"`
+}
+
+type CompletionContext struct {
+	TriggerKind      uint   `json:"triggerKind"`
+	TriggerCharacter string `json:"triggerCharacter"`
+}
+
+type CompletionList struct {
+	IsIncomplete bool             `json:"isIncomplete"`
+	Items        []CompletionItem `json:"items"`
+}
+
+type CompletionItem struct {
+	Label        string                      `json:"label"`
+	LabelDetails *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
+	// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
+	Kind          uint           `json:"kind"`
+	Detail        string         `json:"detail"`
+	Documentation *MarkupContent `json:"documentation,omitempty"`
+	Preselect     bool           `json:"preselect"`
+	TextEdit      *TextEdit      `json:"textEdit,omitempty"`
+}
+
+type CompletionItemLabelDetails struct {
+	Description string `json:"description"`
+	Detail      string `json:"detail"`
 }
 
 type WorkspaceOptions struct {

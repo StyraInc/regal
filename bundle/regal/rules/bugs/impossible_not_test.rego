@@ -118,6 +118,38 @@ test_success_multivalue_not_reference_invalidated_by_function_argument if {
 	r == set()
 }
 
+test_success_multivalue_not_reference_in_same_file_not_reported_in_aggregate_report if {
+	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
+
+	import rego.v1
+
+	partial contains "foo"
+
+	test_partial if {
+		not partial
+	}
+	`)
+
+	r := rule.aggregate_report with input as {"aggregate": agg1}
+	r == set()
+}
+
+test_fail_multivalue_not_reference_in_same_file_reported_in_normal_report if {
+	module := regal.parse_module("p1.rego", `package foo
+
+	import rego.v1
+
+	partial contains "foo"
+
+	test_partial if {
+		not partial
+	}
+	`)
+
+	r := rule.report with input as module
+	r == expected_with_location({"col": 7, "file": "p1.rego", "row": 8, "text": "not partial"})
+}
+
 expected := {
 	"category": "bugs",
 	"description": "Impossible `not` condition",
@@ -130,9 +162,3 @@ expected := {
 }
 
 expected_with_location(location) := {object.union(expected, {"location": location})} if is_object(location)
-
-expected_with_location(location) := {object.union(expected, {"location": loc}) |
-	some loc in location
-} if {
-	is_set(location)
-}

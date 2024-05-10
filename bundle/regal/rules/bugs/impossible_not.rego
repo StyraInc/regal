@@ -7,85 +7,93 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-# regal ignore:rule-length
-aggregate contains entry if {
-	package_path := [part.value | some part in input["package"].path]
+package_path := [part.value | some part in input["package"].path]
 
-	imported_symbols := {symbol: path |
-		some _import in input.imports
+multivalue_rules contains path if {
+	some rule in ast.rules
 
-		_import.path.value[0].value == "data"
-		count(_import.path.value) > 1
+	rule.head.key
+	not rule.head.value
 
-		symbol := imported_symbol(_import)
-		path := [part.value | some part in _import.path.value]
+	# ignore general ref head rules for now
+	every path in array.slice(rule.head.ref, 1, count(rule.head.ref)) {
+		path.type == "string"
 	}
 
-	multivalue_rules := {path |
-		some rule in ast.rules
+	path := concat(".", array.concat(package_path, [p |
+		some ref in rule.head.ref
+		p := ref.value
+	]))
+}
 
-		rule.head.key
-		not rule.head.value
+negated_refs contains negated_ref if {
+	some i, rule in input.rules
 
-		# ignore general ref head rules for now
-		every path in array.slice(rule.head.ref, 1, count(rule.head.ref)) {
-			path.type == "string"
-		}
+	walk(rule, [_, value])
 
-		path := concat(".", array.concat(package_path, [p |
-			some ref in rule.head.ref
-			p := ref.value
-		]))
+	value.negated
+
+	# if terms is an array, it's a function call, and most likely not "impossible"
+	is_object(value.terms)
+	value.terms.type in {"ref", "var"}
+
+	ref := var_to_ref(value.terms)
+
+	# for now, ignore ref if it has variable components
+	every path in array.slice(ref, 1, count(ref)) {
+		path.type == "string"
 	}
 
-	negated_refs := [negated_ref |
-		some i, rule in input.rules
+	# ignore negated local vars
+	not ref[0].value in ast.function_arg_names(rule)
+	not ref[0].value in {var.value | some var in ast.find_vars_in_local_scope(rule, value.location)}
 
-		walk(rule, [_, value])
+	negated_ref := {
+		"ref": ref,
+		"resolved_path": resolve(ref, package_path, ast.resolved_imports),
+	}
+}
 
-		value.negated
+aggregate contains result.aggregate(rego.metadata.chain(), {
+	"imported_symbols": ast.resolved_imports,
+	"multivalue_rules": multivalue_rules,
+	"negated_refs": negated_refs,
+})
 
-		# if terms is an array, it's a function call, and most likely not "impossible"
-		is_object(value.terms)
-		value.terms.type in {"ref", "var"}
+report contains violation if {
+	some entry in aggregate
+	some negated in entry.aggregate_data.negated_refs
 
-		ref := var_to_ref(value.terms)
+	negated.resolved_path in entry.aggregate_data.multivalue_rules
 
-		# for now, ignore ref if it has variable components
-		every path in array.slice(ref, 1, count(ref)) {
-			path.type == "string"
-		}
+	loc := object.union(result.location(negated.ref), {"location": {
+		"file": entry.aggregate_source.file,
+		# note that the "not" isn't present in the AST, so we'll add it manually to the text
+		# in the location to try and make it clear where the issue is (as opposed to just
+		# printing the ref)
+		"text": sprintf("not %s", [to_string(negated.ref)]),
+	}})
 
-		# ignore negated local vars
-		not ref[0].value in ast.function_arg_names(rule)
-		not ref[0].value in {var.value | some var in ast.find_vars_in_local_scope(rule, value.location)}
-
-		negated_ref := {
-			"ref": ref,
-			"resolved_path": resolve(ref, package_path, imported_symbols),
-		}
-	]
-
-	entry := result.aggregate(rego.metadata.chain(), {
-		"imported_symbols": imported_symbols,
-		"multivalue_rules": multivalue_rules,
-		"negated_refs": negated_refs,
-	})
+	violation := result.fail(rego.metadata.chain(), loc)
 }
 
 # METADATA
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
-	all_multivalue_refs := {path |
+	all_multivalue_refs := {{"path": path, "file": entry.aggregate_source.file} |
 		some entry in input.aggregate
 		some path in entry.aggregate_data.multivalue_rules
 	}
 
 	some entry in input.aggregate
 	some negated in entry.aggregate_data.negated_refs
+	some multivalue_ref in all_multivalue_refs
 
-	negated.resolved_path in all_multivalue_refs
+	# violations in same file handled by non-aggregate "report"
+	multivalue_ref.file != entry.aggregate_source.file
+
+	negated.resolved_path == multivalue_ref.path
 
 	loc := object.union(result.location(negated.ref), {"location": {
 		"file": entry.aggregate_source.file,
@@ -101,10 +109,6 @@ aggregate_report contains violation if {
 var_to_ref(terms) := [terms] if terms.type == "var"
 
 var_to_ref(terms) := terms.value if terms.type == "ref"
-
-imported_symbol(imp) := imp.alias
-
-imported_symbol(imp) := regal.last(imp.path.value).value if not imp.alias
 
 to_string(ref) := concat(".", [path |
 	some part in ref

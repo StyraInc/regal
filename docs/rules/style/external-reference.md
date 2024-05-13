@@ -1,6 +1,6 @@
 # external-reference
 
-**Summary**: Reference to input, data or rule ref in function body
+**Summary**: External reference in function
 
 **Category**: Style
 
@@ -21,7 +21,6 @@ is_preferred_login_method(method) if {
 ```
 
 **Prefer**
-
 ```rego
 package policy
 
@@ -70,7 +69,7 @@ first_name(full_name) := capitalized {
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     external-reference:
       # one of "error", "warning", "ignore"

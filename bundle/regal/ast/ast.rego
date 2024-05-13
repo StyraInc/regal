@@ -459,6 +459,14 @@ all_functions := object.union(config.capabilities.builtins, function_decls(input
 
 all_function_names := object.keys(all_functions)
 
+negated_expressions[rule] contains value if {
+	some rule in input.rules
+
+	walk(rule, [_, value])
+
+	value.negated
+}
+
 # METADATA
 # description: |
 #   true if rule head contains no identifier, but is a chained rule body immediately following the previous one:

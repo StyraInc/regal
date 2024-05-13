@@ -8,9 +8,11 @@
 ```rego
 package policy
 
+import rego.v1
+
 engineering_roles = {"engineer", "dba", "developer"}
 
-engineers[employee] {
+engineers contains employee if {
     employee := data.employees[_]
     employee.role in engineering_roles
 }
@@ -24,7 +26,7 @@ import rego.v1
 
 engineering_roles = {"engineer", "dba", "developer"}
 
-engineers[employee] {
+engineers contains employee if {
     some employee in data.employees
     employee.role in engineering_roles
 }
@@ -83,7 +85,9 @@ one of the variables (including wildcards: `_`) is an output variable bound in i
 ```rego
 package policy
 
-example_users[user] {
+import rego.v1
+
+example_users contains user if {
     domain := "example.com"
     user := input.sites[domain].users[_]
 }

@@ -121,6 +121,10 @@ func scaffoldRule(params newRuleCommandParams) error {
 			return err
 		}
 
+		if err := createBuiltinDocs(params); err != nil {
+			return err
+		}
+
 		if err := addToDataYAML(params); err != nil {
 			return err
 		}
@@ -304,6 +308,29 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 	}
 
 	log.Printf("Created builtin rule %q in %s\n", params.name, rulesDir)
+
+	return nil
+}
+
+func createBuiltinDocs(params newRuleCommandParams) error {
+	docsDir := filepath.Join(params.output, "docs", "rules", params.category)
+
+	docTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.md.tpl")
+	if err != nil {
+		return err
+	}
+
+	docFileName := strings.ToLower(params.name) + ".md"
+
+	docFile, err := os.Create(filepath.Join(docsDir, docFileName))
+	if err != nil {
+		return err
+	}
+
+	err = docTmpl.Execute(docFile, templateValues(params))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

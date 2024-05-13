@@ -13,6 +13,26 @@ lint_aggregate.violations := aggregate_report
 
 lint.violations := report
 
+rules_to_run[category][title] if {
+	some category, title
+	config.merged_config.rules[category][title]
+
+	config.for_rule(category, title).level != "ignore"
+	not config.excluded_file(category, title, input.regal.file.name)
+}
+
+notices contains notice if {
+	some category, title
+	some notice in grouped_notices[category][title]
+}
+
+grouped_notices[category][title] contains notice if {
+	some category, title
+	rules_to_run[category][title]
+
+	some notice in data.regal.rules[category][title].notices
+}
+
 # METADATA
 # description: Runs all rules against an input AST and produces a report
 # entrypoint: true
@@ -34,26 +54,6 @@ report contains violation if {
 		"title": "invalid-input",
 		"description": "provided input must be a JSON AST",
 	}
-}
-
-rules_to_run[category][title] if {
-	some category, title
-	config.merged_config.rules[category][title]
-
-	config.for_rule(category, title).level != "ignore"
-	not config.excluded_file(category, title, input.regal.file.name)
-}
-
-notices contains notice if {
-	some category, title
-	some notice in grouped_notices[category][title]
-}
-
-grouped_notices[category][title] contains notice if {
-	some category, title
-	rules_to_run[category][title]
-
-	some notice in data.regal.rules[category][title].notices
 }
 
 # Check bundled rules

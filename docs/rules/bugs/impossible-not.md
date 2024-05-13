@@ -4,7 +4,7 @@
 
 **Category**: Bugs
 
-**Type**: Aggregate - only runs when more than one file is provided for linting
+**Type**: Aggregate - runs both on single files as well as when more than one file is provided for linting
 
 **Avoid**
 ```rego

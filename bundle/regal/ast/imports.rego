@@ -20,6 +20,19 @@ imported_identifiers contains imported_identifier(imp) if {
 	imp.path.value[0].value in {"input", "data"}
 }
 
+# METADATA
+# description: |
+#   map of all imported paths in the input module, keyed by their identifier or "namespace"
+resolved_imports[identifier] := path if {
+	some _import in imports
+
+	_import.path.value[0].value == "data"
+	count(_import.path.value) > 1
+
+	identifier := imported_identifier(_import)
+	path := [part.value | some part in _import.path.value]
+}
+
 imported_identifier(imp) := imp.alias
 
 imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias

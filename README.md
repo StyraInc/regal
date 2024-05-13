@@ -246,6 +246,7 @@ The following rules are currently available:
 | style       | [file-length](https://docs.styra.com/regal/rules/style/file-length)                                   | Max file length exceeded                                  |
 | style       | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)                   | Function argument used for return value                   |
 | style       | [line-length](https://docs.styra.com/regal/rules/style/line-length)                                   | Line too long                                             |
+| style       | [messy-rule](https://docs.styra.com/regal/rules/style/messy-rule)                                     | Messy incremental rule                                    |
 | style       | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)               | Comment should start with whitespace                      |
 | style       | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                           | File should be formatted with `opa fmt`                   |
 | style       | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                       | Prefer snake_case for names                               |

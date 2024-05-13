@@ -220,8 +220,13 @@ print_or_trace_call if {
 	print("forbidden!")
 }
 
+abc if true
+
 # metasyntactic variable
 foo := "bar"
+
+# messy rule
+abc if false
 
 # dubious print sprintf
 y if {

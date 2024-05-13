@@ -94,6 +94,8 @@ fail(metadata, details) := violation if {
 	violation := _fail_annotated_custom(annotation, details)
 }
 
+fail(metadata, details) := _fail_annotated(metadata, details)
+
 notice(metadata) := result if {
 	is_array(metadata)
 	rule_meta := metadata[0]
@@ -151,8 +153,6 @@ _fail_annotated_custom(metadata, details) := violation if {
 
 	violation := object.remove(with_category, ["custom", "scope", "schemas"])
 }
-
-fail(metadata, details) := _fail_annotated(metadata, details)
 
 resource_urls(related_resources, category) := [r |
 	some item in related_resources

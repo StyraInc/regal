@@ -116,6 +116,8 @@ rules:
     line-length:
       level: error
       max-line-length: 120
+    messy-rule:
+      level: error
     no-whitespace-comment:
       level: error
     opa-fmt:

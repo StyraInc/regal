@@ -136,6 +136,8 @@ rules:
       level: error
     todo-comment:
       level: error
+    trailing-default-rule:
+      level: error
     unconditional-assignment:
       level: error
     unnecessary-some:

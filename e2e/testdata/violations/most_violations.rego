@@ -228,6 +228,9 @@ foo := "bar"
 # messy rule
 abc if false
 
+# trailing default rule
+default abc := true
+
 # dubious print sprintf
 y if {
 	print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))

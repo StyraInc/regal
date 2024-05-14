@@ -94,7 +94,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 
 	footer := fmt.Sprintf("%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
 
-	if r.Summary.NumViolations == 0 { //nolint:nestif
+	if r.Summary.NumViolations == 0 {
 		footer += " No violations found."
 	} else {
 		pluralViolations := ""
@@ -256,8 +256,6 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 // Publish first prints the pretty formatted report to console for easy access in the logs. It then goes on
 // to print the GitHub Actions annotations for each violation. Finally, it prints a summary of the report suitable
 // for the GitHub Actions UI.
-//
-//nolint:nestif
 func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 	err := NewPrettyReporter(tr.out).Publish(ctx, r)
 	if err != nil {
@@ -302,7 +300,7 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 
 		fmt.Fprintf(summaryFile, "%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
 
-		if r.Summary.NumViolations == 0 { //nolint:nestif
+		if r.Summary.NumViolations == 0 {
 			fmt.Fprintf(summaryFile, " No violations found")
 		} else {
 			pluralViolations := ""

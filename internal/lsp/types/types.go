@@ -69,6 +69,11 @@ type GeneralClientCapabilities struct {
 	StaleRequestSupport StaleRequestSupportClientCapabilities `json:"staleRequestSupport"`
 }
 
+type ShowMessageParams struct {
+	Type    uint   `json:"type"`
+	Message string `json:"message"`
+}
+
 type StaleRequestSupportClientCapabilities struct {
 	Cancel                  bool     `json:"cancel"`
 	RetryOnContentModifieds []string `json:"retryOnContentModified"`
@@ -247,9 +252,19 @@ type TextDocumentInlayHintParams struct {
 	Range        Range                  `json:"range"`
 }
 
+type TextDocumentSaveOptions struct {
+	IncludeText bool `json:"includeText"`
+}
+
+type TextDocumentDidSaveParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Text         *string                `json:"text,omitempty"`
+}
+
 type TextDocumentSyncOptions struct {
-	OpenClose bool `json:"openClose"`
-	Change    uint `json:"change"`
+	OpenClose bool                    `json:"openClose"`
+	Change    uint                    `json:"change"`
+	Save      TextDocumentSaveOptions `json:"save"`
 }
 
 type TextDocumentIdentifier struct {

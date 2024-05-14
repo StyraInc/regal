@@ -11,7 +11,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
 
-//nolint:nestif
 func documentSymbols(
 	contents string,
 	module *ast.Module,
@@ -173,7 +172,6 @@ func refToString(ref ast.Ref) string {
 	return sb.String()
 }
 
-//nolint:nestif
 func getRuleDetail(rule *ast.Rule) string {
 	if rule.Head.Args != nil {
 		return "function" + rule.Head.Args.String()

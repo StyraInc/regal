@@ -27,6 +27,7 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
+	"github.com/styrainc/regal/pkg/linter"
 )
 
 const (
@@ -114,6 +115,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentDidOpen(ctx, conn, req)
 	case "textDocument/didClose":
 		return struct{}{}, nil
+	case "textDocument/didSave":
+		return l.handleTextDocumentDidSave(ctx, conn, req)
 	case "textDocument/documentSymbol":
 		return l.handleTextDocumentDocumentSymbol(ctx, conn, req)
 	case "textDocument/didChange":
@@ -800,6 +803,56 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	return struct{}{}, nil
 }
 
+func (l *LanguageServer) handleTextDocumentDidSave(
+	ctx context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.TextDocumentDidSaveParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if params.Text != nil && l.loadedConfig != nil {
+		if !strings.Contains(*params.Text, "\r\n") {
+			return struct{}{}, nil
+		}
+
+		enabled, err := linter.NewLinter().WithUserConfig(*l.loadedConfig).DetermineEnabledRules(ctx)
+		if err != nil {
+			l.logError(fmt.Errorf("failed to determine enabled rules: %w", err))
+
+			return struct{}{}, nil
+		}
+
+		formattingEnabled := false
+
+		for _, rule := range enabled {
+			if rule == "opa-fmt" || rule == "use-rego-v1" {
+				formattingEnabled = true
+
+				break
+			}
+		}
+
+		if formattingEnabled {
+			resp := types.ShowMessageParams{
+				Type:    2, // warning
+				Message: "CRLF line ending detected. Please change editor setting to use LF for line endings.",
+			}
+
+			err := l.conn.Notify(ctx, "window/showMessage", resp)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to notify: %w", err))
+
+				return struct{}{}, nil
+			}
+		}
+	}
+
+	return struct{}{}, nil
+}
+
 func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
@@ -1037,6 +1090,9 @@ func (l *LanguageServer) handleInitialize(
 			TextDocumentSyncOptions: types.TextDocumentSyncOptions{
 				OpenClose: true,
 				Change:    1, // TODO: write logic to use 2, for incremental updates
+				Save: types.TextDocumentSaveOptions{
+					IncludeText: true,
+				},
 			},
 			DiagnosticProvider: types.DiagnosticOptions{
 				Identifier:            "rego",

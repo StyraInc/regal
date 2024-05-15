@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	dario.cat/mergo v1.0.0
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.6.0

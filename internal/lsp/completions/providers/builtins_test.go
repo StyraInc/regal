@@ -116,6 +116,39 @@ allow if {
 	}
 }
 
+func TestBuiltIns_noInfix(t *testing.T) {
+	t.Parallel()
+
+	c := cache.NewCache()
+
+	fileContents := `package foo
+
+allow if gt`
+
+	c.SetFileContents(fileURI, fileContents)
+
+	p := &BuiltIns{}
+
+	completionParams := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: fileURI,
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 10, // is the c char that triggered the request
+		},
+	}
+
+	completions, err := p.Run(c, completionParams)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(completions) != 0 {
+		t.Fatalf("Expected no completions, got: %v", completions)
+	}
+}
+
 func completionLabels(completions []types.CompletionItem) []string {
 	labels := make([]string, len(completions))
 	for i, c := range completions {

@@ -45,6 +45,10 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams) ([]types.Com
 	items := []types.CompletionItem{}
 
 	for key, builtIn := range rego.BuiltIns {
+		if builtIn.Infix != "" {
+			continue
+		}
+
 		if strings.HasPrefix(key, lastWord) {
 			items = append(items, types.CompletionItem{
 				Label:  key,

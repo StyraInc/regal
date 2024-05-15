@@ -3,6 +3,7 @@ package hover
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/olekukonko/tablewriter"
 
@@ -15,6 +16,8 @@ import (
 )
 
 var builtinCache = make(map[*ast.Builtin]string) //nolint:gochecknoglobals
+
+var builtinCacheLock = &sync.Mutex{} //nolint:gochecknoglobals
 
 func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 	sb.WriteString("```rego\n")
@@ -47,9 +50,13 @@ func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 }
 
 func CreateHoverContent(builtin *ast.Builtin) string {
+	builtinCacheLock.Lock()
 	if content, ok := builtinCache[builtin]; ok {
+		builtinCacheLock.Unlock()
+
 		return content
 	}
+	builtinCacheLock.Unlock()
 
 	title := fmt.Sprintf(
 		"[%s](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s)",
@@ -119,7 +126,9 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 
 	result := sb.String()
 
+	builtinCacheLock.Lock()
 	builtinCache[builtin] = result
+	builtinCacheLock.Unlock()
 
 	return result
 }

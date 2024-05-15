@@ -49,6 +49,10 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams) ([]types.Com
 			continue
 		}
 
+		if builtIn.IsDeprecated() {
+			continue
+		}
+
 		if strings.HasPrefix(key, lastWord) {
 			items = append(items, types.CompletionItem{
 				Label:  key,

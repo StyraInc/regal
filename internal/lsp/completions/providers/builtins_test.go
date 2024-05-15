@@ -149,6 +149,41 @@ allow if gt`
 	}
 }
 
+func TestBuiltIns_noDeprecated(t *testing.T) {
+	t.Parallel()
+
+	c := cache.NewCache()
+
+	fileContents := `package foo
+
+allow if c`
+
+	c.SetFileContents(fileURI, fileContents)
+
+	p := &BuiltIns{}
+
+	completionParams := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: fileURI,
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 10, // is the c char that triggered the request
+		},
+	}
+
+	completions, err := p.Run(c, completionParams)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	labels := completionLabels(completions)
+
+	if slices.Contains(labels, "cast_set") {
+		t.Fatalf("Expected no deprecated completions, got: %s", strings.Join(labels, ", "))
+	}
+}
+
 func completionLabels(completions []types.CompletionItem) []string {
 	labels := make([]string, len(completions))
 	for i, c := range completions {

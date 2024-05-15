@@ -49,7 +49,7 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.
 
 	return []types.CompletionItem{
 		{
-			Label:  fmt.Sprintf("package %s", dir),
+			Label:  "package " + dir,
 			Detail: "suggested package name based on directory",
 			Kind:   19, // 19 is the kind for a folder
 			TextEdit: &types.TextEdit{

@@ -12,7 +12,6 @@ func TestPackageName(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := "package "
 
 	c.SetFileContents(fileURI, fileContents)

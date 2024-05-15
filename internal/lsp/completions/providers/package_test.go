@@ -12,7 +12,6 @@ func TestPackage(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := "\n"
 
 	c.SetFileContents(fileURI, fileContents)
@@ -49,7 +48,6 @@ func TestPackageAfterComment(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := `
 # this is a comment before the package statement
 p
@@ -90,7 +88,6 @@ func TestPackageNotLaterLines(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := "package foo\n\n"
 
 	c.SetFileContents(fileURI, fileContents)

@@ -1,8 +1,6 @@
 package providers
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -18,30 +16,29 @@ func (*Package) Run(c *cache.Cache, params types.CompletionParams) ([]types.Comp
 	fileContents, ok := c.GetFileContents(fileURI)
 	if !ok {
 		// if the file contents is missing then we can't provide completions
-		return nil, nil
+		return []types.CompletionItem{}, nil
 	}
 
 	lines := strings.Split(fileContents, "\n")
 	if len(lines) < 1 {
-		return nil, nil
+		return []types.CompletionItem{}, nil
 	}
 
 	for i, line := range lines {
 		if i < int(params.Position.Line) && strings.HasPrefix(line, "package ") {
 			// if there is already a package statement in the file then we don't provide any more completions
-			return nil, nil
+			return []types.CompletionItem{}, nil
 		}
 	}
 
 	// if we can't confirm that the user has package statement on the line then we don't provide completions
 	if len(lines)+1 < int(params.Position.Line) {
-		fmt.Fprintln(os.Stderr, "no package statement")
-		return nil, nil
+		return []types.CompletionItem{}, nil
 	}
 
 	// if not on the first line, the user must type p before we provide completions
 	if params.Position.Line != 0 && !strings.HasPrefix(lines[params.Position.Line], "p") {
-		return nil, nil
+		return []types.CompletionItem{}, nil
 	}
 
 	return []types.CompletionItem{

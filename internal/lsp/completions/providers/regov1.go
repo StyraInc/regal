@@ -9,8 +9,7 @@ import (
 
 type RegoV1 struct{}
 
-func (p *RegoV1) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
-
+func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	fileContents, ok := c.GetFileContents(fileURI)
@@ -37,6 +36,7 @@ func (p *RegoV1) Run(c *cache.Cache, params types.CompletionParams) ([]types.Com
 	words := strings.Split(line, " ")
 	lastWord := words[len(words)-1]
 
+	//nolint:gocritic
 	if !strings.HasPrefix("rego.v1", lastWord) {
 		return nil, nil
 	}

@@ -12,7 +12,6 @@ import (
 type BuiltIns struct{}
 
 func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
-
 	fileURI := params.TextDocument.URI
 
 	fileContents, ok := c.GetFileContents(fileURI)

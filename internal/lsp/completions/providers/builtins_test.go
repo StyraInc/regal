@@ -14,7 +14,6 @@ func TestBuiltIns_if(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := `package foo
 
 allow if c`
@@ -50,7 +49,6 @@ func TestBuiltIns_afterAssignment(t *testing.T) {
 
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := `package foo
 
 allow := c`
@@ -82,9 +80,10 @@ allow := c`
 }
 
 func TestBuiltIns_inRuleBody(t *testing.T) {
+	t.Parallel()
+
 	c := cache.NewCache()
 
-	fileURI := "file:///foo/bar/file.rego"
 	fileContents := `package foo
 
 allow if {
@@ -122,5 +121,6 @@ func completionLabels(completions []types.CompletionItem) []string {
 	for i, c := range completions {
 		labels[i] = c.Label
 	}
+
 	return labels
 }

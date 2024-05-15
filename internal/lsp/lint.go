@@ -102,7 +102,13 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 	return false, nil
 }
 
-func updateFileDiagnostics(ctx context.Context, cache *cache.Cache, regalConfig *config.Config, uri, rootDir string) error {
+func updateFileDiagnostics(
+	ctx context.Context,
+	cache *cache.Cache,
+	regalConfig *config.Config,
+	uri string,
+	rootDir string,
+) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		// then there must have been a parse error
@@ -184,7 +190,12 @@ func updateFileDiagnostics(ctx context.Context, cache *cache.Cache, regalConfig 
 	return nil
 }
 
-func updateAllDiagnostics(ctx context.Context, cache *cache.Cache, regalConfig *config.Config, detachedURI string) error {
+func updateAllDiagnostics(
+	ctx context.Context,
+	cache *cache.Cache,
+	regalConfig *config.Config,
+	detachedURI string,
+) error {
 	modules := cache.GetAllModules()
 	files := cache.GetAllFiles()
 

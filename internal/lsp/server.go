@@ -481,7 +481,12 @@ func (l *LanguageServer) processBuiltinsUpdate(_ context.Context, uri string, co
 		return nil
 	}
 
-	return hover.UpdateBuiltinPositions(l.cache, uri)
+	err = hover.UpdateBuiltinPositions(l.cache, uri)
+	if err != nil {
+		return fmt.Errorf("failed to update builtin positions: %w", err)
+	}
+
+	return nil
 }
 
 func (l *LanguageServer) logError(err error) {
@@ -676,16 +681,10 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	bs, err := json.MarshalIndent(params, "", "  ")
-	l.logError(fmt.Errorf("completion params: %s", bs))
-
 	items, err := l.completionsManager.Run(params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
 	}
-
-	bs, err = json.MarshalIndent(items, "", "  ")
-	l.logError(fmt.Errorf("completion items: %s", bs))
 
 	return types.CompletionList{
 		IsIncomplete: false,

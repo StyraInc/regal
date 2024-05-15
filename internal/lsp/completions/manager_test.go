@@ -9,8 +9,9 @@ import (
 )
 
 func TestManager(t *testing.T) {
-	c := cache.NewCache()
+	t.Parallel()
 
+	c := cache.NewCache()
 	fileURI := "file:///foo/bar/file.rego"
 	fileContents := ""
 

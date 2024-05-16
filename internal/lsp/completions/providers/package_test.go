@@ -14,13 +14,13 @@ func TestPackage(t *testing.T) {
 
 	fileContents := "\n"
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &Package{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      0,
@@ -54,13 +54,13 @@ p
 
 `
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &Package{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      2,
@@ -90,13 +90,13 @@ func TestPackageNotLaterLines(t *testing.T) {
 
 	fileContents := "package foo\n\n"
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &Package{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      1,

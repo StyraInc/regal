@@ -14,13 +14,13 @@ func TestPackageName(t *testing.T) {
 
 	fileContents := "package "
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &PackageName{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      0,

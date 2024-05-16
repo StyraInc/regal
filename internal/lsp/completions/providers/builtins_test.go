@@ -18,13 +18,13 @@ func TestBuiltIns_if(t *testing.T) {
 
 allow if c`
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      2,
@@ -53,13 +53,13 @@ func TestBuiltIns_afterAssignment(t *testing.T) {
 
 allow := c`
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      2,
@@ -90,13 +90,13 @@ allow if {
   c
 }`
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      3,
@@ -125,13 +125,13 @@ func TestBuiltIns_noInfix(t *testing.T) {
 
 allow if gt`
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      2,
@@ -158,13 +158,13 @@ func TestBuiltIns_noDeprecated(t *testing.T) {
 
 allow if c`
 
-	c.SetFileContents(fileURI, fileContents)
+	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURI,
+			URI: testCaseFileURI,
 		},
 		Position: types.Position{
 			Line:      2,

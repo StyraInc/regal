@@ -1,4 +1,4 @@
-package lsp
+package hover
 
 import (
 	"os"
@@ -34,7 +34,7 @@ func TestCreateHoverContent(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		hoverContent := createHoverContent(c.builtin)
+		hoverContent := CreateHoverContent(c.builtin)
 
 		if string(file) != hoverContent {
 			t.Errorf("Expected %s, got %s", string(file), hoverContent)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
@@ -19,7 +20,7 @@ import (
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
 // URI instead.
-func updateParse(cache *Cache, uri string) (bool, error) {
+func updateParse(cache *cache.Cache, uri string) (bool, error) {
 	content, ok := cache.GetFileContents(uri)
 	if !ok {
 		return false, fmt.Errorf("failed to get file contents for uri %q", uri)
@@ -101,7 +102,13 @@ func updateParse(cache *Cache, uri string) (bool, error) {
 	return false, nil
 }
 
-func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *config.Config, uri, rootDir string) error {
+func updateFileDiagnostics(
+	ctx context.Context,
+	cache *cache.Cache,
+	regalConfig *config.Config,
+	uri string,
+	rootDir string,
+) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		// then there must have been a parse error
@@ -183,7 +190,12 @@ func updateFileDiagnostics(ctx context.Context, cache *Cache, regalConfig *confi
 	return nil
 }
 
-func updateAllDiagnostics(ctx context.Context, cache *Cache, regalConfig *config.Config, detachedURI string) error {
+func updateAllDiagnostics(
+	ctx context.Context,
+	cache *cache.Cache,
+	regalConfig *config.Config,
+	detachedURI string,
+) error {
 	modules := cache.GetAllModules()
 	files := cache.GetAllFiles()
 

@@ -1,48 +1,23 @@
-package lsp
+package hover
 
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/types"
+
+	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/rego"
+	types2 "github.com/styrainc/regal/internal/lsp/types"
 )
 
-type BuiltinPosition struct {
-	Builtin *ast.Builtin
-	Line    uint
-	Start   uint
-	End     uint
-}
+var builtinCache = make(map[*ast.Builtin]string) //nolint:gochecknoglobals
 
-var builtins = builtinMap() //nolint:gochecknoglobals
-
-var builtinHoverCache = make(map[*ast.Builtin]string) //nolint:gochecknoglobals
-
-func builtinMap() map[string]*ast.Builtin {
-	m := make(map[string]*ast.Builtin)
-	for _, b := range ast.CapabilitiesForThisVersion().Builtins {
-		m[b.Name] = b
-	}
-
-	return m
-}
-
-func builtinCategory(builtin *ast.Builtin) (category string) {
-	if len(builtin.Categories) == 0 {
-		if s := strings.Split(builtin.Name, "."); len(s) > 1 {
-			category = s[0]
-		} else {
-			category = builtin.Name
-		}
-	} else {
-		category = builtin.Categories[0]
-	}
-
-	return category
-}
+var builtinCacheLock = &sync.Mutex{} //nolint:gochecknoglobals
 
 func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 	sb.WriteString("```rego\n")
@@ -74,15 +49,19 @@ func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 	sb.WriteString(")\n```")
 }
 
-func createHoverContent(builtin *ast.Builtin) string {
-	if content, ok := builtinHoverCache[builtin]; ok {
+func CreateHoverContent(builtin *ast.Builtin) string {
+	builtinCacheLock.Lock()
+	if content, ok := builtinCache[builtin]; ok {
+		builtinCacheLock.Unlock()
+
 		return content
 	}
+	builtinCacheLock.Unlock()
 
 	title := fmt.Sprintf(
 		"[%s](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s)",
 		builtin.Name,
-		builtinCategory(builtin),
+		rego.BuiltinCategory(builtin),
 		strings.ReplaceAll(builtin.Name, ".", ""),
 	)
 
@@ -147,23 +126,25 @@ func createHoverContent(builtin *ast.Builtin) string {
 
 	result := sb.String()
 
-	builtinHoverCache[builtin] = result
+	builtinCacheLock.Lock()
+	builtinCache[builtin] = result
+	builtinCacheLock.Unlock()
 
 	return result
 }
 
-func updateBuiltinPositions(cache *Cache, uri string) error {
+func UpdateBuiltinPositions(cache *cache.Cache, uri string) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
 	}
 
-	builtinsOnLine := map[uint][]BuiltinPosition{}
+	builtinsOnLine := map[uint][]types2.BuiltinPosition{}
 
-	for _, call := range AllBuiltinCalls(module) {
+	for _, call := range rego.AllBuiltinCalls(module) {
 		line := uint(call.Location.Row)
 
-		builtinsOnLine[line] = append(builtinsOnLine[line], BuiltinPosition{
+		builtinsOnLine[line] = append(builtinsOnLine[line], types2.BuiltinPosition{
 			Builtin: call.Builtin,
 			Line:    line,
 			Start:   uint(call.Location.Col),

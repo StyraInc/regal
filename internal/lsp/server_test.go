@@ -13,6 +13,7 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
@@ -514,7 +515,7 @@ func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 
 	ls := LanguageServer{
-		cache: NewCache(),
+		cache: cache.NewCache(),
 	}
 
 	err := ls.processBuiltinsUpdate(context.Background(), "file://missing.rego", "foo")
@@ -522,8 +523,8 @@ func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(ls.cache.builtinPositionsFile) != 0 {
-		t.Errorf("expected builtin positions to be empty, got %v", ls.cache.builtinPositionsFile)
+	if l := len(ls.cache.GetAllBuiltInPositions()); l != 0 {
+		t.Errorf("expected builtin positions to be empty, got %d items", l)
 	}
 
 	contents, ok := ls.cache.GetFileContents("file://missing.rego")

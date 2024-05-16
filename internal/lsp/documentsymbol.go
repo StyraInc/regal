@@ -7,6 +7,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
@@ -213,7 +214,7 @@ func getRuleDetail(rule *ast.Rule) string {
 	case ast.Call:
 		name := v[0].String()
 
-		if builtin, ok := builtins[name]; ok {
+		if builtin, ok := rego.BuiltIns[name]; ok {
 			retType := builtin.Decl.NamedResult().String()
 
 			detail += fmt.Sprintf(" (%s)", simplifyType(retType))

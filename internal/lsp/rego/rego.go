@@ -1,4 +1,4 @@
-package lsp
+package rego
 
 import (
 	"github.com/open-policy-agent/opa/ast"
@@ -12,7 +12,7 @@ type BuiltInCall struct {
 	Args     []*ast.Term
 }
 
-func positionFromLocation(loc *ast.Location) types.Position {
+func PositionFromLocation(loc *ast.Location) types.Position {
 	return types.Position{
 		Line:      uint(loc.Row - 1),
 		Character: uint(loc.Col - 1),
@@ -42,7 +42,7 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 			return false
 		}
 
-		if b, ok := builtins[terms[0].Value.String()]; ok {
+		if b, ok := BuiltIns[terms[0].Value.String()]; ok {
 			// Exclude operators and similar builtins
 			if b.Infix != "" {
 				return false

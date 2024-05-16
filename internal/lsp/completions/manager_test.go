@@ -30,7 +30,7 @@ func TestManager(t *testing.T) {
 		},
 	}
 
-	completions, err := mgr.Run(completionParams)
+	completions, err := mgr.Run(completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

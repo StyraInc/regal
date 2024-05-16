@@ -9,7 +9,7 @@ import (
 
 type RegoV1 struct{}
 
-func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
+func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	fileContents, ok := c.GetFileContents(fileURI)

@@ -22,6 +22,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
 	"github.com/styrainc/regal/internal/lsp/completions"
+	"github.com/styrainc/regal/internal/lsp/completions/providers"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
@@ -681,7 +682,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	items, err := l.completionsManager.Run(params)
+	items, err := l.completionsManager.Run(params, &providers.Options{RootURI: l.clientRootURI})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
 	}

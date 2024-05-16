@@ -32,7 +32,7 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -67,7 +67,7 @@ allow := c`
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ allow if {
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -139,7 +139,7 @@ allow if gt`
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -172,7 +172,7 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

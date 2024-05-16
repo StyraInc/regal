@@ -28,7 +28,7 @@ func TestPackage(t *testing.T) {
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -68,7 +68,7 @@ p
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestPackageNotLaterLines(t *testing.T) {
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

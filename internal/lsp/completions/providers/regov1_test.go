@@ -33,7 +33,7 @@ import r
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

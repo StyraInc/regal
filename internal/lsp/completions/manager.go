@@ -17,7 +17,7 @@ type Manager struct {
 type ManagerOptions struct{}
 
 type Provider interface {
-	Run(*cache.Cache, types.CompletionParams) ([]types.CompletionItem, error)
+	Run(*cache.Cache, types.CompletionParams, *providers.Options) ([]types.CompletionItem, error)
 }
 
 func NewManager(c *cache.Cache, opts *ManagerOptions) *Manager {
@@ -35,11 +35,11 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	return m
 }
 
-func (m *Manager) Run(params types.CompletionParams) ([]types.CompletionItem, error) {
+func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([]types.CompletionItem, error) {
 	var completions []types.CompletionItem
 
 	for _, provider := range m.providers {
-		providerCompletions, err := provider.Run(m.c, params)
+		providerCompletions, err := provider.Run(m.c, params, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}

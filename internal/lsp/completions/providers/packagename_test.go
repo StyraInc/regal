@@ -14,13 +14,15 @@ func TestPackageName(t *testing.T) {
 
 	fileContents := "package "
 
-	c.SetFileContents(testCaseFileURI, fileContents)
+	fileURI := "file:///foo/bar/baz/bax/file.rego"
+
+	c.SetFileContents(fileURI, fileContents)
 
 	p := &PackageName{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
+			URI: fileURI,
 		},
 		Position: types.Position{
 			Line:      0,
@@ -28,7 +30,9 @@ func TestPackageName(t *testing.T) {
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, &Options{
+		RootURI: "file:///foo/bar",
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -38,8 +42,8 @@ func TestPackageName(t *testing.T) {
 	}
 
 	comp := completions[0]
-	if comp.Label != "package bar" {
-		t.Fatalf("Expected label to be 'bar', got: %v", comp.Label)
+	if comp.Label != "package baz.bax" {
+		t.Fatalf("Expected label to be 'baz.bax', got: %v", comp.Label)
 	}
 }
 
@@ -69,7 +73,7 @@ package `
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, &Options{})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -108,7 +112,7 @@ package `
 		},
 	}
 
-	completions, err := p.Run(c, completionParams)
+	completions, err := p.Run(c, completionParams, &Options{})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

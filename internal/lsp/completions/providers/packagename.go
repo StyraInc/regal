@@ -14,7 +14,7 @@ import (
 // PackageName will return completions for the package name when starting a new file based on the file's URI.
 type PackageName struct{}
 
-func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.CompletionItem, error) {
+func (*PackageName) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	fileContents, ok := c.GetFileContents(fileURI)
@@ -41,7 +41,16 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.
 	}
 
 	path := uri.ToPath(clients.IdentifierGeneric, fileURI)
-	dir := filepath.Base(filepath.Dir(path))
+	suggestedPackageName := filepath.Base(filepath.Dir(path))
+
+	if opts != nil {
+		if trimmed := strings.TrimPrefix(fileURI, opts.RootURI); trimmed != fileURI {
+			dir := filepath.Dir(trimmed)
+			noLeadingSlash := strings.TrimPrefix(dir, "/")
+			noPeriods := strings.ReplaceAll(noLeadingSlash, ".", "_")
+			suggestedPackageName = strings.ReplaceAll(noPeriods, "/", ".")
+		}
+	}
 
 	if !strings.HasPrefix(lines[params.Position.Line], "p") {
 		return nil, nil
@@ -49,7 +58,7 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.
 
 	return []types.CompletionItem{
 		{
-			Label:  "package " + dir,
+			Label:  "package " + suggestedPackageName,
 			Detail: "suggested package name based on directory",
 			Kind:   19, // 19 is the kind for a folder
 			TextEdit: &types.TextEdit{
@@ -63,7 +72,7 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams) ([]types.
 						Character: params.Position.Character,
 					},
 				},
-				NewText: fmt.Sprintf("package %s\n\n", dir),
+				NewText: fmt.Sprintf("package %s\n\n", suggestedPackageName),
 			},
 		},
 	}, nil

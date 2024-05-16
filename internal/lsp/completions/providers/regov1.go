@@ -29,13 +29,17 @@ func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams) ([]types.Compl
 		return nil, nil
 	}
 
-	if !strings.HasPrefix(line, "import ") { // if in rule body
+	// this completion provider applies on lines with import at the start
+	if !strings.HasPrefix(line, "import ") {
 		return nil, nil
 	}
 
 	words := strings.Split(line, " ")
 	lastWord := words[len(words)-1]
 
+	// We might be checking lines at this point like 'import r', 'import rego', 'import rego.v',
+	// so here we take the last word (i.e. 'r', 'rego', 'rego.v') and check if that words is a
+	// prefix of 'rego.v1'.
 	//nolint:gocritic
 	if !strings.HasPrefix("rego.v1", lastWord) {
 		return nil, nil

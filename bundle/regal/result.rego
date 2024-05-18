@@ -162,8 +162,8 @@ resource_urls(related_resources, category) := [r |
 with_text(location) := {"location": object.union(
 	location,
 	{
-		"file": input.regal.file.name,
-		"text": input.regal.file.lines[location.row - 1],
+		"file": input.regal.file.name, # regal ignore:external-reference
+		"text": input.regal.file.lines[location.row - 1], # regal ignore:external-reference
 	},
 )} if {
 	location.row

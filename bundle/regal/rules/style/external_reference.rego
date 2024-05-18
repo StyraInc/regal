@@ -1,5 +1,5 @@
 # METADATA
-# description: Reference to input, data or rule ref in function body
+# description: External reference in function
 package regal.rules.style["external-reference"]
 
 import rego.v1
@@ -13,10 +13,11 @@ report contains violation if {
 	some fn in ast.functions
 
 	named_args := {arg.value | some arg in fn.head.args; arg.type == "var"}
-	head_vars := {v.value | some v in ast.find_term_vars(fn.head.value)}
+
+	head_vars := {v.value | some v in ast.find_vars(fn.head.value)}
 	body_vars := {v.value | some v in ast.find_vars(fn.body)}
 	else_vars := {v.value | some v in ast.find_vars(fn["else"])}
-	own_vars := (head_vars | body_vars) | else_vars
+	own_vars := (body_vars | head_vars) | else_vars
 
 	# note: parens added by opa fmt 🤦
 	allowed_refs := (named_args | own_vars) | fn_namespaces

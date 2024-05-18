@@ -1,3 +1,4 @@
+//nolint:nilnil
 package lsp
 
 import (
@@ -517,7 +518,8 @@ func (l *LanguageServer) handleTextDocumentHover(
 	if !ok {
 		l.logError(fmt.Errorf("could not get builtins for uri %q", params.TextDocument.URI))
 
-		return struct{}{}, nil
+		// return "null" as per the spec
+		return nil, nil
 	}
 
 	for _, bp := range builtinsOnLine[params.Position.Line+1] {
@@ -537,7 +539,8 @@ func (l *LanguageServer) handleTextDocumentHover(
 		}
 	}
 
-	return struct{}{}, nil
+	// return "null" as per the spec
+	return nil, nil
 }
 
 func (l *LanguageServer) handleTextDocumentCodeAction(
@@ -780,8 +783,8 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 
 	definition, err := orc.FindDefinition(query)
 	if err != nil {
-		// fail silently — the user could have clicked anywhere
-		return struct{}{}, nil //nolint:nilerr
+		// fail silently — the user could have clicked anywhere. return "null" as per the spec
+		return nil, nil //nolint:nilerr
 	}
 
 	loc := types.Location{
@@ -967,7 +970,8 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	if err != nil {
 		l.logError(fmt.Errorf("failed to format file: %w", err))
 
-		return struct{}{}, nil
+		// return "null" as per the spec
+		return nil, nil
 	}
 
 	if len(fixResults) == 0 {

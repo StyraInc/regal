@@ -73,8 +73,10 @@ expected := {
 	"title": "inconsistent-args",
 }
 
+# regal ignore:external-reference
 expected_with_location(location) := {object.union(expected, {"location": location})} if is_object(location)
 
+# regal ignore:external-reference
 expected_with_location(location) := {object.union(expected, {"location": loc}) |
 	some loc in location
 } if {

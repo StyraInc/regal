@@ -221,6 +221,17 @@ _find_vars(path, value, last) := _find_assign_vars(path, value) if {
 	value[0].value[0].value == "assign"
 }
 
+# `=` isn't necessarily assignment, and only considering the variable on the
+# left-hand side is equally dubious, but we'll treat `x = 1` as `x := 1` for
+# the purpose of this function until we have a more robust way of dealing with
+# unification
+_find_vars(path, value, last) := _find_assign_vars(path, value) if {
+	last == "terms"
+	value[0].type == "ref"
+	value[0].value[0].type == "var"
+	value[0].value[0].value == "eq"
+}
+
 _find_vars(_, value, _) := find_ref_vars(value) if value.type == "ref"
 
 _find_vars(path, value, last) := _find_some_in_decl_vars(path, value) if {
@@ -390,6 +401,7 @@ builtin_functions_called contains name if {
 # description: |
 #   Returns custom functions declared in input policy in the same format as builtin capabilities
 function_decls(rules) := {rule_name: decl |
+	# regal ignore:external-reference
 	some rule in functions
 
 	rule_name := name(rule)

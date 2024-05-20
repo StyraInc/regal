@@ -537,7 +537,10 @@ func (l *LanguageServer) handleTextDocumentHover(
 		}
 	}
 
-	return struct{}{}, nil
+	// As set in the spec here: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
+	// if no hover is found, we must return a null response.
+	//nolint:nilnil
+	return nil, nil
 }
 
 func (l *LanguageServer) handleTextDocumentCodeAction(

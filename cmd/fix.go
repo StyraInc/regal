@@ -55,7 +55,7 @@ func init() {
 
 	intro := strings.ReplaceAll(`Fix Rego source files with linter violations.
 Note that this command is intended to help fix style-related issues,
-and could be considered as a stricter opa-fmt command.
+and could be considered as a stricter opa fmt command.
 Issues like bugs should be fixed manually,
 as it is important to understand why the were flagged.`, "\n", " ")
 

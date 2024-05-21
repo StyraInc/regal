@@ -13,6 +13,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/hints"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -77,6 +78,16 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 			line = 0
 		}
 
+		key := "regal/parse"
+		link := "https://docs.styra.com/opa/category/rego-parse-error"
+
+		hints, _ := hints.GetForError(err)
+		if len(hints) > 0 {
+			// there should only be one hint, so take the first
+			key = hints[0]
+			link = "https://docs.styra.com/opa/errors/" + hints[0]
+		}
+
 		diags = append(diags, types.Diagnostic{
 			Severity: 1, // parse errors are the only error Diagnostic the server sends
 			Range: types.Range{
@@ -91,10 +102,10 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 				},
 			},
 			Message: astError.Message,
-			Source:  "regal/parse",
+			Source:  key,
 			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
 			CodeDescription: types.CodeDescription{
-				Href: "https://docs.styra.com/opa/category/rego-parse-error",
+				Href: link,
 			},
 		})
 	}

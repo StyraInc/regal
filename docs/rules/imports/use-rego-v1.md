@@ -4,6 +4,8 @@
 
 **Category**: Imports
 
+**Automatically fixable**: [Yes](/regal/fixing)
+
 **Avoid**
 ```rego
 package policy

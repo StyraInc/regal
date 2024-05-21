@@ -4,6 +4,8 @@
 
 **Category**: Style
 
+**Automatically fixable**: [Yes](/regal/fixing)
+
 **Avoid**
 
 Inconsistent style across policy files and repositories.
@@ -33,7 +35,7 @@ indent_size = 4
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   style:
     opa-fmt:
       # one of "error", "warning", "ignore"

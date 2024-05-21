@@ -4,6 +4,8 @@
 
 **Category**: Style
 
+**Automatically fixable**: [Yes](/regal/fixing)
+
 **Avoid**
 
 ```rego

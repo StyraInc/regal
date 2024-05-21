@@ -9,12 +9,12 @@ package regal.rules.style["double-negative"]
 
 import rego.v1
 
+import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	walk(input.rules, [_, node])
-
-	node.negated
+	some node
+	ast.negated_expressions[_][node]
 
 	node.terms.type == "var"
 	strings.any_prefix_match(node.terms.value, negatives)

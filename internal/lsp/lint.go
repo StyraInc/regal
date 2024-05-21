@@ -26,6 +26,8 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 		return false, fmt.Errorf("failed to get file contents for uri %q", uri)
 	}
 
+	lines := strings.Split(content, "\n")
+
 	module, err := rparse.Module(uri, content)
 	if err == nil {
 		// if the parse was ok, clear the parse errors
@@ -64,28 +66,28 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 	diags := make([]types.Diagnostic, 0)
 
 	for _, astError := range astErrors {
-		itemLen := 1
+		lineLength := 1
+
+		if astError.Location.Row-1 < len(lines) {
+			lineLength = len(lines[astError.Location.Row-1])
+		}
 
 		line := astError.Location.Row - 1
 		if line < 0 {
 			line = 0
 		}
 
-		char := astError.Location.Col - 1
-		if char < 0 {
-			char = 0
-		}
-
 		diags = append(diags, types.Diagnostic{
 			Severity: 1, // parse errors are the only error Diagnostic the server sends
 			Range: types.Range{
 				Start: types.Position{
-					Line:      uint(line),
-					Character: uint(char),
+					Line: uint(line),
+					// we always highlight the whole line for parse errors to make them more visible
+					Character: 0,
 				},
 				End: types.Position{
 					Line:      uint(line),
-					Character: uint(char + itemLen),
+					Character: uint(lineLength),
 				},
 			},
 			Message: astError.Message,

@@ -4,6 +4,8 @@
 
 **Category**: {{.Category}}
 
+**Automatically fixable**: Yes/No
+
 **Avoid**
 ```rego
 package policy

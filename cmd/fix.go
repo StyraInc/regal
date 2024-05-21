@@ -53,11 +53,31 @@ func (p *fixCommandParams) getTimeout() time.Duration {
 func init() {
 	params := &fixCommandParams{}
 
+	intro := strings.ReplaceAll(`Fix Rego source files with linter violations.
+Note that this command is intended to help fix style-related issues,
+and could be considered as a stricter opa-fmt command.
+Issues like bugs should be fixed manually,
+as it is important to understand why the were flagged.`, "\n", " ")
+
 	fixCommand := &cobra.Command{
 		Use:   "fix <path> [path [...]]",
 		Short: "Fix Rego source files",
-		Long:  `Fix Rego source files with linter violations.`,
+		Long: func() string {
+			var fixableRules []string
+			for _, f := range fixes.NewDefaultFixes() {
+				fixableRules = append(fixableRules, f.Name())
+			}
 
+			if len(fixableRules) == 0 {
+				return intro
+			}
+
+			return fmt.Sprintf(`%s
+
+The linter rules with automatic fixes available are currently:
+- %s
+`, intro, strings.Join(fixableRules, "\n- "))
+		}(),
 		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("at least one file or directory must be provided for fixing")

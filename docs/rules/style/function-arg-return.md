@@ -17,6 +17,7 @@ has_email(user) if {
 ```
 
 **Prefer**
+
 ```rego
 package policy
 

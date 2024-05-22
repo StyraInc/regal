@@ -70,8 +70,6 @@ func TestRefToString(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
-
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
 
@@ -131,8 +129,6 @@ func TestDocumentSymbols(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
-
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
 
@@ -219,8 +215,6 @@ func TestSimplifyType(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
-
 		t.Run(tc.input, func(t *testing.T) {
 			t.Parallel()
 

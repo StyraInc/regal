@@ -8,6 +8,8 @@ import (
 	"errors"
 
 	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/compile"
 )
 
 // Error defines the structure of errors returned by the oracle.
@@ -138,7 +140,7 @@ func walkToFirstOccurrence(node ast.Node, needle ast.Var) (match *ast.Term) {
 }
 
 func compileUpto(stage string, modules map[string]*ast.Module, bs []byte, filename string) (*ast.Compiler, *ast.Module, error) {
-	compiler := ast.NewCompiler()
+	compiler := compile.NewCompilerWithRegalBuiltins()
 
 	if stage != "" {
 		compiler = compiler.WithStageAfter(stage, ast.CompilerStageDefinition{

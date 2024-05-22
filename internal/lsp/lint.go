@@ -67,15 +67,14 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 	diags := make([]types.Diagnostic, 0)
 
 	for _, astError := range astErrors {
-		lineLength := 1
-
-		if astError.Location.Row-1 < len(lines) {
-			lineLength = len(lines[astError.Location.Row-1])
-		}
-
 		line := astError.Location.Row - 1
 		if line < 0 {
 			line = 0
+		}
+
+		lineLength := 1
+		if line < len(lines) {
+			lineLength = len(lines[line])
 		}
 
 		key := "regal/parse"

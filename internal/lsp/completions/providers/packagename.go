@@ -17,15 +17,9 @@ type PackageName struct{}
 func (*PackageName) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
-	fileContents, ok := c.GetFileContents(fileURI)
-	if !ok {
-		// if the file contents is missing then we can't provide completions
-		return nil, nil
-	}
-
-	lines := strings.Split(fileContents, "\n")
-	if len(lines) < 1 {
-		return nil, nil
+	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
+	if len(lines) < 1 || currentLine == "" {
+		return []types.CompletionItem{}, nil
 	}
 
 	for i, line := range lines {
@@ -52,7 +46,7 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams, opts *Opt
 		}
 	}
 
-	if !strings.HasPrefix(lines[params.Position.Line], "p") {
+	if !strings.HasPrefix(currentLine, "p") {
 		return nil, nil
 	}
 

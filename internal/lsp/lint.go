@@ -10,6 +10,7 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/completions/refs"
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
@@ -34,6 +35,7 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(uri, []types.Diagnostic{})
 		cache.SetModule(uri, module)
+		cache.SetFileRefs(uri, refs.ForModule(module))
 
 		return true, nil
 	}

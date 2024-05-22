@@ -13,13 +13,7 @@ type Package struct{}
 func (*Package) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
-	fileContents, ok := c.GetFileContents(fileURI)
-	if !ok {
-		// if the file contents is missing then we can't provide completions
-		return []types.CompletionItem{}, nil
-	}
-
-	lines := strings.Split(fileContents, "\n")
+	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
 	if len(lines) < 1 {
 		return []types.CompletionItem{}, nil
 	}
@@ -37,7 +31,7 @@ func (*Package) Run(c *cache.Cache, params types.CompletionParams, _ *Options) (
 	}
 
 	// if not on the first line, the user must type p before we provide completions
-	if params.Position.Line != 0 && !strings.HasPrefix(lines[params.Position.Line], "p") {
+	if params.Position.Line != 0 && !strings.HasPrefix(currentLine, "p") {
 		return []types.CompletionItem{}, nil
 	}
 

@@ -12,29 +12,21 @@ type RegoV1 struct{}
 func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
-	fileContents, ok := c.GetFileContents(fileURI)
-	if !ok {
-		// if the file contents is missing then we can't provide completions
-		return nil, nil
+	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
+	if len(lines) < 1 || currentLine == "" {
+		return []types.CompletionItem{}, nil
 	}
 
-	lines := strings.Split(fileContents, "\n")
-	if params.Position.Line >= uint(len(lines)) {
-		return nil, nil
-	}
-
-	line := lines[params.Position.Line]
-
-	if len(line) < int(params.Position.Character) {
+	if len(currentLine) < int(params.Position.Character) {
 		return nil, nil
 	}
 
 	// this completion provider applies on lines with import at the start
-	if !strings.HasPrefix(line, "import ") {
+	if !strings.HasPrefix(currentLine, "import ") {
 		return nil, nil
 	}
 
-	words := strings.Split(line, " ")
+	words := strings.Split(currentLine, " ")
 	lastWord := words[len(words)-1]
 
 	// We might be checking lines at this point like 'import r', 'import rego', 'import rego.v',
@@ -58,7 +50,7 @@ func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([
 					},
 					End: types.Position{
 						Line:      params.Position.Line,
-						Character: uint(len(line)),
+						Character: uint(len(currentLine)),
 					},
 				},
 				NewText: "rego.v1\n\n",

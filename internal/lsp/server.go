@@ -680,12 +680,13 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result any, err error) {
+) (any, error) {
 	var params types.CompletionParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{RootURI: l.clientRootURI})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)

@@ -14,32 +14,25 @@ type BuiltIns struct{}
 func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
-	fileContents, ok := c.GetFileContents(fileURI)
-	if !ok {
-		// if the file contents is missing then we can't provide completions
+	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
+	if len(lines) < 1 || currentLine == "" {
+		return []types.CompletionItem{}, nil
+	}
+
+	if len(currentLine) < int(params.Position.Character) || len(currentLine) < 2 {
 		return nil, nil
 	}
 
-	lines := strings.Split(fileContents, "\n")
-	if params.Position.Line >= uint(len(lines)) {
+	// TODO: Share and improve this logic, currently shared with the rulerefs provider
+	if !strings.Contains(currentLine, " if ") && // if after if keyword
+		!strings.Contains(currentLine, " contains ") && // if after contains
+		!strings.Contains(currentLine, " else ") && // if after else
+		!strings.Contains(currentLine, "= ") && // if after assignment
+		!strings.HasPrefix(currentLine, "  ") { // if in rule body
 		return nil, nil
 	}
 
-	line := lines[params.Position.Line]
-
-	if len(line) < int(params.Position.Character) || len(line) < 2 {
-		return nil, nil
-	}
-
-	if !strings.Contains(line, " if ") && // if after if keyword
-		!strings.Contains(line, " contains ") && // if after contains
-		!strings.Contains(line, " else ") && // if after else
-		!strings.Contains(line, "= ") && // if after assignment
-		!strings.HasPrefix(line, "  ") { // if in rule body
-		return nil, nil
-	}
-
-	words := strings.Split(line, " ")
+	words := strings.Split(currentLine, " ")
 	lastWord := words[len(words)-1]
 
 	items := []types.CompletionItem{}

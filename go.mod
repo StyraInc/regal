@@ -1,6 +1,6 @@
 module github.com/styrainc/regal
 
-go 1.21 // any officially supported Golang version should be OK
+go 1.22
 
 toolchain go1.22.0
 

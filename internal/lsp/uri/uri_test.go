@@ -29,15 +29,13 @@ func TestPathToURI(t *testing.T) {
 	}
 
 	for label, tc := range testCases {
-		tt := tc
-
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
 
-			got := FromPath(clients.IdentifierGeneric, tt.path)
+			got := FromPath(clients.IdentifierGeneric, tc.path)
 
-			if got != tt.want {
-				t.Errorf("got %q, want %q", got, tt.want)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -69,15 +67,13 @@ func TestPathToURI_VSCode(t *testing.T) {
 	}
 
 	for label, tc := range testCases {
-		tt := tc
-
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
 
-			got := FromPath(clients.IdentifierVSCode, tt.path)
+			got := FromPath(clients.IdentifierVSCode, tc.path)
 
-			if got != tt.want {
-				t.Errorf("got %q, want %q", got, tt.want)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -105,14 +101,12 @@ func TestURIToPath(t *testing.T) {
 	}
 
 	for label, tc := range testCases {
-		tt := tc
-
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
 
-			got := ToPath(clients.IdentifierGeneric, tt.uri)
-			if got != tt.want {
-				t.Errorf("got %q, want %q", got, tt.want)
+			got := ToPath(clients.IdentifierGeneric, tc.uri)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -157,14 +151,12 @@ func TestURIToPath_VSCode(t *testing.T) {
 	}
 
 	for label, tc := range testCases {
-		tt := tc
-
 		t.Run(label, func(t *testing.T) {
 			t.Parallel()
 
-			got := ToPath(clients.IdentifierVSCode, tt.uri)
-			if got != tt.want {
-				t.Errorf("got %q, want %q", got, tt.want)
+			got := ToPath(clients.IdentifierVSCode, tc.uri)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}

@@ -41,7 +41,7 @@ func HappyHolidays() error {
 	)
 	allSprites.Sprites = append(allSprites.Sprites, messageSprite)
 
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		//nolint:gosec
 		flakeX := rand.Intn(width)
 		//nolint:gosec

@@ -1,4 +1,4 @@
-//nolint:nilnil
+//nolint:nilerr,nilnil
 package lsp
 
 import (
@@ -30,6 +30,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
@@ -773,18 +774,30 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
+	modules, err := l.getFilteredModules()
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
+	}
+
 	orc := oracle.New()
 	query := oracle.DefinitionQuery{
 		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
 		Pos:      positionToOffset(contents, params.Position),
-		Modules:  l.cache.GetAllModules(),
+		Modules:  modules,
 		Buffer:   []byte(contents),
 	}
 
 	definition, err := orc.FindDefinition(query)
 	if err != nil {
-		// fail silently — the user could have clicked anywhere. return "null" as per the spec
-		return nil, nil //nolint:nilerr
+		if errors.Is(err, oracle.ErrNoDefinitionFound) || errors.Is(err, oracle.ErrNoMatchFound) {
+			// fail silently — the user could have clicked anywhere. return "null" as per the spec
+			return nil, nil
+		}
+
+		l.logError(fmt.Errorf("failed to find definition: %w", err))
+
+		// return "null" as per the spec
+		return nil, nil
 	}
 
 	loc := types.Location{
@@ -1302,6 +1315,29 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, uri string) er
 	}
 
 	return nil
+}
+
+func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
+	ignore := make([]string, 0)
+
+	if l.loadedConfig != nil && l.loadedConfig.Ignore.Files != nil {
+		ignore = l.loadedConfig.Ignore.Files
+	}
+
+	allModules := l.cache.GetAllModules()
+	paths := util.Keys(allModules)
+
+	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.clientRootURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
+	}
+
+	modules := make(map[string]*ast.Module, len(filtered))
+	for _, path := range filtered {
+		modules[path] = allModules[path]
+	}
+
+	return modules, nil
 }
 
 func positionToOffset(text string, p types.Position) int {

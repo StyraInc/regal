@@ -37,3 +37,13 @@ test_success_not_redundant_existence_check if {
 	r := rule.report with input as module
 	r == set()
 }
+
+test_success_not_redundant_existence_check_with_cancels if {
+	module := ast.with_rego_v1(`
+	not_redundant if {
+		rule.foo with input as {}
+		rule.foo == 1
+	}`)
+	r := rule.report with input as module
+	r == set()
+}

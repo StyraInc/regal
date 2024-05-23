@@ -162,7 +162,7 @@ type CodeAction struct {
 	Title       string       `json:"title"`
 	Kind        string       `json:"kind"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
-	IsPreferred bool         `json:"isPreferred"`
+	IsPreferred *bool        `json:"isPreferred,omitempty"`
 	Command     Command      `json:"command"`
 }
 
@@ -170,7 +170,7 @@ type Command struct {
 	Title     string `json:"title"`
 	Tooltip   string `json:"tooltip"`
 	Command   string `json:"command"`
-	Arguments []any  `json:"arguments"`
+	Arguments *[]any `json:"arguments,omitempty"`
 }
 
 type ExecuteCommandOptions struct {
@@ -330,12 +330,12 @@ type TextDocumentContentChangeEvent struct {
 }
 
 type Diagnostic struct {
-	Range           Range           `json:"range"`
-	Message         string          `json:"message"`
-	Severity        uint            `json:"severity"`
-	Source          string          `json:"source"`
-	Code            string          `json:"code"`
-	CodeDescription CodeDescription `json:"codeDescription"`
+	Range           Range            `json:"range"`
+	Message         string           `json:"message"`
+	Severity        uint             `json:"severity"`
+	Source          string           `json:"source"`
+	Code            string           `json:"code"`
+	CodeDescription *CodeDescription `json:"codeDescription,omitempty"`
 }
 
 type CodeDescription struct {

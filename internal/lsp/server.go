@@ -554,6 +554,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	yes := true
 	actions := make([]types.CodeAction, 0)
 
 	for _, diag := range params.Context.Diagnostics {
@@ -563,7 +564,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Title:       "Format using opa fmt",
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: true,
+				IsPreferred: &yes,
 				Command:     FmtCommand([]string{params.TextDocument.URI}),
 			})
 		case ruleNameUseRegoV1:
@@ -571,7 +572,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Title:       "Format for Rego v1 using opa fmt",
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: true,
+				IsPreferred: &yes,
 				Command:     FmtV1Command([]string{params.TextDocument.URI}),
 			})
 		case "use-assignment-operator":
@@ -579,7 +580,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Title:       "Replace = with := in assignment",
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: true,
+				IsPreferred: &yes,
 				Command: UseAssignmentOperatorCommand([]string{
 					params.TextDocument.URI,
 					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
@@ -591,7 +592,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Title:       "Format comment to have leading whitespace",
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: true,
+				IsPreferred: &yes,
 				Command: NoWhiteSpaceCommentCommand([]string{
 					params.TextDocument.URI,
 					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
@@ -607,12 +608,11 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				Title:       txt,
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: true,
+				IsPreferred: &yes,
 				Command: types.Command{
 					Title:     txt,
 					Command:   "vscode.open",
-					Tooltip:   txt,
-					Arguments: []any{diag.CodeDescription.Href},
+					Arguments: &[]any{diag.CodeDescription.Href},
 				},
 			})
 		}

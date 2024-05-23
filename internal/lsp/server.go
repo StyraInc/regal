@@ -691,6 +691,14 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		return nil, fmt.Errorf("failed to find completions: %w", err)
 	}
 
+	// make sure the items is always [] instead of null as is required by the spec
+	if items == nil {
+		return types.CompletionList{
+			IsIncomplete: false,
+			Items:        make([]types.CompletionItem, 0),
+		}, nil
+	}
+
 	return types.CompletionList{
 		IsIncomplete: false,
 		Items:        items,

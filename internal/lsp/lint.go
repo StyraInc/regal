@@ -103,7 +103,7 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 			Message: astError.Message,
 			Source:  key,
 			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
-			CodeDescription: types.CodeDescription{
+			CodeDescription: &types.CodeDescription{
 				Href: link,
 			},
 		})
@@ -187,7 +187,7 @@ func updateFileDiagnostics(
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: types.CodeDescription{
+			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
@@ -265,7 +265,7 @@ func updateAllDiagnostics(
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: types.CodeDescription{
+			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,

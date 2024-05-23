@@ -8,15 +8,17 @@ const (
 	IdentifierGeneric Identifier = iota
 	IdentifierVSCode
 	IdentifierGoTest
+	IdentifierZed
 )
 
 func DetermineClientIdentifier(clientName string) Identifier {
-	if clientName == "go test" {
+	switch clientName {
+	case "go test":
 		return IdentifierGoTest
-	}
-
-	if clientName == "Visual Studio Code" {
+	case "Visual Studio Code":
 		return IdentifierVSCode
+	case "Zed":
+		return IdentifierZed
 	}
 
 	return IdentifierGeneric

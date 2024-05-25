@@ -29,4 +29,15 @@ Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more inf
 
 ### GitLab CICD
 
-// TODO
+To use Regal in GitLab CI/CD, you could for example use the following stage in your `.gitlab-ci.yml`:
+
+```yaml
+regal_lint_policies:
+  stage: regal-lint
+  image:
+    # For production workflows, use a specific version, like v0.16.0
+    name: ghcr.io/styrainc/regal:latest
+    entrypoint: ['/bin/sh', '-c']
+  script:
+    - regal lint ./policy
+```

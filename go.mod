@@ -1,6 +1,6 @@
 module github.com/styrainc/regal
 
-go 1.21 // any officially supported Golang version should be OK
+go 1.22
 
 toolchain go1.22.0
 
@@ -10,6 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.6.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.64.1
 	github.com/owenrumney/go-sarif/v2 v2.3.1

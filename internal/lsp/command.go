@@ -2,13 +2,13 @@ package lsp
 
 import "github.com/styrainc/regal/internal/lsp/types"
 
-func toAnySlice(a []string) []any {
+func toAnySlice(a []string) *[]any {
 	b := make([]any, len(a))
 	for i := range a {
 		b[i] = a[i]
 	}
 
-	return b
+	return &b
 }
 
 func FmtCommand(args []string) types.Command {

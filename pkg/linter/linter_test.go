@@ -263,46 +263,45 @@ or := 1
 	}
 
 	for _, tc := range tests {
-		tt := tc
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			linter := NewLinter()
 
-			linter = linter.WithRootDir(tt.rootDir)
+			linter = linter.WithRootDir(tc.rootDir)
 
-			if tt.userConfig != nil {
-				linter = linter.WithUserConfig(*tt.userConfig)
+			if tc.userConfig != nil {
+				linter = linter.WithUserConfig(*tc.userConfig)
 			}
 
-			if tt.ignoreFilesFlag != nil {
-				linter = linter.WithIgnore(tt.ignoreFilesFlag)
+			if tc.ignoreFilesFlag != nil {
+				linter = linter.WithIgnore(tc.ignoreFilesFlag)
 			}
 
-			input := test.InputPolicy(tt.filename, policy)
+			input := test.InputPolicy(tc.filename, policy)
 
 			linter = linter.WithInputModules(&input)
 
 			result := testutil.Must(linter.Lint(context.Background()))(t)
 
-			if len(result.Violations) != len(tt.expViolations) {
+			if len(result.Violations) != len(tc.expViolations) {
 				t.Fatalf("expected %d violation, got %d: %v",
-					len(tt.expViolations),
+					len(tc.expViolations),
 					len(result.Violations),
 					result.Violations,
 				)
 			}
 
 			for idx, violation := range result.Violations {
-				if violation.Title != tt.expViolations[idx] {
-					t.Errorf("expected first violation to be '%s', got %s", tt.expViolations[idx], result.Violations[0].Title)
+				if violation.Title != tc.expViolations[idx] {
+					t.Errorf("expected first violation to be '%s', got %s", tc.expViolations[idx], result.Violations[0].Title)
 				}
 			}
 
-			if len(tt.expLevels) > 0 {
+			if len(tc.expLevels) > 0 {
 				for idx, violation := range result.Violations {
-					if violation.Level != tt.expLevels[idx] {
-						t.Errorf("expected first violation to be '%s', got %s", tt.expLevels[idx], result.Violations[0].Level)
+					if violation.Level != tc.expLevels[idx] {
+						t.Errorf("expected first violation to be '%s', got %s", tc.expLevels[idx], result.Violations[0].Level)
 					}
 				}
 			}

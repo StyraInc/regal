@@ -125,8 +125,6 @@ func TestNoWhitespaceComment(t *testing.T) {
 	}
 
 	for testName, tc := range testCases {
-		tc := tc
-
 		nwc := NoWhitespaceComment{}
 
 		t.Run(testName, func(t *testing.T) {

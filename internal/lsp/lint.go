@@ -13,6 +13,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/hints"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -66,15 +67,24 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 	diags := make([]types.Diagnostic, 0)
 
 	for _, astError := range astErrors {
-		lineLength := 1
-
-		if astError.Location.Row-1 < len(lines) {
-			lineLength = len(lines[astError.Location.Row-1])
-		}
-
 		line := astError.Location.Row - 1
 		if line < 0 {
 			line = 0
+		}
+
+		lineLength := 1
+		if line < len(lines) {
+			lineLength = len(lines[line])
+		}
+
+		key := "regal/parse"
+		link := "https://docs.styra.com/opa/category/rego-parse-error"
+
+		hints, _ := hints.GetForError(err)
+		if len(hints) > 0 {
+			// there should only be one hint, so take the first
+			key = hints[0]
+			link = "https://docs.styra.com/opa/errors/" + hints[0]
 		}
 
 		diags = append(diags, types.Diagnostic{
@@ -91,10 +101,10 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 				},
 			},
 			Message: astError.Message,
-			Source:  "regal/parse",
+			Source:  key,
 			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
-			CodeDescription: types.CodeDescription{
-				Href: "https://docs.styra.com/opa/category/rego-parse-error",
+			CodeDescription: &types.CodeDescription{
+				Href: link,
 			},
 		})
 	}
@@ -177,7 +187,7 @@ func updateFileDiagnostics(
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: types.CodeDescription{
+			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,
@@ -255,7 +265,7 @@ func updateAllDiagnostics(
 			Message: item.Description,
 			Source:  "regal/" + item.Category,
 			Code:    item.Title,
-			CodeDescription: types.CodeDescription{
+			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
 					item.Category,

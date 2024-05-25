@@ -52,8 +52,6 @@ allow := true
 	}
 
 	for testName, tc := range testCases {
-		tc := tc
-
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 

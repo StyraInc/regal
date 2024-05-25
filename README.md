@@ -612,13 +612,14 @@ The Regal language server currently supports the following LSP features:
 - [x] Document and workspace symbols (navigate to rules, functions, packages)
 - [x] Inlay hints (show names of built-in function arguments next to their values)
 - [x] Formatting
+- [x] Code completions
 - [x] Code actions (quick fixes for linting issues)
   - [x] [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)
   - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
   - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
   - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
 
-See the [editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
+See the [Editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
 
 ## Resources
 

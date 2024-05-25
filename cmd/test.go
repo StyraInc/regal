@@ -200,7 +200,7 @@ func opaTest(args []string) int {
 		AddCustomBuiltins(builtins.TestContextBuiltins()).
 		Filter(testParams.runRegex)
 
-	for i := 0; i < testParams.count; i++ {
+	for range testParams.count {
 		exitCode := runTests(ctx, txn, runner, testReporter(cov, modules))
 		if exitCode != 0 {
 			return exitCode

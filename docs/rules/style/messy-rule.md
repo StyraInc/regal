@@ -34,7 +34,7 @@ unrelated_rule if {
 
 ## Rationale
 
-Rules that are definecd incrementally should have their definitions grouped together, as this makes the code easier to
+Rules that are defined incrementally should have their definitions grouped together, as this makes the code easier to
 follow. While this is mostly a style preference, having incremental rules grouped also allows editors like VS Code to
 "know" that the rules belong together, allowing them to be smarter when displaying the symbols of a workspace.
 

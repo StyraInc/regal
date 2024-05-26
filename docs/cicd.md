@@ -1,4 +1,4 @@
-# Running Regal in CI/CD pipeline(s)
+# Using Regal in your build pipeline
 
 Its possible to use Regal to lint your Rego policies in your CI/CD pipeline(s)!
 
@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: StyraInc/setup-regal@v1
       with:
-        # For production workflows, use a specific version, like v0.16.0
+        # For production workflows, use a specific version, like v0.22.0
         version: latest
 
     - name: Lint
@@ -37,9 +37,13 @@ To use Regal in GitLab CI/CD, you could for example use the following stage in y
 regal_lint_policies:
   stage: regal-lint
   image:
-    # For production workflows, use a specific version, like v0.16.0
+    # For production workflows, use a specific version, like v0.22.0
     name: ghcr.io/styrainc/regal:latest
     entrypoint: ['/bin/sh', '-c']
   script:
     - regal lint ./policy
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 ```
+
+The above will run Regal on the `policy` directory when a merge request is created or updated.

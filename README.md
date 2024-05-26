@@ -152,9 +152,9 @@ Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 > will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
 > `regal lint`.
 
-### Using Regal in CI/CD Workflows
+### Using Regal in your build pipeline!
 
-Kindly refer to the [CICD](/docs/cicd.md) documentation for more information on how to integrate Regal into your CI/CD workflows.
+To ensure Regal's rules are enforced consistently in your project or organization, we've made it easy to run Regal as part of your builds. See the docs on [Using Regal in your build pipeline](./docs/cicd.md) to learn more about how to set up Regal to lint your policies on every commit or pull request.
 
 ## Rules
 

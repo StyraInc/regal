@@ -154,9 +154,9 @@ Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 
 ### Using Regal in your build pipeline!
 
-To ensure Regal's rules are enforced consistently in your project or organization, 
-we've made it easy to run Regal as part of your builds. 
-See the docs on [Using Regal in your build pipeline](./docs/cicd.md) to learn more 
+To ensure Regal's rules are enforced consistently in your project or organization,
+we've made it easy to run Regal as part of your builds.
+See the docs on [Using Regal in your build pipeline](./docs/cicd.md) to learn more
 about how to set up Regal to lint your policies on every commit or pull request.
 
 ## Rules

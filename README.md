@@ -152,30 +152,12 @@ Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 > will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
 > `regal lint`.
 
-### GitHub Actions
+### Using Regal in your build pipeline!
 
-If you'd like to run Regal in GitHub actions, please consider using [`setup-regal`](https://github.com/StyraInc/setup-regal).
-A simple `.github/workflows/lint.yml` to run regal on PRs could look like this, where `policy` contains Rego files:
-
-```yaml
-name: Regal Lint
-on:
-  pull_request:
-jobs:
-  lint-rego:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: StyraInc/setup-regal@v1
-      with:
-        # For production workflows, use a specific version, like v0.16.0
-        version: latest
-
-    - name: Lint
-      run: regal lint --format=github ./policy
-```
-
-Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
+To ensure Regal's rules are enforced consistently in your project or organization,
+we've made it easy to run Regal as part of your builds.
+See the docs on [Using Regal in your build pipeline](./docs/cicd.md) to learn more
+about how to set up Regal to lint your policies on every commit or pull request.
 
 ## Rules
 

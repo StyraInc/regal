@@ -8,6 +8,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 	"github.com/styrainc/regal/internal/lsp/uri"
 )
 
@@ -54,7 +55,7 @@ func (*PackageName) Run(c *cache.Cache, params types.CompletionParams, opts *Opt
 		{
 			Label:  "package " + suggestedPackageName,
 			Detail: "suggested package name based on directory",
-			Kind:   19, // 19 is the kind for a folder
+			Kind:   completion.Folder,
 			TextEdit: &types.TextEdit{
 				Range: types.Range{
 					Start: types.Position{

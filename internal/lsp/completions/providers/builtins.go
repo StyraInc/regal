@@ -7,6 +7,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
 
 type BuiltIns struct{}
@@ -49,7 +50,7 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		if strings.HasPrefix(key, lastWord) {
 			items = append(items, types.CompletionItem{
 				Label:  key,
-				Kind:   3, // 3 is the kind for a function
+				Kind:   completion.Function,
 				Detail: "",
 				Documentation: &types.MarkupContent{
 					Kind:  "markdown",

@@ -11,7 +11,7 @@ type Ref struct {
 	Label string
 	// Detail is a small amount of additional information about the object.
 	Detail string
-	// Description is a longer description of the object and us markdown formatted.
+	// Description is a longer description of the object and uses Markdown formatting.
 	Description string
 }
 

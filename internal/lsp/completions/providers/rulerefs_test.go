@@ -25,6 +25,8 @@ func TestRuleFromImportedPackageRefs(t *testing.T) {
 		"file:///foo/foo.rego": `package foo
 
 bar := true
+
+_internal := true
 `,
 		"file:///bar/bar.rego": `package bar
 

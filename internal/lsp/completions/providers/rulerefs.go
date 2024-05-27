@@ -53,6 +53,12 @@ func (*RuleFromImportedPackageRefs) Run(
 				continue
 			}
 
+			// don't suggest refs of "private" rules, even
+			// if only just by naming convention
+			if strings.Contains(ref.Label, "._") {
+				continue
+			}
+
 			isFromImportedPackage := false
 
 			for _, i := range mod.Imports {

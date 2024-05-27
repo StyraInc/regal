@@ -33,8 +33,15 @@ type Cache struct {
 	diagnosticsParseErrors map[string][]types.Diagnostic
 	diagnosticsParseMu     sync.Mutex
 
+	// builtinPositionsFile is a map of file URI to builtin positions for that file
 	builtinPositionsFile map[string]map[uint][]types.BuiltinPosition
 	builtinPositionsMu   sync.Mutex
+
+	// fileRefs is a map of file URI to refs that are defined in that file. These are
+	// intended to be used for completions in other files.
+	// fileRefs is expected to be updated when a file is successfully parsed.
+	fileRefs  map[string]map[string]types.Ref
+	fileRefMu sync.Mutex
 }
 
 func NewCache() *Cache {
@@ -47,6 +54,8 @@ func NewCache() *Cache {
 		diagnosticsParseErrors: make(map[string][]types.Diagnostic),
 
 		builtinPositionsFile: make(map[string]map[uint][]types.BuiltinPosition),
+
+		fileRefs: make(map[string]map[string]types.Ref),
 	}
 }
 
@@ -202,6 +211,27 @@ func (c *Cache) GetAllBuiltInPositions() map[string]map[uint][]types.BuiltinPosi
 	return c.builtinPositionsFile
 }
 
+func (c *Cache) SetFileRefs(uri string, items map[string]types.Ref) {
+	c.fileRefMu.Lock()
+	defer c.fileRefMu.Unlock()
+
+	c.fileRefs[uri] = items
+}
+
+func (c *Cache) GetFileRefs(uri string) map[string]types.Ref {
+	c.fileRefMu.Lock()
+	defer c.fileRefMu.Unlock()
+
+	return c.fileRefs[uri]
+}
+
+func (c *Cache) GetAllFileRefs() map[string]map[string]types.Ref {
+	c.fileRefMu.Lock()
+	defer c.fileRefMu.Unlock()
+
+	return c.fileRefs
+}
+
 // Delete removes all cached data for a given URI.
 func (c *Cache) Delete(uri string) {
 	c.fileContentsMu.Lock()
@@ -227,6 +257,10 @@ func (c *Cache) Delete(uri string) {
 	c.builtinPositionsMu.Lock()
 	delete(c.builtinPositionsFile, uri)
 	c.builtinPositionsMu.Unlock()
+
+	c.fileRefMu.Lock()
+	delete(c.fileRefs, uri)
+	c.fileRefMu.Unlock()
 }
 
 func UpdateCacheForURIFromDisk(cache *Cache, uri, path string) (string, error) {

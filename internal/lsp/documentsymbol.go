@@ -7,7 +7,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
-	"github.com/styrainc/regal/internal/lsp/rego"
+	rast "github.com/styrainc/regal/internal/ast"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
@@ -39,7 +39,7 @@ func documentSymbols(
 	ruleGroups := make(map[string][]*ast.Rule, len(module.Rules))
 
 	for _, rule := range module.Rules {
-		name := refToString(rule.Head.Ref())
+		name := rast.RefToString(rule.Head.Ref())
 		ruleGroups[name] = append(ruleGroups[name], rule)
 	}
 
@@ -48,7 +48,7 @@ func documentSymbols(
 			rule := rules[0]
 
 			kind := symbols.Variable
-			if isConstant(rule) {
+			if rast.IsConstant(rule) {
 				kind = symbols.Constant
 			} else if rule.Head.Args != nil {
 				kind = symbols.Function
@@ -56,13 +56,13 @@ func documentSymbols(
 
 			ruleRange := locationToRange(rule.Location)
 			ruleSymbol := types.DocumentSymbol{
-				Name:           refToString(rule.Head.Ref()),
+				Name:           rast.RefToString(rule.Head.Ref()),
 				Kind:           kind,
 				Range:          ruleRange,
 				SelectionRange: ruleRange,
 			}
 
-			if detail := getRuleDetail(rule); detail != "" {
+			if detail := rast.GetRuleDetail(rule); detail != "" {
 				ruleSymbol.Detail = &detail
 			}
 
@@ -82,13 +82,13 @@ func documentSymbols(
 			}
 
 			groupSymbol := types.DocumentSymbol{
-				Name:           refToString(rules[0].Head.Ref()),
+				Name:           rast.RefToString(rules[0].Head.Ref()),
 				Kind:           kind,
 				Range:          groupRange,
 				SelectionRange: groupRange,
 			}
 
-			detail := getRuleDetail(rules[0])
+			detail := rast.GetRuleDetail(rules[0])
 			if detail != "" {
 				groupSymbol.Detail = &detail
 			}
@@ -104,7 +104,7 @@ func documentSymbols(
 					SelectionRange: childRange,
 				}
 
-				childDetail := getRuleDetail(rule)
+				childDetail := rast.GetRuleDetail(rule)
 				if childDetail != "" {
 					childRule.Detail = &childDetail
 				}
@@ -147,122 +147,6 @@ func locationToRange(location *ast.Location) types.Range {
 			Character: uint(len(lines[len(lines)-1])),
 		},
 	}
-}
-
-func refToString(ref ast.Ref) string {
-	sb := strings.Builder{}
-
-	for i, part := range ref {
-		if part.IsGround() {
-			if i > 0 {
-				sb.WriteString(".")
-			}
-
-			sb.WriteString(strings.Trim(part.Value.String(), `"`))
-		} else {
-			if i == 0 {
-				sb.WriteString(strings.Trim(part.Value.String(), `"`))
-			} else {
-				sb.WriteString("[")
-				sb.WriteString(strings.Trim(part.Value.String(), `"`))
-				sb.WriteString("]")
-			}
-		}
-	}
-
-	return sb.String()
-}
-
-func getRuleDetail(rule *ast.Rule) string {
-	if rule.Head.Args != nil {
-		return "function" + rule.Head.Args.String()
-	}
-
-	if rule.Head.Key != nil && rule.Head.Value == nil {
-		return "multi-value rule"
-	}
-
-	if rule.Head.Value == nil {
-		return ""
-	}
-
-	detail := "single-value "
-
-	if rule.Head.Key != nil {
-		detail += "map "
-	}
-
-	detail += "rule"
-
-	switch v := rule.Head.Value.Value.(type) {
-	case ast.Boolean:
-		if strings.HasPrefix(rule.Head.Ref()[0].String(), "test_") {
-			detail += " (test)"
-		} else {
-			detail += " (boolean)"
-		}
-	case ast.Number:
-		detail += " (number)"
-	case ast.String:
-		detail += " (string)"
-	case *ast.Array, *ast.ArrayComprehension:
-		detail += " (array)"
-	case ast.Object, *ast.ObjectComprehension:
-		detail += " (object)"
-	case ast.Set, *ast.SetComprehension:
-		detail += " (set)"
-	case ast.Call:
-		name := v[0].String()
-
-		if builtin, ok := rego.BuiltIns[name]; ok {
-			retType := builtin.Decl.NamedResult().String()
-
-			detail += fmt.Sprintf(" (%s)", simplifyType(retType))
-		}
-	}
-
-	return detail
-}
-
-// simplifyType removes anything but the base type from the type name.
-func simplifyType(name string) string {
-	result := name
-
-	if strings.Contains(result, ":") {
-		result = result[strings.Index(result, ":")+1:]
-	}
-
-	// silence gocritic linter here as strings.Index can in
-	// fact *not* return -1 in these cases
-	if strings.Contains(result, "[") {
-		result = result[:strings.Index(result, "[")] //nolint:gocritic
-	}
-
-	if strings.Contains(result, "<") {
-		result = result[:strings.Index(result, "<")] //nolint:gocritic
-	}
-
-	return strings.TrimSpace(result)
-}
-
-// isConstant returns true if the rule is a "constant" rule, i.e.
-// one without conditions and scalar value in the head.
-func isConstant(rule *ast.Rule) bool {
-	isScalar := false
-
-	if rule.Head.Value == nil {
-		return false
-	}
-
-	switch rule.Head.Value.Value.(type) {
-	case ast.Boolean, ast.Number, ast.String, ast.Null:
-		isScalar = true
-	}
-
-	return isScalar &&
-		rule.Head.Args == nil &&
-		rule.Body.Equal(ast.NewBody(ast.NewExpr(ast.BooleanTerm(true)))) &&
-		rule.Else == nil
 }
 
 func toWorkspaceSymbol(docSym types.DocumentSymbol, docURL string) types.WorkspaceSymbol {

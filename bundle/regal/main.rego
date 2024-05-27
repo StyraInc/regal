@@ -12,9 +12,9 @@ lint.aggregates := aggregate
 
 lint.ignore_directives[input.regal.file.name] := ast.ignore_directives
 
-lint.violations := report
-
 lint_aggregate.violations := aggregate_report
+
+lint.violations := report
 
 rules_to_run[category][title] if {
 	some category, title

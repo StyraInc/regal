@@ -118,8 +118,8 @@ type CompletionParams struct {
 }
 
 type CompletionContext struct {
-	TriggerKind      uint   `json:"triggerKind"`
-	TriggerCharacter string `json:"triggerCharacter"`
+	TriggerKind      completion.TriggerKind `json:"triggerKind"`
+	TriggerCharacter string                 `json:"triggerCharacter"`
 }
 
 type CompletionList struct {

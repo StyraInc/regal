@@ -61,3 +61,21 @@ test_success_import_not_ignored if {
 	r := rule.report with input as module
 	r == set()
 }
+
+# this is covered by the avoid-importing-input rule,
+# and `input` is arguably never unused as it's a global variable
+test_success_import_input_not_ignored if {
+	module := ast.policy(`import input`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+# this is covered by the redundant-data-import rule,
+# and `data` can never be considered unused in Rego
+test_success_import_data_not_ignored if {
+	module := ast.policy(`import data`)
+
+	r := rule.report with input as module
+	r == set()
+}

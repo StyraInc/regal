@@ -12,6 +12,7 @@ import_paths contains path if {
 	path := [p.value | some p in imp.path.value]
 
 	path[0] in {"data", "input"}
+	count(path) > 1
 }
 
 report contains violation if {

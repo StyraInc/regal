@@ -63,9 +63,9 @@ A package that's for things
 %s
 foo: bar
 tags:
-- a
-- b
-- c
+    - a
+    - b
+    - c
 %s
 `, "```yaml", "```"),
 		},

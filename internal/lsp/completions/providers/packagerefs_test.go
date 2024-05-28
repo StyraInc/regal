@@ -65,7 +65,9 @@ import
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	expectedRefs := []string{"data.foo.bar", "data.foo.baz"}
+	// data.foo is not defined in a file, but it included as a partial ref
+	// as it's still valid for import and might be helpful.
+	expectedRefs := []string{"data.foo", "data.foo.bar", "data.foo.baz"}
 	slices.Sort(expectedRefs)
 
 	foundRefs := make([]string, len(completions))

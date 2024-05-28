@@ -29,6 +29,8 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 
 	m.RegisterProvider(&providers.Package{})
 	m.RegisterProvider(&providers.PackageName{})
+	m.RegisterProvider(&providers.Default{})
+	m.RegisterProvider(&providers.Import{})
 	m.RegisterProvider(&providers.BuiltIns{})
 	m.RegisterProvider(&providers.RegoV1{})
 	m.RegisterProvider(&providers.PackageRefs{})

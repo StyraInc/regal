@@ -29,3 +29,11 @@ const (
 	Operator
 	TypeParameter
 )
+
+type TriggerKind uint
+
+const (
+	Invoked TriggerKind = iota + 1
+	TriggerCharacter
+	TriggerForIncompleteCompletions
+)

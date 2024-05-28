@@ -5,6 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
 
 type RegoV1 struct{}
@@ -40,7 +41,7 @@ func (*RegoV1) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([
 	return []types.CompletionItem{
 		{
 			Label:  "rego.v1",
-			Kind:   9, // 9 is for Module
+			Kind:   completion.Module,
 			Detail: "Use Rego v1",
 			TextEdit: &types.TextEdit{
 				Range: types.Range{

@@ -1,6 +1,9 @@
 package types
 
-import "github.com/styrainc/regal/internal/lsp/types/symbols"
+import (
+	"github.com/styrainc/regal/internal/lsp/types/completion"
+	"github.com/styrainc/regal/internal/lsp/types/symbols"
+)
 
 type FileDiagnostics struct {
 	URI   string       `json:"uri"`
@@ -128,11 +131,11 @@ type CompletionItem struct {
 	Label        string                      `json:"label"`
 	LabelDetails *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
 	// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
-	Kind          uint           `json:"kind"`
-	Detail        string         `json:"detail"`
-	Documentation *MarkupContent `json:"documentation,omitempty"`
-	Preselect     bool           `json:"preselect"`
-	TextEdit      *TextEdit      `json:"textEdit,omitempty"`
+	Kind          completion.ItemKind `json:"kind"`
+	Detail        string              `json:"detail"`
+	Documentation *MarkupContent      `json:"documentation,omitempty"`
+	Preselect     bool                `json:"preselect"`
+	TextEdit      *TextEdit           `json:"textEdit,omitempty"`
 }
 
 type CompletionItemLabelDetails struct {

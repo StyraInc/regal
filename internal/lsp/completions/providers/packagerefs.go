@@ -5,7 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/types/symbols"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
 
 // PackageRefs is a completion provider that returns completions when importing packages.
@@ -58,7 +58,7 @@ func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Option
 
 		items = append(items, types.CompletionItem{
 			Label:  item.Label,
-			Kind:   uint(symbols.Module), // for now, only modules are returned
+			Kind:   completion.Module, // for now, only modules are returned
 			Detail: "Rego package",
 			Documentation: &types.MarkupContent{
 				Kind:  "markdown",

@@ -5,7 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/types/symbols"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
 
 // RuleFromImportedPackageRefs is a completion provider that returns completions for
@@ -80,15 +80,15 @@ func (*RuleFromImportedPackageRefs) Run(
 	items := make([]types.CompletionItem, 0)
 
 	for _, ref := range refsFromImports {
-		symbol := symbols.Variable
+		symbol := completion.Variable
 		detail := "Rule"
 
 		switch {
 		case ref.Kind == types.ConstantRule:
-			symbol = symbols.Constant
+			symbol = completion.Constant
 			detail = "Constant Rule"
 		case ref.Kind == types.Function:
-			symbol = symbols.Function
+			symbol = completion.Function
 			detail = "Function"
 		}
 
@@ -99,7 +99,7 @@ func (*RuleFromImportedPackageRefs) Run(
 
 		items = append(items, types.CompletionItem{
 			Label:  packageAndRule,
-			Kind:   uint(symbol),
+			Kind:   symbol,
 			Detail: detail,
 			Documentation: &types.MarkupContent{
 				Kind:  "markdown",

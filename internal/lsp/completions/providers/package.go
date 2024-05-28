@@ -5,6 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
 
 // Package will return completions for the package keyword when starting a new file.
@@ -38,7 +39,7 @@ func (*Package) Run(c *cache.Cache, params types.CompletionParams, _ *Options) (
 	return []types.CompletionItem{
 		{
 			Label:  "package",
-			Kind:   14, // 14 is the kind for keyword
+			Kind:   completion.Module,
 			Detail: "package <package-name>",
 			TextEdit: &types.TextEdit{
 				Range: types.Range{

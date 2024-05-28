@@ -3,45 +3,33 @@ package fileprovider
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
 type FSFileProvider struct {
-	roots []string
+	roots  []string
+	ignore []string
 }
 
-func NewFSFileProvider(roots ...string) *FSFileProvider {
+func NewFSFileProvider(ignore []string, roots ...string) *FSFileProvider {
 	return &FSFileProvider{
-		roots: roots,
+		roots:  roots,
+		ignore: ignore,
 	}
 }
 
 func (p *FSFileProvider) ListFiles() ([]string, error) {
-	var files []string
-
-	for _, root := range p.roots {
-		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if !info.IsDir() {
-				files = append(files, path)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to list files: %w", err)
-		}
+	filtered, err := config.FilterIgnoredPaths(p.roots, p.ignore, true, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
 	}
 
-	return files, nil
+	return filtered, nil
 }
 
 func (*FSFileProvider) GetFile(file string) ([]byte, error) {

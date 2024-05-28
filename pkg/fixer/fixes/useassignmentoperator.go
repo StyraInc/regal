@@ -28,6 +28,10 @@ func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]Fix
 
 		line := lines[loc.Row-1]
 
+		if loc.Col-1 < 0 || loc.Col-1 >= len(line) {
+			continue
+		}
+
 		// unexpected character at location column, skipping
 		if line[loc.Col-1] != byte('=') {
 			continue

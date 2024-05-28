@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"sync"
 
@@ -84,7 +85,7 @@ func (c *Cache) GetAllFiles() map[string]string {
 	c.fileContentsMu.Lock()
 	defer c.fileContentsMu.Unlock()
 
-	return c.fileContents
+	return maps.Clone(c.fileContents)
 }
 
 func (c *Cache) GetFileContents(uri string) (string, bool) {
@@ -107,7 +108,7 @@ func (c *Cache) GetAllModules() map[string]*ast.Module {
 	c.moduleMu.Lock()
 	defer c.moduleMu.Unlock()
 
-	return c.modules
+	return maps.Clone(c.modules)
 }
 
 func (c *Cache) GetModule(uri string) (*ast.Module, bool) {
@@ -208,7 +209,7 @@ func (c *Cache) GetAllBuiltInPositions() map[string]map[uint][]types.BuiltinPosi
 	c.builtinPositionsMu.Lock()
 	defer c.builtinPositionsMu.Unlock()
 
-	return c.builtinPositionsFile
+	return maps.Clone(c.builtinPositionsFile)
 }
 
 func (c *Cache) SetFileRefs(uri string, items map[string]types.Ref) {
@@ -229,7 +230,7 @@ func (c *Cache) GetAllFileRefs() map[string]map[string]types.Ref {
 	c.fileRefMu.Lock()
 	defer c.fileRefMu.Unlock()
 
-	return c.fileRefs
+	return maps.Clone(c.fileRefs)
 }
 
 // Delete removes all cached data for a given URI.

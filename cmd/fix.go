@@ -237,7 +237,13 @@ func fix(args []string, params *fixCommandParams) error {
 	f := fixer.NewFixer()
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
 
-	fileProvider := fileprovider.NewFSFileProvider(args...)
+	ignore := userConfig.Ignore.Files
+
+	if len(params.ignoreFiles.v) > 0 {
+		ignore = params.ignoreFiles.v
+	}
+
+	fileProvider := fileprovider.NewFSFileProvider(ignore, args...)
 
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {

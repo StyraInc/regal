@@ -751,6 +751,12 @@ allow if {
 		t.Fatalf("failed to write main.rego: %v", err)
 	}
 
+	unrelatedFileContents := []byte(`foobar`)
+	err = os.WriteFile(filepath.Join(td, "unrelated.txt"), unrelatedFileContents, 0o644)
+	if err != nil {
+		t.Fatalf("failed to write unrelated.txt: %v", err)
+	}
+
 	err = regal(&stdout, &stderr)("fix", td)
 
 	// 0 exit status is expected as all violations should have been fixed

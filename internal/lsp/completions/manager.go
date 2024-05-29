@@ -37,7 +37,7 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	m.RegisterProvider(&providers.RuleRefs{})
 	m.RegisterProvider(&providers.RuleHead{})
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
-	m.RegisterProvider(&providers.CommonRule{})
+	m.RegisterProvider(&providers.Input{})
 
 	return m
 }

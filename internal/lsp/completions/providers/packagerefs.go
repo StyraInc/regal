@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -29,7 +28,7 @@ func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Option
 	lastWord := words[len(words)-1]
 
 	thisFileReferences := c.GetFileRefs(fileURI)
-	otherFilePackages := make(map[string]types.Ref)
+	refsForContext := make(map[string]types.Ref)
 
 	// filter out the packages that have the last word as a prefix.
 	for file, refs := range c.GetAllFileRefs() {
@@ -54,24 +53,22 @@ func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Option
 				continue
 			}
 
-			otherFilePackages[key] = ref
+			refsForContext[key] = ref
 		}
 	}
 
-	// partialRefs is a generated list of package names generated from
-	// longer names. For example, if the packages data.foo.bar and data.foo.baz
+	// refsForContext is now supplemented with a generated list of package names
+	// from longer packages. For example, if the packages data.foo.bar and data.foo.baz
 	// are defined, an author should still be able to import data.foo.
-	partialRefs := make(map[string]types.Ref)
-
-	for key := range otherFilePackages {
+	for key := range refsForContext {
 		parts := strings.Split(key, ".")
 		// starting at 1 to skip 'data'
 		for i := 1; i < len(parts)-1; i++ {
 			partialKey := strings.Join(parts[:i+1], ".")
 			// only insert the new partial key if there is no full package
 			// ref that matches it
-			if _, ok := partialRefs[partialKey]; !ok {
-				partialRefs[partialKey] = types.Ref{
+			if _, ok := refsForContext[partialKey]; !ok {
+				refsForContext[partialKey] = types.Ref{
 					Label:       partialKey,
 					Description: "See sub packages for more information",
 				}
@@ -82,42 +79,7 @@ func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Option
 	// refs are grouped by 'depth', where depth is the number of dots in the
 	// ref string. This is a simplification, but allows shorted, higher level
 	// refs to be suggested first.
-	byDepth := make(map[int]map[string]types.Ref)
-
-	for _, item := range otherFilePackages {
-		depth := strings.Count(item.Label, ".")
-
-		if _, ok := byDepth[depth]; !ok {
-			byDepth[depth] = make(map[string]types.Ref)
-		}
-
-		byDepth[depth][item.Label] = item
-	}
-
-	// add partial refs to the byDepth map in case they are not defined
-	// as full refs in files.
-	for _, item := range partialRefs {
-		depth := strings.Count(item.Label, ".")
-
-		if _, ok := byDepth[depth]; !ok {
-			byDepth[depth] = make(map[string]types.Ref)
-		}
-
-		// only add partial refs where no top level ref exists.
-		if _, ok := byDepth[depth][item.Label]; ok {
-			continue
-		}
-
-		byDepth[depth][item.Label] = item
-	}
-
-	// items will be shown in order from shallowest to deepest
-	depths := make([]int, 0)
-	for k := range byDepth {
-		depths = append(depths, k)
-	}
-
-	slices.Sort(depths)
+	depths, byDepth := groupKeyedRefsByDepth(refsForContext)
 
 	items := make([]types.CompletionItem, 0)
 	for _, depth := range depths {

@@ -2,6 +2,7 @@ package providers
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -17,9 +18,11 @@ func TestRuleFromImportedPackageRefs(t *testing.T) {
 
 	currentlyEditingFileContents := `package example
 
-	import data.foo
-	import data.bar
-	import data.baz`
+import data.foo
+import data.bar
+import data.baz
+
+local_rule := true`
 
 	regoFiles := map[string]string{
 		"file:///foo/foo.rego": `package foo
@@ -60,14 +63,14 @@ deny := false
 
 	c.SetFileContents("file:///example.rego", currentlyEditingFileContents+"\n\nallow if ")
 
-	p := &RuleFromImportedPackageRefs{}
+	p := &RuleRefs{}
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: "file:///example.rego",
 		},
 		Position: types.Position{
-			Line:      6,
+			Line:      8,
 			Character: 8,
 		},
 	}
@@ -77,7 +80,14 @@ deny := false
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	expectedRefs := []string{"foo.bar", "bar.allow", "baz.funkyfunc"}
+	expectedRefs := []string{
+		"data.notimported", // 'partial', based on data.notimported.deny
+		"data.notimported.deny",
+		"foo.bar",
+		"bar.allow",
+		"baz.funkyfunc",
+		"local_rule",
+	}
 	slices.Sort(expectedRefs)
 
 	foundRefs := make([]string, len(completions))
@@ -89,6 +99,10 @@ deny := false
 	slices.Sort(foundRefs)
 
 	if !slices.Equal(expectedRefs, foundRefs) {
-		t.Fatalf("Expected completions to be %v, got: %v", expectedRefs, foundRefs)
+		t.Fatalf(
+			"Expected completions to be\n%s\ngot:\n%s",
+			strings.Join(expectedRefs, "\n"),
+			strings.Join(foundRefs, "\n"),
+		)
 	}
 }

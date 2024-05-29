@@ -701,7 +701,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}
 
 	return types.CompletionList{
-		IsIncomplete: false,
+		IsIncomplete: true,
 		Items:        items,
 	}, nil
 }

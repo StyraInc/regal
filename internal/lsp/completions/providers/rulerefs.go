@@ -29,7 +29,7 @@ func (*RuleFromImportedPackageRefs) Run(
 		!strings.Contains(currentLine, " contains ") && // if after contains
 		!strings.Contains(currentLine, " else ") && // if after else
 		!strings.Contains(currentLine, "= ") && // if after assignment
-		!strings.HasPrefix(currentLine, "  ") { // if in rule body
+		!patternRuleBody.MatchString(currentLine) { // if in rule body
 		return nil, nil
 	}
 

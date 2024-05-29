@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -23,3 +24,9 @@ func completionLineHelper(c *cache.Cache, fileURI string, currentLineNumber uint
 
 	return strings.Split(fileContents, "\n"), currentLine
 }
+
+//nolint:gochecknoglobals
+var patternRuleBody = regexp.MustCompile(`^\s+`)
+
+//nolint:gochecknoglobals
+var patternWhiteSpace = regexp.MustCompile(`\s+`)

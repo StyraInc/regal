@@ -58,3 +58,21 @@ func groupKeyedRefsByDepth(refs map[string]types.Ref) ([]int, map[int]map[string
 
 	return depths, byDepth
 }
+
+// inRuleBody returns is a best-effort helper to determine if the current line is in a rule body.
+func inRuleBody(currentLine string) bool {
+	switch {
+	case strings.Contains(currentLine, " if "):
+		return true
+	case strings.Contains(currentLine, " contains "):
+		return true
+	case strings.Contains(currentLine, " else "):
+		return true
+	case strings.Contains(currentLine, "= "):
+		return true
+	case patternRuleBody.MatchString(currentLine):
+		return true
+	}
+
+	return false
+}

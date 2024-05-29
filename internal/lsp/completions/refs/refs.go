@@ -103,10 +103,22 @@ to add more detail.`, name)
 }
 
 func findAnnotationForPackage(m *ast.Module) (*ast.Annotations, bool) {
-	for _, a := range m.Annotations {
+	var subPackageIndexes []int
+
+	for i, a := range m.Annotations {
 		if a.Scope == "package" {
 			return a, true
 		}
+
+		if a.Scope == "subpackages" {
+			subPackageIndexes = append(subPackageIndexes, i)
+		}
+	}
+
+	if len(subPackageIndexes) > 0 {
+		// subpackages are also permitted so they can be shown for the top level
+		// package in completions. However, package annotations take precedence.
+		return m.Annotations[subPackageIndexes[0]], true
 	}
 
 	return nil, false

@@ -20,13 +20,8 @@ func (*Input) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]
 		return []types.CompletionItem{}, nil
 	}
 
-	// TODO: Share and improve this logic, currently shared with the rulerefs provider
-	if !strings.Contains(currentLine, " if ") && // if after if keyword
-		!strings.Contains(currentLine, " contains ") && // if after contains
-		!strings.Contains(currentLine, " else ") && // if after else
-		!strings.Contains(currentLine, "= ") && // if after assignment
-		!patternRuleBody.MatchString(currentLine) { // if in rule body
-		return nil, nil
+	if !inRuleBody(currentLine) {
+		return []types.CompletionItem{}, nil
 	}
 
 	words := patternWhiteSpace.Split(strings.TrimSpace(currentLine), -1)

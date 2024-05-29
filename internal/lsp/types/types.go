@@ -136,6 +136,11 @@ type CompletionItem struct {
 	Documentation *MarkupContent      `json:"documentation,omitempty"`
 	Preselect     bool                `json:"preselect"`
 	TextEdit      *TextEdit           `json:"textEdit,omitempty"`
+
+	// Mandatory is used to indicate that the completion item is mandatory and should be offered
+	// as an exclusive completion. This is not part of the LSP spec, but used in regal providers
+	// to indicate that the completion item is the only valid completion.
+	Mandatory bool `json:"-"`
 }
 
 type CompletionItemLabelDetails struct {

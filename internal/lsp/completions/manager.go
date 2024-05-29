@@ -36,6 +36,8 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	m.RegisterProvider(&providers.PackageRefs{})
 	m.RegisterProvider(&providers.RuleRefs{})
 	m.RegisterProvider(&providers.RuleHead{})
+	m.RegisterProvider(&providers.RuleHeadKeyword{})
+	m.RegisterProvider(&providers.CommonRule{})
 
 	return m
 }
@@ -49,8 +51,14 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}
 
-		if len(providerCompletions) > 0 {
-			completions = append(completions, providerCompletions...)
+		for _, completion := range providerCompletions {
+			// if a provider returns a mandatory completion, return it immediately
+			// as it is the only completion that should be shown.
+			if completion.Mandatory {
+				return []types.CompletionItem{completion}, nil
+			}
+
+			completions = append(completions, completion)
 		}
 	}
 

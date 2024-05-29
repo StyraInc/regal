@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -19,7 +20,6 @@ func TestPackageRefs(t *testing.T) {
 	regoFiles := map[string]string{
 		"file:///foo/bar/file.rego": `package foo.bar
 
-allow := true
 `,
 		"file:///foo/baz/file.rego": `package foo.baz
 
@@ -80,5 +80,95 @@ import
 
 	if !slices.Equal(expectedRefs, foundRefs) {
 		t.Fatalf("Expected completions to be %v, got: %v", expectedRefs, foundRefs)
+	}
+}
+
+func TestPackageRefs_Metadata(t *testing.T) {
+	t.Parallel()
+
+	c := cache.NewCache()
+
+	regoFiles := map[string]string{
+		"file:///foo/foo.rego": `# METADATA
+# scope: subpackages
+# authors:
+# - Foo
+# related_resources:
+# - https://example.com
+package foo
+`,
+		"file:///foo/bar/bar.rego": `# METADATA
+# scope: package
+# title: Bar
+# authors:
+# - Bar
+package foo.bar
+`,
+	}
+
+	// string replace to deal with editors stripping whitespace
+	fileContents := strings.ReplaceAll(`package example
+
+import
+
+`, "import", "import ")
+
+	c.SetFileContents("file:///file.rego", fileContents)
+
+	for uri, contents := range regoFiles {
+		mod := parse.MustParseModule(contents)
+		c.SetModule(uri, mod)
+
+		c.SetFileRefs(uri, refs.ForModule(mod))
+	}
+
+	p := &PackageRefs{}
+
+	completionParams := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: "file:///file.rego",
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 8,
+		},
+	}
+
+	completions, err := p.Run(c, completionParams, nil)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	expectedRefs := map[string]struct {
+		Label            string
+		Authors          []string
+		RelatedResources []string
+	}{
+		"data.foo": {
+			Authors:          []string{"Foo"},
+			RelatedResources: []string{"https://example.com"},
+		},
+		"data.foo.bar": {
+			Authors: []string{"Bar"},
+		},
+	}
+
+	for _, c := range completions {
+		ref, ok := expectedRefs[c.Label]
+		if !ok {
+			t.Fatalf("Unexpected completion: %s", c.Label)
+		}
+
+		for _, a := range ref.Authors {
+			if !strings.Contains(c.Documentation.Value, "* "+a) {
+				t.Fatalf("Expected author %s to be in documentation, got: %s", a, c.Documentation.Value)
+			}
+		}
+
+		for _, a := range ref.RelatedResources {
+			if !strings.Contains(c.Documentation.Value, fmt.Sprintf("* [%s]", a)) {
+				t.Fatalf("Expected related resource %s to be in documentation, got: %s", a, c.Documentation.Value)
+			}
+		}
 	}
 }

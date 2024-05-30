@@ -38,6 +38,7 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	m.RegisterProvider(&providers.RuleHead{})
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
 	m.RegisterProvider(&providers.Input{})
+	m.RegisterProvider(&providers.CommonRule{})
 
 	return m
 }

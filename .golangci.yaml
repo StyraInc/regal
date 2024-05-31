@@ -1,31 +1,21 @@
 linters:
   enable-all: true
   disable:
-    # deprecated
-    - deadcode
-    - exhaustivestruct
-    - golint
-    - ifshort
-    - interfacer
-    - inamedparam
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - tagliatelle
-    - varcheck
     # does not work with generics (yet)
     - rowserrcheck
     - wastedassign
     # annoying
+    - tagliatelle
     - nestif
     - gocognit
-    - goerr113
     - varnamelen
     - nonamedreturns
     - testpackage
     - gochecknoinits
     - gomnd
+    - mnd
+    - inamedparam
+    - err113
     - godox
     - exhaustruct
     - cyclop

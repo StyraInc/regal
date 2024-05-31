@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.64.1](https://openpolicyagent.org/badge/v0.64.1)
+![OPA v0.65.0](https://openpolicyagent.org/badge/v0.65.0)
 
 Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), helping
 you write better policies and have fun while doing it!

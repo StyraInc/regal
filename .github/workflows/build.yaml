@@ -42,7 +42,7 @@ jobs:
       - uses: golangci/golangci-lint-action@v6.0.1
         if: matrix.os.name == 'linux'
         with:
-          version: v1.57.2
+          version: v1.59.0
       - uses: actions/upload-artifact@v4
         with:
           name: regal-${{ matrix.os.name }}

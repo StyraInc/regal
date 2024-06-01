@@ -2,7 +2,7 @@
 
 **Summary**: ADD DESCRIPTION HERE
 
-**Category**: {{.Category}}
+**Category**: {{.Category | ToUpper}}
 
 **Automatically fixable**: Yes/No
 

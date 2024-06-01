@@ -14,6 +14,8 @@ rules:
       level: error
     invalid-metadata-attribute:
       level: error
+    leaked-internal-reference:
+      level: error
     not-equals-in-loop:
       level: error
     redundant-existence-check:

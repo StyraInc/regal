@@ -12,6 +12,8 @@ rules:
       level: error
     inconsistent-args:
       level: error
+    internal-entrypoint:
+      level: error
     invalid-metadata-attribute:
       level: error
     leaked-internal-reference:

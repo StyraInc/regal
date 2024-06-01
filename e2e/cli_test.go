@@ -175,6 +175,7 @@ func TestLintAllViolations(t *testing.T) {
 		"implicit-future-keywords": {},
 		"use-if":                   {},
 		"use-contains":             {},
+		"internal-entrypoint":      {},
 	}
 
 	for _, category := range cfg.Rules {

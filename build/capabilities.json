@@ -6111,23 +6111,6 @@
       }
     },
     {
-      "name": "regal.json_pretty",
-      "decl": {
-        "args": [
-          {
-            "description": "data to marshal to JSON in a pretty format",
-            "name": "data",
-            "type": "any"
-          }
-        ],
-        "result": {
-          "name": "output",
-          "type": "string"
-        },
-        "type": "function"
-      }
-    },
-    {
       "name": "regal.last",
       "decl": {
         "args": [

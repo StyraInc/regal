@@ -17,10 +17,6 @@ func Capabilities() *ast.Capabilities {
 			Decl: builtins.RegalParseModuleMeta.Decl,
 		},
 		&ast.Builtin{
-			Name: builtins.RegalJSONPrettyMeta.Name,
-			Decl: builtins.RegalJSONPrettyMeta.Decl,
-		},
-		&ast.Builtin{
 			Name: builtins.RegalLastMeta.Name,
 			Decl: builtins.RegalLastMeta.Decl,
 		})

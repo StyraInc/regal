@@ -265,11 +265,11 @@ Works just like `rego.parse_module`, but provides an AST including location info
 by Regal, like the text representation of each line in the original policy. This is useful for authoring tests to assert
 linter rules work as expected.
 
-### `regal.json_pretty(data)`
+### `regal.last(array)`
 
-Printing nested objects and arrays is quite helpful for debugging AST nodes, but the standard representation — where
-everything is displayed on a single line — not so much. This built-in allows marshalling JSON similar to `json.marshal`,
-but with newlines and spaces added for a more pleasant experience.
+This built-in function is a much more performant way to express `array[count(array) - 1]`. This performance difference
+is almost always irrelevant in "normal" Rego policies, but can have a significant impact in linter rules where it's
+sometimes called thousands of times as part of traversing the input AST.
 
 In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
 [regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast/ast.rego) package to see what's available is

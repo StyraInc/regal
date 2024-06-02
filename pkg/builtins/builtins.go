@@ -27,17 +27,6 @@ var RegalParseModuleMeta = &rego.Function{
 	),
 }
 
-// RegalJSONPrettyMeta metadata for regal.json_pretty.
-var RegalJSONPrettyMeta = &rego.Function{
-	Name: "regal.json_pretty",
-	Decl: types.NewFunction(
-		types.Args(
-			types.Named("data", types.A).Description("data to marshal to JSON in a pretty format"),
-		),
-		types.Named("output", types.S),
-	),
-}
-
 // RegalLastMeta metadata for regal.last.
 var RegalLastMeta = &rego.Function{
 	Name: "regal.last",
@@ -101,16 +90,6 @@ func RegalLast(_ rego.BuiltinContext, arr *ast.Term) (*ast.Term, error) {
 	return arrOp.Elem(arrOp.Len() - 1), nil
 }
 
-// RegalJSONPretty regal.json_pretty, like json.marshal but with pretty formatting.
-func RegalJSONPretty(_ rego.BuiltinContext, data *ast.Term) (*ast.Term, error) {
-	encoded, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	return ast.StringTerm(string(encoded)), nil
-}
-
 // TestContextBuiltins returns the list of builtins as expected by the test runner.
 func TestContextBuiltins() []*tester.Builtin {
 	return []*tester.Builtin{
@@ -120,13 +99,6 @@ func TestContextBuiltins() []*tester.Builtin {
 				Decl: RegalParseModuleMeta.Decl,
 			},
 			Func: rego.Function2(RegalParseModuleMeta, RegalParseModule),
-		},
-		{
-			Decl: &ast.Builtin{
-				Name: RegalJSONPrettyMeta.Name,
-				Decl: RegalJSONPrettyMeta.Decl,
-			},
-			Func: rego.Function1(RegalJSONPrettyMeta, RegalJSONPretty),
 		},
 		{
 			Decl: &ast.Builtin{

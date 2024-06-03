@@ -182,6 +182,7 @@ The following rules are currently available:
 | bugs        | [if-empty-object](https://docs.styra.com/regal/rules/bugs/if-empty-object)                            | Empty object following `if`                               |
 | bugs        | [impossible-not](https://docs.styra.com/regal/rules/bugs/impossible-not)                              | Impossible `not` condition                                |
 | bugs        | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                        | Inconsistently named function arguments                   |
+| bugs        | [internal-entrypoint](https://docs.styra.com/regal/rules/bugs/internal-entrypoint)                    | Entrypoint can't be marked internal                       |
 | bugs        | [invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute)      | Invalid attribute in metadata annotation                  |
 | bugs        | [leaked-internal-reference](https://docs.styra.com/regal/rules/bugs/leaked-internal-reference)        | Outside reference to internal rule or function            |
 | bugs        | [not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop)                      | Use of != in loop                                         |

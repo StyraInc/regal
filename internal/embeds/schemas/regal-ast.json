@@ -113,6 +113,12 @@
     },
     "rule": {
       "properties": {
+        "annotations": {
+          "items": {
+            "$ref": "#/$defs/annotations"
+          },
+          "type": "array"
+        },
         "default": {
           "type": "boolean"
         },

@@ -228,7 +228,7 @@ func fix(args []string, params *fixCommandParams) error {
 		}
 
 		l = l.WithUserConfig(userConfig)
-	case err != nil && params.configFile != "":
+	case params.configFile != "":
 		return fmt.Errorf("user-provided config file not found: %w", err)
 	case params.debug:
 		log.Println("no user-provided config file found, will use the default config")

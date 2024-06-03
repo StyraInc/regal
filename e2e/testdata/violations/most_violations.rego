@@ -49,6 +49,8 @@ duplicate_rule if {
 	input.foo
 }
 
+leaked_internal_reference := data.foo._bar
+
 # METADATA
 # invalid-metadata-attribute: true
 should := "fail"

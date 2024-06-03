@@ -315,7 +315,13 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 func createBuiltinDocs(params newRuleCommandParams) error {
 	docsDir := filepath.Join(params.output, "docs", "rules", params.category)
 
-	docTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.md.tpl")
+	docTmpl := template.New("builtin.md.tpl")
+
+	docTmpl = docTmpl.Funcs(template.FuncMap{
+		"ToUpper": strings.ToUpper,
+	})
+
+	docTmpl, err := docTmpl.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.md.tpl")
 	if err != nil {
 		return err
 	}
@@ -331,6 +337,8 @@ func createBuiltinDocs(params newRuleCommandParams) error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Created doc template for builtin rule %q in %s\n", params.name, docsDir)
 
 	return nil
 }

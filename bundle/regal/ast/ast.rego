@@ -340,6 +340,9 @@ all_rules_refs contains value if {
 	is_ref(value)
 }
 
+# METADATA
+# title: all_refs
+# description: set containing all references found in the input AST
 all_refs contains value if some value in all_rules_refs
 
 all_refs contains value if {
@@ -348,6 +351,9 @@ all_refs contains value if {
 	is_ref(value)
 }
 
+# METADATA
+# title: ref_to_string
+# description:  returns the "path" string of any given ref value
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
 
 _ref_part_to_string(0, ref) := ref.value

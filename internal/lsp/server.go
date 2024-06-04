@@ -513,6 +513,46 @@ func (l *LanguageServer) handleTextDocumentHover(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// The Zed editor doesn't show CodeDescription.Href in diagnostic messages.
+	// Instead, we hijack the hover request to show the documentation links
+	// when there are violations present.
+	violations, ok := l.cache.GetFileDiagnostics(params.TextDocument.URI)
+	if l.clientIdentifier == clients.IdentifierZed && ok && len(violations) > 0 {
+		var docSnippets []string
+
+		var sharedRange types.Range
+
+		for _, v := range violations {
+			if v.Range.Start.Line == params.Position.Line &&
+				v.Range.Start.Character <= params.Position.Character &&
+				v.Range.End.Character >= params.Position.Character {
+				// this is an approximation, if there are multiple violations on the same line
+				// where hover loc is in their range, then they all just share a range as a
+				// single range is needed in the hover response.
+				sharedRange = v.Range
+				docSnippets = append(docSnippets, fmt.Sprintf("[%s/%s](%s)", v.Source, v.Code, v.CodeDescription.Href))
+			}
+		}
+
+		if len(docSnippets) > 1 {
+			return HoverResponse{
+				Contents: types.MarkupContent{
+					Kind:  "markdown",
+					Value: "Documentation links:\n\n* " + strings.Join(docSnippets, "\n* "),
+				},
+				Range: sharedRange,
+			}, nil
+		} else if len(docSnippets) == 1 {
+			return HoverResponse{
+				Contents: types.MarkupContent{
+					Kind:  "markdown",
+					Value: "Documentation: " + docSnippets[0],
+				},
+				Range: sharedRange,
+			}, nil
+		}
+	}
+
 	builtinsOnLine, ok := l.cache.GetBuiltinPositions(params.TextDocument.URI)
 	// when no builtins are found, we can't return a useful hover response.
 	// log the error, but return an empty struct to avoid an error being shown in the client.

@@ -640,7 +640,7 @@ See the [Editor Support](/docs/editor-support.md) page for information about Reg
 
 - [Custom Rules](/docs/custom-rules.md) describes how to develop your own linter rules
 - [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
-- [Development](/docs/development.md) contains information about how to hack on Regal itself
+- [Contributing](/docs/CONTRIBUTING.md) contains information about how to hack on Regal itself
 - [Go Integration](/docs/integration.md) describes how to integrate Regal in your Go application
 - [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
   [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules

@@ -31,6 +31,14 @@ Projects and products that integrate Regal into their offerings.
 - [Enterprise OPA](https://github.com/styrainc/enterprise-opa)
 - [The Rego Playground](https://play.openpolicyagent.org)
 
+## Packaging
+
+The following package managers include Regal in their repositories, either natively or via plugins.
+
+- [Homebrew](https://brew.sh/) via Styra's [homebrew-packages](https://github.com/StyraInc/homebrew-packages)
+- [asdf](https://asdf-vm.com/) via [asdf-regal](https://github.com/asdf-community/asdf-regal)
+- [pkgsrc](https://www.pkgsrc.se/) and the [regal](https://pkgsrc.se/devel/regal) package
+
 ## Companies and Organizations
 
 Companies and organizations using Regal (not counting organizations behind the open source projects listed above).

@@ -610,7 +610,8 @@ but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/polic
 In order to support linting directly in editors and IDE's, Regal implements parts of the
 [Language Server Protocol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
 (LSP). With Regal installed and available on your `$PATH`, editors like VS Code (using the
-[OPA extension](https://github.com/open-policy-agent/vscode-opa)) can leverage Regal for diagnostics, i.e. linting,
+[OPA extension](https://github.com/open-policy-agent/vscode-opa)) and Zed (using the
+[zed-rego](https://github.com/StyraInc/zed-rego) extension) can leverage Regal for diagnostics, i.e. linting,
 and have the results displayed directly in your editor as you work on your Rego policies. The Regal LSP implementation
 doesn't stop at linting though — it'll also provide features like tooltips on hover, go to definition, and document
 symbols helping you easily navigate the Rego code in your workspace.

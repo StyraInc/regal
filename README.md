@@ -88,6 +88,13 @@ curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/down
 docker pull ghcr.io/styrainc/regal:latest
 ```
 
+**asdf**
+```shell
+asdf plugin add regal
+asdf install regal latest
+asdf global regal latest
+```
+
 See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
 published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
 

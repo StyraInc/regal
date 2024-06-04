@@ -8,8 +8,15 @@ the official OPA extension for Visual Studio Code - now supports the Regal langu
 To see Regal linting as you work, install the extension at version `0.13.3` or later
 and open a workspace with Rego files.
 
-The plugin will automatically find and use
-[Regal config](https://docs.styra.com/regal#configuration).
+The plugin will automatically find and use [Regal config](https://docs.styra.com/regal#configuration).
+
+## Zed
+
+[Zed](https://zed.dev) is a modern open-source code editor with focus on performance and simplicity.
+
+Zed supports Rego via Regal and the [zed-rego](https://github.com/StyraInc/zed-rego) extension developed by the Styra
+community. The extension provides syntax highlighting, linting, and all the other language server features provided by
+Regal.
 
 ## Neovim via nvim-lspconfig
 

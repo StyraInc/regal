@@ -58,7 +58,7 @@ You can also experiment with input in the [Rego Playground](https://play.openpol
 						Line: params.Position.Line, Character: params.Position.Character,
 					},
 				},
-				NewText: "input.",
+				NewText: "input",
 			},
 		})
 	}

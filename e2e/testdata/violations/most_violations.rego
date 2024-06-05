@@ -117,6 +117,12 @@ equals_pattern_matching(x) := x == "x"
 
 boolean_assignment := 1 < input.two
 
+# METADATA
+# description: ambiguous scope
+incremental if input.x
+
+incremental if input.y
+
 ### Style ###
 
 # avoid-get-and-list-prefix

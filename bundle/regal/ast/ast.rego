@@ -343,6 +343,7 @@ all_rules_refs contains value if {
 # METADATA
 # title: all_refs
 # description: set containing all references found in the input AST
+# scope: document
 all_refs contains value if some value in all_rules_refs
 
 all_refs contains value if {
@@ -377,6 +378,7 @@ static_rule_ref(ref) if every t in array.slice(ref, 1, count(ref)) {
 # description: |
 #   return the name of a rule if, and only if it only has static parts with
 #   no vars. This could be "username", or "user.name", but not "user[name]"
+# scope: document
 static_rule_name(rule) := rule.head.ref[0].value if count(rule.head.ref) == 1
 
 static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [ref.value |
@@ -438,6 +440,7 @@ function_ret_in_args(fn_name, terms) if {
 # METADATA
 # description: |
 #   answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
+# scope: document
 implicit_boolean_assignment(rule) if {
 	# note the missing location attribute here, which is how we distinguish
 	# between implicit and explicit assignments

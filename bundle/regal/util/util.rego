@@ -1,7 +1,11 @@
+# METADATA
+# description: various utility functions for linter policies
 package regal.util
 
 import rego.v1
 
+# METADATA
+# description: returns true if string is snake_case formatted
 is_snake_case(str) if str == lower(str)
 
 # METADATA
@@ -18,6 +22,13 @@ find_duplicates(arr) := {indices |
 
 	count(indices) > 1
 }
+
+# METADATA
+# description: returns true if array has duplicates of item
+has_duplicates(array, item) if count([x |
+	some x in array
+	x == item
+]) > 1
 
 # METADATA
 # description: |

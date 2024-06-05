@@ -20,6 +20,7 @@ default for_rule(_, _) := {"level": "error"}
 #   Returns the configuration applied (i.e. the provided configuration
 #   merged with any user configuration and possibly command line overrides)
 #   to the rule matching the category and title.
+# scope: document
 for_rule(category, title) := _with_level(category, title, "ignore") if {
 	force_disabled(category, title)
 } else := _with_level(category, title, "error") if {

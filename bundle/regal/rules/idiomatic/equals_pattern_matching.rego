@@ -30,7 +30,7 @@ report contains violation if {
 	val.value[0].value[0].type == "var"
 	val.value[0].value[0].value == "equal"
 
-	terms := normalize_eq_terms(val.value, ast.scalar_types)
+	terms := _normalize_eq_terms(val.value, ast.scalar_types)
 	terms[0].value in arg_var_names
 
 	violation := result.fail(rego.metadata.chain(), result.location(fn))
@@ -63,21 +63,20 @@ report contains violation if {
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value == "equal"
 
-	terms := normalize_eq_terms(expr.terms, ast.scalar_types)
+	terms := _normalize_eq_terms(expr.terms, ast.scalar_types)
 	terms[0].value in arg_var_names
 
 	violation := result.fail(rego.metadata.chain(), result.location(fn))
 }
 
-# METADATA
-# description: Normalize var to always always be on the left hand side
-normalize_eq_terms(terms, scalar_types) := [terms[1], terms[2]] if {
+# normalize var to always always be on the left hand side
+_normalize_eq_terms(terms, scalar_types) := [terms[1], terms[2]] if {
 	terms[1].type == "var"
 	not startswith(terms[1].value, "$")
 	terms[2].type in scalar_types
 }
 
-normalize_eq_terms(terms, scalar_types) := [terms[2], terms[1]] if {
+_normalize_eq_terms(terms, scalar_types) := [terms[2], terms[1]] if {
 	terms[1].type in scalar_types
 	terms[2].type == "var"
 	not startswith(terms[2].value, "$")

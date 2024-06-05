@@ -21,7 +21,7 @@ report contains violation if {
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value in {"eq", "equal"}
 
-	[var, ref] := normalize_eq_terms(terms)
+	[var, ref] := _normalize_eq_terms(terms)
 
 	var.value in arg_names
 	ref.value[0].value in arg_names
@@ -31,15 +31,14 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-# METADATA
-# description: Normalize var to always always be on the left hand side
-normalize_eq_terms(terms) := [terms[1], terms[2]] if {
+# normalize var to always always be on the left hand side
+_normalize_eq_terms(terms) := [terms[1], terms[2]] if {
 	terms[1].type == "var"
 	terms[2].type == "ref"
 	terms[2].value[0].type == "var"
 }
 
-normalize_eq_terms(terms) := [terms[2], terms[1]] if {
+_normalize_eq_terms(terms) := [terms[2], terms[1]] if {
 	terms[1].type == "ref"
 	terms[1].value[0].type == "var"
 	terms[2].type == "var"

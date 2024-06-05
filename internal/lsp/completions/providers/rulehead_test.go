@@ -44,7 +44,7 @@ funckyfunc := true
 
 		c.SetFileContents(uri, contents)
 		c.SetModule(uri, mod)
-		c.SetFileRefs(uri, refs.ForModule(mod))
+		c.SetFileRefs(uri, refs.DefinedInModule(mod))
 	}
 
 	p := &RuleHead{}

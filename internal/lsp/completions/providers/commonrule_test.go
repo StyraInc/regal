@@ -107,7 +107,7 @@ deny := false
 	}
 
 	c.SetModule(testCaseFileURI, mod)
-	c.SetFileRefs(testCaseFileURI, refs.ForModule(mod))
+	c.SetFileRefs(testCaseFileURI, refs.DefinedInModule(mod))
 
 	p := &CommonRule{}
 

@@ -45,7 +45,7 @@ import
 		mod := parse.MustParseModule(contents)
 		c.SetModule(uri, mod)
 
-		c.SetFileRefs(uri, refs.ForModule(mod))
+		c.SetFileRefs(uri, refs.DefinedInModule(mod))
 	}
 
 	p := &PackageRefs{}
@@ -119,7 +119,7 @@ import
 		mod := parse.MustParseModule(contents)
 		c.SetModule(uri, mod)
 
-		c.SetFileRefs(uri, refs.ForModule(mod))
+		c.SetFileRefs(uri, refs.DefinedInModule(mod))
 	}
 
 	p := &PackageRefs{}

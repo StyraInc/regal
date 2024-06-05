@@ -44,6 +44,8 @@ rules:
     prefer-value-in-head:
       level: ignore
   idiomatic:
+    ambiguous-scope:
+      level: error
     boolean-assignment:
       level: error
     custom-has-key-construct:

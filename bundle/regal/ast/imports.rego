@@ -8,6 +8,7 @@ default imports := []
 # description: |
 #   same as input.imports but with a default value (`[]`), making
 #   it safe to refer to without risk of halting evaluation
+# scope: document
 imports := input.imports
 
 # METADATA

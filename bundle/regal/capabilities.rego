@@ -11,6 +11,7 @@ default provided := {}
 #   The capabilities object for Regal itself. Use `config.capabilities`
 #   to get the capabilities for the target environment (i.e. the policies
 #   getting linted).
+# scope: document
 provided := data.internal.capabilities
 
 has_object_keys if "object.keys" in object.keys(config.capabilities.builtins)

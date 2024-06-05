@@ -2,7 +2,6 @@ package refs
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -13,6 +12,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
+
+	_ "embed"
 )
 
 //go:embed rego/ref_names.rego

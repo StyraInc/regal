@@ -44,4 +44,8 @@ allow if i`
 	if labels[0] != "input" {
 		t.Fatalf("Expected 'input' completion, got: %v", labels[0])
 	}
+
+	if exp, got := "input", completions[0].TextEdit.NewText; exp != got {
+		t.Fatalf("Expected '%s' as new text, got: %s", exp, got)
+	}
 }

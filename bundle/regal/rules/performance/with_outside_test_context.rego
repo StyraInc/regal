@@ -12,7 +12,7 @@ report contains violation if {
 	some expr in rule.body
 
 	expr["with"]
-	not strings.any_prefix_match(ast.name(rule), {"test_", "todo_test"})
+	not strings.any_prefix_match(ast.ref_to_string(rule.head.ref), {"test_", "todo_test"})
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr["with"][0]))
 }

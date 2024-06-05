@@ -35,14 +35,6 @@ package_name := concat(".", [path.value |
 	i > 0
 ])
 
-# METADATA
-# description: |
-#   returns the name of the rule, i.e. "foo" for "foo { ... }"
-#   note that what constitutes the "name" of a ref-head rule is
-#   ambiguous at best, i.e. a["b"][c] { ... } ... in those cases
-#   we currently return the first element of the ref, i.e. "a"
-name(rule) := rule.head.ref[0].value
-
 named_refs(refs) := [ref |
 	some i, ref in refs
 	_is_name(ref, i)
@@ -81,7 +73,8 @@ rules := [rule |
 tests := [rule |
 	some rule in input.rules
 	not rule.head.args
-	startswith(name(rule), "test_")
+
+	startswith(ref_to_string(rule.head.ref), "test_")
 ]
 
 functions := [rule |
@@ -91,11 +84,11 @@ functions := [rule |
 
 function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
-rule_and_function_names contains name(rule) if some rule in input.rules
+rule_and_function_names contains ref_to_string(rule.head.ref) if some rule in input.rules
 
 identifiers := rule_and_function_names | imported_identifiers
 
-rule_names contains name(rule) if some rule in rules
+rule_names contains ref_to_string(rule.head.ref) if some rule in rules
 
 # METADATA
 # description: parse provided snippet with a generic package declaration added
@@ -412,7 +405,7 @@ function_decls(rules) := {rule_name: decl |
 	# regal ignore:external-reference
 	some rule in functions
 
-	rule_name := name(rule)
+	rule_name := ref_to_string(rule.head.ref)
 
 	# ensure we only get one set of args, or we'll have a conflict
 	args := [[item |
@@ -420,7 +413,7 @@ function_decls(rules) := {rule_name: decl |
 		item := {"type": "any"}
 	] |
 		some rule in rules
-		name(rule) == rule_name
+		ref_to_string(rule.head.ref) == rule_name
 	][0]
 
 	decl := {"decl": {"args": args, "result": {"type": "any"}}}

@@ -13,7 +13,7 @@ report contains violation if {
 
 	# Deny any rule named foo, bar, or baz. This is just an example!
 	# Add your own rule logic here.
-	ast.name(rule) in {"foo", "bar", "baz"}
+	ast.ref_to_string(rule.head.ref) in {"foo", "bar", "baz"}
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule))
 }

@@ -14,7 +14,7 @@ report contains violation if {
 	"if" in ast.rule_names
 
 	some rule in input.rules
-	ast.name(rule) == "if"
+	ast.ref_to_string(rule.head.ref) == "if"
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

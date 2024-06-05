@@ -8,7 +8,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	test_names := [ast.name(rule) | some rule in ast.tests]
+	test_names := [ast.ref_to_string(rule.head.ref) | some rule in ast.tests]
 
 	some i, name in test_names
 

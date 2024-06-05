@@ -38,13 +38,16 @@ report contains violation if {
 	some rule in input.rules
 
 	not rule.head.args
-	not regex.match(convention.pattern, ast.name(rule))
+
+	name := ast.ref_to_string(rule.head.ref)
+
+	not regex.match(convention.pattern, name)
 
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: rule name %q does not match pattern '%s'",
-			[ast.name(rule), convention.pattern],
+			[name, convention.pattern],
 		),
 	)
 }
@@ -58,13 +61,15 @@ report contains violation if {
 
 	some rule in ast.functions
 
-	not regex.match(convention.pattern, ast.name(rule))
+	name := ast.ref_to_string(rule.head.ref)
+
+	not regex.match(convention.pattern, name)
 
 	violation := with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: function name %q does not match pattern '%s'",
-			[ast.name(rule), convention.pattern],
+			[name, convention.pattern],
 		),
 	)
 }

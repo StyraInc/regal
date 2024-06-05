@@ -43,6 +43,11 @@ type Cache struct {
 	// fileRefs is expected to be updated when a file is successfully parsed.
 	fileRefs  map[string]map[string]types.Ref
 	fileRefMu sync.Mutex
+
+	// usedRefs is a map of file URI to a list of string ref names used in that file.
+	// These are intended to be used for completions in that file.
+	usedRefs   map[string][]string
+	usedRefsMu sync.Mutex
 }
 
 func NewCache() *Cache {
@@ -57,6 +62,8 @@ func NewCache() *Cache {
 		builtinPositionsFile: make(map[string]map[uint][]types.BuiltinPosition),
 
 		fileRefs: make(map[string]map[string]types.Ref),
+
+		usedRefs: make(map[string][]string),
 	}
 }
 
@@ -233,6 +240,22 @@ func (c *Cache) GetAllFileRefs() map[string]map[string]types.Ref {
 	return maps.Clone(c.fileRefs)
 }
 
+func (c *Cache) SetUsedRefs(uri string, items []string) {
+	c.usedRefsMu.Lock()
+	defer c.usedRefsMu.Unlock()
+
+	c.usedRefs[uri] = items
+}
+
+func (c *Cache) GetUsedRefs(uri string) ([]string, bool) {
+	c.usedRefsMu.Lock()
+	defer c.usedRefsMu.Unlock()
+
+	refs, ok := c.usedRefs[uri]
+
+	return refs, ok
+}
+
 // Delete removes all cached data for a given URI.
 func (c *Cache) Delete(uri string) {
 	c.fileContentsMu.Lock()
@@ -262,6 +285,10 @@ func (c *Cache) Delete(uri string) {
 	c.fileRefMu.Lock()
 	delete(c.fileRefs, uri)
 	c.fileRefMu.Unlock()
+
+	c.usedRefsMu.Lock()
+	delete(c.usedRefs, uri)
+	c.usedRefsMu.Unlock()
 }
 
 func UpdateCacheForURIFromDisk(cache *Cache, uri, path string) (string, error) {

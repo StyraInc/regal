@@ -32,7 +32,7 @@ func TestForModule_Package(t *testing.T) {
 package example
 `)
 
-	items := ForModule(mod)
+	items := DefinedInModule(mod)
 
 	expectedRefs := map[string]types.Ref{
 		"data.example": {
@@ -123,7 +123,7 @@ deny contains "strings" if true
 pi := 3.14
 `)
 
-	items := ForModule(mod)
+	items := DefinedInModule(mod)
 
 	expectedRefs := map[string]types.Ref{
 		"data.example": {

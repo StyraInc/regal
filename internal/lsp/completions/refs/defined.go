@@ -13,9 +13,9 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
-// ForModule returns a map of refs and details about them to be used in completions that
+// DefinedInModule returns a map of refs and details about them to be used in completions that
 // were found in the given module.
-func ForModule(module *ast.Module) map[string]types.Ref {
+func DefinedInModule(module *ast.Module) map[string]types.Ref {
 	modKey := module.Package.Path.String()
 
 	// first, create a reference for the package using the metadata

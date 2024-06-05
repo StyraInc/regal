@@ -448,7 +448,7 @@ func (l *LanguageServer) processTextContentUpdate(
 
 	l.cache.SetFileContents(uri, content)
 
-	success, err := updateParse(l.cache, uri)
+	success, err := updateParse(ctx, l.cache, uri)
 	if err != nil {
 		return false, fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -465,7 +465,7 @@ func (l *LanguageServer) processTextContentUpdate(
 	return false, nil
 }
 
-func (l *LanguageServer) processBuiltinsUpdate(_ context.Context, uri string, content string) error {
+func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, uri string, content string) error {
 	if _, ok := l.cache.GetFileContents(uri); !ok {
 		// If the file is not in the cache, exit early or else
 		// we might accidentally put it in the cache after it's been
@@ -475,7 +475,7 @@ func (l *LanguageServer) processBuiltinsUpdate(_ context.Context, uri string, co
 
 	l.cache.SetFileContents(uri, content)
 
-	success, err := updateParse(l.cache, uri)
+	success, err := updateParse(ctx, l.cache, uri)
 	if err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -1161,7 +1161,7 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 }
 
 func (l *LanguageServer) handleInitialize(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
@@ -1246,7 +1246,7 @@ func (l *LanguageServer) handleInitialize(
 	if l.clientRootURI != "" {
 		l.workspaceMode = true
 
-		err = l.loadWorkspaceContents()
+		err = l.loadWorkspaceContents(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
@@ -1260,7 +1260,7 @@ func (l *LanguageServer) handleInitialize(
 	return result, nil
 }
 
-func (l *LanguageServer) loadWorkspaceContents() error {
+func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.clientRootURI)
 
 	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
@@ -1280,7 +1280,7 @@ func (l *LanguageServer) loadWorkspaceContents() error {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
 		}
 
-		_, err = updateParse(l.cache, fileURI)
+		_, err = updateParse(ctx, l.cache, fileURI)
 		if err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}

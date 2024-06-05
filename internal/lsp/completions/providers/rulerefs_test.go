@@ -58,7 +58,7 @@ deny := false
 
 		c.SetModule(uri, mod)
 
-		c.SetFileRefs(uri, refs.ForModule(mod))
+		c.SetFileRefs(uri, refs.DefinedInModule(mod))
 	}
 
 	c.SetFileContents("file:///example.rego", currentlyEditingFileContents+"\n\nallow if ")

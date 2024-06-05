@@ -22,7 +22,7 @@ import (
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
 // URI instead.
-func updateParse(cache *cache.Cache, uri string) (bool, error) {
+func updateParse(ctx context.Context, cache *cache.Cache, uri string) (bool, error) {
 	content, ok := cache.GetFileContents(uri)
 	if !ok {
 		return false, fmt.Errorf("failed to get file contents for uri %q", uri)
@@ -35,7 +35,14 @@ func updateParse(cache *cache.Cache, uri string) (bool, error) {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(uri, []types.Diagnostic{})
 		cache.SetModule(uri, module)
-		cache.SetFileRefs(uri, refs.ForModule(module))
+		cache.SetFileRefs(uri, refs.DefinedInModule(module))
+
+		refNames, err := refs.UsedInModule(ctx, module)
+		if err != nil {
+			return false, fmt.Errorf("failed to get used refs: %w", err)
+		}
+
+		cache.SetUsedRefs(uri, refNames)
 
 		return true, nil
 	}

@@ -19,7 +19,7 @@ Recommended, but not required:
 
 - The [rq](https://git.sr.ht/~charles/rq) tool. This is used for automating and simplifying many of the tasks outlined
   in this document, and is (ab)used as a Rego-based replacement for Make in this project. Check out the
-  [do.rq](../build/do.rq) file to see what that looks like, and for documentation on the available tasks.
+  [do.rq](https://github.com/StyraInc/regal/blob/main/build/do.rq) file to see what that looks like, and for documentation on the available tasks.
 
 ## Contributing New Rules
 

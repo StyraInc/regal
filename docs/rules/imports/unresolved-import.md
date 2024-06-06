@@ -4,6 +4,8 @@
 
 **Category**: Imports
 
+**Type**: Aggregate - only runs when more than one file is provided for linting
+
 **Avoid**
 
 Imports that can't be resolved.
@@ -38,7 +40,7 @@ import data.users
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     unresolved-import:
       # one of "error", "warning", "ignore"

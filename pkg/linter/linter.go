@@ -316,7 +316,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if len(input.FileNames) > 1 {
-		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, regoReport.Aggregates)
+		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, regoReport.Aggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 		}
@@ -680,6 +680,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 	aggregate := report.Report{}
 	aggregate.Aggregates = make(map[string][]report.Aggregate)
+	aggregate.IgnoreDirectives = make(map[string]map[string][]string)
 
 	var wg sync.WaitGroup
 
@@ -749,6 +750,10 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				aggregate.Aggregates[k] = append(aggregate.Aggregates[k], result.Aggregates[k]...)
 			}
 
+			for k := range result.IgnoreDirectives {
+				aggregate.IgnoreDirectives[k] = result.IgnoreDirectives[k]
+			}
+
 			if l.profiling {
 				aggregate.AddProfileEntries(result.AggregateProfile)
 			}
@@ -774,6 +779,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 func (l Linter) lintWithRegoAggregateRules(
 	ctx context.Context,
 	aggregates map[string][]report.Aggregate,
+	ignoreDirectives map[string]map[string][]string,
 ) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRegoAggregate)
 	defer l.stopTimer(regalmetrics.RegalLintRegoAggregate)
@@ -798,6 +804,7 @@ func (l Linter) lintWithRegoAggregateRules(
 		// There is no file provided in input here, but we'll provide *something* for
 		// consistency, and to avoid silently failing with undefined should someone
 		// refer to input.regal in an aggregate_report rule
+		"ignore_directives": ignoreDirectives,
 		"regal": map[string]any{
 			"file": map[string]any{
 				"name":  "__aggregate_report__",

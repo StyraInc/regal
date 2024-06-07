@@ -176,6 +176,7 @@ func TestLintAllViolations(t *testing.T) {
 		"use-if":                   {},
 		"use-contains":             {},
 		"internal-entrypoint":      {},
+		"file-length":              {},
 	}
 
 	for _, category := range cfg.Rules {
@@ -410,7 +411,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("three policies - violation expected", func(t *testing.T) {
 		stdout := bytes.Buffer{}
 		stderr := bytes.Buffer{}
-		// By sending a single file to the command, we skip the aggregates computation, so we expect one violation
+
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
 			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/three_policies"))
@@ -431,6 +432,45 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
 		}
 	})
+}
+
+func TestLintAggregateIgnoreDirective(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)("lint", "--format", "json",
+		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"))
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+
+	err = json.Unmarshal(stdout.Bytes(), &rep)
+	if err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	if rep.Summary.NumViolations != 1 {
+		t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
+	}
+
+	violation := rep.Violations[0]
+	if violation.Title != "unresolved-import" {
+		t.Errorf("expected violation 'unresolved-import', got %q", violation.Title)
+	}
+
+	// ensure that it's the file without the ignore directive that has the violation
+	if !strings.HasSuffix(violation.Location.File, "second.rego") {
+		t.Errorf("expected violation in second.rego, got %q", violation.Location.File)
+	}
 }
 
 func TestTestRegalBundledBundle(t *testing.T) {

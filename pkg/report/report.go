@@ -64,12 +64,13 @@ type Report struct {
 	Violations []Violation `json:"violations"`
 	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
 	// to avoid surfacing a null/empty field.
-	Aggregates       map[string][]Aggregate  `json:"aggregates,omitempty"`
-	Notices          []Notice                `json:"notices,omitempty"`
-	Summary          Summary                 `json:"summary"`
-	Metrics          map[string]any          `json:"metrics,omitempty"`
-	AggregateProfile map[string]ProfileEntry `json:"-"`
-	Profile          []ProfileEntry          `json:"profile,omitempty"`
+	Aggregates       map[string][]Aggregate         `json:"aggregates,omitempty"`
+	Notices          []Notice                       `json:"notices,omitempty"`
+	Summary          Summary                        `json:"summary"`
+	Metrics          map[string]any                 `json:"metrics,omitempty"`
+	AggregateProfile map[string]ProfileEntry        `json:"-"`
+	Profile          []ProfileEntry                 `json:"profile,omitempty"`
+	IgnoreDirectives map[string]map[string][]string `json:"ignore_directives,omitempty"`
 }
 
 // ProfileEntry is a single entry of profiling information, keyed by location.

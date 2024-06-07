@@ -4,14 +4,17 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.config
+import data.regal.util
 
 lint.notices := notices
 
 lint.aggregates := aggregate
 
-lint_aggregate.violations := aggregate_report
+lint.ignore_directives[input.regal.file.name] := ast.ignore_directives
 
 lint.violations := report
+
+lint_aggregate.violations := aggregate_report
 
 rules_to_run[category][title] if {
 	some category, title
@@ -34,7 +37,12 @@ grouped_notices[category][title] contains notice if {
 }
 
 # METADATA
-# description: Runs all rules against an input AST and produces a report
+# title: report
+# description: |
+#   This is the main entrypoint for linting, The report rule runs all rules against an input AST and produces a report
+# scope: document
+
+# METADATA
 # entrypoint: true
 report contains violation if {
 	not is_object(input)
@@ -65,7 +73,7 @@ report contains violation if {
 
 	some violation in data.regal.rules[category][title].report
 
-	not ignored(violation, ignore_directives)
+	not ignored(violation, ast.ignore_directives)
 }
 
 # Check custom rules
@@ -77,7 +85,7 @@ report contains violation if {
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
 
-	not ignored(violation, ignore_directives)
+	not ignored(violation, ast.ignore_directives)
 }
 
 # Collect aggregates in bundled rules
@@ -119,7 +127,9 @@ aggregate_report contains violation if {
 	# regal ignore:with-outside-test-context
 	some violation in data.regal.rules[category][title].aggregate_report with input as input_for_rule
 
-	not ignored(violation, ignore_directives)
+	ignore_directives := object.get(input.ignore_directives, violation.location.file, {})
+
+	not ignored(violation, util.keys_to_numbers(ignore_directives))
 }
 
 # METADATA
@@ -141,7 +151,12 @@ aggregate_report contains violation if {
 	# regal ignore:with-outside-test-context
 	some violation in data.custom.regal.rules[category][title].aggregate_report with input as input_for_rule
 
-	not ignored(violation, ignore_directives)
+	# for custom rules, we can't assume that the author included
+	# a location in the violation, although they _really_ should
+	file := object.get(violation, ["location", "file"], "")
+	ignore_directives := object.get(input.ignore_directives, file, {})
+
+	not ignored(violation, util.keys_to_numbers(ignore_directives))
 }
 
 ignored(violation, directives) if {
@@ -152,17 +167,4 @@ ignored(violation, directives) if {
 ignored(violation, directives) if {
 	ignored_rules := directives[violation.location.row + 1]
 	violation.title in ignored_rules
-}
-
-ignore_directives[row] := rules if {
-	some comment in ast.comments_decoded
-	text := trim_space(comment.Text)
-
-	i := indexof(text, "regal ignore:")
-	i != -1
-
-	list := regex.replace(substring(text, i + 13, -1), `\s`, "")
-
-	row := comment.Location.row + 1
-	rules := split(list, ",")
 }

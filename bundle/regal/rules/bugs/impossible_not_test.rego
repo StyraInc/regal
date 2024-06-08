@@ -2,6 +2,8 @@ package regal.rules.bugs["impossible-not_test"]
 
 import rego.v1
 
+import data.regal.config
+
 import data.regal.rules.bugs["impossible-not"] as rule
 
 test_fail_multivalue_not_reference_same_package if {
@@ -156,7 +158,7 @@ expected := {
 	"level": "error",
 	"related_resources": [{
 		"description": "documentation",
-		"ref": "https://docs.styra.com/regal/rules/bugs/impossible-not",
+		"ref": config.docs.resolve_url("$baseUrl/$category/impossible-not", "bugs"),
 	}],
 	"title": "impossible-not",
 }

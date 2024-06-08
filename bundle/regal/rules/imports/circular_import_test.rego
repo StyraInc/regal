@@ -2,6 +2,8 @@ package regal.rules.imports["circular-import_test"]
 
 import rego.v1
 
+import data.regal.config
+
 import data.regal.rules.imports["circular-import"] as rule
 
 test_aggregate_rule_empty_if_no_refs if {
@@ -203,7 +205,7 @@ test_aggregate_report_fails_when_cycle_present if {
 		"location": {"col": 0, "file": "b.rego", "row": 2},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/imports/circular-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/circular-import", "imports"),
 		}],
 		"title": "circular-import",
 	}}
@@ -226,7 +228,7 @@ test_aggregate_report_fails_when_cycle_present_in_1_package if {
 		"location": {"col": 12, "file": "a.rego", "row": 3},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/imports/circular-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/circular-import", "imports"),
 		}],
 		"title": "circular-import",
 	}}
@@ -258,7 +260,7 @@ test_aggregate_report_fails_when_cycle_present_in_n_packages if {
 		"location": {"col": 12, "file": "c.rego", "row": 3},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/imports/circular-import",
+			"ref": config.docs.resolve_url("$baseUrl/$category/circular-import", "imports"),
 		}],
 		"title": "circular-import",
 	}}

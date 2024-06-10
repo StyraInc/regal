@@ -101,10 +101,8 @@ func init() {
 
 			rep, err := lint(args, params)
 			if err != nil {
-				if !errors.Is(err, &alreadyReportedError{}) {
-					log.SetOutput(os.Stderr)
-					log.Println(err)
-				}
+				log.SetOutput(os.Stderr)
+				log.Println(err)
 
 				return exit(1)
 			}
@@ -316,7 +314,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	result, err := regal.Lint(ctx)
 	if err != nil {
-		return report.Report{}, reportErrors(params.format, outputWriter, err)
+		return report.Report{}, formatError(params.format, fmt.Errorf("error(s) encountered while linting: %w", err))
 	}
 
 	rep, err := getReporter(params.format, outputWriter)
@@ -364,33 +362,18 @@ func getWriterForOutputFile(filename string) (io.Writer, error) {
 	return f, nil
 }
 
-// alreadyReportedError is an error type that is used to signal that an error has already been reported
-// and should not shown again, however it should still trigger the error exit code.
-type alreadyReportedError struct{}
-
-func (*alreadyReportedError) Error() string {
-	return "error already reported"
-}
-
-func reportErrors(format string, outputWriter io.Writer, err error) error {
+func formatError(format string, err error) error {
 	// currently, JSON and SARIF will get the same generic JSON error format
 	if format == formatJSON || format == formatSarif {
-		enc := json.NewEncoder(outputWriter)
-		enc.SetIndent("", "  ")
-
-		if err = enc.Encode(map[string]interface{}{
+		bs, err := json.MarshalIndent(map[string]interface{}{
 			"errors": []string{err.Error()},
-		}); err != nil {
-			return fmt.Errorf("failed to encode error in %s: %w", format, err)
+		}, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format errors for output: %w", err)
 		}
 
-		return &alreadyReportedError{}
+		return fmt.Errorf("%s", string(bs))
 	}
 
-	_, err = outputWriter.Write([]byte(fmt.Sprintf("error(s) encountered while linting: %s\n", err)))
-	if err != nil {
-		return fmt.Errorf("failed to write error to output: %w", err)
-	}
-
-	return &alreadyReportedError{}
+	return err
 }

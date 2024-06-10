@@ -1316,7 +1316,7 @@ func (*LanguageServer) handleTextDocumentDiagnostic(
 	// this is a no-op. Because we accept the textDocument/didChange event, which contains the new content,
 	// we don't need to do anything here as once the new content has been parsed, the diagnostics will be sent
 	// on the channel regardless of this request.
-	return struct{}{}, nil
+	return nil, nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(

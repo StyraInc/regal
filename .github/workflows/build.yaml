@@ -48,7 +48,7 @@ jobs:
       - run: go install git.sr.ht/~charles/rq/cmd/rq@${{ env.RQ_VERSION }}
         if: steps.cache-rq.outputs.cache-hit != 'true'
       - name: Cache rq binary
-        if: steps.cache-binary.outputs.cache-hit != 'true'
+        if: steps.cache-rq.outputs.cache-hit != 'true'
         uses: actions/cache@v4
         with:
           path: ~/go/bin/rq

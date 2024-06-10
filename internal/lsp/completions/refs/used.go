@@ -26,7 +26,11 @@ var refNamesRego string
 //nolint:gochecknoglobals
 var pq *rego.PreparedEvalQuery
 
-func init() {
+// initialize prepares the rego query for finding ref names used in a module.
+// This is run and the resulting prepared query stored for performance reasons.
+// This function is only used by language server code paths and so init() is not
+// used.
+func initialize(ctx context.Context) {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
 	dataBundle := bundle.Bundle{
@@ -52,7 +56,7 @@ func init() {
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	}
 
-	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
+	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +69,12 @@ func init() {
 // See the rego above for more details on what's included and excluded.
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
+	if pq == nil {
+		// new context here as the pq is used by later calls too
+		//nolint:contextcheck
+		initialize(context.Background())
+	}
+
 	rs, err := pq.Eval(ctx, rego.EvalInput(module))
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate rego query: %w", err)

@@ -219,7 +219,10 @@ func fix(args []string, params *fixCommandParams) error {
 			log.Printf("found user config file: %s", userConfigFile.Name())
 		}
 
-		if err := yaml.NewDecoder(userConfigFile).Decode(&userConfig); err != nil {
+		err := yaml.NewDecoder(userConfigFile).Decode(&userConfig)
+		if errors.Is(err, io.EOF) {
+			log.Printf("user config file %q is empty, will use the default config", userConfigFile.Name())
+		} else if err != nil {
 			if regalDir != nil {
 				return fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
 			}

@@ -3,6 +3,7 @@ package refs
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -26,7 +27,14 @@ var refNamesRego string
 //nolint:gochecknoglobals
 var pq *rego.PreparedEvalQuery
 
-func init() {
+//nolint:gochecknoglobals
+var pqInitOnce sync.Once
+
+// initialize prepares the rego query for finding ref names used in a module.
+// This is run and the resulting prepared query stored for performance reasons.
+// This function is only used by language server code paths and so init() is not
+// used.
+func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
 	dataBundle := bundle.Bundle{
@@ -65,6 +73,10 @@ func init() {
 // See the rego above for more details on what's included and excluded.
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
+	if pq == nil {
+		pqInitOnce.Do(initialize)
+	}
+
 	rs, err := pq.Eval(ctx, rego.EvalInput(module))
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate rego query: %w", err)

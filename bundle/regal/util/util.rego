@@ -35,3 +35,10 @@ has_duplicates(array, item) if count([x |
 #   returns an array of arrays built from all parts of the provided path array,
 #   so e.g. [1, 2, 3] would return [[1], [1, 2], [1, 2, 3]]
 all_paths(path) := [array.slice(path, 0, len) | some len in numbers.range(1, count(path))]
+
+# METADATA
+# description: attempts to turn any key in provided object into numeric form
+keys_to_numbers(obj) := {num: v |
+	some k, v in obj
+	num := to_number(k)
+}

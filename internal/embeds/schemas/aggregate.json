@@ -12,6 +12,9 @@
         "aggregate": {
           "$ref": "#/$defs/aggregate"
         },
+        "ignore_directives": {
+          "$ref": "#/$defs/ignore_directives"
+        },
         "regal": {
           "$ref": "#/$defs/regal"
         }
@@ -23,6 +26,9 @@
       "items": {
         "type": "object"
       }
+    },
+    "ignore_directives": {
+      "type": "object"
     },
     "regal": {
       "properties": {

@@ -15,7 +15,7 @@ imports := input.imports
 # description: |
 #   set of all names imported in the input module, meaning commonly the last part of any
 #   imported ref, like "bar" in "data.foo.bar", or an alias like "baz" in "data.foo.bar as baz".
-imported_identifiers contains imported_identifier(imp) if {
+imported_identifiers contains _imported_identifier(imp) if {
 	some imp in imports
 
 	imp.path.value[0].value in {"input", "data"}
@@ -30,14 +30,14 @@ resolved_imports[identifier] := path if {
 	_import.path.value[0].value == "data"
 	count(_import.path.value) > 1
 
-	identifier := imported_identifier(_import)
+	identifier := _imported_identifier(_import)
 	path := [part.value | some part in _import.path.value]
 }
 
-imported_identifier(imp) := imp.alias
-
-imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
-
+# METADATA
+# description: |
+#   returns true if provided path (like ["data", "foo", "bar"]) is in the
+#   list of imports (which is commonly ast.imports)
 imports_has_path(imports, path) if {
 	some imp in imports
 
@@ -53,6 +53,10 @@ imports_keyword(imports, keyword) if {
 
 	_has_keyword(_arr(imp), keyword)
 }
+
+_imported_identifier(imp) := imp.alias
+
+_imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
 
 _arr(xs) := [y.value | some y in xs.path.value]
 

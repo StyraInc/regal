@@ -6,9 +6,7 @@ import rego.v1
 
 import data.regal.result
 
-aggregate contains entry if {
-    entry := result.aggregate(rego.metadata.chain(), {})
-}
+aggregate contains result.aggregate(rego.metadata.chain(), {})
 
 aggregate_report contains violation if {
 	not two_files_processed

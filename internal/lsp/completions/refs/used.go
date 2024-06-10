@@ -3,6 +3,7 @@ package refs
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -26,11 +27,14 @@ var refNamesRego string
 //nolint:gochecknoglobals
 var pq *rego.PreparedEvalQuery
 
+//nolint:gochecknoglobals
+var pqInitOnce sync.Once
+
 // initialize prepares the rego query for finding ref names used in a module.
 // This is run and the resulting prepared query stored for performance reasons.
 // This function is only used by language server code paths and so init() is not
 // used.
-func initialize(ctx context.Context) {
+func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
 	dataBundle := bundle.Bundle{
@@ -56,7 +60,7 @@ func initialize(ctx context.Context) {
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	}
 
-	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(ctx)
+	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -70,9 +74,7 @@ func initialize(ctx context.Context) {
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
 	if pq == nil {
-		// new context here as the pq is used by later calls too
-		//nolint:contextcheck
-		initialize(context.Background())
+		pqInitOnce.Do(initialize)
 	}
 
 	rs, err := pq.Eval(ctx, rego.EvalInput(module))

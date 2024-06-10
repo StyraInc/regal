@@ -3,6 +3,7 @@ package regal.rules.bugs["inconsistent-args_test"]
 import rego.v1
 
 import data.regal.ast
+import data.regal.config
 
 import data.regal.rules.bugs["inconsistent-args"] as rule
 
@@ -68,7 +69,7 @@ expected := {
 	"level": "error",
 	"related_resources": [{
 		"description": "documentation",
-		"ref": "https://docs.styra.com/regal/rules/bugs/inconsistent-args",
+		"ref": config.docs.resolve_url("$baseUrl/$category/inconsistent-args", "bugs"),
 	}],
 	"title": "inconsistent-args",
 }

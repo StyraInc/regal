@@ -3,6 +3,7 @@ package regal.rules.style["double-negative_test"]
 import rego.v1
 
 import data.regal.ast
+import data.regal.config
 
 import data.regal.rules.style["double-negative"] as rule
 
@@ -20,7 +21,7 @@ test_fail_double_negative if {
 		"location": {"col": 13, "file": "policy.rego", "row": 8, "text": "    fine if not not_fine"},
 		"related_resources": [{
 			"description": "documentation",
-			"ref": "https://docs.styra.com/regal/rules/style/double-negative",
+			"ref": config.docs.resolve_url("$baseUrl/$category/double-negative", "style"),
 		}],
 		"title": "double-negative",
 		"level": "error",

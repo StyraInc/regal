@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -313,7 +314,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	result, err := regal.Lint(ctx)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("error(s) encountered while linting: %w", err)
+		return report.Report{}, formatError(params.format, fmt.Errorf("error(s) encountered while linting: %w", err))
 	}
 
 	rep, err := getReporter(params.format, outputWriter)
@@ -359,4 +360,20 @@ func getWriterForOutputFile(filename string) (io.Writer, error) {
 	}
 
 	return f, nil
+}
+
+func formatError(format string, err error) error {
+	// currently, JSON and SARIF will get the same generic JSON error format
+	if format == formatJSON || format == formatSarif {
+		bs, err := json.MarshalIndent(map[string]interface{}{
+			"errors": []string{err.Error()},
+		}, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format errors for output: %w", err)
+		}
+
+		return fmt.Errorf("%s", string(bs))
+	}
+
+	return err
 }

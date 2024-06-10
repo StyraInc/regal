@@ -47,6 +47,19 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 					Kind:  "markdown",
 					Value: hover.CreateHoverContent(builtIn),
 				},
+				TextEdit: &types.TextEdit{
+					Range: types.Range{
+						Start: types.Position{
+							Line:      params.Position.Line,
+							Character: params.Position.Character - uint(len(lastWord)),
+						},
+						End: types.Position{
+							Line:      params.Position.Line,
+							Character: params.Position.Character,
+						},
+					},
+					NewText: key,
+				},
 			})
 		}
 	}

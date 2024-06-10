@@ -73,9 +73,7 @@ func initialize() {
 // See the rego above for more details on what's included and excluded.
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
-	if pq == nil {
-		pqInitOnce.Do(initialize)
-	}
+	pqInitOnce.Do(initialize)
 
 	rs, err := pq.Eval(ctx, rego.EvalInput(module))
 	if err != nil {

@@ -29,6 +29,8 @@ type Config struct {
 	// Defaults state is loaded from configuration under rules and so is not (un)marshalled
 	// in the same way.
 	Defaults Defaults `json:"-" yaml:"-"`
+
+	Features *Features `json:"features,omitempty" yaml:"features,omitempty"`
 }
 
 type Category map[string]Rule
@@ -44,6 +46,14 @@ type Defaults struct {
 // currently only the level is supported.
 type Default struct {
 	Level string `json:"level" yaml:"level"`
+}
+
+type Features struct {
+	RemoteFeatures *RemoteFeatures `json:"remote_features,omitempty" yaml:"remote_features,omitempty"`
+}
+
+type RemoteFeatures struct {
+	CheckVersion bool `json:"check_version,omitempty" yaml:"check_version,omitempty"`
 }
 
 func (d *Default) mapToConfig(result any) error {
@@ -167,6 +177,14 @@ func FromMap(confMap map[string]any) (Config, error) {
 	return conf, nil
 }
 
+func (config *Config) SetDefaults() {
+	config.Features = &Features{
+		RemoteFeatures: &RemoteFeatures{
+			CheckVersion: true,
+		},
+	}
+}
+
 func (config Config) MarshalYAML() (any, error) {
 	var unstructuredConfig map[string]any
 
@@ -229,6 +247,11 @@ type marshallingIntermediary struct {
 			} `yaml:"builtins"`
 		} `yaml:"minus"`
 	} `yaml:"capabilities"`
+	Features struct {
+		RemoteFeatures struct {
+			CheckVersion bool `yaml:"check_version"`
+		} `yaml:"remote_features"`
+	} `yaml:"features"`
 }
 
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {
@@ -301,6 +324,15 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	// add any builtins referenced in the plus config
 	for _, plusBuiltin := range result.Capabilities.Plus.Builtins {
 		config.Capabilities.Builtins[plusBuiltin.Name] = fromOPABuiltin(*plusBuiltin)
+	}
+
+	// feature defaults
+	if result.Features.RemoteFeatures.CheckVersion {
+		config.Features = &Features{
+			RemoteFeatures: &RemoteFeatures{
+				CheckVersion: true,
+			},
+		}
 	}
 
 	return nil

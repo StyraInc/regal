@@ -20,10 +20,12 @@ import (
 
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
+	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/reporter"
+	"github.com/styrainc/regal/pkg/version"
 )
 
 type lintCommandParams struct {
@@ -280,6 +282,8 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	var userConfig config.Config
 
+	userConfig.SetDefaults()
+
 	userConfigFile, err := readUserConfig(params, regalDir)
 
 	switch {
@@ -311,6 +315,23 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	if params.metrics {
 		m.Timer(regalmetrics.RegalConfigParse).Stop()
 	}
+
+	go func() {
+		dir := ""
+		if regalDir != nil {
+			dir = regalDir.Name()
+		}
+
+		if userConfig.Features.RemoteFeatures.CheckVersion &&
+			os.Getenv(update.CheckAndWarnIgnoreVariable) != "false" {
+			update.CheckAndWarn(update.Options{
+				CurrentVersion: version.Version,
+				CurrentTime:    time.Now().UTC(),
+				Debug:          params.debug,
+				StateDir:       dir,
+			}, os.Stderr)
+		}
+	}()
 
 	result, err := regal.Lint(ctx)
 	if err != nil {

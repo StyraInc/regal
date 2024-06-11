@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
@@ -30,10 +31,12 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/version"
 )
 
 const (
@@ -292,6 +295,8 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			var loadedConfig config.Config
 
+			loadedConfig.SetDefaults()
+
 			err = yaml.NewDecoder(configFile).Decode(&loadedConfig)
 			if err != nil && !errors.Is(err, io.EOF) {
 				l.logError(fmt.Errorf("failed to reload config: %w", err))
@@ -307,6 +312,19 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				l.loadedConfig = &loadedConfig
 			}
 			l.loadedConfigLock.Unlock()
+
+			//nolint:contextcheck
+			go func() {
+				if loadedConfig.Features.RemoteFeatures.CheckVersion &&
+					os.Getenv(update.CheckAndWarnIgnoreVariable) != "false" {
+					update.CheckAndWarn(update.Options{
+						CurrentVersion: version.Version,
+						CurrentTime:    time.Now().UTC(),
+						Debug:          false,
+						StateDir:       filepath.Dir(configFile.Name()),
+					}, os.Stderr)
+				}
+			}()
 
 			l.diagnosticRequestWorkspace <- "config file changed"
 		case <-l.configWatcher.Drop:

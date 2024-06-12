@@ -9,7 +9,7 @@ Regal will notify you by writing a message in stderr.
 
 An example of such a message is:
 
-```
+```txt
 A new version of Regal is available (v0.23.1). You are running v0.23.0.
 See https://github.com/StyraInc/regal/releases/tag/v0.23.1 for the latest release.
 ```

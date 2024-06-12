@@ -21,7 +21,7 @@ import (
 //go:embed update.rego
 var updateModule string
 
-const CheckAndWarnIgnoreVariable = "REGAL_FEATURES_REMOTE_CHECK_VERSION"
+const CheckVersionDisableEnvVar = "REGAL_FEATURES_REMOTE_CHECK_VERSION_DISABLE"
 
 type Options struct {
 	CurrentVersion string

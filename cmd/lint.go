@@ -321,7 +321,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		}
 
 		if userConfig.Features.Remote.CheckVersion &&
-			os.Getenv(update.CheckAndWarnIgnoreVariable) != "false" {
+			os.Getenv(update.CheckVersionDisableEnvVar) != "false" {
 			update.CheckAndWarn(update.Options{
 				CurrentVersion: version.Version,
 				CurrentTime:    time.Now().UTC(),

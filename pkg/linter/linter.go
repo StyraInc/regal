@@ -12,7 +12,6 @@ import (
 	"strings"
 	"sync"
 
-	"dario.cat/mergo"
 	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
@@ -42,7 +41,7 @@ type Linter struct {
 	rootDir              string
 	ruleBundles          []*bundle.Bundle
 	userConfig           *config.Config
-	combinedConfig       *config.Config
+	combinedCfg          *config.Config
 	dataBundle           *bundle.Bundle
 	customRulesPaths     []string
 	customRuleFS         fs.FS
@@ -79,6 +78,11 @@ func NewLinter() Linter {
 	return Linter{
 		ruleBundles: []*bundle.Bundle{&regalRules},
 	}
+}
+
+// NewEmptyLinter creates a linter with no rule bundles.
+func NewEmptyLinter() Linter {
+	return Linter{}
 }
 
 // WithInputPaths sets the inputPaths to lint. Note that these will be
@@ -222,12 +226,10 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, errors.New("nothing provided to lint")
 	}
 
-	conf, err := l.mergedConfig()
+	conf, err := l.combinedConfig()
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
 	}
-
-	l.combinedConfig = &conf
 
 	l.dataBundle = &bundle.Bundle{
 		Manifest: bundle.Manifest{
@@ -236,7 +238,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		},
 		Data: map[string]any{
 			"internal": map[string]any{
-				"combined_config": config.ToMap(*l.combinedConfig),
+				"combined_config": config.ToMap(*conf),
 				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
 			},
 		},
@@ -860,121 +862,34 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	return r, nil
 }
 
-func (l Linter) readProvidedConfig() (config.Config, error) {
+func (l Linter) combinedConfig() (*config.Config, error) {
+	if l.combinedCfg != nil {
+		return l.combinedCfg, nil
+	}
+
 	regalBundle, err := l.getBundleByName("regal")
 	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
+		return &config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
 	}
 
-	path := []string{"regal", "config", "provided"}
-
-	bundled, err := util.SearchMap(regalBundle.Data, path)
+	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(regalBundle, l.userConfig)
 	if err != nil {
-		return config.Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
-	}
-
-	bundledConf, ok := bundled.(map[string]any)
-	if !ok {
-		return config.Config{}, errors.New("expected 'rules' of object type")
-	}
-
-	return config.FromMap(bundledConf) //nolint:wrapcheck
-}
-
-func (l Linter) mergedConfig() (config.Config, error) {
-	if l.combinedConfig != nil {
-		return *l.combinedConfig, nil
-	}
-
-	mergedConf, err := l.readProvidedConfig()
-	if err != nil {
-		return config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
-	}
-
-	providedRuleLevels := providedConfLevels(mergedConf)
-
-	if l.userConfig != nil {
-		err = mergo.Merge(&mergedConf, l.userConfig, mergo.WithOverride)
-		if err != nil {
-			return config.Config{}, fmt.Errorf("failed to merge config: %w", err)
-		}
-
-		// adopt user rule levels based on config and defaults
-		// If the user configuration contains rules with the level unset, copy the level from the provided configuration
-		extractUserRuleLevels(l.userConfig, &mergedConf, providedRuleLevels)
-	}
-
-	if mergedConf.Capabilities == nil {
-		mergedConf.Capabilities = config.CapabilitiesForThisVersion()
+		return &config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
 
 	if l.debugMode {
 		bs, err := yaml.Marshal(mergedConf)
 		if err != nil {
-			return config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
+			return &config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
 		}
 
 		log.Println("merged provided and user config:")
 		log.Println(string(bs))
 	}
 
-	return mergedConf, nil
-}
+	l.combinedCfg = &mergedConf
 
-// extractUserRuleLevels uses defaulting config and per-rule levels from user configuration to set the level for each
-// rule.
-func extractUserRuleLevels(userConfig *config.Config, mergedConf *config.Config, providedRuleLevels map[string]string) {
-	for categoryName, rulesByCategory := range mergedConf.Rules {
-		for ruleName, rule := range rulesByCategory {
-			var providedLevel string
-
-			var ok bool
-
-			if providedLevel, ok = providedRuleLevels[ruleName]; !ok {
-				continue
-			}
-
-			// use the level from the provided configuration as the fallback
-			selectedRuleLevel := providedLevel
-
-			var userHasConfiguredRule bool
-
-			if _, ok := userConfig.Rules[categoryName]; ok {
-				_, userHasConfiguredRule = userConfig.Rules[categoryName][ruleName]
-			}
-
-			if userHasConfiguredRule && userConfig.Rules[categoryName][ruleName].Level != "" {
-				// if the user config has a level for the rule, use that
-				selectedRuleLevel = userConfig.Rules[categoryName][ruleName].Level
-			} else if categoryDefault, ok := mergedConf.Defaults.Categories[categoryName]; ok {
-				// if the config has a default level for the category, use that
-				if categoryDefault.Level != "" {
-					selectedRuleLevel = categoryDefault.Level
-				}
-			} else if mergedConf.Defaults.Global.Level != "" {
-				// if the config has a global default level, use that
-				selectedRuleLevel = mergedConf.Defaults.Global.Level
-			}
-
-			rule.Level = selectedRuleLevel
-			mergedConf.Rules[categoryName][ruleName] = rule
-		}
-	}
-}
-
-// Copy the level of each rule from the provided configuration.
-func providedConfLevels(conf config.Config) map[string]string {
-	ruleLevels := make(map[string]string)
-
-	for categoryName, rulesByCategory := range conf.Rules {
-		for ruleName := range rulesByCategory {
-			// Note that this assumes all rules have unique names,
-			// which we'll likely always want for provided rules
-			ruleLevels[ruleName] = conf.Rules[categoryName][ruleName].Level
-		}
-	}
-
-	return ruleLevels
+	return l.combinedCfg, nil
 }
 
 func (l Linter) enabledGoRules() ([]rules.Rule, error) {
@@ -1003,12 +918,12 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 		return enabledGoRules, nil
 	}
 
-	conf, err := l.mergedConfig()
+	conf, err := l.combinedConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create merged config: %w", err)
 	}
 
-	for _, rule := range rules.AllGoRules(conf) {
+	for _, rule := range rules.AllGoRules(*conf) {
 		// disabling specific rule has the highest precedence
 		if util.Contains(l.disable, rule.Name()) {
 			continue

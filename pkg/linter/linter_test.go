@@ -438,7 +438,7 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	mergedConfig := testutil.Must(linter.mergedConfig())(t)
+	mergedConfig := testutil.Must(linter.combinedConfig())(t)
 
 	// Since no level was provided, "error" should be inherited from the provided configuration for the rule
 	if mergedConfig.Rules["style"]["file-length"].Level != "error" {
@@ -477,7 +477,7 @@ func TestLintMergedConfigUsesProvidedDefaults(t *testing.T) {
 		WithUserConfig(userConfig).
 		WithInputModules(&input)
 
-	mergedConfig := testutil.Must(linter.mergedConfig())(t)
+	mergedConfig := testutil.Must(linter.combinedConfig())(t)
 
 	// specifically configured rule should not be affected by the default
 	if mergedConfig.Rules["style"]["opa-fmt"].Level != "warning" {

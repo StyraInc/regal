@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
@@ -19,6 +20,8 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/bundle"
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
@@ -30,10 +33,12 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/version"
 )
 
 const (
@@ -278,6 +283,13 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		return
 	}
 
+	regalRules, err := rio.LoadRegalBundleFS(bundle.Bundle)
+	if err != nil {
+		l.logError(fmt.Errorf("failed to load regal bundle for defaulting of user config: %w", err))
+
+		return
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -290,11 +302,18 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				continue
 			}
 
-			var loadedConfig config.Config
+			var userConfig config.Config
 
-			err = yaml.NewDecoder(configFile).Decode(&loadedConfig)
+			err = yaml.NewDecoder(configFile).Decode(&userConfig)
 			if err != nil && !errors.Is(err, io.EOF) {
 				l.logError(fmt.Errorf("failed to reload config: %w", err))
+
+				return
+			}
+
+			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, &userConfig)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to load config: %w", err))
 
 				return
 			}
@@ -304,9 +323,22 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			if errors.Is(err, io.EOF) {
 				l.loadedConfig = nil
 			} else {
-				l.loadedConfig = &loadedConfig
+				l.loadedConfig = &mergedConfig
 			}
 			l.loadedConfigLock.Unlock()
+
+			//nolint:contextcheck
+			go func() {
+				if l.loadedConfig.Features.Remote.CheckVersion &&
+					os.Getenv(update.CheckVersionDisableEnvVar) != "" {
+					update.CheckAndWarn(update.Options{
+						CurrentVersion: version.Version,
+						CurrentTime:    time.Now().UTC(),
+						Debug:          false,
+						StateDir:       config.GlobalDir(),
+					}, os.Stderr)
+				}
+			}()
 
 			l.diagnosticRequestWorkspace <- "config file changed"
 		case <-l.configWatcher.Drop:

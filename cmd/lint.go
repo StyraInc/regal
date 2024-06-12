@@ -282,8 +282,6 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	var userConfig config.Config
 
-	userConfig.SetDefaults()
-
 	userConfigFile, err := readUserConfig(params, regalDir)
 
 	switch {
@@ -322,7 +320,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 			dir = regalDir.Name()
 		}
 
-		if userConfig.Features.RemoteFeatures.CheckVersion &&
+		if userConfig.Features.Remote.CheckVersion &&
 			os.Getenv(update.CheckAndWarnIgnoreVariable) != "false" {
 			update.CheckAndWarn(update.Options{
 				CurrentVersion: version.Version,

@@ -49,7 +49,7 @@ type Default struct {
 }
 
 type Features struct {
-	RemoteFeatures *RemoteFeatures `json:"remote_features,omitempty" yaml:"remote_features,omitempty"`
+	Remote *RemoteFeatures `json:"remote,omitempty" yaml:"remote,omitempty"`
 }
 
 type RemoteFeatures struct {
@@ -177,14 +177,6 @@ func FromMap(confMap map[string]any) (Config, error) {
 	return conf, nil
 }
 
-func (config *Config) SetDefaults() {
-	config.Features = &Features{
-		RemoteFeatures: &RemoteFeatures{
-			CheckVersion: true,
-		},
-	}
-}
-
 func (config Config) MarshalYAML() (any, error) {
 	var unstructuredConfig map[string]any
 
@@ -250,7 +242,7 @@ type marshallingIntermediary struct {
 	Features struct {
 		RemoteFeatures struct {
 			CheckVersion bool `yaml:"check_version"`
-		} `yaml:"remote_features"`
+		} `yaml:"remote"`
 	} `yaml:"features"`
 }
 
@@ -329,7 +321,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	// feature defaults
 	if result.Features.RemoteFeatures.CheckVersion {
 		config.Features = &Features{
-			RemoteFeatures: &RemoteFeatures{
+			Remote: &RemoteFeatures{
 				CheckVersion: true,
 			},
 		}

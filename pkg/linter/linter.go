@@ -80,7 +80,7 @@ func NewLinter() Linter {
 	}
 }
 
-// NewEmptyLinter creates a linter with no rule bundles
+// NewEmptyLinter creates a linter with no rule bundles.
 func NewEmptyLinter() Linter {
 	return Linter{}
 }

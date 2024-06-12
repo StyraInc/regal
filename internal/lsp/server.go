@@ -330,7 +330,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			//nolint:contextcheck
 			go func() {
 				if l.loadedConfig.Features.Remote.CheckVersion &&
-					os.Getenv(update.CheckVersionDisableEnvVar) != "false" {
+					os.Getenv(update.CheckVersionDisableEnvVar) != "" {
 					update.CheckAndWarn(update.Options{
 						CurrentVersion: version.Version,
 						CurrentTime:    time.Now().UTC(),

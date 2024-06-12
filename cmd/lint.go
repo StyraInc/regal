@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/topdown"
 
@@ -248,7 +249,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	// regal rules are loaded here and passed to the linter separately
 	// as the configuration is also used to determine feature toggles
-	// and the defaults from from the data.yaml here.
+	// and the defaults from the data.yaml here.
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
 	regal := linter.NewEmptyLinter().
@@ -321,25 +322,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigParse).Stop()
 	}
 
-	go func() {
-		mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, &userConfig)
-		if err != nil {
-			if params.debug {
-				log.Printf("failed to merge user config with default config when checking version: %v", err)
-			}
-			return
-		}
-
-		if mergedConfig.Features.Remote.CheckVersion &&
-			os.Getenv(update.CheckVersionDisableEnvVar) != "false" {
-			update.CheckAndWarn(update.Options{
-				CurrentVersion: version.Version,
-				CurrentTime:    time.Now().UTC(),
-				Debug:          params.debug,
-				StateDir:       config.GlobalDir(),
-			}, os.Stderr)
-		}
-	}()
+	go updateCheckAndWarn(params, regalRules, &userConfig)
 
 	result, err := regal.Lint(ctx)
 	if err != nil {
@@ -352,6 +335,27 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	}
 
 	return result, rep.Publish(ctx, result) //nolint:wrapcheck
+}
+
+func updateCheckAndWarn(params *lintCommandParams, regalRules bundle.Bundle, userConfig *config.Config) {
+	mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, userConfig)
+	if err != nil {
+		if params.debug {
+			log.Printf("failed to merge user config with default config when checking version: %v", err)
+		}
+
+		return
+	}
+
+	if mergedConfig.Features.Remote.CheckVersion &&
+		os.Getenv(update.CheckVersionDisableEnvVar) != "" {
+		update.CheckAndWarn(update.Options{
+			CurrentVersion: version.Version,
+			CurrentTime:    time.Now().UTC(),
+			Debug:          params.debug,
+			StateDir:       config.GlobalDir(),
+		}, os.Stderr)
+	}
 }
 
 func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, error) {

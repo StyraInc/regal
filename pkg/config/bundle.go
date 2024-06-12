@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"dario.cat/mergo"
+
 	"github.com/open-policy-agent/opa/bundle"
+
 	"github.com/styrainc/regal/internal/util"
 )
 
@@ -28,11 +30,9 @@ func LoadConfigWithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Co
 		return Config{}, fmt.Errorf("failed to convert config from map: %w", err)
 	}
 
-	if defaultConfig.Capabilities == nil {
-		defaultConfig.Capabilities = CapabilitiesForThisVersion()
-	}
-
 	if userConfig == nil {
+		defaultConfig.Capabilities = CapabilitiesForThisVersion()
+
 		return defaultConfig, nil
 	}
 
@@ -41,6 +41,10 @@ func LoadConfigWithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Co
 	err = mergo.Merge(&defaultConfig, userConfig, mergo.WithOverride)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to merge user config: %w", err)
+	}
+
+	if defaultConfig.Capabilities == nil {
+		defaultConfig.Capabilities = CapabilitiesForThisVersion()
 	}
 
 	// adopt user rule levels based on config and defaults

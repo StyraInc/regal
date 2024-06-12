@@ -335,7 +335,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 						CurrentVersion: version.Version,
 						CurrentTime:    time.Now().UTC(),
 						Debug:          false,
-						StateDir:       filepath.Dir(configFile.Name()),
+						StateDir:       config.GlobalDir(),
 					}, os.Stderr)
 				}
 			}()

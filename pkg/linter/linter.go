@@ -80,6 +80,11 @@ func NewLinter() Linter {
 	}
 }
 
+// NewEmptyLinter creates a linter with no rule bundles
+func NewEmptyLinter() Linter {
+	return Linter{}
+}
+
 // WithInputPaths sets the inputPaths to lint. Note that these will be
 // filtered according to the ignore options.
 func (l Linter) WithInputPaths(paths []string) Linter {

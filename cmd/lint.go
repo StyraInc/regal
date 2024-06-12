@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/metrics"
 	"github.com/open-policy-agent/opa/topdown"
 
+	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/update"
@@ -245,7 +246,13 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigSearch).Stop()
 	}
 
-	regal := linter.NewLinter().
+	// regal rules are loaded here and passed to the linter separately
+	// as the configuration is also used to determine feature toggles
+	// and the defaults from from the data.yaml here.
+	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
+
+	regal := linter.NewEmptyLinter().
+		WithAddedBundle(regalRules).
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).
@@ -315,18 +322,21 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	}
 
 	go func() {
-		dir := ""
-		if regalDir != nil {
-			dir = regalDir.Name()
+		mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, &userConfig)
+		if err != nil {
+			if params.debug {
+				log.Printf("failed to merge user config with default config when checking version: %v", err)
+			}
+			return
 		}
 
-		if userConfig.Features.Remote.CheckVersion &&
+		if mergedConfig.Features.Remote.CheckVersion &&
 			os.Getenv(update.CheckVersionDisableEnvVar) != "false" {
 			update.CheckAndWarn(update.Options{
 				CurrentVersion: version.Version,
 				CurrentTime:    time.Now().UTC(),
 				Debug:          params.debug,
-				StateDir:       dir,
+				StateDir:       config.GlobalDir(),
 			}, os.Stderr)
 		}
 	}()

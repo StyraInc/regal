@@ -53,7 +53,7 @@ type Features struct {
 }
 
 type RemoteFeatures struct {
-	CheckVersion bool `json:"check_version,omitempty" yaml:"check_version,omitempty"`
+	CheckVersion bool `json:"check-version,omitempty" yaml:"check-version,omitempty"`
 }
 
 func (d *Default) mapToConfig(result any) error {

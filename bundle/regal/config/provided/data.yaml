@@ -1,6 +1,6 @@
 features:
   remote:
-    check_version: true
+    check-version: true
 rules:
   bugs:
     constant-condition:

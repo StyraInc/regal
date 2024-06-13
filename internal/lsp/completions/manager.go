@@ -5,6 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
@@ -47,6 +48,12 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([]types.CompletionItem, error) {
 	var completions []types.CompletionItem
 
+	if m.isInsideOfComment(params) {
+		// Exit early if caret position is inside a comment. Most clients won't show
+		// suggestions there anyway, and there's no need to ask providers for completions.
+		return completions, nil
+	}
+
 	for _, provider := range m.providers {
 		providerCompletions, err := provider.Run(m.c, params, opts)
 		if err != nil {
@@ -69,4 +76,20 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 
 func (m *Manager) RegisterProvider(provider Provider) {
 	m.providers = append(m.providers, provider)
+}
+
+func (m *Manager) isInsideOfComment(params types.CompletionParams) bool {
+	if module, ok := m.c.GetModule(params.TextDocument.URI); ok {
+		for _, comment := range module.Comments {
+			cp := rego.PositionFromLocation(comment.Location)
+
+			if cp.Line == params.Position.Line {
+				if cp.Character <= params.Position.Character {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }

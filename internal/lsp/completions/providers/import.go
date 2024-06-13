@@ -17,12 +17,15 @@ func (*Import) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([
 
 	_, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
 
-	if params.Context.TriggerKind == completion.Invoked && params.Position.Character == 0 {
+	// the user manually invoked completions at the beginning of an empty line
+	if params.Position.Character == 0 && strings.TrimSpace(currentLine) == "" {
 		return importCompletionItem(params), nil
 	}
 
 	// the user must type i before we provide completions
-	if params.Position.Line != 0 && strings.HasPrefix(currentLine, "i") {
+	if params.Position.Character != 0 &&
+		strings.HasPrefix(currentLine, "i") &&
+		!strings.HasPrefix(currentLine, "import ") {
 		return importCompletionItem(params), nil
 	}
 

@@ -31,6 +31,11 @@ func (*RuleHeadKeyword) Run(c *cache.Cache, params types.CompletionParams, _ *Op
 		return []types.CompletionItem{}, nil
 	}
 
+	firstWord := strings.TrimSpace(words[0])
+	if firstWord == "package" || firstWord == "import" {
+		return []types.CompletionItem{}, nil
+	}
+
 	lastWord := words[len(words)-1]
 
 	const keyWdContains = "contains"

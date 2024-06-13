@@ -47,9 +47,12 @@ func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Option
 				continue
 			}
 
-			// only suggest packages that match the last word
-			// the user has typed.
-			if !strings.HasPrefix(ref.Label, lastWord) {
+			// if the user has not typed in any word, they've triggered
+			// completion suggestions manually
+			if strings.TrimSpace(lastWord) != "" &&
+				// otherwise, only suggest packages that match the last
+				// word the user has typed.
+				!strings.HasPrefix(ref.Label, lastWord) {
 				continue
 			}
 

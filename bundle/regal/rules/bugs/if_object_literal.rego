@@ -1,10 +1,6 @@
 # METADATA
-# description: Empty object following `if`
-package regal.rules.bugs["if-empty-object"]
-
-# NOTE: this rule has been deprecated and is no longer enabled by default
-# Use the `if-object-literal` rule instead, which checks for any object,
-# non-empty or not
+# description: Object literal following `if`
+package regal.rules.bugs["if-object-literal"]
 
 import rego.v1
 
@@ -23,7 +19,6 @@ report contains violation if {
 	count(rule.body) == 1
 
 	rule.body[0].terms.type == "object"
-	rule.body[0].terms.value == []
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule))
 }

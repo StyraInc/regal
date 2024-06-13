@@ -1,5 +1,9 @@
 # if-empty-object
 
+**This rule has been deprecated and replaced by the
+[if-object-literal](https://docs.styra.com/regal/rules/bugs/if-object-literal) rule. Documentation kept here only for
+the sake of posterity.**
+
 **Summary**: Empty object following `if`
 
 **Category**: Bugs

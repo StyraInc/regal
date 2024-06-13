@@ -327,6 +327,15 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			}
 			l.loadedConfigLock.Unlock()
 
+			// the config may now ignore files that existed in the cache before,
+			// in which case we need to remove them to stop their contents being
+			// used in other ls functions.
+			for k := range l.cache.GetAllFiles() {
+				if l.ignoreURI(k) {
+					l.cache.Delete(k)
+				}
+			}
+
 			//nolint:contextcheck
 			go func() {
 				if l.loadedConfig.Features.Remote.CheckVersion &&

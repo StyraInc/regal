@@ -12,6 +12,7 @@ import (
 // RuleHeadKeyword will return completions for the keywords when starting a new rule.
 // The current cases are supported:
 // - [rule-name] if
+// - [rule-name] :=
 // - [rule-name] contains
 // - [rule-name] contains if
 // These completions are mandatory, that means they are the only ones to be shown.
@@ -42,29 +43,49 @@ func (*RuleHeadKeyword) Run(c *cache.Cache, params types.CompletionParams, _ *Op
 
 	const keyWdIf = "if"
 
-	var label string
+	const keyWdAssign = ":="
 
-	switch {
-	// suggest contains after the name of the rule in the rule head
-	//nolint:gocritic
-	case len(words) == 2 && strings.HasPrefix(keyWdContains, lastWord):
-		label = "contains"
-	// suggest if at the end of the rule head
-	case len(words) == 4 && words[1] == keyWdContains:
-		label = keyWdIf
-	// suggest if after the rule name
-	//nolint:gocritic
-	case len(words) == 2 && strings.HasPrefix(keyWdIf, lastWord):
-		label = keyWdIf
+	mandatory := false
+	keywords := map[string]bool{
+		keyWdIf:       true,
+		keyWdContains: true,
+		keyWdAssign:   true,
 	}
 
-	if label == "" {
-		return []types.CompletionItem{}, nil
+	if lastWord != "" {
+		mandatory = true
+		keywords = map[string]bool{
+			keyWdIf:       false,
+			keyWdContains: false,
+		}
+
+		switch {
+		// suggest the assignment operator after the name of the rule
+		case len(words) == 2 && strings.HasPrefix(keyWdAssign, lastWord):
+			keywords[keyWdAssign] = true
+		// suggest contains after the name of the rule in the rule head
+		//nolint:gocritic
+		case len(words) == 2 && strings.HasPrefix(keyWdContains, lastWord):
+			keywords[keyWdContains] = true
+		// suggest if at the end of the rule head
+		case len(words) == 4 && words[1] == keyWdContains:
+			keywords[keyWdIf] = true
+		// suggest if after the rule name
+		//nolint:gocritic
+		case len(words) == 2 && strings.HasPrefix(keyWdIf, lastWord):
+			keywords[keyWdIf] = true
+		}
 	}
 
-	return []types.CompletionItem{
-		{
-			Label: label,
+	ret := make([]types.CompletionItem, 0)
+
+	for k, v := range keywords {
+		if !v {
+			continue
+		}
+
+		ret = append(ret, types.CompletionItem{
+			Label: k,
 			Kind:  completion.Keyword,
 			TextEdit: &types.TextEdit{
 				Range: types.Range{
@@ -77,9 +98,11 @@ func (*RuleHeadKeyword) Run(c *cache.Cache, params types.CompletionParams, _ *Op
 						Character: uint(len(currentLine)),
 					},
 				},
-				NewText: label + " ",
+				NewText: k + " ",
 			},
-			Mandatory: true,
-		},
-	}, nil
+			Mandatory: mandatory,
+		})
+	}
+
+	return ret, nil
 }

@@ -10,6 +10,9 @@ rules:
     duplicate-rule:
       level: error
     if-empty-object:
+      # deprecated with the introduction of if-object-literal
+      level: ignore
+    if-object-literal:
       level: error
     impossible-not:
       level: error

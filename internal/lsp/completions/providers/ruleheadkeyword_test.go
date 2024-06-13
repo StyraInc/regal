@@ -8,6 +8,57 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
+func TestRuleHeadKeyword_ManualTriggerAfterRuleName(t *testing.T) {
+	t.Parallel()
+
+	c := cache.NewCache()
+
+	fileContents := `package policy
+
+deny` + " "
+
+	c.SetFileContents(testCaseFileURI, fileContents)
+
+	p := &RuleHeadKeyword{}
+
+	completionParams := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: testCaseFileURI,
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 4,
+		},
+	}
+
+	completions, err := p.Run(c, completionParams, nil)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	expectedLabels := []string{"contains", "if", ":="}
+
+	if len(completions) != len(expectedLabels) {
+		t.Fatalf("Expected %v completions, got: %v", len(expectedLabels), len(completions))
+	}
+
+	for _, comp := range completions {
+		found := false
+
+		for _, label := range expectedLabels {
+			if comp.Label == label {
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			t.Fatalf("Expected label to be one of %v, got: %v", expectedLabels, comp.Label)
+		}
+	}
+}
+
 func TestRuleHeadKeyword_TypedIAfterRuleName(t *testing.T) {
 	t.Parallel()
 

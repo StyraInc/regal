@@ -5,8 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/olekukonko/tablewriter"
-
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/types"
 
@@ -83,30 +81,25 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 
 	sb.WriteString("\n\n#### Arguments\n\n")
 
-	table := tablewriter.NewWriter(sb)
-
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeader([]string{"Name", "Type", "Description"})
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-	table.SetCenterSeparator("|") // Add Bulk Data
-
-	argsData := make([][]string, 0)
-
 	for _, arg := range builtin.Decl.NamedFuncArgs().Args {
+		sb.WriteString("- ")
+
 		if n, ok := arg.(*types.NamedType); ok {
-			argsData = append(argsData, []string{"`" + n.Name + "`", n.Type.String(), n.Descr})
+			sb.WriteString("`")
+			sb.WriteString(n.Name)
+			sb.WriteString("` ")
+			sb.WriteString(n.Type.String())
+
+			if n.Descr != "" {
+				sb.WriteString(" — ")
+				sb.WriteString(n.Descr)
+			}
 		} else {
-			argsData = append(argsData, []string{"`" + arg.String() + "`", "", ""})
+			sb.WriteString(arg.String())
 		}
+
+		sb.WriteString("\n")
 	}
-
-	table.AppendBulk(argsData)
-	table.Render()
-
-	table.ClearRows()
 
 	sb.WriteString("\n\nReturns ")
 

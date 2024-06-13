@@ -327,6 +327,15 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			}
 			l.loadedConfigLock.Unlock()
 
+			// the config may now ignore files that existed in the cache before,
+			// in which case we need to remove them to stop their contents being
+			// used in other ls functions.
+			for k := range l.cache.GetAllFiles() {
+				if l.ignoreURI(k) {
+					l.cache.Delete(k)
+				}
+			}
+
 			//nolint:contextcheck
 			go func() {
 				if l.loadedConfig.Features.Remote.CheckVersion &&
@@ -470,17 +479,21 @@ func (l *LanguageServer) fixEditParams(
 // on the diagnostic channel.
 func (l *LanguageServer) processTextContentUpdate(
 	ctx context.Context,
-	uri string,
+	fileURI string,
 	content string,
 ) (bool, error) {
-	currentContent, ok := l.cache.GetFileContents(uri)
+	if l.ignoreURI(fileURI) {
+		return false, nil
+	}
+
+	currentContent, ok := l.cache.GetFileContents(fileURI)
 	if ok && currentContent == content {
 		return false, nil
 	}
 
-	l.cache.SetFileContents(uri, content)
+	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, uri)
+	success, err := updateParse(ctx, l.cache, fileURI)
 	if err != nil {
 		return false, fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -489,7 +502,7 @@ func (l *LanguageServer) processTextContentUpdate(
 		return true, nil
 	}
 
-	err = l.sendFileDiagnostics(ctx, uri)
+	err = l.sendFileDiagnostics(ctx, fileURI)
 	if err != nil {
 		return false, fmt.Errorf("failed to send diagnostic: %w", err)
 	}
@@ -497,17 +510,21 @@ func (l *LanguageServer) processTextContentUpdate(
 	return false, nil
 }
 
-func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, uri string, content string) error {
-	if _, ok := l.cache.GetFileContents(uri); !ok {
+func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, fileURI string, content string) error {
+	if l.ignoreURI(fileURI) {
+		return nil
+	}
+
+	if _, ok := l.cache.GetFileContents(fileURI); !ok {
 		// If the file is not in the cache, exit early or else
 		// we might accidentally put it in the cache after it's been
 		// deleted: https://github.com/StyraInc/regal/issues/679
 		return nil
 	}
 
-	l.cache.SetFileContents(uri, content)
+	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, uri)
+	success, err := updateParse(ctx, l.cache, fileURI)
 	if err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -516,7 +533,7 @@ func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, uri string, 
 		return nil
 	}
 
-	err = hover.UpdateBuiltinPositions(l.cache, uri)
+	err = hover.UpdateBuiltinPositions(l.cache, fileURI)
 	if err != nil {
 		return fmt.Errorf("failed to update builtin positions: %w", err)
 	}
@@ -543,6 +560,10 @@ func (l *LanguageServer) handleTextDocumentHover(
 	var params types.TextDocumentHoverParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if l.ignoreURI(params.TextDocument.URI) {
+		return nil, nil
 	}
 
 	// The Zed editor doesn't show CodeDescription.Href in diagnostic messages.
@@ -628,6 +649,10 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 
 	yes := true
 	actions := make([]types.CodeAction, 0)
+
+	if l.ignoreURI(params.TextDocument.URI) {
+		return actions, nil
+	}
 
 	for _, diag := range params.Context.Diagnostics {
 		switch diag.Code {
@@ -778,7 +803,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}, nil
 }
 
-func partialInlayHints(parseErrors []types.Diagnostic, contents, uri string) []types.InlayHint {
+func partialInlayHints(parseErrors []types.Diagnostic, contents, fileURI string) []types.InlayHint {
 	firstErrorLine := uint(0)
 	for _, parseError := range parseErrors {
 		if parseError.Range.Start.Line > firstErrorLine {
@@ -800,7 +825,7 @@ func partialInlayHints(parseErrors []types.Diagnostic, contents, uri string) []t
 	lines := strings.Join(strings.Split(contents, "\n")[:firstErrorLine], "\n")
 
 	// parse the part of the module that might work
-	module, err := rparse.Module(uri, lines)
+	module, err := rparse.Module(fileURI, lines)
 	if err != nil {
 		// if we still can't parse the bit we hoped was valid, we exit as this is 'too hard'
 		return []types.InlayHint{}
@@ -848,6 +873,10 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 	var params types.DefinitionParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if l.ignoreURI(params.TextDocument.URI) {
+		return nil, nil
 	}
 
 	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
@@ -1085,6 +1114,10 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	if l.ignoreURI(params.Files[0].URI) {
+		return struct{}{}, nil
+	}
+
 	for _, createOp := range params.Files {
 		_, err = cache.UpdateCacheForURIFromDisk(
 			l.cache,
@@ -1117,6 +1150,10 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	if l.ignoreURI(params.Files[0].URI) {
+		return struct{}{}, nil
+	}
+
 	for _, deleteOp := range params.Files {
 		l.cache.Delete(deleteOp.URI)
 
@@ -1142,6 +1179,10 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	}
 
 	for _, renameOp := range params.Files {
+		if l.ignoreURI(renameOp.OldURI) && l.ignoreURI(renameOp.NewURI) {
+			continue
+		}
+
 		content, err := cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
@@ -1307,6 +1348,10 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 
 		fileURI := uri.FromPath(l.clientIdentifier, path)
 
+		if l.ignoreURI(fileURI) {
+			return nil
+		}
+
 		_, err = cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
@@ -1369,7 +1414,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	regoFiles := make([]string, 0)
 
 	for _, change := range params.Changes {
-		if change.URI == "" {
+		if change.URI == "" || l.ignoreURI(change.URI) {
 			continue
 		}
 
@@ -1384,10 +1429,10 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	return struct{}{}, nil
 }
 
-func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, uri string) error {
+func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string) error {
 	resp := types.FileDiagnostics{
-		Items: l.cache.GetAllDiagnosticsForURI(uri),
-		URI:   uri,
+		Items: l.cache.GetAllDiagnosticsForURI(fileURI),
+		URI:   fileURI,
 	}
 
 	err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp)
@@ -1419,6 +1464,24 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	}
 
 	return modules, nil
+}
+
+func (l *LanguageServer) ignoreURI(fileURI string) bool {
+	if l.loadedConfig == nil {
+		return false
+	}
+
+	paths, err := config.FilterIgnoredPaths(
+		[]string{fileURI},
+		l.loadedConfig.Ignore.Files,
+		false,
+		fileURI,
+	)
+	if err != nil || len(paths) == 0 {
+		return true
+	}
+
+	return false
 }
 
 func positionToOffset(text string, p types.Position) int {

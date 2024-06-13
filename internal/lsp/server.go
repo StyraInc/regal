@@ -759,15 +759,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}
 
 	// items is allocated here so that the return value is always a non-nil CompletionList
-	opts := &providers.Options{
-		RootURI:          l.clientRootURI,
-		ClientIdentifier: l.clientIdentifier,
-	}
-	if l.loadedConfig != nil {
-		opts.Ignore = l.loadedConfig.Ignore
-	}
-
-	items, err := l.completionsManager.Run(params, opts)
+	items, err := l.completionsManager.Run(params, &providers.Options{RootURI: l.clientRootURI})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
 	}

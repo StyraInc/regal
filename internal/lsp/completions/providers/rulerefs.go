@@ -1,14 +1,11 @@
 package providers
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
-	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/pkg/config"
 )
 
 // RuleRefs is a completion provider that returns completions for
@@ -21,13 +18,8 @@ type RuleRefs struct{}
 func (*RuleRefs) Run(
 	c *cache.Cache,
 	params types.CompletionParams,
-	opts *Options,
+	_ *Options,
 ) ([]types.CompletionItem, error) {
-	// opts are needed here to ignore refs from ignored files
-	if opts == nil {
-		return nil, errors.New("options are required")
-	}
-
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
@@ -51,19 +43,7 @@ func (*RuleRefs) Run(
 
 	refsForContext := make(map[string]types.Ref)
 
-	for workspaceFileURI, refs := range c.GetAllFileRefs() {
-		var isIgnored bool
-
-		paths, err := config.FilterIgnoredPaths(
-			[]string{uri.ToPath(opts.ClientIdentifier, workspaceFileURI)},
-			opts.Ignore.Files,
-			false,
-			uri.ToPath(opts.ClientIdentifier, opts.RootURI),
-		)
-		if err != nil || len(paths) == 0 {
-			isIgnored = true
-		}
-
+	for uri, refs := range c.GetAllFileRefs() {
 		for _, ref := range refs {
 			// we are not interested in packages here, only rules
 			if ref.Kind == types.Package {
@@ -78,26 +58,17 @@ func (*RuleRefs) Run(
 
 			// for refs from imported packages, we need to strip the start of the
 			// package string, e.g. data.foo.bar -> bar
-			var isImported bool
-
 			key := ref.Label
-
 			for _, i := range mod.Imports {
 				if k := attemptToStripImportPrefix(key, i.Path.String()); k != "" {
 					key = k
-
-					isImported = true
 
 					break
 				}
 			}
 
-			if isIgnored && !isImported {
-				continue
-			}
-
 			// suggest rules from the current file without any package prefix
-			if workspaceFileURI == fileURI {
+			if uri == fileURI {
 				parts := strings.Split(key, ".")
 				key = parts[len(parts)-1]
 			}

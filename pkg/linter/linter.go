@@ -116,7 +116,7 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 }
 
 // WithCustomRulesFromFS adds custom rules for evaluation from a filesystem implementing the fs.FS interface.
-// A rootpath within the filesystem must also be specified. Note, _test.rego files will be ignored.
+// A root path within the filesystem must also be specified. Note, _test.rego files will be ignored.
 func (l Linter) WithCustomRulesFromFS(f fs.FS, rootPath string) Linter {
 	l.customRuleFS = f
 	l.customRuleFSRootPath = rootPath

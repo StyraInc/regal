@@ -64,22 +64,6 @@ func SearchMap(object map[string]any, path []string) (any, error) {
 	return current, nil
 }
 
-// CopyMap returns a deep copy of the provided map.
-func CopyMap(m map[string]interface{}) map[string]interface{} {
-	cp := make(map[string]interface{})
-
-	for k, v := range m {
-		vm, ok := v.(map[string]interface{})
-		if ok {
-			cp[k] = CopyMap(vm)
-		} else {
-			cp[k] = v
-		}
-	}
-
-	return cp
-}
-
 func Must[T any](v T, err error) T {
 	if err != nil {
 		panic(err)

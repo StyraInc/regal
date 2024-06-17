@@ -42,6 +42,8 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	m.RegisterProvider(&providers.CommonRule{})
 	m.RegisterProvider(&providers.UsedRefs{})
 
+	m.RegisterProvider(providers.NewPolicy())
+
 	return m
 }
 

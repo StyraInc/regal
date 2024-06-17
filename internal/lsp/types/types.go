@@ -374,6 +374,10 @@ type TextDocumentDidOpenParams struct {
 	TextDocument TextDocumentItem `json:"textDocument"`
 }
 
+type TextDocumentDidCloseParams struct {
+	TextDocument TextDocumentItem `json:"textDocument"`
+}
+
 type TextDocumentItem struct {
 	LanguageID string `json:"languageId"`
 	Text       string `json:"text"`

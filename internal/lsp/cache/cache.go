@@ -18,6 +18,13 @@ type Cache struct {
 	fileContents   map[string]string
 	fileContentsMu sync.Mutex
 
+	// ignoredFileContents is a similar map of file URI to raw file contents
+	// but it's not queried for project level operations like goto definition,
+	// linting etc.
+	// ignoredFileContents is also cleared on the delete operation.
+	ignoredFileContents   map[string]string
+	ignoredFileContentsMu sync.Mutex
+
 	// modules is a map of file URI to parsed AST modules from the latest file contents value
 	modules  map[string]*ast.Module
 	moduleMu sync.Mutex
@@ -52,8 +59,10 @@ type Cache struct {
 
 func NewCache() *Cache {
 	return &Cache{
-		fileContents: make(map[string]string),
-		modules:      make(map[string]*ast.Module),
+		fileContents:        make(map[string]string),
+		ignoredFileContents: make(map[string]string),
+
+		modules: make(map[string]*ast.Module),
 
 		diagnosticsFile:        make(map[string][]types.Diagnostic),
 		diagnosticsAggregate:   make(map[string][]types.Diagnostic),
@@ -109,6 +118,22 @@ func (c *Cache) SetFileContents(uri string, content string) {
 	defer c.fileContentsMu.Unlock()
 
 	c.fileContents[uri] = content
+}
+
+func (c *Cache) GetIgnoredFileContents(uri string) (string, bool) {
+	c.ignoredFileContentsMu.Lock()
+	defer c.ignoredFileContentsMu.Unlock()
+
+	val, ok := c.ignoredFileContents[uri]
+
+	return val, ok
+}
+
+func (c *Cache) SetIgnoredFileContents(uri string, content string) {
+	c.ignoredFileContentsMu.Lock()
+	defer c.ignoredFileContentsMu.Unlock()
+
+	c.ignoredFileContents[uri] = content
 }
 
 func (c *Cache) GetAllModules() map[string]*ast.Module {
@@ -256,7 +281,8 @@ func (c *Cache) GetUsedRefs(uri string) ([]string, bool) {
 	return refs, ok
 }
 
-// Delete removes all cached data for a given URI.
+// Delete removes all cached data for a given URI. Ignored file contents are
+// also removed if found for a matching URI.
 func (c *Cache) Delete(uri string) {
 	c.fileContentsMu.Lock()
 	delete(c.fileContents, uri)
@@ -289,6 +315,10 @@ func (c *Cache) Delete(uri string) {
 	c.usedRefsMu.Lock()
 	delete(c.usedRefs, uri)
 	c.usedRefsMu.Unlock()
+
+	c.ignoredFileContentsMu.Lock()
+	delete(c.ignoredFileContents, uri)
+	c.ignoredFileContentsMu.Unlock()
 }
 
 func UpdateCacheForURIFromDisk(cache *Cache, uri, path string) (string, error) {

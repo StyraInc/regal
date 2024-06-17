@@ -449,6 +449,11 @@ rules:
 
 ### Ignoring Files Globally
 
+**Note**: Ignoring files will disable most language server features
+for those files. Only formatting will remain available.
+Ignored files won't be used for completions, linting, or definitions
+in other files.
+
 If you want to ignore certain files for all rules, you can use the global ignore attribute in your configuration file:
 
 ```yaml

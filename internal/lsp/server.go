@@ -129,7 +129,7 @@ func (l *LanguageServer) Handle(
 	case "textDocument/didOpen":
 		return l.handleTextDocumentDidOpen(ctx, conn, req)
 	case "textDocument/didClose":
-		return struct{}{}, nil
+		return l.handleTextDocumentDidClose(ctx, conn, req)
 	case "textDocument/didSave":
 		return l.handleTextDocumentDidSave(ctx, conn, req)
 	case "textDocument/documentSymbol":
@@ -748,6 +748,10 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	if l.ignoreURI(params.TextDocument.URI) {
+		return []types.InlayHint{}, nil
+	}
+
 	// when a file cannot be parsed, we do a best effort attempt to provide inlay hints
 	// by finding the location of the first parse error and attempting to parse up to that point
 	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
@@ -931,6 +935,17 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// if the opened file is ignored in config, then we only store the
+	// contents for file level operations like formatting.
+	if l.ignoreURI(params.TextDocument.URI) {
+		l.cache.SetIgnoredFileContents(
+			params.TextDocument.URI,
+			params.TextDocument.Text,
+		)
+
+		return struct{}{}, nil
+	}
+
 	evt := fileUpdateEvent{
 		Reason:  "textDocument/didOpen",
 		URI:     params.TextDocument.URI,
@@ -938,7 +953,27 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	}
 
 	l.diagnosticRequestFile <- evt
+
 	l.builtinsPositionFile <- evt
+
+	return struct{}{}, nil
+}
+
+func (l *LanguageServer) handleTextDocumentDidClose(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.TextDocumentDidCloseParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	// if the file being closed is ignored in config, then we
+	// need to clear it from the ignored state in the cache.
+	if l.ignoreURI(params.TextDocument.URI) {
+		l.cache.Delete(params.TextDocument.URI)
+	}
 
 	return struct{}{}, nil
 }
@@ -951,6 +986,21 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	var params types.TextDocumentDidChangeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if len(params.ContentChanges) == 0 {
+		return struct{}{}, nil
+	}
+
+	// if the changed file is ignored in config, then we only store the
+	// contents for file level operations like formatting.
+	if l.ignoreURI(params.TextDocument.URI) {
+		l.cache.SetIgnoredFileContents(
+			params.TextDocument.URI,
+			params.ContentChanges[0].Text,
+		)
+
+		return struct{}{}, nil
 	}
 
 	evt := fileUpdateEvent{
@@ -1025,6 +1075,10 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	if l.ignoreURI(params.TextDocument.URI) {
+		return []types.DocumentSymbol{}, nil
+	}
+
 	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
 	if !ok {
 		l.logError(fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI))
@@ -1079,7 +1133,17 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		l.logError(fmt.Errorf("formatting params validation warnings: %v", warnings))
 	}
 
-	oldContent, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	var oldContent string
+
+	var ok bool
+
+	// Fetch the contents used for formatting from the appropriate cache location.
+	if l.ignoreURI(params.TextDocument.URI) {
+		oldContent, ok = l.cache.GetIgnoredFileContents(params.TextDocument.URI)
+	} else {
+		oldContent, ok = l.cache.GetFileContents(params.TextDocument.URI)
+	}
+
 	if !ok {
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}

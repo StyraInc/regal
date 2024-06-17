@@ -292,15 +292,23 @@ _before_location(var, location) if {
 }
 
 # METADATA
+# description: find *only* names in the local scope, and not e.g. rule names
+find_names_in_local_scope(rule, location) := names if {
+	fn_arg_names := _function_arg_names(rule)
+	var_names := {var.value | some var in find_vars_in_local_scope(rule, location)}
+
+	names := fn_arg_names | var_names
+}
+
+# METADATA
 # description: |
 #   similar to `find_vars_in_local_scope`, but returns all variable names in scope
 #   of the given location *and* the rule names present in the scope (i.e. module)
 find_names_in_scope(rule, location) := names if {
-	fn_arg_names := _function_arg_names(rule)
-	var_names := {var.value | some var in find_vars_in_local_scope(rule, location)}
+	locals := find_names_in_local_scope(rule, location)
 
 	# parens below added by opa-fmt :)
-	names := ((rule_names | imported_identifiers) | fn_arg_names) | var_names
+	names := (rule_names | imported_identifiers) | locals
 }
 
 # METADATA

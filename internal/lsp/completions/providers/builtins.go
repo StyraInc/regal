@@ -42,7 +42,7 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 			items = append(items, types.CompletionItem{
 				Label:  key,
 				Kind:   completion.Function,
-				Detail: "",
+				Detail: "built-in function",
 				Documentation: &types.MarkupContent{
 					Kind:  "markdown",
 					Value: hover.CreateHoverContent(builtIn),

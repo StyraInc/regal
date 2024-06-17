@@ -54,9 +54,7 @@ You can also experiment with input in the [Rego Playground](https://play.openpol
 						Line:      params.Position.Line,
 						Character: params.Position.Character - uint(len(lastWord)),
 					},
-					End: types.Position{
-						Line: params.Position.Line, Character: params.Position.Character,
-					},
+					End: params.Position,
 				},
 				NewText: "input",
 			},

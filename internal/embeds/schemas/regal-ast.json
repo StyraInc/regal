@@ -395,6 +395,10 @@
             }
           },
           "type": "object"
+        },
+        "context": {
+          "description": "extra attributes provided in the specific evaluation context",
+          "type": "object"
         }
       },
       "type": "object",

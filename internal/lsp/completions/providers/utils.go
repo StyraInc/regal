@@ -59,7 +59,7 @@ func groupKeyedRefsByDepth(refs map[string]types.Ref) ([]int, map[int]map[string
 	return depths, byDepth
 }
 
-// inRuleBody returns is a best-effort helper to determine if the current line is in a rule body.
+// inRuleBody is a best-effort helper to determine if the current line is in a rule body.
 func inRuleBody(currentLine string) bool {
 	switch {
 	case strings.Contains(currentLine, " if "):

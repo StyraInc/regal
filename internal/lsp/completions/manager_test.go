@@ -55,7 +55,7 @@ func TestManagerEarlyExitInsideComment(t *testing.T) {
 
 	fileContents := `package p
 
-import rego.v1 # modern rego i
+# foo := http
 `
 
 	module := ast.MustParseModule(fileContents)
@@ -64,7 +64,7 @@ import rego.v1 # modern rego i
 	c.SetModule(fileURI, module)
 
 	mgr := NewManager(c, &ManagerOptions{})
-	mgr.RegisterProvider(&providers.Import{})
+	mgr.RegisterProvider(&providers.BuiltIns{})
 
 	completionParams := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
@@ -72,7 +72,7 @@ import rego.v1 # modern rego i
 		},
 		Position: types.Position{
 			Line:      2,
-			Character: 30,
+			Character: 13,
 		},
 	}
 

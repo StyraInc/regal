@@ -52,15 +52,43 @@ function(bar) if {
 		},
 		"context": {"location": {
 			"row": 9,
-			"col": 7,
+			"col": 10,
 		}},
 	}})
 	items := locals.items with input as module
 
 	count(items) == 2
+	expect_item(items, "bar", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+	expect_item(items, "baz", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+}
 
-	expect_item(items, "bar", {"end": {"character": 6, "line": 8}, "start": {"character": 5, "line": 8}})
-	expect_item(items, "baz", {"end": {"character": 6, "line": 8}, "start": {"character": 5, "line": 8}})
+test_locals_in_completion_items_function_call if {
+	policy := `package policy
+
+import rego.v1
+
+foo := 1
+
+function(bar) if {
+	baz := 1
+	qux := other_function(b)
+}
+`
+	module := object.union(regal.parse_module("p.rego", policy), {"regal": {
+		"file": {
+			"name": "p.rego",
+			"lines": split(policy, "\n"),
+		},
+		"context": {"location": {
+			"row": 9,
+			"col": 25,
+		}},
+	}})
+	items := locals.items with input as module
+
+	count(items) == 2
+	expect_item(items, "bar", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
+	expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
 }
 
 expect_item(items, label, range) if {

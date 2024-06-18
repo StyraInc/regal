@@ -12,25 +12,31 @@ items contains item if {
 	line != ""
 	location.in_rule_body(line)
 
-	last_word := regal.last(regex.split(`\s+`, trim_space(line)))
+	word := location.word_at(line, input.regal.context.location.col)
+
+	not excluded(line, position)
 
 	some local in location.find_locals(input.rules, input.regal.context.location)
 
-	startswith(local, last_word)
+	startswith(local, word.text)
 
 	item := {
 		"label": local,
 		"kind": kind.variable,
 		"detail": "local variable",
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": position.character - count(last_word),
-				},
-				"end": position,
-			},
+			"range": location.word_range(word, position),
 			"newText": local,
 		},
 	}
+}
+
+# exclude local suggestions in function args definition,
+# as those would recursively contribute to themselves
+excluded(line, position) if _function_args_position(substring(line, 0, position.character))
+
+_function_args_position(text) if {
+	text == trim_left(text, " \t")
+	contains(text, "(")
+	not contains(text, "=")
 }

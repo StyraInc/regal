@@ -51,6 +51,42 @@ find_rule(rules, location) := [rule |
 
 # METADATA
 # description: |
-#   find local variables (declared via function arguments, some/every declarations or assignment)
-#   at the given location
+#   find local variables (declared via function arguments, some/every
+#   declarations or assignment) at the given location
 find_locals(rules, location) := ast.find_names_in_local_scope(find_rule(rules, location), location)
+
+# METADATA
+# description: |
+#   return the range for a word object (as return by `word_at`)
+word_range(word, position) := {
+	"start": {
+		"line": position.line,
+		"character": position.character - word.offset_before,
+	},
+	"end": {
+		"line": position.line,
+		"character": position.character + word.offset_after,
+	},
+}
+
+# METADATA
+# description: |
+#   find word at column in line, and return its text, and the offset
+#   from the position (before and after)
+word_at(line, col) := word if {
+	text_before := substring(line, 0, col - 1)
+	word_before := _to_string(regex.find_n(`[a-zA-Z_]+$`, text_before, 1))
+
+	text_after := substring(line, col - 1, count(line))
+	word_after := _to_string(regex.find_n(`^[a-zA-Z_]+`, text_after, 1))
+
+	word := {
+		"offset_before": count(word_before),
+		"offset_after": count(word_after),
+		"text": sprintf("%s%s", [word_before, word_after]),
+	}
+}
+
+_to_string(arr) := "" if count(arr) == 0
+
+_to_string(arr) := arr[0] if count(arr) > 0

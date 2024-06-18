@@ -52,6 +52,11 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		return nil, fmt.Errorf("could not get file contents for: %s", params.TextDocument.URI)
 	}
 
+	module, ok := c.GetModule(params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("could not get module for: %s", params.TextDocument.URI)
+	}
+
 	// TODO: Use real identifier, and add to input context too
 	path := uri.ToPath(clients.IdentifierGeneric, params.TextDocument.URI)
 
@@ -62,7 +67,7 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		"col": location.Col,
 	}
 
-	input, err := rego2.ParseToInput(path, content, inputContext)
+	input, err := rego2.ToInput(path, content, module, inputContext)
 	if err != nil {
 		// parser error could be due to work in progress, so just return an empty list here
 		return []types.CompletionItem{}, nil //nolint: nilerr

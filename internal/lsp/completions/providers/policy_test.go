@@ -3,10 +3,9 @@ package providers
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
-
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/parse"
 )
 
 func TestPolicyProvider(t *testing.T) {
@@ -23,7 +22,7 @@ allow if {
 	roles := u
 }
 `
-	module := ast.MustParseModule(policy)
+	module := parse.MustParseModule(policy)
 	c := cache.NewCache()
 
 	c.SetFileContents(testCaseFileURI, policy)

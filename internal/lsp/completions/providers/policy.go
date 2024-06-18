@@ -56,11 +56,6 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 		return nil, fmt.Errorf("could not get file contents for: %s", params.TextDocument.URI)
 	}
 
-	module, ok := c.GetModule(params.TextDocument.URI)
-	if !ok {
-		return nil, fmt.Errorf("could not get module for: %s", params.TextDocument.URI)
-	}
-
 	location := rego2.LocationFromPosition(params.Position)
 	inputContext := make(map[string]any)
 	inputContext["location"] = map[string]any{
@@ -73,7 +68,6 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 		params.TextDocument.URI,
 		opts.ClientIdentifier,
 		content,
-		module,
 		inputContext,
 	)
 	if err != nil {

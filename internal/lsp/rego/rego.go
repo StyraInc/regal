@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -11,7 +12,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/parse"
 )
 
 type BuiltInCall struct {
@@ -83,14 +83,19 @@ func ToInput(
 	fileURI string,
 	cid clients.Identifier,
 	content string,
-	module *ast.Module,
 	context map[string]any,
 ) (map[string]any, error) {
 	path := uri.ToPath(cid, fileURI)
 
-	input, err := parse.PrepareAST(path, content, module)
-	if err != nil {
-		return nil, fmt.Errorf("failed preparing input: %w", err)
+	input := map[string]any{
+		"regal": map[string]any{
+			"file": map[string]any{
+				"name":  path,
+				"uri":   fileURI,
+				"lines": strings.Split(content, "\n"),
+			},
+			"context": context,
+		},
 	}
 
 	if regal, ok := input["regal"].(map[string]any); ok {

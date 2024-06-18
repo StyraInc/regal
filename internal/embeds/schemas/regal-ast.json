@@ -401,7 +401,15 @@
         },
         "context": {
           "description": "extra attributes provided in the specific evaluation context",
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "client_identifier": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object"
+            }
+          }
         }
       },
       "type": "object",

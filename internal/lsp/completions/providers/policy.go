@@ -67,6 +67,7 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 		"row": location.Row,
 		"col": location.Col,
 	}
+	inputContext["client_identifier"] = opts.ClientIdentifier
 
 	input, err := rego2.ToInput(
 		params.TextDocument.URI,

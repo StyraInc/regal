@@ -91,6 +91,31 @@ function(bar) if {
 	expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
 }
 
+test_locals_in_completion_items_rule_head_assignment if {
+	policy := `package policy
+
+import rego.v1
+
+function(bar) := f if {
+	foo := 1
+}
+`
+	module := object.union(regal.parse_module("p.rego", policy), {"regal": {
+		"file": {
+			"name": "p.rego",
+			"lines": split(policy, "\n"),
+		},
+		"context": {"location": {
+			"row": 5,
+			"col": 19,
+		}},
+	}})
+	items := locals.items with input as module
+
+	count(items) == 1
+	expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
+}
+
 expect_item(items, label, range) if {
 	expected := {"detail": "local variable", "kind": 6}
 

@@ -76,14 +76,8 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 	return builtinCalls
 }
 
-// ParseToInput parse a rego policy and returns it parsed with Regal additions
-// to be used as input for evaluation.
-func ParseToInput(path, content string, context map[string]any) (map[string]any, error) {
-	module, err := parse.Module(path, content)
-	if err != nil {
-		return nil, fmt.Errorf("failed parsing module: %w", err)
-	}
-
+// ToInput prepares a module with Regal additions to be used as input for evaluation.
+func ToInput(path, content string, module *ast.Module, context map[string]any) (map[string]any, error) {
 	input, err := parse.PrepareAST(path, content, module)
 	if err != nil {
 		return nil, fmt.Errorf("failed preparing input: %w", err)

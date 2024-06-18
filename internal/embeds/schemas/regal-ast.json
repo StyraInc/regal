@@ -387,6 +387,9 @@
             "name": {
               "type": "string"
             },
+            "uri": {
+              "type": "string"
+            },
             "lines": {
               "type": "array",
               "items": {

@@ -2,21 +2,21 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/clients"
 	rego2 "github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -35,8 +35,8 @@ var regalRules = func() bundle.Bundle {
 // NewPolicy creates a new Policy provider. This provider is distinctly different from the other providers
 // as it acts like the entrypoint for all Rego-based providers, and not a single provider "function" like
 // the Go providers do.
-func NewPolicy() *Policy {
-	pq, err := prepareQuery("completions := data.regal.lsp.completion.items")
+func NewPolicy(store storage.Store) *Policy {
+	pq, err := prepareQuery(store, "completions := data.regal.lsp.completion.items")
 	if err != nil {
 		panic(fmt.Sprintf("failed preparing query for static bundle: %v", err))
 	}
@@ -46,7 +46,11 @@ func NewPolicy() *Policy {
 	}
 }
 
-func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
+func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
+	if opts == nil {
+		return nil, errors.New("options must be provided")
+	}
+
 	content, ok := c.GetFileContents(params.TextDocument.URI)
 	if !ok {
 		return nil, fmt.Errorf("could not get file contents for: %s", params.TextDocument.URI)
@@ -57,9 +61,6 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		return nil, fmt.Errorf("could not get module for: %s", params.TextDocument.URI)
 	}
 
-	// TODO: Use real identifier, and add to input context too
-	path := uri.ToPath(clients.IdentifierGeneric, params.TextDocument.URI)
-
 	location := rego2.LocationFromPosition(params.Position)
 	inputContext := make(map[string]any)
 	inputContext["location"] = map[string]any{
@@ -67,7 +68,13 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		"col": location.Col,
 	}
 
-	input, err := rego2.ToInput(path, content, module, inputContext)
+	input, err := rego2.ToInput(
+		params.TextDocument.URI,
+		opts.ClientIdentifier,
+		content,
+		module,
+		inputContext,
+	)
 	if err != nil {
 		// parser error could be due to work in progress, so just return an empty list here
 		return []types.CompletionItem{}, nil //nolint: nilerr
@@ -88,8 +95,15 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 	return completions, nil
 }
 
-func prepareQuery(query string) (*rego.PreparedEvalQuery, error) {
-	regoArgs := prepareRegoArgs(ast.MustParseBody(query))
+func prepareQuery(store storage.Store, query string) (*rego.PreparedEvalQuery, error) {
+	regoArgs := prepareRegoArgs(store, ast.MustParseBody(query))
+
+	txn, err := store.NewTransaction(context.TODO(), storage.WriteParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating transaction: %w", err)
+	}
+
+	regoArgs = append(regoArgs, rego.Transaction(txn))
 
 	// Note that we currently don't provide metrics or profiling here, and
 	// most likely we should — need to consider how to best make that conditional
@@ -99,11 +113,17 @@ func prepareQuery(query string) (*rego.PreparedEvalQuery, error) {
 		return nil, fmt.Errorf("failed preparing query: %w", err)
 	}
 
+	err = store.Commit(context.Background(), txn)
+	if err != nil {
+		return nil, fmt.Errorf("failed committing transaction: %w", err)
+	}
+
 	return &pq, nil
 }
 
-func prepareRegoArgs(query ast.Body) []func(*rego.Rego) {
+func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
 	return []func(*rego.Rego){
+		rego.Store(store),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal", &regalRules),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),

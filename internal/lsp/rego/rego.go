@@ -8,7 +8,9 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 
+	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/parse"
 )
 
@@ -77,10 +79,26 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 }
 
 // ToInput prepares a module with Regal additions to be used as input for evaluation.
-func ToInput(path, content string, module *ast.Module, context map[string]any) (map[string]any, error) {
+func ToInput(
+	fileURI string,
+	cid clients.Identifier,
+	content string,
+	module *ast.Module,
+	context map[string]any,
+) (map[string]any, error) {
+	path := uri.ToPath(cid, fileURI)
+
 	input, err := parse.PrepareAST(path, content, module)
 	if err != nil {
 		return nil, fmt.Errorf("failed preparing input: %w", err)
+	}
+
+	if regal, ok := input["regal"].(map[string]any); ok {
+		if f, ok := regal["file"].(map[string]any); ok {
+			f["uri"] = fileURI
+		}
+
+		regal["client_id"] = cid
 	}
 
 	return SetInputContext(input, context), nil

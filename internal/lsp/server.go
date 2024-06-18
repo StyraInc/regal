@@ -19,6 +19,8 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/storage/inmem"
 
 	"github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -55,23 +57,28 @@ type LanguageServerOptions struct {
 
 func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 	c := cache.NewCache()
+	store := inmem.NewFromObject(map[string]interface{}{
+		"workspace": map[string]interface{}{
+			"parsed": map[string]interface{}{},
+		},
+	})
+
 	ls := &LanguageServer{
 		cache:                      c,
+		regoStore:                  store,
 		errorLog:                   opts.ErrorLog,
 		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		commandRequest:             make(chan types.ExecuteCommandParams, 10),
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
-		completionsManager:         completions.NewDefaultManager(c),
+		completionsManager:         completions.NewDefaultManager(c, store),
 	}
 
 	return ls
 }
 
 type LanguageServer struct {
-	cache *cache.Cache
-
 	conn *jsonrpc2.Conn
 
 	errorLog io.Writer
@@ -79,6 +86,9 @@ type LanguageServer struct {
 	configWatcher    *lsconfig.Watcher
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
+
+	cache     *cache.Cache
+	regoStore storage.Store
 
 	diagnosticRequestFile      chan fileUpdateEvent
 	diagnosticRequestWorkspace chan string
@@ -493,7 +503,7 @@ func (l *LanguageServer) processTextContentUpdate(
 
 	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, fileURI)
+	success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
 	if err != nil {
 		return false, fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -524,7 +534,7 @@ func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, fileURI stri
 
 	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, fileURI)
+	success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
 	if err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -788,7 +798,10 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}
 
 	// items is allocated here so that the return value is always a non-nil CompletionList
-	items, err := l.completionsManager.Run(params, &providers.Options{RootURI: l.clientRootURI})
+	items, err := l.completionsManager.Run(params, &providers.Options{
+		ClientIdentifier: l.clientIdentifier,
+		RootURI:          l.clientRootURI,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
 	}
@@ -1421,7 +1434,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
 		}
 
-		_, err = updateParse(ctx, l.cache, fileURI)
+		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI)
 		if err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}

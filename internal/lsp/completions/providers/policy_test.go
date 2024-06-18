@@ -3,7 +3,10 @@ package providers
 import (
 	"testing"
 
+	"github.com/open-policy-agent/opa/storage/inmem"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 )
@@ -11,7 +14,13 @@ import (
 func TestPolicyProvider(t *testing.T) {
 	t.Parallel()
 
-	locals := NewPolicy()
+	store := inmem.NewFromObject(map[string]interface{}{
+		"workspace": map[string]interface{}{
+			"parsed": map[string]interface{}{},
+		},
+	})
+
+	locals := NewPolicy(store)
 	policy := `package p
 
 import rego.v1
@@ -38,7 +47,11 @@ allow if {
 		},
 	}
 
-	result, err := locals.Run(c, params, nil)
+	result, err := locals.Run(
+		c,
+		params,
+		&Options{ClientIdentifier: clients.IdentifierGeneric},
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

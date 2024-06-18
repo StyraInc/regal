@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/storage"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/refs"
@@ -22,27 +23,58 @@ import (
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
 // URI instead.
-func updateParse(ctx context.Context, cache *cache.Cache, uri string) (bool, error) {
-	content, ok := cache.GetFileContents(uri)
+func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, fileURI string) (bool, error) {
+	content, ok := cache.GetFileContents(fileURI)
 	if !ok {
-		return false, fmt.Errorf("failed to get file contents for uri %q", uri)
+		return false, fmt.Errorf("failed to get file contents for uri %q", fileURI)
 	}
 
 	lines := strings.Split(content, "\n")
 
-	module, err := rparse.Module(uri, content)
+	module, err := rparse.Module(fileURI, content)
 	if err == nil {
 		// if the parse was ok, clear the parse errors
-		cache.SetParseErrors(uri, []types.Diagnostic{})
-		cache.SetModule(uri, module)
-		cache.SetFileRefs(uri, refs.DefinedInModule(module))
+		cache.SetParseErrors(fileURI, []types.Diagnostic{})
+
+		cache.SetModule(fileURI, module)
+
+		txn, err := store.NewTransaction(ctx, storage.WriteParams)
+		if err != nil {
+			return false, fmt.Errorf("failed to create transaction: %w", err)
+		}
+
+		var stErr *storage.Error
+
+		err = store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, module)
+
+		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
+			err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, module)
+			if err != nil {
+				store.Abort(ctx, txn)
+
+				return false, fmt.Errorf("failed to init module in store: %w", err)
+			}
+		}
+
+		if err != nil {
+			store.Abort(ctx, txn)
+
+			return false, fmt.Errorf("failed to replace module in store: %w", err)
+		}
+
+		err = store.Commit(ctx, txn)
+		if err != nil {
+			return false, fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		cache.SetFileRefs(fileURI, refs.DefinedInModule(module))
 
 		refNames, err := refs.UsedInModule(ctx, module)
 		if err != nil {
 			return false, fmt.Errorf("failed to get used refs: %w", err)
 		}
 
-		cache.SetUsedRefs(uri, refNames)
+		cache.SetUsedRefs(fileURI, refNames)
 
 		return true, nil
 	}
@@ -118,7 +150,7 @@ func updateParse(ctx context.Context, cache *cache.Cache, uri string) (bool, err
 		})
 	}
 
-	cache.SetParseErrors(uri, diags)
+	cache.SetParseErrors(fileURI, diags)
 
 	return false, nil
 }

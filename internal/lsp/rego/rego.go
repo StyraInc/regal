@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 
+	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/lsp/uri"
 )
 
 type BuiltInCall struct {
@@ -77,10 +79,31 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 }
 
 // ToInput prepares a module with Regal additions to be used as input for evaluation.
-func ToInput(path, content string, module *ast.Module, context map[string]any) (map[string]any, error) {
-	input, err := parse.PrepareAST(path, content, module)
-	if err != nil {
-		return nil, fmt.Errorf("failed preparing input: %w", err)
+func ToInput(
+	fileURI string,
+	cid clients.Identifier,
+	content string,
+	context map[string]any,
+) (map[string]any, error) {
+	path := uri.ToPath(cid, fileURI)
+
+	input := map[string]any{
+		"regal": map[string]any{
+			"file": map[string]any{
+				"name":  path,
+				"uri":   fileURI,
+				"lines": strings.Split(content, "\n"),
+			},
+			"context": context,
+		},
+	}
+
+	if regal, ok := input["regal"].(map[string]any); ok {
+		if f, ok := regal["file"].(map[string]any); ok {
+			f["uri"] = fileURI
+		}
+
+		regal["client_id"] = cid
 	}
 
 	return SetInputContext(input, context), nil

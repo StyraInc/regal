@@ -3,6 +3,8 @@ package completions
 import (
 	"fmt"
 
+	"github.com/open-policy-agent/opa/storage"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"
 	"github.com/styrainc/regal/internal/lsp/rego"
@@ -25,7 +27,7 @@ func NewManager(c *cache.Cache, opts *ManagerOptions) *Manager {
 	return &Manager{c: c, opts: opts}
 }
 
-func NewDefaultManager(c *cache.Cache) *Manager {
+func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 	m := NewManager(c, &ManagerOptions{})
 
 	m.RegisterProvider(&providers.Package{})
@@ -34,14 +36,13 @@ func NewDefaultManager(c *cache.Cache) *Manager {
 	m.RegisterProvider(&providers.BuiltIns{})
 	m.RegisterProvider(&providers.RegoV1{})
 	m.RegisterProvider(&providers.PackageRefs{})
-	m.RegisterProvider(&providers.RuleRefs{})
 	m.RegisterProvider(&providers.RuleHead{})
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
 	m.RegisterProvider(&providers.Input{})
 	m.RegisterProvider(&providers.CommonRule{})
 	m.RegisterProvider(&providers.UsedRefs{})
 
-	m.RegisterProvider(providers.NewPolicy())
+	m.RegisterProvider(providers.NewPolicy(store))
 
 	return m
 }

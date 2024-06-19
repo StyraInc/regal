@@ -1,5 +1,8 @@
 package providers
 
+import "github.com/styrainc/regal/internal/lsp/clients"
+
 type Options struct {
-	RootURI string
+	ClientIdentifier clients.Identifier
+	RootURI          string
 }

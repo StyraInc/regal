@@ -1,9 +1,14 @@
 package providers
 
 import (
+	"slices"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/storage/inmem"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 )
@@ -11,7 +16,6 @@ import (
 func TestPolicyProvider(t *testing.T) {
 	t.Parallel()
 
-	locals := NewPolicy()
 	policy := `package p
 
 import rego.v1
@@ -26,7 +30,16 @@ allow if {
 	c := cache.NewCache()
 
 	c.SetFileContents(testCaseFileURI, policy)
-	c.SetModule(testCaseFileURI, module)
+
+	store := inmem.NewFromObject(map[string]interface{}{
+		"workspace": map[string]interface{}{
+			"parsed": map[string]interface{}{
+				testCaseFileURI: module,
+			},
+		},
+	})
+
+	locals := NewPolicy(store)
 
 	params := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
@@ -38,12 +51,92 @@ allow if {
 		},
 	}
 
-	result, err := locals.Run(c, params, nil)
+	result, err := locals.Run(
+		c,
+		params,
+		&Options{ClientIdentifier: clients.IdentifierGeneric},
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(result) == 0 {
-		t.Fatalf("expected completion items, got none")
+	labels := []string{}
+	for _, item := range result {
+		labels = append(labels, item.Label)
+	}
+
+	expected := []string{"user"}
+	if !slices.Equal(expected, labels) {
+		t.Fatalf("expected %v, got %v", expected, labels)
+	}
+}
+
+func TestPolicyProvider_B(t *testing.T) {
+	t.Parallel()
+
+	file1 := ast.MustParseModule(`package example
+
+import rego.v1
+
+foo := true
+`)
+	file2 := ast.MustParseModule(`package example2
+
+import rego.v1
+
+import data.example
+`)
+
+	store := inmem.NewFromObject(map[string]interface{}{
+		"workspace": map[string]interface{}{
+			"parsed": map[string]interface{}{
+				"file:///file1.rego": file1,
+				"file:///file2.rego": file2,
+			},
+		},
+	})
+
+	locals := NewPolicy(store)
+	fileEdited := `package example2
+
+import rego.v1
+
+import data.example
+
+allow if {
+	foo :=
+}
+`
+	c := cache.NewCache()
+
+	c.SetFileContents("file:///file2.rego", fileEdited)
+
+	params := types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: "file:///file2.rego",
+		},
+		Position: types.Position{
+			Line:      7,
+			Character: 11,
+		},
+	}
+
+	result, err := locals.Run(
+		c,
+		params,
+		&Options{ClientIdentifier: clients.IdentifierGeneric},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	labels := []string{}
+	for _, item := range result {
+		labels = append(labels, item.Label)
+	}
+
+	expected := []string{"example.foo"}
+	if !slices.Equal(expected, labels) {
+		t.Fatalf("expected %v, got %v", expected, labels)
 	}
 }

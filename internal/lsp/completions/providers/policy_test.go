@@ -13,7 +13,7 @@ import (
 	"github.com/styrainc/regal/internal/parse"
 )
 
-func TestPolicyProvider(t *testing.T) {
+func TestPolicyProvider_Example1(t *testing.T) {
 	t.Parallel()
 
 	policy := `package p
@@ -71,7 +71,7 @@ allow if {
 	}
 }
 
-func TestPolicyProvider_B(t *testing.T) {
+func TestPolicyProvider_Example2(t *testing.T) {
 	t.Parallel()
 
 	file1 := ast.MustParseModule(`package example

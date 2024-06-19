@@ -12,6 +12,10 @@ import (
 
 type BuiltIns struct{}
 
+func (*BuiltIns) Name() string {
+	return "builtins"
+}
+
 func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

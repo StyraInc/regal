@@ -18,6 +18,10 @@ import (
 // These completions are mandatory, that means they are the only ones to be shown.
 type RuleHeadKeyword struct{}
 
+func (*RuleHeadKeyword) Name() string {
+	return "ruleheadkeyword"
+}
+
 func (*RuleHeadKeyword) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

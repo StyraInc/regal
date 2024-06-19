@@ -2,6 +2,8 @@ package completions
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/open-policy-agent/opa/storage"
 
@@ -21,6 +23,7 @@ type ManagerOptions struct{}
 
 type Provider interface {
 	Run(*cache.Cache, types.CompletionParams, *providers.Options) ([]types.CompletionItem, error)
+	Name() string
 }
 
 func NewManager(c *cache.Cache, opts *ManagerOptions) *Manager {
@@ -30,15 +33,12 @@ func NewManager(c *cache.Cache, opts *ManagerOptions) *Manager {
 func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 	m := NewManager(c, &ManagerOptions{})
 
-	m.RegisterProvider(&providers.Package{})
 	m.RegisterProvider(&providers.PackageName{})
 	m.RegisterProvider(&providers.BuiltIns{})
-	m.RegisterProvider(&providers.RegoV1{})
 	m.RegisterProvider(&providers.PackageRefs{})
 	m.RegisterProvider(&providers.RuleHead{})
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
 	m.RegisterProvider(&providers.Input{})
-	m.RegisterProvider(&providers.CommonRule{})
 	m.RegisterProvider(&providers.UsedRefs{})
 
 	m.RegisterProvider(providers.NewPolicy(store))
@@ -56,10 +56,14 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 	}
 
 	for _, provider := range m.providers {
+		now := time.Now()
+
 		providerCompletions, err := provider.Run(m.c, params, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}
+
+		fmt.Fprintf(os.Stderr, "Provider %s took %v\n", provider.Name(), time.Since(now))
 
 		for _, completion := range providerCompletions {
 			// if a provider returns a mandatory completion, return it immediately

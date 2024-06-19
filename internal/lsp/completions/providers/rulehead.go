@@ -13,11 +13,11 @@ import (
 // when adding new heads, the user can easily add new ones.
 type RuleHead struct{}
 
-func (*RuleHead) Run(
-	c *cache.Cache,
-	params types.CompletionParams,
-	_ *Options,
-) ([]types.CompletionItem, error) {
+func (*RuleHead) Name() string {
+	return "rulehead"
+}
+
+func (*RuleHead) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)

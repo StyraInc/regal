@@ -20,3 +20,19 @@ expect_item(items, label, range) if {
 
 	item in items
 }
+
+input_module_with_location(module, policy, location) := object.union(module, {"regal": {
+	"file": {
+		"name": "p.rego",
+		"lines": split(policy, "\n"),
+	},
+	"context": {"location": location},
+}})
+
+input_with_location(policy, location) := {"regal": {
+	"file": {
+		"name": "p.rego",
+		"lines": split(policy, "\n"),
+	},
+	"context": {"location": location},
+}}

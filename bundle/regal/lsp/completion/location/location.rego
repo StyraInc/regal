@@ -87,6 +87,25 @@ word_at(line, col) := word if {
 	}
 }
 
+# METADATA
+# description: |
+#   find ref at column in line, and return its text, and the offset
+#   from the position (before and after)
+#   this is similar to word_at but captures `.` as well
+ref_at(line, col) := word if {
+	text_before := substring(line, 0, col - 1)
+	word_before := _to_string(regex.find_n(`[a-zA-Z_\.]+$`, text_before, 1))
+
+	text_after := substring(line, col - 1, count(line))
+	word_after := _to_string(regex.find_n(`^[a-zA-Z_\.]+`, text_after, 1))
+
+	word := {
+		"offset_before": count(word_before),
+		"offset_after": count(word_after),
+		"text": sprintf("%s%s", [word_before, word_after]),
+	}
+}
+
 _to_string(arr) := "" if count(arr) == 0
 
 _to_string(arr) := arr[0] if count(arr) > 0

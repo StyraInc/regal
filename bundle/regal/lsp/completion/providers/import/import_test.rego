@@ -3,6 +3,7 @@ package regal.lsp.completion.providers.import_test
 import rego.v1
 
 import data.regal.lsp.completion.providers["import"] as provider
+import data.regal.lsp.completion.providers.utils_test as util
 
 test_import_completion_empty_line if {
 	policy := `package policy
@@ -10,16 +11,7 @@ test_import_completion_empty_line if {
 import rego.v1
 
 `
-
-	regal_module := {"regal": {
-		"file": {
-			"name": "p.rego",
-			"lines": split(policy, "\n"),
-		},
-		"context": {"location": {"row": 5, "col": 1}},
-	}}
-	items := provider.items with input as regal_module
-
+	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 1})
 	items == {{
 		"label": "import",
 		"detail": "import <path>",
@@ -41,14 +33,7 @@ import rego.v1
 
 imp`
 
-	regal_module := {"regal": {
-		"file": {
-			"name": "p.rego",
-			"lines": split(policy, "\n"),
-		},
-		"context": {"location": {"row": 5, "col": 3}},
-	}}
-	items := provider.items with input as regal_module
+	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 3})
 
 	items == {{
 		"label": "import",

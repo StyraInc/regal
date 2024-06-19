@@ -15,6 +15,10 @@ import (
 // PackageName will return completions for the package name when starting a new file based on the file's URI.
 type PackageName struct{}
 
+func (*PackageName) Name() string {
+	return "packagename"
+}
+
 func (*PackageName) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

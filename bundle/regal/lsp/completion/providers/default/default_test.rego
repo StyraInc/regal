@@ -3,6 +3,7 @@ package regal.lsp.completion.providers.default_test
 import rego.v1
 
 import data.regal.lsp.completion.providers["default"] as provider
+import data.regal.lsp.completion.providers.utils_test as util
 
 test_default_completion_on_typing if {
 	policy := `package policy
@@ -13,7 +14,7 @@ import rego.v1
 `
 	module := regal.parse_module("p.rego", policy)
 	new_policy := sprintf("%s%s", [policy, "d"])
-	items := provider.items with input as input_with_location(module, new_policy, {"row": 5, "col": 2})
+	items := provider.items with input as util.input_module_with_location(module, new_policy, {"row": 5, "col": 2})
 
 	items == {{
 		"detail": "default <rule-name> := <value>",
@@ -43,7 +44,7 @@ deny if false
 `
 	module := regal.parse_module("p.rego", policy)
 	new_policy := sprintf("%s%s", [policy, "d"])
-	items := provider.items with input as input_with_location(module, new_policy, {"row": 9, "col": 2})
+	items := provider.items with input as util.input_module_with_location(module, new_policy, {"row": 9, "col": 2})
 
 	items == {
 		{
@@ -93,7 +94,7 @@ import rego.v1
 
 `
 	module := regal.parse_module("p.rego", policy)
-	items := provider.items with input as input_with_location(module, policy, {"row": 5, "col": 2})
+	items := provider.items with input as util.input_module_with_location(module, policy, {"row": 5, "col": 2})
 
 	items == {{
 		"detail": "default <rule-name> := <value>",
@@ -108,11 +109,3 @@ import rego.v1
 		},
 	}}
 }
-
-input_with_location(module, policy, location) := object.union(module, {"regal": {
-	"file": {
-		"name": "p.rego",
-		"lines": split(policy, "\n"),
-	},
-	"context": {"location": location},
-}})

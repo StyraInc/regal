@@ -141,6 +141,15 @@ type CompletionItem struct {
 	// as an exclusive completion. This is not part of the LSP spec, but used in regal providers
 	// to indicate that the completion item is the only valid completion.
 	Mandatory bool `json:"-"`
+
+	// Regal is used to store regal-specific metadata about the completion item.
+	// This is not part of the LSP spec, but used in the manager to post process
+	// items before returning them to the client.
+	Regal *CompletionItemRegalMetadata `json:"_regal,omitempty"`
+}
+
+type CompletionItemRegalMetadata struct {
+	Provider string `json:"provider"`
 }
 
 type CompletionItemLabelDetails struct {

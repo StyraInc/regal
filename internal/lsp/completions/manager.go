@@ -47,12 +47,12 @@ func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 }
 
 func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([]types.CompletionItem, error) {
-	var completions []types.CompletionItem
+	completions := make(map[string][]types.CompletionItem)
 
 	if m.isInsideOfComment(params) {
 		// Exit early if caret position is inside a comment. Most clients won't show
 		// suggestions there anyway, and there's no need to ask providers for completions.
-		return completions, nil
+		return []types.CompletionItem{}, nil
 	}
 
 	for _, provider := range m.providers {
@@ -68,11 +68,60 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 				return []types.CompletionItem{completion}, nil
 			}
 
-			completions = append(completions, completion)
+			completions[completion.Label] = append(completions[completion.Label], completion)
 		}
 	}
 
-	return completions, nil
+	var completionsList []types.CompletionItem
+
+	for _, completionItems := range completions {
+		if len(completionItems) < 2 {
+			completionsList = append(completionsList, completionItems...)
+
+			continue
+		}
+
+		maxRank := 0
+
+		for _, completion := range completionItems {
+			if completion.Regal == nil {
+				continue
+			}
+
+			if rank := rankProvider(completion.Regal.Provider); rank > maxRank {
+				maxRank = rank
+			}
+		}
+
+		for _, completion := range completionItems {
+			if completion.Regal == nil {
+				completionsList = append(completionsList, completion)
+
+				continue
+			}
+
+			if rank := rankProvider(completion.Regal.Provider); rank == maxRank {
+				completionsList = append(completionsList, completion)
+			}
+		}
+	}
+
+	for i := range completionsList {
+		completionsList[i].Regal = nil
+	}
+
+	return completionsList, nil
+}
+
+func rankProvider(provider string) int {
+	switch provider {
+	case "rulerefs":
+		return 100
+	case "usedrefs":
+		return 90
+	default:
+		return 0
+	}
 }
 
 func (m *Manager) RegisterProvider(provider Provider) {

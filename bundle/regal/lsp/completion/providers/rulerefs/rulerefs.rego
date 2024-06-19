@@ -111,6 +111,9 @@ items := [item |
 	line != ""
 	location.in_rule_body(line)
 
+	# \W is used here to match ( in the case of func() := ..., as well as the space in the case of rule := ...
+	first_word := regex.split(`\W+`, trim_space(line))[0]
+
 	last_word := regal.last(regex.split(`\s+`, trim_space(line)))
 
 	prefix := defermine_ref_prefix(last_word)
@@ -121,6 +124,9 @@ items := [item |
 	some ref in sort(grouped_refs[group_size])
 
 	startswith(ref, prefix)
+
+	# this is to avoid suggesting a recursive rule, e.g. rule := rule, or func() := func()
+	ref != first_word
 
 	item := {
 		"label": ref,
@@ -136,5 +142,6 @@ items := [item |
 			},
 			"newText": ref,
 		},
+		"_regal": {"provider": "rulerefs"},
 	}
 ]

@@ -59,6 +59,9 @@ func (*UsedRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 				},
 				NewText: ref,
 			},
+			Regal: &types.CompletionItemRegalMetadata{
+				Provider: "usedrefs",
+			},
 		})
 	}
 

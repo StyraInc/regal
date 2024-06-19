@@ -6,10 +6,12 @@ import rego.v1
 workspace := {
 	"current_file.rego": `package foo
 
+import rego.v1
+
 import data.imported_pkg
 import data.imported_pkg_2
 
-local_rule := true
+local_rule if true
 `,
 	"imported_file.rego": `package imported_pkg
 
@@ -47,7 +49,7 @@ another_local_rule := `])
 			"lines": split(current_file_contents, "\n"),
 		},
 		"context": {"location": {
-			"row": 8,
+			"row": 10,
 			"col": 21,
 		}},
 	}}
@@ -78,7 +80,7 @@ another_local_rule := imp`])
 			"lines": split(current_file_contents, "\n"),
 		},
 		"context": {"location": {
-			"row": 8,
+			"row": 10,
 			"col": 21,
 		}},
 	}}
@@ -100,15 +102,69 @@ test_rule_refs_not_in_rule if {
 
 a`])
 
+	lines := split(current_file_contents, "\n")
+
 	regal_module := {"regal": {
 		"file": {
 			"name": "current_file.rego",
 			"uri": "current_file.rego", # would be file:// prefixed in server
-			"lines": split(current_file_contents, "\n"),
+			"lines": lines,
 		},
 		"context": {"location": {
-			"row": 8,
-			"col": 21,
+			"row": count(lines),
+			"col": 1,
+		}},
+	}}
+
+	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+
+	count(items) == 0
+}
+
+test_rule_refs_no_recursion if {
+	current_file_contents := concat("", [workspace["current_file.rego"], `
+
+local_rule if local`])
+
+	lines := split(current_file_contents, "\n")
+
+	regal_module := {"regal": {
+		"file": {
+			"name": "current_file.rego",
+			"uri": "current_file.rego", # would be file:// prefixed in server
+			"lines": lines,
+		},
+		"context": {"location": {
+			"row": count(lines),
+			"col": 19,
+		}},
+	}}
+
+	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+
+	count(items) == 0
+}
+
+test_rule_refs_no_recursion_func if {
+	current_file_contents := concat("", [workspace["current_file.rego"], `
+
+local_fun("") := foo {
+	true
+}
+
+local_func("foo") := local_f`])
+
+	lines := split(current_file_contents, "\n")
+
+	regal_module := {"regal": {
+		"file": {
+			"name": "current_file.rego",
+			"uri": "current_file.rego", # would be file:// prefixed in server
+			"lines": lines,
+		},
+		"context": {"location": {
+			"row": count(lines),
+			"col": 26,
 		}},
 	}}
 

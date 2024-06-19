@@ -87,24 +87,18 @@ type LanguageServer struct {
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
 
+	workspaceRootURI string
+	clientIdentifier clients.Identifier
+
 	cache     *cache.Cache
 	regoStore storage.Store
 
+	completionsManager *completions.Manager
+
 	diagnosticRequestFile      chan fileUpdateEvent
 	diagnosticRequestWorkspace chan string
-
-	builtinsPositionFile chan fileUpdateEvent
-
-	commandRequest chan types.ExecuteCommandParams
-
-	clientRootURI    string
-	clientIdentifier clients.Identifier
-
-	// workspaceMode is set to true when the ls is initialized with
-	// a clientRootURI.
-	workspaceMode bool
-
-	completionsManager *completions.Manager
+	builtinsPositionFile       chan fileUpdateEvent
+	commandRequest             chan types.ExecuteCommandParams
 }
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.
@@ -237,7 +231,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 
 			// otherwise, lint the file and send the diagnostics
-			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.clientRootURI)
+			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
 			}
@@ -255,7 +249,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 		case <-l.diagnosticRequestWorkspace:
 			// results will be sent in response to the next workspace/diagnostics request
-			err := updateAllDiagnostics(ctx, l.cache, l.loadedConfig, l.clientRootURI)
+			err := updateAllDiagnostics(ctx, l.cache, l.loadedConfig, l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update aggregate diagnostics (trigger): %w", err))
 			}
@@ -341,9 +335,61 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			// in which case we need to remove them to stop their contents being
 			// used in other ls functions.
 			for k := range l.cache.GetAllFiles() {
-				if l.ignoreURI(k) {
-					l.cache.Delete(k)
+				if !l.ignoreURI(k) {
+					continue
 				}
+
+				// move the contents to the ignored part of the cache
+				contents, ok := l.cache.GetFileContents(k)
+				if ok {
+					l.cache.Delete(k)
+
+					l.cache.SetIgnoredFileContents(k, contents)
+				}
+
+				txn, err := l.regoStore.NewTransaction(ctx, storage.WriteParams)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to create transaction to remove mod from store: %w", err))
+
+					continue
+				}
+
+				err = l.regoStore.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", k}, nil)
+				if err != nil {
+					l.regoStore.Abort(ctx, txn)
+					l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
+
+					continue
+				}
+
+				err = l.regoStore.Commit(ctx, txn)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to commit transaction to remove mod from store: %w", err))
+				}
+			}
+
+			// when a file is 'unignored', we move it's contents to the
+			// standard file list if missing
+			for k, v := range l.cache.GetAllIgnoredFiles() {
+				if l.ignoreURI(k) {
+					continue
+				}
+
+				// ignored contents will only be used when there is no existing content
+				_, ok := l.cache.GetFileContents(k)
+				if !ok {
+					l.cache.SetFileContents(k, v)
+
+					// updating the parse here will enable things like go-to defn
+					// to start working right away without the need for a file content
+					// update to run updateParse.
+					_, err = updateParse(ctx, l.cache, l.regoStore, k)
+					if err != nil {
+						l.logError(fmt.Errorf("failed to update parse for previously ignored file %q: %w", k, err))
+					}
+				}
+
+				l.cache.ClearIgnoredFileContents(k)
 			}
 
 			//nolint:contextcheck
@@ -800,7 +846,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
-		RootURI:          l.clientRootURI,
+		RootURI:          l.workspaceRootURI,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -1294,17 +1340,18 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 		Items: make([]types.WorkspaceFullDocumentDiagnosticReport, 0),
 	}
 
-	// if we're not in workspace mode, we can't show anything here
-	// since we don't have the URI of the workspace from initialize
-	if !l.workspaceMode {
+	// if the workspace root is not set, then we return an empty report
+	// since we can't provide workspace diagnostics without a workspace root
+	// being set. This is unset when the client in is in single file mode.
+	if l.workspaceRootURI == "" {
 		return workspaceReport, nil
 	}
 
 	workspaceReport.Items = append(workspaceReport.Items, types.WorkspaceFullDocumentDiagnosticReport{
-		URI:     l.clientRootURI,
+		URI:     l.workspaceRootURI,
 		Kind:    "full",
 		Version: nil,
-		Items:   l.cache.GetAllDiagnosticsForURI(l.clientRootURI),
+		Items:   l.cache.GetAllDiagnosticsForURI(l.workspaceRootURI),
 	})
 
 	return workspaceReport, nil
@@ -1320,7 +1367,7 @@ func (l *LanguageServer) handleInitialize(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	l.clientRootURI = params.RootURI
+	l.workspaceRootURI = params.RootURI
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
@@ -1393,25 +1440,25 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
-	if l.clientRootURI != "" {
-		l.workspaceMode = true
+	if l.workspaceRootURI != "" {
+		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
+		if err == nil {
+			l.configWatcher.Watch(configFile.Name())
+		}
 
 		err = l.loadWorkspaceContents(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
 
-		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.clientRootURI))
-		if err == nil {
-			l.configWatcher.Watch(configFile.Name())
-		}
+		l.diagnosticRequestWorkspace <- "server initialize"
 	}
 
 	return result, nil
 }
 
 func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
-	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.clientRootURI)
+	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
 
 	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -1530,7 +1577,7 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	allModules := l.cache.GetAllModules()
 	paths := util.Keys(allModules)
 
-	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.clientRootURI)
+	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.workspaceRootURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
 	}
@@ -1549,10 +1596,10 @@ func (l *LanguageServer) ignoreURI(fileURI string) bool {
 	}
 
 	paths, err := config.FilterIgnoredPaths(
-		[]string{fileURI},
+		[]string{uri.ToPath(l.clientIdentifier, fileURI)},
 		l.loadedConfig.Ignore.Files,
 		false,
-		fileURI,
+		uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
 	)
 	if err != nil || len(paths) == 0 {
 		return true

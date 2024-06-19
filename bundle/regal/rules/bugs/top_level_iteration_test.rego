@@ -44,6 +44,12 @@ test_success_top_level_known_var_ref if {
 	r == set()
 }
 
+# https://github.com/StyraInc/regal/issues/852
+test_success_top_level_ref_head_vars_assignment if {
+	r := rule.report with input as ast.with_rego_v1(`foo[x] := input[x] if some x in [1, 2, 3]`)
+	r == set()
+}
+
 # https://github.com/StyraInc/regal/issues/401
 test_success_top_level_input_assignment if {
 	r := rule.report with input as ast.with_rego_v1(`x := input`)

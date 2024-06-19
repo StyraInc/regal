@@ -10,6 +10,13 @@ import data.regal.result
 report contains violation if {
 	some rule in input.rules
 
+	# skip if vars in the ref head
+	count([part |
+		some i, part in rule.head.ref
+		i > 0
+		part.type == "var"
+	]) == 0
+
 	rule.head.value.type == "ref"
 
 	last := regal.last(rule.head.value.value)

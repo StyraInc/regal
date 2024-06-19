@@ -335,29 +335,61 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			// in which case we need to remove them to stop their contents being
 			// used in other ls functions.
 			for k := range l.cache.GetAllFiles() {
-				if l.ignoreURI(k) {
+				if !l.ignoreURI(k) {
+					continue
+				}
+
+				// move the contents to the ignored part of the cache
+				contents, ok := l.cache.GetFileContents(k)
+				if ok {
 					l.cache.Delete(k)
 
-					txn, err := l.regoStore.NewTransaction(ctx, storage.WriteParams)
+					l.cache.SetIgnoredFileContents(k, contents)
+				}
+
+				txn, err := l.regoStore.NewTransaction(ctx, storage.WriteParams)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to create transaction to remove mod from store: %w", err))
+
+					continue
+				}
+
+				err = l.regoStore.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", k}, nil)
+				if err != nil {
+					l.regoStore.Abort(ctx, txn)
+					l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
+
+					continue
+				}
+
+				err = l.regoStore.Commit(ctx, txn)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to commit transaction to remove mod from store: %w", err))
+				}
+			}
+
+			// when a file is 'unignored', we move it's contents to the
+			// standard file list if missing
+			for k, v := range l.cache.GetAllIgnoredFiles() {
+				if l.ignoreURI(k) {
+					continue
+				}
+
+				// ignored contents will only be used when there is no existing content
+				_, ok := l.cache.GetFileContents(k)
+				if !ok {
+					l.cache.SetFileContents(k, v)
+
+					// updating the parse here will enable things like go-to defn
+					// to start working right away without the need for a file content
+					// update to run updateParse.
+					_, err = updateParse(ctx, l.cache, l.regoStore, k)
 					if err != nil {
-						l.logError(fmt.Errorf("failed to create transaction to remove mod from store: %w", err))
-
-						continue
-					}
-
-					err = l.regoStore.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", k}, nil)
-					if err != nil {
-						l.regoStore.Abort(ctx, txn)
-						l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
-
-						continue
-					}
-
-					err = l.regoStore.Commit(ctx, txn)
-					if err != nil {
-						l.logError(fmt.Errorf("failed to commit transaction to remove mod from store: %w", err))
+						l.logError(fmt.Errorf("failed to update parse for previously ignored file %q: %w", k, err))
 					}
 				}
+
+				l.cache.ClearIgnoredFileContents(k)
 			}
 
 			//nolint:contextcheck

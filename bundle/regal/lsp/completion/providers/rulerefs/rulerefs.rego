@@ -142,5 +142,6 @@ items := [item |
 			},
 			"newText": ref,
 		},
+		"_regal": {"provider": "rulerefs"},
 	}
 ]

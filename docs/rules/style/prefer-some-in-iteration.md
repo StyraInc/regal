@@ -49,6 +49,30 @@ Or is `other_rule` a map-generating rule, and we're checking for the existence o
 elsewhere in the code. Using `some .. in` removes this ambiguity, and makes the intent clear without having to jump
 around in the policy.
 
+Improved readability is not the only benefit of using `some .. in`. The `some` keyword ensures that the bindings
+following the keyword are bound to the local scope, and modifications outside of e.g. a rule body won't affect how the
+variables are evaluated. Consider the following simplified example to iterate over the keys of a map:
+
+```rego
+package policy
+
+key_traversal if {
+    map[key]
+    # do something with key
+}
+
+
+key_traversal if {
+    some key in object.keys(map)
+    # do something with key
+}
+```
+
+The two rules above are equivalent in that they both bind the variable `key` to the keys of `map`. The first
+example would however change behavior entirely if a rule named `key` was introduced in the package, as the expression
+would then mean "does map have key `key`?". While this isn't common, using `some .. in` means one less thing to worry
+about.
+
 ## Exceptions
 
 Deeply nested iteration is often easier to read using the more compact form.
@@ -116,6 +140,8 @@ rules:
 
 - Rego Style Guide: [Prefer some .. in for iteration](https://github.com/StyraInc/rego-style-guide#prefer-some--in-for-iteration)
 - Regal Docs: [Use `some` to declare output variables](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)
+- OPA Docs: [Membership and Iteration: `in`](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
+- OPA Docs: [Some Keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#some-keyword)
 
 ## Community
 

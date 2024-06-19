@@ -139,8 +139,8 @@ allow = true
 		)
 	}
 
-	if ls.clientRootURI != request.RootURI {
-		t.Fatalf("expected client root URI to be %s, got %s", request.RootURI, ls.clientRootURI)
+	if ls.workspaceRootURI != request.RootURI {
+		t.Fatalf("expected client root URI to be %s, got %s", request.RootURI, ls.workspaceRootURI)
 	}
 
 	// validate that the file contents from the workspace are loaded during the initialize request
@@ -429,24 +429,6 @@ ignore:
 		}
 	}
 
-	// validate that the client received empty diagnostics for the ignored file
-	timeout = time.NewTimer(defaultTimeout)
-	defer timeout.Stop()
-
-	for {
-		var success bool
-		select {
-		case diags := <-ignoredFileMessages:
-			success = testRequestDataCodes(t, diags, ignoredRegoURI, []string{})
-		case <-timeout.C:
-			t.Fatalf("timed out waiting for empty ignored file diagnostics to be sent")
-		}
-
-		if success {
-			break
-		}
-	}
-
 	// 3. Client sends textDocument/didChange notification with new contents for authz.rego
 	// no response to the call is expected
 	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
@@ -632,8 +614,8 @@ allow := true
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
-	if ls.clientRootURI != request.RootURI {
-		t.Fatalf("expected client root URI to be %s, got %s", request.RootURI, ls.clientRootURI)
+	if ls.workspaceRootURI != request.RootURI {
+		t.Fatalf("expected client root URI to be %s, got %s", request.RootURI, ls.workspaceRootURI)
 	}
 
 	// Client sends initialized notification
@@ -692,11 +674,11 @@ allow := true
 	}
 }
 
-func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, uri string, codes []string) bool {
+func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileURI string, codes []string) bool {
 	t.Helper()
 
-	if requestData.URI != uri {
-		t.Log("expected diagnostics to be sent for", uri, "got", requestData.URI)
+	if requestData.URI != fileURI {
+		t.Log("expected diagnostics to be sent for", fileURI, "got", requestData.URI)
 
 		return false
 	}

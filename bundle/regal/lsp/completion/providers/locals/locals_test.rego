@@ -2,7 +2,8 @@ package regal.lsp.completion.providers.locals_test
 
 import rego.v1
 
-import data.regal.lsp.completion.providers.locals
+import data.regal.lsp.completion.providers.locals as provider
+import data.regal.lsp.completion.providers.utils_test as utils
 
 test_no_locals_in_completion_items if {
 	workspace := {"file:///p.rego": `package policy
@@ -26,7 +27,7 @@ bar if {
 			"col": 9,
 		}},
 	}}
-	items := locals.items with input as regal_module with data.workspace.parsed as parsed_modules(workspace)
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 0
 }
@@ -56,11 +57,11 @@ function(bar) if {
 		}},
 	}}
 
-	items := locals.items with input as regal_module with data.workspace.parsed as parsed_modules(workspace)
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 2
-	expect_item(items, "bar", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
-	expect_item(items, "baz", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+	utils.expect_item(items, "bar", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+	utils.expect_item(items, "baz", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
 }
 
 test_locals_in_completion_items_function_call if {
@@ -88,11 +89,11 @@ function(bar) if {
 		}},
 	}}
 
-	items := locals.items with input as regal_module with data.workspace.parsed as parsed_modules(workspace)
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 2
-	expect_item(items, "bar", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
-	expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
+	utils.expect_item(items, "bar", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
+	utils.expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
 }
 
 test_locals_in_completion_items_rule_head_assignment if {
@@ -116,27 +117,8 @@ function(bar) := f if {
 			"col": 19,
 		}},
 	}}
-	items := locals.items with input as regal_module with data.workspace.parsed as parsed_modules(workspace)
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 1
-	expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
-}
-
-parsed_modules(workspace) := {file_uri: parsed_module |
-	some file_uri, contents in workspace
-	parsed_module := regal.parse_module(file_uri, contents)
-}
-
-expect_item(items, label, range) if {
-	expected := {"detail": "local variable", "kind": 6}
-
-	item := object.union(expected, {
-		"label": label,
-		"textEdit": {
-			"newText": label,
-			"range": range,
-		},
-	})
-
-	item in items
+	utils.expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
 }

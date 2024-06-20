@@ -20,7 +20,6 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 	"github.com/open-policy-agent/opa/storage"
-	"github.com/open-policy-agent/opa/storage/inmem"
 
 	"github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -57,11 +56,7 @@ type LanguageServerOptions struct {
 
 func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 	c := cache.NewCache()
-	store := inmem.NewFromObject(map[string]interface{}{
-		"workspace": map[string]interface{}{
-			"parsed": map[string]interface{}{},
-		},
-	})
+	store := NewRegalStore()
 
 	ls := &LanguageServer{
 		cache:                      c,
@@ -347,24 +342,9 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					l.cache.SetIgnoredFileContents(k, contents)
 				}
 
-				txn, err := l.regoStore.NewTransaction(ctx, storage.WriteParams)
+				err := RemoveFileMod(ctx, l.regoStore, k)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to create transaction to remove mod from store: %w", err))
-
-					continue
-				}
-
-				err = l.regoStore.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", k}, nil)
-				if err != nil {
-					l.regoStore.Abort(ctx, txn)
 					l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
-
-					continue
-				}
-
-				err = l.regoStore.Commit(ctx, txn)
-				if err != nil {
-					l.logError(fmt.Errorf("failed to commit transaction to remove mod from store: %w", err))
 				}
 			}
 

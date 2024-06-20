@@ -9,17 +9,8 @@ import data.regal.lsp.completion.location
 ref_is_internal(ref) if contains(ref, "._")
 
 workspace_rule_refs contains ref if {
-	some file, parsed in data.workspace.parsed
-
-	package_name := concat(".", [path.value |
-		some i, path in parsed["package"].path
-	])
-
-	some rule in parsed.rules
-
-	rule_ref := ast.ref_to_string(rule.head.ref)
-
-	ref := concat(".", [package_name, rule_ref])
+	some refs in data.workspace.defined_refs
+	some ref in refs
 }
 
 parsed_current_file := data.workspace.parsed[input.regal.file.uri]
@@ -98,10 +89,10 @@ grouped_refs[size] contains ref if {
 	size := count(indexof_n(ref, "."))
 }
 
-default defermine_ref_prefix(_) := ""
+default determine_ref_prefix(_) := ""
 
-defermine_ref_prefix(word) := word if {
-	not word in {":="}
+determine_ref_prefix(word) := word if {
+	word != ":="
 }
 
 items := [item |
@@ -116,7 +107,7 @@ items := [item |
 
 	last_word := regal.last(regex.split(`\s+`, trim_space(line)))
 
-	prefix := defermine_ref_prefix(last_word)
+	prefix := determine_ref_prefix(last_word)
 
 	sorted_counts := sort(object.keys(grouped_refs))
 

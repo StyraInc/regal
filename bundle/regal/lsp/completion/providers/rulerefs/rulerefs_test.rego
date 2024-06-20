@@ -1,5 +1,6 @@
 package regal.lsp.completion.providers.rulerefs_test
 
+import data.regal.ast
 import data.regal.lsp.completion.providers.rulerefs
 import rego.v1
 
@@ -38,6 +39,20 @@ parsed_modules[file_uri] := parsed_module if {
 	parsed_module := regal.parse_module(file_uri, contents)
 }
 
+defined_refs[file_uri] contains ref if {
+	some file_uri, parsed_module in parsed_modules
+
+	package_name := concat(".", [path.value |
+		some i, path in parsed_module["package"].path
+	])
+
+	some rule in parsed_module.rules
+
+	rule_ref := ast.ref_to_string(rule.head.ref)
+
+	ref := concat(".", [package_name, rule_ref])
+}
+
 test_rule_refs_no_word if {
 	current_file_contents := concat("", [workspace["current_file.rego"], `
 another_local_rule := `])
@@ -54,7 +69,9 @@ another_local_rule := `])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+	items := rulerefs.items with input as regal_module
+		with data.workspace.parsed as parsed_modules
+		with data.workspace.defined_refs as defined_refs
 
 	labels := [item.label | some item in items]
 
@@ -85,7 +102,9 @@ another_local_rule := imp`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+	items := rulerefs.items with input as regal_module
+		with data.workspace.parsed as parsed_modules
+		with data.workspace.defined_refs as defined_refs
 
 	labels := [item.label | some item in items]
 
@@ -116,7 +135,9 @@ a`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+	items := rulerefs.items with input as regal_module
+		with data.workspace.parsed as parsed_modules
+		with data.workspace.defined_refs as defined_refs
 
 	count(items) == 0
 }
@@ -140,7 +161,9 @@ local_rule if local`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+	items := rulerefs.items with input as regal_module
+		with data.workspace.parsed as parsed_modules
+		with data.workspace.defined_refs as defined_refs
 
 	count(items) == 0
 }
@@ -168,7 +191,9 @@ local_func("foo") := local_f`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module with data.workspace.parsed as parsed_modules
+	items := rulerefs.items with input as regal_module
+		with data.workspace.parsed as parsed_modules
+		with data.workspace.defined_refs as defined_refs
 
 	count(items) == 0
 }

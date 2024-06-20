@@ -6,13 +6,13 @@ import "github.com/open-policy-agent/opa/ast"
 // Ref is designed to be used in completions and provides information
 // relevant to the object with that operation in mind.
 type Ref struct {
-	Kind RefKind
+	Kind RefKind `json:"kind"`
 	// Label is a identifier for the object. e.g. data.package.rule.
-	Label string
+	Label string `json:"label"`
 	// Detail is a small amount of additional information about the object.
-	Detail string
+	Detail string `json:"detail"`
 	// Description is a longer description of the object and uses Markdown formatting.
-	Description string
+	Description string `json:"description"`
 }
 
 // RefKind represents the kind of object that a Ref represents.

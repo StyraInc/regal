@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -38,36 +39,32 @@ func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, f
 
 		cache.SetModule(fileURI, module)
 
-		txn, err := store.NewTransaction(ctx, storage.WriteParams)
+		err := PutFileMod(ctx, store, fileURI, module)
 		if err != nil {
-			return false, fmt.Errorf("failed to create transaction: %w", err)
+			return false, fmt.Errorf("failed to update rego store with parsed module: %w", err)
 		}
 
-		var stErr *storage.Error
+		definedRefs := refs.DefinedInModule(module)
 
-		err = store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, module)
+		cache.SetFileRefs(fileURI, definedRefs)
 
-		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
-			err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, module)
-			if err != nil {
-				store.Abort(ctx, txn)
+		// TODO: consider how we use and generate these to avoid needing to have in the cache and the store
+		var ruleRefs []string
 
-				return false, fmt.Errorf("failed to init module in store: %w", err)
+		for _, ref := range definedRefs {
+			if ref.Kind == types.Package {
+				continue
 			}
+
+			ruleRefs = append(ruleRefs, ref.Label)
 		}
 
+		fmt.Fprintln(os.Stderr, ruleRefs)
+
+		err = PutFileRefs(ctx, store, fileURI, ruleRefs)
 		if err != nil {
-			store.Abort(ctx, txn)
-
-			return false, fmt.Errorf("failed to replace module in store: %w", err)
+			return false, fmt.Errorf("failed to update rego store with defined refs: %w", err)
 		}
-
-		err = store.Commit(ctx, txn)
-		if err != nil {
-			return false, fmt.Errorf("failed to commit transaction: %w", err)
-		}
-
-		cache.SetFileRefs(fileURI, refs.DefinedInModule(module))
 
 		refNames, err := refs.UsedInModule(ctx, module)
 		if err != nil {

@@ -93,6 +93,10 @@ import data.example
 				"file:///file1.rego": file1,
 				"file:///file2.rego": file2,
 			},
+			"defined_refs": map[string][]string{
+				"file:///file1.rego": {"example.foo"},
+				"file:///file2.rego": {},
+			},
 		},
 	})
 
@@ -135,7 +139,7 @@ allow if {
 		labels = append(labels, item.Label)
 	}
 
-	expected := []string{"example.foo"}
+	expected := []string{"example", "example.foo"}
 	if !slices.Equal(expected, labels) {
 		t.Fatalf("expected %v, got %v", expected, labels)
 	}

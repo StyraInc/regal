@@ -11,6 +11,10 @@ import (
 // PackageRefs is a completion provider that returns completions when importing packages.
 type PackageRefs struct{}
 
+func (*PackageRefs) Name() string {
+	return "packagerefs"
+}
+
 func (*PackageRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

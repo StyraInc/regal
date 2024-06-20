@@ -12,6 +12,10 @@ import (
 // at suitable times.
 type Input struct{}
 
+func (*Input) Name() string {
+	return "input"
+}
+
 func (*Input) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

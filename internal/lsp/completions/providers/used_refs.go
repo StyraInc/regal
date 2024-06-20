@@ -12,6 +12,10 @@ import (
 // that have already been typed into a module.
 type UsedRefs struct{}
 
+func (*UsedRefs) Name() string {
+	return "usedrefs"
+}
+
 func (*UsedRefs) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 

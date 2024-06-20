@@ -46,6 +46,10 @@ func NewPolicy(store storage.Store) *Policy {
 	}
 }
 
+func (*Policy) Name() string {
+	return "policy"
+}
+
 func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
 	if opts == nil {
 		return nil, errors.New("options must be provided")

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -58,8 +57,6 @@ func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, f
 
 			ruleRefs = append(ruleRefs, ref.Label)
 		}
-
-		fmt.Fprintln(os.Stderr, ruleRefs)
 
 		err = PutFileRefs(ctx, store, fileURI, ruleRefs)
 		if err != nil {

@@ -8,6 +8,18 @@ import data.regal.lsp.completion.location
 
 ref_is_internal(ref) if contains(ref, "._")
 
+default determine_ref_prefix(_) := ""
+
+determine_ref_prefix(word) := word if {
+	word != ":="
+}
+
+position := location.to_position(input.regal.context.location)
+
+line := input.regal.file.lines[position.line]
+
+last_word := regal.last(regex.split(`\s+`, trim_space(line)))
+
 workspace_rule_refs contains ref if {
 	some refs in data.workspace.defined_refs
 	some ref in refs
@@ -84,40 +96,32 @@ rule_ref_suggestions contains pkg if {
 	pkg := concat(".", array.slice(parts, 0, count(parts) - 1))
 }
 
-grouped_refs[size] contains ref if {
-	some ref in rule_ref_suggestions
-	size := count(indexof_n(ref, "."))
-}
-
-default determine_ref_prefix(_) := ""
-
-determine_ref_prefix(word) := word if {
-	word != ":="
-}
-
-items := [item |
-	position := location.to_position(input.regal.context.location)
-
-	line := input.regal.file.lines[position.line]
+matching_rule_ref_suggestions contains ref if {
 	line != ""
 	location.in_rule_body(line)
+
+	prefix := determine_ref_prefix(last_word)
+
+	some ref in rule_ref_suggestions
+
+	startswith(ref, prefix)
 
 	# \W is used here to match ( in the case of func() := ..., as well as the space in the case of rule := ...
 	first_word := regex.split(`\W+`, trim_space(line))[0]
 
-	last_word := regal.last(regex.split(`\s+`, trim_space(line)))
-
-	prefix := determine_ref_prefix(last_word)
-
-	sorted_counts := sort(object.keys(grouped_refs))
-
-	some group_size in sorted_counts
-	some ref in sort(grouped_refs[group_size])
-
-	startswith(ref, prefix)
-
 	# this is to avoid suggesting a recursive rule, e.g. rule := rule, or func() := func()
 	ref != first_word
+}
+
+grouped_refs[size] contains ref if {
+	some ref in matching_rule_ref_suggestions
+
+	size := count(indexof_n(ref, "."))
+}
+
+items := [item |
+	some _, group in grouped_refs
+	some ref in sort(group)
 
 	item := {
 		"label": ref,

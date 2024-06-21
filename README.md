@@ -666,6 +666,7 @@ See the [Editor Support](/docs/editor-support.md) page for information about Reg
 - [Scaling Open Source Community by Getting Closer to Users](https://thenewstack.io/scaling-open-source-community-by-getting-closer-to-users/)
   by @anderseknert
 - [Linting Rego with... Rego!](https://www.styra.com/blog/linting-rego-with-rego/) by @anderseknert
+- [Regal: Rego(OPA)用リンタの導入手順](https://zenn.dev/erueru_tech/articles/6cfb886d92858a) by @erueru-tech
 
 ## Status
 

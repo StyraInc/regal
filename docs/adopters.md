@@ -30,6 +30,7 @@ Projects and products that integrate Regal into their offerings.
 - [Dependency Management Data](https://gitlab.com/tanna.dev/dependency-management-data)
 - [Enterprise OPA](https://github.com/styrainc/enterprise-opa)
 - [The Rego Playground](https://play.openpolicyagent.org)
+- [reviewdog/action-regal](https://github.com/reviewdog/action-regal)
 
 ## Packaging
 

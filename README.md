@@ -662,11 +662,11 @@ See the [Editor Support](/docs/editor-support.md) page for information about Reg
 ### Blogs and Articles
 
 - [Guarding the Guardrails - Introducing Regal the Rego Linter](https://www.styra.com/blog/guarding-the-guardrails-introducing-regal-the-rego-linter/)
-  by @charlieegan3
+  by Anders Eknert ([@anderseknert](https://github.com/anderseknert))
 - [Scaling Open Source Community by Getting Closer to Users](https://thenewstack.io/scaling-open-source-community-by-getting-closer-to-users/)
-  by @anderseknert
-- [Linting Rego with... Rego!](https://www.styra.com/blog/linting-rego-with-rego/) by @anderseknert
-- [Regal: Rego(OPA)用リンタの導入手順](https://zenn.dev/erueru_tech/articles/6cfb886d92858a) by @erueru-tech
+  by Charlie Egan ([@charlieegan3](https://github.com/charlieegan3))
+- [Linting Rego with... Rego!](https://www.styra.com/blog/linting-rego-with-rego/) by Anders Eknert ([@anderseknert](https://github.com/anderseknert))
+- [Regal: Rego(OPA)用リンタの導入手順](https://zenn.dev/erueru_tech/articles/6cfb886d92858a) by Jun Fujita ([@erueru-tech](https://github.com/erueru-tech))
 
 ## Status
 
@@ -675,18 +675,25 @@ If you want to embed Regal in another project or product, please reach out!
 
 ## Roadmap
 
-The roadmap for Regal currently looks like this:
+The Regal project roadmap is subject to change, but these are some of the features we're planning to work on
+in the near future:
 
-- [x] 50 rules!
-- [x] Add `custom` (or `organizational`, `opinionated`, or...) category for built-in "custom", or
-      [organizational rules](https://github.com/StyraInc/regal/issues/48), to enforce things like naming conventions.
-      The most common customizations should not require writing custom rules, but be made available in configuration.
-- [x] Simplify custom rules authoring by providing
-      [command for scaffolding](https://github.com/StyraInc/regal/issues/206)
-- [ ] Make more rules consider [nested](https://github.com/StyraInc/regal/issues/82) AST nodes
-- [x] [GitHub Action](https://github.com/StyraInc/setup-regal)
+### Linter
+
+- [ ] Allow remediation of more `style` category rules using the `regal fix` command
+- [ ] Add [unused-rule](https://github.com/StyraInc/regal/issues/358) linter
+- [ ] Add [unused-output-variable](https://github.com/StyraInc/regal/issues/60) linter
+
+### Language Server
+
+- [ ] Make "Check on save" unnecessary by allowing diagnostics to include
+      [compilation errors](https://github.com/StyraInc/regal/issues/745)
+- [ ] Add Code Lens to "Evaluate" any rule or package
+- [ ] Implement [Signature Help](https://github.com/StyraInc/regal/issues/695) feature
 
 The roadmap is updated when all the current items have been completed.
+
+If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!
 
 ## Community
 

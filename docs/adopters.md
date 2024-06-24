@@ -21,7 +21,10 @@ Public open source projects integrating Regal for linting in their CI/CD pipelin
 - [OPA Library](https://github.com/open-policy-agent/library)
 - [Red Hat COP](https://github.com/redhat-cop/rego-policies)
 - [ScubaGear](https://github.com/cisagov/ScubaGear)
+- [ScubaGoggles](https://github.com/cisagov/ScubaGoggles)
 - [Spacelift Policy Library](https://github.com/spacelift-io/spacelift-policies-example-library)
+- [Trino Operator](https://github.com/stackabletech/trino-operator)
+- [Phylum](https://github.com/phylum-dev/policy)
 
 ## Integrations
 
@@ -30,6 +33,7 @@ Projects and products that integrate Regal into their offerings.
 - [Dependency Management Data](https://gitlab.com/tanna.dev/dependency-management-data)
 - [Enterprise OPA](https://github.com/styrainc/enterprise-opa)
 - [The Rego Playground](https://play.openpolicyagent.org)
+- [Trunk Check](https://trunk.io/check)
 - [reviewdog/action-regal](https://github.com/reviewdog/action-regal)
 
 ## Packaging

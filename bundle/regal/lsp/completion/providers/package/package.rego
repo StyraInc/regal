@@ -18,16 +18,7 @@ items contains item if {
 		"kind": kind.keyword,
 		"detail": "package <package-name>",
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": 0,
-				},
-				"end": {
-					"line": position.line,
-					"character": position.character,
-				},
-			},
+			"range": location.from_start_of_line_to_position(position),
 			"newText": "package ",
 		},
 	}

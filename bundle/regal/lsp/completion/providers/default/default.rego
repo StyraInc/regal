@@ -18,13 +18,7 @@ items contains item if {
 		"kind": kind.keyword,
 		"detail": "default <rule-name> := <value>",
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": 0,
-				},
-				"end": position,
-			},
+			"range": location.from_start_of_line_to_position(position),
 			"newText": "default ",
 		},
 	}
@@ -43,13 +37,7 @@ items contains item if {
 		"kind": kind.keyword,
 		"detail": sprintf("add default assignment for %s rule", [name]),
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": 0,
-				},
-				"end": position,
-			},
+			"range": location.from_start_of_line_to_position(position),
 			"newText": sprintf("default %s := ", [name]),
 		},
 	}

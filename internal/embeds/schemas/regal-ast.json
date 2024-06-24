@@ -408,6 +408,12 @@
             },
             "location": {
               "type": "object"
+            },
+            "path_separator": {
+              "type": "string"
+            },
+            "workspace_root": {
+              "type": "string"
             }
           }
         }

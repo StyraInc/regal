@@ -17,6 +17,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/cache"
 	rego2 "github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -67,6 +68,8 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 		"col": location.Col,
 	}
 	inputContext["client_identifier"] = opts.ClientIdentifier
+	inputContext["workspace_root"] = uri.ToPath(opts.ClientIdentifier, opts.RootURI)
+	inputContext["path_separator"] = string(os.PathSeparator)
 
 	input, err := rego2.ToInput(
 		params.TextDocument.URI,

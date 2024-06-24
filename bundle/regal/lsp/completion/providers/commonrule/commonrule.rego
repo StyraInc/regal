@@ -28,13 +28,7 @@ items contains item if {
 			"value": sprintf("%q is a common rule name", [label]),
 		},
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": 0,
-				},
-				"end": position,
-			},
+			"range": location.from_start_of_line_to_position(position),
 			"newText": sprintf("%s ", [label]),
 		},
 	}

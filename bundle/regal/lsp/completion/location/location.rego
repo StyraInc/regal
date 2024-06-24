@@ -27,6 +27,19 @@ to_position(location) := {
 }
 
 # METADATA
+# description: returns a range from start of line to position
+from_start_of_line_to_position(position) := {
+	"start": {
+		"line": position.line,
+		"character": 0,
+	},
+	"end": {
+		"line": position.line,
+		"character": position.character,
+	},
+}
+
+# METADATA
 # description: |
 #   estimate where the location "ends" based on its text attribute,
 #   both line and column

@@ -1,0 +1,110 @@
+package regal.lsp.completion.providers.snippet_test
+
+import rego.v1
+
+import data.regal.lsp.completion.providers.snippet as provider
+import data.regal.lsp.completion.providers.utils_test as util
+
+# regal ignore:rule-length
+test_snippet_completion_on_typing if {
+	policy := `package policy
+
+import rego.v1
+
+allow if {
+	e
+}`
+	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 2})
+	items == {
+		{
+			"detail": "every key-value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every key-value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:key}, ${2:value} in ${3:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 2, "line": 5},
+					"start": {"character": 1, "line": 5},
+				},
+			},
+		},
+		{
+			"detail": "every value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:var} in ${2:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 2, "line": 5},
+					"start": {"character": 1, "line": 5},
+				},
+			},
+		},
+	}
+}
+
+# regal ignore:rule-length
+test_snippet_completion_on_invoked if {
+	policy := `package policy
+
+import rego.v1
+
+allow if `
+	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 10})
+	items == {
+		{
+			"detail": "every key-value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every key-value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:key}, ${2:value} in ${3:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 9, "line": 4},
+					"start": {"character": 9, "line": 4},
+				},
+			},
+		},
+		{
+			"detail": "every value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:var} in ${2:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 9, "line": 4},
+					"start": {"character": 9, "line": 4},
+				},
+			},
+		},
+		{
+			"detail": "some key-value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "some key-value iteration (snippet)",
+			"textEdit": {
+				"newText": "some ${1:key}, ${2:value} in ${3:collection}\n$0",
+				"range": {
+					"end": {"character": 9, "line": 4},
+					"start": {"character": 9, "line": 4},
+				},
+			},
+		},
+		{
+			"detail": "some value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "some value iteration (snippet)",
+			"textEdit": {
+				"newText": "some ${1:var} in ${2:collection}\n$0",
+				"range": {
+					"end": {"character": 9, "line": 4},
+					"start": {"character": 9, "line": 4},
+				},
+			},
+		},
+	}
+}

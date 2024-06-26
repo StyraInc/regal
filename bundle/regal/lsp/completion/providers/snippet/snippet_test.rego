@@ -108,3 +108,26 @@ allow if `
 		},
 	}
 }
+
+test_metadata_snippet_completion if {
+	policy := `package policy
+
+import rego.v1
+
+
+`
+	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 1})
+	items == {{
+		"detail": "metadata annotation",
+		"insertTextFormat": 2,
+		"kind": 15,
+		"label": "metadata annotation (snippet)",
+		"textEdit": {
+			"newText": "# METADATA\n# title: ${1:title}\n# description: ${2:description}",
+			"range": {
+				"end": {"character": 0, "line": 4},
+				"start": {"character": 0, "line": 4},
+			},
+		},
+	}}
+}

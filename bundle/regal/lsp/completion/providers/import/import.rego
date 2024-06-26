@@ -10,7 +10,7 @@ items contains item if {
 	line := input.regal.file.lines[position.line]
 	word := location.word_at(line, input.regal.context.location.col)
 
-	invoke_suggestion(line)
+	startswith("import", line)
 
 	item := {
 		"label": "import",
@@ -22,7 +22,3 @@ items contains item if {
 		},
 	}
 }
-
-invoke_suggestion("")
-
-invoke_suggestion(line) if startswith("import", line)

@@ -9,7 +9,8 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	invoke_suggestion(line, position)
+	startswith(line, "package ")
+	position.character > 7
 
 	ps := input.regal.context.path_separator
 
@@ -30,11 +31,6 @@ items contains item if {
 			"newText": sprintf("%s\n\n", [suggestion]),
 		},
 	}
-}
-
-invoke_suggestion(line, position) if {
-	startswith(line, "package ")
-	position.character > 7
 }
 
 base(path) := substring(path, 0, regal.last(indexof_n(path, "/")))

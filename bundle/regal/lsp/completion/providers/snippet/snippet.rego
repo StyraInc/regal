@@ -30,6 +30,26 @@ items contains item if {
 	}
 }
 
+items contains item if {
+	position := location.to_position(input.regal.context.location)
+	line := input.regal.file.lines[position.line]
+
+	startswith("metadata", line)
+
+	word := location.word_at(line, input.regal.context.location.col)
+
+	item := {
+		"label": "metadata annotation (snippet)",
+		"kind": kind.snippet,
+		"detail": "metadata annotation",
+		"textEdit": {
+			"range": location.word_range(word, position),
+			"newText": "# METADATA\n# title: ${1:title}\n# description: ${2:description}",
+		},
+		"insertTextFormat": 2, # snippet
+	}
+}
+
 _snippets := {
 	"some value iteration": {
 		"body": "some ${1:var} in ${2:collection}\n$0",

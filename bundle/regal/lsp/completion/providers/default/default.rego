@@ -11,7 +11,7 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	invoke_suggestion(line)
+	startswith("default", line)
 
 	item := {
 		"label": "default",
@@ -28,7 +28,7 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	invoke_suggestion(line)
+	startswith("default", line)
 
 	some name in ast.rule_and_function_names
 
@@ -42,7 +42,3 @@ items contains item if {
 		},
 	}
 }
-
-invoke_suggestion("")
-
-invoke_suggestion(line) if startswith("default", line)

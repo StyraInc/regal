@@ -17,7 +17,7 @@ items contains item if {
 
 	some label in suggested_names
 
-	invoke_suggestion(line, label)
+	startswith(label, line)
 
 	item := {
 		"label": label,
@@ -33,8 +33,3 @@ items contains item if {
 		},
 	}
 }
-
-invoke_suggestion("", _)
-
-# regal ignore:external-reference
-invoke_suggestion(line, label) if startswith(label, line)

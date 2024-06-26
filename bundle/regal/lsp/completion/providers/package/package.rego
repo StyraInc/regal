@@ -11,7 +11,7 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	invoke_suggestion(line)
+	startswith("package", line)
 
 	item := {
 		"label": "package",
@@ -23,8 +23,3 @@ items contains item if {
 		},
 	}
 }
-
-invoke_suggestion("")
-
-# regal ignore:external-reference
-invoke_suggestion(line) if startswith("package", line)

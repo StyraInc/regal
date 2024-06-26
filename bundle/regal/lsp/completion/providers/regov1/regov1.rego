@@ -15,7 +15,7 @@ items contains item if {
 
 	word := location.ref_at(line, input.regal.context.location.col)
 
-	invoke_suggestion(word)
+	startswith("rego.v1", word.text)
 
 	item := {
 		"label": "rego.v1",
@@ -26,8 +26,4 @@ items contains item if {
 			"newText": "rego.v1\n\n",
 		},
 	}
-}
-
-invoke_suggestion(word) if {
-	startswith("rego.v1", word.text)
 }

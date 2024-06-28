@@ -134,6 +134,8 @@ rules:
       level: error
     opa-fmt:
       level: error
+    pointless-reassignment:
+      level: error
     prefer-snake-case:
       level: error
     prefer-some-in-iteration:

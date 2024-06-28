@@ -47,13 +47,22 @@ _is_name(ref, pos) if {
 	ref.type == "string"
 }
 
-# allow := true, which expands to allow = true { true }
+# METADATA
+# description: |
+#   answers if the body was generated or not, i.e. not seen
+#   in the original Rego file — for example `x := 1`
+# scope: document
+
+# METADATA
+# description: covers case of allow := true, which expands to allow = true { true }
 generated_body(rule) if rule.body[0].location == rule.head.value.location
 
+# METADATA
+# description: covers case of default rules
 generated_body(rule) if rule["default"] == true
 
-# rule["message"] or
-# rule contains "message"
+# METADATA
+# description: covers case of rule["message"] or rule contains "message"
 generated_body(rule) if {
 	rule.body[0].location.row == rule.head.key.location.row
 
@@ -62,14 +71,19 @@ generated_body(rule) if {
 	rule.body[0].location.col < rule.head.key.location.col
 }
 
-# f("x")
+# METADATA
+# description: covers case of f("x")
 generated_body(rule) if rule.body[0].location == rule.head.location
 
+# METADATA
+# description: all the rules (excluding functions) in the input AST
 rules := [rule |
 	some rule in input.rules
 	not rule.head.args
 ]
 
+# METADATA
+# description: all the test rules in the input AST
 tests := [rule |
 	some rule in input.rules
 	not rule.head.args
@@ -77,17 +91,27 @@ tests := [rule |
 	startswith(ref_to_string(rule.head.ref), "test_")
 ]
 
+# METADATA
+# description: all the functions declared in the input AST
 functions := [rule |
 	some rule in input.rules
 	rule.head.args
 ]
 
+# METADATA
+# description: a list of the names for the giiven rule (if function)
 function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
+# METADATA
+# description: all the rule and function names in the input AST
 rule_and_function_names contains ref_to_string(rule.head.ref) if some rule in input.rules
 
+# METADATA
+# description: all identifers in the input AST (rule and functiin names, plus imported names)
 identifiers := rule_and_function_names | imported_identifiers
 
+# METADATA
+# description: all rule names in the input AST (excluding functions)
 rule_names contains ref_to_string(rule.head.ref) if some rule in rules
 
 _function_arg_names(rule) := {arg.value |
@@ -104,6 +128,9 @@ is_output_var(rule, ref, location) if {
 	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
 }
 
+# METADATA
+# description: as the name implies, answers whether provided value is a ref
+# scope: document
 default is_ref(_) := false
 
 is_ref(value) if value.type == "ref"
@@ -162,7 +189,7 @@ static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [re
 }
 
 # METADATA
-# description: provides a set of all built-in function calls made in input policy
+# description: provides a set of names of all built-in functions called in the input policy
 builtin_functions_called contains name if {
 	some value in all_refs
 
@@ -236,8 +263,16 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value.location.col == 1
 }
 
+# METADATA
+# description: |
+#   object containing all available built-in and custom functions in the
+#   scope of the input AST, keyed by function name
 all_functions := object.union(config.capabilities.builtins, function_decls(input.rules))
 
+# METADATA
+# description: |
+#   set containing all available built-in and custom function names in the
+#   scope of the input AST
 all_function_names := object.keys(all_functions)
 
 negated_expressions[rule] contains value if {

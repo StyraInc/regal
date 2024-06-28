@@ -19,12 +19,12 @@ allow := false`)
 	aggregate := rule.aggregate with input as module
 	aggregate == {
 		{
-			"aggregate_data": {"entrypoint": {"col": 1, "row": 2, "text": "IyBNRVRBREFUQQ=="}},
+			"aggregate_data": {"entrypoint": {"col": 1, "row": 2, "text": "IyBNRVRBREFUQQojIGVudHJ5cG9pbnQ6IHRydWU="}},
 			"aggregate_source": {"file": "policy.rego", "package_path": ["p"]},
 			"rule": {"category": "idiomatic", "title": "no-defined-entrypoint"},
 		},
 		{
-			"aggregate_data": {"entrypoint": {"col": 1, "row": 6, "text": "IyBNRVRBREFUQQ=="}},
+			"aggregate_data": {"entrypoint": {"col": 1, "row": 6, "text": "IyBNRVRBREFUQQojIGVudHJ5cG9pbnQ6IHRydWU="}},
 			"aggregate_source": {"file": "policy.rego", "package_path": ["p"]},
 			"rule": {"category": "idiomatic", "title": "no-defined-entrypoint"},
 		},

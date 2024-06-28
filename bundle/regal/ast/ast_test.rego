@@ -119,6 +119,7 @@ test_function_decls_multiple_same_name if {
 	is_object(custom)
 }
 
+# regal ignore:rule-length
 test_comment_blocks if {
 	policy := `package p
 
@@ -137,7 +138,14 @@ allow := true
 	blocks := ast.comment_blocks(module.comments)
 	blocks == [
 		[
-			{"Location": {"col": 1, "row": 3, "text": "IyBNRVRBREFUQQ=="}, "Text": "IE1FVEFEQVRB"},
+			{
+				"Location": {
+					"col": 1,
+					"row": 3,
+					"text": "IyBNRVRBREFUQQojIHRpdGxlOiBmb28KIyBiYXI6IGludmFsaWQ=",
+				},
+				"Text": "IE1FVEFEQVRB",
+			},
 			{"Location": {"col": 1, "file": "p.rego", "row": 4}, "Text": "IHRpdGxlOiBmb28="},
 			{"Location": {"col": 1, "file": "p.rego", "row": 5}, "Text": "IGJhcjogaW52YWxpZA=="},
 		],

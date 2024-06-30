@@ -54,10 +54,10 @@ another if {
 }
 `)
 
-	location.find_locals(module.rules, {"row": 6, "col": 1}) == set()
-	location.find_locals(module.rules, {"row": 6, "col": 10}) == {"x"}
-	location.find_locals(module.rules, {"row": 10, "col": 1}) == {"a", "b"}
-	location.find_locals(module.rules, {"row": 10, "col": 6}) == {"a", "b", "c"}
-	location.find_locals(module.rules, {"row": 15, "col": 1}) == {"x", "y"}
-	location.find_locals(module.rules, {"row": 16, "col": 1}) == {"x", "y", "z"}
+	location.find_locals(module.rules, {"row": 6, "col": 1}) with input as module == set()
+	location.find_locals(module.rules, {"row": 6, "col": 10}) with input as module == {"x"}
+	location.find_locals(module.rules, {"row": 10, "col": 1}) with input as module == {"a", "b"}
+	location.find_locals(module.rules, {"row": 10, "col": 6}) with input as module == {"a", "b", "c"}
+	location.find_locals(module.rules, {"row": 15, "col": 1}) with input as module == {"x", "y"}
+	location.find_locals(module.rules, {"row": 16, "col": 1}) with input as module == {"x", "y", "z"}
 }

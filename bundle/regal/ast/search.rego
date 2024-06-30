@@ -88,7 +88,7 @@ _find_object_comprehension_vars(value) := array.concat(key, val) if {
 	val := [value.value.value | value.value.value.type == "var"]
 }
 
-_find_vars(_, value, last) := find_term_vars(function_ret_args(fn_name, value)) if {
+_find_vars(_, value, last) := {"term": find_term_vars(function_ret_args(fn_name, value))} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
@@ -101,7 +101,7 @@ _find_vars(_, value, last) := find_term_vars(function_ret_args(fn_name, value)) 
 	function_ret_in_args(fn_name, value)
 }
 
-_find_vars(path, value, last) := _find_assign_vars(path, value) if {
+_find_vars(path, value, last) := {"assign": _find_assign_vars(path, value)} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
@@ -112,54 +112,86 @@ _find_vars(path, value, last) := _find_assign_vars(path, value) if {
 # left-hand side is equally dubious, but we'll treat `x = 1` as `x := 1` for
 # the purpose of this function until we have a more robust way of dealing with
 # unification
-_find_vars(path, value, last) := _find_assign_vars(path, value) if {
+_find_vars(path, value, last) := {"assign": _find_assign_vars(path, value)} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "eq"
 }
 
-_find_vars(_, value, _) := find_ref_vars(value) if value.type == "ref"
+_find_vars(_, value, _) := {"ref": find_ref_vars(value)} if value.type == "ref"
 
-_find_vars(path, value, last) := _find_some_in_decl_vars(path, value) if {
+_find_vars(path, value, last) := {"somein": _find_some_in_decl_vars(path, value)} if {
 	last == "symbols"
 	value[0].type == "call"
 }
 
-_find_vars(path, value, last) := _find_some_decl_vars(path, value) if {
+_find_vars(path, value, last) := {"some": _find_some_decl_vars(path, value)} if {
 	last == "symbols"
 	value[0].type != "call"
 }
 
-_find_vars(path, value, last) := _find_every_vars(path, value) if {
+_find_vars(path, value, last) := {"every": _find_every_vars(path, value)} if {
 	last == "terms"
 	value.domain
 }
 
-_find_vars(_, value, _) := _find_set_or_array_comprehension_vars(value) if {
+_find_vars(_, value, _) := {"setorarraycomprehension": _find_set_or_array_comprehension_vars(value)} if {
 	value.type in {"setcomprehension", "arraycomprehension"}
 }
 
-_find_vars(_, value, _) := _find_object_comprehension_vars(value) if value.type == "objectcomprehension"
+_find_vars(_, value, _) := {"objectcomprehension": _find_object_comprehension_vars(value)} if {
+	value.type == "objectcomprehension"
+}
 
-find_some_decl_vars(rule) := [var |
-	walk(rule, [path, value])
+_rule_index(rule) := sprintf("%d", [i]) if {
+	some i, r in _rules # regal ignore:external-reference
+	r == rule
+}
 
-	regal.last(path) == "symbols"
-	value[0].type != "call"
-
-	some var in _find_some_decl_vars(path, value)
-]
+find_some_decl_vars(rule) := [var | some var in vars[_rule_index(rule)]["some"]] # regal ignore:external-reference
 
 # METADATA
 # description: |
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some`, `every` and in comprehensions
+#   DEPRECATED: uses ast.vars instead
 find_vars(node) := [var |
 	walk(node, [path, value])
 
-	some var in _find_vars(path, value, regal.last(path))
+	var := _find_vars(path, value, regal.last(path))[_][_]
 ]
+
+# hack to work around the different input models of linting vs. the lsp package.. we
+# should probably consider something more robust
+_rules := input.rules
+
+_rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
+
+# METADATA:
+# description: |
+#   object containing all variables found in the input AST, keyed first by the index of
+#   the rule where the variables were found (as a numeric string), and then the context
+#   of the variable, which will be one of:
+#   - objectcomprehension
+#   - setorarraycomprehension
+#   - term
+#   - assign
+#   - every
+#   - some
+#   - somein
+#   - ref
+vars[rule_index][context] contains var if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [path, value])
+
+	some context, vars in _find_vars(path, value, regal.last(path))
+	some var in vars
+}
 
 # METADATA
 # description: |
@@ -168,7 +200,8 @@ find_vars(node) := [var |
 #   assignments / unification, but it's likely good enough since other rules
 #   recommend against those
 find_vars_in_local_scope(rule, location) := [var |
-	some var in find_vars(rule)
+	var := vars[_rule_index(rule)][_][_] # regal ignore:external-reference
+
 	not startswith(var.value, "$")
 	_before_location(rule, var, location)
 ]

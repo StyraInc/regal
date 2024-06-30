@@ -42,12 +42,12 @@ report contains violation if {
 }
 
 report contains violation if {
-	some rule in input.rules
-	some var in ast.find_vars(rule)
+	some i
+	var := ast.vars[i][_][_]
 
 	lower(var.value) in metasyntactic
 
-	ast.is_output_var(rule, var, var.location)
+	ast.is_output_var(input.rules[to_number(i)], var, var.location)
 
 	violation := result.fail(rego.metadata.chain(), result.location(var))
 }

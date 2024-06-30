@@ -122,11 +122,7 @@ all_rules_refs contains value if {
 # scope: document
 all_refs contains value if some value in all_rules_refs
 
-all_refs contains value if {
-	walk(input.imports, [_, value])
-
-	is_ref(value)
-}
+all_refs contains imported.path if some imported in input.imports
 
 # METADATA
 # title: ref_to_string

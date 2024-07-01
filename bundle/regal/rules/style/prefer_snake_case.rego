@@ -17,7 +17,7 @@ report contains violation if {
 }
 
 report contains violation if {
-	some var in ast.find_vars(input.rules)
+	var := ast.vars[_][_][_]
 	not util.is_snake_case(var.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(var))

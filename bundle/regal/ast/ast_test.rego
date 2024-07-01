@@ -189,11 +189,11 @@ test_find_vars_in_local_scope if {
 		"e": {"col": 4, "row": 14},
 	}
 
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.a)) == set()
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.b)) == {"a"}
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.c)) == {"a", "b", "c"}
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.d)) == {"a", "b", "c", "d"}
-	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.e)) == {"a", "b", "c", "d", "e"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.a)) with input as module == set()
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.b)) with input as module == {"a"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.c)) with input as module == {"a", "b", "c"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.d)) with input as module == {"a", "b", "c", "d"}
+	var_names(ast.find_vars_in_local_scope(allow_rule, var_locations.e)) with input as module == {"a", "b", "c", "d", "e"}
 }
 
 test_find_vars_in_local_scope_complex_comprehension_term if {
@@ -210,7 +210,7 @@ test_find_vars_in_local_scope_complex_comprehension_term if {
 
 	allow_rule := module.rules[0]
 
-	ast.find_vars_in_local_scope(allow_rule, {"col": 10, "row": 10}) == [
+	ast.find_vars_in_local_scope(allow_rule, {"col": 10, "row": 10}) with input as module == [
 		{"location": {"col": 3, "row": 7, "text": "YQ=="}, "type": "var", "value": "a"},
 		{"location": {"col": 15, "row": 7, "text": "Yg=="}, "type": "var", "value": "b"},
 		{"location": {"col": 20, "row": 7, "text": "Yw=="}, "type": "var", "value": "c"},
@@ -264,7 +264,7 @@ test_find_some_decl_vars if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	some_vars := ast.find_some_decl_vars(module.rules[0])
+	some_vars := ast.find_some_decl_vars(module.rules[0]) with input as module
 
 	var_names(some_vars) == {"x", "y", "z"}
 }
@@ -284,8 +284,8 @@ test_find_some_decl_names_in_scope if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) == {"x"}
-	ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 10}) == {"x", "y", "z"}
+	{"x"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) with input as module
+	{"x", "y", "z"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 10}) with input as module
 }
 
 var_names(vars) := {var.value | some var in vars}

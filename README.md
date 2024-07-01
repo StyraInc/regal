@@ -626,19 +626,29 @@ symbols helping you easily navigate the Rego code in your workspace.
 
 The Regal language server currently supports the following LSP features:
 
-- [x] Diagnostics (linting)
-- [x] Hover (for inline docs on built-in functions)
-- [x] Go to definition (ctrl/cmd + click on a reference to go to definition)
-- [x] Folding ranges (expand/collapse blocks, imports, comments)
-- [x] Document and workspace symbols (navigate to rules, functions, packages)
-- [x] Inlay hints (show names of built-in function arguments next to their values)
-- [x] Formatting
-- [x] Code completions
-- [x] Code actions (quick fixes for linting issues)
+- [x] [Diagnostics](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#diagnostics) (linting)
+- [x] [Hover](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#hover)
+      (for inline docs on built-in functions)
+- [x] [Go to definition](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#go-to-definition)
+      (ctrl/cmd + click on a reference to go to definition)
+- [x] [Folding ranges](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#folding-ranges)
+      (expand/collapse blocks, imports, comments)
+- [x] [Document and workspace symbols](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#document-and-workspace-symbols)
+      (navigate to rules, functions, packages)
+- [x] [Inlay hints](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#inlay-hints)
+      (show names of built-in function arguments next to their values)
+- [x] [Formatting](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#formatting)
+- [x] [Code completions](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#code-completions)
+- [x] [Code actions](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#code-actions)
+      (quick fixes for linting issues)
   - [x] [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)
   - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
   - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
   - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+
+See the
+[documentation page for the language server](https://github.com/StyraInc/regal/blob/main/docs/language-server.md)
+for an extensive overview of all features, and their meaning.
 
 See the [Editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
 

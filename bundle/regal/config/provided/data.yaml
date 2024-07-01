@@ -3,6 +3,8 @@ features:
     check-version: true
 rules:
   bugs:
+    annotation-without-metadata:
+      level: error
     argument-always-wildcard:
       level: error
     constant-condition:

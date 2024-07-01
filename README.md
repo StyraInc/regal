@@ -242,6 +242,7 @@ The following rules are currently available:
 | style       | [messy-rule](https://docs.styra.com/regal/rules/style/messy-rule)                                     | Messy incremental rule                                    |
 | style       | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)               | Comment should start with whitespace                      |
 | style       | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                           | File should be formatted with `opa fmt`                   |
+| style       | [pointless-reassignment](https://docs.styra.com/regal/rules/style/pointless-reassignment)             | Pointless reassignment of variable                        |
 | style       | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                       | Prefer snake_case for names                               |
 | style       | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)         | Prefer `some .. in` for iteration                         |
 | style       | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                                   | Max rule length exceeded                                  |

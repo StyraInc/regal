@@ -214,6 +214,8 @@ yoda_condition if {
 	"foo" == input.bar
 }
 
+pointless_reassignment := yoda_condition
+
 ### Testing ###
 
 # this will also trigger the test-outside-test-package rule

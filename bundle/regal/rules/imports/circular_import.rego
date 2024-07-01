@@ -43,11 +43,10 @@ aggregate_report contains violation if {
 
 	sorted_group := sort(g)
 
-	location := [e |
+	location := [loc |
 		some m1 in sorted_group
 		some m2 in sorted_group
 		some loc in package_locations[m1][m2]
-		e := loc
 	][0]
 
 	violation := result.fail(

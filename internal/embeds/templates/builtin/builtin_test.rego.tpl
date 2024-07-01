@@ -24,6 +24,6 @@ test_rule_named_foo_not_allowed if {
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/{{.NameOriginal}}", "{{.Category}}"),
 		}],
-		"title": "{{.NameOriginal}}"
+		"title": "{{.NameOriginal}}",
 	}}
 }

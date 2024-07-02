@@ -2,8 +2,6 @@ package completions
 
 import (
 	"fmt"
-	"os"
-	"time"
 
 	"github.com/open-policy-agent/opa/storage"
 
@@ -49,23 +47,21 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 	completions := make(map[string][]types.CompletionItem)
 
 	if m.isInsideOfComment(params) {
-		// Exit early if caret position is inside a comment. Most clients won't show
-		// suggestions there anyway, and there's no need to ask providers for completions.
+		// Exit early if caret position is inside a comment. We currently don't have any provider
+		// where doing completions inside of a comment makes much sense. Behavior is also editor-specific:
+		// - Zed: always on, with no way to disable
+		// - VSCode: disabled but can be enabled with "editor.quickSuggestions.comments" setting
 		return []types.CompletionItem{}, nil
 	}
 
 	for _, provider := range m.providers {
-		now := time.Now()
-
 		providerCompletions, err := provider.Run(m.c, params, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}
 
-		fmt.Fprintf(os.Stderr, "Provider %s took %v\n", provider.Name(), time.Since(now))
-
 		for _, completion := range providerCompletions {
-			// if a provider returns a mandatory completion, return it immediately
+			// If a provider returns a mandatory completion, return it immediately
 			// as it is the only completion that should be shown.
 			if completion.Mandatory {
 				return []types.CompletionItem{completion}, nil

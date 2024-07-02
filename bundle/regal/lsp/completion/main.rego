@@ -10,4 +10,9 @@ import rego.v1
 # METADATA
 # description: main entry point for completion suggestions
 # entrypoint: true
-items contains data.regal.lsp.completion.providers[_].items[_]
+items contains item if {
+	some provider
+	completion := data.regal.lsp.completion.providers[provider].items[_]
+
+	item := object.union(completion, {"_regal": {"provider": provider}})
+}

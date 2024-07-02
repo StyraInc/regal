@@ -40,6 +40,8 @@ rules:
       level: error
     unassigned-return-value:
       level: error
+    var-shadows-builtin:
+      level: error
     zero-arity-function:
       level: error
   custom:

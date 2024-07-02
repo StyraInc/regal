@@ -46,9 +46,9 @@ cases := {
 
 test_all_cases_are_as_expected if {
 	not_exp := {pattern: res |
-		subcases := cases[pattern]
+		some pattern, subcases in cases
 		res := {file: res1 |
-			exp := subcases[file]
+			some file, exp in subcases
 			act := config.exclude(pattern, file)
 			exp != act
 			res1 := {"exp": exp, "act": act}

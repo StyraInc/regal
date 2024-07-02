@@ -8,6 +8,8 @@ on:
     - v[0-9].**
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   update-docs:
     name: Update Docs

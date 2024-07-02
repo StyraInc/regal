@@ -98,6 +98,8 @@ argument_always_wildcard(_) if true
 # title: annotation without metadata
 some_rule := true
 
+var_shadows_builtin if http := true
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

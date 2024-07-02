@@ -39,7 +39,7 @@ pattern_compiler(pattern) := ps1 if {
 	ps1 := {pat |
 		some _p, _ in ps
 		nps := trailing_slash(_p)
-		nps[pat]
+		some pat, _ in nps
 	}
 }
 

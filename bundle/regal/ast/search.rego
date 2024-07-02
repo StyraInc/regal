@@ -79,15 +79,6 @@ find_term_vars(term) := [value |
 	value.type == "var"
 ]
 
-_find_set_or_array_comprehension_vars(value) := [value.value.term] if {
-	value.value.term.type == "var"
-} else := find_term_vars(value.value.term)
-
-_find_object_comprehension_vars(value) := array.concat(key, val) if {
-	key := [value.value.key | value.value.key.type == "var"]
-	val := [value.value.value | value.value.value.type == "var"]
-}
-
 _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, value))} if {
 	last == "terms"
 	value[0].type == "ref"
@@ -136,14 +127,6 @@ _find_vars(value, last) := {"every": _find_every_vars(value)} if {
 	value.domain
 }
 
-_find_vars(value, _) := {"setorarraycomprehension": _find_set_or_array_comprehension_vars(value)} if {
-	value.type in {"setcomprehension", "arraycomprehension"}
-}
-
-_find_vars(value, _) := {"objectcomprehension": _find_object_comprehension_vars(value)} if {
-	value.type == "objectcomprehension"
-}
-
 _rule_index(rule) := sprintf("%d", [i]) if {
 	some i, r in _rules # regal ignore:external-reference
 	r == rule
@@ -173,8 +156,6 @@ _rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
 #   object containing all variables found in the input AST, keyed first by the index of
 #   the rule where the variables were found (as a numeric string), and then the context
 #   of the variable, which will be one of:
-#   - objectcomprehension
-#   - setorarraycomprehension
 #   - term
 #   - assign
 #   - every

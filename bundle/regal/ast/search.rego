@@ -11,7 +11,7 @@ _find_nested_vars(obj) := [value |
 # simple assignment, i.e. `x := 100` returns `x`
 # always returns a single var, but wrapped in an
 # array for consistency
-_find_assign_vars(_, value) := var if {
+_find_assign_vars(value) := var if {
 	value[1].type == "var"
 	var := [value[1]]
 }
@@ -20,19 +20,19 @@ _find_assign_vars(_, value) := var if {
 # [a, b, c] := [1, 2, 3]
 # or
 # {a: b} := {"foo": "bar"}
-_find_assign_vars(_, value) := var if {
+_find_assign_vars(value) := var if {
 	value[1].type in {"array", "object"}
 	var := _find_nested_vars(value[1])
 }
 
 # var declared via `some`, i.e. `some x` or `some x, y`
-_find_some_decl_vars(_, value) := [v |
+_find_some_decl_vars(value) := [v |
 	some v in value
 	v.type == "var"
 ]
 
 # single var declared via `some in`, i.e. `some x in y`
-_find_some_in_decl_vars(_, value) := var if {
+_find_some_in_decl_vars(value) := var if {
 	arr := value[0].value
 	count(arr) == 3
 
@@ -40,7 +40,7 @@ _find_some_in_decl_vars(_, value) := var if {
 }
 
 # two vars declared via `some in`, i.e. `some x, y in z`
-_find_some_in_decl_vars(_, value) := var if {
+_find_some_in_decl_vars(value) := var if {
 	arr := value[0].value
 	count(arr) == 4
 
@@ -62,7 +62,7 @@ find_ref_vars(value) := [var |
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
 # or `every`, i.e. `every x, y in y {}`
-_find_every_vars(_, value) := var if {
+_find_every_vars(value) := var if {
 	key_var := [v | v := value.key; v.type == "var"; indexof(v.value, "$") == -1]
 	val_var := [v | v := value.value; v.type == "var"; indexof(v.value, "$") == -1]
 
@@ -88,7 +88,7 @@ _find_object_comprehension_vars(value) := array.concat(key, val) if {
 	val := [value.value.value | value.value.value.type == "var"]
 }
 
-_find_vars(_, value, last) := {"term": find_term_vars(function_ret_args(fn_name, value))} if {
+_find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, value))} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
@@ -101,7 +101,7 @@ _find_vars(_, value, last) := {"term": find_term_vars(function_ret_args(fn_name,
 	function_ret_in_args(fn_name, value)
 }
 
-_find_vars(path, value, last) := {"assign": _find_assign_vars(path, value)} if {
+_find_vars(value, last) := {"assign": _find_assign_vars(value)} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
@@ -112,35 +112,35 @@ _find_vars(path, value, last) := {"assign": _find_assign_vars(path, value)} if {
 # left-hand side is equally dubious, but we'll treat `x = 1` as `x := 1` for
 # the purpose of this function until we have a more robust way of dealing with
 # unification
-_find_vars(path, value, last) := {"assign": _find_assign_vars(path, value)} if {
+_find_vars(value, last) := {"assign": _find_assign_vars(value)} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "eq"
 }
 
-_find_vars(_, value, _) := {"ref": find_ref_vars(value)} if value.type == "ref"
+_find_vars(value, _) := {"ref": find_ref_vars(value)} if value.type == "ref"
 
-_find_vars(path, value, last) := {"somein": _find_some_in_decl_vars(path, value)} if {
+_find_vars(value, last) := {"somein": _find_some_in_decl_vars(value)} if {
 	last == "symbols"
 	value[0].type == "call"
 }
 
-_find_vars(path, value, last) := {"some": _find_some_decl_vars(path, value)} if {
+_find_vars(value, last) := {"some": _find_some_decl_vars(value)} if {
 	last == "symbols"
 	value[0].type != "call"
 }
 
-_find_vars(path, value, last) := {"every": _find_every_vars(path, value)} if {
+_find_vars(value, last) := {"every": _find_every_vars(value)} if {
 	last == "terms"
 	value.domain
 }
 
-_find_vars(_, value, _) := {"setorarraycomprehension": _find_set_or_array_comprehension_vars(value)} if {
+_find_vars(value, _) := {"setorarraycomprehension": _find_set_or_array_comprehension_vars(value)} if {
 	value.type in {"setcomprehension", "arraycomprehension"}
 }
 
-_find_vars(_, value, _) := {"objectcomprehension": _find_object_comprehension_vars(value)} if {
+_find_vars(value, _) := {"objectcomprehension": _find_object_comprehension_vars(value)} if {
 	value.type == "objectcomprehension"
 }
 
@@ -159,7 +159,7 @@ find_some_decl_vars(rule) := [var | some var in vars[_rule_index(rule)]["some"]]
 find_vars(node) := [var |
 	walk(node, [path, value])
 
-	var := _find_vars(path, value, regal.last(path))[_][_]
+	var := _find_vars(value, regal.last(path))[_][_]
 ]
 
 # hack to work around the different input models of linting vs. the lsp package.. we
@@ -189,7 +189,7 @@ vars[rule_index][context] contains var if {
 
 	walk(rule, [path, value])
 
-	some context, vars in _find_vars(path, value, regal.last(path))
+	some context, vars in _find_vars(value, regal.last(path))
 	some var in vars
 }
 

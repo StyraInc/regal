@@ -183,6 +183,7 @@ The following rules are currently available:
 
 |  Category   |                                                 Title                                                 |                        Description                        |
 |-------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| bugs        | [argument-always-wildcard](https://docs.styra.com/regal/rules/bugs/argument-always-wildcard)          | Argument is always a wildcard                             |
 | bugs        | [constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition)                      | Constant condition                                        |
 | bugs        | [deprecated-builtin](https://docs.styra.com/regal/rules/bugs/deprecated-builtin)                      | Avoid using deprecated built-in functions                 |
 | bugs        | [duplicate-rule](https://docs.styra.com/regal/rules/bugs/duplicate-rule)                              | Duplicate rule                                            |

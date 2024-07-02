@@ -3,6 +3,8 @@ features:
     check-version: true
 rules:
   bugs:
+    argument-always-wildcard:
+      level: error
     constant-condition:
       level: error
     deprecated-builtin:

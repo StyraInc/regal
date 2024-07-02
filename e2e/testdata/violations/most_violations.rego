@@ -91,6 +91,10 @@ impossible_not if {
 	not partial
 }
 
+argument_always_wildcard(_) if true
+
+argument_always_wildcard(_) if true
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

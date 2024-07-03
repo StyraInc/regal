@@ -1,8 +1,10 @@
 package regal.lsp.completion.providers.rulerefs_test
 
-import data.regal.ast
-import data.regal.lsp.completion.providers.rulerefs
 import rego.v1
+
+import data.regal.ast
+
+import data.regal.lsp.completion.providers.rulerefs as provider
 
 workspace := {
 	"current_file.rego": `package foo
@@ -69,7 +71,7 @@ another_local_rule := `])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module
+	items := provider.items with input as regal_module
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 
@@ -98,11 +100,11 @@ another_local_rule := imp`])
 		},
 		"context": {"location": {
 			"row": 10,
-			"col": 21,
+			"col": 26,
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module
+	items := provider.items with input as regal_module
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 
@@ -135,7 +137,7 @@ a`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module
+	items := provider.items with input as regal_module
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 
@@ -161,7 +163,7 @@ local_rule if local`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module
+	items := provider.items with input as regal_module
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 
@@ -191,7 +193,7 @@ local_func("foo") := local_f`])
 		}},
 	}}
 
-	items := rulerefs.items with input as regal_module
+	items := provider.items with input as regal_module
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 

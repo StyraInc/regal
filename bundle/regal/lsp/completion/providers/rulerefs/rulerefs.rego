@@ -10,15 +10,13 @@ ref_is_internal(ref) if contains(ref, "._")
 
 default determine_ref_prefix(_) := ""
 
-determine_ref_prefix(word) := word if {
-	word != ":="
-}
+determine_ref_prefix(word) := word if word != ":="
 
 position := location.to_position(input.regal.context.location)
 
 line := input.regal.file.lines[position.line]
 
-last_word := regal.last(regex.split(`\s+`, trim_space(line)))
+word := location.ref_at(line, input.regal.context.location.col)
 
 workspace_rule_refs contains ref if {
 	some refs in data.workspace.defined_refs
@@ -100,7 +98,7 @@ matching_rule_ref_suggestions contains ref if {
 	line != ""
 	location.in_rule_body(line)
 
-	prefix := determine_ref_prefix(last_word)
+	prefix := determine_ref_prefix(word.text)
 
 	some ref in rule_ref_suggestions
 
@@ -120,7 +118,7 @@ grouped_refs[size] contains ref if {
 }
 
 items := [item |
-	some _, group in grouped_refs
+	some group in grouped_refs
 	some ref in sort(group)
 
 	item := {
@@ -128,15 +126,8 @@ items := [item |
 		"kind": kind.variable,
 		"detail": "rule ref",
 		"textEdit": {
-			"range": {
-				"start": {
-					"line": position.line,
-					"character": position.character - count(last_word),
-				},
-				"end": position,
-			},
+			"range": location.word_range(word, position),
 			"newText": ref,
 		},
-		"_regal": {"provider": "rulerefs"},
 	}
 ]

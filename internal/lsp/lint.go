@@ -63,13 +63,6 @@ func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, f
 			return false, fmt.Errorf("failed to update rego store with defined refs: %w", err)
 		}
 
-		refNames, err := refs.UsedInModule(ctx, module)
-		if err != nil {
-			return false, fmt.Errorf("failed to get used refs: %w", err)
-		}
-
-		cache.SetUsedRefs(fileURI, refNames)
-
 		return true, nil
 	}
 

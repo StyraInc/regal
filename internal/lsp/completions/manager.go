@@ -36,7 +36,6 @@ func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 	m.RegisterProvider(&providers.RuleHead{})
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
 	m.RegisterProvider(&providers.Input{})
-	m.RegisterProvider(&providers.UsedRefs{})
 
 	m.RegisterProvider(providers.NewPolicy(store))
 
@@ -44,8 +43,6 @@ func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 }
 
 func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([]types.CompletionItem, error) {
-	completions := make(map[string][]types.CompletionItem)
-
 	if m.isInsideOfComment(params) {
 		// Exit early if caret position is inside a comment. We currently don't have any provider
 		// where doing completions inside of a comment makes much sense. Behavior is also editor-specific:
@@ -53,6 +50,8 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 		// - VSCode: disabled but can be enabled with "editor.quickSuggestions.comments" setting
 		return []types.CompletionItem{}, nil
 	}
+
+	var completionsList []types.CompletionItem
 
 	for _, provider := range m.providers {
 		providerCompletions, err := provider.Run(m.c, params, opts)
@@ -67,60 +66,12 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 				return []types.CompletionItem{completion}, nil
 			}
 
-			completions[completion.Label] = append(completions[completion.Label], completion)
+			completion.Regal = nil
+			completionsList = append(completionsList, completion)
 		}
-	}
-
-	var completionsList []types.CompletionItem
-
-	for _, completionItems := range completions {
-		if len(completionItems) < 2 {
-			completionsList = append(completionsList, completionItems...)
-
-			continue
-		}
-
-		maxRank := 0
-
-		for _, completion := range completionItems {
-			if completion.Regal == nil {
-				continue
-			}
-
-			if rank := rankProvider(completion.Regal.Provider); rank > maxRank {
-				maxRank = rank
-			}
-		}
-
-		for _, completion := range completionItems {
-			if completion.Regal == nil {
-				completionsList = append(completionsList, completion)
-
-				continue
-			}
-
-			if rank := rankProvider(completion.Regal.Provider); rank == maxRank {
-				completionsList = append(completionsList, completion)
-			}
-		}
-	}
-
-	for i := range completionsList {
-		completionsList[i].Regal = nil
 	}
 
 	return completionsList, nil
-}
-
-func rankProvider(provider string) int {
-	switch provider {
-	case "rulerefs":
-		return 100
-	case "usedrefs":
-		return 90
-	default:
-		return 0
-	}
 }
 
 func (m *Manager) RegisterProvider(provider Provider) {

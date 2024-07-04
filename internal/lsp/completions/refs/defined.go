@@ -42,6 +42,11 @@ func DefinedInModule(module *ast.Module) map[string]types.Ref {
 
 	for _, rule := range module.Rules {
 		name := rast.RefToString(rule.Head.Ref())
+
+		if strings.HasPrefix(name, "test_") {
+			continue
+		}
+
 		ruleGroups[name] = append(ruleGroups[name], rule)
 	}
 

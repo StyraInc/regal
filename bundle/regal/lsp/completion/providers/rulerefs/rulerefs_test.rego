@@ -44,9 +44,7 @@ parsed_modules[file_uri] := parsed_module if {
 defined_refs[file_uri] contains ref if {
 	some file_uri, parsed_module in parsed_modules
 
-	package_name := concat(".", [path.value |
-		some i, path in parsed_module["package"].path
-	])
+	package_name := ast.ref_to_string(parsed_module["package"].path)
 
 	some rule in parsed_module.rules
 
@@ -75,15 +73,15 @@ another_local_rule := `])
 		with data.workspace.parsed as parsed_modules
 		with data.workspace.defined_refs as defined_refs
 
-	labels := [item.label | some item in items]
+	labels := {item.label | some item in items}
 
-	expected_refs := [
+	expected_refs := {
 		"local_rule",
 		"imported_pkg.another_rule",
 		"imported_pkg_2.another_rule_2",
 		"data.not_imported_pkg.foo.bar", # partial generated from rule below
 		"data.not_imported_pkg.foo.bar.yet_another_rule",
-	]
+	}
 
 	expected_refs == labels
 }

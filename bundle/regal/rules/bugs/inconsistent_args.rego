@@ -35,7 +35,25 @@ report contains violation if {
 
 	inconsistent_args(position)
 
-	violation := result.fail(rego.metadata.chain(), result.location(find_function_by_name(name)))
+	violation := result.fail(rego.metadata.chain(), _args_location(find_function_by_name(name)))
+}
+
+_args_location(fn) := loc if {
+	# mostly to get the `text` attribute
+	oloc := result.location(fn)
+
+	farg := fn.head.args[0].location
+	larg := regal.last(fn.head.args).location
+
+	# use the location of the first and last arg for highlighting
+	loc := object.union(oloc, {"location": {
+		"row": farg.row,
+		"col": farg.col,
+		"end": {
+			"row": larg.row,
+			"col": larg.col + count(base64.decode(larg.text)),
+		},
+	}})
 }
 
 inconsistent_args(position) if {

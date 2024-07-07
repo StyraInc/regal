@@ -56,7 +56,15 @@ _category_title_from_path(path) := [category, title] if ["regal", "rules", categ
 
 _category_title_from_path(path) := [category, title] if ["custom", "regal", "rules", category, title] = path
 
-# Provided rules, i.e. regal.rules.category.title
+# METADATA
+# description: |
+#   helper function to call when building the "return value" for the `report` in any linter rule —
+#   recommendation being that both built-in rules and custom rules use this in favor of building the
+#   result by hand
+# scope: document
+
+# METADATA
+# description: provided rules, i.e. regal.rules.category.title
 fail(metadata, details) := violation if {
 	is_array(metadata) # from rego.metadata.chain()
 
@@ -76,7 +84,8 @@ fail(metadata, details) := violation if {
 	violation := _fail_annotated(annotation, details)
 }
 
-# Custom rules, i.e. custom.regal.rules.category.title
+# METADATA
+# description: custom rules, i.e. custom.regal.rules.category.title
 fail(metadata, details) := violation if {
 	is_array(metadata) # from rego.metadata.chain()
 
@@ -94,8 +103,15 @@ fail(metadata, details) := violation if {
 	violation := _fail_annotated_custom(annotation, details)
 }
 
+# METADATA
+# description: fallback case
 fail(metadata, details) := _fail_annotated(metadata, details)
 
+# METADATA
+# description: |
+#   creates a notice object, i.e. one used to inform users of things like a rule getting
+#   ignored because the set capabilities does not include a dependency (like a buiöt-in function)
+#   needed by the rule
 notice(metadata) := result if {
 	is_array(metadata)
 	rule_meta := metadata[0]
@@ -159,7 +175,7 @@ resource_urls(related_resources, category) := [r |
 	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
 ]
 
-with_text(location) := {"location": object.union(
+_with_text(location) := {"location": object.union(
 	location,
 	{
 		"file": input.regal.file.name, # regal ignore:external-reference
@@ -169,17 +185,17 @@ with_text(location) := {"location": object.union(
 	location.row
 } else := {"location": location}
 
-location(x) := with_text(x.location) if x.location
+location(x) := _with_text(x.location) if x.location
 
-location(x) := with_text(x[0].location) if is_array(x)
+location(x) := _with_text(x[0].location) if is_array(x)
 
 # Special case for comments, where this typo sadly is hard to change at this point
-location(x) := with_text(x.Location) if x.Location
+location(x) := _with_text(x.Location) if x.Location
 
 # Special case for rule refs, where location is currently only assigned to the value
 # In this case, we'll just assume that the column is 1, as that's the most likely place
 # See: https://github.com/open-policy-agent/opa/issues/5790
-location(x) := with_text(location) if {
+location(x) := _with_text(location) if {
 	not x.location
 	count(x.ref) == 1
 	x.ref[0].type == "var"
@@ -190,4 +206,22 @@ location(x) := {} if {
 	not x.location
 	not x.Location
 	count(x.ref) != 1
+}
+
+# METADATA
+# description: |
+#   similar to `location` but includes an `end` attribute where `end.row` is the same
+#   value as x.location.row, and `end.col` is the start col + the length of the text
+#   original attribute value base64 decoded from x.location
+ranged_location_from_text(x) := end if {
+	otext := base64.decode(x.location.text)
+	lines := split(otext, "\n")
+
+	loc := location(x)
+	end := object.union(loc, {"location": {"end": {
+		# note the use of the _original_ location text here, as loc.location.text
+		# will be the entire line where the violation occured
+		"row": (loc.location.row + count(lines)) - 1,
+		"col": loc.location.col + count(regal.last(lines)),
+	}}})
 }

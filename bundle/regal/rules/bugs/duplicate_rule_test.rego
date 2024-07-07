@@ -19,12 +19,11 @@ test_fail_simple_duplicate_rule if {
 	`)
 
 	r := rule.report with input as module
-
 	r == {{
 		"category": "bugs",
 		"description": "Duplicate rule found at line 10",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 6, "text": "\tallow if {"},
+		"location": {"col": 2, "file": "policy.rego", "row": 6, "text": "\tallow if {", "end": {"col": 4, "row": 8}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/duplicate-rule", "bugs"),
@@ -68,7 +67,7 @@ test_fail_multiple_duplicate_rules if {
 		"category": "bugs",
 		"description": "Duplicate rules found at lines 14, 18",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 10, "text": "\tallow if {"},
+		"location": {"col": 2, "file": "policy.rego", "row": 10, "text": "\tallow if {", "end": {"col": 4, "row": 12}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/duplicate-rule", "bugs"),

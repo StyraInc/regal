@@ -17,13 +17,22 @@ type RelatedResource struct {
 	Reference   string `json:"ref"`
 }
 
+type Position struct {
+	Row    int `json:"row"`
+	Column int `json:"col"`
+}
+
 // Location provides information on the location of a violation.
+// End attribute added in v0.24.0 and ideally we'd have a Start attribute the same way.
+// But as opposed to adding an optional End attribute, changing the structure of the existing
+// struct would break all existing API clients.
 type Location struct {
-	Column int     `json:"col"`
-	Row    int     `json:"row"`
-	Offset int     `json:"offset,omitempty"`
-	File   string  `json:"file"`
-	Text   *string `json:"text,omitempty"`
+	Column int       `json:"col"`
+	Row    int       `json:"row"`
+	End    *Position `json:"end,omitempty"`
+	Offset int       `json:"offset,omitempty"`
+	File   string    `json:"file"`
+	Text   *string   `json:"text,omitempty"`
 }
 
 // Violation describes any violation found by Regal.

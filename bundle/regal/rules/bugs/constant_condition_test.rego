@@ -14,7 +14,7 @@ test_fail_simple_constant_condition if {
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
-		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1"},
+		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1", "end": {"row": 4, "col": 3}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
@@ -34,7 +34,13 @@ test_fail_rule_with_body_looking_generated if {
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
-		"location": {"col": 9, "file": "policy.rego", "row": 3, "text": "allow { true }"},
+		"location": {
+			"file": "policy.rego",
+			"col": 9,
+			"row": 3,
+			"end": {"row": 3, "col": 13},
+			"text": "allow { true }",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
@@ -51,7 +57,7 @@ test_fail_operator_constant_condition if {
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
-		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1 == 1"},
+		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1 == 1", "end": {"col": 8, "row": 4}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),

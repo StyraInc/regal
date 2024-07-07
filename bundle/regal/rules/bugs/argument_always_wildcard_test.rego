@@ -17,7 +17,7 @@ test_fail_single_function_single_argument_always_a_wildcard if {
 		"category": "bugs",
 		"description": "Argument is always a wildcard",
 		"level": "error",
-		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1"},
+		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1", "end": {"col": 5, "row": 6}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
@@ -37,7 +37,7 @@ test_fail_single_argument_always_a_wildcard if {
 		"category": "bugs",
 		"description": "Argument is always a wildcard",
 		"level": "error",
-		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1"},
+		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1", "end": {"col": 5, "row": 6}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
@@ -57,7 +57,13 @@ test_fail_single_argument_always_a_wildcard_default_function if {
 		"category": "bugs",
 		"description": "Argument is always a wildcard",
 		"level": "error",
-		"location": {"col": 12, "file": "policy.rego", "row": 6, "text": "\tdefault f(_) := 1"},
+		"location": {
+			"col": 12,
+			"file": "policy.rego",
+			"row": 6,
+			"text": "\tdefault f(_) := 1",
+			"end": {"col": 13, "row": 6},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
@@ -77,7 +83,7 @@ test_fail_multiple_argument_always_a_wildcard if {
 		"category": "bugs",
 		"description": "Argument is always a wildcard",
 		"level": "error",
-		"location": {"col": 7, "file": "policy.rego", "row": 6, "text": "\tf(x, _) := x + 1"},
+		"location": {"col": 7, "file": "policy.rego", "row": 6, "text": "\tf(x, _) := x + 1", "end": {"col": 8, "row": 6}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),

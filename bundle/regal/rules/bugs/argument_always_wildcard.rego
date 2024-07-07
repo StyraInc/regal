@@ -7,16 +7,10 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-function_groups[name] contains fn if {
-	some fn in ast.functions
-
-	name := ast.ref_to_string(fn.head.ref)
-}
-
 report contains violation if {
-	some functions in function_groups
+	some functions in _function_groups
 
-	fn := any_member(functions)
+	fn := _any_member(functions)
 
 	some pos in numbers.range(0, count(fn.head.args) - 1)
 
@@ -25,7 +19,13 @@ report contains violation if {
 		startswith(function.head.args[pos].value, "$")
 	}
 
-	violation := result.fail(rego.metadata.chain(), result.location(fn.head.args[pos]))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(fn.head.args[pos]))
 }
 
-any_member(s) := [x | some x in s][0]
+_function_groups[name] contains fn if {
+	some fn in ast.functions
+
+	name := ast.ref_to_string(fn.head.ref)
+}
+
+_any_member(s) := [x | some x in s][0]

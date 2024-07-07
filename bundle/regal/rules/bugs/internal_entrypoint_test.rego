@@ -20,7 +20,7 @@ _allow := true
 		"category": "bugs",
 		"description": "Entrypoint can't be marked internal",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 9, "text": "_allow := true"},
+		"location": {"col": 1, "file": "policy.rego", "row": 9, "text": "_allow := true", "end": {"col": 7, "row": 9}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/internal-entrypoint", "bugs"),

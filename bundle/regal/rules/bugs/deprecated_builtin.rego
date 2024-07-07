@@ -20,17 +20,11 @@ report contains violation if {
 
 	some ref in ast.all_refs
 
-	ref[0].value[0].type == "var"
-	not ref[0].value[0].value in {"input", "data"}
+	call := ref[0]
 
-	name := concat(".", [value |
-		some part in ref[0].value
-		value := part.value
-	])
+	ast.ref_to_string(call.value) in deprecated_builtins
 
-	name in deprecated_builtins
-
-	violation := result.fail(rego.metadata.chain(), result.location(ref))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(call))
 }
 
 any_deprecated_builtin(caps_builtins, deprecated_builtins) if {

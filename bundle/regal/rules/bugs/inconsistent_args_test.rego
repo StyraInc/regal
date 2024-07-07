@@ -15,7 +15,13 @@ test_fail_inconsistent_args if {
 	bar(b, a) if b > a
 	`)
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 7, "text": "\tfoo(b, a) if b > a"})
+	r == expected_with_location({
+		"col": 6,
+		"file": "policy.rego",
+		"row": 7,
+		"text": "\tfoo(b, a) if b > a",
+		"end": {"col": 10, "row": 7},
+	})
 }
 
 test_fail_nested_inconsistent_args if {
@@ -24,7 +30,13 @@ test_fail_nested_inconsistent_args if {
 	a.b.foo(b, a) if b > a
 	`)
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 7, "text": "\ta.b.foo(b, a) if b > a"})
+	r == expected_with_location({
+		"col": 10,
+		"file": "policy.rego",
+		"row": 7,
+		"text": "\ta.b.foo(b, a) if b > a",
+		"end": {"col": 14, "row": 7},
+	})
 }
 
 test_success_not_inconsistent_args if {

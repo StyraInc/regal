@@ -12,7 +12,17 @@ report contains violation if {
 	some annotation in rule.annotations
 
 	annotation.entrypoint == true
-	startswith(ast.ref_to_string(rule.head.ref), "_")
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+	some i, part in rule.head.ref
+
+	_any_internal(i, part)
+
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(part))
+}
+
+_any_internal(0, part) if startswith(part.value, "_")
+
+_any_internal(_, part) if {
+	part.type == "string"
+	startswith(part.value, "_")
 }

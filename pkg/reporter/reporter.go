@@ -186,6 +186,8 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 		table.Append([]string{yellow("Rule:"), violation.Title})
 		table.Append([]string{yellow("Description:"), description})
 		table.Append([]string{yellow("Category:"), violation.Category})
+		// End location ignored here as it's not too interesting in this format and line:column
+		// allows click-to-open.
 		table.Append([]string{yellow("Location:"), cyan(violation.Location.String())})
 
 		if violation.Location.Text != nil {
@@ -388,12 +390,16 @@ func getLocation(violation report.Violation) *sarif.Location {
 			sarif.NewSimpleArtifactLocation(violation.Location.File),
 		)
 
+	region := sarif.NewRegion().
+		WithStartLine(violation.Location.Row).
+		WithStartColumn(violation.Location.Column)
+
+	if violation.Location.End != nil {
+		region = region.WithEndLine(violation.Location.End.Row).WithEndColumn(violation.Location.End.Column)
+	}
+
 	if violation.Location.Row > 0 && violation.Location.Column > 0 {
-		physicalLocation = physicalLocation.WithRegion(
-			sarif.NewRegion().
-				WithStartLine(violation.Location.Row).
-				WithStartColumn(violation.Location.Column),
-		)
+		physicalLocation = physicalLocation.WithRegion(region)
 	}
 
 	return sarif.NewLocationWithPhysicalLocation(physicalLocation)

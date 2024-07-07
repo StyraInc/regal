@@ -31,6 +31,10 @@ var rep = report.Report{
 				Row:    1,
 				Column: 1,
 				Text:   ptr("package illegal"),
+				End: &report.Position{
+					Row:    1,
+					Column: 14,
+				},
 			},
 			RelatedResources: []report.RelatedResource{
 				{
@@ -205,6 +209,10 @@ func TestJSONReporterPublish(t *testing.T) {
       "location": {
         "col": 1,
         "row": 1,
+        "end": {
+          "row": 1,
+          "col": 14
+        },
         "file": "a.rego",
         "text": "package illegal"
       }
@@ -416,7 +424,9 @@ func TestSarifReporterPublish(t *testing.T) {
                 },
                 "region": {
                   "startLine": 1,
-                  "startColumn": 1
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 14
                 }
               }
             }

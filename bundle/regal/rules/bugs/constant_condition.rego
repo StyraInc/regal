@@ -18,6 +18,9 @@ _rules_with_bodies := [rule |
 	not ast.generated_body(rule)
 ]
 
+# METADATA
+# description: single scalar value, like a lone `true` inside a rule body
+# scope: rule
 report contains violation if {
 	expr := _rules_with_bodies[_].body[_]
 
@@ -27,9 +30,12 @@ report contains violation if {
 	# however meaningless it may be. Maybe consider for another rule?
 	expr.terms.type in ast.scalar_types
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr.terms))
 }
 
+# METADATA
+# description: two scalar values with a "boolean operator" between, like 1 == 1, or 2 > 1
+# scope: rule
 report contains violation if {
 	expr := _rules_with_bodies[_].body[_]
 
@@ -39,5 +45,5 @@ report contains violation if {
 	expr.terms[1].type in ast.scalar_types
 	expr.terms[2].type in ast.scalar_types
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr))
 }

@@ -82,6 +82,7 @@ invalid_some_context(rule, path) if {
 	node.terms[0].type == "ref"
 	node.terms[0].value[0].type == "var"
 	node.terms[0].value[0].value in ast.all_function_names # regal ignore:external-reference
+	not node.terms[0].value[0].value in ast.operators # regal ignore:external-reference
 }
 
 # if previous node is of type call, also don't recommend `some .. in`

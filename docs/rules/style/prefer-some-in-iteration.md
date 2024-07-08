@@ -10,7 +10,7 @@ package policy
 
 import rego.v1
 
-engineering_roles = {"engineer", "dba", "developer"}
+engineering_roles := {"engineer", "dba", "developer"}
 
 engineers contains employee if {
     employee := data.employees[_]
@@ -24,7 +24,7 @@ package policy
 
 import rego.v1
 
-engineering_roles = {"engineer", "dba", "developer"}
+engineering_roles := {"engineer", "dba", "developer"}
 
 engineers contains employee if {
     some employee in data.employees

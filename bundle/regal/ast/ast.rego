@@ -6,6 +6,26 @@ import data.regal.config
 
 scalar_types := {"boolean", "null", "number", "string"}
 
+operators := {
+	"and",
+	"assign",
+	"div",
+	"eq",
+	"equal",
+	"gt",
+	"gte",
+	"internal.member_2",
+	"internal.member_3",
+	"lt",
+	"lte",
+	"minus",
+	"mul",
+	"neq",
+	"or",
+	"plus",
+	"rem",
+}
+
 # regal ignore:external-reference
 is_constant(value) if value.type in scalar_types
 

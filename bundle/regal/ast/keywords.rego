@@ -73,8 +73,6 @@ keywords[value.row] contains keyword if {
 
 	walk(expr.terms, [path, value])
 
-	# regal.last(path) == "location"
-
 	value.col
 	value.row
 

@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
 
 	rbundle "github.com/styrainc/regal/bundle"
@@ -92,13 +91,6 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 
 	return builtinCalls
 }
-
-//nolint:gochecknoglobals
-var regalRules = func() bundle.Bundle {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
-	return regalRules
-}()
 
 //nolint:gochecknoglobals
 var keywordPreparedQuery *rego.PreparedEvalQuery

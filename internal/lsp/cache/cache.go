@@ -45,6 +45,8 @@ type Cache struct {
 	builtinPositionsFile map[string]map[uint][]types.BuiltinPosition
 	builtinPositionsMu   sync.Mutex
 
+	// keywordLocationsFile is a map of file URI to Rego keyword locations for that file
+	// to be used for hover hints.
 	keywordLocationsFile map[string]map[uint][]types.KeywordLocation
 	keywordLocationsMu   sync.Mutex
 

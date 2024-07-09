@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -99,17 +100,35 @@ var regalRules = func() bundle.Bundle {
 	return regalRules
 }()
 
-// AllKeywords returns all keywords in the module.
-func AllKeywords(ctx context.Context, module *ast.Module) (map[string][]KeywordUse, error) {
+//nolint:gochecknoglobals
+var keywordPreparedQuery *rego.PreparedEvalQuery
+
+//nolint:gochecknoglobals
+var keywordPreparedQueryInitOnce sync.Once
+
+func initialize() {
+	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
+
 	regoArgs := []func(*rego.Rego){
-		rego.ParsedQuery(ast.MustParseBody("data.regal.ast.keywords")),
 		rego.ParsedBundle("regal", &regalRules),
+		rego.Query("data.regal.ast.keywords"),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-		rego.Input(module),
 	}
 
-	rs, err := rego.New(regoArgs...).Eval(ctx)
+	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	keywordPreparedQuery = &preparedQuery
+}
+
+// AllKeywords returns all keywords in the module.
+func AllKeywords(ctx context.Context, module *ast.Module) (map[string][]KeywordUse, error) {
+	keywordPreparedQueryInitOnce.Do(initialize)
+
+	rs, err := keywordPreparedQuery.Eval(ctx, rego.EvalInput(module))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
 	}

@@ -21,19 +21,14 @@ report contains violation if {
 
 # pointless reassignment in rule body
 report contains violation if {
-	some call in ast.all_refs
+	some rule in input.rules
+	some expr in rule.body
 
-	call[0].value[0].type == "var"
-	call[0].value[0].value == "assign"
+	not expr["with"]
 
-	call[2].type == "var"
+	expr.terms[0].value[0].type == "var"
+	expr.terms[0].value[0].value == "assign"
+	expr.terms[2].type == "var"
 
-	violation := result.fail(rego.metadata.chain(), result.location(call))
-}
-
-assign_calls contains call if {
-	some call in ast.all_refs
-
-	call[0].value[0].type == "var"
-	call[0].value[0].value == "assign"
+	violation := result.fail(rego.metadata.chain(), result.location(expr.terms))
 }

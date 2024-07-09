@@ -50,3 +50,18 @@ test_pointless_reassignment_in_rule_body if {
 		"title": "pointless-reassignment",
 	}}
 }
+
+test_pointless_reassignment_in_rule_body_using_with if {
+	module := ast.with_rego_v1(`
+	foo := input
+
+	rule if {
+		bar := foo with input as "wow"
+
+		bar == true
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}

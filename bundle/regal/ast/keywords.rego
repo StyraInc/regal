@@ -3,23 +3,19 @@ package regal.ast
 import rego.v1
 
 keywords[row] contains keyword if {
-	some rule in input.rules
-
-	rule_text := base64.decode(rule.location.text)
-
-	some idx, line in split(rule_text, "\n")
+	some idx, line in input.regal.file.lines
 
 	col := indexof(line, " if ")
 	col > 0
 
-	row := rule.location.row + idx
+	row := idx + 1
 
 	not row in _comment_row_index
 
 	keyword := {
 		"name": "if",
 		"location": {
-			"row": rule.location.row + idx,
+			"row": idx + 1,
 			"col": col + 2,
 		},
 	}

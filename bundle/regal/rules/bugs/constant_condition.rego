@@ -13,8 +13,13 @@ import data.regal.result
 
 _operators := {"equal", "gt", "gte", "lt", "lte", "neq"}
 
+_rules_with_bodies := [rule |
+	some rule in input.rules
+	not ast.generated_body(rule)
+]
+
 report contains violation if {
-	some expr in ast.exprs[_]
+	expr := _rules_with_bodies[_].body[_]
 
 	# We could probably include arrays and objects too, as a single compound value
 	# is not very useful, but it's not as clear cut as scalars, as you could have
@@ -26,7 +31,7 @@ report contains violation if {
 }
 
 report contains violation if {
-	some expr in ast.exprs[_]
+	expr := _rules_with_bodies[_].body[_]
 
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value in _operators

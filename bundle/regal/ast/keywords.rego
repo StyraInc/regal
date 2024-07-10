@@ -79,6 +79,23 @@ keywords[value.row] contains keyword if {
 	some keyword in _determine_keywords(context, value, name)
 }
 
+keywords[value.row] contains keyword if {
+	some rule in input.rules
+	rule.head.assign
+
+	walk(rule.head.value, [path, value])
+
+	value.col
+	value.row
+
+	name := _keyword_b64s[value.text]
+
+	parent_path := array.slice(path, 0, count(path) - 1)
+	context := object.get(rule.head.value, parent_path, {})
+
+	some keyword in _determine_keywords(context, value, name)
+}
+
 _determine_keywords(_, value, name) := {keyword} if {
 	name in {"in", "some"}
 

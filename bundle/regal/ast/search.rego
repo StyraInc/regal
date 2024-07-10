@@ -243,17 +243,12 @@ find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	_before_location(rule, some_var, location)
 }
 
-_rules_with_bodies[rule_index] := rule if {
-	some rule_index, rule in input.rules
-	not generated_body(rule)
-}
+# _rules_with_bodies[rule_index] := rule if {
+# 	some rule_index, rule in input.rules
+# 	not generated_body(rule)
+# }
 
-# METADATA
-# description: |
-#   find all expressions from the rules in the input
 exprs[rule_index][expr_index] := expr if {
-	some rule_index
-	some expr_index
-
-	expr := _rules_with_bodies[rule_index].body[expr_index]
+	some rule_index, rule in input.rules
+	some expr_index, expr in rule.body
 }

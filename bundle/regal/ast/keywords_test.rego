@@ -99,17 +99,36 @@ allow contains {
 }
 
 test_keywords_some_in if {
-	policy := `package policy
-
-import rego.v1
-
+	policy := ast.with_rego_v1(`
 allow if {
 	some e in [1,2,3]
-}`
+}`)
 
-	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
+	kwds := ast.keywords with input as policy
 
 	count(kwds) == 4 # lines with keywords
+
+	_keyword_on_row(
+		kwds,
+		7,
+		{"name": "some", "location": {"row": 7, "col": 2}},
+	)
+
+	_keyword_on_row(
+		kwds,
+		7,
+		{"name": "in", "location": {"row": 7, "col": 9}},
+	)
+}
+
+test_keywords_some_no_body if {
+	policy := ast.with_rego_v1(`list := [e|
+	some e in [1,2,3]
+]`)
+
+	kwds := ast.keywords with input as policy
+
+	count(kwds) == 3 # lines with keywords
 
 	_keyword_on_row(
 		kwds,
@@ -124,58 +143,74 @@ allow if {
 	)
 }
 
-test_keywords_contains if {
-	policy := `package policy
+test_keywords_some_in_func_arg if {
+	policy := ast.with_rego_v1(`foo := concat(".", [part |
+	some part in ["a","b","c"]
+])`)
 
-import rego.v1
-
-messages contains "hello" if {
-	1 == 1
-}`
-
-	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
+	kwds := ast.keywords with input as policy
 
 	count(kwds) == 3 # lines with keywords
 
 	_keyword_on_row(
 		kwds,
-		5,
-		{"name": "contains", "location": {"row": 5, "col": 10}},
+		6,
+		{"name": "some", "location": {"row": 6, "col": 2}},
 	)
 
 	_keyword_on_row(
 		kwds,
-		5,
-		{"name": "if", "location": {"row": 5, "col": 27}},
+		6,
+		{"name": "in", "location": {"row": 6, "col": 12}},
+	)
+}
+
+test_keywords_contains if {
+	policy := ast.with_rego_v1(`
+messages contains "hello" if {
+	1 == 1
+}`)
+
+	kwds := ast.keywords with input as policy
+
+	count(kwds) == 3 # lines with keywords
+
+	_keyword_on_row(
+		kwds,
+		6,
+		{"name": "contains", "location": {"row": 6, "col": 10}},
+	)
+
+	_keyword_on_row(
+		kwds,
+		6,
+		{"name": "if", "location": {"row": 6, "col": 27}},
 	)
 }
 
 test_keywords_every if {
-	policy := `package policy
-
-import rego.v1
-
+	policy := ast.with_rego_v1(`
 allow if {
 	every k in [1,2,3] {
 		k == "foo"
 		v == 1
 	}
-}`
+}`)
 
-	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
+	kwds := ast.keywords with input as policy
 
 	count(kwds) == 4 # lines with keywords
 
 	_keyword_on_row(
 		kwds,
-		6,
-		{"name": "every", "location": {"row": 6, "col": 2}},
+		7,
+		{"name": "every", "location": {"row": 7, "col": 2}},
 	)
 
 	_keyword_on_row(
 		kwds,
-		6,
-		{"name": "in", "location": {"row": 6, "col": 10}},
+		7,
+		{"name": "in", "location": {"row": 7, "col": 10}},
 	)
 }
 

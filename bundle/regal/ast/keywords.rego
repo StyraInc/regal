@@ -64,8 +64,7 @@ keywords[loc.row] contains keyword if {
 }
 
 keywords[value.row] contains keyword if {
-	some rule in input.rules
-	some expr in rule.body
+	some expr in exprs[_]
 
 	walk(expr.terms, [path, value])
 

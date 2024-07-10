@@ -8,8 +8,8 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
-	some i, expr in rule.body
+	some rule_index, rule in input.rules
+	some expr_index, expr in ast.exprs[rule_index]
 
 	expr.terms.type == "ref"
 
@@ -19,7 +19,7 @@ report contains violation if {
 
 	ref_str := ast.ref_to_string(expr.terms.value)
 
-	next_expr := rule.body[i + 1]
+	next_expr := rule.body[expr_index + 1]
 
 	some term in next_expr.terms
 

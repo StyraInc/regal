@@ -96,16 +96,12 @@ _determine_keywords(_, value, name) := {keyword} if {
 	}
 }
 
-_determine_keywords(context, value, name) := keywords if {
-	name == "every"
-
-	v := object.get(context, "value", {})
-
-	text := base64.decode(v.location.text)
+_determine_keywords(context, value, "every") := keywords if {
+	text := base64.decode(context.value.location.text)
 
 	keywords := {
 		{
-			"name": name,
+			"name": "every",
 			"location": {
 				"row": value.row,
 				"col": value.col,
@@ -115,7 +111,7 @@ _determine_keywords(context, value, name) := keywords if {
 			"name": "in",
 			"location": {
 				"row": value.row,
-				"col": (v.location.col + count(text)) + 1,
+				"col": (context.value.location.col + count(text)) + 1,
 			},
 		},
 	}

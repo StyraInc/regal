@@ -15,6 +15,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -117,10 +118,15 @@ func initialize() {
 }
 
 // AllKeywords returns all keywords in the module.
-func AllKeywords(ctx context.Context, module *ast.Module) (map[string][]KeywordUse, error) {
+func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
 	keywordPreparedQueryInitOnce.Do(initialize)
 
-	rs, err := keywordPreparedQuery.Eval(ctx, rego.EvalInput(module))
+	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
+	if err != nil {
+		return nil, fmt.Errorf("failed enhancing input: %w", err)
+	}
+
+	rs, err := keywordPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
 	}

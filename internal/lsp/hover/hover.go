@@ -3,9 +3,12 @@ package hover
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/types"
@@ -164,10 +167,18 @@ func UpdateKeywordLocations(ctx context.Context, cache *cache.Cache, uri string)
 		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
 	}
 
-	keywords, err := rego.AllKeywords(ctx, module)
+	fileContents, ok := cache.GetFileContents(uri)
+	if !ok {
+		return fmt.Errorf("failed to determine keyword locations: no file contents for uri %q", uri)
+	}
+
+	t := time.Now()
+	keywords, err := rego.AllKeywords(ctx, filepath.Base(uri), fileContents, module)
 	if err != nil {
 		return fmt.Errorf("failed to determine keyword locations: %w", err)
 	}
+
+	fmt.Fprintln(os.Stderr, time.Since(t))
 
 	keywordLocations := make(map[uint][]types2.KeywordLocation)
 

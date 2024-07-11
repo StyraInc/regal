@@ -29,6 +29,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/completions"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
+	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -266,7 +267,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.builtinsPositionFile:
-			err := l.processBuiltinsUpdate(ctx, evt.URI, evt.Content)
+			err := l.processHoverContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
 			}
@@ -546,7 +547,7 @@ func (l *LanguageServer) processTextContentUpdate(
 	return false, nil
 }
 
-func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, fileURI string, content string) error {
+func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI string, content string) error {
 	if l.ignoreURI(fileURI) {
 		return nil
 	}
@@ -572,6 +573,11 @@ func (l *LanguageServer) processBuiltinsUpdate(ctx context.Context, fileURI stri
 	err = hover.UpdateBuiltinPositions(l.cache, fileURI)
 	if err != nil {
 		return fmt.Errorf("failed to update builtin positions: %w", err)
+	}
+
+	err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI)
+	if err != nil {
+		return fmt.Errorf("failed to update keyword locations: %w", err)
 	}
 
 	return nil
@@ -664,6 +670,40 @@ func (l *LanguageServer) handleTextDocumentHover(
 				Range: types.Range{
 					Start: types.Position{Line: bp.Line - 1, Character: bp.Start - 1},
 					End:   types.Position{Line: bp.Line - 1, Character: bp.End - 1},
+				},
+			}, nil
+		}
+	}
+
+	keywordsOnLine, ok := l.cache.GetKeywordLocations(params.TextDocument.URI)
+	// when no keywords are found, we can't return a useful hover response.
+	if !ok {
+		l.logError(fmt.Errorf("could not get keywords for uri %q", params.TextDocument.URI))
+
+		// return "null" as per the spec
+		return nil, nil
+	}
+
+	for _, kp := range keywordsOnLine[params.Position.Line+1] {
+		if params.Position.Character >= kp.Start-1 && params.Position.Character <= kp.End-1 {
+			link, ok := examples.GetKeywordLink(kp.Name)
+			if !ok {
+				continue
+			}
+
+			contents := fmt.Sprintf(`### %s
+
+[View examples](%s) for the '%s' keyword.
+`, kp.Name, link, kp.Name)
+
+			return HoverResponse{
+				Contents: types.MarkupContent{
+					Kind:  "markdown",
+					Value: contents,
+				},
+				Range: types.Range{
+					Start: types.Position{Line: kp.Line - 1, Character: kp.Start - 1},
+					End:   types.Position{Line: kp.Line - 1, Character: kp.End - 1},
 				},
 			}, nil
 		}

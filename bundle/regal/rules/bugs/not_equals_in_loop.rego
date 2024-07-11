@@ -4,10 +4,11 @@ package regal.rules.bugs["not-equals-in-loop"]
 
 import rego.v1
 
+import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	expr := input.rules[_].body[_]
+	some expr in ast.exprs[_]
 
 	expr.terms[0].type == "ref"
 	expr.terms[0].value[0].type == "var"

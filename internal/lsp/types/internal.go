@@ -32,3 +32,10 @@ type BuiltinPosition struct {
 	Start   uint
 	End     uint
 }
+
+type KeywordLocation struct {
+	Name  string
+	Line  uint
+	Start uint
+	End   uint
+}

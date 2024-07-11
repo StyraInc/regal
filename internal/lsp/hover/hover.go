@@ -1,7 +1,10 @@
 package hover
 
 import (
+	"context"
 	"fmt"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -9,6 +12,7 @@ import (
 	"github.com/open-policy-agent/opa/types"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	types2 "github.com/styrainc/regal/internal/lsp/types"
 )
@@ -68,6 +72,11 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 	sb.WriteString("### ")
 	sb.WriteString(title)
 	sb.WriteString("\n\n")
+
+	exampleLink, ok := examples.GetBuiltInLink(builtin.Name)
+	if ok {
+		sb.WriteString(fmt.Sprintf("[View Usage Examples](%s)\n", exampleLink))
+	}
 
 	writeFunctionSnippet(sb, builtin)
 
@@ -146,6 +155,47 @@ func UpdateBuiltinPositions(cache *cache.Cache, uri string) error {
 	}
 
 	cache.SetBuiltinPositions(uri, builtinsOnLine)
+
+	return nil
+}
+
+func UpdateKeywordLocations(ctx context.Context, cache *cache.Cache, uri string) error {
+	module, ok := cache.GetModule(uri)
+	if !ok {
+		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
+	}
+
+	fileContents, ok := cache.GetFileContents(uri)
+	if !ok {
+		return fmt.Errorf("failed to determine keyword locations: no file contents for uri %q", uri)
+	}
+
+	keywords, err := rego.AllKeywords(ctx, filepath.Base(uri), fileContents, module)
+	if err != nil {
+		return fmt.Errorf("failed to determine keyword locations: %w", err)
+	}
+
+	keywordLocations := make(map[uint][]types2.KeywordLocation)
+
+	for line, uses := range keywords {
+		lineNumber64, err := strconv.ParseUint(line, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse line number: %w", err)
+		}
+
+		lineNumber := uint(lineNumber64)
+
+		for _, use := range uses {
+			keywordLocations[lineNumber] = append(keywordLocations[lineNumber], types2.KeywordLocation{
+				Name:  use.Name,
+				Line:  lineNumber,
+				Start: use.Location.Col,
+				End:   use.Location.Col + uint(len(use.Name)),
+			})
+		}
+	}
+
+	cache.SetKeywordLocations(uri, keywordLocations)
 
 	return nil
 }

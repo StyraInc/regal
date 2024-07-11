@@ -8,8 +8,8 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
-	some expr in rule.body
+	some rule_index, rule in input.rules
+	some expr_index, expr in ast.exprs[rule_index]
 
 	expr["with"]
 	not strings.any_prefix_match(ast.ref_to_string(rule.head.ref), {"test_", "todo_test"})

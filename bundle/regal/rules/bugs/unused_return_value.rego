@@ -9,7 +9,7 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	expr := input.rules[_].body[_]
+	some expr in ast.exprs[_]
 
 	expr.terms[0].type == "ref"
 	expr.terms[0].value[0].type == "var"

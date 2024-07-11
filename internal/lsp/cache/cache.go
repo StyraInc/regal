@@ -45,6 +45,11 @@ type Cache struct {
 	builtinPositionsFile map[string]map[uint][]types.BuiltinPosition
 	builtinPositionsMu   sync.Mutex
 
+	// keywordLocationsFile is a map of file URI to Rego keyword locations for that file
+	// to be used for hover hints.
+	keywordLocationsFile map[string]map[uint][]types.KeywordLocation
+	keywordLocationsMu   sync.Mutex
+
 	// fileRefs is a map of file URI to refs that are defined in that file. These are
 	// intended to be used for completions in other files.
 	// fileRefs is expected to be updated when a file is successfully parsed.
@@ -64,6 +69,7 @@ func NewCache() *Cache {
 		diagnosticsParseErrors: make(map[string][]types.Diagnostic),
 
 		builtinPositionsFile: make(map[string]map[uint][]types.BuiltinPosition),
+		keywordLocationsFile: make(map[string]map[uint][]types.KeywordLocation),
 
 		fileRefs: make(map[string]map[string]types.Ref),
 	}
@@ -249,6 +255,22 @@ func (c *Cache) GetAllBuiltInPositions() map[string]map[uint][]types.BuiltinPosi
 	defer c.builtinPositionsMu.Unlock()
 
 	return maps.Clone(c.builtinPositionsFile)
+}
+
+func (c *Cache) SetKeywordLocations(fileURI string, keywords map[uint][]types.KeywordLocation) {
+	c.keywordLocationsMu.Lock()
+	defer c.keywordLocationsMu.Unlock()
+
+	c.keywordLocationsFile[fileURI] = keywords
+}
+
+func (c *Cache) GetKeywordLocations(fileURI string) (map[uint][]types.KeywordLocation, bool) {
+	c.keywordLocationsMu.Lock()
+	defer c.keywordLocationsMu.Unlock()
+
+	val, ok := c.keywordLocationsFile[fileURI]
+
+	return val, ok
 }
 
 func (c *Cache) SetFileRefs(fileURI string, items map[string]types.Ref) {

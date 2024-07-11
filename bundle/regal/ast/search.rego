@@ -242,3 +242,13 @@ find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	some some_var in find_some_decl_vars(rule)
 	_before_location(rule, some_var, location)
 }
+
+# _rules_with_bodies[rule_index] := rule if {
+# 	some rule_index, rule in input.rules
+# 	not generated_body(rule)
+# }
+
+exprs[rule_index][expr_index] := expr if {
+	some rule_index, rule in input.rules
+	some expr_index, expr in rule.body
+}

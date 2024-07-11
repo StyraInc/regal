@@ -500,7 +500,7 @@ func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 		cache: cache.NewCache(),
 	}
 
-	err := ls.processBuiltinsUpdate(context.Background(), "file://missing.rego", "foo")
+	err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo")
 	if err != nil {
 		t.Fatal(err)
 	}

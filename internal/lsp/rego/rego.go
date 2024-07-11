@@ -5,19 +5,34 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 
+	rbundle "github.com/styrainc/regal/bundle"
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/pkg/builtins"
 )
 
 type BuiltInCall struct {
 	Builtin  *ast.Builtin
 	Location *ast.Location
 	Args     []*ast.Term
+}
+
+type KeywordUse struct {
+	Name     string             `json:"name"`
+	Location KeywordUseLocation `json:"location"`
+}
+
+type KeywordUseLocation struct {
+	Row uint `json:"row"`
+	Col uint `json:"col"`
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
@@ -76,6 +91,62 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 	callVisitor.Walk(module)
 
 	return builtinCalls
+}
+
+//nolint:gochecknoglobals
+var keywordPreparedQuery *rego.PreparedEvalQuery
+
+//nolint:gochecknoglobals
+var keywordPreparedQueryInitOnce sync.Once
+
+func initialize() {
+	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
+
+	regoArgs := []func(*rego.Rego){
+		rego.ParsedBundle("regal", &regalRules),
+		rego.Query("data.regal.ast.keywords"),
+		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
+		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+	}
+
+	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	keywordPreparedQuery = &preparedQuery
+}
+
+// AllKeywords returns all keywords in the module.
+func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
+	keywordPreparedQueryInitOnce.Do(initialize)
+
+	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
+	if err != nil {
+		return nil, fmt.Errorf("failed enhancing input: %w", err)
+	}
+
+	rs, err := keywordPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
+	if err != nil {
+		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
+	}
+
+	if len(rs) != 1 {
+		return nil, errors.New("expected exactly one result from evaluation")
+	}
+
+	if len(rs[0].Expressions) != 1 {
+		return nil, errors.New("expected exactly one expression in result")
+	}
+
+	var result map[string][]KeywordUse
+
+	err = rio.JSONRoundTrip(rs[0].Expressions[0].Value, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshaling keywords: %w", err)
+	}
+
+	return result, nil
 }
 
 // ToInput prepares a module with Regal additions to be used as input for evaluation.

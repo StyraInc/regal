@@ -9,6 +9,10 @@ This implementation allows the result of linting to be presented directly in you
 and without having to call Regal from the command line. The language server however provides much more than just
 linting!
 
+:::tip
+Check support for your editor on the [editor support](./editor-support.md) page.
+:::
+
 ## Features
 
 The Regal language server currently supports the following LSP features:
@@ -20,7 +24,7 @@ uses diagnostics to present users with either parsing errors in case of syntax i
 by the Regal linter.
 
 <img
-  src="assets/lsp/diagnostics.png"
+  src={require('./assets/lsp/diagnostics.png').default}
   alt="Screenshot of diagnostics as displayed in Zed"/>
 
 Future versions of Regal may include also [compilation errors](https://github.com/StyraInc/regal/issues/745) as part of
@@ -33,7 +37,7 @@ for the code under the cursor. This is particularly useful for built-in function
 the meaning of the function, and the arguments it expects.
 
 <img
-  src="assets/lsp/hover.png"
+  src={require('./assets/lsp/hover.png').default}
   alt="Screenshot of hover as displayed in VS Code"/>
 
 The Regal language server currently supports hover for all built-in functions OPA provides.
@@ -49,7 +53,7 @@ Regal provides folding ranges for any policy being edited. Folding ranges are ar
 or expanded, which may be useful for hiding content that is not relevant to the current task.
 
 <img
-  src="assets/lsp/folding.png"
+  src={require('./assets/lsp/folding.png').default}
   alt="Screenshot of folding ranges as displayed in Zed"/>
 
 Regal supports folding ranges for blocks, imports and comments.
@@ -60,13 +64,13 @@ Document and workspace symbols allow policy authors to quickly scan and navigate
 anywhere in the document or workspace.
 
 <img
-  src="assets/lsp/documentsymbols.png"
+  src={require('./assets/lsp/documentsymbols.png').default}
   alt="Screenshot showing search on workspace symbols in Zed"/>
 
 VS Code additionally provides an "Outline" view, which is a nice visual representation of the symbols in the document.
 
 <img
-  src="assets/lsp/documentsymbols2.png"
+  src={require('./assets/lsp/documentsymbols2.png').default}
   alt="Screenshot showing outline view of document symbols in VS Code"/>
 
 ### Inlay hints
@@ -76,8 +80,8 @@ by showing the name of the argument next to the value. Inlay hints can additiona
 like the expected type of the argument.
 
 <img
-  src="assets/lsp/inlay.png"
-  alt="Screenshot showing inlay hints in VS Code/>
+  src={require('./assets/lsp/inlay.png').default}
+  alt="Screenshot showing inlay hints in VS Code"/>
 
 Regal currently supports inlay hints for all built-in functions. Future versions may support inlay hints for
 user-defined functions too.
@@ -88,7 +92,7 @@ Regal uses the `opa fmt` formatter for formatting Rego. This is made available a
 a [code action](#code-actions) when unformatted files are encountered.
 
 <img
-  src="assets/lsp/format.png"
+  src={require('./assets/lsp/format.png').default}
   alt="Screenshot of diagnostics as displayed in Zed"/>
 
 ### Code completions
@@ -105,7 +109,7 @@ be suggestions for:
 - And much more!
 
 <img
-  src="assets/lsp/completion.png"
+  src={require('./assets/lsp/completion.png').default}
   alt="Screenshot of completion suggestions as displayed in Zed"/>
 
 New completion providers are added continuosly, so if you have a suggestion for a new completion, please
@@ -118,7 +122,7 @@ that may appear when a linter rule has been violated. Code actions can be trigge
 that appears on the line with a diagnostic message, or by pressing `ctrl/cmd + .` when the cursor is on the line.
 
 <img
-  src="assets/lsp/codeaction.png"
+  src={require('./assets/lsp/codeaction.png').default}
   alt="Screenshot of code action displayed in Zed"/>
 
 Regal currently provides quick fix code actions for the following linter rules:
@@ -136,7 +140,7 @@ with the `language server protocol` label for a list of features that are not ye
 server, but that are planned for the future. If you have suggestions for anything else, please create a new issue!
 
 Also note that not all clients (i.e. editors) may support all features of a language server! See the
-[editor support](/docs/editor-support.md) page for information about Regal support in different editors.
+[editor support](./editor-support.md) page for information about Regal support in different editors.
 
 ## Community
 

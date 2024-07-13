@@ -100,6 +100,11 @@ some_rule := true
 
 var_shadows_builtin if http := true
 
+unused_output_variable if {
+	some x
+	input[x]
+}
+
 ### Idiomatic ###
 
 custom_has_key_construct(map, key) if {

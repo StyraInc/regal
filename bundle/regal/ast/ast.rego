@@ -31,12 +31,7 @@ is_constant(value) if value.type in scalar_types
 
 is_constant(value) if {
 	value.type in {"array", "object"}
-	not has_var(value)
-}
-
-has_var(value) if {
-	walk(value.value, [_, term])
-	term.type == "var"
+	not has_term_var(value.value)
 }
 
 builtin_names := object.keys(config.capabilities.builtins)
@@ -119,7 +114,7 @@ functions := [rule |
 ]
 
 # METADATA
-# description: a list of the names for the giiven rule (if function)
+# description: a list of the argument names for the given rule (if function)
 function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
 # METADATA
@@ -133,11 +128,6 @@ identifiers := rule_and_function_names | imported_identifiers
 # METADATA
 # description: all rule names in the input AST (excluding functions)
 rule_names contains ref_to_string(rule.head.ref) if some rule in rules
-
-_function_arg_names(rule) := {arg.value |
-	some arg in rule.head.args
-	arg.type == "var"
-}
 
 # METADATA
 # description: |
@@ -157,11 +147,51 @@ is_ref(value) if value.type == "ref"
 
 is_ref(value) if value[0].type == "ref"
 
-all_rules_refs contains value if {
-	walk(input.rules, [_, value])
+refs[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
 
 	is_ref(value)
 }
+
+# METADATA
+# description: |
+#   a map containing all function calls (built-in and custom) in the input AST
+#   keyed by rule index
+function_calls[rule_index] contains call if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	some ref in refs[rule_index]
+
+	name := ref_to_string(ref[0].value)
+	args := [arg |
+		some i, arg in array.slice(ref, 1, 100)
+
+		not _exclude_arg(name, i, arg)
+	]
+
+	call := {
+		"name": ref_to_string(ref[0].value),
+		"location": ref[0].location,
+		"args": args,
+	}
+}
+
+# these will be aggregated as calls anyway, so let's try and keep this flat
+_exclude_arg(_, _, arg) if arg.type == "call"
+
+# first "arg" of assign is the variable to assign to.. special case we simply
+# ignore here, as it's covered elsewhere
+_exclude_arg("assign", 0, _)
+
+all_rules_refs contains refs[_][_]
 
 # METADATA
 # title: all_refs

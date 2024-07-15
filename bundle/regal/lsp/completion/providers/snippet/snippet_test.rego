@@ -6,7 +6,7 @@ import data.regal.lsp.completion.providers.snippet as provider
 import data.regal.lsp.completion.providers.utils_test as util
 
 # regal ignore:rule-length
-test_snippet_completion_on_typing if {
+test_snippet_completion_on_typing_partial_prefix if {
 	policy := `package policy
 
 import rego.v1
@@ -43,6 +43,60 @@ allow if {
 			},
 		},
 	}
+}
+
+# regal ignore:rule-length
+test_snippet_completion_on_typing_full_prefix if {
+	policy := `package policy
+
+import rego.v1
+
+allow if {
+	every
+}`
+	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 6})
+	items == {
+		{
+			"detail": "every key-value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every key-value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:key}, ${2:value} in ${3:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 6, "line": 5},
+					"start": {"character": 1, "line": 5},
+				},
+			},
+		},
+		{
+			"detail": "every value iteration",
+			"insertTextFormat": 2,
+			"kind": 15,
+			"label": "every value iteration (snippet)",
+			"textEdit": {
+				"newText": "every ${1:var} in ${2:collection} {\n\t$0\n}",
+				"range": {
+					"end": {"character": 6, "line": 5},
+					"start": {"character": 1, "line": 5},
+				},
+			},
+		},
+	}
+}
+
+# regal ignore:rule-length
+test_snippet_completion_on_typing_no_repeat if {
+	policy := `package policy
+
+import rego.v1
+
+allow if {
+	some e in [1,2,3] some
+}
+`
+	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 21})
+	items == set()
 }
 
 # regal ignore:rule-length

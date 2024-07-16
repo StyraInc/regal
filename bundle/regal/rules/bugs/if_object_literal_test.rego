@@ -14,7 +14,7 @@ test_fail_if_empty_object if {
 		"category": "bugs",
 		"description": "Object literal following `if`",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 5, "text": "rule if {}"},
+		"location": {"col": 9, "file": "policy.rego", "row": 5, "text": "rule if {}", "end": {"col": 11, "row": 5}},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/if-object-literal", "bugs"),
@@ -30,7 +30,13 @@ test_fail_non_empty_object if {
 		"category": "bugs",
 		"description": "Object literal following `if`",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 5, "text": `rule if {"x": input.x}`},
+		"location": {
+			"col": 9,
+			"file": "policy.rego",
+			"row": 5,
+			"text": `rule if {"x": input.x}`,
+			"end": {"col": 23, "row": 5},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/if-object-literal", "bugs"),

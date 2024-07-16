@@ -17,6 +17,7 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/hints"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -95,10 +96,7 @@ func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, f
 	diags := make([]types.Diagnostic, 0)
 
 	for _, astError := range astErrors {
-		line := astError.Location.Row - 1
-		if line < 0 {
-			line = 0
-		}
+		line := max(astError.Location.Row-1, 0)
 
 		lineLength := 1
 		if line < len(lines) {
@@ -178,21 +176,6 @@ func updateFileDiagnostics(
 	diags := make([]types.Diagnostic, 0)
 
 	for _, item := range rpt.Violations {
-		itemLen := 0
-		if item.Location.Text != nil {
-			itemLen = len(*item.Location.Text)
-		}
-
-		line := item.Location.Row - 1
-		if line < 0 {
-			line = 0
-		}
-
-		char := item.Location.Column - 1
-		if char < 0 {
-			char = 0
-		}
-
 		// here errors are presented as warnings, and warnings as info
 		// to differentiate from parse errors
 		severity := uint(2)
@@ -202,19 +185,10 @@ func updateFileDiagnostics(
 
 		diags = append(diags, types.Diagnostic{
 			Severity: severity,
-			Range: types.Range{
-				Start: types.Position{
-					Line:      uint(line),
-					Character: uint(char),
-				},
-				End: types.Position{
-					Line:      uint(line),
-					Character: uint(char + itemLen + 1),
-				},
-			},
-			Message: item.Description,
-			Source:  "regal/" + item.Category,
-			Code:    item.Title,
+			Range:    getRangeForViolation(item),
+			Message:  item.Description,
+			Source:   "regal/" + item.Category,
+			Code:     item.Title,
 			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
@@ -256,21 +230,6 @@ func updateAllDiagnostics(
 	fileDiags := make(map[string][]types.Diagnostic)
 
 	for _, item := range rpt.Violations {
-		itemLen := 0
-		if item.Location.Text != nil {
-			itemLen = len(*item.Location.Text)
-		}
-
-		line := item.Location.Row - 1
-		if line < 0 {
-			line = 0
-		}
-
-		char := item.Location.Column - 1
-		if char < 0 {
-			char = 0
-		}
-
 		// here errors are presented as warnings, and warnings as info
 		// to differentiate from parse errors
 		severity := uint(2)
@@ -280,19 +239,10 @@ func updateAllDiagnostics(
 
 		diag := types.Diagnostic{
 			Severity: severity,
-			Range: types.Range{
-				Start: types.Position{
-					Line:      uint(line),
-					Character: uint(char),
-				},
-				End: types.Position{
-					Line:      uint(line),
-					Character: uint(char + itemLen + 1),
-				},
-			},
-			Message: item.Description,
-			Source:  "regal/" + item.Category,
-			Code:    item.Title,
+			Range:    getRangeForViolation(item),
+			Message:  item.Description,
+			Source:   "regal/" + item.Category,
+			Code:     item.Title,
 			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(
 					"https://docs.styra.com/regal/rules/%s/%s",
@@ -356,4 +306,30 @@ type astError struct {
 	Code     string        `json:"code"`
 	Message  string        `json:"message"`
 	Location *ast.Location `json:"location,omitempty"`
+}
+
+func getRangeForViolation(item report.Violation) types.Range {
+	start := types.Position{
+		Line:      uint(max(item.Location.Row-1, 0)),
+		Character: uint(max(item.Location.Column-1, 0)),
+	}
+
+	end := types.Position{}
+	if item.Location.End != nil {
+		end.Line = uint(max(item.Location.End.Row-1, 0))
+		end.Character = uint(max(item.Location.End.Column-1, 0))
+	} else {
+		itemLen := 0
+		if item.Location.Text != nil {
+			itemLen = len(*item.Location.Text)
+		}
+
+		end.Line = start.Line
+		end.Character = start.Character + uint(itemLen)
+	}
+
+	return types.Range{
+		Start: start,
+		End:   end,
+	}
 }

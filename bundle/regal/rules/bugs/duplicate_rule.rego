@@ -19,7 +19,7 @@ report contains violation if {
 	]
 
 	violation := result.fail(rego.metadata.chain(), object.union(
-		result.location(input.rules[first]),
+		result.ranged_location_from_text(input.rules[first]),
 		{"description": message(dup_locations)},
 	))
 }

@@ -18,7 +18,10 @@ report contains violation if {
 	some attribute in attributes
 	not attribute in ast.comments.metadata_attributes
 
-	violation := result.fail(rego.metadata.chain(), result.location(_find_line(block, attribute)))
+	violation := result.fail(
+		rego.metadata.chain(),
+		result.location(_find_line(block, attribute)),
+	)
 }
 
 _block_to_string(block) := concat("\n", [line |

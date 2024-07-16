@@ -19,7 +19,13 @@ test_fail_call_to_deprecated_builtin_function if {
 		"category": "bugs",
 		"description": "Avoid using deprecated built-in functions",
 		"level": "error",
-		"location": {"col": 3, "file": "policy.rego", "row": 7, "text": "\t\tany([true, false])"},
+		"location": {
+			"col": 3,
+			"file": "policy.rego",
+			"row": 7,
+			"text": "\t\tany([true, false])",
+			"end": {"col": 6, "row": 7},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/deprecated-builtin", "bugs"),

@@ -5,7 +5,9 @@ on:
     tags:
       - v[0-9].**
 
-permissions: read-all
+permissions:
+  # this is needed to create a release
+  contents: write
 
 jobs:
   goreleaser:

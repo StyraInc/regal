@@ -8,6 +8,8 @@ on:
 permissions:
   # this is needed to create a release
   contents: write
+  # this is needed to create artifacts in ghcr
+  packages: write
 
 jobs:
   goreleaser:

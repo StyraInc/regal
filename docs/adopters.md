@@ -43,6 +43,7 @@ The following package managers include Regal in their repositories, either nativ
 - [Homebrew](https://brew.sh/) via Styra's [homebrew-packages](https://github.com/StyraInc/homebrew-packages)
 - [asdf](https://asdf-vm.com/) via [asdf-regal](https://github.com/asdf-community/asdf-regal)
 - [pkgsrc](https://www.pkgsrc.se/) and the [regal](https://pkgsrc.se/devel/regal) package
+- [Nix](https://nixos.org/): [regal](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/re/regal/package.nix) package on [nixpkgs](https://github.com/NixOS/nixpkgs)
 
 ## Companies and Organizations
 

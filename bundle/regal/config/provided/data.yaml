@@ -7,6 +7,7 @@ rules:
       level: error
     argument-always-wildcard:
       level: error
+      except-function-name-pattern: "^mock_"
     constant-condition:
       level: error
     deprecated-builtin:

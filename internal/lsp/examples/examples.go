@@ -1,9 +1,10 @@
 package examples
 
 import (
-	_ "embed"
 	"encoding/json"
 	"fmt"
+
+	_ "embed"
 )
 
 // GetBuiltInLink returns the URL for the built-in function documentation

@@ -71,13 +71,23 @@ _find_every_vars(value) := var if {
 
 # METADATA
 # description: |
-#   traverses all nodes in provided term (using `walk`), and returns an array with
-#   all variables declared in term, i,e [x, y] or {x: y}, etc.
-find_term_vars(term) := [value |
-	walk(term, [_, value])
+#   traverses all nodes in provided terms (using `walk`), and returns an array with
+#   all variables declared in terms, i,e [x, y] or {x: y}, etc.
+find_term_vars(terms) := [term |
+	walk(terms, [_, term])
 
-	value.type == "var"
+	term.type == "var"
 ]
+
+# METADATA
+# description: |
+#   traverses all nodes in provided terms (using `walk`), and returns true if any variable
+#   is found in terms, with early exit (as opposed to find_term_vars)
+has_term_var(terms) if {
+	walk(terms, [_, term])
+
+	term.type == "var"
+}
 
 _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, value))} if {
 	last == "terms"
@@ -221,6 +231,11 @@ find_names_in_local_scope(rule, location) := names if {
 	var_names := {var.value | some var in find_vars_in_local_scope(rule, location)}
 
 	names := fn_arg_names | var_names
+}
+
+_function_arg_names(rule) := {arg.value |
+	some arg in rule.head.args
+	arg.type == "var"
 }
 
 # METADATA

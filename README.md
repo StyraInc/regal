@@ -703,7 +703,7 @@ in the near future:
 
 - [ ] Make "Check on save" unnecessary by allowing diagnostics to include
       [compilation errors](https://github.com/StyraInc/regal/issues/745)
-- [ ] Add Code Lens to "Evaluate" any rule or package
+- [ ] Add Code Lens to "Evaluate" any rule or package (VS Code only, initially)
 - [ ] Implement [Signature Help](https://github.com/StyraInc/regal/issues/695) feature
 
 The roadmap is updated when all the current items have been completed.

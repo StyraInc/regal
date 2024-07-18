@@ -85,6 +85,10 @@ rules:
     argument-always-wildcard:
       # one of "error", "warning", "ignore"
       level: error
+      # function name patterns for which this rule should make an exception
+      # default is to ignore any function name starting with "mock_" as these
+      # commonly don't need named arguments
+      except-function-name-pattern: "^mock_"
 ```
 
 ## Community

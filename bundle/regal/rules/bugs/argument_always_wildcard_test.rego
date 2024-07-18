@@ -26,6 +26,15 @@ test_fail_single_function_single_argument_always_a_wildcard if {
 	}}
 }
 
+test_success_single_function_single_argument_always_a_wildcard_except_function_name if {
+	module := ast.with_rego_v1(`
+	mock_f(_) := 1
+	`)
+
+	r := rule.report with input as module with config.for_rule as {"except-function-name-pattern": "^mock_"}
+	r == set()
+}
+
 test_fail_single_argument_always_a_wildcard if {
 	module := ast.with_rego_v1(`
 	f(_) := 1

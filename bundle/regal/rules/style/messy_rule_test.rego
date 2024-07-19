@@ -72,6 +72,19 @@ test_success_non_incremental_nested_rule_definiton if {
 	r == set()
 }
 
+test_success_non_messy_ref_head_rules if {
+	module := ast.with_rego_v1(`
+	keywords[foo.bar] contains "foo"
+
+	keywords[foo] contains "foo"
+
+	keywords[foo.baz] contains "foo"
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 test_fail_messy_incremental_nested_variable_rule_definiton if {
 	module := ast.with_rego_v1(`
 	base[x].foo := 5 if { x := 1 }

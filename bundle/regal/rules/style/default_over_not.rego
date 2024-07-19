@@ -16,7 +16,7 @@ report contains violation if {
 	not rule["default"]
 	ast.generated_body(rule)
 
-	name := ast.static_rule_name(rule)
+	name := _static_rule_name(rule)
 	value := rule.head.value
 
 	ast.static_ref(value)
@@ -27,7 +27,7 @@ report contains violation if {
 	sibling_rules := [sibling |
 		some j, sibling in ast.rules
 		i != j
-		ast.static_rule_name(sibling) == name
+		_static_rule_name(sibling) == name
 	]
 
 	some sibling in sibling_rules
@@ -38,4 +38,14 @@ report contains violation if {
 	ast.ref_to_string(sibling.body[0].terms.value) == ast.ref_to_string(value.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(sibling.body[0]))
+}
+
+_static_rule_name(rule) := rule.head.ref[0].value if count(rule.head.ref) == 1
+
+_static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [ref.value |
+	some i, ref in rule.head.ref
+	i > 0
+])) if {
+	count(rule.head.ref) > 1
+	ast.static_rule_ref(rule.head.ref)
 }

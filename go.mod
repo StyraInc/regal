@@ -66,4 +66,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/open-policy-agent/opa => github.com/johanfylling/opa v0.35.1-0.20240718112810-6c1f9914b497
+replace github.com/open-policy-agent/opa => github.com/johanfylling/opa v0.35.1-0.20240719123043-aef2d042f863

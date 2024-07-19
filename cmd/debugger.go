@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strings"
 
@@ -18,6 +19,8 @@ import (
 
 func init() {
 	verboseLogging := false
+	serverMode := false
+	address := "localhost:4712"
 
 	debuggerCommand := &cobra.Command{
 		Use:   "debug",
@@ -33,6 +36,62 @@ func init() {
 				logger.Local.SetLevel(logging.Debug)
 			}
 
+			if serverMode {
+				return startServer(ctx, address, logger)
+			}
+
+			return startCmd(ctx, logger)
+		}),
+	}
+
+	debuggerCommand.Flags().BoolVarP(&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
+	debuggerCommand.Flags().BoolVarP(&serverMode, "server", "s", serverMode, "Start the debugger in server mode")
+	debuggerCommand.Flags().StringVarP(&address, "address", "a", address, "Address to listen on. For use with --server flag.")
+
+	RootCommand.AddCommand(debuggerCommand)
+}
+
+func startCmd(ctx context.Context, logger *dap.DebugLogger) error {
+	protoManager := dap.NewProtocolManager(logger.Local)
+	logger.ProtocolManager = protoManager
+
+	debugParams := []debug.DebuggerOption{
+		debug.SetEventHandler(newEventHandler(protoManager)),
+		debug.SetLogger(logger),
+	}
+
+	debugger := debug.NewDebugger(debugParams...)
+
+	conn := newCmdConn(os.Stdin, os.Stdout)
+	s := newState(ctx, protoManager, debugger, logger)
+	return protoManager.Start(ctx, conn, s.messageHandler)
+}
+
+func startServer(ctx context.Context, address string, logger *dap.DebugLogger) error {
+
+	l, err := net.Listen("tcp", address)
+	if err != nil {
+		return err
+	}
+
+	logger.Local.Info("Listening on %s", address)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			return err
+		}
+
+		logger.Local.Info("New connection from %s", conn.RemoteAddr())
+
+		go func() {
+			defer func() {
+				if err := conn.Close(); err != nil {
+					logger.Local.Error("Error closing connection: %v", err)
+				}
+				logger.Local.Info("Connection closed")
+			}()
+
 			protoManager := dap.NewProtocolManager(logger.Local)
 			logger.ProtocolManager = protoManager
 
@@ -43,15 +102,14 @@ func init() {
 
 			debugger := debug.NewDebugger(debugParams...)
 
-			conn := newCmdConn(os.Stdin, os.Stdout)
 			s := newState(ctx, protoManager, debugger, logger)
-			return protoManager.Start(ctx, conn, s.messageHandler)
-		}),
+			if err := protoManager.Start(ctx, conn, s.messageHandler); err != nil {
+				logger.Local.Error("Error handling connection: %v", err)
+			}
+
+			logger.Local.Info("Closing connection...")
+		}()
 	}
-
-	debuggerCommand.Flags().BoolVarP(&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
-
-	RootCommand.AddCommand(debuggerCommand)
 }
 
 type state struct {
@@ -83,7 +141,7 @@ func newState(ctx context.Context, protocolManager *dap.ProtocolManager, debugge
 }
 
 func newEventHandler(pm *dap.ProtocolManager) debug.EventHandler {
-	return func(e debug.DebugEvent) {
+	return func(e debug.Event) {
 		switch e.Type {
 		case debug.ExceptionEventType:
 			pm.SendEvent(dap.NewStoppedExceptionEvent(e.Thread, e.Message))
@@ -228,7 +286,7 @@ func (s *state) threads(_ *godap.ThreadsRequest) (*godap.ThreadsResponse, error)
 	ts, err := s.session.Threads()
 	if err == nil {
 		for _, t := range ts {
-			threads = append(threads, godap.Thread{Id: int(t.Id()), Name: t.Name()})
+			threads = append(threads, godap.Thread{Id: int(t.ID()), Name: t.Name()})
 		}
 	}
 	return dap.NewThreadsResponse(threads), err
@@ -358,7 +416,7 @@ func (s *state) setBreakpoints(request *godap.SetBreakpointsRequest) (*godap.Set
 				}
 			}
 			breakpoints = append(breakpoints, godap.Breakpoint{
-				Id:       bp.Id(),
+				Id:       int(bp.ID()),
 				Source:   source,
 				Line:     line,
 				Verified: true,

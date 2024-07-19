@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -10,10 +11,12 @@ import (
 	"strings"
 
 	godap "github.com/google/go-dap"
+	"github.com/spf13/cobra"
+
 	"github.com/open-policy-agent/opa/ast/location"
 	"github.com/open-policy-agent/opa/debug"
 	"github.com/open-policy-agent/opa/logging"
-	"github.com/spf13/cobra"
+
 	"github.com/styrainc/regal/internal/dap"
 )
 
@@ -44,9 +47,12 @@ func init() {
 		}),
 	}
 
-	debuggerCommand.Flags().BoolVarP(&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
-	debuggerCommand.Flags().BoolVarP(&serverMode, "server", "s", serverMode, "Start the debugger in server mode")
-	debuggerCommand.Flags().StringVarP(&address, "address", "a", address, "Address to listen on. For use with --server flag.")
+	debuggerCommand.Flags().BoolVarP(
+		&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
+	debuggerCommand.Flags().BoolVarP(
+		&serverMode, "server", "s", serverMode, "Start the debugger in server mode")
+	debuggerCommand.Flags().StringVarP(
+		&address, "address", "a", address, "Address to listen on. For use with --server flag.")
 
 	RootCommand.AddCommand(debuggerCommand)
 }
@@ -63,15 +69,19 @@ func startCmd(ctx context.Context, logger *dap.DebugLogger) error {
 	debugger := debug.NewDebugger(debugParams...)
 
 	conn := newCmdConn(os.Stdin, os.Stdout)
-	s := newState(ctx, protoManager, debugger, logger)
-	return protoManager.Start(ctx, conn, s.messageHandler)
+	s := newState(protoManager, debugger, logger)
+
+	if err := protoManager.Start(ctx, conn, s.messageHandler); err != nil {
+		return fmt.Errorf("failed to handle connection: %w", err)
+	}
+
+	return nil
 }
 
 func startServer(ctx context.Context, address string, logger *dap.DebugLogger) error {
-
 	l, err := net.Listen("tcp", address)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not listen: %w", err)
 	}
 
 	logger.Local.Info("Listening on %s", address)
@@ -79,7 +89,7 @@ func startServer(ctx context.Context, address string, logger *dap.DebugLogger) e
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			return err
+			return fmt.Errorf("could not accept: %w", err)
 		}
 
 		logger.Local.Info("New connection from %s", conn.RemoteAddr())
@@ -89,6 +99,7 @@ func startServer(ctx context.Context, address string, logger *dap.DebugLogger) e
 				if err := conn.Close(); err != nil {
 					logger.Local.Error("Error closing connection: %v", err)
 				}
+
 				logger.Local.Info("Connection closed")
 			}()
 
@@ -102,9 +113,9 @@ func startServer(ctx context.Context, address string, logger *dap.DebugLogger) e
 
 			debugger := debug.NewDebugger(debugParams...)
 
-			s := newState(ctx, protoManager, debugger, logger)
+			s := newState(protoManager, debugger, logger)
 			if err := protoManager.Start(ctx, conn, s.messageHandler); err != nil {
-				logger.Local.Error("Error handling connection: %v", err)
+				logger.Local.Error("Failed to handle connection: %v", err)
 			}
 
 			logger.Local.Info("Closing connection...")
@@ -113,7 +124,6 @@ func startServer(ctx context.Context, address string, logger *dap.DebugLogger) e
 }
 
 type state struct {
-	ctx                context.Context
 	protocolManager    *dap.ProtocolManager
 	debugger           debug.Debugger
 	session            debug.Session
@@ -122,9 +132,8 @@ type state struct {
 	clientCapabilities *godap.InitializeRequestArguments
 }
 
-func newState(ctx context.Context, protocolManager *dap.ProtocolManager, debugger debug.Debugger, logger *dap.DebugLogger) *state {
+func newState(protocolManager *dap.ProtocolManager, debugger debug.Debugger, logger *dap.DebugLogger) *state {
 	return &state{
-		ctx:             ctx,
 		protocolManager: protocolManager,
 		debugger:        debugger,
 		logger:          logger,
@@ -157,15 +166,17 @@ func newEventHandler(pm *dap.ProtocolManager) debug.EventHandler {
 	}
 }
 
-func (s *state) messageHandler(message godap.Message) (bool, godap.ResponseMessage, error) {
+func (s *state) messageHandler(ctx context.Context, message godap.Message) (bool, godap.ResponseMessage, error) {
 	var resp godap.ResponseMessage
+
 	var err error
+
 	switch request := message.(type) {
 	case *godap.AttachRequest:
 		resp = dap.NewAttachResponse()
-		err = fmt.Errorf("attach not supported")
+		err = errors.New("attach not supported")
 	case *godap.BreakpointLocationsRequest:
-		resp, err = s.breakpointLocations(request)
+		resp = s.breakpointLocations(request)
 	case *godap.ConfigurationDoneRequest:
 		// FIXME: Is this when we should start eval?
 		resp = dap.NewConfigurationDoneResponse()
@@ -176,9 +187,9 @@ func (s *state) messageHandler(message godap.Message) (bool, godap.ResponseMessa
 	case *godap.EvaluateRequest:
 		resp, err = s.evaluate(request)
 	case *godap.InitializeRequest:
-		resp, err = s.initialize(request)
+		resp = s.initialize(request)
 	case *godap.LaunchRequest:
-		resp, err = s.launch(request)
+		resp, err = s.launch(ctx, request)
 	case *godap.NextRequest:
 		resp, err = s.next(request)
 	case *godap.ScopesRequest:
@@ -201,10 +212,11 @@ func (s *state) messageHandler(message godap.Message) (bool, godap.ResponseMessa
 		s.logger.Warn("Handler not found for request: %T", message)
 		err = fmt.Errorf("handler not found for request: %T", message)
 	}
+
 	return false, resp, err
 }
 
-func (s *state) initialize(r *godap.InitializeRequest) (*godap.InitializeResponse, error) {
+func (s *state) initialize(r *godap.InitializeRequest) *godap.InitializeResponse {
 	if args, err := json.Marshal(r.Arguments); err == nil {
 		s.logger.Info("Initializing: %s", args)
 	} else {
@@ -213,7 +225,7 @@ func (s *state) initialize(r *godap.InitializeRequest) (*godap.InitializeRespons
 
 	s.clientCapabilities = &r.Arguments
 
-	return dap.NewInitializeResponse(*s.serverCapabilities), nil
+	return dap.NewInitializeResponse(*s.serverCapabilities)
 }
 
 type launchProperties struct {
@@ -221,10 +233,10 @@ type launchProperties struct {
 	LogLevel string `json:"log_level"`
 }
 
-func (s *state) launch(r *godap.LaunchRequest) (*godap.LaunchResponse, error) {
+func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.LaunchResponse, error) {
 	var props launchProperties
 	if err := json.Unmarshal(r.Arguments, &props); err != nil {
-		return dap.NewLaunchResponse(), fmt.Errorf("invalid launch properties: %v", err)
+		return dap.NewLaunchResponse(), fmt.Errorf("invalid launch properties: %w", err)
 	}
 
 	if props.LogLevel != "" {
@@ -236,18 +248,20 @@ func (s *state) launch(r *godap.LaunchRequest) (*godap.LaunchResponse, error) {
 	s.logger.Info("Launching: %s", props)
 
 	var err error
+
 	switch props.Command {
 	case "eval":
 		var evalProps debug.LaunchEvalProperties
 		if err := json.Unmarshal(r.Arguments, &evalProps); err != nil {
-			return dap.NewLaunchResponse(), fmt.Errorf("invalid launch eval properties: %v", err)
+			return dap.NewLaunchResponse(), fmt.Errorf("invalid launch eval properties: %w", err)
 		}
+
 		// FIXME: Should we protect this with a mutex?
-		s.session, err = s.debugger.LaunchEval(s.ctx, evalProps)
+		s.session, err = s.debugger.LaunchEval(ctx, evalProps)
 	case "test":
-		err = fmt.Errorf("test not supported")
+		err = errors.New("test not supported")
 	case "":
-		err = fmt.Errorf("missing launch command")
+		err = errors.New("missing launch command")
 	default:
 		err = fmt.Errorf("unsupported launch command: '%s'", props.Command)
 	}
@@ -261,8 +275,8 @@ func (s *state) launch(r *godap.LaunchRequest) (*godap.LaunchResponse, error) {
 	return dap.NewLaunchResponse(), err
 }
 
-func (s *state) evaluate(_ *godap.EvaluateRequest) (*godap.EvaluateResponse, error) {
-	return dap.NewEvaluateResponse(""), fmt.Errorf("evaluate not supported")
+func (*state) evaluate(_ *godap.EvaluateRequest) (*godap.EvaluateResponse, error) {
+	return dap.NewEvaluateResponse(""), errors.New("evaluate not supported")
 }
 
 func (s *state) resume(r *godap.ContinueRequest) (*godap.ContinueResponse, error) {
@@ -283,17 +297,20 @@ func (s *state) stepOut(r *godap.StepOutRequest) (*godap.StepOutResponse, error)
 
 func (s *state) threads(_ *godap.ThreadsRequest) (*godap.ThreadsResponse, error) {
 	var threads []godap.Thread
+
 	ts, err := s.session.Threads()
 	if err == nil {
 		for _, t := range ts {
 			threads = append(threads, godap.Thread{Id: int(t.ID()), Name: t.Name()})
 		}
 	}
+
 	return dap.NewThreadsResponse(threads), err
 }
 
 func (s *state) stackTrace(r *godap.StackTraceRequest) (*godap.StackTraceResponse, error) {
 	var stackFrames []godap.StackFrame
+
 	fs, err := s.session.StackTrace(debug.ThreadID(r.Arguments.ThreadId))
 	if err == nil {
 		for _, f := range fs {
@@ -311,6 +328,7 @@ func (s *state) stackTrace(r *godap.StackTraceRequest) (*godap.StackTraceRespons
 			})
 		}
 	}
+
 	return dap.NewStackTraceResponse(stackFrames), err
 }
 
@@ -330,28 +348,34 @@ func pos(loc *location.Location) (source *godap.Source, line, col, endLine, endC
 	col = loc.Col
 
 	// vs-code will select text if multiple lines are present; avoid this
-	//endLine = loc.Row + len(lines) - 1
-	//endCol = col + len(lines[len(lines)-1])
+	// endLine = loc.Row + len(lines) - 1
+	// endCol = col + len(lines[len(lines)-1])
 	endLine = line
 	endCol = col + len(lines[0])
+
 	return
 }
 
 func (s *state) scopes(r *godap.ScopesRequest) (*godap.ScopesResponse, error) {
 	var scopes []godap.Scope
+
 	ss, err := s.session.Scopes(debug.FrameID(r.Arguments.FrameId))
 	if err == nil {
 		for _, s := range ss {
 			var source *godap.Source
+
 			line := 1
+
 			if loc := s.Location(); loc != nil {
 				line = loc.Row
+
 				if loc.File != "" {
 					source = &godap.Source{
 						Path: loc.File,
 					}
 				}
 			}
+
 			scopes = append(scopes, godap.Scope{
 				Name:               s.Name(),
 				NamedVariables:     s.NamedVariables(),
@@ -361,11 +385,13 @@ func (s *state) scopes(r *godap.ScopesRequest) (*godap.ScopesResponse, error) {
 			})
 		}
 	}
+
 	return dap.NewScopesResponse(scopes), err
 }
 
 func (s *state) variables(r *godap.VariablesRequest) (*godap.VariablesResponse, error) {
 	var variables []godap.Variable
+
 	vs, err := s.session.Variables(debug.VarRef(r.Arguments.VariablesReference))
 	if err == nil {
 		for _, v := range vs {
@@ -377,10 +403,11 @@ func (s *state) variables(r *godap.VariablesRequest) (*godap.VariablesResponse, 
 			})
 		}
 	}
+
 	return dap.NewVariablesResponse(variables), err
 }
 
-func (s *state) breakpointLocations(request *godap.BreakpointLocationsRequest) (*godap.BreakpointLocationsResponse, error) {
+func (s *state) breakpointLocations(request *godap.BreakpointLocationsRequest) *godap.BreakpointLocationsResponse {
 	line := request.Arguments.Line
 	s.logger.Debug("Breakpoint locations requested for: %s:%d", request.Arguments.Source.Name, line)
 
@@ -390,11 +417,12 @@ func (s *state) breakpointLocations(request *godap.BreakpointLocationsRequest) (
 			Line:   line,
 			Column: 1,
 		},
-	}), nil
+	})
 }
 
 func (s *state) setBreakpoints(request *godap.SetBreakpointsRequest) (*godap.SetBreakpointsResponse, error) {
 	locations := make([]location.Location, len(request.Arguments.Breakpoints))
+
 	for i, bp := range request.Arguments.Breakpoints {
 		locations[i] = location.Location{
 			File: request.Arguments.Source.Path,
@@ -403,18 +431,21 @@ func (s *state) setBreakpoints(request *godap.SetBreakpointsRequest) (*godap.Set
 	}
 
 	var breakpoints []godap.Breakpoint
+
 	bps, err := s.session.SetBreakpoints(locations)
 	if err == nil {
 		for _, bp := range bps {
 			var source *godap.Source
-			line := 1
-			l := bp.Location()
-			line = bp.Location().Row
-			if bp.Location().File != "" {
+
+			loc := bp.Location()
+			line := loc.Row
+
+			if loc.File != "" {
 				source = &godap.Source{
-					Path: l.File,
+					Path: loc.File,
 				}
 			}
+
 			breakpoints = append(breakpoints, godap.Breakpoint{
 				Id:       int(bp.ID()),
 				Source:   source,
@@ -443,24 +474,38 @@ func newCmdConn(in io.ReadCloser, out io.WriteCloser) *cmdConn {
 	}
 }
 
-func (c *cmdConn) Read(p []byte) (n int, err error) {
-	return c.in.Read(p)
+func (c *cmdConn) Read(p []byte) (int, error) {
+	n, err := c.in.Read(p)
+	if err != nil {
+		return n, fmt.Errorf("failed to read: %w", err)
+	}
+
+	return n, nil
 }
 
-func (c *cmdConn) Write(p []byte) (n int, err error) {
-	return c.out.Write(p)
+func (c *cmdConn) Write(p []byte) (int, error) {
+	n, err := c.out.Write(p)
+	if err != nil {
+		return n, fmt.Errorf("failed to write: %w", err)
+	}
+
+	return n, nil
 }
 
 func (c *cmdConn) Close() error {
 	var errs []error
+
 	if err := c.in.Close(); err != nil {
 		errs = append(errs, err)
 	}
+
 	if err := c.out.Close(); err != nil {
 		errs = append(errs, err)
 	}
+
 	if len(errs) > 0 {
 		return fmt.Errorf("errors: %v", errs)
 	}
+
 	return nil
 }

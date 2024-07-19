@@ -1,26 +1,22 @@
-// Copyright 2024 The OPA Authors.  All rights reserved.
-// Use of this source code is governed by an Apache2
-// license that can be found in the LICENSE file.
-
 package dap
 
 import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"sync"
 
-	"github.com/google/go-dap"
 	godap "github.com/google/go-dap"
+
 	"github.com/open-policy-agent/opa/debug"
 	"github.com/open-policy-agent/opa/logging"
 )
 
-type MessageHandler func(request godap.Message) (bool, godap.ResponseMessage, error)
+type MessageHandler func(ctx context.Context, request godap.Message) (bool, godap.ResponseMessage, error)
 
 type ProtocolManager struct {
-	//handle  messageHandler
 	inChan  chan godap.Message
 	outChan chan godap.Message
 	logger  logging.Logger
@@ -30,7 +26,6 @@ type ProtocolManager struct {
 
 func NewProtocolManager(logger logging.Logger) *ProtocolManager {
 	return &ProtocolManager{
-		//handle:  handler,
 		inChan:  make(chan godap.Message),
 		outChan: make(chan godap.Message),
 		logger:  logger,
@@ -44,14 +39,16 @@ func (pm *ProtocolManager) Start(ctx context.Context, conn io.ReadWriteCloser, h
 	go func() {
 		for resp := range pm.outChan {
 			if pm.logger.GetLevel() == logging.Debug {
-				if respData, _ := json.Marshal(resp); respData != nil {
+				if respData, err := json.Marshal(resp); respData != nil && err == nil {
 					pm.logger.Debug("Sending %T\n%s", resp, respData)
 				} else {
 					pm.logger.Debug("Sending %T", resp)
 				}
 			}
+
 			if err := godap.WriteProtocolMessage(conn, resp); err != nil {
 				done <- err
+
 				return
 			}
 		}
@@ -60,27 +57,32 @@ func (pm *ProtocolManager) Start(ctx context.Context, conn io.ReadWriteCloser, h
 	go func() {
 		for {
 			pm.logger.Debug("Waiting for message...")
+
 			req, err := godap.ReadProtocolMessage(reader)
 			if err != nil {
 				done <- err
+
 				return
 			}
 
 			if pm.logger.GetLevel() == logging.Debug {
-				if reqData, _ := json.Marshal(req); reqData != nil {
+				if reqData, err := json.Marshal(req); reqData != nil && err == nil {
 					pm.logger.Debug("Received %T\n%s", req, reqData)
 				} else {
 					pm.logger.Debug("Received %T", req)
 				}
 			}
 
-			stop, resp, err := handle(req)
+			stop, resp, err := handle(ctx, req)
 			if err != nil {
 				pm.logger.Warn("Error handling request: %v", err)
 			}
+
 			pm.SendResponse(resp, req, err)
+
 			if stop {
 				done <- err
+
 				return
 			}
 		}
@@ -91,7 +93,7 @@ func (pm *ProtocolManager) Start(ctx context.Context, conn io.ReadWriteCloser, h
 		case err := <-done:
 			return err
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("context closed: %w", ctx.Err())
 		}
 	}
 }
@@ -108,9 +110,11 @@ func (pm *ProtocolManager) SendResponse(resp godap.ResponseMessage, req godap.Me
 
 	if r := resp.GetResponse(); r != nil {
 		r.Success = err == nil
+
 		if err != nil {
 			r.Message = err.Error()
 		}
+
 		r.Seq = pm.nextSeq()
 		if req != nil {
 			r.RequestSeq = req.GetSeq()
@@ -128,9 +132,12 @@ func (pm *ProtocolManager) nextSeq() int {
 	if pm == nil {
 		return 0
 	}
+
 	pm.seqLock.Lock()
 	defer pm.seqLock.Unlock()
+
 	pm.seq++
+
 	return pm.seq
 }
 
@@ -186,11 +193,9 @@ func NewInitializeResponse(capabilities godap.Capabilities) *godap.InitializeRes
 	return &godap.InitializeResponse{
 		Response: godap.Response{
 			ProtocolMessage: godap.ProtocolMessage{
-				//Seq:  pm.nextSeq(),
 				Type: "response",
 			},
 			Command: "initialize",
-			//RequestSeq: r.GetSeq(),
 			Success: true,
 		},
 		Body: capabilities,
@@ -299,7 +304,7 @@ func NewScopesResponse(scopes []godap.Scope) *godap.ScopesResponse {
 			Command: "scopes",
 			Success: true,
 		},
-		Body: dap.ScopesResponseBody{
+		Body: godap.ScopesResponseBody{
 			Scopes: scopes,
 		},
 	}
@@ -391,7 +396,7 @@ func NewOutputEvent(category string, output string) *godap.OutputEvent {
 	}
 }
 
-func NewThreadEvent(threadId debug.ThreadID, reason string) *godap.ThreadEvent {
+func NewThreadEvent(threadID debug.ThreadID, reason string) *godap.ThreadEvent {
 	return &godap.ThreadEvent{
 		Event: godap.Event{
 			ProtocolMessage: godap.ProtocolMessage{
@@ -401,7 +406,7 @@ func NewThreadEvent(threadId debug.ThreadID, reason string) *godap.ThreadEvent {
 		},
 		Body: godap.ThreadEventBody{
 			Reason:   reason,
-			ThreadId: int(threadId),
+			ThreadId: int(threadID),
 		},
 	}
 }
@@ -417,23 +422,25 @@ func NewTerminatedEvent() *godap.TerminatedEvent {
 	}
 }
 
-func NewStoppedEntryEvent(threadId debug.ThreadID) *godap.StoppedEvent {
-	return NewStoppedEvent("entry", threadId, nil, "", "")
+func NewStoppedEntryEvent(threadID debug.ThreadID) *godap.StoppedEvent {
+	return NewStoppedEvent("entry", threadID, nil, "", "")
 }
 
-func NewStoppedExceptionEvent(threadId debug.ThreadID, text string) *godap.StoppedEvent {
-	return NewStoppedEvent("exception", threadId, nil, "", text)
+func NewStoppedExceptionEvent(threadID debug.ThreadID, text string) *godap.StoppedEvent {
+	return NewStoppedEvent("exception", threadID, nil, "", text)
 }
 
-func NewStoppedResultEvent(threadId debug.ThreadID) *godap.StoppedEvent {
-	return NewStoppedEvent("result", threadId, nil, "", "")
+func NewStoppedResultEvent(threadID debug.ThreadID) *godap.StoppedEvent {
+	return NewStoppedEvent("result", threadID, nil, "", "")
 }
 
-func NewStoppedBreakpointEvent(threadId debug.ThreadID, bp *godap.Breakpoint) *godap.StoppedEvent {
-	return NewStoppedEvent("breakpoint", threadId, []int{bp.Id}, "", "")
+func NewStoppedBreakpointEvent(threadID debug.ThreadID, bp *godap.Breakpoint) *godap.StoppedEvent {
+	return NewStoppedEvent("breakpoint", threadID, []int{bp.Id}, "", "")
 }
 
-func NewStoppedEvent(reason string, threadId debug.ThreadID, bps []int, description string, text string) *godap.StoppedEvent {
+func NewStoppedEvent(reason string, threadID debug.ThreadID, bps []int, description string,
+	text string,
+) *godap.StoppedEvent {
 	return &godap.StoppedEvent{
 		Event: godap.Event{
 			ProtocolMessage: godap.ProtocolMessage{
@@ -443,8 +450,9 @@ func NewStoppedEvent(reason string, threadId debug.ThreadID, bps []int, descript
 		},
 		Body: godap.StoppedEventBody{
 			Reason:            reason,
-			ThreadId:          int(threadId),
+			ThreadId:          int(threadID),
 			Text:              text,
+			Description:       description,
 			AllThreadsStopped: true,
 			HitBreakpointIds:  bps,
 			PreserveFocusHint: false,

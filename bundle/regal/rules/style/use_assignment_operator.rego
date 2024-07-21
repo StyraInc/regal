@@ -41,21 +41,19 @@ report contains violation if {
 	# walking is expensive but necessary here, since there could be
 	# any number of `else` clauses nested below. no need to traverse
 	# the rule if there isn't a single `else` present though!
-	rule["else"]
 
 	# NOTE: the same logic is used in default-over-else
 	# we should consider having a helper function to return
 	# all else clauses, for a given rule, as potentially that
 	# would be cached on the second invocation of the function
-	walk(rule, [_, value])
-	value["else"]
+	walk(rule["else"], [_, value])
 
 	# extract the text from location to see if '=' is used for
 	# assignment
-	text := base64.decode(value["else"].head.location.text)
+	text := base64.decode(value.head.location.text)
 	regex.match(`^else\s*=`, text)
 
-	loc := result.location(value["else"].head)
+	loc := result.location(value.head)
 
 	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
 }

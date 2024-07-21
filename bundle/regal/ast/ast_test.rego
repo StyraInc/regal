@@ -248,27 +248,6 @@ test_find_names_in_scope if {
 	in_scope == {"bar", "global", "comp", "allow", "a", "b", "c", "d", "e"}
 }
 
-test_find_some_decl_vars if {
-	policy := `
-	package p
-
-	import rego.v1
-
-	allow if {
-		foo := 1
-		some x
-		input[x]
-		some y, z
-		input[y][z] == x
-	}`
-
-	module := regal.parse_module("p.rego", policy)
-
-	some_vars := ast.find_some_decl_vars(module.rules[0]) with input as module
-
-	var_names(some_vars) == {"x", "y", "z"}
-}
-
 test_find_some_decl_names_in_scope if {
 	policy := `package p
 

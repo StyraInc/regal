@@ -8,7 +8,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	var := ast.vars[_][_][_]
+	var := ast.found.vars[_][_][_]
 
 	var.value in ast.builtin_namespaces
 

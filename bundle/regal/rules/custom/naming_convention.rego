@@ -81,7 +81,7 @@ report contains violation if {
 
 	target in {"var", "variable"}
 
-	var := ast.vars[_][_][_]
+	var := ast.found.vars[_][_][_]
 
 	not regex.match(convention.pattern, var.value)
 

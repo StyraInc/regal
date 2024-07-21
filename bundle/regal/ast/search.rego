@@ -153,13 +153,11 @@ _rule_index(rule) := sprintf("%d", [i]) if {
 	r == rule
 }
 
-find_some_decl_vars(rule) := [var | some var in vars[_rule_index(rule)]["some"]] # regal ignore:external-reference
-
 # METADATA
 # description: |
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some`, `every` and in comprehensions
-#   DEPRECATED: uses ast.vars instead
+#   DEPRECATED: uses ast.found.vars instead
 find_vars(node) := [var |
 	walk(node, [path, value])
 
@@ -183,7 +181,7 @@ _rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
 #   - some
 #   - somein
 #   - ref
-vars[rule_index][context] contains var if {
+found.vars[rule_index][context] contains var if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
@@ -195,6 +193,26 @@ vars[rule_index][context] contains var if {
 	some var in vars
 }
 
+found.refs[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
+
+	is_ref(value)
+}
+
+found.symbols[rule_index] contains value.symbols if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
+}
+
 # METADATA
 # description: |
 #   finds all vars declared in `rule` *before* the `location` provided
@@ -202,7 +220,7 @@ vars[rule_index][context] contains var if {
 #   assignments / unification, but it's likely good enough since other rules
 #   recommend against those
 find_vars_in_local_scope(rule, location) := [var |
-	var := vars[_rule_index(rule)][_][_] # regal ignore:external-reference
+	var := found.vars[_rule_index(rule)][_][_] # regal ignore:external-reference
 
 	not startswith(var.value, "$")
 	_before_location(rule, var, location)
@@ -265,7 +283,7 @@ find_names_in_scope(rule, location) := names if {
 #   find all variables declared via `some` declarations (and *not* `some .. in`)
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
-	some some_var in find_some_decl_vars(rule)
+	some some_var in found.vars[_rule_index(rule)]["some"] # regal ignore:external-reference
 	_before_location(rule, some_var, location)
 }
 

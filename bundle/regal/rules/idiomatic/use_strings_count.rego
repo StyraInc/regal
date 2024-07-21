@@ -19,7 +19,7 @@ notices contains result.notice(rego.metadata.chain()) if not capabilities.has_ob
 report contains violation if {
 	some rule in input.rules
 
-	ref := ast.refs[_][_]
+	ref := ast.found.refs[_][_]
 
 	ref[0].value[0].type == "var"
 	ref[0].value[0].value == "count"

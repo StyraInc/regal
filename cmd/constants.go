@@ -13,4 +13,6 @@ const (
 	formatFestive = "festive"
 	// formatSarif is the SARIF format value for the --format flag in various commands.
 	formatSarif = "sarif"
+	// formatJunit is the JUnit format value for the --format flag in various commands.
+	formatJunit = "junit"
 )

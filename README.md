@@ -599,12 +599,13 @@ are:
   from the linter report
 - `sarif` - [SARIF](https://sarifweb.azurewebsites.net/) JSON output, for consumption by tools processing code analysis
   reports
+- `junit` - JUnit XML output, e.g. for CI servers like GitLab that show these results in a merge request.
 
 ## OPA Check and Strict Mode
 
 Linting with Regal assumes syntactically correct Rego. If there are errors parsing any files during linting, the
 process is aborted and any parser errors are logged similarly to OPA. OPA itself provides a "linter" of sorts,
-via the `opa check` comand and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
+via the `opa check` command and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
 but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations.
 
 > **Note** It is recommended to run `opa check --strict` as part of your policy build process, and address any violations

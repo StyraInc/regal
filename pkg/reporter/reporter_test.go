@@ -595,3 +595,65 @@ func TestSarifReporterPublishNoViolations(t *testing.T) {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
+
+//nolint:lll // the expected output is unfortunately longer than the allowed max line length
+func TestJUnitReporterPublish(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+
+	sr := NewJUnitReporter(&buf)
+
+	err := sr.Publish(context.Background(), rep)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `<testsuites name="regal" tests="2" failures="2">
+	<testsuite name="a.rego" tests="1" failures="1" errors="0" id="0" time="">
+		<testcase name="legal/breaking-the-law: Rego must not break the law!" classname="a.rego:1:1">
+			<failure message="Rego must not break the law!. To learn more, see: https://example.com/illegal" type="error"><![CDATA[Rule: breaking-the-law
+Description: Rego must not break the law!
+Category: legal
+Location: a.rego:1:1
+Text: package illegal
+Documentation: https://example.com/illegal]]></failure>
+		</testcase>
+	</testsuite>
+	<testsuite name="b.rego" tests="1" failures="1" errors="0" id="0" time="">
+		<testcase name="really?/questionable-decision: Questionable decision found" classname="b.rego:22:18">
+			<failure message="Questionable decision found. To learn more, see: https://example.com/questionable" type="warning"><![CDATA[Rule: questionable-decision
+Description: Questionable decision found
+Category: really?
+Location: b.rego:22:18
+Text: default allow = true
+Documentation: https://example.com/questionable]]></failure>
+		</testcase>
+	</testsuite>
+</testsuites>
+`
+
+	if buf.String() != expect {
+		t.Errorf("expected \n%s, got \n%s", expect, buf.String())
+	}
+}
+
+func TestJUnitReporterPublishNoViolations(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+
+	sr := NewJUnitReporter(&buf)
+
+	err := sr.Publish(context.Background(), report.Report{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expect := `<testsuites name="regal"></testsuites>
+`
+
+	if buf.String() != expect {
+		t.Errorf("expected \n%s, got \n%s", expect, buf.String())
+	}
+}

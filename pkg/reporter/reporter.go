@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
@@ -53,6 +55,12 @@ type SarifReporter struct {
 	out io.Writer
 }
 
+// JUnitReporter reports violations in the JUnit XML format
+// (https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd).
+type JUnitReporter struct {
+	out io.Writer
+}
+
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
@@ -81,6 +89,11 @@ func NewFestiveReporter(out io.Writer) FestiveReporter {
 // NewSarifReporter creates a new SarifReporter.
 func NewSarifReporter(out io.Writer) SarifReporter {
 	return SarifReporter{out: out}
+}
+
+// NewJUnitReporter creates a new JUnitReporter.
+func NewJUnitReporter(out io.Writer) JUnitReporter {
+	return JUnitReporter{out: out}
 }
 
 // Publish prints a pretty report to the configured output.
@@ -422,4 +435,50 @@ func getUniqueViolationURLs(violations []report.Violation) map[string]string {
 	}
 
 	return urls
+}
+
+// Publish prints a JUnit XML report to the configured output.
+func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
+	testSuites := junit.Testsuites{
+		Name: "regal",
+	}
+
+	// group by file & sort by file
+	files := make([]string, 0)
+	violationsPerFile := map[string][]report.Violation{}
+
+	for _, violation := range r.Violations {
+		files = append(files, violation.Location.File)
+		violationsPerFile[violation.Location.File] = append(violationsPerFile[violation.Location.File], violation)
+	}
+
+	sort.Strings(files)
+
+	for _, file := range files {
+		testsuite := junit.Testsuite{
+			Name: file,
+		}
+
+		for _, violation := range violationsPerFile[file] {
+			testsuite.AddTestcase(junit.Testcase{
+				Name:      fmt.Sprintf("%s/%s: %s", violation.Category, violation.Title, violation.Description),
+				Classname: violation.Location.String(),
+				Failure: &junit.Result{
+					Message: fmt.Sprintf("%s. To learn more, see: %s", violation.Description, getDocumentationURL(violation)),
+					Type:    violation.Level,
+					Data: fmt.Sprintf("Rule: %s\nDescription: %s\nCategory: %s\nLocation: %s\nText: %s\nDocumentation: %s",
+						violation.Title,
+						violation.Description,
+						violation.Category,
+						violation.Location.String(),
+						strings.TrimSpace(*violation.Location.Text),
+						getDocumentationURL(violation)),
+				},
+			})
+		}
+
+		testSuites.AddSuite(testsuite)
+	}
+
+	return testSuites.WriteXML(tr.out)
 }

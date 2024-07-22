@@ -194,7 +194,6 @@ _exclude_arg("assign", 0, _)
 all_rules_refs contains refs[_][_]
 
 # METADATA
-# title: all_refs
 # description: set containing all references found in the input AST
 # scope: document
 all_refs contains value if some value in all_rules_refs
@@ -202,8 +201,7 @@ all_refs contains value if some value in all_rules_refs
 all_refs contains imported.path if some imported in input.imports
 
 # METADATA
-# title: ref_to_string
-# description:  returns the "path" string of any given ref value
+# description: returns the "path" string of any given ref value
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
 
 _ref_part_to_string(0, ref) := ref.value
@@ -215,27 +213,23 @@ _ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
 	i > 0
 }
 
+# METADATA
+# description: |
+#   returns the string representation of a ref up until its first
+#   non-static (i.e. variable) value, if any:
+#   foo.bar -> foo.bar
+#   foo.bar[baz] -> foo.bar
+ref_static_to_string(ref) := ss if {
+	rs := ref_to_string(ref)
+	ss := substring(rs, 0, indexof(rs, ".$"))
+}
+
 static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"
 }
 
 static_rule_ref(ref) if every t in array.slice(ref, 1, count(ref)) {
 	t.type != "var"
-}
-
-# METADATA
-# description: |
-#   return the name of a rule if, and only if it only has static parts with
-#   no vars. This could be "username", or "user.name", but not "user[name]"
-# scope: document
-static_rule_name(rule) := rule.head.ref[0].value if count(rule.head.ref) == 1
-
-static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [ref.value |
-	some i, ref in rule.head.ref
-	i > 0
-])) if {
-	count(rule.head.ref) > 1
-	static_rule_ref(rule.head.ref)
 }
 
 # METADATA

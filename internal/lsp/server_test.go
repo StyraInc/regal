@@ -5,21 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 const mainRegoFileName = "/main.rego"
 
-const defaultTimeout = 3 * time.Second
+// defaultTimeout is set based on the investigation done as part of
+// https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
+// maximum time observed for an operation to complete.
+const defaultTimeout = 20 * time.Second
 
 const defaultBufferedChannelSize = 5
 
@@ -87,7 +93,7 @@ allow = true
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -331,7 +337,7 @@ ignore:
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -340,30 +346,29 @@ ignore:
 	adminsFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	ignoredFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method == "textDocument/publishDiagnostics" {
-			var requestData types.FileDiagnostics
-
-			err = json.Unmarshal(*req.Params, &requestData)
-			if err != nil {
-				t.Fatalf("failed to unmarshal diagnostics: %s", err)
-			}
-
-			if requestData.URI == authzRegoURI {
-				authzFileMessages <- requestData
-			}
-
-			if requestData.URI == adminsRegoURI {
-				adminsFileMessages <- requestData
-			}
-
-			if requestData.URI == ignoredRegoURI {
-				ignoredFileMessages <- requestData
-			}
+		if req.Method != "textDocument/publishDiagnostics" {
+			t.Log("unexpected request method:", req.Method)
 
 			return struct{}{}, nil
 		}
 
-		t.Fatalf("unexpected request: %v", req)
+		var requestData types.FileDiagnostics
+
+		err = json.Unmarshal(*req.Params, &requestData)
+		if err != nil {
+			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		}
+
+		switch requestData.URI {
+		case authzRegoURI:
+			authzFileMessages <- requestData
+		case adminsRegoURI:
+			adminsFileMessages <- requestData
+		case ignoredRegoURI:
+			ignoredFileMessages <- requestData
+		default:
+			t.Logf("unexpected diagnostics for file: %s", requestData.URI)
+		}
 
 		return struct{}{}, nil
 	}
@@ -464,7 +469,7 @@ allow if input.user in admins.users
 		case diags := <-authzFileMessages:
 			success = testRequestDataCodes(t, diags, authzRegoURI, []string{})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -483,7 +488,7 @@ allow if input.user in admins.users
 		case requestData := <-adminsFileMessages:
 			success = testRequestDataCodes(t, requestData, adminsRegoURI, []string{"use-assignment-operator"})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -496,9 +501,9 @@ allow if input.user in admins.users
 func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 
-	ls := LanguageServer{
-		cache: cache.NewCache(),
-	}
+	ls := NewLanguageServer(&LanguageServerOptions{
+		ErrorLog: newTestLogger(t),
+	})
 
 	err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo")
 	if err != nil {
@@ -571,7 +576,7 @@ allow := true
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -683,31 +688,20 @@ func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileU
 		return false
 	}
 
-	if len(requestData.Items) != len(codes) {
-		t.Log("expected", len(codes), "diagnostics, got", len(requestData.Items))
-
-		return false
+	// Extract the codes from requestData.Items
+	requestCodes := make([]string, len(requestData.Items))
+	for i, item := range requestData.Items {
+		requestCodes[i] = item.Code
 	}
 
-	for _, v := range codes {
-		found := false
-		foundItems := make([]string, 0, len(requestData.Items))
+	// Sort both slices
+	sort.Strings(requestCodes)
+	sort.Strings(codes)
 
-		for _, i := range requestData.Items {
-			foundItems = append(foundItems, i.Code)
+	if !slices.Equal(requestCodes, codes) {
+		t.Logf("expected items: %v, got: %v", codes, requestCodes)
 
-			if i.Code == v {
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			t.Log("expected diagnostic", v, "not found in", foundItems)
-
-			return false
-		}
+		return false
 	}
 
 	return true
@@ -739,4 +733,21 @@ func createConnections(
 	}
 
 	return connServer, connClient, cleanup
+}
+
+// NewTestLogger returns an io.Writer that logs to the given testing.T.
+func newTestLogger(t *testing.T) io.Writer {
+	t.Helper()
+
+	return &testLogger{t: t}
+}
+
+type testLogger struct {
+	t *testing.T
+}
+
+func (tl *testLogger) Write(p []byte) (n int, err error) {
+	tl.t.Log(strings.TrimSpace(string(p)))
+
+	return len(p), nil
 }

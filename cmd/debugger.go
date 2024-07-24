@@ -267,10 +267,9 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 	}
 
 	if err == nil {
+		err = s.session.ResumeAll()
 		s.protocolManager.SendEvent(dap.NewInitializedEvent())
 	}
-
-	err = s.session.ResumeAll()
 
 	return dap.NewLaunchResponse(), err
 }

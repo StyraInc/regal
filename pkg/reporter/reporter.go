@@ -204,7 +204,11 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 		table.Append([]string{yellow("Location:"), cyan(violation.Location.String())})
 
 		if violation.Location.Text != nil {
-			table.Append([]string{yellow("Text:"), strings.TrimSpace(*violation.Location.Text)})
+			if len(*violation.Location.Text) > 117 {
+				table.Append([]string{yellow("Text:"), (*violation.Location.Text)[:117] + "..."})
+			} else {
+				table.Append([]string{yellow("Text:"), strings.TrimSpace(*violation.Location.Text)})
+			}
 		}
 
 		table.Append([]string{yellow("Documentation:"), cyan(getDocumentationURL(violation))})

@@ -121,6 +121,64 @@ Documentation:	https://example.com/questionable
 	}
 }
 
+func TestPrettyReporterPublishLongText(t *testing.T) {
+	t.Parallel()
+
+	longRep := report.Report{
+		Summary: report.Summary{
+			FilesScanned:  3,
+			NumViolations: 1,
+			FilesFailed:   0,
+			RulesSkipped:  0,
+		},
+		Violations: []report.Violation{
+			{
+				Title:       "long-violation",
+				Description: "violation with a long description",
+				Category:    "long",
+				Location: report.Location{
+					File:   "b.rego",
+					Row:    22,
+					Column: 18,
+					Text:   ptr(strings.Repeat("long,", 1000)),
+				},
+				RelatedResources: []report.RelatedResource{
+					{
+						Description: "documentation",
+						Reference:   "https://example.com/to-long",
+					},
+				},
+				Level: "warning",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	pr := NewPrettyReporter(&buf)
+
+	err := pr.Publish(context.Background(), longRep)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectLines := strings.Split(`Rule:         	long-violation
+Description:  	violation with a long description
+Category:     	long
+Location:     	b.rego:22:18
+Text:         	long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,lo...
+Documentation:	https://example.com/to-long
+
+3 files linted. 1 violation found.
+
+`, "\n")
+
+	for i, line := range strings.Split(buf.String(), "\n") {
+		if got, want := strings.TrimSpace(line), expectLines[i]; got != want {
+			t.Fatalf("expected\n%q\ngot\n%q", want, got)
+		}
+	}
+}
+
 func TestPrettyReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 

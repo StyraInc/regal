@@ -161,11 +161,12 @@ func TestPrettyReporterPublishLongText(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	//nolint:lll
 	expectLines := strings.Split(`Rule:         	long-violation
 Description:  	violation with a long description
 Category:     	long
 Location:     	b.rego:22:18
-Text:         	long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,lo...
+Text:         	long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,lo...
 Documentation:	https://example.com/to-long
 
 3 files linted. 1 violation found.

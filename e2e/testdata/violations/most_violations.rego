@@ -60,7 +60,7 @@ not_equals_in_loop if {
 }
 
 # rule-shadows-builtin
-contains := true
+abs := true
 
 top_level_iteration := input[_]
 

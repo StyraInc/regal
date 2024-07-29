@@ -710,8 +710,9 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 	// This is only an informative warning — command should not fail
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	expectOut := "1 file linted. No violations found. 2 rules skipped:\n" +
+	expectOut := "1 file linted. No violations found. 3 rules skipped:\n" +
 		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
 		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
 
 	if stdout.String() != expectOut {
@@ -736,8 +737,9 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T
 	// This is only an informative warning — command should not fail
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	expectOut := "2 files linted. No violations found. 2 rules skipped:\n" +
+	expectOut := "2 files linted. No violations found. 3 rules skipped:\n" +
 		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
 		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
 
 	if stdout.String() != expectOut {

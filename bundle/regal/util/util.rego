@@ -25,8 +25,8 @@ find_duplicates(arr) := {indices |
 
 # METADATA
 # description: returns true if array has duplicates of item
-has_duplicates(array, item) if count([x |
-	some x in array
+has_duplicates(arr, item) if count([x |
+	some x in arr
 	x == item
 ]) > 1
 

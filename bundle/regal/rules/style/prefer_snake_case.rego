@@ -20,11 +20,11 @@ report contains violation if {
 	var := ast.vars[_][_][_]
 	not util.is_snake_case(var.value)
 
-	violation := result.fail(rego.metadata.chain(), result.location(var))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(var))
 }
 
-_location(_, part) := result.location(part) if part.location
+_location(_, part) := result.ranged_location_from_text(part) if part.location
 
 # workaround until https://github.com/open-policy-agent/opa/issues/6860
 # is fixed and we can trust that location is included for all ref parts
-_location(rule, part) := result.location(rule.head) if not part.location
+_location(rule, part) := result.ranged_location_from_text(rule.head) if not part.location

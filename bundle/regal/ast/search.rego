@@ -137,6 +137,17 @@ _find_vars(value, last) := {"every": _find_every_vars(value)} if {
 	value.domain
 }
 
+_find_vars(value, last) := {"args": arg_vars} if {
+	last == "args"
+
+	arg_vars := [arg |
+		some arg in value
+		arg.type == "var"
+	]
+
+	count(arg_vars) > 0
+}
+
 _rule_index(rule) := sprintf("%d", [i]) if {
 	some i, r in _rules # regal ignore:external-reference
 	r == rule

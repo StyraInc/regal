@@ -863,6 +863,15 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// when config ignores a file, then we return an empty completion list
+	// as a no-op.
+	if l.ignoreURI(params.TextDocument.URI) {
+		return types.CompletionList{
+			IsIncomplete: false,
+			Items:        []types.CompletionItem{},
+		}, nil
+	}
+
 	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,

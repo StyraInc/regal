@@ -16,6 +16,8 @@ provided := data.internal.capabilities
 
 has_object_keys if "object.keys" in object.keys(config.capabilities.builtins)
 
+has_strings_count if "strings.count" in object.keys(config.capabilities.builtins)
+
 # if if if!
 has_if if "if" in config.capabilities.future_keywords
 

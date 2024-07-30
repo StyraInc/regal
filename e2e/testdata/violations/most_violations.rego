@@ -137,6 +137,8 @@ incremental if input.x
 
 incremental if input.y
 
+prefer_strings_count := count(indexof_n("foobarbaz", "a"))
+
 ### Style ###
 
 # avoid-get-and-list-prefix

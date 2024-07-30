@@ -217,6 +217,7 @@ The following rules are currently available:
 | idiomatic   | [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)                                         | Use the `if` keyword                                      |
 | idiomatic   | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                       | Use in to check for membership                            |
 | idiomatic   | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)     | Use `some` to declare output variables                    |
+| idiomatic   | [use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count)                   | Use `strings.count` where possible                        |
 | imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)             | Avoid importing input                                     |
 | imports     | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                         | Circular import                                           |
 | imports     | [ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import)                           | Reference ignores import                                  |

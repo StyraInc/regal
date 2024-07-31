@@ -330,20 +330,20 @@ func (c *Cache) Delete(fileURI string) {
 	c.ignoredFileContentsMu.Unlock()
 }
 
-func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (string, error) {
+func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
+		return false, "", fmt.Errorf("failed to read file: %w", err)
 	}
 
 	currentContent := string(content)
 
 	cachedContent, ok := cache.GetFileContents(fileURI)
 	if ok && cachedContent == currentContent {
-		return cachedContent, nil
+		return false, cachedContent, nil
 	}
 
 	cache.SetFileContents(fileURI, currentContent)
 
-	return currentContent, nil
+	return true, currentContent, nil
 }

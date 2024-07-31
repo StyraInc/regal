@@ -49,7 +49,7 @@ deny = true
 
 	expectedFileFixedViolations := map[string][]string{
 		// use-assignment-operator is not expected since use-rego-v1 also addresses this in this example
-		"main.rego": {"no-whitespace-comment", "opa-fmt", "use-rego-v1"},
+		"main.rego": {"no-whitespace-comment", "use-rego-v1"},
 	}
 	expectedFileContents := map[string][]byte{
 		"main.rego": []byte(`package test
@@ -64,7 +64,7 @@ deny := true
 `),
 	}
 
-	if got, exp := fixReport.TotalFixes(), 3; got != exp {
+	if got, exp := fixReport.TotalFixes(), 2; got != exp {
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 

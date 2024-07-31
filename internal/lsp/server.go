@@ -88,6 +88,8 @@ type LanguageServer struct {
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
 
+	clientInitializationOptions types.InitializationOptions
+
 	cache     *cache.Cache
 	regoStore storage.Store
 
@@ -352,7 +354,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				}
 			}
 
-			// when a file is 'unignored', we move it's contents to the
+			// when a file is 'unignored', we move its contents to the
 			// standard file list if missing
 			for k, v := range l.cache.GetAllIgnoredFiles() {
 				if l.ignoreURI(k) {
@@ -364,7 +366,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				if !ok {
 					l.cache.SetFileContents(k, v)
 
-					// updating the parse here will enable things like go-to defn
+					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
 					_, err = updateParse(ctx, l.cache, l.regoStore, k)
@@ -529,9 +531,9 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 				continue
 			}
 
-			for _, uri := range changedOrNewURIs {
+			for _, cnURI := range changedOrNewURIs {
 				l.diagnosticRequestFile <- fileUpdateEvent{
-					URI:    uri,
+					URI:    cnURI,
 					Reason: "internal/workspaceStateWorker/changedOrNewFile",
 				}
 			}
@@ -1296,10 +1298,6 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
-		l.logError(fmt.Errorf("formatting params validation warnings: %v", warnings))
-	}
-
 	var oldContent string
 
 	var ok bool
@@ -1315,43 +1313,81 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
-	// set up an in-memory file provider to pass to the fixer for this one file
-	memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
-		params.TextDocument.URI: []byte(oldContent),
-	})
+	formatter := "opa-fmt"
 
-	input, err := memfp.ToInput()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create fixer input: %w", err)
+	if l.clientInitializationOptions.Formatter != nil {
+		formatter = *l.clientInitializationOptions.Formatter
 	}
 
-	li := linter.NewLinter().
-		WithUserConfig(*l.loadedConfig).
-		WithInputModules(&input)
+	var newContent []byte
 
-	f := fixer.NewFixer()
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
-	f.RegisterMandatoryFixes(
-		&fixes.Fmt{
-			NameOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
+	switch formatter {
+	case "opa-fmt", "opa-fmt-rego-v1":
+		opts := format.Opts{}
+		if formatter == "opa-fmt-rego-v1" {
+			opts.RegoVersion = ast.RegoV0CompatV1
+		}
+
+		f := &fixes.Fmt{OPAFmtOpts: opts}
+		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
+
+		fixResults, err := f.Fix(&fixes.FixCandidate{Filename: filepath.Base(p), Contents: []byte(oldContent)}, nil)
+		if err != nil {
+			l.logError(fmt.Errorf("failed to format file: %w", err))
+
+			// return "null" as per the spec
+			return nil, nil
+		}
+
+		if len(fixResults) == 0 {
+			return []types.TextEdit{}, nil
+		}
+
+		newContent = fixResults[0].Contents
+	case "regal-fix":
+		// set up an in-memory file provider to pass to the fixer for this one file
+		memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
+			params.TextDocument.URI: []byte(oldContent),
+		})
+
+		input, err := memfp.ToInput()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create fixer input: %w", err)
+		}
+
+		f := fixer.NewFixer()
+		f.RegisterFixes(fixes.NewDefaultFixes()...)
+		f.RegisterMandatoryFixes(
+			&fixes.Fmt{
+				NameOverride: "use-rego-v1",
+				OPAFmtOpts: format.Opts{
+					RegoVersion: ast.RegoV0CompatV1,
+				},
 			},
-		},
-	)
+		)
 
-	fixReport, err := f.Fix(ctx, &li, memfp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to format: %w", err)
-	}
+		li := linter.NewLinter().
+			WithInputModules(&input)
 
-	if fixReport.TotalFixes() == 0 {
-		return []types.TextEdit{}, nil
-	}
+		if l.loadedConfig != nil {
+			li = li.WithUserConfig(*l.loadedConfig)
+		}
 
-	newContent, err := memfp.GetFile(params.TextDocument.URI)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get formatted contents: %w", err)
+		fixReport, err := f.Fix(ctx, &li, memfp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to format: %w", err)
+		}
+
+		if fixReport.TotalFixes() == 0 {
+			return []types.TextEdit{}, nil
+		}
+
+		newContent, err = memfp.GetFile(params.TextDocument.URI)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get formatted contents: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unrecognized formatter %q", formatter)
 	}
 
 	return ComputeEdits(oldContent, string(newContent)), nil
@@ -1505,6 +1541,10 @@ func (l *LanguageServer) handleInitialize(
 			fmt.Errorf("unable to match client identifier for initializing client, using generic functionality: %s",
 				params.ClientInfo.Name),
 		)
+	}
+
+	if params.InitializationOptions != nil {
+		l.clientInitializationOptions = *params.InitializationOptions
 	}
 
 	regoFilter := types.FileOperationFilter{

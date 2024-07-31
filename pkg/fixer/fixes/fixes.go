@@ -9,7 +9,6 @@ import (
 // When a new fix is added, it should be added to this list.
 func NewDefaultFixes() []Fix {
 	return []Fix{
-		&Fmt{},
 		&Fmt{
 			NameOverride: "use-rego-v1",
 			OPAFmtOpts: format.Opts{

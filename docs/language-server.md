@@ -88,12 +88,17 @@ user-defined functions too.
 
 ### Formatting
 
-Regal uses the `opa fmt` formatter for formatting Rego. This is made available as a command in editors, but also via
-a [code action](#code-actions) when unformatted files are encountered.
+By default, Regal uses the `opa fmt` formatter for formatting Rego. This is made available as a command in editors,
+but also via a [code action](#code-actions) when unformatted files are encountered.
 
 <img
   src={require('./assets/lsp/format.png').default}
   alt="Screenshot of diagnostics as displayed in Zed"/>
+
+Two other formatters are also available — `opa fmt --rego-v1` and `regal fix`. See the docs on
+[Fixing Violations](fixing.md) for more information about the `fix` command. Which formatter to use
+can be set via the `formatter` configuration option, which can be passed to Regal via the client (see
+the documentation for your client for how to do that).
 
 ### Code completions
 

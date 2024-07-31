@@ -34,7 +34,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/lsp/workspace"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
@@ -83,8 +82,6 @@ type LanguageServer struct {
 	configWatcher    *lsconfig.Watcher
 	loadedConfig     *config.Config
 	loadedConfigLock sync.Mutex
-
-	workspaceDirWatcher *workspace.DirWatcher
 
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
@@ -396,49 +393,6 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			l.loadedConfigLock.Unlock()
 
 			l.diagnosticRequestWorkspace <- "config file dropped"
-		}
-	}
-}
-
-func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
-	ready := make(chan struct{})
-	go func() {
-		for l.workspaceRootURI == "" {
-			time.Sleep(300 * time.Millisecond)
-		}
-		ready <- struct{}{}
-	}()
-	select {
-	case <-ctx.Done():
-		return
-	case <-ready:
-	}
-
-	l.logError(fmt.Errorf("starting workspace state worker"))
-
-	dw, err := workspace.NewDirWatcher(&workspace.DirWatcherOpts{
-		ErrorLog:        l.errorLog,
-		PollingInterval: 500 * time.Millisecond,
-		RootPath:        uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
-	})
-	if err != nil {
-		l.logError(fmt.Errorf("failed to create dir watcher: %w", err))
-	}
-
-	l.workspaceDirWatcher = dw
-
-	l.workspaceDirWatcher.Start(ctx)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case path := <-dw.CreateChan:
-			l.logError(fmt.Errorf("file created: %s", path))
-		case path := <-dw.UpdateChan:
-			l.logError(fmt.Errorf("file updated: %s", path))
-		case path := <-dw.RemoveChan:
-			l.logError(fmt.Errorf("file removed: %s", path))
 		}
 	}
 }

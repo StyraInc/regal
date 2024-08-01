@@ -1,6 +1,7 @@
 package fixer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -16,9 +17,12 @@ func NewFixer() *Fixer {
 }
 
 type Fixer struct {
-	registeredFixes map[string]any
+	registeredFixes          map[string]any
+	registeredMandatoryFixes map[string]any
 }
 
+// RegisterFixes sets the fixes that will be fixed if there are related linter
+// violations that can be fixed by fixes.
 func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 	if f.registeredFixes == nil {
 		f.registeredFixes = make(map[string]any)
@@ -26,6 +30,19 @@ func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 
 	for _, fix := range fixes {
 		f.registeredFixes[fix.Name()] = fix
+	}
+}
+
+// RegisterMandatoryFixes sets fixes which will be run before other registered
+// fixes, against all files which are not ignored, regardless of linter
+// violations.
+func (f *Fixer) RegisterMandatoryFixes(fixes ...fixes.Fix) {
+	if f.registeredMandatoryFixes == nil {
+		f.registeredMandatoryFixes = make(map[string]any)
+	}
+
+	for _, fix := range fixes {
+		f.registeredMandatoryFixes[fix.Name()] = fix
 	}
 }
 
@@ -43,7 +60,67 @@ func (f *Fixer) GetFixForName(name string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
+func (f *Fixer) GetMandatoryFixForName(name string) (fixes.Fix, bool) {
+	fix, ok := f.registeredMandatoryFixes[name]
+	if !ok {
+		return nil, false
+	}
+	fixInstance, ok := fix.(fixes.Fix)
+	if !ok {
+		return nil, false
+	}
+	return fixInstance, true
+}
+
 func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileProvider) (*Report, error) {
+	fixReport := NewReport()
+
+	// first, run the mandatory fixes against all files
+	for len(f.registeredMandatoryFixes) > 0 {
+		fixMadeInIteration := false
+
+		files, err := fp.ListFiles()
+		if err != nil {
+			return nil, fmt.Errorf("failed to list files: %w", err)
+		}
+
+		for _, file := range files {
+			for fix := range f.registeredMandatoryFixes {
+				fixInstance, ok := f.GetMandatoryFixForName(fix)
+				if !ok {
+					return nil, fmt.Errorf("no mandatory fix matched %s", fix)
+				}
+
+				fc, err := fp.GetFile(file)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get file %s: %w", file, err)
+				}
+
+				fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
+
+				fixResults, err := fixInstance.Fix(&fixCandidate, nil)
+				if err != nil {
+					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+				}
+
+				for _, fixResult := range fixResults {
+					if !bytes.Equal(fc, fixResult.Contents) {
+						fp.PutFile(file, fixResult.Contents)
+
+						fixReport.SetFileFixedViolation(file, fix)
+
+						fixMadeInIteration = true
+					}
+				}
+			}
+		}
+
+		if !fixMadeInIteration {
+			break
+		}
+	}
+
+	// next, run the fixes that require a linter violation trigger
 	enabledRules, err := l.DetermineEnabledRules(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine enabled rules: %w", err)
@@ -56,8 +133,6 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 			fixableEnabledRules = append(fixableEnabledRules, rule)
 		}
 	}
-
-	fixReport := NewReport()
 
 	for {
 		fixMadeInIteration := false

@@ -65,10 +65,12 @@ func (f *Fixer) GetMandatoryFixForName(name string) (fixes.Fix, bool) {
 	if !ok {
 		return nil, false
 	}
+
 	fixInstance, ok := fix.(fixes.Fix)
 	if !ok {
 		return nil, false
 	}
+
 	return fixInstance, true
 }
 
@@ -105,7 +107,10 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 
 				for _, fixResult := range fixResults {
 					if !bytes.Equal(fc, fixResult.Contents) {
-						fp.PutFile(file, fixResult.Contents)
+						err := fp.PutFile(file, fixResult.Contents)
+						if err != nil {
+							return nil, fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
+						}
 
 						fixReport.SetFileFixedViolation(file, fix)
 

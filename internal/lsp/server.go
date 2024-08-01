@@ -1287,7 +1287,7 @@ func (l *LanguageServer) handleTextDocumentFoldingRange(
 }
 
 func (l *LanguageServer) handleTextDocumentFormatting(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
@@ -1340,7 +1340,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		},
 	)
 
-	fixReport, err := f.Fix(context.Background(), &li, memfp)
+	fixReport, err := f.Fix(ctx, &li, memfp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to format: %w", err)
 	}

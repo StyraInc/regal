@@ -196,7 +196,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			return
 		case evt := <-l.diagnosticRequestFile:
 			// if file has been deleted, clear diagnostics in the client
-			if evt.Reason == "textDocument/didDelete" {
+			if evt.Reason == "textDocument/didDelete" ||
+				evt.Reason == "internal/workspaceStateWorker/missingFile" {
 				err := l.sendFileDiagnostics(ctx, evt.URI)
 				if err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
@@ -454,6 +455,72 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil)
 				if err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
+			}
+		}
+	}
+}
+
+// StartWorkspaceStateWorker will poll for changes to the workspaces state that
+// are not sent from the client. For example, when a file a is removed from the
+// workspace after changing branch.
+func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
+	timer := time.NewTicker(2 * time.Second)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			// first clear files that are missing from the workspaceDir
+			for fileURI := range l.cache.GetAllFiles() {
+				filePath := uri.ToPath(l.clientIdentifier, fileURI)
+
+				_, err := os.Stat(filePath)
+				if !os.IsNotExist(err) {
+					// if the file is not missing, we have no work to do
+					continue
+				}
+
+				// if the diagnostics for the file are empty, or missing
+				// then we do not need to send anything to the client and can
+				// remove the file from the cache.
+				diagnostics, ok := l.cache.GetFileDiagnostics(fileURI)
+				if !ok || len(diagnostics) == 0 {
+					l.cache.Delete(fileURI)
+
+					continue
+				}
+
+				// if there are diagnostics, we need to clear them and send a
+				// notification to the client.
+				l.cache.SetFileDiagnostics(fileURI, []types.Diagnostic{})
+				l.diagnosticRequestFile <- fileUpdateEvent{
+					URI:    fileURI,
+					Reason: "internal/workspaceStateWorker/missingFile",
+				}
+			}
+
+			// for this next operation, the workspace root must be set as it's
+			// used to scan for new files.
+			if l.workspaceRootURI == "" {
+				continue
+			}
+
+			// next, check if there are any new files that are not ignored and
+			// need to be loaded. We get new only so that files being worked
+			// on are not loaded from disk during editing.
+			changedOrNewURIs, err := l.loadWorkspaceContents(ctx, true)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to refresh workspace contents: %w", err))
+
+				continue
+			}
+
+			for _, uri := range changedOrNewURIs {
+				l.diagnosticRequestFile <- fileUpdateEvent{
+					URI:    uri,
+					Reason: "internal/workspaceStateWorker/changedOrNewFile",
 				}
 			}
 		}
@@ -1271,7 +1338,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	}
 
 	for _, createOp := range params.Files {
-		_, err = cache.UpdateCacheForURIFromDisk(
+		_, _, err = cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, createOp.URI),
 			uri.ToPath(l.clientIdentifier, createOp.URI),
@@ -1335,7 +1402,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			continue
 		}
 
-		content, err := cache.UpdateCacheForURIFromDisk(
+		_, content, err := cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
 			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
@@ -1475,7 +1542,7 @@ func (l *LanguageServer) handleInitialize(
 			l.configWatcher.Watch(configFile.Name())
 		}
 
-		err = l.loadWorkspaceContents(ctx)
+		_, err = l.loadWorkspaceContents(ctx, false)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
@@ -1486,8 +1553,10 @@ func (l *LanguageServer) handleInitialize(
 	return result, nil
 }
 
-func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
+func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) ([]string, error) {
 	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+
+	changedOrNewURIs := make([]string, 0)
 
 	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -1505,9 +1574,20 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 			return nil
 		}
 
-		_, err = cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
+		// if the caller has requested only new files, then we can exit early
+		if _, ok := l.cache.GetModule(fileURI); newOnly && ok {
+			return nil
+		}
+
+		changed, _, err := cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
+		}
+
+		// there is no need to update the parse if the file contents
+		// was not changed in the above operation.
+		if !changed {
+			return nil
 		}
 
 		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI)
@@ -1515,13 +1595,15 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
 
+		changedOrNewURIs = append(changedOrNewURIs, fileURI)
+
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
-	return nil
+	return changedOrNewURIs, nil
 }
 
 func (l *LanguageServer) handleInitialized(

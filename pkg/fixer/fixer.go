@@ -120,6 +120,12 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
+	// if there are no registeredFixes (fixes that require a linter), then
+	// we are done
+	if len(f.registeredFixes) == 0 {
+		return fixReport, nil
+	}
+
 	// next, run the fixes that require a linter violation trigger
 	enabledRules, err := l.DetermineEnabledRules(ctx)
 	if err != nil {

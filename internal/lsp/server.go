@@ -38,6 +38,8 @@ import (
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/fixer"
+	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/version"
@@ -1313,24 +1315,46 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
-	f := &fixes.Fmt{OPAFmtOpts: format.Opts{}}
+	// set up an in-memory file provider to pass to the fixer for this one file
+	memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
+		params.TextDocument.URI: []byte(oldContent),
+	})
 
-	fixResults, err := f.Fix(&fixes.FixCandidate{
-		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
-		Contents: []byte(oldContent),
-	}, nil)
+	input, err := memfp.ToInput()
 	if err != nil {
-		l.logError(fmt.Errorf("failed to format file: %w", err))
-
-		// return "null" as per the spec
-		return nil, nil
+		return nil, fmt.Errorf("failed to create fixer input: %w", err)
 	}
 
-	if len(fixResults) == 0 {
+	li := linter.NewLinter().
+		WithUserConfig(*l.loadedConfig).
+		WithInputModules(&input)
+
+	f := fixer.NewFixer()
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f.RegisterMandatoryFixes(
+		&fixes.Fmt{
+			NameOverride: "use-rego-v1",
+			OPAFmtOpts: format.Opts{
+				RegoVersion: ast.RegoV0CompatV1,
+			},
+		},
+	)
+
+	fixReport, err := f.Fix(context.Background(), &li, memfp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format: %w", err)
+	}
+
+	if fixReport.TotalFixes() == 0 {
 		return []types.TextEdit{}, nil
 	}
 
-	return ComputeEdits(oldContent, string(fixResults[0].Contents)), nil
+	newContent, err := memfp.GetFile(params.TextDocument.URI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get formatted contents: %w", err)
+	}
+
+	return ComputeEdits(oldContent, string(newContent)), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(

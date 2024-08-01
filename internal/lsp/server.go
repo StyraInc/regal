@@ -448,6 +448,16 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 			if err != nil {
 				l.logError(err)
 
+				err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+					Type:    1, // error
+					Message: err.Error(),
+				})
+				if err != nil {
+					l.logError(fmt.Errorf("failed to notify client of command error: %w", err))
+
+					break
+				}
+
 				break
 			}
 

@@ -237,8 +237,22 @@ func fix(args []string, params *fixCommandParams) error {
 		log.Println("no user-provided config file found, will use the default config")
 	}
 
+	fixes := fixes.NewDefaultFixes()
+
+	// the linter will be run with only the fixable rules enabled.
+	// first, disable all the rules
+	l.WithDisableAll(true)
+
+	fixableRules := make([]string, 0, len(fixes))
+	for _, fix := range fixes {
+		fixableRules = append(fixableRules, fix.Name())
+	}
+
+	// enable only the rules for which fixes are available
+	l.WithEnabledRules(fixableRules...)
+
 	f := fixer.NewFixer()
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f.RegisterFixes(fixes...)
 
 	ignore := userConfig.Ignore.Files
 

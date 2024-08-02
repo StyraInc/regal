@@ -778,7 +778,6 @@ func TestFix(t *testing.T) {
 	stderr := bytes.Buffer{}
 	td := t.TempDir()
 
-	// only violation is for the opa-fmt rule
 	unformattedContents := []byte(`package wow
 
 import rego.v1
@@ -805,11 +804,10 @@ allow if {
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`3 fixes applied:
+	exp := fmt.Sprintf(`2 fixes applied:
 %s/main.rego:
 - no-whitespace-comment
-- opa-fmt
-- use-assignment-operator
+- use-rego-v1
 `, td)
 
 	if act := stdout.String(); exp != act {

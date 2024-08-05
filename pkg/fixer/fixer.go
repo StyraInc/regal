@@ -12,10 +12,15 @@ import (
 	"github.com/styrainc/regal/pkg/linter"
 )
 
+// NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {
-	return &Fixer{}
+	return &Fixer{
+		registeredFixes:          make(map[string]any),
+		registeredMandatoryFixes: make(map[string]any),
+	}
 }
 
+// Fixer must be instantiated via NewFixer.
 type Fixer struct {
 	registeredFixes          map[string]any
 	registeredMandatoryFixes map[string]any
@@ -24,12 +29,10 @@ type Fixer struct {
 // RegisterFixes sets the fixes that will be fixed if there are related linter
 // violations that can be fixed by fixes.
 func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
-	if f.registeredFixes == nil {
-		f.registeredFixes = make(map[string]any)
-	}
-
 	for _, fix := range fixes {
-		f.registeredFixes[fix.Name()] = fix
+		if _, mandatory := f.registeredMandatoryFixes[fix.Name()]; !mandatory {
+			f.registeredFixes[fix.Name()] = fix
+		}
 	}
 }
 
@@ -37,12 +40,10 @@ func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 // fixes, against all files which are not ignored, regardless of linter
 // violations.
 func (f *Fixer) RegisterMandatoryFixes(fixes ...fixes.Fix) {
-	if f.registeredMandatoryFixes == nil {
-		f.registeredMandatoryFixes = make(map[string]any)
-	}
-
 	for _, fix := range fixes {
 		f.registeredMandatoryFixes[fix.Name()] = fix
+
+		delete(f.registeredFixes, fix.Name())
 	}
 }
 

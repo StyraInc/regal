@@ -19,15 +19,20 @@ type FileEvent struct {
 	URI  string `json:"uri"`
 }
 
+type InitializationOptions struct {
+	Formatter *string `json:"formatter,omitempty"`
+}
+
 type InitializeParams struct {
-	ProcessID        int                `json:"processId"`
-	ClientInfo       Client             `json:"clientInfo"`
-	Locale           string             `json:"locale"`
-	RootPath         string             `json:"rootPath"`
-	RootURI          string             `json:"rootUri"`
-	Capabilities     ClientCapabilities `json:"capabilities"`
-	Trace            string             `json:"trace"`
-	WorkspaceFolders []WorkspaceFolder  `json:"workspaceFolders"`
+	ProcessID             int                    `json:"processId"`
+	ClientInfo            Client                 `json:"clientInfo"`
+	Locale                string                 `json:"locale"`
+	RootPath              string                 `json:"rootPath"`
+	RootURI               string                 `json:"rootUri"`
+	Capabilities          ClientCapabilities     `json:"capabilities"`
+	Trace                 string                 `json:"trace"`
+	WorkspaceFolders      []WorkspaceFolder      `json:"workspaceFolders"`
+	InitializationOptions *InitializationOptions `json:"initializationOptions,omitempty"`
 }
 
 type WorkspaceFolder struct {

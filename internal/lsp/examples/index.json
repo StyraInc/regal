@@ -12,6 +12,7 @@
   },
   "keywords": {
     "contains": "keywords/contains",
+    "if": "keywords/if",
     "some": "keywords/some"
   }
 }

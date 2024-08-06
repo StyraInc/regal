@@ -15,7 +15,8 @@ jobs:
     name: Update Examples Index
     runs-on: ubuntu-22.04
     permissions:
-      contents: write # this workflow updates repo contents
+      contents: write # this is needed to open a pull request
+      pull-requests: write # this is also needed to open a pull request
     steps:
       - name: Check out code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -61,7 +62,8 @@ jobs:
               --stdin-input | \
             tee internal/lsp/examples/index.json
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+      - name: Open a pull request
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
         with:
-          commit_message: Update Imported Docs
+          commit-message: Update rego-by-examples index
+          base: main

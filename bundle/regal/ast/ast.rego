@@ -147,17 +147,6 @@ is_ref(value) if value.type == "ref"
 
 is_ref(value) if value[0].type == "ref"
 
-refs[rule_index] contains value if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
-
-	walk(rule, [_, value])
-
-	is_ref(value)
-}
-
 # METADATA
 # description: |
 #   a map containing all function calls (built-in and custom) in the input AST
@@ -168,7 +157,7 @@ function_calls[rule_index] contains call if {
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 	rule_index := sprintf("%d", [i])
 
-	some ref in refs[rule_index]
+	some ref in found.refs[rule_index]
 
 	name := ref_to_string(ref[0].value)
 	args := [arg |
@@ -191,7 +180,7 @@ _exclude_arg(_, _, arg) if arg.type == "call"
 # ignore here, as it's covered elsewhere
 _exclude_arg("assign", 0, _)
 
-all_rules_refs contains refs[_][_]
+all_rules_refs contains found.refs[_][_]
 
 # METADATA
 # description: set containing all references found in the input AST

@@ -43,7 +43,7 @@ report contains violation if {
 
 report contains violation if {
 	some i
-	var := ast.vars[i][_][_]
+	var := ast.found.vars[i][_][_]
 
 	lower(var.value) in metasyntactic
 

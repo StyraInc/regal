@@ -8,24 +8,14 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	# can't use ast.all_refs here as we need to
-	# refer to the `rule` below
-	some rule in input.rules
-
-	walk(rule, [_, value])
-
-	value.type == "ref"
-	ref := value.value
-
-	some i, elem in ref
+	some rule_index, i
+	elem := ast.found.refs[rule_index][_].value[i]
 
 	# first item can't be a loop or key ref
 	i != 0
 	elem.type == "var"
 	not startswith(elem.value, "$")
-
-	scope := ast.find_names_in_scope(rule, elem.location)
-	not elem.value in scope
+	not elem.value in ast.find_names_in_scope(input.rules[to_number(rule_index)], elem.location)
 
 	violation := result.fail(rego.metadata.chain(), result.location(elem))
 }

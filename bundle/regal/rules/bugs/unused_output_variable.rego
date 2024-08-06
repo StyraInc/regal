@@ -42,7 +42,7 @@ report contains violation if {
 
 _ref_vars[rule_index][var.value] contains var if {
 	some rule_index
-	var := ast.vars[rule_index].ref[_]
+	var := ast.found.vars[rule_index].ref[_]
 
 	not startswith(var.value, "$")
 }

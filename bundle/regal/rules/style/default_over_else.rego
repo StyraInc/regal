@@ -16,13 +16,10 @@ report contains violation if {
 	# walking is expensive but necessary here, since there could be
 	# any number of `else` clauses nested below. no need to traverse
 	# the rule if there isn't a single `else` present though!
-	rule["else"]
+	walk(rule["else"], [_, value])
 
-	walk(rule, [_, value])
-
-	# quoting is needed as `else` is a keyword
-	else_body := value["else"].body
-	else_head := value["else"].head
+	else_body := value.body
+	else_head := value.head
 
 	# we don't know for sure, but if all that's in the body is an empty
 	# `true`, it's likely an implicit body (i.e. one not printed)

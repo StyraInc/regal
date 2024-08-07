@@ -36,7 +36,7 @@ rules:
 
 - OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
 - OPA Repo: [builtin_metadata.json](https://github.com/open-policy-agent/opa/blob/main/builtin_metadata.json)
-- Regal Docs: [var-shadows-builting](https://docs.styra.com/regal/rules/bugs/var-shadows-builtin)
+- Regal Docs: [var-shadows-builtin](https://docs.styra.com/regal/rules/bugs/var-shadows-builtin)
 
 ## Community
 

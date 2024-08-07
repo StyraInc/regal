@@ -2,7 +2,9 @@ package lsp
 
 import (
 	"context"
+	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/styrainc/regal/internal/parse"
@@ -39,7 +41,9 @@ func TestEvalWorkspacePath(t *testing.T) {
 	ls.cache.SetModule("file://policy1.rego", module1)
 	ls.cache.SetModule("file://policy2.rego", module2)
 
-	res, err := ls.EvalWorkspacePath(context.TODO(), "data.policy1.allow", `{"exists": true}`)
+	input := strings.NewReader(`{"exists": true}`)
+
+	res, err := ls.EvalWorkspacePath(context.TODO(), "data.policy1.allow", input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +71,7 @@ func TestFindInput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if FindInput(file, workspacePath) != "" {
+	if readInputString(t, file, workspacePath) != "" {
 		t.Fatalf("did not expect to find input.json")
 	}
 
@@ -75,7 +79,7 @@ func TestFindInput(t *testing.T) {
 
 	createWithContent(t, tmpDir+"/workspace/foo/bar/input.json", content)
 
-	if res := FindInput(file, workspacePath); res != content {
+	if res := readInputString(t, file, workspacePath); res != content {
 		t.Errorf("expected input at %s, got %s", content, res)
 	}
 
@@ -86,7 +90,7 @@ func TestFindInput(t *testing.T) {
 
 	createWithContent(t, tmpDir+"/workspace/input.json", content)
 
-	if res := FindInput(file, workspacePath); res != content {
+	if res := readInputString(t, file, workspacePath); res != content {
 		t.Errorf("expected input at %s, got %s", content, res)
 	}
 }
@@ -105,4 +109,25 @@ func createWithContent(t *testing.T, path string, content string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func readInputString(t *testing.T, file, workspacePath string) string {
+	t.Helper()
+
+	input := FindInput(file, workspacePath)
+
+	if input == nil {
+		return ""
+	}
+
+	bs, err := io.ReadAll(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if bs == nil {
+		return ""
+	}
+
+	return string(bs)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,7 +20,7 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
-func (l *LanguageServer) Eval(ctx context.Context, query string, input string) (rego.ResultSet, error) {
+func (l *LanguageServer) Eval(ctx context.Context, query string, input io.Reader) (rego.ResultSet, error) {
 	modules := l.cache.GetAllModules()
 	moduleFiles := make([]bundle.ModuleFile, 0, len(modules))
 
@@ -47,10 +48,15 @@ func (l *LanguageServer) Eval(ctx context.Context, query string, input string) (
 		return nil, fmt.Errorf("failed preparing query: %w", err)
 	}
 
-	if input != "" {
+	if input != nil {
 		inputMap := make(map[string]any)
 
-		err = json.Unmarshal([]byte(input), &inputMap)
+		in, err := io.ReadAll(input)
+		if err != nil {
+			return nil, fmt.Errorf("failed reading input: %w", err)
+		}
+
+		err = json.Unmarshal(in, &inputMap)
 		if err != nil {
 			return nil, fmt.Errorf("failed unmarshalling input: %w", err)
 		}
@@ -66,22 +72,23 @@ type EvalPathResult struct {
 	IsUndefined bool `json:"isUndefined"`
 }
 
-func FindInput(file string, workspacePath string) string {
+func FindInput(file string, workspacePath string) io.Reader {
 	relative := strings.TrimPrefix(file, workspacePath)
 	components := strings.Split(path.Dir(relative), string(filepath.Separator))
 
 	for i := range len(components) {
 		inputPath := path.Join(workspacePath, path.Join(components[:len(components)-i]...), "input.json")
 
-		if input, err := os.ReadFile(inputPath); err == nil {
-			return string(input)
+		f, err := os.Open(inputPath)
+		if err == nil {
+			return f
 		}
 	}
 
-	return ""
+	return nil
 }
 
-func (l *LanguageServer) EvalWorkspacePath(ctx context.Context, query string, input string) (EvalPathResult, error) {
+func (l *LanguageServer) EvalWorkspacePath(ctx context.Context, query string, input io.Reader) (EvalPathResult, error) {
 	resultQuery := "result := " + query
 
 	result, err := l.Eval(ctx, resultQuery, input)

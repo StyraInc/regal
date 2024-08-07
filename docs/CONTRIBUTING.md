@@ -77,7 +77,7 @@ build/do.rq test
 
 ### E2E tests
 
-End-to-End (E2E) tests assert the behaviour of the `regal` binary called with certain configs, and test files.
+End-to-End (E2E) tests assert the behavior of the `regal` binary called with certain configs, and test files.
 They expect a `regal` binary either in the top-level directory, or pointed at by `$REGAL_BIN`, and can be run
 locally via
 

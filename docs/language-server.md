@@ -28,7 +28,7 @@ by the Regal linter.
   alt="Screenshot of diagnostics as displayed in Zed"/>
 
 Future versions of Regal may include also [compilation errors](https://github.com/StyraInc/regal/issues/745) as part of
-diagnistics messages.
+diagnostics messages.
 
 ### Hover
 
@@ -117,7 +117,8 @@ be suggestions for:
   src={require('./assets/lsp/completion.png').default}
   alt="Screenshot of completion suggestions as displayed in Zed"/>
 
-New completion providers are added continuosly, so if you have a suggestion for a new completion, please
+New completion providers are added continuously, so if you have a suggestion for
+a new completion, please
 [open an issue](https://github.com/StyraInc/regal/issues)!
 
 ### Code actions

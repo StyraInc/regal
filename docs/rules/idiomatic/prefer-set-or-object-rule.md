@@ -150,7 +150,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Genarating Sets](https://www.openpolicyagent.org/docs/latest/policy-language/#generating-sets)
+- OPA Docs: [Generating Sets](https://www.openpolicyagent.org/docs/latest/policy-language/#generating-sets)
 - OPA Docs: [Generating Objects](https://www.openpolicyagent.org/docs/latest/policy-language/#generating-objects)
 - OPA Docs: [Comprehensions](https://www.openpolicyagent.org/docs/latest/policy-language/#comprehensions)
 - Styra Blog: [Five Things You Didn't Know About OPA](https://www.styra.com/blog/five-things-you-didnt-know-about-opa/)

@@ -8,6 +8,7 @@ If you're using Regal, please consider opening a pull request to add your projec
 
 Public open source projects integrating Regal for linting in their CI/CD pipelines.
 
+<!-- cspell:disable -->
 - [Brainiac](https://github.com/carbonetes/brainiac)
 - [Cloudbeat](https://github.com/elastic/cloudbeat)
 - [Conftest](https://github.com/open-policy-agent/conftest)
@@ -25,16 +26,19 @@ Public open source projects integrating Regal for linting in their CI/CD pipelin
 - [Spacelift Policy Library](https://github.com/spacelift-io/spacelift-policies-example-library)
 - [Trino Operator](https://github.com/stackabletech/trino-operator)
 - [Phylum](https://github.com/phylum-dev/policy)
+<!-- cspell:enable -->
 
 ## Integrations
 
 Projects and products that integrate Regal into their offerings.
 
+<!-- cspell:disable -->
 - [Dependency Management Data](https://gitlab.com/tanna.dev/dependency-management-data)
 - [Enterprise OPA](https://github.com/styrainc/enterprise-opa)
 - [The Rego Playground](https://play.openpolicyagent.org)
 - [Trunk Check](https://trunk.io/check)
 - [reviewdog/action-regal](https://github.com/reviewdog/action-regal)
+<!-- cspell:enable-->
 
 ## Packaging
 
@@ -50,11 +54,13 @@ The following package managers include Regal in their repositories, either nativ
 
 Companies and organizations using Regal (not counting organizations behind the open source projects listed above).
 
+<!-- cspell:disable -->
 - [Atlassian](https://www.atlassian.com)
 - [Bankdata](https://www.bankdata.dk)
 - [Miro](https://miro.com)
 - [Stacklok](https://stacklok.com)
 - [Styra](https://www.styra.com)
+<!-- cspell:enable-->
 
 ## Community
 

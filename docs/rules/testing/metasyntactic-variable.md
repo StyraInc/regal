@@ -31,6 +31,7 @@ occasionally useful in examples, but should be avoided in production policy.
 
 This linter rules forbids any metasyntactic variable names, as listed by Wikipedia:
 
+<!-- cspell:disable -->
 - foobar
 - foo
 - bar
@@ -45,6 +46,7 @@ This linter rules forbids any metasyntactic variable names, as listed by Wikiped
 - plugh
 - xyzzy
 - thud
+<!-- cspell:enable -->
 
 ## Exceptions
 

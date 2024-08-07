@@ -29,7 +29,7 @@ jobs:
 
 Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
 
-## GitLab CICD
+## GitLab CI/CD
 
 To use Regal in GitLab CI/CD, you could for example use the following stage in your `.gitlab-ci.yml`:
 

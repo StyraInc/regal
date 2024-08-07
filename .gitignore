@@ -4,3 +4,9 @@ dist/
 
 /regal
 /regal.exe
+
+# These two files are used by the Regal evaluation Code Lens, where input.json
+# defines the input to use for evaluation, and output.json is where the output
+# ends up unless the client supports presenting it in a different way.
+input.json
+output.json

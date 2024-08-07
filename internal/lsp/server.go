@@ -480,10 +480,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
-				input := FindInput(
-					uri.ToPath(l.clientIdentifier, file),
-					uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
-				)
+				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+				input := FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
 
 				result, err := l.EvalWorkspacePath(ctx, path, input)
 				if err != nil {
@@ -492,16 +490,43 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
-				responseParams := map[string]any{
-					"result": result,
-					"line":   line,
-				}
+				if l.clientIdentifier == clients.IdentifierVSCode {
+					responseParams := map[string]any{
+						"result": result,
+						"line":   line,
+					}
 
-				responseResult := map[string]any{}
+					responseResult := map[string]any{}
 
-				err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
-				if err != nil {
-					l.logError(fmt.Errorf("failed %s notify: %v", "regal/hello", err.Error()))
+					err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
+					if err != nil {
+						l.logError(fmt.Errorf("failed %s notify: %v", "regal/hello", err.Error()))
+					}
+				} else {
+					output := filepath.Join(workspacePath, "output.json")
+
+					var f *os.File
+
+					f, err = os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+
+					if err == nil {
+						var jsonVal []byte
+
+						value := result.Value
+						if result.IsUndefined {
+							// Display undefined as an empty object
+							// we could also go with "<undefined>" or similar
+							value = make(map[string]any)
+						}
+
+						jsonVal, err = json.MarshalIndent(value, "", "  ")
+						if err == nil {
+							// staticcheck thinks err here is never used, but I think that's false?
+							_, err = f.Write(jsonVal) //nolint:staticcheck
+						}
+
+						f.Close()
+					}
 				}
 			}
 
@@ -998,13 +1023,6 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 	var params types.CodeLensParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
-	}
-
-	if l.clientIdentifier != clients.IdentifierVSCode {
-		// only VSCode has the client side capability to handle the callback request
-		// to handle the result of evaluation, so displaying code lenses for any other
-		// editor is likely just going to result in a bad experience
-		return nil, nil // return a null response, as per the spec
 	}
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
@@ -1736,14 +1754,8 @@ func (l *LanguageServer) handleInitialize(
 					LabelDetailsSupport: true,
 				},
 			},
+			CodeLensProvider: &types.CodeLensOptions{},
 		},
-	}
-
-	// Since evaluation requires some client side handling, this can't be supported
-	// purely by the LSP. Clients that are capable of handling the code lens callback
-	// should be added here though.
-	if l.clientIdentifier == clients.IdentifierVSCode {
-		initializeResult.Capabilities.CodeLensProvider = &types.CodeLensOptions{}
 	}
 
 	if l.workspaceRootURI != "" {

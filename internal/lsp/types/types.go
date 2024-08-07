@@ -105,6 +105,7 @@ type ServerCapabilities struct {
 	WorkspaceSymbolProvider    bool                    `json:"workspaceSymbolProvider"`
 	DefinitionProvider         bool                    `json:"definitionProvider"`
 	CompletionProvider         CompletionOptions       `json:"completionProvider"`
+	CodeLensProvider           *CodeLensOptions        `json:"codeLensProvider,omitempty"`
 }
 
 type CompletionOptions struct {
@@ -187,6 +188,20 @@ type CodeAction struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
 	IsPreferred *bool        `json:"isPreferred,omitempty"`
 	Command     Command      `json:"command"`
+}
+
+type CodeLensOptions struct {
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+}
+
+type CodeLensParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type CodeLens struct {
+	Range   Range    `json:"range"`
+	Command *Command `json:"command,omitempty"`
+	Data    *any     `json:"data,omitempty"`
 }
 
 type Command struct {

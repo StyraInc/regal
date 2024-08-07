@@ -109,6 +109,7 @@ type fileUpdateEvent struct {
 	Content string
 }
 
+//nolint:gocyclo
 func (l *LanguageServer) Handle(
 	ctx context.Context,
 	conn *jsonrpc2.Conn,
@@ -148,6 +149,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/inlayHint":
 		return l.handleTextDocumentInlayHint(ctx, conn, req)
+	case "textDocument/codeLens":
+		return l.handleTextDocumentCodeLens(ctx, conn, req)
 	case "textDocument/completion":
 		return l.handleTextDocumentCompletion(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
@@ -447,6 +450,59 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 					params,
 				)
+			case "regal.eval":
+				fmt.Fprintf(os.Stderr, "regal.eval called with params: %v\n", params)
+
+				if len(params.Arguments) != 3 {
+					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
+
+					break
+				}
+
+				file, ok := params.Arguments[0].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+
+					break
+				}
+
+				path, ok := params.Arguments[1].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected second argument to be a string, got %T", params.Arguments[1]))
+
+					break
+				}
+
+				line, ok := params.Arguments[2].(float64)
+				if !ok {
+					l.logError(fmt.Errorf("expected third argument to be a number, got %T", params.Arguments[2]))
+
+					break
+				}
+
+				input := FindInput(
+					uri.ToPath(l.clientIdentifier, file),
+					uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
+				)
+
+				result, err := l.EvalWorkspacePath(ctx, path, input)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
+
+					break
+				}
+
+				responseParams := map[string]any{
+					"result": result,
+					"line":   line,
+				}
+
+				responseResult := map[string]any{}
+
+				err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
+				if err != nil {
+					l.logError(fmt.Errorf("failed %s notify: %v", "regal/hello", err.Error()))
+				}
 			}
 
 			if err != nil {
@@ -932,6 +988,78 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	inlayHints := getInlayHints(module)
 
 	return inlayHints, nil
+}
+
+func (l *LanguageServer) handleTextDocumentCodeLens(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.CodeLensParams
+	if err := json.Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	if l.clientIdentifier != clients.IdentifierVSCode {
+		// only VSCode has the client side capability to handle the callback request
+		// to handle the result of evaluation, so displaying code lenses for any other
+		// editor is likely just going to result in a bad experience
+		return nil, nil // return a null response, as per the spec
+	}
+
+	module, ok := l.cache.GetModule(params.TextDocument.URI)
+	if !ok {
+		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
+
+		// return a null response, as per the spec
+		return nil, nil
+	}
+
+	codeLenses := make([]types.CodeLens, 0)
+
+	// Package
+
+	pkgLens := types.CodeLens{
+		Range: locationToRange(module.Package.Location),
+		Command: &types.Command{
+			Title:   "Evaluate",
+			Command: "regal.eval",
+			Arguments: &[]any{
+				module.Package.Location.File,
+				module.Package.Path.String(),
+				module.Package.Location.Row,
+			},
+		},
+	}
+
+	codeLenses = append(codeLenses, pkgLens)
+
+	// Rules
+
+	for _, rule := range module.Rules {
+		if rule.Head.Args != nil {
+			// Skip functions for now, as it's not clear how to best
+			// provide inputs for them.
+			continue
+		}
+
+		ruleLens := types.CodeLens{
+			Range: locationToRange(rule.Location),
+			Command: &types.Command{
+				Title:   "Evaluate",
+				Command: "regal.eval",
+				Arguments: &[]any{
+					module.Package.Location.File,
+					module.Package.Path.String() + "." + string(rule.Head.Name),
+					rule.Head.Location.Row,
+				},
+			},
+		}
+
+		codeLenses = append(codeLenses, ruleLens)
+	}
+
+	return codeLenses, nil
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(
@@ -1527,7 +1655,7 @@ func (l *LanguageServer) handleInitialize(
 	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result any, err error) {
+) (any, error) {
 	var params types.InitializeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
@@ -1554,7 +1682,7 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
-	result = types.InitializeResult{
+	initializeResult := types.InitializeResult{
 		Capabilities: types.ServerCapabilities{
 			TextDocumentSyncOptions: types.TextDocumentSyncOptions{
 				OpenClose: true,
@@ -1590,6 +1718,7 @@ func (l *LanguageServer) handleInitialize(
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
+					"regal.eval",
 					"regal.fix.opa-fmt",
 					"regal.fix.use-rego-v1",
 					"regal.fix.use-assignment-operator",
@@ -1610,6 +1739,13 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
+	// Since evaluation requires some client side handling, this can't be supported
+	// purely by the LSP. Clients that are capable of handling the code lens callback
+	// should be added here though.
+	if l.clientIdentifier == clients.IdentifierVSCode {
+		initializeResult.Capabilities.CodeLensProvider = &types.CodeLensOptions{}
+	}
+
 	if l.workspaceRootURI != "" {
 		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
 		if err == nil {
@@ -1624,7 +1760,7 @@ func (l *LanguageServer) handleInitialize(
 		l.diagnosticRequestWorkspace <- "server initialize"
 	}
 
-	return result, nil
+	return initializeResult, nil
 }
 
 func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) ([]string, error) {

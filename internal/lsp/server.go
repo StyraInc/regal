@@ -485,6 +485,16 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 
+					err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+						Type:    1, // error
+						Message: err.Error(),
+					})
+					if err != nil {
+						l.logError(fmt.Errorf("failed to notify client of eval error: %w", err))
+
+						break
+					}
+
 					break
 				}
 
@@ -1079,17 +1089,16 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 }
 
 func getRuleName(rule *ast.Rule) string {
-	parts := make([]string, 0, len(rule.Head.Ref()))
+	result := rule.Head.Ref().String()
 
-	for i, part := range rule.Head.Ref() {
-		if !part.Value.IsGround() && i > 0 {
-			break
-		}
-
-		parts = append(parts, part.Value.String())
+	// only evaluate the top level rule name if there are refs
+	// e.g. my[foo].bar -> my
+	//      bar.bar.bar -> bar.bar.bar
+	if i := strings.Index(result, "["); i > 0 {
+		return result[:i]
 	}
 
-	return strings.Join(parts, ".")
+	return result
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(

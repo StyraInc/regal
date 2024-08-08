@@ -451,8 +451,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					params,
 				)
 			case "regal.eval":
-				fmt.Fprintf(os.Stderr, "regal.eval called with params: %v\n", params)
-
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
 
@@ -1068,7 +1066,7 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 				Command: "regal.eval",
 				Arguments: &[]any{
 					module.Package.Location.File,
-					module.Package.Path.String() + "." + string(rule.Head.Name),
+					module.Package.Path.String() + "." + getRuleName(rule),
 					rule.Head.Location.Row,
 				},
 			},
@@ -1078,6 +1076,20 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 	}
 
 	return codeLenses, nil
+}
+
+func getRuleName(rule *ast.Rule) string {
+	parts := make([]string, 0, len(rule.Head.Ref()))
+
+	for i, part := range rule.Head.Ref() {
+		if !part.Value.IsGround() && i > 0 {
+			break
+		}
+
+		parts = append(parts, part.Value.String())
+	}
+
+	return strings.Join(parts, ".")
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(

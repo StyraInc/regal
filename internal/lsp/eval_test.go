@@ -48,12 +48,6 @@ func TestEvalWorkspacePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	empty := EvalPathResult{}
-
-	if res == empty {
-		t.Fatal("expected result, got nil")
-	}
-
 	if val, ok := res.Value.(bool); !ok || val != true {
 		t.Fatalf("expected true, got false")
 	}

@@ -14,13 +14,18 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/topdown/print"
 
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
-func (l *LanguageServer) Eval(ctx context.Context, query string, input io.Reader) (rego.ResultSet, error) {
+func (l *LanguageServer) Eval(
+	ctx context.Context,
+	query string,
+	input io.Reader,
+	printHook print.Hook,
+) (rego.ResultSet, error) {
 	modules := l.cache.GetAllModules()
 	moduleFiles := make([]bundle.ModuleFile, 0, len(modules))
 
@@ -41,7 +46,7 @@ func (l *LanguageServer) Eval(ctx context.Context, query string, input io.Reader
 		Modules: moduleFiles,
 	}
 
-	regoArgs := prepareRegoArgs(ast.MustParseBody(query), bd)
+	regoArgs := prepareRegoArgs(ast.MustParseBody(query), bd, printHook)
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -68,8 +73,9 @@ func (l *LanguageServer) Eval(ctx context.Context, query string, input io.Reader
 }
 
 type EvalPathResult struct {
-	Value       any  `json:"value"`
-	IsUndefined bool `json:"isUndefined"`
+	Value       any              `json:"value"`
+	IsUndefined bool             `json:"isUndefined"`
+	PrintOutput map[int][]string `json:"printOutput"`
 }
 
 func FindInput(file string, workspacePath string) io.Reader {
@@ -88,16 +94,22 @@ func FindInput(file string, workspacePath string) io.Reader {
 	return nil
 }
 
-func (l *LanguageServer) EvalWorkspacePath(ctx context.Context, query string, input io.Reader) (EvalPathResult, error) {
+func (l *LanguageServer) EvalWorkspacePath(
+	ctx context.Context,
+	query string,
+	input io.Reader,
+) (EvalPathResult, error) {
 	resultQuery := "result := " + query
 
-	result, err := l.Eval(ctx, resultQuery, input)
+	hook := PrintHook{Output: make(map[int][]string)}
+
+	result, err := l.Eval(ctx, resultQuery, input, hook)
 	if err != nil {
 		return EvalPathResult{}, fmt.Errorf("failed evaluating query: %w", err)
 	}
 
 	if len(result) == 0 {
-		return EvalPathResult{IsUndefined: true}, nil
+		return EvalPathResult{IsUndefined: true, PrintOutput: hook.Output}, nil
 	}
 
 	res, ok := result[0].Bindings["result"]
@@ -105,16 +117,26 @@ func (l *LanguageServer) EvalWorkspacePath(ctx context.Context, query string, in
 		return EvalPathResult{}, errors.New("expected result in bindings, didn't get it")
 	}
 
-	return EvalPathResult{Value: res}, nil
+	return EvalPathResult{Value: res, PrintOutput: hook.Output}, nil
 }
 
-func prepareRegoArgs(query ast.Body, bd bundle.Bundle) []func(*rego.Rego) {
+func prepareRegoArgs(query ast.Body, bd bundle.Bundle, printHook print.Hook) []func(*rego.Rego) {
 	return []func(*rego.Rego){
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("workspace", &bd),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 		rego.EnablePrintStatements(true),
-		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+		rego.PrintHook(printHook),
 	}
+}
+
+type PrintHook struct {
+	Output map[int][]string
+}
+
+func (h PrintHook) Print(ctx print.Context, msg string) error {
+	h.Output[ctx.Location.Row] = append(h.Output[ctx.Location.Row], msg)
+
+	return nil
 }

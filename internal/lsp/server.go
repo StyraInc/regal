@@ -508,7 +508,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 
 					err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
 					if err != nil {
-						l.logError(fmt.Errorf("failed %s notify: %v", "regal/hello", err.Error()))
+						l.logError(fmt.Errorf("regal/showEvalResult failed: %v", err.Error()))
 					}
 				} else {
 					output := filepath.Join(workspacePath, "output.json")

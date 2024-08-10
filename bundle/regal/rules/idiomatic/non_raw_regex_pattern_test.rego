@@ -15,7 +15,13 @@ test_fail_non_raw_rule_head if {
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
 		"level": "error",
-		"location": {"col": 18, "file": "policy.rego", "row": 3, "text": "x := regex.match(\"[0-9]+\", \"1\")"},
+		"location": {
+			"col": 18,
+			"file": "policy.rego",
+			"row": 3,
+			"text": "x := regex.match(\"[0-9]+\", \"1\")",
+			"end": {"col": 26, "row": 3},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),
@@ -33,7 +39,13 @@ test_fail_non_raw_rule_body if {
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
 		"level": "error",
-		"location": {"col": 18, "file": "policy.rego", "row": 4, "text": "\t\tregex.is_valid(\"[0-9]+\")"},
+		"location": {
+			"col": 18,
+			"file": "policy.rego",
+			"row": 4,
+			"text": "\t\tregex.is_valid(\"[0-9]+\")",
+			"end": {"col": 26, "row": 4},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),
@@ -49,7 +61,13 @@ test_fail_pattern_in_second_arg if {
 		"category": "idiomatic",
 		"description": "Use raw strings for regex patterns",
 		"level": "error",
-		"location": {"col": 25, "file": "policy.rego", "row": 3, "text": "r := regex.replace(\"a\", \"[a]\", \"b\")"},
+		"location": {
+			"col": 25,
+			"file": "policy.rego",
+			"row": 3,
+			"text": "r := regex.replace(\"a\", \"[a]\", \"b\")",
+			"end": {"col": 30, "row": 3},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/non-raw-regex-pattern", "idiomatic"),

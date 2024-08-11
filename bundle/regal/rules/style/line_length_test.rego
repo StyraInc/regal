@@ -20,8 +20,11 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 		}],
 		"title": "line-length",
 		"location": {
-			"col": 103, "file": "policy.rego", "row": 6,
+			"col": 1,
+			"file": "policy.rego",
+			"row": 6,
 			"text": `foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]`,
+			"end": {"col": 103, "row": 6},
 		},
 		"level": "error",
 	}}
@@ -50,9 +53,11 @@ test_fail_line_too_long_but_below_breakable_word_threshold if {
 		"description": "Line too long",
 		"level": "error",
 		"location": {
-			"col": 56,
+			"col": 1,
 			"file": "policy.rego",
-			"row": 7, "text": "\t# Long url: https://www.example.com/this/is/a/very/long",
+			"row": 7,
+			"text": "\t# Long url: https://www.example.com/this/is/a/very/long",
+			"end": {"col": 56, "row": 7},
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -73,10 +78,12 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 		"description": "Line too long",
 		"level": "error",
 		"location": {
-			"col": 147,
+			"col": 1,
 			"file": "policy.rego",
+			"row": 5,
 			# regal ignore:line-length
-			"row": 5, "text": "# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened",
+			"text": "# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened",
+			"end": {"col": 147, "row": 5},
 		},
 		"related_resources": [{
 			"description": "documentation",

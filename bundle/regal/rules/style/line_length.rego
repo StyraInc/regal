@@ -28,8 +28,12 @@ report contains violation if {
 		{"location": {
 			"file": input.regal.file.name,
 			"row": i + 1,
-			"col": line_length,
+			"col": 1,
 			"text": input.regal.file.lines[i],
+			"end": {
+				"row": i + 1,
+				"col": line_length,
+			},
 		}},
 	)
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
@@ -478,6 +479,27 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
+				currentModule, ok := l.cache.GetModule(file)
+				if !ok {
+					l.logError(fmt.Errorf("failed to get module for file %q", file))
+					break
+				}
+
+				currentContents, ok := l.cache.GetFileContents(file)
+				if !ok {
+					l.logError(fmt.Errorf("failed to get contents for file %q", file))
+					break
+				}
+
+				allRuleHeads, err := rego.AllRuleHeads(ctx, filepath.Base(file), currentContents, currentModule)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to get rule heads: %w", err))
+					break
+				}
+
+				// if there are none, then it's a package evaluation
+				ruleHeads := allRuleHeads[path]
+
 				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
 				input := FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
 
@@ -498,10 +520,20 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
+				target := "package"
+				if len(ruleHeads) > 0 {
+					target = strings.TrimPrefix(path, currentModule.Package.Path.String()+".")
+				}
+
 				if l.clientIdentifier == clients.IdentifierVSCode {
 					responseParams := map[string]any{
 						"result": result,
 						"line":   line,
+						"target": target,
+						// only used when the target is 'package'
+						"package": strings.TrimPrefix(currentModule.Package.Path.String(), "data."),
+						// only used when the target is a rule
+						"rule_heads": ruleHeads,
 					}
 
 					responseResult := map[string]any{}

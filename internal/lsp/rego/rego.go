@@ -30,6 +30,8 @@ type KeywordUse struct {
 	Location KeywordUseLocation `json:"location"`
 }
 
+type RuleHeads map[string][]*ast.Location
+
 type KeywordUseLocation struct {
 	Row uint `json:"row"`
 	Col uint `json:"col"`
@@ -94,39 +96,54 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 }
 
 //nolint:gochecknoglobals
-var keywordPreparedQuery *rego.PreparedEvalQuery
+var keywordsPreparedQuery *rego.PreparedEvalQuery
 
 //nolint:gochecknoglobals
-var keywordPreparedQueryInitOnce sync.Once
+var ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
+
+//nolint:gochecknoglobals
+var preparedQueriesInitOnce sync.Once
 
 func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
-	regoArgs := []func(*rego.Rego){
-		rego.ParsedBundle("regal", &regalRules),
-		rego.Query("data.regal.ast.keywords"),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+	createArgs := func(args ...func(*rego.Rego)) []func(*rego.Rego) {
+		return append([]func(*rego.Rego){
+			rego.ParsedBundle("regal", &regalRules),
+			rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
+			rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+		}, args...)
 	}
 
-	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
+	keywordRegoArgs := createArgs(rego.Query("data.regal.ast.keywords"))
+
+	kwpq, err := rego.New(keywordRegoArgs...).PrepareForEval(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
-	keywordPreparedQuery = &preparedQuery
+	keywordsPreparedQuery = &kwpq
+
+	ruleHeadLocationsRegoArgs := createArgs(rego.Query("data.regal.ast.rule_head_locations"))
+
+	rhlpq, err := rego.New(ruleHeadLocationsRegoArgs...).PrepareForEval(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	ruleHeadLocationsPreparedQuery = &rhlpq
 }
 
 // AllKeywords returns all keywords in the module.
 func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
-	keywordPreparedQueryInitOnce.Do(initialize)
+	preparedQueriesInitOnce.Do(initialize)
 
 	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
 	if err != nil {
 		return nil, fmt.Errorf("failed enhancing input: %w", err)
 	}
 
-	rs, err := keywordPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
+	rs, err := keywordsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
 	}
@@ -140,6 +157,42 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 	}
 
 	var result map[string][]KeywordUse
+
+	err = rio.JSONRoundTrip(rs[0].Expressions[0].Value, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshaling keywords: %w", err)
+	}
+
+	return result, nil
+}
+
+// AllRuleHeadLocations returns mapping of rules names to the head locations.
+func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
+	preparedQueriesInitOnce.Do(initialize)
+
+	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
+	if err != nil {
+		return nil, fmt.Errorf("failed enhancing input: %w", err)
+	}
+
+	rs, err := ruleHeadLocationsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
+	if err != nil {
+		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
+	}
+
+	if len(rs) == 0 {
+		return nil, errors.New("no results returned from evaluation")
+	}
+
+	if len(rs) != 1 {
+		return nil, errors.New("expected exactly one result from evaluation")
+	}
+
+	if len(rs[0].Expressions) != 1 {
+		return nil, errors.New("expected exactly one expression in result")
+	}
+
+	var result RuleHeads
 
 	err = rio.JSONRoundTrip(rs[0].Expressions[0].Value, &result)
 	if err != nil {

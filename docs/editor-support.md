@@ -15,8 +15,8 @@ The plugin will automatically find and use [Regal config](https://docs.styra.com
 [Zed](https://zed.dev) is a modern open-source code editor with focus on performance and simplicity.
 
 Zed supports Rego via Regal and the [zed-rego](https://github.com/StyraInc/zed-rego) extension developed by the Styra
-community. The extension provides syntax highlighting, linting, and all the other language server features provided by
-Regal.
+community. The extension provides syntax highlighting, linting, and most of the other language server features provided
+by Regal.
 
 ## Neovim
 

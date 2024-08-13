@@ -1806,6 +1806,12 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 			return fmt.Errorf("failed to walk workspace dir %q: %w", path, err)
 		}
 
+		// These directories often have thousands of items we don't care about,
+		// so don't even traverse them.
+		if d.IsDir() && (d.Name() == ".git" || d.Name() == ".idea") {
+			return filepath.SkipDir
+		}
+
 		// TODO(charlieegan3): make this configurable for things like .rq etc?
 		if d.IsDir() || !strings.HasSuffix(path, ".rego") {
 			return nil

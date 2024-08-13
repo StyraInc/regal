@@ -107,13 +107,15 @@ var preparedQueriesInitOnce sync.Once
 func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
 
-	sharedRegoArgs := []func(*rego.Rego){
-		rego.ParsedBundle("regal", &regalRules),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+	createArgs := func(args ...func(*rego.Rego)) []func(*rego.Rego) {
+		return append([]func(*rego.Rego){
+			rego.ParsedBundle("regal", &regalRules),
+			rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
+			rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+		}, args...)
 	}
 
-	keywordRegoArgs := append(sharedRegoArgs, rego.Query("data.regal.ast.keywords"))
+	keywordRegoArgs := createArgs(rego.Query("data.regal.ast.keywords"))
 
 	kwpq, err := rego.New(keywordRegoArgs...).PrepareForEval(context.Background())
 	if err != nil {
@@ -122,7 +124,7 @@ func initialize() {
 
 	keywordsPreparedQuery = &kwpq
 
-	ruleHeadLocationsRegoArgs := append(sharedRegoArgs, rego.Query("data.regal.ast.rule_head_locations"))
+	ruleHeadLocationsRegoArgs := createArgs(rego.Query("data.regal.ast.rule_head_locations"))
 
 	rhlpq, err := rego.New(ruleHeadLocationsRegoArgs...).PrepareForEval(context.Background())
 	if err != nil {

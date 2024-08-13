@@ -482,18 +482,21 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				currentModule, ok := l.cache.GetModule(file)
 				if !ok {
 					l.logError(fmt.Errorf("failed to get module for file %q", file))
+
 					break
 				}
 
 				currentContents, ok := l.cache.GetFileContents(file)
 				if !ok {
 					l.logError(fmt.Errorf("failed to get contents for file %q", file))
+
 					break
 				}
 
 				allRuleHeadLocations, err := rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
 				if err != nil {
 					l.logError(fmt.Errorf("failed to get rule head locations: %w", err))
+
 					break
 				}
 

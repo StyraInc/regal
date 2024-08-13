@@ -6,7 +6,7 @@ import rego.v1
 # description: |
 #   For a given rule head name, this rule contains a list of locations where
 #   there is a rule head with that name.
-rule_heads[name] contains info if {
+rule_head_locations[name] contains info if {
 	some rule in input.rules
 
 	name := concat(".", [

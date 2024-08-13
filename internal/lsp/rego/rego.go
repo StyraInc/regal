@@ -99,10 +99,10 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 var keywordsPreparedQuery *rego.PreparedEvalQuery
 
 //nolint:gochecknoglobals
-var ruleHeadsPreparedQuery *rego.PreparedEvalQuery
+var ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
 
 //nolint:gochecknoglobals
-var keywordPreparedQueryInitOnce sync.Once
+var preparedQueriesInitOnce sync.Once
 
 func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
@@ -122,19 +122,19 @@ func initialize() {
 
 	keywordsPreparedQuery = &kwpq
 
-	ruleHeadRegoArgs := append(sharedRegoArgs, rego.Query("data.regal.ast.rule_heads"))
+	ruleHeadLocationsRegoArgs := append(sharedRegoArgs, rego.Query("data.regal.ast.rule_head_locations"))
 
-	rhpq, err := rego.New(ruleHeadRegoArgs...).PrepareForEval(context.Background())
+	rhlpq, err := rego.New(ruleHeadLocationsRegoArgs...).PrepareForEval(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
-	ruleHeadsPreparedQuery = &rhpq
+	ruleHeadLocationsPreparedQuery = &rhlpq
 }
 
 // AllKeywords returns all keywords in the module.
 func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
-	keywordPreparedQueryInitOnce.Do(initialize)
+	preparedQueriesInitOnce.Do(initialize)
 
 	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
 	if err != nil {
@@ -164,18 +164,22 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 	return result, nil
 }
 
-// AllRuleHeads returns mapping of rules names to the head locations.
-func AllRuleHeads(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
-	keywordPreparedQueryInitOnce.Do(initialize)
+// AllRuleHeadLocations returns mapping of rules names to the head locations.
+func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
+	preparedQueriesInitOnce.Do(initialize)
 
 	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
 	if err != nil {
 		return nil, fmt.Errorf("failed enhancing input: %w", err)
 	}
 
-	rs, err := ruleHeadsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
+	rs, err := ruleHeadLocationsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
+	}
+
+	if len(rs) == 0 {
+		return nil, errors.New("no results returned from evaluation")
 	}
 
 	if len(rs) != 1 {

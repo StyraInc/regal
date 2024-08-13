@@ -491,14 +491,14 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					break
 				}
 
-				allRuleHeads, err := rego.AllRuleHeads(ctx, filepath.Base(file), currentContents, currentModule)
+				allRuleHeadLocations, err := rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to get rule heads: %w", err))
+					l.logError(fmt.Errorf("failed to get rule head locations: %w", err))
 					break
 				}
 
 				// if there are none, then it's a package evaluation
-				ruleHeads := allRuleHeads[path]
+				ruleHeadLocations := allRuleHeadLocations[path]
 
 				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
 				input := FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
@@ -521,7 +521,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				}
 
 				target := "package"
-				if len(ruleHeads) > 0 {
+				if len(ruleHeadLocations) > 0 {
 					target = strings.TrimPrefix(path, currentModule.Package.Path.String()+".")
 				}
 
@@ -533,7 +533,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 						// only used when the target is 'package'
 						"package": strings.TrimPrefix(currentModule.Package.Path.String(), "data."),
 						// only used when the target is a rule
-						"rule_heads": ruleHeads,
+						"rule_head_locations": ruleHeadLocations,
 					}
 
 					responseResult := map[string]any{}

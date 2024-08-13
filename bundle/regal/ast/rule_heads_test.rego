@@ -24,10 +24,7 @@ ref_rule[foo] := true if {
 }
 `
 
-	result := ast.rule_heads with input as object.union(
-		regal.parse_module("p.rego", policy),
-		{"regal": {"file": {"lines": split(policy, "\n")}}},
-	)
+	result := ast.rule_head_locations with input as regal.parse_module("p.rego", policy)
 
 	result == {
 		"data.policy.allow": {{"col": 9, "row": 5}, {"col": 1, "row": 7}},

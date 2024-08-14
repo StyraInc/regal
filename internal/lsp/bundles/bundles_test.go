@@ -1,78 +1,101 @@
 package bundles
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
-func TestFindInWorkspace(t *testing.T) {
+func TestLoadDataBundle(t *testing.T) {
 	t.Parallel()
 
-	tempDir := t.TempDir()
-
-	files := map[string]string{
-		"foo/bar/.manifest":         ``, // contents of manifests not used currently
-		"foo/bar/baz/data.json":     `{"file1": true}`,
-		"bar/foo/.manifest":         ``,
-		"bar/foo/baz/data.yaml":     `file2: true`,
-		"bar/foo/bar/bax/data.yaml": `file5: true`,
-		"baz/.manifest":             ``,
-		"baz/data.yml":              `file3: true`,
-		"baz/foo/data.json":         `[{"file4": true}]`,
-	}
-
-	for file, contents := range files {
-		dir := filepath.Join(tempDir, filepath.Dir(file))
-
-		err := os.MkdirAll(dir, 0o777)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = os.WriteFile(filepath.Join(tempDir, file), []byte(contents), 0o777)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	expectedBundles := map[string]any{
-		"foo/bar": map[string]any{
-			"baz": map[string]any{
-				"file1": true,
+	testCases := map[string]struct {
+		path         string
+		files        map[string]string
+		expectedData any
+	}{
+		"simple bundle": {
+			path: "foo",
+			files: map[string]string{
+				"foo/.manifest": `{"roots":["foo"]}`,
+				"foo/data.json": `{"foo": "bar"}`,
+			},
+			expectedData: map[string]any{
+				"foo": "bar",
 			},
 		},
-		"bar/foo": map[string]any{
-			"baz": map[string]any{
-				"file2": true,
+		"nested bundle": {
+			path: "foo",
+			files: map[string]string{
+				"foo/.manifest":     `{"roots":["foo", "bar"]}`,
+				"foo/data.yml":      `foo: bar`,
+				"foo/bar/data.yaml": `bar: baz`,
 			},
-		},
-		"baz": map[string]any{
-			"file3": true,
-			"foo": []map[string]any{
-				{
-					"file4": true,
+			expectedData: map[string]any{
+				"foo": "bar",
+				"bar": map[string]any{
+					"bar": "baz",
 				},
 			},
 		},
+		"array data": {
+			path: "foo",
+			files: map[string]string{
+				"foo/.manifest":     `{"roots":["bar"]}`,
+				"foo/bar/data.json": `[{"foo": "bar"}]`,
+			},
+			expectedData: map[string]any{
+				"bar": []any{
+					map[string]any{
+						"foo": "bar",
+					},
+				},
+			},
+		},
+		"rego files": {
+			path: "foo",
+			files: map[string]string{
+				"foo/.manifest":  `{"roots":["foo"]}`,
+				"food/rego.rego": `package foo`,
+			},
+			expectedData: map[string]any{},
+		},
 	}
 
-	expectedJSON, err := json.MarshalIndent(expectedBundles, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	bundles, err := FindInWorkspace(tempDir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	for testCase, testData := range testCases {
+		t.Run(testCase, func(t *testing.T) {
+			t.Parallel()
 
-	actualJSON, _ := json.MarshalIndent(bundles, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
+			workspacePath := t.TempDir()
 
-	if exp, got := string(expectedJSON), string(actualJSON); exp != got {
-		t.Fatalf("expected %s, got %s", exp, got)
+			// create the workspace state
+			for file, contents := range testData.files {
+				filePath := filepath.Join(workspacePath, file)
+
+				dir := filepath.Dir(filePath)
+				if err := os.MkdirAll(dir, 0o755); err != nil {
+					t.Fatalf("failed to create directory %s: %v", dir, err)
+				}
+
+				err := os.WriteFile(filePath, []byte(contents), 0o600)
+				if err != nil {
+					t.Fatalf("failed to write file %s: %v", filePath, err)
+				}
+			}
+
+			b, err := LoadDataBundle(filepath.Join(workspacePath, testData.path))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(b.Data, testData.expectedData) {
+				t.Fatalf("expected data to be %v, but got %v", testData.expectedData, b.Data)
+			}
+
+			if len(b.Modules) != 0 {
+				t.Fatalf("expected no modules, but got %d", len(b.Modules))
+			}
+		})
 	}
 }

@@ -3,8 +3,9 @@ package builtins
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -60,6 +61,8 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 	if err != nil {
 		return nil, err
 	}
+
+	json := encoding.JSON()
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&enhancedAST); err != nil {

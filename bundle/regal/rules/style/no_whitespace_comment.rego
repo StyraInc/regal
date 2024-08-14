@@ -11,7 +11,7 @@ import data.regal.result
 report contains violation if {
 	some comment in ast.comments_decoded
 
-	not _whitespace_comment(comment.Text)
+	not _whitespace_comment(comment.text)
 
 	violation := result.fail(rego.metadata.chain(), result.location(comment))
 }

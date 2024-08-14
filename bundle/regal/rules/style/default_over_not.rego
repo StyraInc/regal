@@ -14,7 +14,7 @@ report contains violation if {
 	# example: `rule := input.foo`
 
 	not rule["default"]
-	ast.generated_body(rule)
+	not rule.body
 
 	name := _static_rule_name(rule)
 	value := rule.head.value

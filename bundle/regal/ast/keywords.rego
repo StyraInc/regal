@@ -2,6 +2,8 @@ package regal.ast
 
 import rego.v1
 
+import data.regal.util
+
 keywords[row] contains keyword if {
 	some idx, line in input.regal.file.lines
 
@@ -21,26 +23,29 @@ keywords[row] contains keyword if {
 	}
 }
 
-keywords[pkg.location.row] contains keyword if {
+keywords[loc.row] contains keyword if {
 	pkg := input["package"]
+	loc := util.to_location_object(pkg.location)
 
 	keyword := {
 		"name": "package",
 		"location": {
-			"row": pkg.location.row,
-			"col": pkg.location.col,
+			"row": loc.row,
+			"col": loc.col,
 		},
 	}
 }
 
-keywords[imp.location.row] contains keyword if {
+keywords[loc.row] contains keyword if {
 	some imp in input.imports
+
+	loc := util.to_location_object(imp.location)
 
 	keyword := {
 		"name": "import",
 		"location": {
-			"row": imp.location.row,
-			"col": imp.location.col,
+			"row": loc.row,
+			"col": loc.col,
 		},
 	}
 }
@@ -48,8 +53,7 @@ keywords[imp.location.row] contains keyword if {
 keywords[loc.row] contains keyword if {
 	some rule in input.rules
 
-	loc := rule.head.location
-
+	loc := util.to_location_object(rule.head.location)
 	col := indexof(base64.decode(loc.text), " contains ")
 
 	col > 0
@@ -63,37 +67,38 @@ keywords[loc.row] contains keyword if {
 	}
 }
 
-keywords[value.row] contains keyword if {
-	some expr in exprs[_]
+keywords[loc.row] contains keyword if {
+	expr := exprs[_][_]
 
 	walk(expr.terms, [path, value])
 
-	value.col
-	value.row
+	regal.last(path) == "location"
 
-	name := _keyword_b64s[value.text]
+	loc := util.to_location_object(value)
+	name := _keyword_b64s[loc.text]
 
 	parent_path := array.slice(path, 0, count(path) - 1)
 	context := object.get(expr.terms, parent_path, {})
 
-	some keyword in _determine_keywords(context, value, name)
+	some keyword in _determine_keywords(context, loc, name)
 }
 
-keywords[value.row] contains keyword if {
+keywords[loc.row] contains keyword if {
 	some rule in input.rules
 	rule.head.assign
 
 	walk(rule.head.value, [path, value])
 
-	value.col
-	value.row
+	regal.last(path) == "location"
 
-	name := _keyword_b64s[value.text]
+	loc := util.to_location_object(value)
+
+	name := _keyword_b64s[loc.text]
 
 	parent_path := array.slice(path, 0, count(path) - 1)
 	context := object.get(rule.head.value, parent_path, {})
 
-	some keyword in _determine_keywords(context, value, name)
+	some keyword in _determine_keywords(context, loc, name)
 }
 
 _determine_keywords(_, value, name) := {keyword} if {
@@ -109,7 +114,8 @@ _determine_keywords(_, value, name) := {keyword} if {
 }
 
 _determine_keywords(context, value, "every") := keywords if {
-	text := base64.decode(context.value.location.text)
+	ctx_loc := util.to_location_object(context.value.location)
+	text := base64.decode(ctx_loc.text)
 
 	keywords := {
 		{
@@ -123,15 +129,13 @@ _determine_keywords(context, value, "every") := keywords if {
 			"name": "in",
 			"location": {
 				"row": value.row,
-				"col": (context.value.location.col + count(text)) + 1,
+				"col": (ctx_loc.col + count(text)) + 1,
 			},
 		},
 	}
 }
 
-_comment_row_index contains comment.Location.row if {
-	some comment in object.get(input, "comments", [])
-}
+_comment_row_index contains util.to_location_object(comment.location).row if some comment in input.comments
 
 _keyword_b64s := {
 	"aW4=": "in",

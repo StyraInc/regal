@@ -11,6 +11,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 refs contains ref if {
 	some r in ast.all_refs
@@ -21,7 +22,7 @@ refs contains ref if {
 
 	ref := {
 		"package_path": concat(".", [e.value | some e in r.value]),
-		"location": object.remove(r.location, {"text"}),
+		"location": object.remove(util.to_location_object(r.location), {"text"}),
 	}
 }
 
@@ -91,13 +92,13 @@ package_locations[referenced_pkg][referencing_pkg] contains location if {
 	some ref in ag_pkg.aggregate_data.refs
 
 	referenced_pkg := ref.package_path
-
 	referencing_pkg := sprintf("data.%s", [concat(".", ag_pkg.aggregate_source.package_path)])
+	ref_loc := util.to_location_object(ref.location)
 
 	location := {
 		"file": ag_pkg.aggregate_source.file,
-		"row": ref.location.row,
-		"col": ref.location.col,
+		"row": ref_loc.row,
+		"col": ref_loc.col,
 	}
 }
 

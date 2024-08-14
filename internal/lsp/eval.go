@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,6 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -76,6 +77,8 @@ func (l *LanguageServer) Eval(
 		if err != nil {
 			return nil, fmt.Errorf("failed reading input: %w", err)
 		}
+
+		json := encoding.JSON()
 
 		err = json.Unmarshal(in, &inputMap)
 		if err != nil {

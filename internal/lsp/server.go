@@ -3,7 +3,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
@@ -564,6 +564,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 							value = make(map[string]any)
 						}
 
+						json := encoding.JSON()
+
 						jsonVal, err = json.MarshalIndent(value, "", "  ")
 						if err == nil {
 							// staticcheck thinks err here is never used, but I think that's false?
@@ -809,6 +811,9 @@ func (l *LanguageServer) handleTextDocumentHover(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentHoverParams
+
+	json := encoding.JSON()
+
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -926,7 +931,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.CodeActionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1007,7 +1012,8 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.ExecuteCommandParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1027,7 +1033,8 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentInlayHintParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1066,7 +1073,7 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.CodeLensParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1144,7 +1151,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	req *jsonrpc2.Request,
 ) (any, error) {
 	var params types.CompletionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1217,7 +1224,7 @@ func (l *LanguageServer) handleWorkspaceSymbol(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceSymbolParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1248,7 +1255,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DefinitionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1304,7 +1311,7 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidOpenParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1338,7 +1345,7 @@ func (l *LanguageServer) handleTextDocumentDidClose(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidCloseParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1357,7 +1364,7 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidChangeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1394,7 +1401,7 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidSaveParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1444,7 +1451,7 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DocumentSymbolParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1475,7 +1482,7 @@ func (l *LanguageServer) handleTextDocumentFoldingRange(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.FoldingRangeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1498,7 +1505,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DocumentFormattingParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1603,7 +1610,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidCreateFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1639,7 +1646,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidDeleteFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1667,7 +1674,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidRenameFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1733,7 +1740,7 @@ func (l *LanguageServer) handleInitialize(
 	req *jsonrpc2.Request,
 ) (any, error) {
 	var params types.InitializeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1941,7 +1948,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	}
 
 	var params types.WorkspaceDidChangeWatchedFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 

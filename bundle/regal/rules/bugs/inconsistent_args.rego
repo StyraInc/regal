@@ -6,6 +6,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 report contains violation if {
 	count(ast.functions) > 0
@@ -42,8 +43,8 @@ _args_location(fn) := loc if {
 	# mostly to get the `text` attribute
 	oloc := result.location(fn)
 
-	farg := fn.head.args[0].location
-	larg := regal.last(fn.head.args).location
+	farg := util.to_location_object(fn.head.args[0].location)
+	larg := util.to_location_object(regal.last(fn.head.args).location)
 
 	# use the location of the first and last arg for highlighting
 	loc := object.union(oloc, {"location": {

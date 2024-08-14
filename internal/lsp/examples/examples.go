@@ -1,8 +1,9 @@
 package examples
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	_ "embed"
 )
@@ -43,6 +44,8 @@ var index *indexData
 
 func init() {
 	index = &indexData{}
+
+	json := encoding.JSON()
 
 	if err := json.Unmarshal(indexJSON, index); err != nil {
 		panic("failed to unmarshal built-in index: " + err.Error())

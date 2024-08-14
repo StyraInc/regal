@@ -80,9 +80,7 @@ func TestLintWithUserConfig(t *testing.T) {
 
 import rego.v1
 
-boo := input.hoo[_]
-
-or := 1
+r := input.foo[_]
 `)
 
 	userConfig := config.Config{

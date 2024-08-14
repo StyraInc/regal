@@ -48,12 +48,11 @@ report contains violation if {
 	# would be cached on the second invocation of the function
 	walk(rule["else"], [_, value])
 
+	loc := result.location(value.head)
+
 	# extract the text from location to see if '=' is used for
 	# assignment
-	text := base64.decode(value.head.location.text)
-	regex.match(`^else\s*=`, text)
-
-	loc := result.location(value.head)
+	regex.match(`else\s*=`, loc.location.text)
 
 	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
 }

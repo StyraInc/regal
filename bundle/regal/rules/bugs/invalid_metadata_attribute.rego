@@ -10,7 +10,7 @@ import data.regal.result
 report contains violation if {
 	some block in ast.comments.blocks
 
-	startswith(trim_space(block[0].Text), "METADATA")
+	startswith(trim_space(block[0].text), "METADATA")
 
 	text := _block_to_string(block)
 	attributes := object.keys(yaml.unmarshal(text))
@@ -27,10 +27,10 @@ report contains violation if {
 _block_to_string(block) := concat("\n", [line |
 	some i, entry in block
 	i > 0
-	line := entry.Text
+	line := entry.text
 ])
 
 _find_line(block, attribute) := [line |
 	some line in block
-	startswith(trim_space(line.Text), sprintf("%s:", [attribute]))
+	startswith(trim_space(line.text), sprintf("%s:", [attribute]))
 ][0]

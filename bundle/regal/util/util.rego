@@ -42,3 +42,10 @@ keys_to_numbers(obj) := {num: v |
 	some k, v in obj
 	num := to_number(k)
 }
+
+to_location_object(loc) := {"row": to_number(row), "col": to_number(col), "text": text} if {
+	is_string(loc)
+	[row, col, text] := split(loc, ":")
+}
+
+to_location_object(loc) := loc if is_object(loc)

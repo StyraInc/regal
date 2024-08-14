@@ -3,6 +3,7 @@ package regal.ast
 import rego.v1
 
 import data.regal.config
+import data.regal.util
 
 scalar_types := {"boolean", "null", "number", "string"}
 
@@ -61,34 +62,6 @@ _is_name(ref, pos) if {
 	pos > 0
 	ref.type == "string"
 }
-
-# METADATA
-# description: |
-#   answers if the body was generated or not, i.e. not seen
-#   in the original Rego file — for example `x := 1`
-# scope: document
-
-# METADATA
-# description: covers case of allow := true, which expands to allow = true { true }
-generated_body(rule) if rule.body[0].location == rule.head.value.location
-
-# METADATA
-# description: covers case of default rules
-generated_body(rule) if rule["default"] == true
-
-# METADATA
-# description: covers case of rule["message"] or rule contains "message"
-generated_body(rule) if {
-	rule.body[0].location.row == rule.head.key.location.row
-
-	# this is a quirk in the AST — the generated body will have a location
-	# set before the key, i.e. "message"
-	rule.body[0].location.col < rule.head.key.location.col
-}
-
-# METADATA
-# description: covers case of f("x")
-generated_body(rule) if rule.body[0].location == rule.head.location
 
 # METADATA
 # description: all the rules (excluding functions) in the input AST
@@ -168,7 +141,7 @@ function_calls[rule_index] contains call if {
 
 	call := {
 		"name": ref_to_string(ref[0].value),
-		"location": ref[0].location,
+		"location": util.to_location_object(ref[0].location),
 		"args": args,
 	}
 }
@@ -270,8 +243,7 @@ function_ret_in_args(fn_name, terms) if {
 }
 
 # METADATA
-# description: |
-#   answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
+# description: answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
 # scope: document
 implicit_boolean_assignment(rule) if {
 	# note the missing location attribute here, which is how we distinguish
@@ -279,6 +251,10 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value == {"type": "boolean", "value": true}
 }
 
+# or sometimes, like this...
+implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
+
+# or like this...
 implicit_boolean_assignment(rule) if {
 	# This handles the *quite* special case of
 	# `a.b if true`, which is "rewritten" to `a.b = true` *and*  where a location is still added to the value
@@ -293,6 +269,7 @@ implicit_boolean_assignment(rule) if {
 	# If you write Rego like that — you're not going to use Regal anyway, are you? ¯\_(ツ)_/¯
 	rule.head.value.type == "boolean"
 	rule.head.value.value == true
+
 	rule.head.value.location.col == 1
 }
 
@@ -325,8 +302,10 @@ negated_expressions[rule] contains value if {
 #       input.baz
 #   }
 is_chained_rule_body(rule, lines) if {
-	row_text := lines[rule.head.location.row - 1]
-	col_text := substring(row_text, rule.head.location.col - 1, -1)
+	head_loc := util.to_location_object(rule.head.location)
+
+	row_text := lines[head_loc.row - 1]
+	col_text := substring(row_text, head_loc.col - 1, -1)
 
 	startswith(col_text, "{")
 }

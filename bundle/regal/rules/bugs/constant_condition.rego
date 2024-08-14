@@ -15,7 +15,7 @@ _operators := {"equal", "gt", "gte", "lt", "lte", "neq"}
 
 _rules_with_bodies := [rule |
 	some rule in input.rules
-	not ast.generated_body(rule)
+	rule.body
 ]
 
 # METADATA

@@ -4,6 +4,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.capabilities
+import data.regal.util
 
 # regal ignore:rule-length
 test_find_vars if {
@@ -138,21 +139,14 @@ allow := true
 	blocks := ast.comment_blocks(module.comments)
 	blocks == [
 		[
-			{
-				"Location": {
-					"col": 1,
-					"row": 3,
-					"text": "IyBNRVRBREFUQQojIHRpdGxlOiBmb28KIyBiYXI6IGludmFsaWQ=",
-				},
-				"Text": "IE1FVEFEQVRB",
-			},
-			{"Location": {"col": 1, "file": "p.rego", "row": 4}, "Text": "IHRpdGxlOiBmb28="},
-			{"Location": {"col": 1, "file": "p.rego", "row": 5}, "Text": "IGJhcjogaW52YWxpZA=="},
+			{"location": "3:1:IyBNRVRBREFUQQojIHRpdGxlOiBmb28KIyBiYXI6IGludmFsaWQ=", "text": "IE1FVEFEQVRB"},
+			{"location": "4:1:IyB0aXRsZTogZm9v", "text": "IHRpdGxlOiBmb28="},
+			{"location": "5:1:IyBiYXI6IGludmFsaWQ=", "text": "IGJhcjogaW52YWxpZA=="},
 		],
-		[{"Location": {"col": 1, "file": "p.rego", "row": 8}, "Text": "IG5vdCBtZXRhZGF0YQ=="}],
+		[{"location": "8:1:IyBub3QgbWV0YWRhdGE=", "text": "IG5vdCBtZXRhZGF0YQ=="}],
 		[
-			{"Location": {"col": 1, "file": "p.rego", "row": 10}, "Text": "IGFub3RoZXI="},
-			{"Location": {"col": 1, "file": "p.rego", "row": 11}, "Text": "IGJsb2Nr"},
+			{"location": "10:1:IyBhbm90aGVy", "text": "IGFub3RoZXI="},
+			{"location": "11:1:IyBibG9jaw==", "text": "IGJsb2Nr"},
 		],
 	]
 }
@@ -269,16 +263,6 @@ test_find_some_decl_names_in_scope if {
 
 var_names(vars) := {var.value | some var in vars}
 
-test_generated_body_function if {
-	policy := `package p
-
-	f("x")`
-
-	module := regal.parse_module("p.rego", policy)
-
-	ast.generated_body(module.rules[0])
-}
-
 test_all_refs if {
 	policy := `package policy
 
@@ -295,7 +279,7 @@ test_all_refs if {
 
 	r := ast.all_refs with input as module
 
-	text_refs := {base64.decode(ref.location.text) | some ref in r}
+	text_refs := {base64.decode(util.to_location_object(ref.location).text) | some ref in r}
 
 	text_refs == {":=", "data.foo.bar", "data.foo.bax", "data.foo.baz"}
 }

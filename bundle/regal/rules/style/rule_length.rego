@@ -4,15 +4,15 @@ package regal.rules.style["rule-length"]
 
 import rego.v1
 
-import data.regal.ast
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 cfg := config.for_rule("style", "rule-length")
 
 report contains violation if {
 	some rule in input.rules
-	lines := split(base64.decode(rule.location.text), "\n")
+	lines := split(base64.decode(util.to_location_object(rule.location).text), "\n")
 
 	line_count(cfg, rule, lines) > cfg["max-rule-length"]
 
@@ -23,7 +23,7 @@ report contains violation if {
 
 generated_body_exception(conf, rule) if {
 	conf["except-empty-body"] == true
-	ast.generated_body(rule)
+	not rule.body
 }
 
 line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
@@ -32,7 +32,7 @@ line_count(cfg, rule, lines) := n if {
 	not cfg["count-comments"]
 
 	# Note that this assumes } on its own line
-	body_start := rule.location.row + 1
+	body_start := util.to_location_object(rule.location).row + 1
 	body_end := (body_start + count(lines)) - 3
 	body_total := (body_end - body_start) + 1
 
@@ -41,8 +41,10 @@ line_count(cfg, rule, lines) := n if {
 	body_comments := sum([1 |
 		some comment in input.comments
 
-		comment.Location.row >= body_start
-		comment.Location.row <= body_end
+		loc := util.to_location_object(comment.location)
+
+		loc.row >= body_start
+		loc.row <= body_end
 	])
 
 	n := body_total - body_comments

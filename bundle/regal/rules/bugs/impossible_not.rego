@@ -6,6 +6,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 package_path := [part.value | some part in input["package"].path]
 
@@ -43,7 +44,9 @@ negated_refs contains negated_ref if {
 
 	# ignore negated local vars
 	not ref[0].value in ast.function_arg_names(rule)
-	not ref[0].value in {var.value | some var in ast.find_vars_in_local_scope(rule, value.location)}
+	not ref[0].value in {var.value |
+		some var in ast.find_vars_in_local_scope(rule, util.to_location_object(value.location))
+	}
 
 	negated_ref := {
 		"ref": ref,

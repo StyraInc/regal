@@ -3,13 +3,13 @@ package reporter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/fatih/color"
 	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
@@ -262,7 +262,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 		r.Violations = []report.Violation{}
 	}
 
-	bs, err := json.MarshalIndent(r, "", "  ")
+	bs, err := encoding.JSON().MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json marshalling of report failed: %w", err)
 	}

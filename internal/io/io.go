@@ -1,15 +1,13 @@
 package io
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	files "io/fs"
 	"log"
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader/filter"
@@ -73,6 +71,8 @@ func ToMap(a any) map[string]any {
 
 // JSONRoundTrip convert any value to JSON and back again.
 func JSONRoundTrip(from any, to any) error {
+	json := encoding.JSON()
+
 	bs, err := json.Marshal(from)
 	if err != nil {
 		return fmt.Errorf("failed JSON marshalling %w", err)
@@ -86,15 +86,6 @@ func MustJSONRoundTrip(from any, to any) {
 	if err := JSONRoundTrip(from, to); err != nil {
 		log.Fatal(err)
 	}
-}
-
-// MustYAMLToMap creates a map from reader, expecting YAML content, or fail.
-func MustYAMLToMap(from io.Reader) (m map[string]any) {
-	if err := yaml.NewDecoder(from).Decode(&m); err != nil {
-		log.Fatal(err)
-	}
-
-	return m
 }
 
 // CloseFileIgnore closes file ignoring errors, mainly for deferred cleanup.

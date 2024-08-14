@@ -281,6 +281,18 @@ test_success_iteration_in_args_call_in_comprehension_head if {
 	r == set()
 }
 
+test_success_top_level_iteration if {
+	policy := ast.with_rego_v1(`r := input.foo[_]`)
+
+	r := rule.report with config.for_rule as {
+		"level": "error",
+		"ignore-nesting-level": 2,
+	}
+		with input as policy
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r == set()
+}
+
 allow_nesting(i) := {
 	"level": "error",
 	"ignore-nesting-level": i,

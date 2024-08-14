@@ -14,9 +14,9 @@ cfg := config.for_rule("style", "prefer-some-in-iteration")
 report contains violation if {
 	some i, rule in input.rules
 
-	node := filter_top_level_ref(rule)
+	not possible_top_level_iteration(rule)
 
-	walk(node, [path, value])
+	walk(rule, [path, value])
 
 	value.type == "ref"
 
@@ -56,9 +56,10 @@ has_sub_attribute(ref) if {
 
 # don't walk top level iteration refs:
 # https://docs.styra.com/regal/rules/bugs/top-level-iteration
-filter_top_level_ref(rule) := rule.body if {
+possible_top_level_iteration(rule) if {
+	not rule.body
 	rule.head.value.type == "ref"
-} else := rule
+}
 
 # don't recommend `some .. in` if iteration occurs inside of arrays, objects, or sets
 invalid_some_context(rule, path) if {

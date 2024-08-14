@@ -37,7 +37,7 @@ func TestRefresh(t *testing.T) {
 
 	writeFiles(files)
 
-	c := NewCache(workspacePath)
+	c := NewCache(&CacheOptions{WorkspacePath: workspacePath})
 
 	// perform the first load of the bundles
 	refreshedBundles, err := c.Refresh()
@@ -60,6 +60,14 @@ func TestRefresh(t *testing.T) {
 
 	if !reflect.DeepEqual(fooBundle.Data, map[string]any{"foo": "bar"}) {
 		t.Fatalf("unexpected bundle data: %v", fooBundle.Data)
+	}
+
+	if fooBundle.Manifest.Roots == nil {
+		t.Fatalf("unexpected bundle roots: %v", fooBundle.Manifest.Roots)
+	}
+
+	if !reflect.DeepEqual(*fooBundle.Manifest.Roots, []string{"foo"}) {
+		t.Fatalf("unexpected bundle roots: %v", *fooBundle.Manifest.Roots)
 	}
 
 	// perform the second load of the bundles, after no changes on disk
@@ -117,7 +125,7 @@ func TestRefresh(t *testing.T) {
 	// create a new bundle
 	writeFiles(
 		map[string]string{
-			"bar/.manifest": `{"roots":["foo"]}`,
+			"bar/.manifest": `{"roots":["bar"]}`,
 			"bar/data.json": `{"bar": true}`,
 		},
 	)

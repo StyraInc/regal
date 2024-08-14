@@ -19,17 +19,31 @@ import (
 type Cache struct {
 	workspacePath string
 	bundles       map[string]*cacheBundle
+	errorLog      io.Writer
 }
 
-func NewCache(workspacePath string) *Cache {
+type CacheOptions struct {
+	WorkspacePath string
+	ErrorLog      io.Writer
+}
+
+func NewCache(opts *CacheOptions) *Cache {
+	workspacePath := opts.WorkspacePath
+
 	if !strings.HasSuffix(workspacePath, string(filepath.Separator)) {
 		workspacePath += string(filepath.Separator)
 	}
 
-	return &Cache{
+	c := &Cache{
 		workspacePath: workspacePath,
 		bundles:       make(map[string]*cacheBundle),
 	}
+
+	if opts.ErrorLog != nil {
+		c.errorLog = opts.ErrorLog
+	}
+
+	return c
 }
 
 // Refresh walks the workspace path and loads or refreshes any bundles that
@@ -74,7 +88,11 @@ func (c *Cache) Refresh() ([]string, error) {
 
 		refreshed, err := c.bundles[root].Refresh(filepath.Join(c.workspacePath, root))
 		if err != nil {
-			return nil, fmt.Errorf("failed to refresh bundle %q: %w", root, err)
+			if c.errorLog != nil {
+				fmt.Fprintf(c.errorLog, "failed to refresh bundle %q: %v\n", root, err)
+			}
+
+			continue
 		}
 
 		if refreshed {
@@ -121,6 +139,17 @@ func (c *Cache) Get(root string) (bundle.Bundle, bool) {
 	}
 
 	return b.bundle, true
+}
+
+// All returns all the bundles in the cache.
+func (c *Cache) All() map[string]bundle.Bundle {
+	bundles := make(map[string]bundle.Bundle)
+
+	for root, cacheBundle := range c.bundles {
+		bundles[root] = cacheBundle.bundle
+	}
+
+	return bundles
 }
 
 // cacheBundle is an internal struct that holds a bundle.Bundle and the MD5

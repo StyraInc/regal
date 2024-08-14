@@ -31,5 +31,5 @@ func dataFileLoaderFilter(abspath string, info os.FileInfo, _ int) bool {
 
 	basename := filepath.Base(abspath)
 
-	return !slices.Contains([]string{"data.json", "data.yml", "data.yaml"}, basename)
+	return !slices.Contains([]string{".manifest", "data.json", "data.yml", "data.yaml"}, basename)
 }

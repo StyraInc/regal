@@ -25,6 +25,7 @@ func (l *LanguageServer) Eval(
 	query string,
 	input io.Reader,
 	printHook print.Hook,
+	dataBundles map[string]bundle.Bundle,
 ) (rego.ResultSet, error) {
 	modules := l.cache.GetAllModules()
 	moduleFiles := make([]bundle.ModuleFile, 0, len(modules))
@@ -37,16 +38,31 @@ func (l *LanguageServer) Eval(
 		})
 	}
 
-	bd := bundle.Bundle{
-		Data: make(map[string]any),
+	allBundles := make(map[string]bundle.Bundle)
+
+	for k, v := range dataBundles {
+		if v.Manifest.Roots == nil {
+			l.logError(fmt.Errorf("bundle %s has no roots and will be skipped", k))
+
+			continue
+		}
+
+		allBundles[k] = v
+	}
+
+	allBundles["workspace"] = bundle.Bundle{
 		Manifest: bundle.Manifest{
-			Roots:    &[]string{""},
+			// there is no data in this bundle so the roots are not used,
+			// however, roots must be set.
+			Roots:    &[]string{"workspace"},
 			Metadata: map[string]any{"name": "workspace"},
 		},
 		Modules: moduleFiles,
+		// Data is all sourced from the dataBundles instead
+		Data: make(map[string]any),
 	}
 
-	regoArgs := prepareRegoArgs(ast.MustParseBody(query), bd, printHook)
+	regoArgs := prepareRegoArgs(ast.MustParseBody(query), allBundles, printHook)
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -103,7 +119,12 @@ func (l *LanguageServer) EvalWorkspacePath(
 
 	hook := PrintHook{Output: make(map[int][]string)}
 
-	result, err := l.Eval(ctx, resultQuery, input, hook)
+	var bs map[string]bundle.Bundle
+	if l.bundleCache != nil {
+		bs = l.bundleCache.All()
+	}
+
+	result, err := l.Eval(ctx, resultQuery, input, hook, bs)
 	if err != nil {
 		return EvalPathResult{}, fmt.Errorf("failed evaluating query: %w", err)
 	}
@@ -120,15 +141,21 @@ func (l *LanguageServer) EvalWorkspacePath(
 	return EvalPathResult{Value: res, PrintOutput: hook.Output}, nil
 }
 
-func prepareRegoArgs(query ast.Body, bd bundle.Bundle, printHook print.Hook) []func(*rego.Rego) {
-	return []func(*rego.Rego){
+func prepareRegoArgs(query ast.Body, bundles map[string]bundle.Bundle, printHook print.Hook) []func(*rego.Rego) {
+	bundleArgs := make([]func(*rego.Rego), 0, len(bundles))
+	for key, b := range bundles {
+		bundleArgs = append(bundleArgs, rego.ParsedBundle(key, &b))
+	}
+
+	baseArgs := []func(*rego.Rego){
 		rego.ParsedQuery(query),
-		rego.ParsedBundle("workspace", &bd),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 		rego.EnablePrintStatements(true),
 		rego.PrintHook(printHook),
 	}
+
+	return append(baseArgs, bundleArgs...)
 }
 
 type PrintHook struct {

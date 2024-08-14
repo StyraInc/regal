@@ -23,6 +23,7 @@ import (
 
 	"github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
@@ -91,8 +92,9 @@ type LanguageServer struct {
 
 	clientInitializationOptions types.InitializationOptions
 
-	cache     *cache.Cache
-	regoStore storage.Store
+	cache       *cache.Cache
+	regoStore   storage.Store
+	bundleCache *bundles.Cache
 
 	completionsManager *completions.Manager
 
@@ -1815,7 +1817,14 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	if l.workspaceRootURI != "" {
-		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
+		workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+
+		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{
+			WorkspacePath: workspaceRootPath,
+			ErrorLog:      l.errorLog,
+		})
+
+		configFile, err := config.FindConfig(workspaceRootPath)
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())
 		}
@@ -1885,6 +1894,17 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+	}
+
+	if l.bundleCache != nil {
+		rb, err := l.bundleCache.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
+		}
+
+		if len(rb) > 0 {
+			fmt.Fprintln(os.Stderr, "Reloaded bundles:", rb)
+		}
 	}
 
 	return changedOrNewURIs, nil

@@ -25,6 +25,7 @@ linters:
     - nolintlint
     - depguard
     - gomoddirectives # need replacements for wasip1
+    - execinquery # deprecated
 linters-settings:
   tagliatelle:
     case:

@@ -4984,6 +4984,33 @@
       }
     },
     {
+      "name": "strings.count",
+      "description": "Returns the number of non-overlapping instances of a substring in a string.",
+      "categories": [
+        "strings"
+      ],
+      "decl": {
+        "args": [
+          {
+            "description": "string to search in",
+            "name": "search",
+            "type": "string"
+          },
+          {
+            "description": "substring to look for",
+            "name": "substring",
+            "type": "string"
+          }
+        ],
+        "result": {
+          "description": "count of occurrences, `0` if not found",
+          "name": "output",
+          "type": "number"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "strings.render_template",
       "description": "Renders a templated string with given template variables injected. For a given templated string and key/value mapping, values will be injected into the template where they are referenced by key.\n\tFor examples of templating syntax, see https://pkg.go.dev/text/template",
       "categories": [

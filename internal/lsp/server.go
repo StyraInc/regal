@@ -1897,13 +1897,9 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 	}
 
 	if l.bundleCache != nil {
-		rb, err := l.bundleCache.Refresh()
+		_, err := l.bundleCache.Refresh()
 		if err != nil {
 			return nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
-		}
-
-		if len(rb) > 0 {
-			fmt.Fprintln(os.Stderr, "Reloaded bundles:", rb)
 		}
 	}
 

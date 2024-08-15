@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/bundle"
+
+	"github.com/styrainc/regal/internal/util"
 )
 
 // Cache is a struct that maintains a number of bundles in memory and
@@ -123,12 +125,7 @@ func (c *Cache) Refresh() ([]string, error) {
 // List returns a list of all the bundle roots that are currently present in
 // the cache.
 func (c *Cache) List() []string {
-	roots := make([]string, 0, len(c.bundles))
-	for root := range c.bundles {
-		roots = append(roots, root)
-	}
-
-	return roots
+	return util.Keys(c.bundles)
 }
 
 // Get returns the bundle for the given root from the cache.

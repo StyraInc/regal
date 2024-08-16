@@ -10,7 +10,7 @@ package policy
 
 import rego.v1
 
-permisisions := ["read", "write"] if {
+permissions := ["read", "write"] if {
     input.user == "admin"
 } else := ["read"]
 ```
@@ -21,9 +21,9 @@ package policy
 
 import rego.v1
 
-default permisisions := ["read"]
+default permissions := ["read"]
 
-permisisions := ["read", "write"] if {
+permissions := ["read", "write"] if {
     input.user == "admin"
 }
 ```

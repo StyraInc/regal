@@ -14,7 +14,7 @@ reasons contains sprintf("%q is a dog!", [user.name]) if {
     some user in input.users
     user.species == "canine"
 
-    # Useful for debugging, but leave out before commiting
+    # Useful for debugging, but leave out before committing
     print("user:", user)
 }
 ```

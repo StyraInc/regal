@@ -67,7 +67,7 @@ package p
 
 # METADATA
 # scope: document
-# descriptiom: allow allows
+# description: allow allows
 
 # METADATA
 # title: allow

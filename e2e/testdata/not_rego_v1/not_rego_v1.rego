@@ -1,6 +1,6 @@
 package legacy
 
-# implict-future-keywords
+# implicit-future-keywords
 import future.keywords
 
 use_if {

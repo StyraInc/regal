@@ -122,7 +122,7 @@ function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 rule_and_function_names contains ref_to_string(rule.head.ref) if some rule in input.rules
 
 # METADATA
-# description: all identifers in the input AST (rule and functiin names, plus imported names)
+# description: all identifiers in the input AST (rule and function names, plus imported names)
 identifiers := rule_and_function_names | imported_identifiers
 
 # METADATA

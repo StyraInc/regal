@@ -15,7 +15,7 @@ report[item] if {
     startswith(item, "report")
 }
 
-# unconditinally add an item to report
+# unconditionally add an item to report
 report["report1"]
 ```
 
@@ -32,7 +32,7 @@ report contains item if {
     startswith(item, "report")
 }
 
-# unconditinally add an item to report
+# unconditionally add an item to report
 report contains "report1"
 ```
 

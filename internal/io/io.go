@@ -2,9 +2,12 @@ package io
 
 import (
 	"fmt"
+	"io"
 	files "io/fs"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -100,4 +103,22 @@ func ExcludeTestFilter() filter.LoaderFilter {
 			// more polished to deal with this for the time being.
 			info.Name() != "todo_test.rego"
 	}
+}
+
+// FindInput finds input.json file in workspace closest to the file, and returns
+// both the location and the reader.
+func FindInput(file string, workspacePath string) (string, io.Reader) {
+	relative := strings.TrimPrefix(file, workspacePath)
+	components := strings.Split(path.Dir(relative), string(filepath.Separator))
+
+	for i := range len(components) {
+		inputPath := path.Join(workspacePath, path.Join(components[:len(components)-i]...), "input.json")
+
+		f, err := os.Open(inputPath)
+		if err == nil {
+			return inputPath, f
+		}
+	}
+
+	return "", nil
 }

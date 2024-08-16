@@ -5,10 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
@@ -95,22 +91,6 @@ type EvalPathResult struct {
 	Value       any              `json:"value"`
 	IsUndefined bool             `json:"isUndefined"`
 	PrintOutput map[int][]string `json:"printOutput"`
-}
-
-func FindInput(file string, workspacePath string) io.Reader {
-	relative := strings.TrimPrefix(file, workspacePath)
-	components := strings.Split(path.Dir(relative), string(filepath.Separator))
-
-	for i := range len(components) {
-		inputPath := path.Join(workspacePath, path.Join(components[:len(components)-i]...), "input.json")
-
-		f, err := os.Open(inputPath)
-		if err == nil {
-			return f
-		}
-	}
-
-	return nil
 }
 
 func (l *LanguageServer) EvalWorkspacePath(

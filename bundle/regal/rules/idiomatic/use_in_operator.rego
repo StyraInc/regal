@@ -16,7 +16,7 @@ report contains violation if {
 	nlt := nl_terms[0]
 	static_term(nlt.term)
 
-	# Use the non-loop term positon to determine the
+	# Use the non-loop term position to determine the
 	# location of the loop term (3 is the count of terms)
 	violation := result.fail(rego.metadata.chain(), result.location(terms[3 - nlt.pos]))
 }

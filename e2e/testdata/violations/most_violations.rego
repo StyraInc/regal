@@ -1,7 +1,7 @@
 # METADATA
 # description: |
 #   This file is used for e2e tests of most of the provided linter rules. All violations can't
-#   be tested in a single file, as some are mutually exlusive (i.e. implicit-future-keywords and
+#   be tested in a single file, as some are mutually exclusive (i.e. implicit-future-keywords and
 #   rule-named-if).
 package all_violations
 

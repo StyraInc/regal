@@ -7,20 +7,20 @@ import data.regal.result
 
 test_no_related_resources_in_result_fail_on_custom_rule_unless_provided if {
 	chain := [
-		{"path": ["custom", "regal", "rules", "categoy", "name", "report"]},
+		{"path": ["custom", "regal", "rules", "category", "name", "report"]},
 		{
 			"annotations": {
 				"scope": "package",
 				"description": "This is a test",
 			},
-			"path": ["custom", "regal", "rules", "categoy", "name"],
+			"path": ["custom", "regal", "rules", "category", "name"],
 		},
 	]
 
 	violation := result.fail(chain, {})
 
 	violation == {
-		"category": "categoy",
+		"category": "category",
 		"description": "This is a test",
 		"level": "error",
 		"title": "name",
@@ -29,7 +29,7 @@ test_no_related_resources_in_result_fail_on_custom_rule_unless_provided if {
 
 test_related_resources_in_result_fail_on_custom_rule_when_provided if {
 	chain := [
-		{"path": ["custom", "regal", "rules", "categoy", "name", "report"]},
+		{"path": ["custom", "regal", "rules", "category", "name", "report"]},
 		{
 			"annotations": {
 				"scope": "package",
@@ -39,14 +39,14 @@ test_related_resources_in_result_fail_on_custom_rule_when_provided if {
 					"ref": "https://example.com",
 				}],
 			},
-			"path": ["custom", "regal", "rules", "categoy", "name"],
+			"path": ["custom", "regal", "rules", "category", "name"],
 		},
 	]
 
 	violation := result.fail(chain, {})
 
 	violation == {
-		"category": "categoy",
+		"category": "category",
 		"description": "This is a test",
 		"level": "error",
 		"related_resources": [{

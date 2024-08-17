@@ -47,7 +47,7 @@ allow := false # title: allow
 	r == set()
 }
 
-test_success_annotation_without_metadata_but_comment_preceeding if {
+test_success_annotation_without_metadata_but_comment_preceding if {
 	module := ast.with_rego_v1(`
 # something that is not an annotation here will cancel this rule
 # as this is less likely to be a mistake... but weird

@@ -110,7 +110,7 @@ fail(metadata, details) := _fail_annotated(metadata, details)
 # METADATA
 # description: |
 #   creates a notice object, i.e. one used to inform users of things like a rule getting
-#   ignored because the set capabilities does not include a dependency (like a buiöt-in function)
+#   ignored because the set capabilities does not include a dependency (like a built-in function)
 #   needed by the rule
 notice(metadata) := result if {
 	is_array(metadata)
@@ -220,7 +220,7 @@ ranged_location_from_text(x) := end if {
 	loc := location(x)
 	end := object.union(loc, {"location": {"end": {
 		# note the use of the _original_ location text here, as loc.location.text
-		# will be the entire line where the violation occured
+		# will be the entire line where the violation occurred
 		"row": (loc.location.row + count(lines)) - 1,
 		"col": loc.location.col + count(regal.last(lines)),
 	}}})

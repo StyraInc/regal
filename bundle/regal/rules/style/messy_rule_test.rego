@@ -46,7 +46,7 @@ test_fail_messy_default_definition if {
 	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tfoo if 5 == 1"})
 }
 
-test_fail_messy_nested_rule_definiton if {
+test_fail_messy_nested_rule_definition if {
 	module := ast.with_rego_v1(`
 	base.foo if true
 
@@ -59,7 +59,7 @@ test_fail_messy_nested_rule_definiton if {
 	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tbase.foo if 5 == 1"})
 }
 
-test_success_non_incremental_nested_rule_definiton if {
+test_success_non_incremental_nested_rule_definition if {
 	module := ast.with_rego_v1(`
 	base.foo if true
 
@@ -85,7 +85,7 @@ test_success_non_messy_ref_head_rules if {
 	r == set()
 }
 
-test_fail_messy_incremental_nested_variable_rule_definiton if {
+test_fail_messy_incremental_nested_variable_rule_definitiion if {
 	module := ast.with_rego_v1(`
 	base[x].foo := 5 if { x := 1 }
 

@@ -7,7 +7,7 @@ import data.regal.config
 import data.regal.rules.style["todo-comment"] as rule
 
 test_fail_todo_comment if {
-	r := rule.report with input as ast.policy(`# TODO: do someting clever`)
+	r := rule.report with input as ast.policy(`# TODO: do something clever`)
 	r == {{
 		"category": "style",
 		"description": "Avoid TODO comments",
@@ -16,7 +16,7 @@ test_fail_todo_comment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/todo-comment", "style"),
 		}],
 		"title": "todo-comment",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": `# TODO: do someting clever`},
+		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": `# TODO: do something clever`},
 		"level": "error",
 	}}
 }

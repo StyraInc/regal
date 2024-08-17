@@ -301,7 +301,7 @@ func updateAllDiagnostics(
 	return nil
 }
 
-// astError is copied from OPA but drop details as I (charlieegan3) had issues unmarsalling the field.
+// astError is copied from OPA but drop details as I (charlieegan3) had issues unmarshalling the field.
 type astError struct {
 	Code     string        `json:"code"`
 	Message  string        `json:"message"`

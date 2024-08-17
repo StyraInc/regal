@@ -1810,7 +1810,7 @@
           }
         ],
         "result": {
-          "description": "deseralized from `x`",
+          "description": "deserialized from `x`",
           "name": "y",
           "type": "string"
         },
@@ -3089,7 +3089,7 @@
           }
         ],
         "result": {
-          "description": "the term deseralized from `x`",
+          "description": "the term deserialized from `x`",
           "name": "y",
           "type": "any"
         },
@@ -4187,7 +4187,7 @@
     },
     {
       "name": "product",
-      "description": "Muliplies elements of an array or set of numbers",
+      "description": "Multiplies elements of an array or set of numbers",
       "categories": [
         "aggregates"
       ],
@@ -4274,7 +4274,7 @@
     },
     {
       "name": "rand.intn",
-      "description": "Returns a random integer between `0` and `n` (`n` exlusive). If `n` is `0`, then `y` is always `0`. For any given argument pair (`str`, `n`), the output will be consistent throughout a query evaluation.",
+      "description": "Returns a random integer between `0` and `n` (`n` exclusive). If `n` is `0`, then `y` is always `0`. For any given argument pair (`str`, `n`), the output will be consistent throughout a query evaluation.",
       "categories": [
         "numbers"
       ],
@@ -4794,7 +4794,7 @@
           }
         ],
         "result": {
-          "description": "splitted parts",
+          "description": "split parts",
           "dynamic": {
             "type": "string"
           },
@@ -5602,7 +5602,7 @@
     },
     {
       "name": "trim_left",
-      "description": "Returns `value` with all leading instances of the `cutset` chartacters removed.",
+      "description": "Returns `value` with all leading instances of the `cutset` characters removed.",
       "categories": [
         "strings"
       ],
@@ -5656,7 +5656,7 @@
     },
     {
       "name": "trim_right",
-      "description": "Returns `value` with all trailing instances of the `cutset` chartacters removed.",
+      "description": "Returns `value` with all trailing instances of the `cutset` characters removed.",
       "categories": [
         "strings"
       ],
@@ -6100,7 +6100,7 @@
           }
         ],
         "result": {
-          "description": "the term deseralized from `x`",
+          "description": "the term deserialized from `x`",
           "name": "y",
           "type": "any"
         },

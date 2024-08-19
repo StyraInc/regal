@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	dario.cat/mergo v1.0.0
+	dario.cat/mergo v1.0.1
 	github.com/fatih/color v1.17.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gobwas/glob v0.2.3

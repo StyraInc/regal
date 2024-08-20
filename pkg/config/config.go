@@ -12,13 +12,16 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	eopa_caps "github.com/styrainc/regal/capabilities/eopa"
+
 	rio "github.com/styrainc/regal/internal/io"
 )
 
 const (
-	capabilitiesEngineOPA = "opa"
-	keyIgnore             = "ignore"
-	keyLevel              = "level"
+	capabilitiesEngineOPA  = "opa"
+	capabilitiesEngineEOPA = "eopa"
+	keyIgnore              = "ignore"
+	keyLevel               = "level"
 )
 
 type Config struct {
@@ -297,6 +300,15 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 
 	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
 		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
+		if err != nil {
+			return fmt.Errorf("loading capabilities failed: %w", err)
+		}
+
+		config.Capabilities = fromOPACapabilities(*capabilities)
+	}
+
+	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineEOPA {
+		capabilities, err := eopa_caps.LoadCapabilitiesVersion(result.Capabilities.From.Version)
 		if err != nil {
 			return fmt.Errorf("loading capabilities failed: %w", err)
 		}

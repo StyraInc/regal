@@ -39,6 +39,7 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/capabilities"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
@@ -1166,10 +1167,18 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		}, nil
 	}
 
+	l.loadedConfigLock.Lock()
+	caps, err := capabilities.Lookup(l.loadedConfig.Engine, l.loadedConfig.Version)
+	l.loadedConfigLock.Unlock()
+	if err != nil {
+		return nil, err
+	}
+
 	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
+		Capabilities:     caps,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)

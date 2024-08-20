@@ -3,9 +3,9 @@ package providers
 import (
 	"strings"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/hover"
-	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
@@ -16,7 +16,7 @@ func (*BuiltIns) Name() string {
 	return "builtins"
 }
 
-func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
+func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, opt *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
@@ -33,7 +33,14 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 
 	items := []types.CompletionItem{}
 
-	for key, builtIn := range rego.BuiltIns {
+	builtins := ast.CapabilitiesForThisVersion().Builtins
+	if opt.Capabilities != nil {
+		builtins = opt.Capabilities.Builtins
+	}
+
+	for _, builtIn := range builtins {
+		key := builtIn.Name
+
 		if builtIn.Infix != "" {
 			continue
 		}

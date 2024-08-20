@@ -34,6 +34,9 @@ type Config struct {
 	Defaults Defaults `json:"-" yaml:"-"`
 
 	Features *Features `json:"features,omitempty" yaml:"features,omitempty"`
+
+	Engine  string `json:"engine,omitempty" yaml:"engine,omitempty"`
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
 type Category map[string]Rule
@@ -272,6 +275,9 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	capabilitiesFile := result.Capabilities.From.File
 	capabilitiesEngine := result.Capabilities.From.Engine
 	capabilitiesEngineVersion := result.Capabilities.From.Version
+
+	config.Engine = result.Capabilities.From.Engine
+	config.Version = result.Capabilities.From.Version
 
 	if capabilitiesFile != "" && capabilitiesEngine != "" {
 		return errors.New("capabilities from.file and from.engine are mutually exclusive")

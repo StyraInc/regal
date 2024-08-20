@@ -12,7 +12,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
-	eopa_caps "github.com/styrainc/regal/capabilities/eopa"
+	eopa_caps "github.com/styrainc/enterprise-opa/capabilities"
 
 	rio "github.com/styrainc/regal/internal/io"
 )

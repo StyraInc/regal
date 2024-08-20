@@ -337,7 +337,20 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			} else {
 				l.loadedConfig = &mergedConfig
 			}
-			l.loadedConfigLock.Unlock()
+			defer l.loadedConfigLock.Unlock()
+
+			// The engine and version may have changed, so we need
+			// to update the capabilities.
+			//
+			// TODO: if we eventually want to support using
+			// capabilities from files on disk with the LSP, this
+			// will need to be updated.
+			caps, err := capabilities.Lookup(l.loadedConfig.Engine, l.loadedConfig.Version)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
+				return
+			}
+			rego.UpdateBuiltins(caps)
 
 			// the config may now ignore files that existed in the cache before,
 			// in which case we need to remove them to stop their contents being
@@ -1167,18 +1180,10 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		}, nil
 	}
 
-	l.loadedConfigLock.Lock()
-	caps, err := capabilities.Lookup(l.loadedConfig.Engine, l.loadedConfig.Version)
-	l.loadedConfigLock.Unlock()
-	if err != nil {
-		return nil, err
-	}
-
 	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
-		Capabilities:     caps,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)

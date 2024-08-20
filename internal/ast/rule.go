@@ -53,6 +53,9 @@ func GetRuleDetail(rule *ast.Rule) string {
 	case ast.Call:
 		name := v[0].String()
 
+		rego.BuiltInsLock.RLock()
+		defer rego.BuiltInsLock.RUnlock()
+
 		if builtin, ok := rego.BuiltIns[name]; ok {
 			retType := builtin.Decl.NamedResult().String()
 

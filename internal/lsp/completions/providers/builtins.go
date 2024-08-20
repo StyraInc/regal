@@ -3,9 +3,9 @@ package providers
 import (
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/hover"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
@@ -33,12 +33,10 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, opt *Options
 
 	items := []types.CompletionItem{}
 
-	builtins := ast.CapabilitiesForThisVersion().Builtins
-	if opt.Capabilities != nil {
-		builtins = opt.Capabilities.Builtins
-	}
+	rego.BuiltInsLock.RLock()
+	defer rego.BuiltInsLock.RUnlock()
 
-	for _, builtIn := range builtins {
+	for _, builtIn := range rego.BuiltIns {
 		key := builtIn.Name
 
 		if builtIn.Infix != "" {

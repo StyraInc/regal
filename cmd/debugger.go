@@ -178,7 +178,7 @@ func (s *state) messageHandler(ctx context.Context, message godap.Message) (bool
 	case *godap.BreakpointLocationsRequest:
 		resp = s.breakpointLocations(request)
 	case *godap.ConfigurationDoneRequest:
-		// FIXME: Is this when we should start eval?
+		err = s.start()
 		resp = dap.NewConfigurationDoneResponse()
 	case *godap.ContinueRequest:
 		resp, err = s.resume(request)
@@ -230,7 +230,7 @@ func (s *state) initialize(r *godap.InitializeRequest) *godap.InitializeResponse
 
 type launchProperties struct {
 	Command  string `json:"command"`
-	LogLevel string `json:"log_level"`
+	LogLevel string `json:"logLevel"`
 }
 
 func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.LaunchResponse, error) {
@@ -267,11 +267,15 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 	}
 
 	if err == nil {
-		err = s.session.ResumeAll()
+		//	err = s.session.ResumeAll()
 		s.protocolManager.SendEvent(dap.NewInitializedEvent())
 	}
 
 	return dap.NewLaunchResponse(), err
+}
+
+func (s *state) start() error {
+	return s.session.ResumeAll()
 }
 
 func (*state) evaluate(_ *godap.EvaluateRequest) (*godap.EvaluateResponse, error) {
@@ -420,38 +424,41 @@ func (s *state) breakpointLocations(request *godap.BreakpointLocationsRequest) *
 }
 
 func (s *state) setBreakpoints(request *godap.SetBreakpointsRequest) (*godap.SetBreakpointsResponse, error) {
-	locations := make([]location.Location, len(request.Arguments.Breakpoints))
+	bps, err := s.session.Breakpoints()
+	if err != nil {
+		return dap.NewSetBreakpointsResponse(nil), err
+	}
 
-	for i, bp := range request.Arguments.Breakpoints {
-		locations[i] = location.Location{
-			File: request.Arguments.Source.Path,
-			Row:  bp.Line,
+	// Remove all breakpoints for the given source.
+	for _, bp := range bps {
+		if bp.Location().File != request.Arguments.Source.Path {
+			continue
+		}
+
+		if _, err := s.session.RemoveBreakpoint(bp.ID()); err != nil {
+			return dap.NewSetBreakpointsResponse(nil), err
 		}
 	}
 
-	var breakpoints []godap.Breakpoint
+	breakpoints := make([]godap.Breakpoint, len(request.Arguments.Breakpoints))
 
-	bps, err := s.session.SetBreakpoints(locations)
-	if err == nil {
-		for _, bp := range bps {
-			var source *godap.Source
-
-			loc := bp.Location()
-			line := loc.Row
-
-			if loc.File != "" {
-				source = &godap.Source{
-					Path: loc.File,
-				}
-			}
-
-			breakpoints = append(breakpoints, godap.Breakpoint{
-				Id:       int(bp.ID()),
-				Source:   source,
-				Line:     line,
-				Verified: true,
-			})
+	for _, sbp := range request.Arguments.Breakpoints {
+		loc := location.Location{
+			File: request.Arguments.Source.Path,
+			Row:  sbp.Line,
 		}
+
+		bp, err := s.session.AddBreakpoint(loc)
+		if err != nil {
+			return dap.NewSetBreakpointsResponse(breakpoints), err
+		}
+
+		breakpoints = append(breakpoints, godap.Breakpoint{
+			Id:       int(bp.ID()),
+			Source:   &godap.Source{Path: loc.File},
+			Line:     bp.Location().Row,
+			Verified: true,
+		})
 	}
 
 	return dap.NewSetBreakpointsResponse(breakpoints), err

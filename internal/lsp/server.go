@@ -339,13 +339,9 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			}
 			defer l.loadedConfigLock.Unlock()
 
-			// The engine and version may have changed, so we need
-			// to update the capabilities.
-			//
-			// TODO: if we eventually want to support using
-			// capabilities from files on disk with the LSP, this
-			// will need to be updated.
-			caps, err := capabilities.Lookup(l.loadedConfig.Engine, l.loadedConfig.Version)
+			// Capabilities URL may have changed, so we we should
+			// reload it.
+			caps, err := capabilities.Lookup(l.loadedConfig.CapabilitiesURL)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
 				return

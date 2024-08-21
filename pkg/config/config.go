@@ -12,9 +12,8 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
-	eopa_caps "github.com/styrainc/enterprise-opa/capabilities"
-
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/pkg/capabilities"
 )
 
 const (
@@ -35,8 +34,7 @@ type Config struct {
 
 	Features *Features `json:"features,omitempty" yaml:"features,omitempty"`
 
-	Engine  string `json:"engine,omitempty" yaml:"engine,omitempty"`
-	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+	CapabilitiesURL string `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
 }
 
 type Category map[string]Rule
@@ -235,6 +233,7 @@ type marshallingIntermediary struct {
 			Engine  string `yaml:"engine"`
 			Version string `yaml:"version"`
 			File    string `yaml:"file"`
+			URL     string `yaml:"url"`
 		} `yaml:"from"`
 		Plus struct {
 			Builtins []*ast.Builtin `yaml:"builtins"`
@@ -275,57 +274,62 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	capabilitiesFile := result.Capabilities.From.File
 	capabilitiesEngine := result.Capabilities.From.Engine
 	capabilitiesEngineVersion := result.Capabilities.From.Version
+	capabilitiesURL := result.Capabilities.From.URL
 
-	config.Engine = result.Capabilities.From.Engine
-	config.Version = result.Capabilities.From.Version
+	// Capabilities can be specified by an engine+version combo, a local
+	// file path, or a URL. These cannot be mixed and matched.
+	if capabilitiesURL != "" && capabilitiesFile != "" {
+		return errors.New("capabilities from.url and from.file are mutually exclusive")
+	}
+
+	if capabilitiesURL != "" && capabilitiesEngine != "" {
+		return errors.New("capabilities from.url and from.engine are mutually exclusive")
+	}
+
+	if capabilitiesURL != "" && capabilitiesEngineVersion != "" {
+		return errors.New("capabilities from.url and from.version are mutually exclusive")
+	}
 
 	if capabilitiesFile != "" && capabilitiesEngine != "" {
 		return errors.New("capabilities from.file and from.engine are mutually exclusive")
 	}
 
 	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
+		// Although regal:///capabilities/{engine} is valid and refers
+		// to the latest version for that engine, we'll keep the
+		// existing (pre-capabilities.Lookup()) behavior in place and
+		// disallow that when using the engine key.
 		return errors.New("please set the version for the engine from which to load capabilities from")
 	}
 
+	if capabilitiesEngine != "" {
+		capabilitiesURL = "regal:///capabilities/" + capabilitiesEngine + "/" + capabilitiesEngineVersion
+	}
+
 	if capabilitiesFile != "" {
-		bs, err := os.ReadFile(capabilitiesFile)
+		absfp, err := filepath.Abs(capabilitiesFile)
 		if err != nil {
-			return fmt.Errorf("failed to load capabilities file: %w", err)
+			return fmt.Errorf("unable to load capabilities from '%s', failed to determine absolute path: %w", capabilitiesFile, err)
 		}
 
-		opaCaps := ast.Capabilities{}
-		json := encoding.JSON()
-
-		err = json.Unmarshal(bs, &opaCaps)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal capabilities file contents: %w", err)
-		}
-
-		config.Capabilities = fromOPACapabilities(opaCaps)
+		capabilitiesURL = "file://" + absfp
 	}
 
-	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineOPA {
-		capabilities, err := ast.LoadCapabilitiesVersion(result.Capabilities.From.Version)
-		if err != nil {
-			return fmt.Errorf("loading capabilities failed: %w", err)
-		}
-
-		config.Capabilities = fromOPACapabilities(*capabilities)
+	if capabilitiesEngine == "" && capabilitiesFile == "" && capabilitiesURL == "" {
+		capabilitiesURL = "regal:///capabilities/default"
 	}
 
-	if capabilitiesEngine != "" && result.Capabilities.From.Engine == capabilitiesEngineEOPA {
-		capabilities, err := eopa_caps.LoadCapabilitiesVersion(result.Capabilities.From.Version)
-		if err != nil {
-			return fmt.Errorf("loading capabilities failed: %w", err)
-		}
-
-		config.Capabilities = fromOPACapabilities(*capabilities)
+	opaCaps, err := capabilities.Lookup(capabilitiesURL)
+	if err != nil {
+		return fmt.Errorf("failed to load capabilities: %w", err)
 	}
 
-	// by default, use the capabilities from the current OPA
-	if capabilitiesEngine == "" && capabilitiesFile == "" {
-		config.Capabilities = CapabilitiesForThisVersion()
-	}
+	config.Capabilities = fromOPACapabilities(*opaCaps)
+
+	// This is used in the LSP to load the OPA capabilities, since the
+	// capabilities version in the user-facing config does not contain all
+	// of the information that the LSP needs.
+	config.CapabilitiesURL = capabilitiesURL
 
 	// remove any builtins referenced in the minus config
 	for _, minusBuiltin := range result.Capabilities.Minus.Builtins {

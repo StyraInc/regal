@@ -440,7 +440,7 @@ func (s *state) setBreakpoints(request *godap.SetBreakpointsRequest) (*godap.Set
 		}
 	}
 
-	breakpoints := make([]godap.Breakpoint, len(request.Arguments.Breakpoints))
+	breakpoints := make([]godap.Breakpoint, 0, len(request.Arguments.Breakpoints))
 
 	for _, sbp := range request.Arguments.Breakpoints {
 		loc := location.Location{

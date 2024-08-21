@@ -11,7 +11,7 @@ import data.regal.result
 report contains violation if {
 	some rule in ast.rules
 
-	ast.generated_body(rule)
+	not rule.body
 
 	rule.head.value.type == "var"
 	count(rule.head.ref) == 1

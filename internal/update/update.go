@@ -3,7 +3,6 @@ package update
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/rego"
 
@@ -115,6 +116,8 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 				return "", fmt.Errorf("failed to open file: %w", err)
 			}
 
+			json := encoding.JSON()
+
 			err = json.NewDecoder(file).Decode(&preExistingState)
 			if err != nil {
 				return "", fmt.Errorf("failed to decode existing version state file: %w", err)
@@ -163,6 +166,8 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 	var responseData struct {
 		TagName string `json:"tag_name"`
 	}
+
+	json := encoding.JSON()
 
 	err = json.NewDecoder(resp.Body).Decode(&responseData)
 	if err != nil {

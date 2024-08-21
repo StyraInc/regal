@@ -11,7 +11,7 @@ report contains violation if {
 	some rule in ast.rules
 
 	rule.head.value.type in {"setcomprehension", "objectcomprehension"}
-	ast.generated_body(rule)
+	not rule.body
 
 	# Ignore simple conversions from array to set
 	not is_array_conversion(rule.head.value)

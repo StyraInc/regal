@@ -3,6 +3,7 @@ package regal.result
 import rego.v1
 
 import data.regal.config
+import data.regal.util
 
 # METADATA
 # description: |
@@ -175,31 +176,27 @@ resource_urls(related_resources, category) := [r |
 	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
 ]
 
-_with_text(location) := {"location": object.union(
-	location,
-	{
+_with_text(loc_obj) := loc if {
+	loc := {"location": object.union(loc_obj, {
 		"file": input.regal.file.name, # regal ignore:external-reference
-		"text": input.regal.file.lines[location.row - 1], # regal ignore:external-reference
-	},
-)} if {
-	location.row
-} else := {"location": location}
+		"text": input.regal.file.lines[loc_obj.row - 1], # regal ignore:external-reference
+	})}
 
-location(x) := _with_text(x.location) if x.location
+	loc_obj.row
+} else := {"location": loc_obj}
 
-location(x) := _with_text(x[0].location) if is_array(x)
+location(x) := _with_text(util.to_location_object(x.location))
 
-# Special case for comments, where this typo sadly is hard to change at this point
-location(x) := _with_text(x.Location) if x.Location
+location(x) := _with_text(util.to_location_object(x[0].location)) if is_array(x)
 
 # Special case for rule refs, where location is currently only assigned to the value
 # In this case, we'll just assume that the column is 1, as that's the most likely place
 # See: https://github.com/open-policy-agent/opa/issues/5790
-location(x) := _with_text(location) if {
+location(x) := _with_text(loc_obj) if {
 	not x.location
 	count(x.ref) == 1
 	x.ref[0].type == "var"
-	location := object.union(x.value.location, {"col": 1})
+	loc_obj := object.union(util.to_location_object(x.value.location), {"col": 1})
 }
 
 location(x) := {} if {
@@ -214,7 +211,7 @@ location(x) := {} if {
 #   value as x.location.row, and `end.col` is the start col + the length of the text
 #   original attribute value base64 decoded from x.location
 ranged_location_from_text(x) := end if {
-	otext := base64.decode(x.location.text)
+	otext := base64.decode(util.to_location_object(x.location).text)
 	lines := split(otext, "\n")
 
 	loc := location(x)

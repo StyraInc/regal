@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/internal/compile"
@@ -17,7 +17,7 @@ func init() {
 		Short:  "Print the capabilities of Regal",
 		Long:   "Show capabilities for Regal",
 		RunE: func(*cobra.Command, []string) error {
-			bs, err := json.MarshalIndent(compile.Capabilities(), "", "  ")
+			bs, err := encoding.JSON().MarshalIndent(compile.Capabilities(), "", "  ")
 			if err != nil {
 				return fmt.Errorf("failed marshalling capabilities: %w", err)
 			}

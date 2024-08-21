@@ -23,11 +23,11 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
@@ -140,6 +140,8 @@ func buildRecvHandler(
 	cfg ConnectionLoggingConfig,
 ) func(req *jsonrpc2.Request, resp *jsonrpc2.Response) {
 	return func(req *jsonrpc2.Request, resp *jsonrpc2.Response) {
+		json := encoding.JSON()
+
 		switch {
 		case req != nil && resp == nil:
 			setMethod(req.ID, req.Method)
@@ -186,6 +188,8 @@ func buildSendHandler(
 	cfg ConnectionLoggingConfig,
 ) func(req *jsonrpc2.Request, resp *jsonrpc2.Response) {
 	return func(req *jsonrpc2.Request, resp *jsonrpc2.Response) {
+		json := encoding.JSON()
+
 		switch {
 		case req != nil && resp == nil:
 			if !cfg.ShouldLog(req.Method) {

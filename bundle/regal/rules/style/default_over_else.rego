@@ -18,14 +18,9 @@ report contains violation if {
 	# the rule if there isn't a single `else` present though!
 	walk(rule["else"], [_, value])
 
-	else_body := value.body
 	else_head := value.head
 
-	# we don't know for sure, but if all that's in the body is an empty
-	# `true`, it's likely an implicit body (i.e. one not printed)
-	count(else_body) == 1
-	else_body[0].terms.type == "boolean"
-	else_body[0].terms.value == true
+	not value.body
 
 	ast.is_constant(else_head.value)
 

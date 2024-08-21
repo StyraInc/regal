@@ -17,7 +17,7 @@ todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
 
 report contains violation if {
 	some comment in ast.comments_decoded
-	regex.match(todo_pattern, comment.Text)
+	regex.match(todo_pattern, comment.text)
 
 	violation := result.fail(rego.metadata.chain(), result.location(comment))
 }

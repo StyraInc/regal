@@ -5,6 +5,7 @@ package regal.lsp.completion.location
 import rego.v1
 
 import data.regal.ast
+import data.regal.util
 
 # METADATA
 # description: best-effort helper to determine if the current line is in a rule body
@@ -57,8 +58,11 @@ end_location_estimate(location) := end if {
 #   undefined if provided location is not within the range of a rule
 find_rule(rules, location) := [rule |
 	some i, rule in rules
-	end_location := end_location_estimate(rule.location)
-	location.row >= rule.location.row
+
+	start_location := util.to_location_object(rule.location)
+	end_location := end_location_estimate(start_location)
+
+	location.row >= start_location.row
 	location.row <= end_location.row
 ][0]
 

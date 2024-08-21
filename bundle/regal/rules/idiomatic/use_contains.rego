@@ -7,6 +7,7 @@ import rego.v1
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.result
+import data.regal.util
 
 # METADATA
 # description: Missing capability for keyword `contains`
@@ -23,7 +24,7 @@ report contains violation if {
 	rule.head.key
 	not rule.head.value
 
-	text := base64.decode(rule.head.location.text)
+	text := base64.decode(util.to_location_object(rule.head.location).text)
 
 	not contains(text, " contains ")
 

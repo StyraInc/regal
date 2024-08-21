@@ -50,7 +50,10 @@ _incremental_rules[name] contains rule if {
 _rule_names := [ast.ref_to_string(rule.head.ref) | some rule in input.rules]
 
 _explicit_scope(rule, lines) if {
-	some i in numbers.range(rule.annotations[0].location.row - 1, rule.head.location.row - 2)
+	some i in numbers.range(
+		util.to_location_object(rule.annotations[0].location).row - 1,
+		util.to_location_object(rule.head.location).row - 2,
+	)
 	line := lines[i]
 
 	startswith(line, "# scope:")

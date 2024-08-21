@@ -8,6 +8,7 @@ import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 cfg := config.for_rule("custom", "one-liner-rule")
 
@@ -35,7 +36,7 @@ report contains violation if {
 
 	# Note that this will give us the text representation of the whole rule,
 	# which we'll need as the "if" is only visible here ¯\_(ツ)_/¯
-	text := base64.decode(rule.location.text)
+	text := base64.decode(util.to_location_object(rule.location).text)
 	lines := [line |
 		some s in split(text, "\n")
 		line := trim_space(s)
@@ -65,9 +66,14 @@ rule_body_brackets(lines) if {
 }
 
 comment_in_body(rule, comments, lines) if {
+	rule_location := util.to_location_object(rule.location)
+
 	some comment in comments
-	comment.Location.row > rule.location.row
-	comment.Location.row < rule.location.row + count(lines)
+
+	comment_location := util.to_location_object(comment.location)
+
+	comment_location.row > rule_location.row
+	comment_location.row < rule_location.row + count(lines)
 }
 
 default max_line_length := 120

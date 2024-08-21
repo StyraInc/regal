@@ -160,11 +160,11 @@ aggregate_report contains violation if {
 }
 
 ignored(violation, directives) if {
-	ignored_rules := directives[violation.location.row]
+	ignored_rules := directives[util.to_location_object(violation.location).row]
 	violation.title in ignored_rules
 }
 
 ignored(violation, directives) if {
-	ignored_rules := directives[violation.location.row + 1]
+	ignored_rules := directives[util.to_location_object(violation.location).row + 1]
 	violation.title in ignored_rules
 }

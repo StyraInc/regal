@@ -215,7 +215,7 @@ allow if {
 }
 
 _keyword_on_row(kwds, row, keyword) if {
-	some kwd in object.get(kwds, row, {})
+	some kwd in kwds[row]
 
 	kwd.name == keyword.name
 	kwd.location.row == keyword.location.row

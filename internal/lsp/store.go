@@ -11,9 +11,9 @@ import (
 )
 
 func NewRegalStore() storage.Store {
-	return inmem.NewFromObject(map[string]interface{}{
-		"workspace": map[string]interface{}{
-			"parsed":       map[string]interface{}{},
+	return inmem.NewFromObject(map[string]any{
+		"workspace": map[string]any{
+			"parsed":       map[string]any{},
 			"defined_refs": map[string][]string{},
 		},
 	})

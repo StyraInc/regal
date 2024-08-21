@@ -6,13 +6,14 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 report contains violation if {
 	# notably, not ast.functions, as zero-arity functions are treated
 	# as regular rules (i.e. they have no `args` key in the head)
 	some rule in ast.rules
 
-	text := base64.decode(rule.location.text)
+	text := base64.decode(util.to_location_object(rule.location).text)
 
 	regex.match(`^[a-zA-z1-9_\.\[\]"]+\(\)`, text)
 

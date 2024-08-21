@@ -2,6 +2,8 @@ package regal.ast
 
 import rego.v1
 
+import data.regal.util
+
 _find_nested_vars(obj) := [value |
 	walk(obj, [_, value])
 	value.type == "var"
@@ -223,41 +225,49 @@ find_vars_in_local_scope(rule, location) := [var |
 	var := found.vars[_rule_index(rule)][_][_] # regal ignore:external-reference
 
 	not startswith(var.value, "$")
-	_before_location(rule, var, location)
+	_before_location(rule, var, util.to_location_object(location))
 ]
 
 _end_location(location) := end if {
-	lines := split(base64.decode(location.text), "\n")
+	loc := util.to_location_object(location)
+	lines := split(base64.decode(loc.text), "\n")
 	end := {
-		"row": (location.row + count(lines)) - 1,
-		"col": location.col + count(regal.last(lines)),
+		"row": (loc.row + count(lines)) - 1,
+		"col": loc.col + count(regal.last(lines)),
 	}
 }
 
 # special case — the value location of the rule head "sees"
 # all local variables declared in the rule body
 _before_location(rule, _, location) if {
-	value_start := rule.head.value.location
-	value_end := _end_location(rule.head.value.location)
+	loc := util.to_location_object(location)
 
-	location.row >= value_start.row
-	location.col >= value_start.col
-	location.row <= value_end.row
-	location.col <= value_end.col
+	value_start := util.to_location_object(rule.head.value.location)
+	value_end := _end_location(util.to_location_object(rule.head.value.location))
+
+	loc.row >= value_start.row
+	loc.col >= value_start.col
+	loc.row <= value_end.row
+	loc.col <= value_end.col
 }
 
-_before_location(_, var, location) if var.location.row < location.row
+_before_location(_, var, location) if {
+	util.to_location_object(var.location).row < util.to_location_object(location).row
+}
 
 _before_location(_, var, location) if {
-	var.location.row == location.row
-	var.location.col < location.col
+	var_loc := util.to_location_object(var.location)
+	loc := util.to_location_object(location)
+
+	var_loc.row == loc.row
+	var_loc.col < loc.col
 }
 
 # METADATA
 # description: find *only* names in the local scope, and not e.g. rule names
 find_names_in_local_scope(rule, location) := names if {
 	fn_arg_names := _function_arg_names(rule)
-	var_names := {var.value | some var in find_vars_in_local_scope(rule, location)}
+	var_names := {var.value | some var in find_vars_in_local_scope(rule, util.to_location_object(location))}
 
 	names := fn_arg_names | var_names
 }
@@ -272,7 +282,7 @@ _function_arg_names(rule) := {arg.value |
 #   similar to `find_vars_in_local_scope`, but returns all variable names in scope
 #   of the given location *and* the rule names present in the scope (i.e. module)
 find_names_in_scope(rule, location) := names if {
-	locals := find_names_in_local_scope(rule, location)
+	locals := find_names_in_local_scope(rule, util.to_location_object(location))
 
 	# parens below added by opa-fmt :)
 	names := (rule_names | imported_identifiers) | locals

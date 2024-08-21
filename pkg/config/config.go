@@ -1,13 +1,13 @@
 package config
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -285,6 +285,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		}
 
 		opaCaps := ast.Capabilities{}
+		json := encoding.JSON()
 
 		err = json.Unmarshal(bs, &opaCaps)
 		if err != nil {
@@ -469,11 +470,16 @@ func (rule Rule) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("marshalling rule failed %w", err)
 	}
 
+	json := encoding.JSON()
+
 	return json.Marshal(&result) //nolint:wrapcheck
 }
 
 func (rule *Rule) UnmarshalJSON(data []byte) error {
 	var result map[string]any
+
+	json := encoding.JSON()
+
 	if err := json.Unmarshal(data, &result); err != nil {
 		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}

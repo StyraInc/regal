@@ -6,6 +6,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 # Mapping of regex.* functions and the position(s)
 # of their "pattern" attributes
@@ -52,7 +53,7 @@ report contains violation if {
 
 	value[pos].type == "string"
 
-	loc := value[pos].location
+	loc := util.to_location_object(value[pos].location)
 	row := input.regal.file.lines[loc.row - 1]
 	chr := substring(row, loc.col - 1, 1)
 

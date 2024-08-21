@@ -15,8 +15,8 @@ import data.regal.result
 # f(1)
 report contains violation if {
 	some fn in ast.functions
-	ast.generated_body(fn)
 
+	not fn.body
 	not fn["else"]
 
 	arg_var_names := {arg.value |
@@ -41,8 +41,8 @@ report contains violation if {
 # f(1)
 report contains violation if {
 	some fn in ast.functions
-	not ast.generated_body(fn)
 
+	fn.body
 	not fn["else"]
 
 	arg_var_names := {arg.value |

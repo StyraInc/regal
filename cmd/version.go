@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/pkg/version"
@@ -38,7 +38,7 @@ func init() {
 
 			switch params.format {
 			case formatJSON:
-				e := json.NewEncoder(os.Stdout)
+				e := encoding.JSON().NewEncoder(os.Stdout)
 				e.SetIndent("", "  ")
 				err := e.Encode(vi)
 				if err != nil {

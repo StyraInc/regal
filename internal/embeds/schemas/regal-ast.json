@@ -198,11 +198,11 @@
     },
     "comment": {
       "properties": {
-        "Text": {
+        "text": {
           "type": "string",
           "contentEncoding": "base64"
         },
-        "Location": {
+        "location": {
           "$ref": "#/$defs/location"
         }
       },
@@ -270,27 +270,7 @@
       "type": "object"
     },
     "location": {
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "row": {
-          "type": "integer"
-        },
-        "col": {
-          "type": "integer"
-        },
-        "text": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "file",
-        "row",
-        "col"
-      ]
+      "type": "string"
     },
     "package": {
       "properties": {

@@ -3,7 +3,6 @@ package lsp
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -103,7 +103,7 @@ allow = true
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = json.Unmarshal(*req.Params, &requestData)
+			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {
 				t.Fatalf("failed to unmarshal diagnostics: %s", err)
 			}
@@ -354,7 +354,7 @@ ignore:
 
 		var requestData types.FileDiagnostics
 
-		err = json.Unmarshal(*req.Params, &requestData)
+		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 		if err != nil {
 			t.Fatalf("failed to unmarshal diagnostics: %s", err)
 		}
@@ -586,7 +586,7 @@ allow := true
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = json.Unmarshal(*req.Params, &requestData)
+			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {
 				t.Fatalf("failed to unmarshal diagnostics: %s", err)
 			}
@@ -726,10 +726,10 @@ func createConnections(
 	)
 
 	cleanup := func() {
-		netConnServer.Close()
-		netConnClient.Close()
-		connServer.Close()
-		connClient.Close()
+		_ = netConnServer.Close()
+		_ = netConnClient.Close()
+		_ = connServer.Close()
+		_ = connClient.Close()
 	}
 
 	return connServer, connClient, cleanup

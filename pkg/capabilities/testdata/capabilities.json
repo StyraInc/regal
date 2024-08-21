@@ -1,0 +1,27 @@
+{
+  "builtins": [
+    {
+      "name": "unittest123",
+      "description": "dummy used to test loading capabilities",
+      "categories": [
+        "numbers"
+      ],
+      "decl": {
+        "args": [
+          {
+            "name": "x",
+            "type": "number"
+          }
+        ],
+        "result": {
+          "description": "the absolute value of `x`",
+          "name": "y",
+          "type": "number"
+        },
+        "type": "function"
+      }
+    }
+  ],
+  "future_keywords": [],
+  "features": []
+}

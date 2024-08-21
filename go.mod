@@ -5,6 +5,7 @@ go 1.22.5
 require (
 	dario.cat/mergo v1.0.1
 	github.com/anderseknert/roast v0.1.0
+	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.17.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gobwas/glob v0.2.3
@@ -20,6 +21,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/styrainc/enterprise-opa v1.24.6-0.20240820155757-4e9e10dc8edd
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	gopkg.in/yaml.v3 v3.0.1
 )
 

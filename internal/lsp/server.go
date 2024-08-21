@@ -337,11 +337,16 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			} else {
 				l.loadedConfig = &mergedConfig
 			}
-			defer l.loadedConfigLock.Unlock()
+			l.loadedConfigLock.Unlock()
 
 			// Capabilities URL may have changed, so we we should
 			// reload it.
-			caps, err := capabilities.Lookup(l.loadedConfig.CapabilitiesURL)
+			capsURL := l.loadedConfig.CapabilitiesURL
+			if capsURL == "" {
+				// This can happen if we have an empty config.
+				capsURL = "regal:///capabilities/default"
+			}
+			caps, err := capabilities.Lookup(capsURL)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
 				return

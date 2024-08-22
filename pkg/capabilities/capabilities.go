@@ -161,12 +161,7 @@ func lookupFileURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 }
 
 func lookupWebURL(parsedURL *url.URL) (*ast.Capabilities, error) {
-	req, err := http.NewRequest(http.MethodGet, parsedURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(parsedURL.String())
 	if err != nil {
 		return nil, err
 	}

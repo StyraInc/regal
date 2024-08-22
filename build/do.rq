@@ -27,6 +27,17 @@ package script
 
 import future.keywords
 
+# Path to Regal's project root. (./build/do.rq/../.. => ./)
+regal_root := rq.abs(rq.dir(rq.dir(rq.scriptpath())))
+
+# Root of the directory hierarchy where engine-specific capabilities JSON for
+# embedding into the Regal binary should be placed.
+embedded_caps_dir := rq.joinpath([regal_root, "pkg", "capabilities", "embedded"])
+
+# Directory where EOPA-specific JSON capabilities for embedding should be
+# placed.
+eopa_caps_dir := rq.joinpath([embedded_caps_dir, "eopa"])
+
 main contains do[what]  if some what in rq.args()
 main contains job[what] if some what in rq.args()
 main contains job.tasks if {
@@ -92,6 +103,14 @@ job.pr {
 job.test {
 	test
 }
+
+# METADATA
+# title: fetch
+# description: Fetch third-party artifacts, such as capabilities JSON files for engines.
+job.fetch {
+	fetch_engine_caps
+}
+
 
 # METADATA
 # title: lint
@@ -162,6 +181,28 @@ check_readme {
 write_readme {
 	run("./regal table --write-to-readme bundle")
 }
+
+fetch_engine_caps {
+	fetch_eopa_caps
+}
+
+fetch_eopa_caps {
+	templ := {
+		"remote": "https://github.com/StyraInc/enterprise-opa.git",
+		"ref": "main",
+		"srcdir": "capabilities",
+		"destdir": eopa_caps_dir
+	}
+
+	# NOTE(charles): My git config forces git to use ssh instead of http
+	# URLs, which is not desired in this case. It follows others my have
+	# similar setups locally. Setting GIT_CONFIG=/dev/null in this case
+	# prevents this.
+
+	fetch_cmd := rq.template("sh -c 'GIT_CONFIG=/dev/null git archive --remote={{.remote | quote}} {{.ref}} {{.srcdir | quote}} | tar -x -C {{.destdir | quote}}'", templ)
+	run(fetch_cmd)
+}
+
 
 fmt_all {
 	gci

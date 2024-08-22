@@ -74,9 +74,9 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 			return false
 		}
 
-		BuiltInsLock.RLock()
-		defer BuiltInsLock.RUnlock()
-		if b, ok := BuiltIns[terms[0].Value.String()]; ok {
+		bis := GetBuiltins()
+
+		if b, ok := bis[terms[0].Value.String()]; ok {
 			// Exclude operators and similar builtins
 			if b.Infix != "" {
 				return false

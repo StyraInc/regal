@@ -33,10 +33,9 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, opt *Options
 
 	items := []types.CompletionItem{}
 
-	rego.BuiltInsLock.RLock()
-	defer rego.BuiltInsLock.RUnlock()
+	bis := rego.GetBuiltins()
 
-	for _, builtIn := range rego.BuiltIns {
+	for _, builtIn := range bis {
 		key := builtIn.Name
 
 		if builtIn.Infix != "" {

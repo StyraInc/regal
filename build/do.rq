@@ -238,7 +238,25 @@ fetch_eopa_caps {
 
 	{ rq.error(sprintf("\nstdout: %s\nstderr: %s\n", [eopa_tags_result.stdout, eopa_tags_result.stderr])) | eopa_tags_result.exitcode != 0 }
 
-	eopa_tags := {r[2] | r := eopa_tags_result.stdout[_]}
+
+	# We assume that tags and capabilities files are 1:1, but some EOPA
+	# release tags in the past did not correctly get capabilities files, so
+	# we eliminate them from consideration.
+	
+	known_bad_tags := {
+		"v0.100.5",  # tag missing capabilities file
+		"v0.100.6",  # tag missing capabilities file
+		"v0.100.7",  # tag missing capabilities file
+		"v0.49.0-5", # tag missing capabilities file
+		"v0.49.0-6", # tag missing capabilities file
+		"v0.49.0-7", # tag missing capabilities file
+		"v0.49.0-8", # tag missing capabilities file
+		"v1.15.0",   # tag missing capabilities file (misnamed v0.15.0)
+		"v1.4.1",    # tag missing capabilities file
+		"v1.5.0",    # tag missing capabilities file
+	}
+
+	eopa_tags := {t | r := eopa_tags_result.stdout[_]; t := r[2] ; not known_bad_tags[t]}
 
 	# Get a directory listing for the capabilities directory, filtering for
 	# only nonzero size files with JSON extensions. The size check is to
@@ -266,7 +284,7 @@ fetch_eopa_caps {
 		r := rq.template("https://raw.githubusercontent.com/StyraInc/enterprise-opa/main/capabilities/{{.tag}}.json", {"tag": t})
 	}
 
-	print(sprintf("fetching %d capabilities files locally", [count(missing_locally)]))
+	print(sprintf("fetching %d capabilities files missing locally", [count(missing_locally)]))
 
 	# Download the capabilities from the constructed URLs.
 	new_caps := {
@@ -275,7 +293,13 @@ fetch_eopa_caps {
 		m := missing_locally[_]
 		print(sprintf("\tfetcing %s", [m.remote]))
 		resp := http.send({"url": m.remote, "method": "GET"})
+			
+		{ rq.error(sprintf("non-200 status code '%d' for URL '%s'", [resp.status_code, m.remote])) | resp.status_code != 200 }
+
 		c := resp.raw_body
+
+		# sanity check in case we got the URL wrong
+		not regex.match("404: Not Found", c)
 	}
 
 	# Commit the retrieved content to disk.

@@ -7,8 +7,8 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 )
 
-var builtInsLock = &sync.RWMutex{}                          // nolint:gochecknoglobals
-var builtIns = builtinMap(ast.CapabilitiesForThisVersion()) //nolint:gochecknoglobals
+var builtInsLock = &sync.RWMutex{}
+var builtIns = builtinMap(ast.CapabilitiesForThisVersion())
 
 // Update updates the builtins database with the provided capabilities.
 func UpdateBuiltins(caps *ast.Capabilities) {

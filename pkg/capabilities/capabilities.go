@@ -16,7 +16,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 
-	eopa_caps "github.com/styrainc/enterprise-opa/capabilities"
+	embedded "github.com/styrainc/regal/pkg/capabilities/embedded"
 )
 
 const (
@@ -145,7 +145,7 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	case engineOPA:
 		return ast.LoadCapabilitiesVersion(version)
 	case engineEOPA:
-		return eopa_caps.LoadCapabilitiesVersion(version)
+		return embedded.LoadCapabilitiesVersion(engineEOPA, version)
 	default:
 		return nil, fmt.Errorf("engine '%s' not present in embedded capabilities database", engine)
 	}
@@ -243,7 +243,7 @@ func List() (map[string][]string, error) {
 		return nil, err
 	}
 
-	eopaCaps, err := eopa_caps.LoadCapabilitiesVersions()
+	eopaCaps, err := embedded.LoadCapabilitiesVersions(engineEOPA)
 	if err != nil {
 		return nil, err
 	}

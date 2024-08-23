@@ -69,6 +69,9 @@ rules:
       level: error
     custom-in-construct:
       level: error
+    directory-package-mismatch:
+      level: error
+      exclude-test-suffix: true
     equals-pattern-matching:
       level: error
     no-defined-entrypoint:

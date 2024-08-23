@@ -210,6 +210,7 @@ The following rules are currently available:
 | idiomatic   | [boolean-assignment](https://docs.styra.com/regal/rules/idiomatic/boolean-assignment)                 | Prefer `if` over boolean assignment                       |
 | idiomatic   | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)     | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic   | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)               | Custom function may be replaced by `in` keyword           |
+| idiomatic   | [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch) | Directory structure should mirror package                 |
 | idiomatic   | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)       | Prefer pattern matching in function arguments             |
 | idiomatic   | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)           | Missing entrypoint annotation                             |
 | idiomatic   | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)           | Use raw strings for regex patterns                        |

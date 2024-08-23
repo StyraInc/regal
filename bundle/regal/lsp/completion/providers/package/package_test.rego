@@ -3,7 +3,7 @@ package regal.lsp.completion.providers.package_test
 import rego.v1
 
 import data.regal.lsp.completion.providers["package"] as provider
-import data.regal.lsp.completion.providers.utils_test as util
+import data.regal.lsp.completion.providers.test_utils as util
 
 test_package_completion_on_typing if {
 	policy := `p`

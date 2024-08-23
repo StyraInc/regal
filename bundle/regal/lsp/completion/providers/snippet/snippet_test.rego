@@ -3,7 +3,7 @@ package regal.lsp.completion.providers.snippet_test
 import rego.v1
 
 import data.regal.lsp.completion.providers.snippet as provider
-import data.regal.lsp.completion.providers.utils_test as util
+import data.regal.lsp.completion.providers.test_utils as util
 
 # regal ignore:rule-length
 test_snippet_completion_on_typing_partial_prefix if {

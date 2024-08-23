@@ -2,6 +2,7 @@ package parse
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -43,6 +44,9 @@ func PrepareAST(name string, content string, module *ast.Module) (map[string]any
 		"file": map[string]any{
 			"name":  name,
 			"lines": strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"),
+		},
+		"environment": map[string]any{
+			"path_separator": string(os.PathSeparator),
 		},
 	}
 

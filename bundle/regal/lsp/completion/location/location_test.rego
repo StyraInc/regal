@@ -1,4 +1,4 @@
-package regal.lsp.completion.providers.location_test
+package regal.lsp.completion.location_test
 
 import rego.v1
 

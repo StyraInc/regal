@@ -14,6 +14,7 @@ import (
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 
 	_ "embed"
@@ -65,10 +66,10 @@ func CheckAndWarn(opts Options, w io.Writer) {
 	regoArgs := []func(*rego.Rego){
 		rego.Module("update.rego", updateModule),
 		rego.Query(`data.update.needs_update`),
-		rego.Input(map[string]interface{}{
-			"current_version": opts.CurrentVersion,
-			"latest_version":  latestVersion,
-		}),
+		rego.ParsedInput(ast.NewObject(
+			ast.Item(ast.StringTerm("current_version"), ast.StringTerm(opts.CurrentVersion)),
+			ast.Item(ast.StringTerm("latest_version"), ast.StringTerm(latestVersion)),
+		)),
 	}
 
 	rs, err := rego.New(regoArgs...).Eval(context.Background())

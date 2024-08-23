@@ -77,8 +77,12 @@ allow = true
 `
 
 	files := map[string]string{
-		"main.rego":          mainRegoContents,
-		".regal/config.yaml": ``,
+		"main.rego": mainRegoContents,
+		".regal/config.yaml": `
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore`,
 	}
 
 	for f, fc := range files {
@@ -229,6 +233,9 @@ allow := true
 	// 4. Client sends workspace/didChangeWatchedFiles notification with new config
 	newConfigContents := `
 rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: ignore
@@ -309,6 +316,10 @@ users = {"alice", "bob"}
 foo = 1
 `,
 		".regal/config.yaml": `
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
 ignore:
   files:
     - ignored/*.rego
@@ -554,6 +565,9 @@ allow := true
 	files := map[string]string{
 		childDirName + mainRegoFileName: mainRegoContents,
 		".regal/config.yaml": `rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: error
@@ -650,6 +664,9 @@ allow := true
 	// User updates config file contents in parent directory that is not
 	// part of the workspace
 	newConfigContents := `rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: ignore

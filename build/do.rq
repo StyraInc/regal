@@ -30,6 +30,8 @@ import future.keywords
 # Path to Regal's project root. (./build/do.rq/../.. => ./)
 regal_root := rq.abs(rq.dir(rq.dir(rq.scriptpath())))
 
+build_dir := rq.joinpath([regal_root, "build"])
+
 # Root of the directory hierarchy where engine-specific capabilities JSON for
 # embedding into the Regal binary should be placed.
 embedded_caps_dir := rq.joinpath([regal_root, "pkg", "capabilities", "embedded"])
@@ -187,20 +189,102 @@ fetch_engine_caps {
 }
 
 fetch_eopa_caps {
-	templ := {
-		"remote": "https://github.com/StyraInc/enterprise-opa.git",
-		"ref": "main",
-		"srcdir": "capabilities",
-		"destdir": eopa_caps_dir
+
+	# git ls-remote --tags output looks like this:
+	#
+	#	...
+	#	bab5bdd4bb2de45c7d1bcf5d7b5df3c61a131f38        refs/tags/v1.0.0
+	#	bab5bdd4bb2de45c7d1bcf5d7b5df3c61a131f38        refs/tags/v1.0.1
+	#	9ace37dda9859a1afd2fcd6a87dd7f1955be4dc4        refs/tags/v1.10.1
+	#	...
+	#
+	# so .stdout will look like this:
+	#
+	#	...
+	#	[
+	#		"bab5bdd4bb2de45c7d1bcf5d7b5df3c61a131f38\trefs",
+	#		"tags",
+	#		"v1.0.0"
+	#	],
+	#	[
+	#		"bab5bdd4bb2de45c7d1bcf5d7b5df3c61a131f38\trefs",
+	#		"tags",
+	#		"v1.0.1"
+	#	],
+	#	[
+	#		"bab5bdd4bb2de45c7d1bcf5d7b5df3c61a131f38\trefs",
+	#		"tags",
+	#		"v1.1.0"
+	#	],
+	#	...
+
+	print("fetching tags for enterprise-opa repository")
+
+	eopa_tags_result := rq.run([
+			"git",
+			"ls-remote",
+			"--tags",
+			"https://github.com/styrainc/enterprise-opa"
+		], {
+			"stdout_spec": {
+				"format": "raw",
+				"options": {
+					"raw.fs": "/",
+					"raw.rs": "[\n\r]"
+				},
+			}
+		}
+	)
+
+	{ rq.error(sprintf("\nstdout: %s\nstderr: %s\n", [eopa_tags_result.stdout, eopa_tags_result.stderr])) | eopa_tags_result.exitcode != 0 }
+
+	eopa_tags := {r[2] | r := eopa_tags_result.stdout[_]}
+
+	# Get a directory listing for the capabilities directory, filtering for
+	# only nonzero size files with JSON extensions. The size check is to
+	# avoid long-tail edge cases where we crashed after opening the file
+	# for writing but before committing any content.
+	eopa_caps_tree := {p: f | f := rq.tree(eopa_caps_dir, {})[p]; f.size != 0; f.ext == "json"}
+
+	# Determine which capabilities files are missing, what URL they
+	# should be fetched from, and where they should end up on disk.
+	missing_locally := {
+		{"local": p, "remote": r}
+
+		|
+
+		# construct the local path we expect the caps to exist at
+		t := eopa_tags[_]
+		p := rq.joinpath([eopa_caps_dir, sprintf("%s.json", [t])])
+
+		# eopa_caps_tree has object values, so if the path is missing,
+		# retrieving a non-object type is sufficient to check for
+		# nonexistance
+		object.get(eopa_caps_tree, p, "-") == "-"
+
+		# construct the URL to fetch the content from
+		r := rq.template("https://raw.githubusercontent.com/StyraInc/enterprise-opa/main/capabilities/{{.tag}}.json", {"tag": t})
 	}
 
-	# NOTE(charles): My git config forces git to use ssh instead of http
-	# URLs, which is not desired in this case. It follows others my have
-	# similar setups locally. Setting GIT_CONFIG=/dev/null in this case
-	# prevents this.
+	print(sprintf("fetching %d capabilities files locally", [count(missing_locally)]))
 
-	fetch_cmd := rq.template("sh -c 'GIT_CONFIG=/dev/null git archive --remote={{.remote | quote}} {{.ref}} {{.srcdir | quote}} | tar -x -C {{.destdir | quote}}'", templ)
-	run(fetch_cmd)
+	# Download the capabilities from the constructed URLs.
+	new_caps := {
+		{"local": m.local, "content": c}
+		|
+		m := missing_locally[_]
+		print(sprintf("\tfetcing %s", [m.remote]))
+		resp := http.send({"url": m.remote, "method": "GET"})
+		c := resp.raw_body
+	}
+
+	# Commit the retrieved content to disk.
+	{
+		true
+		|
+		cap := new_caps[_]
+		rq.write(cap.content, {"format": "raw", "file_path": cap.local})
+	}
 }
 
 

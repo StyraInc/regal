@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/parse"
 )
 
@@ -108,7 +109,7 @@ func createWithContent(t *testing.T, path string, content string) {
 func readInputString(t *testing.T, file, workspacePath string) string {
 	t.Helper()
 
-	input := FindInput(file, workspacePath)
+	_, input := rio.FindInput(file, workspacePath)
 
 	if input == nil {
 		return ""

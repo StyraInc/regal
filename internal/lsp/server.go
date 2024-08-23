@@ -506,7 +506,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				ruleHeadLocations := allRuleHeadLocations[path]
 
 				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
-				input := FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
+				_, input := rio.FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
 
 				result, err := l.EvalWorkspacePath(ctx, path, input)
 				if err != nil {

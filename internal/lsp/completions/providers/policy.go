@@ -2,8 +2,10 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -70,6 +72,23 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 	inputContext["client_identifier"] = opts.ClientIdentifier
 	inputContext["workspace_root"] = uri.ToPath(opts.ClientIdentifier, opts.RootURI)
 	inputContext["path_separator"] = string(os.PathSeparator)
+
+	workspacePath := uri.ToPath(opts.ClientIdentifier, opts.RootURI)
+	inputDotJSONPath, inputDotJSONReader := rio.FindInput(
+		uri.ToPath(opts.ClientIdentifier, params.TextDocument.URI),
+		workspacePath,
+	)
+
+	if inputDotJSONReader != nil {
+		inputDotJSON := make(map[string]any)
+
+		if bs, err := io.ReadAll(inputDotJSONReader); err == nil {
+			if err = json.Unmarshal(bs, &inputDotJSON); err == nil {
+				inputContext["input_dot_json_path"] = inputDotJSONPath
+				inputContext["input_dot_json"] = inputDotJSON
+			}
+		}
+	}
 
 	input, err := rego2.ToInput(
 		params.TextDocument.URI,

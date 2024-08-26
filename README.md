@@ -365,6 +365,30 @@ reached. If no configuration file is found, Regal will use the default configura
 A custom configuration may be also be provided using the `--config-file`/`-c` option for `regal lint`, which when
 provided will be used to override the default configuration.
 
+
+### Loading Capabilities from URLs
+
+
+Starting with Regal version TODO, Regal can load capabilities from URLs with the `file`, `http`, or `https` schemes using the `capabilities.from.url` config key. For example, to load capabilities from `https://example.org/capabilities.json`, this configuration could be used:
+
+```yaml
+capabilities:
+  from:
+    url: https://example.org/capabilities.json
+```
+
+
+### Supported Engines
+
+
+Regal includes capabilities files for the following engines:
+
+| Engine | Website | Description |
+|--------|---------|-------------|
+| `opa`  | https://www.openpolicyagent.org/ | Open Policy Agent |
+| `eopa` | https://www.styra.com/enterprise-opa/ | Styra Enterprise OPA |
+
+
 ## Ignoring Rules
 
 If one of Regal's rules doesn't align with your team's preferences, don't worry! Regal is not meant to be the law,

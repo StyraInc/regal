@@ -34,7 +34,7 @@ build_dir := rq.joinpath([regal_root, "build"])
 
 # Root of the directory hierarchy where engine-specific capabilities JSON for
 # embedding into the Regal binary should be placed.
-embedded_caps_dir := rq.joinpath([regal_root, "pkg", "capabilities", "embedded"])
+embedded_caps_dir := rq.joinpath([regal_root, "internal", "capabilities", "embedded"])
 
 # Directory where EOPA-specific JSON capabilities for embedding should be
 # placed.

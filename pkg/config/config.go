@@ -12,8 +12,8 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/capabilities"
 )
 
 const (

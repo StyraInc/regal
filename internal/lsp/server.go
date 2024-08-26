@@ -22,6 +22,7 @@ import (
 	"github.com/open-policy-agent/opa/storage"
 
 	"github.com/styrainc/regal/bundle"
+	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -39,7 +40,6 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/capabilities"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"

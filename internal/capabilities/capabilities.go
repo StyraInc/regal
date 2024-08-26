@@ -16,7 +16,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 
-	embedded "github.com/styrainc/regal/pkg/capabilities/embedded"
+	embedded "github.com/styrainc/regal/internal/capabilities/embedded"
 )
 
 const (

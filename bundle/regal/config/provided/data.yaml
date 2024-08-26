@@ -37,6 +37,8 @@ rules:
       level: error
     rule-shadows-builtin:
       level: error
+    sprintf-arguments-mismatch:
+      level: error
     top-level-iteration:
       level: error
     unassigned-return-value:

@@ -196,6 +196,7 @@ The following rules are currently available:
 | bugs        | [redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check)        | Redundant existence check                                 |
 | bugs        | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                                | Rule named "if"                                           |
 | bugs        | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                  | Rule name shadows built-in                                |
+| bugs        | [sprintf-arguments-mismatch](https://docs.styra.com/regal/rules/bugs/sprintf-arguments-mismatch)      | Mismatch in `sprintf` arguments count                     |
 | bugs        | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                    | Iteration in top-level assignment                         |
 | bugs        | [unassigned-return-value](https://docs.styra.com/regal/rules/bugs/unassigned-return-value)            | Non-boolean return value unassigned                       |
 | bugs        | [unused-output-variable](https://docs.styra.com/regal/rules/bugs/unused-output-variable)              | Unused output variable                                    |

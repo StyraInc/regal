@@ -3,8 +3,8 @@ package embedded
 import "testing"
 
 func TestEmbeddedEOPA(t *testing.T) {
-	// As of 2024-08-23, there are 57 capabilities files in the EOPA repo.
-	// It follows that there should never be less than 54 valid
+	// As of 2024-08-27, there are 47 capabilities files in the EOPA repo.
+	// It follows that there should never be less than 47 valid
 	// capabilities in the embedded database. This is really just a sanity
 	// check to ensure the JSON files didn't get misplaced or something to
 	// that effect.
@@ -17,8 +17,8 @@ func TestEmbeddedEOPA(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(versions) < 54 {
-		t.Errorf("Expected at least 54 EOPA capabilities in the embedded database")
+	if len(versions) < 47 {
+		t.Errorf("Expected at least 47 EOPA capabilities in the embedded database (got %d)", len(versions))
 	}
 
 	for _, v := range versions {

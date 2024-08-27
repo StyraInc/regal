@@ -1,7 +1,6 @@
 package rego
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -13,11 +12,9 @@ var builtIns = builtinMap(ast.CapabilitiesForThisVersion())
 
 // Update updates the builtins database with the provided capabilities.
 func UpdateBuiltins(caps *ast.Capabilities) {
-	fmt.Printf("DDD15 updating builtin caps\n")
 	builtInsLock.Lock()
 	builtIns = builtinMap(caps)
 	_, ok := builtIns["neo4j.query"]
-	fmt.Printf("DDD20 neo4j.query in builtins?: %v\n", ok)
 	builtInsLock.Unlock()
 }
 

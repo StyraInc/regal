@@ -56,6 +56,9 @@ const fileURIScheme = "file://"
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
 // language server by making updates to both and validating that the correct diagnostics are sent to the client.
 //
+// This test also ensures that updating the config to point to a non-default engine and capabilities version works
+// and causes that engine's builtins to work with completions.
+//
 //nolint:gocyclo,maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
 	t.Parallel()
@@ -107,9 +110,6 @@ rules:
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
-
-			fmt.Printf("XXX req %+v\n", req)
-			fmt.Printf("YYY params%+v\n", string(*req.Params))
 
 			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {

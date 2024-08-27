@@ -14,7 +14,6 @@ var builtIns = builtinMap(ast.CapabilitiesForThisVersion())
 func UpdateBuiltins(caps *ast.Capabilities) {
 	builtInsLock.Lock()
 	builtIns = builtinMap(caps)
-	_, ok := builtIns["neo4j.query"]
 	builtInsLock.Unlock()
 }
 

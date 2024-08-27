@@ -289,7 +289,7 @@ fetch_eopa_caps {
 		{"local": m.local, "content": c}
 		|
 		m := missing_locally[_]
-		print(sprintf("\tfetcing %s", [m.remote]))
+		print("\tfetching ", m.remote)
 		resp := http.send({"url": m.remote, "method": "GET"})
 			
 		{ rq.error(sprintf("non-200 status code '%d' for URL '%s'", [resp.status_code, m.remote])) | resp.status_code != 200 }

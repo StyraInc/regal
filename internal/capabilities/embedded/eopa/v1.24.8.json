@@ -573,6 +573,23 @@
       }
     },
     {
+      "name": "crypto.hmac.equal",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "type": "boolean"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "crypto.hmac.md5",
       "decl": {
         "args": [
@@ -655,6 +672,31 @@
       }
     },
     {
+      "name": "crypto.parse_private_keys",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "crypto.sha1",
       "decl": {
         "args": [
@@ -688,6 +730,50 @@
         "args": [
           {
             "type": "string"
+          }
+        ],
+        "result": {
+          "static": [
+            {
+              "type": "boolean"
+            },
+            {
+              "dynamic": {
+                "dynamic": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "any"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ],
+          "type": "array"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "crypto.x509.parse_and_verify_certificates_with_options",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
           }
         ],
         "result": {
@@ -763,6 +849,31 @@
       }
     },
     {
+      "name": "crypto.x509.parse_keypair",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "crypto.x509.parse_rsa_private_key",
       "decl": {
         "args": [
@@ -801,6 +912,68 @@
         "type": "function"
       },
       "infix": "/"
+    },
+    {
+      "name": "dynamodb.get",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
+      "name": "dynamodb.query",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
     },
     {
       "name": "endswith",
@@ -2081,6 +2254,51 @@
       }
     },
     {
+      "name": "json.marshal_with_options",
+      "decl": {
+        "args": [
+          {
+            "type": "any"
+          },
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "static": [
+              {
+                "key": "indent",
+                "value": {
+                  "type": "string"
+                }
+              },
+              {
+                "key": "prefix",
+                "value": {
+                  "type": "string"
+                }
+              },
+              {
+                "key": "pretty",
+                "value": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "result": {
+          "type": "string"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "json.match_schema",
       "decl": {
         "args": [
@@ -2487,6 +2705,68 @@
       "infix": "-"
     },
     {
+      "name": "mongodb.find",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
+      "name": "mongodb.find_one",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
       "name": "mul",
       "decl": {
         "args": [
@@ -2503,6 +2783,37 @@
         "type": "function"
       },
       "infix": "*"
+    },
+    {
+      "name": "neo4j.query",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
     },
     {
       "name": "neq",
@@ -2812,6 +3123,29 @@
       "name": "numbers.range",
       "decl": {
         "args": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "numbers.range_step",
+      "decl": {
+        "args": [
+          {
+            "type": "number"
+          },
           {
             "type": "number"
           },
@@ -3286,6 +3620,37 @@
       }
     },
     {
+      "name": "redis.query",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
       "name": "regex.find_all_string_submatch_n",
       "decl": {
         "args": [
@@ -3444,6 +3809,37 @@
         },
         "type": "function"
       }
+    },
+    {
+      "name": "rego.eval",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
     },
     {
       "name": "rego.metadata.chain",
@@ -3672,6 +4068,37 @@
       }
     },
     {
+      "name": "sql.send",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
       "name": "startswith",
       "decl": {
         "args": [
@@ -3786,6 +4213,48 @@
         ],
         "result": {
           "type": "boolean"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "strings.count",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "type": "number"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "strings.render_template",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "type": "string"
         },
         "type": "function"
       }
@@ -4493,6 +4962,28 @@
       }
     },
     {
+      "name": "uuid.parse",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "uuid.rfc4122",
       "decl": {
         "args": [
@@ -4502,6 +4993,37 @@
         ],
         "result": {
           "type": "string"
+        },
+        "type": "function"
+      },
+      "nondeterministic": true
+    },
+    {
+      "name": "vault.send",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "type": "object"
+          }
+        ],
+        "result": {
+          "dynamic": {
+            "key": {
+              "type": "any"
+            },
+            "value": {
+              "type": "any"
+            }
+          },
+          "type": "object"
         },
         "type": "function"
       },
@@ -4582,17 +5104,9 @@
     "if",
     "in"
   ],
-  "wasm_abi_versions": null,
   "features": [
     "rule_head_ref_string_prefixes",
-    "bjson_bundle",
-    "grpc_service",
-    "kafka_data_plugin",
-    "git_data_plugin",
-    "ldap_data_plugin",
-    "s3_data_plugin",
-    "okta_data_plugin",
-    "http_data_plugin",
-    "lia_plugin"
+    "rule_head_refs",
+    "rego_v1_import"
   ]
 }

@@ -244,19 +244,17 @@ fetch_eopa_caps {
 	# we eliminate them from consideration.
 	
 	known_bad_tags := {
-		"v0.100.5",  # tag missing capabilities file
-		"v0.100.6",  # tag missing capabilities file
-		"v0.100.7",  # tag missing capabilities file
-		"v0.49.0-5", # tag missing capabilities file
-		"v0.49.0-6", # tag missing capabilities file
-		"v0.49.0-7", # tag missing capabilities file
-		"v0.49.0-8", # tag missing capabilities file
 		"v1.15.0",   # tag missing capabilities file (misnamed v0.15.0)
 		"v1.4.1",    # tag missing capabilities file
 		"v1.5.0",    # tag missing capabilities file
 	}
 
-	eopa_tags := {t | r := eopa_tags_result.stdout[_]; t := r[2] ; not known_bad_tags[t]}
+	# Note that we use the `not startswith` to explicitly drop any
+	# pre-1.0.0 tags. There is little reason anyone would want them, and if
+	# they really have a need, they can manually download them and use the
+	# file locally.
+
+	eopa_tags := {t | r := eopa_tags_result.stdout[_]; t := r[2] ; not known_bad_tags[t] ; not startswith(t, "v0.")}
 
 	# Get a directory listing for the capabilities directory, filtering for
 	# only nonzero size files with JSON extensions. The size check is to

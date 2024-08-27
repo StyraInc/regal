@@ -302,10 +302,9 @@ fetch_eopa_caps {
 
 	# Commit the retrieved content to disk.
 	{
-		true
+		rq.write(cap.content, {"format": "raw", "file_path": cap.local})
 		|
 		cap := new_caps[_]
-		rq.write(cap.content, {"format": "raw", "file_path": cap.local})
 	}
 }
 

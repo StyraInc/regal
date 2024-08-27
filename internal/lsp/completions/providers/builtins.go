@@ -16,7 +16,7 @@ func (*BuiltIns) Name() string {
 	return "builtins"
 }
 
-func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, opt *Options) ([]types.CompletionItem, error) {
+func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)

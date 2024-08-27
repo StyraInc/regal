@@ -49,6 +49,7 @@ func LoadCapabilitiesVersion(engine, version string) (*ast.Capabilities, error) 
 			return ast.LoadCapabilitiesJSON(bytes.NewReader(cont))
 		}
 	}
+
 	return nil, fmt.Errorf("(Regal embedded %s capabilities library) no capabilities version found %v", engine, version)
 }
 
@@ -63,5 +64,6 @@ func LoadCapabilitiesVersions(engine string) ([]string, error) {
 	for _, ent := range ents {
 		capabilitiesVersions = append(capabilitiesVersions, strings.Replace(ent.Name(), ".json", "", 1))
 	}
+
 	return capabilitiesVersions, nil
 }

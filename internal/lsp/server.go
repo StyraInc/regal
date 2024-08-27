@@ -339,7 +339,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			}
 			l.loadedConfigLock.Unlock()
 
-			// Capabilities URL may have changed, so we we should
+			// Capabilities URL may have changed, so we should
 			// reload it.
 			capsURL := l.loadedConfig.CapabilitiesURL
 			if capsURL == "" {

@@ -309,7 +309,11 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	if capabilitiesFile != "" {
 		absfp, err := filepath.Abs(capabilitiesFile)
 		if err != nil {
-			return fmt.Errorf("unable to load capabilities from '%s', failed to determine absolute path: %w", capabilitiesFile, err)
+			return fmt.Errorf(
+				"unable to load capabilities from '%s', failed to determine absolute path: %w",
+				capabilitiesFile,
+				err,
+			)
 		}
 
 		capabilitiesURL = "file://" + absfp

@@ -47,7 +47,7 @@ const (
 func Lookup(rawURL string) (*ast.Capabilities, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse URL '%s': %w", rawURL, err)
 	}
 
 	return LookupURL(parsedURL)
@@ -80,12 +80,14 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	elems := make([]string, 0)
 	dir := urlPath
 	var file string
+
 	for dir != "" {
 		// leading and trailing / symbols confuse path.Split()
 		dir = strings.Trim(dir, "/")
 		dir, file = path.Split(dir)
 		elems = append(elems, file)
 	}
+
 	slices.Reverse(elems)
 
 	if len(elems) < 1 {
@@ -96,11 +98,17 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	// to make other regal:// URLs later for other purposes, we don't cross
 	// contaminate different subsystems.
 	if elems[0] != "capabilities" {
-		return nil, fmt.Errorf("regal URL '%s' does not have 'capabilities' as it's first path element - did you mean to try to load capabilities from this URL?", parsedURL.String())
+		return nil, fmt.Errorf(
+			"regal URL '%s' does not have 'capabilities' as it's first path element - did you mean to try to load capabilities from this URL?",
+			parsedURL.String(),
+		)
 	}
 
 	if len(elems) > 3 {
-		return nil, fmt.Errorf("regal URL '%s' is malformed (too many path elements), expected regal://capabilities/{engine}[/{version}]", parsedURL.String())
+		return nil, fmt.Errorf(
+			"regal URL '%s' is malformed (too many path elements), expected regal://capabilities/{engine}[/{version}]",
+			parsedURL.String(),
+		)
 	}
 
 	if elems[1] == "default" {
@@ -124,16 +132,29 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 
 		versionsList, err := List()
 		if err != nil {
-			return nil, fmt.Errorf("while processing regal URL '%s', failed to determine the latest version for engine '%s': %w", parsedURL.String(), engine, err)
+			return nil, fmt.Errorf(
+				"while processing regal URL '%s', failed to determine the latest version for engine '%s': %w",
+				parsedURL.String(),
+				engine,
+				err,
+			)
 		}
 
 		versionsForEngine, ok := versionsList[engine]
 		if !ok {
-			return nil, fmt.Errorf("while processing regal URL '%s', failed to determine the latest version for engine '%s': engine not found in embedded database", parsedURL.String(), engine)
+			return nil, fmt.Errorf(
+				"while processing regal URL '%s', failed to determine the latest version for engine '%s': engine not found in embedded database",
+				parsedURL.String(),
+				engine,
+			)
 		}
 
 		if len(versionsForEngine) < 1 {
-			return nil, fmt.Errorf("while processing regal URL '%s', failed to determine the latest version for engine '%s': engine found in embedded database but has no versions associated with it", parsedURL.String(), engine)
+			return nil, fmt.Errorf(
+				"while processing regal URL '%s', failed to determine the latest version for engine '%s': engine found in embedded database but has no versions associated with it",
+				parsedURL.String(),
+				engine,
+			)
 		}
 
 		version = versionsForEngine[0]
@@ -141,9 +162,21 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 
 	switch engine {
 	case engineOPA:
-		return ast.LoadCapabilitiesVersion(version)
+		// This obtuse error handling is required to make the linter
+		// happy.
+		caps, err := ast.LoadCapabilitiesVersion(version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
+		}
+
+		return caps, nil
 	case engineEOPA:
-		return embedded.LoadCapabilitiesVersion(engineEOPA, version)
+		caps, err := embedded.LoadCapabilitiesVersion(engineEOPA, version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
+		}
+
+		return caps, nil
 	default:
 		return nil, fmt.Errorf("engine '%s' not present in embedded capabilities database", engine)
 	}
@@ -152,19 +185,30 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 func lookupFileURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	fd, err := os.Open(parsedURL.Path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file '%s': %w", parsedURL.Path, err)
 	}
 
-	return ast.LoadCapabilitiesJSON(fd)
+	caps, err := ast.LoadCapabilitiesJSON(fd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
+	}
+
+	return caps, nil
 }
 
 func lookupWebURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	resp, err := http.Get(parsedURL.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get URL '%s': %w", parsedURL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	caps, err := ast.LoadCapabilitiesJSON(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
 	}
 
-	return ast.LoadCapabilitiesJSON(resp.Body)
+	return caps, nil
 }
 
 // semverSort uses the semver library to perform the string comparisons during
@@ -205,7 +249,7 @@ func semverSort(stringVersions []string) {
 		}
 
 		if iValid && jValid {
-			return (*iVers).LessThan(*jVers)
+			return iVers.LessThan(*jVers)
 		}
 
 		// When i is valid semver and j is not, i always sorts first.
@@ -237,12 +281,12 @@ func semverSort(stringVersions []string) {
 func List() (map[string][]string, error) {
 	opaCaps, err := ast.LoadCapabilitiesVersions()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
 	}
 
 	eopaCaps, err := embedded.LoadCapabilitiesVersions(engineEOPA)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load capabilities due to error: %w", err)
 	}
 
 	semverSort(opaCaps)

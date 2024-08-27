@@ -1,12 +1,13 @@
 package capabilities
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 )
 
 func TestLookupFromFile(t *testing.T) {
+	t.Parallel()
+
 	// Test that we are able to load a capabilities file using a file://
 	// URL.
 
@@ -15,7 +16,7 @@ func TestLookupFromFile(t *testing.T) {
 		t.Fatalf("could not determine absolute path to test capabilities file: %v", err)
 	}
 
-	urlForPath := fmt.Sprintf("file://%s", path)
+	urlForPath := "file://" + path
 
 	caps, err := Lookup(urlForPath)
 	if err != nil {
@@ -32,6 +33,8 @@ func TestLookupFromFile(t *testing.T) {
 }
 
 func TestLookupFromURL(t *testing.T) {
+	t.Parallel()
+
 	// Test that we can load a one of the existing OPA capabilities files
 	// via GitHub.
 
@@ -46,6 +49,8 @@ func TestLookupFromURL(t *testing.T) {
 }
 
 func TestLookupFromEmbedded(t *testing.T) {
+	t.Parallel()
+
 	// Test that we can load a one of the existing OPA capabilities files
 	// via the embedded database.
 
@@ -60,6 +65,8 @@ func TestLookupFromEmbedded(t *testing.T) {
 }
 
 func TestSemverSort(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		note   string
 		input  []string

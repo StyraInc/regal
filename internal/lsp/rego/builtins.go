@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	builtInsLock = &sync.RWMutex{}
-	builtIns     = builtinMap(ast.CapabilitiesForThisVersion())
+	builtInsLock = &sync.RWMutex{}                              //nolint:gochecknoglobals
+	builtIns     = builtinMap(ast.CapabilitiesForThisVersion()) //nolint:gochecknoglobals
 )
 
 // Update updates the builtins database with the provided capabilities.
@@ -22,6 +22,7 @@ func UpdateBuiltins(caps *ast.Capabilities) {
 func GetBuiltins() map[string]*ast.Builtin {
 	builtInsLock.RLock()
 	defer builtInsLock.RUnlock()
+
 	return builtIns
 }
 

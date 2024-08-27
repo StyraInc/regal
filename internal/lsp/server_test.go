@@ -399,7 +399,10 @@ allow := neo4j.q
 
 	foundNeo4j := false
 	for _, itemI := range resp["items"].([]any) {
-		item := itemI.(map[string]any)
+		item, ok := itemI.(map[string]any)
+		if !ok {
+			t.Fatalf("completion item '%+v' was not a JSON object", itemI)
+		}
 		t.Logf("completion label: %s", item["label"])
 		if item["label"] == "neo4j.query" {
 			foundNeo4j = true

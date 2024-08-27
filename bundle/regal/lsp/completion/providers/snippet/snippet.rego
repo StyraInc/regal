@@ -15,11 +15,7 @@ items contains item if {
 	some label, snippet in _snippets
 
 	strings.any_prefix_match(snippet.prefix, word.text)
-
-	# regal ignore:todo-comment
-	# TODO: use https://github.com/open-policy-agent/opa/pull/6841 when
-	# released.
-	count(regex.find_n(snippet.prefix[0], line, 2)) < 2
+	strings.count(line, snippet.prefix[0]) < 2
 
 	not endswith(trim_space(line), "=")
 

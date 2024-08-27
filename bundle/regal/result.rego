@@ -151,7 +151,7 @@ _fail_annotated(metadata, details) := violation if {
 	})
 
 	without_custom_and_scope := object.remove(with_category, ["custom", "scope", "schemas"])
-	related_resources := resource_urls(without_custom_and_scope.related_resources, category)
+	related_resources := _resource_urls(without_custom_and_scope.related_resources, category)
 
 	violation := json.patch(
 		without_custom_and_scope,
@@ -171,7 +171,7 @@ _fail_annotated_custom(metadata, details) := violation if {
 	violation := object.remove(with_category, ["custom", "scope", "schemas"])
 }
 
-resource_urls(related_resources, category) := [r |
+_resource_urls(related_resources, category) := [r |
 	some item in related_resources
 	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
 ]
@@ -185,25 +185,15 @@ _with_text(loc_obj) := loc if {
 	loc_obj.row
 } else := {"location": loc_obj}
 
+# METADATA
+# description: |
+#   returns a "normalized" location object from the location value found in the AST.
+#   new code should most often use one of the ranged_ location functions instea, as
+#   that will also include an `"end"` location attribute
+# scope: document
 location(x) := _with_text(util.to_location_object(x.location))
 
 location(x) := _with_text(util.to_location_object(x[0].location)) if is_array(x)
-
-# Special case for rule refs, where location is currently only assigned to the value
-# In this case, we'll just assume that the column is 1, as that's the most likely place
-# See: https://github.com/open-policy-agent/opa/issues/5790
-location(x) := _with_text(loc_obj) if {
-	not x.location
-	count(x.ref) == 1
-	x.ref[0].type == "var"
-	loc_obj := object.union(util.to_location_object(x.value.location), {"col": 1})
-}
-
-location(x) := {} if {
-	not x.location
-	not x.Location
-	count(x.ref) != 1
-}
 
 # METADATA
 # description: |

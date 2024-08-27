@@ -1167,10 +1167,13 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (any, error) {
+	fmt.Printf("BBB1168\n")
 	var params types.CompletionParams
 	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
+
+	fmt.Printf("BBB1172\n")
 
 	// when config ignores a file, then we return an empty completion list
 	// as a no-op.
@@ -1181,6 +1184,8 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		}, nil
 	}
 
+	fmt.Printf("BBB1185\n")
+
 	// items is allocated here so that the return value is always a non-nil CompletionList
 	items, err := l.completionsManager.Run(params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
@@ -1188,6 +1193,10 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
+	}
+
+	for _, i := range items {
+		fmt.Printf("BBB1197 %+v & %+v\n\n", i, i.TextEdit)
 	}
 
 	// make sure the items is always [] instead of null as is required by the spec

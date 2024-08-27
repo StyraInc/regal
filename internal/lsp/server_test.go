@@ -25,7 +25,8 @@ const mainRegoFileName = "/main.rego"
 // defaultTimeout is set based on the investigation done as part of
 // https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
 // maximum time observed for an operation to complete.
-const defaultTimeout = 20 * time.Second
+// const defaultTimeout = 20 * time.Second
+const defaultTimeout = 5 * time.Second
 
 const defaultBufferedChannelSize = 5
 
@@ -53,7 +54,7 @@ func (*InMemoryReadWriteCloser) Close() error {
 const fileURIScheme = "file://"
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
-// language server my making updates to both and validating that the correct diagnostics are sent to the client.
+// language server by making updates to both and validating that the correct diagnostics are sent to the client.
 //
 //nolint:gocyclo,maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
@@ -106,6 +107,9 @@ rules:
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
+
+			fmt.Printf("XXX req %+v\n", req)
+			fmt.Printf("YYY params%+v\n", string(*req.Params))
 
 			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {
@@ -275,6 +279,138 @@ rules:
 			break
 		}
 	}
+
+	// 5. Client sends new config with an EOPA capabilities file specified.
+	newConfigContents = `
+rules:
+  style:
+    opa-fmt:
+      level: ignore
+capabilities:
+  from:
+    engine: eopa
+    version: v1.23.0
+`
+
+	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600)
+	if err != nil {
+		t.Fatalf("failed to write new config file: %s", err)
+	}
+
+	// validate that the client received a new, empty diagnostics notification for the file
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			if requestData.URI != mainRegoURI {
+				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+
+				break
+			}
+
+			if len(requestData.Items) != 0 {
+				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+
+				break
+			}
+
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// 6. Client sends textDocument/didChange notification with new
+	// contents for main.rego no response to the call is expected. We added
+	// the start of an EOPA-specific call, so if the capabilities were
+	// loaded correctly, we should see a completion later after we ask for
+	// it.
+	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: mainRegoURI,
+		},
+		ContentChanges: []types.TextDocumentContentChangeEvent{
+			{
+				Text: `package main
+import rego.v1
+allow := neo4j.q
+`,
+			},
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("failed to send didChange notification: %s", err)
+	}
+
+	// validate that the client received a new diagnostics notification for the file
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+
+			if requestData.URI != mainRegoURI {
+				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+
+				break
+			}
+
+			if len(requestData.Items) != 0 {
+				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+
+				break
+			}
+
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// 7. With our new config applied, and the file updated, we can ask the
+	// LSP for a completion. We expect to see neo4j.query show up. Since
+	// neo4j.query is an EOPA-specific builtin, it should never appear if
+	// we're using the normal OPA capabilities file.
+	resp := make(map[string]any)
+	err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: mainRegoURI,
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 16,
+		},
+	}, &resp)
+	if err != nil {
+		t.Fatalf("failed to send completion notification: %s", err)
+	}
+
+	foundNeo4j := false
+	for _, itemI := range resp["items"].([]any) {
+		item := itemI.(map[string]any)
+		t.Logf("completion label: %s", item["label"])
+		if item["label"] == "neo4j.query" {
+			foundNeo4j = true
+		}
+	}
+
+	if !foundNeo4j {
+		t.Errorf("expected neo4j.query in completion results for neo4j.q")
+	}
+
 }
 
 // TestLanguageServerMultipleFiles tests that changes to multiple files are handled correctly. When there are multiple

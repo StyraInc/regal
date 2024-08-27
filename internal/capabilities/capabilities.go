@@ -46,6 +46,8 @@ const (
 // version for the specified engine.
 func Lookup(rawURL string) (*ast.Capabilities, error) {
 
+	fmt.Printf("EEE49 %s\n", rawURL)
+
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err

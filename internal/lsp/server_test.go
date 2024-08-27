@@ -25,8 +25,7 @@ const mainRegoFileName = "/main.rego"
 // defaultTimeout is set based on the investigation done as part of
 // https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
 // maximum time observed for an operation to complete.
-// const defaultTimeout = 20 * time.Second
-const defaultTimeout = 5 * time.Second
+const defaultTimeout = 20 * time.Second
 
 const defaultBufferedChannelSize = 5
 
@@ -410,7 +409,6 @@ allow := neo4j.q
 	if !foundNeo4j {
 		t.Errorf("expected neo4j.query in completion results for neo4j.q")
 	}
-
 }
 
 // TestLanguageServerMultipleFiles tests that changes to multiple files are handled correctly. When there are multiple

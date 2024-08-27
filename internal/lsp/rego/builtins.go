@@ -7,8 +7,10 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 )
 
-var builtInsLock = &sync.RWMutex{}
-var builtIns = builtinMap(ast.CapabilitiesForThisVersion())
+var (
+	builtInsLock = &sync.RWMutex{}
+	builtIns     = builtinMap(ast.CapabilitiesForThisVersion())
+)
 
 // Update updates the builtins database with the provided capabilities.
 func UpdateBuiltins(caps *ast.Capabilities) {

@@ -48,12 +48,11 @@ func LoadCapabilitiesVersion(engine, version string) (*ast.Capabilities, error) 
 
 			return ast.LoadCapabilitiesJSON(bytes.NewReader(cont))
 		}
-
 	}
 	return nil, fmt.Errorf("(Regal embedded %s capabilities library) no capabilities version found %v", engine, version)
 }
 
-// LoadCapabilitiesVersions loads all capabilities versions
+// LoadCapabilitiesVersions loads all capabilities versions.
 func LoadCapabilitiesVersions(engine string) ([]string, error) {
 	ents, err := FS.ReadDir(engine)
 	if err != nil {

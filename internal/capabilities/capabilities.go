@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
-
 	"github.com/coreos/go-semver/semver"
+
+	"github.com/open-policy-agent/opa/ast"
 
 	embedded "github.com/styrainc/regal/internal/capabilities/embedded"
 )
@@ -45,7 +45,6 @@ const (
 // 'regal://capabilities/{engine}/{version}' loads the requested capabilities
 // version for the specified engine.
 func Lookup(rawURL string) (*ast.Capabilities, error) {
-
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,6 @@ func LookupURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 }
 
 func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
-
 	// We need to consider the individual path elements of the URL. It
 	// would arguably be more elegant to do this with regex and named
 	// capture groups, but I trust the stdlib URL and path splitting
@@ -222,7 +220,6 @@ func semverSort(stringVersions []string) {
 		// If neither string is valid semver, fall back to normal
 		// string comparison.
 		return iStr < jStr
-
 	})
 
 	// This sort sorts ascending, but we want descending. I can't figure

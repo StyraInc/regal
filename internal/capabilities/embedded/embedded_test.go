@@ -23,7 +23,6 @@ func TestEmbeddedEOPA(t *testing.T) {
 
 	for _, v := range versions {
 		caps, err := LoadCapabilitiesVersion("eopa", v)
-
 		if err != nil {
 			t.Errorf("error with eopa capabilities version %s: %v", v, err)
 		}
@@ -32,5 +31,4 @@ func TestEmbeddedEOPA(t *testing.T) {
 			t.Errorf("eopa capabilities version %s has no builtins", v)
 		}
 	}
-
 }

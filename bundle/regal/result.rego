@@ -222,3 +222,10 @@ ranged_location_from_text(x) := end if {
 		"col": loc.location.col + count(regal.last(lines)),
 	}}})
 }
+
+# METADATA
+# description: creates a location where x is the start, and y is the end (calculated from `text`)
+ranged_location_between(x, y) := object.union(
+	location(x),
+	{"location": {"end": ranged_location_from_text(y).location.end}},
+)

@@ -122,14 +122,19 @@ is_ref(value) if value[0].type == "ref"
 
 # METADATA
 # description: |
+#   returns an array of all rule indices, as strings. this will be needed until
+#   https://github.com/open-policy-agent/opa/issues/6736 is fixed
+rule_index_strings := [s |
+	some i, _ in _rules
+	s := sprintf("%d", [i])
+]
+
+# METADATA
+# description: |
 #   a map containing all function calls (built-in and custom) in the input AST
 #   keyed by rule index
 function_calls[rule_index] contains call if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
-
+	some rule_index in rule_index_strings
 	some ref in found.refs[rule_index]
 
 	name := ref_to_string(ref[0].value)
@@ -141,7 +146,7 @@ function_calls[rule_index] contains call if {
 
 	call := {
 		"name": ref_to_string(ref[0].value),
-		"location": util.to_location_object(ref[0].location),
+		"location": ref[0].location,
 		"args": args,
 	}
 }
@@ -206,8 +211,6 @@ builtin_functions_called contains name if {
 		some part in value[0].value
 		value := part.value
 	])
-
-	name in builtin_names
 }
 
 # METADATA

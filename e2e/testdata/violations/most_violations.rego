@@ -59,6 +59,8 @@ not_equals_in_loop if {
 	"foo" != input.bar[_]
 }
 
+sprintf_arguments_mismatch := sprintf("%v", [1, 2])
+
 # rule-shadows-builtin
 abs := true
 

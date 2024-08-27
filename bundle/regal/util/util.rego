@@ -49,3 +49,10 @@ to_location_object(loc) := {"row": to_number(row), "col": to_number(col), "text"
 }
 
 to_location_object(loc) := loc if is_object(loc)
+
+# METADATA
+# description: short-hand helper to prepare values for pretty-printing
+json_pretty(value) := json.marshal_with_options(value, {
+	"indent": "  ",
+	"pretty": true,
+})

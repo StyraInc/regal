@@ -17,6 +17,7 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
@@ -319,6 +320,37 @@ capabilities:
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// NOTE(charles): the configuration is updated asynchronously from the
+	// thread the test is running in. This check prevents a race condition
+	// where the completion test runs before rego.builtIns is updated which
+	// was causing flaky tests in CI.
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		success := false
+
+		select {
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for builtins map to be updated")
+		default:
+			bis := rego.GetBuiltins()
+
+			// Search for a builtin we know is only in the EOPA capabilities.
+			if _, ok := bis["startswith"]; ok {
+				success = true
+			} else {
+				// If we hammer the mutex too hard, it may never
+				// get a chance to be updated.
+				time.Sleep(100 * time.Millisecond)
+			}
 		}
 
 		if success {

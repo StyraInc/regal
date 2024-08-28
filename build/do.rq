@@ -254,7 +254,7 @@ fetch_eopa_caps {
 	# they really have a need, they can manually download them and use the
 	# file locally.
 
-	eopa_tags := {t | r := eopa_tags_result.stdout[_]; t := r[2] ; not known_bad_tags[t] ; not startswith(t, "v0.")}
+	eopa_tags := {t | some r in eopa_tags_result.stdout; t := r[2] ; not known_bad_tags[t] ; not startswith(t, "v0.")}
 
 	# Get a directory listing for the capabilities directory, filtering for
 	# only nonzero size files with JSON extensions. The size check is to
@@ -304,7 +304,7 @@ fetch_eopa_caps {
 	{
 		rq.write(cap.content, {"format": "raw", "file_path": cap.local})
 		|
-		cap := new_caps[_]
+		some cap in new_caps
 	}
 }
 

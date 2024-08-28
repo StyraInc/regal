@@ -16,6 +16,9 @@ import (
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
 	"github.com/styrainc/regal/internal/novelty"
+	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/fixer"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -149,6 +152,38 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	}
 
 	_, err := fmt.Fprint(tr.out, table+footer+"\n")
+	if err != nil {
+		return fmt.Errorf("failed to write report: %w", err)
+	}
+
+	f := fixer.NewFixer()
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
+
+	fixableViolations := make(map[string]struct{})
+	fixableViolationsCount := 0
+
+	for _, violation := range r.Violations {
+		if fix, ok := f.GetFixForName(violation.Title); ok {
+			if _, ok := fixableViolations[fix.Name()]; !ok {
+				fixableViolations[fix.Name()] = struct{}{}
+			}
+
+			fixableViolationsCount++
+		}
+	}
+
+	if fixableViolationsCount > 0 {
+		_, err = fmt.Fprintf(
+			tr.out,
+			`
+Hint: %d/%d violations can be automatically fixed (%s)
+      Run regal fix --help for more details.
+`,
+			fixableViolationsCount,
+			r.Summary.NumViolations,
+			strings.Join(util.Keys(fixableViolations), ", "),
+		)
+	}
 
 	return err
 }

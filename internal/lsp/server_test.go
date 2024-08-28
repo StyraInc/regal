@@ -392,7 +392,6 @@ allow := neo4j.q
 			Character: 16,
 		},
 	}, &resp)
-
 	if err != nil {
 		t.Fatalf("failed to send completion notification: %s", err)
 	}

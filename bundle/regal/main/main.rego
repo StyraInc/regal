@@ -40,6 +40,9 @@ grouped_notices[category][title] contains notice if {
 # title: report
 # description: |
 #   This is the main entrypoint for linting, The report rule runs all rules against an input AST and produces a report
+# scope: document
+
+# METADATA
 # entrypoint: true
 report contains violation if {
 	not is_object(input)

@@ -3,6 +3,7 @@
 package capabilities
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -44,23 +45,23 @@ const (
 //
 // 'regal://capabilities/{engine}/{version}' loads the requested capabilities
 // version for the specified engine.
-func Lookup(rawURL string) (*ast.Capabilities, error) {
+func Lookup(ctx context.Context, rawURL string) (*ast.Capabilities, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL '%s': %w", rawURL, err)
 	}
 
-	return LookupURL(parsedURL)
+	return LookupURL(ctx, parsedURL)
 }
 
 // LookupURL behaves identically to Lookup(), but allows using a pre-parsed
 // URL to avoid a needless round-trip through a string.
-func LookupURL(parsedURL *url.URL) (*ast.Capabilities, error) {
+func LookupURL(ctx context.Context, parsedURL *url.URL) (*ast.Capabilities, error) {
 	switch parsedURL.Scheme {
 	case "http":
-		return lookupWebURL(parsedURL)
+		return lookupWebURL(ctx, parsedURL)
 	case "https":
-		return lookupWebURL(parsedURL)
+		return lookupWebURL(ctx, parsedURL)
 	case "file":
 		return lookupFileURL(parsedURL)
 	case "regal":
@@ -79,6 +80,7 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	urlPath = path.Clean(urlPath)
 	elems := make([]string, 0)
 	dir := urlPath
+
 	var file string
 
 	for dir != "" {
@@ -99,14 +101,16 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	// contaminate different subsystems.
 	if elems[0] != "capabilities" {
 		return nil, fmt.Errorf(
-			"regal URL '%s' does not have 'capabilities' as it's first path element - did you mean to try to load capabilities from this URL?",
+			"regal URL '%s' does not have 'capabilities' as it's first path element "+
+				"- did you mean to try to load capabilities from this URL?",
 			parsedURL.String(),
 		)
 	}
 
 	if len(elems) > 3 {
 		return nil, fmt.Errorf(
-			"regal URL '%s' is malformed (too many path elements), expected regal://capabilities/{engine}[/{version}]",
+			"regal URL '%s' is malformed (too many path elements), "+
+				"expected regal://capabilities/{engine}[/{version}]",
 			parsedURL.String(),
 		)
 	}
@@ -117,6 +121,7 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 
 	engine := elems[1]
 	version := ""
+
 	if len(elems) == 3 {
 		version = elems[2]
 	} else {
@@ -129,7 +134,6 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 		// an issue today. But in future we may need to expand List()
 		// so that it filters to only a specific engine or something to
 		// that effect.
-
 		versionsList, err := List()
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -143,7 +147,8 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 		versionsForEngine, ok := versionsList[engine]
 		if !ok {
 			return nil, fmt.Errorf(
-				"while processing regal URL '%s', failed to determine the latest version for engine '%s': engine not found in embedded database",
+				"while processing regal URL '%s', failed to determine "+
+					"the latest version for engine '%s': engine not found in embedded database",
 				parsedURL.String(),
 				engine,
 			)
@@ -151,7 +156,9 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 
 		if len(versionsForEngine) < 1 {
 			return nil, fmt.Errorf(
-				"while processing regal URL '%s', failed to determine the latest version for engine '%s': engine found in embedded database but has no versions associated with it",
+				"while processing regal URL '%s', failed to determine the "+
+					"latest version for engine '%s': engine found in embedded "+
+					"database but has no versions associated with it",
 				parsedURL.String(),
 				engine,
 			)
@@ -196,8 +203,15 @@ func lookupFileURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	return caps, nil
 }
 
-func lookupWebURL(parsedURL *url.URL) (*ast.Capabilities, error) {
-	resp, err := http.Get(parsedURL.String())
+func lookupWebURL(ctx context.Context, parsedURL *url.URL) (*ast.Capabilities, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsedURL.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request for URL '%s': %w", parsedURL.String(), err)
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get URL '%s': %w", parsedURL.String(), err)
 	}
@@ -230,6 +244,7 @@ func semverSort(stringVersions []string) {
 		if !ok {
 			var err error
 			iVers, err = semver.NewVersion(iStr)
+
 			if err != nil {
 				iValid = false
 			} else {
@@ -241,6 +256,7 @@ func semverSort(stringVersions []string) {
 		if !ok {
 			var err error
 			jVers, err = semver.NewVersion(jStr)
+
 			if err != nil {
 				jValid = false
 			} else {

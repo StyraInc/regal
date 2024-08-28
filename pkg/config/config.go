@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -323,7 +324,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		capabilitiesURL = "regal:///capabilities/default"
 	}
 
-	opaCaps, err := capabilities.Lookup(capabilitiesURL)
+	opaCaps, err := capabilities.Lookup(context.Background(), capabilitiesURL)
 	if err != nil {
 		return fmt.Errorf("failed to load capabilities: %w", err)
 	}

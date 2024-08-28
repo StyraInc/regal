@@ -356,7 +356,6 @@ allow := neo4j.q
 		var success bool
 		select {
 		case requestData := <-receivedMessages:
-
 			if requestData.URI != mainRegoURI {
 				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
 
@@ -393,17 +392,26 @@ allow := neo4j.q
 			Character: 16,
 		},
 	}, &resp)
+
 	if err != nil {
 		t.Fatalf("failed to send completion notification: %s", err)
 	}
 
 	foundNeo4j := false
-	for _, itemI := range resp["items"].([]any) {
+	itemsList, ok := resp["items"].([]any)
+
+	if !ok {
+		t.Fatalf("failed to cast resp[items] to []any")
+	}
+
+	for _, itemI := range itemsList {
 		item, ok := itemI.(map[string]any)
 		if !ok {
 			t.Fatalf("completion item '%+v' was not a JSON object", itemI)
 		}
+
 		t.Logf("completion label: %s", item["label"])
+
 		if item["label"] == "neo4j.query" {
 			foundNeo4j = true
 		}

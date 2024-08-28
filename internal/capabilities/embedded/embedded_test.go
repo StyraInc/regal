@@ -3,6 +3,8 @@ package embedded
 import "testing"
 
 func TestEmbeddedEOPA(t *testing.T) {
+	t.Parallel()
+
 	// As of 2024-08-27, there are 47 capabilities files in the EOPA repo.
 	// It follows that there should never be less than 47 valid
 	// capabilities in the embedded database. This is really just a sanity

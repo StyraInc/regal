@@ -1,6 +1,7 @@
 package capabilities
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 )
@@ -18,7 +19,7 @@ func TestLookupFromFile(t *testing.T) {
 
 	urlForPath := "file://" + path
 
-	caps, err := Lookup(urlForPath)
+	caps, err := Lookup(context.Background(), urlForPath)
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)
 	}
@@ -38,7 +39,10 @@ func TestLookupFromURL(t *testing.T) {
 	// Test that we can load a one of the existing OPA capabilities files
 	// via GitHub.
 
-	caps, err := Lookup("https://raw.githubusercontent.com/open-policy-agent/opa/main/capabilities/v0.55.0.json")
+	caps, err := Lookup(
+		context.Background(),
+		"https://raw.githubusercontent.com/open-policy-agent/opa/main/capabilities/v0.55.0.json",
+	)
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)
 	}
@@ -54,7 +58,7 @@ func TestLookupFromEmbedded(t *testing.T) {
 	// Test that we can load a one of the existing OPA capabilities files
 	// via the embedded database.
 
-	caps, err := Lookup("regal:///capabilities/opa/v0.55.0")
+	caps, err := Lookup(context.Background(), "regal:///capabilities/opa/v0.55.0")
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)
 	}

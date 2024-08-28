@@ -332,25 +332,31 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			// if the config is now blank, then we need to clear it
 			l.loadedConfigLock.Lock()
+
 			if errors.Is(err, io.EOF) {
 				l.loadedConfig = nil
 			} else {
 				l.loadedConfig = &mergedConfig
 			}
+
 			l.loadedConfigLock.Unlock()
 
 			// Capabilities URL may have changed, so we should
 			// reload it.
 			capsURL := l.loadedConfig.CapabilitiesURL
+
 			if capsURL == "" {
 				// This can happen if we have an empty config.
 				capsURL = "regal:///capabilities/default"
 			}
-			caps, err := capabilities.Lookup(capsURL)
+
+			caps, err := capabilities.Lookup(ctx, capsURL)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
+
 				return
 			}
+
 			rego.UpdateBuiltins(caps)
 
 			// the config may now ignore files that existed in the cache before,

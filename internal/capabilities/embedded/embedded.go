@@ -43,10 +43,15 @@ func LoadCapabilitiesVersion(engine, version string) (*ast.Capabilities, error) 
 		if cv == version {
 			cont, err := FS.ReadFile("eopa/" + cv + ".json")
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to open capabilities version '%s' for engine '%s': %w", cv, engine, err)
 			}
 
-			return ast.LoadCapabilitiesJSON(bytes.NewReader(cont))
+			caps, err := ast.LoadCapabilitiesJSON(bytes.NewReader(cont))
+			if err != nil {
+				return nil, fmt.Errorf("failed to load capabilities version '%s' for engine '%s': %w", cv, engine, err)
+			}
+
+			return caps, nil
 		}
 	}
 
@@ -57,7 +62,11 @@ func LoadCapabilitiesVersion(engine, version string) (*ast.Capabilities, error) 
 func LoadCapabilitiesVersions(engine string) ([]string, error) {
 	ents, err := FS.ReadDir(engine)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"failed to embedded capabilities directory for engine '%s' (does the engine exist?): %w",
+			engine,
+			err,
+		)
 	}
 
 	capabilitiesVersions := make([]string, 0, len(ents))

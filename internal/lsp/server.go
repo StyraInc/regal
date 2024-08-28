@@ -1859,7 +1859,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 
 		// These directories often have thousands of items we don't care about,
 		// so don't even traverse them.
-		if d.IsDir() && (d.Name() == ".git" || d.Name() == ".idea") {
+		if d.IsDir() && (d.Name() == ".git" || d.Name() == ".idea" || d.Name() == "node_modules") {
 			return filepath.SkipDir
 		}
 

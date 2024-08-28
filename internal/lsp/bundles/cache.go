@@ -59,7 +59,7 @@ func (c *Cache) Refresh() ([]string, error) {
 	var foundBundleRoots []string
 
 	err := filepath.Walk(c.workspacePath, func(path string, info os.FileInfo, _ error) error {
-		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea") {
+		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea" || info.Name() == "node_modules") {
 			return filepath.SkipDir
 		}
 

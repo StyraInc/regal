@@ -18,24 +18,6 @@ base_result := {
 	"related_resources": related_resources,
 }
 
-test_possible_offending_prefixes if {
-	module := regal.parse_module("example.rego", `
-    package policy.foo.bar
-
-    allow := true
-    `)
-
-	r := rule.possible_offending_prefixes with input as module
-
-	r == {
-		"policy_foo_bar",
-		"foo_bar",
-		"bar",
-		"policyFooBar",
-		"fooBar",
-	}
-}
-
 test_rule_empty_if_no_repetition if {
 	module := regal.parse_module("example.rego", `
     package policy.foo.bar
@@ -59,14 +41,21 @@ test_rule_violation_if_repetition if {
 
 	r == {object.union(
 		base_result,
-		{"location": {"col": 5, "file": "example.rego", "row": 4, "text": "    bar := true"}},
+		{"location": {
+			"row": 4,
+			"col": 5,
+			"end": {
+				"col": 8,
+				"row": 4,
+			},
+			"file": "example.rego",
+			"text": "    bar := true",
+		}},
 	)}
 }
 
 test_rule_violation_if_repetition_of_more_than_one_path_component if {
-	module := regal.parse_module("example.rego", `
-    package policy.foo.bar.baz
-
+	module := regal.parse_module("example.rego", `package policy.foo.bar.baz
     foo_bar_baz := true
 
     barBaz := 1
@@ -75,17 +64,24 @@ test_rule_violation_if_repetition_of_more_than_one_path_component if {
 	r := rule.report with input as module
 
 	r == {
-		object.union(
-			base_result,
-			{"location": {"col": 5, "file": "example.rego", "row": 4, "text": "    foo_bar_baz := true"}},
-		),
-		object.union(
-			base_result,
-			{"location": {"col": 5, "file": "example.rego", "row": 6, "text": "    barBaz := 1"}},
-		),
+		object.union(base_result, {"location": {
+			"row": 2,
+			"col": 5,
+			"end": {"col": 16, "row": 2},
+			"file": "example.rego",
+			"text": "    foo_bar_baz := true",
+		}}),
+		object.union(base_result, {"location": {
+			"row": 4,
+			"col": 5,
+			"end": {"col": 11, "row": 4},
+			"file": "example.rego",
+			"text": "    barBaz := 1",
+		}}),
 	}
 }
 
+# regal ignore:rule-length
 test_rule_violation_if_repetition_multiple if {
 	module := regal.parse_module("example.rego", `
     package policy.foo.bar
@@ -98,12 +94,27 @@ test_rule_violation_if_repetition_multiple if {
 	r := rule.report with input as module
 
 	r == {
-		object.union(base_result, {"location": {"col": 5, "file": "example.rego", "row": 4, "text": "    bar := true"}}),
-		object.union(base_result, {"location": {"col": 5, "file": "example.rego", "row": 5, "text": "    barNumber := 3"}}),
-		object.union(
-			base_result,
-			{"location": {"col": 5, "file": "example.rego", "row": 6, "text": "    barString := \"string\""}},
-		),
+		object.union(base_result, {"location": {
+			"col": 5,
+			"file": "example.rego",
+			"row": 4,
+			"end": {"col": 8, "row": 4},
+			"text": "    bar := true",
+		}}),
+		object.union(base_result, {"location": {
+			"col": 5,
+			"file": "example.rego",
+			"row": 5,
+			"end": {"col": 14, "row": 5},
+			"text": "    barNumber := 3",
+		}}),
+		object.union(base_result, {"location": {
+			"col": 5,
+			"file": "example.rego",
+			"row": 6,
+			"end": {"col": 14, "row": 6},
+			"text": "    barString := \"string\"",
+		}}),
 	}
 }
 
@@ -118,13 +129,18 @@ test_rule_violation_if_repetition_in_function if {
 
 	r == {object.union(
 		base_result,
-		{"location": {"col": 5, "file": "example.rego", "row": 4, "text": "    bar(_) := true"}},
+		{"location": {
+			"col": 5,
+			"file": "example.rego",
+			"row": 4,
+			"end": {"col": 8, "row": 4},
+			"text": "    bar(_) := true",
+		}},
 	)}
 }
 
 test_rule_violation_if_repetition_in_defaults if {
-	module := regal.parse_module("example.rego", `
-    package policy.foo.bar
+	module := regal.parse_module("example.rego", `package policy.foo.bar
 
     default bar(_) := true
     default barNumber := 3
@@ -133,13 +149,39 @@ test_rule_violation_if_repetition_in_defaults if {
 	r := rule.report with input as module
 
 	r == {
-		object.union(
-			base_result,
-			{"location": {"col": 13, "file": "example.rego", "row": 4, "text": "    default bar(_) := true"}},
-		),
-		object.union(
-			base_result,
-			{"location": {"col": 13, "file": "example.rego", "row": 5, "text": "    default barNumber := 3"}},
-		),
+		object.union(base_result, {"location": {
+			"col": 13,
+			"file": "example.rego",
+			"row": 3,
+			"end": {"col": 16, "row": 3},
+			"text": "    default bar(_) := true",
+		}}),
+		object.union(base_result, {"location": {
+			"col": 13,
+			"file": "example.rego",
+			"row": 4,
+			"end": {"col": 22, "row": 4},
+			"text": "    default barNumber := 3",
+		}}),
 	}
+}
+
+test_rule_violation_if_repetition_ref_head_rule if {
+	module := regal.parse_module("example.rego", `
+	package policy
+
+	import rego.v1
+
+	policy.decision contains "nope"
+	`)
+
+	r := rule.report with input as module
+
+	r == {object.union(base_result, {"location": {
+		"col": 2,
+		"file": "example.rego",
+		"row": 6,
+		"end": {"col": 8, "row": 6},
+		"text": "\tpolicy.decision contains \"nope\"",
+	}})}
 }

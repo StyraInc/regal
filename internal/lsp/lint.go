@@ -2,11 +2,10 @@ package lsp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/storage"
@@ -84,8 +83,6 @@ func updateParse(ctx context.Context, cache *cache.Cache, store storage.Store, f
 			Location: parseError.Location,
 		})
 	} else {
-		json := encoding.JSON()
-
 		jsonErrors, err := json.Marshal(unwrappedError)
 		if err != nil {
 			return false, fmt.Errorf("failed to marshal parse errors: %w", err)

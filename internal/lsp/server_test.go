@@ -392,6 +392,9 @@ allow := neo4j.q
 			Character: 16,
 		},
 	}, &resp)
+	//nolint:wsl
+	// NOTE(charles): gofumpt does not want a space here, but golint
+	// requires one to be present.
 	if err != nil {
 		t.Fatalf("failed to send completion notification: %s", err)
 	}

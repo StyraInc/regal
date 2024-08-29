@@ -162,6 +162,7 @@ test {
 
 e2e {
 	run("go test -tags e2e ./e2e")
+	run("go test -tags integration ./internal/capabilities")
 }
 
 lint {
@@ -236,13 +237,12 @@ fetch_eopa_caps {
 		}
 	)
 
-	{ rq.error(sprintf("\nstdout: %s\nstderr: %s\n", [eopa_tags_result.stdout, eopa_tags_result.stderr])) | eopa_tags_result.exitcode != 0 }
-
+	error_nonzero(eopa_tags_result, "failed to fetch tags from GitHub")
 
 	# We assume that tags and capabilities files are 1:1, but some EOPA
 	# release tags in the past did not correctly get capabilities files, so
 	# we eliminate them from consideration.
-	
+
 	known_bad_tags := {
 		"v1.15.0",   # tag missing capabilities file (misnamed v0.15.0)
 		"v1.4.1",    # tag missing capabilities file
@@ -254,13 +254,26 @@ fetch_eopa_caps {
 	# they really have a need, they can manually download them and use the
 	# file locally.
 
-	eopa_tags := {t | some r in eopa_tags_result.stdout; t := r[2] ; not known_bad_tags[t] ; not startswith(t, "v0.")}
+	eopa_tags := {
+		t
+		|
+		some r in eopa_tags_result.stdout
+		t := r[2]
+		not known_bad_tags[t]
+		not startswith(t, "v0.")
+	}
 
 	# Get a directory listing for the capabilities directory, filtering for
 	# only nonzero size files with JSON extensions. The size check is to
 	# avoid long-tail edge cases where we crashed after opening the file
 	# for writing but before committing any content.
-	eopa_caps_tree := {p: f | f := rq.tree(eopa_caps_dir, {})[p]; f.size != 0; f.ext == "json"}
+	eopa_caps_tree := {
+		p: f
+		|
+		f := rq.tree(eopa_caps_dir, {})[p]
+		f.size != 0
+		f.ext == "json"
+	}
 
 	# Determine which capabilities files are missing, what URL they
 	# should be fetched from, and where they should end up on disk.
@@ -273,10 +286,7 @@ fetch_eopa_caps {
 		t := eopa_tags[_]
 		p := rq.joinpath([eopa_caps_dir, sprintf("%s.json", [t])])
 
-		# eopa_caps_tree has object values, so if the path is missing,
-		# retrieving a non-object type is sufficient to check for
-		# nonexistance
-		object.get(eopa_caps_tree, p, "-") == "-"
+		not eopa_caps_tree[p]
 
 		# construct the URL to fetch the content from
 		r := rq.template("https://raw.githubusercontent.com/StyraInc/enterprise-opa/main/capabilities/{{.tag}}.json", {"tag": t})
@@ -291,13 +301,10 @@ fetch_eopa_caps {
 		m := missing_locally[_]
 		print("\tfetching ", m.remote)
 		resp := http.send({"url": m.remote, "method": "GET"})
-			
+
 		{ rq.error(sprintf("non-200 status code '%d' for URL '%s'", [resp.status_code, m.remote])) | resp.status_code != 200 }
 
 		c := resp.raw_body
-
-		# sanity check in case we got the URL wrong
-		not regex.match("404: Not Found", c)
 	}
 
 	# Commit the retrieved content to disk.
@@ -372,3 +379,10 @@ github(what, j) {
 } else := true
 
 is_github if rq.env().GITHUB_ACTION
+
+error_nonzero(run_result, message) if {
+	run_result.exitcode != 0
+	rq.error(sprintf("%s\nstdout:%s\nstderr:\n%s\n", [message, run_result.stdout, run_result.stderr]))
+} else {
+	true
+}

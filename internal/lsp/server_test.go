@@ -896,8 +896,11 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 	c.SetFileContents(fileURL, "package authz.main.rules")
 
 	l.clientIdentifier = clients.IdentifierVSCode
+
 	l.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
+
 	l.cache = c
+
 	l.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
 			"idiomatic": {

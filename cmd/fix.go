@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/format"
 
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
@@ -281,4 +282,43 @@ func fix(args []string, params *fixCommandParams) error {
 	}
 
 	return nil
+}
+
+func getPotentialRoots(paths []string) ([]string, error) {
+	dirMap := make(map[string]struct{})
+
+	for _, path := range paths {
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+		}
+
+		if isDir(abs) {
+			dirMap[abs] = struct{}{}
+		} else {
+			dirMap[filepath.Dir(abs)] = struct{}{}
+		}
+	}
+
+	for _, dir := range util.Keys(dirMap) {
+		brds, err := config.FindBundleRootDirectories(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
+		}
+
+		for _, brd := range brds {
+			dirMap[brd] = struct{}{}
+		}
+	}
+
+	return util.Keys(dirMap), nil
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }

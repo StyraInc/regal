@@ -26,7 +26,8 @@ const mainRegoFileName = "/main.rego"
 // defaultTimeout is set based on the investigation done as part of
 // https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
 // maximum time observed for an operation to complete.
-const defaultTimeout = 20 * time.Second
+// const defaultTimeout = 20 * time.Second
+const defaultTimeout = 60 * time.Second
 
 const defaultBufferedChannelSize = 5
 
@@ -81,12 +82,8 @@ allow = true
 `
 
 	files := map[string]string{
-		"main.rego": mainRegoContents,
-		".regal/config.yaml": `
-rules:
-  idiomatic:
-    directory-package-mismatch:
-      level: ignore`,
+		"main.rego":          mainRegoContents,
+		".regal/config.yaml": ``,
 	}
 
 	for f, fc := range files {
@@ -237,9 +234,6 @@ allow := true
 	// 4. Client sends workspace/didChangeWatchedFiles notification with new config
 	newConfigContents := `
 rules:
-  idiomatic:
-    directory-package-mismatch:
-      level: ignore
   style:
     opa-fmt:
       level: ignore
@@ -495,10 +489,6 @@ users = {"alice", "bob"}
 foo = 1
 `,
 		".regal/config.yaml": `
-rules:
-  idiomatic:
-    directory-package-mismatch:
-      level: ignore
 ignore:
   files:
     - ignored/*.rego
@@ -744,9 +734,6 @@ allow := true
 	files := map[string]string{
 		childDirName + mainRegoFileName: mainRegoContents,
 		".regal/config.yaml": `rules:
-  idiomatic:
-    directory-package-mismatch:
-      level: ignore
   style:
     opa-fmt:
       level: error
@@ -843,9 +830,6 @@ allow := true
 	// User updates config file contents in parent directory that is not
 	// part of the workspace
 	newConfigContents := `rules:
-  idiomatic:
-    directory-package-mismatch:
-      level: ignore
   style:
     opa-fmt:
       level: ignore

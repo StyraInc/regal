@@ -566,6 +566,28 @@ capabilities:
           type: object
 ```
 
+### Loading Capabilities from URLs
+
+Starting with Regal version TODO, Regal can load capabilities from URLs with
+the `http`, or `https` schemes using the `capabilities.from.url` config key.
+For example, to load capabilities from `https://example.org/capabilities.json`,
+this configuration could be used:
+
+```yaml
+capabilities:
+  from:
+    url: https://example.org/capabilities.json
+```
+
+### Supported Engines
+
+Regal includes capabilities files for the following engines:
+
+| Engine | Website | Description |
+|--------|---------|-------------|
+| `opa`  | [OPA website](https://www.openpolicyagent.org/) | Open Policy Agent |
+| `eopa` | [Enterprise OPA website](https://www.styra.com/enterprise-opa/) | Styra Enterprise OPA |
+
 ## Exit Codes
 
 Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be

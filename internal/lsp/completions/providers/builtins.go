@@ -20,6 +20,7 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
+
 	if len(lines) < 1 || currentLine == "" {
 		return []types.CompletionItem{}, nil
 	}
@@ -33,7 +34,11 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 
 	items := []types.CompletionItem{}
 
-	for key, builtIn := range rego.BuiltIns {
+	bis := rego.GetBuiltins()
+
+	for _, builtIn := range bis {
+		key := builtIn.Name
+
 		if builtIn.Infix != "" {
 			continue
 		}

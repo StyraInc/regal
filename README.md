@@ -568,9 +568,8 @@ capabilities:
 
 ### Loading Capabilities from URLs
 
-Starting with Regal version TODO, Regal can load capabilities from URLs with
-the `http`, or `https` schemes using the `capabilities.from.url` config key.
-For example, to load capabilities from `https://example.org/capabilities.json`,
+Starting with Regal version v0.26.0, Regal can load capabilities from URLs with the `http`, or `https` schemes using
+the `capabilities.from.url` config key. For example, to load capabilities from `https://example.org/capabilities.json`,
 this configuration could be used:
 
 ```yaml

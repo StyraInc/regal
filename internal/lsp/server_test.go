@@ -286,6 +286,9 @@ rules:
   style:
     opa-fmt:
       level: ignore
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
 capabilities:
   from:
     engine: eopa

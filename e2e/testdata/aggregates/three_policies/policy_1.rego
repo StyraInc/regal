@@ -1,4 +1,4 @@
-package mypolicy1.public
+package three_policies
 
 import rego.v1
 

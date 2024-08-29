@@ -362,7 +362,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 
 	expectedViolations := []string{
-		`Naming convention violation: package name "this.fails" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
+		`Naming convention violation: package name "custom_naming_convention" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
 		`Naming convention violation: rule name "naming_convention_fail" does not match pattern '^_[a-z_]+$|^allow$'`,
 	}
 
@@ -383,7 +383,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies"))
 
 		expectExitCode(t, err, 0, &stdout, &stderr)
@@ -398,7 +398,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies/policy_1.rego"))
 
 		expectExitCode(t, err, 0, &stdout, &stderr)
@@ -413,7 +413,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/three_policies"))
 
 		expectExitCode(t, err, 3, &stdout, &stderr)

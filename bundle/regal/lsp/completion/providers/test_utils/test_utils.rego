@@ -1,4 +1,4 @@
-package regal.lsp.completion.providers.utils_test
+package regal.lsp.completion.providers.test_utils
 
 import rego.v1
 

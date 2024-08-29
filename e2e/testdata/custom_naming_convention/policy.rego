@@ -1,5 +1,5 @@
 # package name must start with "acmecorp"
-package this.fails
+package custom_naming_convention
 
 import rego.v1
 

@@ -1,4 +1,4 @@
-package lsp.completions
+package regal.lsp.completion
 
 import rego.v1
 

@@ -1,3 +1,4 @@
+# regal ignore:directory-package-mismatch
 package process
 
 import rego.v1

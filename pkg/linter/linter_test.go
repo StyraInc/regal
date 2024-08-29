@@ -248,9 +248,11 @@ or := 1
 					Files: []string{"bar/*"},
 				},
 			},
-			filename:      "file:///wow/foo/p.rego",
-			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
-			rootDir:       "file:///wow",
+			filename: "file:///wow/foo/p.rego",
+			expViolations: []string{
+				"opa-fmt", "top-level-iteration", "rule-shadows-builtin", "directory-package-mismatch",
+			},
+			rootDir: "file:///wow",
 		},
 		{
 			name:            "CLI flag ignore files",

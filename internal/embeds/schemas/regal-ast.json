@@ -362,6 +362,11 @@
     },
     "regal": {
       "properties": {
+        "environment": {
+          "path_separator": {
+            "type": "string"
+          }
+        },
         "file": {
           "properties": {
             "name": {

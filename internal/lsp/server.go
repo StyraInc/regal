@@ -512,9 +512,11 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 
+					cleanedMessage := strings.Replace(err.Error(), l.workspaceRootURI+"/", "", 1)
+
 					err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
 						Type:    1, // error
-						Message: err.Error(),
+						Message: cleanedMessage,
 					})
 					if err != nil {
 						l.logError(fmt.Errorf("failed to notify client of eval error: %w", err))
@@ -1744,7 +1746,10 @@ func (l *LanguageServer) handleInitialize(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	l.workspaceRootURI = params.RootURI
+	// params.RootURI is not expected to have a trailing slash, but if one is
+	// present it will be removed for consistency.
+	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, string(os.PathSeparator))
+
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
 	if l.clientIdentifier == clients.IdentifierGeneric {

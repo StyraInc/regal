@@ -53,16 +53,6 @@ func MustLoadRegalBundleFS(fs files.FS) bundle.Bundle {
 	return regalBundle
 }
 
-// MustLoadRegalBundlePath loads bundle from path, exit on failure.
-func MustLoadRegalBundlePath(path string) bundle.Bundle {
-	regalBundle, err := LoadRegalBundlePath(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return regalBundle
-}
-
 // ToMap convert any value to map[string]any, or panics on failure.
 func ToMap(a any) map[string]any {
 	r := make(map[string]any)
@@ -121,4 +111,44 @@ func FindInput(file string, workspacePath string) (string, io.Reader) {
 	}
 
 	return "", nil
+}
+
+func IsSkipWalkDirectory(info files.DirEntry) bool {
+	return info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea" || info.Name() == "node_modules")
+}
+
+// WalkFiles walks the file system rooted at root, calling f for each file. This is
+// a less ceremonious version of filepath.WalkDir where only file paths (not dirs)
+// are passed to the callback, and where directories that should commonly  be ignored
+// (.git, node_modules, etc.) are skipped.
+func WalkFiles(root string, f func(path string) error) error {
+	return filepath.WalkDir(root, func(path string, info os.DirEntry, _ error) error { // nolint:wrapcheck
+		if IsSkipWalkDirectory(info) {
+			return filepath.SkipDir
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		return f(path)
+	})
+}
+
+func FindManifestLocations(root string) ([]string, error) {
+	var foundBundleRoots []string
+
+	if err := WalkFiles(root, func(path string) error {
+		if filepath.Base(path) == ".manifest" {
+			if rel, err := filepath.Rel(root, path); err == nil {
+				foundBundleRoots = append(foundBundleRoots, filepath.Dir(rel))
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to walk workspace path: %w", err)
+	}
+
+	return foundBundleRoots, nil
 }

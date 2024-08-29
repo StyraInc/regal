@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/util"
 )
 
 const (
@@ -36,6 +38,12 @@ type Config struct {
 	Features *Features `json:"features,omitempty" yaml:"features,omitempty"`
 
 	CapabilitiesURL string `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
+
+	Project *Project `json:"project,omitempty" yaml:"project,omitempty"`
+}
+
+type Project struct {
+	Roots []string `json:"roots" yaml:"roots"`
 }
 
 type Category map[string]Rule
@@ -162,6 +170,96 @@ func FindRegalDirectory(path string) (*os.File, error) {
 	}
 }
 
+// FindBundleRootDirectories finds all bundle root directories from the provided path,
+// which **must** be an absolute path. Bundle root directories may be found either by:
+//
+// - Configuration (`project.roots`)
+// - By the presence of a .manifest file anywhere under the path
+// - By the presence of a .regal directory anywhere under or above the path ... TODO (anders): might reconsider "above"?
+//
+// All returned paths are absolute paths. If the provided path itself
+// is determined to be a bundle root directory it will be included in the result.
+func FindBundleRootDirectories(path string) ([]string, error) {
+	var foundBundleRoots []string
+
+	// This will traverse the tree **upwards** searching for a .regal directory
+	regalDir, err := FindRegalDirectory(path)
+	if err == nil {
+		roots, err := rootsFromRegalDirectory(regalDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get roots from .regal directory: %w", err)
+		}
+
+		foundBundleRoots = append(foundBundleRoots, roots...)
+	}
+
+	// This will traverse the tree **downwards** searching for .regal directories
+	// Not using rio.WalkFiles here as we're specifically looking for directories
+	if err := filepath.WalkDir(path, func(path string, info os.DirEntry, _ error) error {
+		if info.IsDir() && info.Name() == regalDirName {
+			// Opening files as part of walking is generally not a good idea...
+			// but I think we can assume the number of .regal directories in a project
+			// is limited to a reasonable number.
+			rd, err := os.Open(path)
+			if err != nil {
+				return fmt.Errorf("failed to open .regal directory: %w", err)
+			}
+
+			defer rd.Close()
+
+			roots, err := rootsFromRegalDirectory(rd)
+			if err != nil {
+				return fmt.Errorf("failed to get roots from .regal directory: %w", err)
+			}
+
+			foundBundleRoots = append(foundBundleRoots, roots...)
+		}
+
+		// rather than calling rio.FindManifestLocations later, let's
+		// check for .manifest directories as part of the same walk
+		if !info.IsDir() && info.Name() == ".manifest" {
+			foundBundleRoots = append(foundBundleRoots, filepath.Dir(path))
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to walk path: %w", err)
+	}
+
+	slices.Sort(foundBundleRoots)
+
+	return slices.Compact(foundBundleRoots), nil
+}
+
+func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
+	foundBundleRoots := make([]string, 0)
+
+	defer regalDir.Close()
+
+	parent, _ := filepath.Split(regalDir.Name())
+
+	parent = filepath.Clean(parent)
+
+	// add the parent directory of .regal
+	foundBundleRoots = append(foundBundleRoots, parent)
+
+	file, err := os.ReadFile(filepath.Join(regalDir.Name(), "config.yaml"))
+	if err == nil {
+		var conf Config
+
+		err = yaml.Unmarshal(file, &conf)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
+		}
+
+		if conf.Project != nil {
+			foundBundleRoots = append(foundBundleRoots, util.Map(util.FilepathJoiner(parent), conf.Project.Roots)...)
+		}
+	}
+
+	return foundBundleRoots, nil
+}
+
 func FindConfig(path string) (*os.File, error) {
 	regalDir, err := FindRegalDirectory(path)
 	if err != nil {
@@ -250,6 +348,7 @@ type marshallingIntermediary struct {
 			CheckVersion bool `yaml:"check_version"`
 		} `yaml:"remote"`
 	} `yaml:"features"`
+	Project *Project `yaml:"project"`
 }
 
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {
@@ -335,6 +434,8 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	// capabilities version in the user-facing config does not contain all
 	// of the information that the LSP needs.
 	config.CapabilitiesURL = capabilitiesURL
+
+	config.Project = result.Project
 
 	// remove any builtins referenced in the minus config
 	for _, minusBuiltin := range result.Capabilities.Minus.Builtins {
@@ -571,4 +672,43 @@ func (rule *Rule) mapToConfig(result any) error {
 	delete(rule.Extra, keyIgnore)
 
 	return nil
+}
+
+func GetPotentialRoots(paths ...string) ([]string, error) {
+	dirMap := make(map[string]struct{})
+
+	for _, path := range paths {
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+		}
+
+		if isDir(abs) {
+			dirMap[abs] = struct{}{}
+		} else {
+			dirMap[filepath.Dir(abs)] = struct{}{}
+		}
+	}
+
+	for _, dir := range util.Keys(dirMap) {
+		brds, err := FindBundleRootDirectories(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
+		}
+
+		for _, brd := range brds {
+			dirMap[brd] = struct{}{}
+		}
+	}
+
+	return util.Keys(dirMap), nil
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }

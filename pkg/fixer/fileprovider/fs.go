@@ -3,33 +3,43 @@ package fileprovider
 import (
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
 type FSFileProvider struct {
-	roots  []string
+	roots  map[string]struct{}
 	ignore []string
 }
 
 func NewFSFileProvider(ignore []string, roots ...string) *FSFileProvider {
+	rootsMap := make(map[string]struct{}, len(roots))
+	for _, root := range roots {
+		rootsMap[root] = struct{}{}
+	}
+
 	return &FSFileProvider{
-		roots:  roots,
+		roots:  rootsMap,
 		ignore: ignore,
 	}
 }
 
 func (p *FSFileProvider) ListFiles() ([]string, error) {
-	filtered, err := config.FilterIgnoredPaths(p.roots, p.ignore, true, "")
+	filtered, err := config.FilterIgnoredPaths(util.Keys(p.roots), p.ignore, true, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
 	}
 
-	return filtered, nil
+	slices.Sort(filtered)
+
+	// TODO: Figure out why filtered returns duplicates in the first place
+	return slices.Compact(filtered), nil
 }
 
 func (*FSFileProvider) GetFile(file string) ([]byte, error) {
@@ -41,7 +51,7 @@ func (*FSFileProvider) GetFile(file string) ([]byte, error) {
 	return content, nil
 }
 
-func (*FSFileProvider) PutFile(file string, content []byte) error {
+func (p *FSFileProvider) PutFile(file string, content []byte) error {
 	stat, err := os.Stat(file)
 	if err != nil {
 		return fmt.Errorf("failed to stat file %s: %w", file, err)
@@ -51,6 +61,27 @@ func (*FSFileProvider) PutFile(file string, content []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", file, err)
 	}
+
+	p.roots[file] = struct{}{}
+
+	return nil
+}
+
+// DeleteFile removes the file from the filesystem if it exists. If it does not exist
+// DeleteFile will return nil, as it's already gone. Returns error on any other issues.
+func (p *FSFileProvider) DeleteFile(file string) error {
+	if _, err := os.Stat(file); err != nil && os.IsNotExist(err) {
+		delete(p.roots, file)
+
+		return nil
+	}
+
+	err := os.Remove(file)
+	if err != nil {
+		return fmt.Errorf("failed to remove file %s: %w", file, err)
+	}
+
+	delete(p.roots, file)
 
 	return nil
 }

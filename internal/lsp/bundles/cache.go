@@ -13,6 +13,7 @@ import (
 
 	"github.com/open-policy-agent/opa/bundle"
 
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
 )
 
@@ -56,26 +57,7 @@ func (c *Cache) Refresh() ([]string, error) {
 	}
 
 	// find all the bundle roots that are currently present on disk
-	var foundBundleRoots []string
-
-	err := filepath.Walk(c.workspacePath, func(path string, info os.FileInfo, _ error) error {
-		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea" || info.Name() == "node_modules") {
-			return filepath.SkipDir
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		if filepath.Base(path) == ".manifest" {
-			foundBundleRoots = append(
-				foundBundleRoots,
-				strings.TrimPrefix(filepath.Dir(path), c.workspacePath),
-			)
-		}
-
-		return nil
-	})
+	foundBundleRoots, err := rio.FindManifestLocations(c.workspacePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to walk workspace path: %w", err)
 	}

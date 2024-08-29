@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
@@ -17,6 +19,7 @@ func NewFixer() *Fixer {
 	return &Fixer{
 		registeredFixes:          make(map[string]any),
 		registeredMandatoryFixes: make(map[string]any),
+		registeredRoots:          make([]string, 0),
 	}
 }
 
@@ -24,6 +27,7 @@ func NewFixer() *Fixer {
 type Fixer struct {
 	registeredFixes          map[string]any
 	registeredMandatoryFixes map[string]any
+	registeredRoots          []string
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
@@ -45,6 +49,14 @@ func (f *Fixer) RegisterMandatoryFixes(fixes ...fixes.Fix) {
 
 		delete(f.registeredFixes, fix.Name())
 	}
+}
+
+// RegisterRoots sets the roots of the files that will be fixed.
+// Certain fixes may require the nearest root of the file to be known,
+// as fix operations could involve things like moving files, which
+// will be moved relative to their nearest root.
+func (f *Fixer) RegisterRoots(roots ...string) {
+	f.registeredRoots = append(f.registeredRoots, roots...)
 }
 
 func (f *Fixer) GetFixForName(name string) (fixes.Fix, bool) {
@@ -101,7 +113,9 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 
 				fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
 
-				fixResults, err := fixInstance.Fix(&fixCandidate, nil)
+				fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
+					BaseDir: util.FindClosestMatchingRoot(file, f.registeredRoots),
+				})
 				if err != nil {
 					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
 				}
@@ -113,7 +127,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 							return nil, fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
 						}
 
-						fixReport.SetFileFixedViolation(file, fix)
+						fixReport.AddFileFix(file, fixResult)
 
 						fixMadeInIteration = true
 					}
@@ -146,6 +160,8 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
+	movedFiles := make(map[string]string)
+
 	for {
 		fixMadeInIteration := false
 
@@ -164,22 +180,36 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 
 		for _, violation := range rep.Violations {
+			file, ok := movedFiles[violation.Location.File]
+			if !ok {
+				file = violation.Location.File
+			}
+
 			fixInstance, ok := f.GetFixForName(violation.Title)
 			if !ok {
 				return nil, fmt.Errorf("no fix for violation %s", violation.Title)
 			}
 
-			fc, err := fp.GetFile(violation.Location.File)
+			fc, err := fp.GetFile(file)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get file %s: %w", violation.Location.File, err)
+				return nil, fmt.Errorf("failed to get file %s: %w", file, err)
 			}
 
-			fixCandidate := fixes.FixCandidate{
-				Filename: violation.Location.File,
-				Contents: fc,
+			fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
+
+			config, err := l.GetConfig()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get config: %w", err)
+			}
+
+			abs, err := filepath.Abs(file)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get absolute path for %s: %w", file, err)
 			}
 
 			fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
+				BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
+				Config:  config,
 				Locations: []ast.Location{
 					{
 						Row: violation.Location.Row,
@@ -188,19 +218,32 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 				},
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to fix %s: %w", violation.Location.File, err)
+				return nil, fmt.Errorf("failed to fix %s: %w", file, err)
 			}
 
 			if len(fixResults) > 0 {
 				// Note: Only one content update fix result is currently supported
 				fixResult := fixResults[0]
 
-				err = fp.PutFile(violation.Location.File, fixResult.Contents)
+				if bytes.Equal(fc, fixResult.Contents) {
+					// if file was moved, we need to update the file provider accordingly
+					if fixResult.Rename != nil {
+						err := fp.DeleteFile(fixResult.Rename.FromPath)
+						if err != nil {
+							return nil, fmt.Errorf("failed to delete file %s: %w", fixResult.Rename.FromPath, err)
+						}
+
+						movedFiles[file] = fixResult.Rename.ToPath
+						file = fixResult.Rename.ToPath
+					}
+				}
+
+				err = fp.PutFile(file, fixResult.Contents)
 				if err != nil {
 					return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
 				}
 
-				fixReport.SetFileFixedViolation(violation.Location.File, violation.Title)
+				fixReport.AddFileFix(file, fixResult)
 
 				fixMadeInIteration = true
 			}
@@ -210,6 +253,8 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 			break
 		}
 	}
+
+	fixReport.SetMovedFiles(movedFiles)
 
 	return fixReport, nil
 }

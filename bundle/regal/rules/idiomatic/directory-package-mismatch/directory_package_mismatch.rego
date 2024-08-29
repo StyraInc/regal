@@ -7,27 +7,19 @@ import rego.v1
 import data.regal.config
 import data.regal.result
 
-# METADATA
+# - METADATA
 # description: |
 #   emit warning notice when package has more parts than the directory,
-#   as this should likely **not** fail
-notices contains _notice(message, "warning") if {
-	count(_file_path_values) > 0
-	count(_file_path_values) < count(_pkg_path_values)
+# #   as this should likely **not** fail
+# notices contains _notice(message, "warning") if {
+# 	count(_file_path_values) > 0
+# 	count(_file_path_values) < count(_pkg_path_values)
 
-	message := sprintf(
-		"package '%s' has more parts than provided directory path '%s'",
-		[concat(".", _pkg_path_values), concat("/", _file_path_values)],
-	)
-}
-
-# METADATA
-# description: emit notice when single file is provided, but with no severity
-notices contains _notice(message, "none") if {
-	count(_file_path_values) == 0
-
-	message := "provided file has no directory components in its path... try linting a directory"
-}
+# 	message := sprintf(
+# 		"package '%s' has more parts than provided directory path '%s'",
+# 		[concat(".", _pkg_path_values), concat("/", _file_path_values)],
+# 	)
+# }
 
 report contains violation if {
 	# get the last n components from file path, where n == count(_pkg_path_values)
@@ -49,10 +41,10 @@ _pkg_path := [p.value |
 	i > 0
 ]
 
-_pkg_path_values := without_test_suffix if {
-	cfg := config.for_rule("idiomatic", "directory-package-mismatch")
+_pkg_path_values := _pkg_path if not config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
 
-	cfg["exclude-test-suffix"]
+_pkg_path_values := without_test_suffix if {
+	config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
 
 	without_test_suffix := array.concat(
 		array.slice(_pkg_path, 0, count(_pkg_path) - 1),

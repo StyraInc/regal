@@ -226,7 +226,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, errors.New("nothing provided to lint")
 	}
 
-	conf, err := l.combinedConfig()
+	conf, err := l.GetConfig()
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
 	}
@@ -862,7 +862,9 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 	return r, nil
 }
 
-func (l Linter) combinedConfig() (*config.Config, error) {
+// GetConfig returns the final configuration for the linter, i.e. Regal's default
+// configuration plus any user-provided configuration merged on top of it.
+func (l Linter) GetConfig() (*config.Config, error) {
 	if l.combinedCfg != nil {
 		return l.combinedCfg, nil
 	}
@@ -918,7 +920,7 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 		return enabledGoRules, nil
 	}
 
-	conf, err := l.combinedConfig()
+	conf, err := l.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create merged config: %w", err)
 	}

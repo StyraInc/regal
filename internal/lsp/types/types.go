@@ -83,8 +83,8 @@ type ShowMessageParams struct {
 }
 
 type StaleRequestSupportClientCapabilities struct {
-	Cancel                  bool     `json:"cancel"`
-	RetryOnContentModifieds []string `json:"retryOnContentModified"`
+	Cancel                 bool     `json:"cancel"`
+	RetryOnContentModified []string `json:"retryOnContentModified"`
 }
 
 type InitializeResult struct {
@@ -223,6 +223,30 @@ type ExecuteCommandParams struct {
 type ApplyWorkspaceEditParams struct {
 	Label string        `json:"label"`
 	Edit  WorkspaceEdit `json:"edit"`
+}
+
+type ApplyWorkspaceRenameEditParams struct {
+	Label string              `json:"label"`
+	Edit  WorkspaceRenameEdit `json:"edit"`
+}
+
+type RenameFileOptions struct {
+	Overwrite      bool `json:"overwrite"`
+	IgnoreIfExists bool `json:"ignoreIfExists"`
+}
+
+type RenameFile struct {
+	Kind                 string             `json:"kind"` // must always be "rename"
+	OldURI               string             `json:"oldUri"`
+	NewURI               string             `json:"newUri"`
+	Options              *RenameFileOptions `json:"options,omitempty"`
+	AnnotationIdentifier *string            `json:"annotationId,omitempty"`
+}
+
+// WorkspaceRenameEdit is a WorkspaceEdit that is used for renaming files.
+// Perhaps we should use generics and a union type here instead.
+type WorkspaceRenameEdit struct {
+	DocumentChanges []RenameFile `json:"documentChanges"`
 }
 
 type WorkspaceEdit struct {

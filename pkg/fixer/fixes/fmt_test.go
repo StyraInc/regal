@@ -55,7 +55,9 @@ allow := true
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			fixResults, err := tc.fmt.Fix(tc.fc, nil)
+			fixResults, err := tc.fmt.Fix(tc.fc, &RuntimeOptions{
+				BaseDir: "",
+			})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

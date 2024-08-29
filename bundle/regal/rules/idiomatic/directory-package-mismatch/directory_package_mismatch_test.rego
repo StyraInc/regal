@@ -36,32 +36,6 @@ test_success_directory_structure_package_path_match_shorter_directory_path if {
 	r == set()
 }
 
-test_notice_severity_warning_when_directory_path_shorter_than_package_path if {
-	module := regal.parse_module("bar/baz/p.rego", "package foo.bar.baz")
-	r := rule.notices with input as module with config.for_rule as default_config
-
-	r == {{
-		"category": "idiomatic",
-		"description": "package 'foo.bar.baz' has more parts than provided directory path 'bar/baz'",
-		"level": "notice",
-		"severity": "warning",
-		"title": "directory-package-mismatch",
-	}}
-}
-
-test_notice_severity_none_when_no_path_likely_single_file_provided if {
-	module := regal.parse_module("p.rego", "package p")
-	r := rule.notices with input as module with config.for_rule as default_config
-
-	r == {{
-		"category": "idiomatic",
-		"description": "provided file has no directory components in its path... try linting a directory",
-		"level": "notice",
-		"severity": "none",
-		"title": "directory-package-mismatch",
-	}}
-}
-
 with_location(location) := {{
 	"category": "idiomatic",
 	"description": "Directory structure should mirror package",

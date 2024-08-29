@@ -46,3 +46,12 @@ func NoWhiteSpaceCommentCommand(args []string) types.Command {
 		Arguments: toAnySlice(args),
 	}
 }
+
+func DirectoryStructureMismatchCommand(args []string) types.Command {
+	return types.Command{
+		Title:     "Fix directory structure / package path mismatch",
+		Command:   "regal.fix.directory-package-mismatch",
+		Tooltip:   "Fix directory structure / package path mismatch",
+		Arguments: toAnySlice(args),
+	}
+}

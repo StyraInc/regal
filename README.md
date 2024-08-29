@@ -671,6 +671,7 @@ The Regal language server currently supports the following LSP features:
   - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
   - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
   - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+  - [x] [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)
 - [x] [Code lenses](https://docs.styra.com/regal/language-server#code-lenses-evaluation)
       (click to evaluate any package or rule directly in the editor)
 

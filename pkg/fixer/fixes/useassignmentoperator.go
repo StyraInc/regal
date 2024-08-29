@@ -12,7 +12,7 @@ func (*UseAssignmentOperator) Name() string {
 	return "use-assignment-operator"
 }
 
-func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
+func (u *UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 
 	if opts == nil {
@@ -45,5 +45,9 @@ func (*UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]Fix
 		return nil, nil
 	}
 
-	return []FixResult{{Contents: bytes.Join(lines, []byte("\n"))}}, nil
+	return []FixResult{{
+		Title:    u.Name(),
+		Root:     opts.BaseDir,
+		Contents: bytes.Join(lines, []byte("\n")),
+	}}, nil
 }

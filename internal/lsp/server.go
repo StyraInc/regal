@@ -52,8 +52,11 @@ const (
 	methodTextDocumentPublishDiagnostics = "textDocument/publishDiagnostics"
 	methodWorkspaceApplyEdit             = "workspace/applyEdit"
 
-	ruleNameOPAFmt    = "opa-fmt"
-	ruleNameUseRegoV1 = "use-rego-v1"
+	ruleNameOPAFmt                   = "opa-fmt"
+	ruleNameUseRegoV1                = "use-rego-v1"
+	ruleNameUseAssignmentOperator    = "use-assignment-operator"
+	ruleNameNoWhitespaceComment      = "no-whitespace-comment"
+	ruleNameDirectoryPackageMismatch = "directory-package-mismatch"
 )
 
 type LanguageServerOptions struct {
@@ -113,7 +116,6 @@ type fileUpdateEvent struct {
 	Content string
 }
 
-//nolint:gocyclo
 func (l *LanguageServer) Handle(
 	ctx context.Context,
 	conn *jsonrpc2.Conn,
@@ -429,7 +431,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 	}
 }
 
-func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
+func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:maintidx
 	// note, in this function conn.Call is used as the workspace/applyEdit message is a request, not a notification
 	// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
 	// receive responses too.
@@ -474,6 +476,34 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 					params,
 				)
+			case "regal.fix.directory-package-mismatch":
+				var renameParams types.ApplyWorkspaceRenameEditParams
+
+				fileURL, ok := params.Arguments[0].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+
+					break
+				}
+
+				renameParams, err = l.fixRenameParams(
+					"Rename file to match package path",
+					&fixes.DirectoryPackageMismatch{DryRun: true},
+					fileURL,
+				)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to fix directory package mismatch: %w", err))
+
+					break
+				}
+
+				// handle this ourselves as it's a rename and not a content edit
+				fixed = false
+
+				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
+				if err != nil {
+					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
 			case "regal.eval":
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
@@ -526,8 +556,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				// if there are none, then it's a package evaluation
 				ruleHeadLocations := allRuleHeadLocations[path]
 
-				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
-				_, input := rio.FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
+				_, input := rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
 
 				result, err := l.EvalWorkspacePath(ctx, path, input)
 				if err != nil {
@@ -571,7 +600,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 						l.logError(fmt.Errorf("regal/showEvalResult failed: %v", err.Error()))
 					}
 				} else {
-					output := filepath.Join(workspacePath, "output.json")
+					output := filepath.Join(l.workspacePath(), "output.json")
 
 					var f *os.File
 
@@ -741,6 +770,64 @@ func (l *LanguageServer) fixEditParams(
 	}
 
 	return true, editParams, nil
+}
+
+func (l *LanguageServer) fixRenameParams(
+	label string,
+	fix fixes.Fix,
+	fileURL string,
+) (types.ApplyWorkspaceRenameEditParams, error) {
+	contents, ok := l.cache.GetFileContents(fileURL)
+	if !ok {
+		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to get module for file %q", fileURL)
+	}
+
+	roots, err := config.GetPotentialRoots(l.workspacePath())
+	if err != nil {
+		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to get potential roots: %w", err)
+	}
+
+	fmt.Fprintf(os.Stderr, "potential roots: %v\n", roots)
+
+	file := uri.ToPath(l.clientIdentifier, fileURL)
+	baseDir := util.FindClosestMatchingRoot(file, roots)
+
+	fmt.Fprintf(os.Stderr, "base dir: %v\n", baseDir)
+
+	results, err := fix.Fix(
+		&fixes.FixCandidate{
+			Filename: file,
+			Contents: []byte(contents),
+		},
+		&fixes.RuntimeOptions{
+			Config:  l.loadedConfig,
+			BaseDir: baseDir,
+		},
+	)
+	if err != nil {
+		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed attempted fix: %w", err)
+	}
+
+	result := results[0]
+
+	renameEdit := types.WorkspaceRenameEdit{
+		DocumentChanges: []types.RenameFile{
+			{
+				Kind:   "rename",
+				OldURI: uri.FromPath(l.clientIdentifier, result.Rename.FromPath),
+				NewURI: uri.FromPath(l.clientIdentifier, result.Rename.ToPath),
+				Options: &types.RenameFileOptions{
+					Overwrite:      false,
+					IgnoreIfExists: false,
+				},
+			},
+		},
+	}
+
+	return types.ApplyWorkspaceRenameEditParams{
+		Label: label,
+		Edit:  renameEdit,
+	}, nil
 }
 
 // processTextContentUpdate updates the cache with the new content for the file at the given URI, attempts to parse the
@@ -983,7 +1070,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 				IsPreferred: &yes,
 				Command:     FmtV1Command([]string{params.TextDocument.URI}),
 			})
-		case "use-assignment-operator":
+		case ruleNameUseAssignmentOperator:
 			actions = append(actions, types.CodeAction{
 				Title:       "Replace = with := in assignment",
 				Kind:        "quickfix",
@@ -995,7 +1082,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
 				}),
 			})
-		case "no-whitespace-comment":
+		case ruleNameNoWhitespaceComment:
 			actions = append(actions, types.CodeAction{
 				Title:       "Format comment to have leading whitespace",
 				Kind:        "quickfix",
@@ -1005,6 +1092,16 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 					params.TextDocument.URI,
 					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
 					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
+				}),
+			})
+		case ruleNameDirectoryPackageMismatch:
+			actions = append(actions, types.CodeAction{
+				Title:       "Move file so that directory structure mirrors package path",
+				Kind:        "quickfix",
+				Diagnostics: []types.Diagnostic{diag},
+				IsPreferred: &yes,
+				Command: DirectoryStructureMismatchCommand([]string{
+					params.TextDocument.URI,
 				}),
 			})
 		}
@@ -1590,7 +1687,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		}
 
 		f := fixer.NewFixer()
-		f.RegisterFixes(fixes.NewDefaultFixes()...)
+		f.RegisterFixes(fixes.NewDefaultFormatterFixes()...)
 		f.RegisterMandatoryFixes(
 			&fixes.Fmt{
 				NameOverride: "use-rego-v1",
@@ -1599,6 +1696,15 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 				},
 			},
 		)
+
+		if roots, err := config.GetPotentialRoots(
+			l.workspacePath(),
+			uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
+		); err == nil {
+			f.RegisterRoots(roots...)
+		} else {
+			return nil, fmt.Errorf("could not find potential roots: %w", err)
+		}
 
 		li := linter.NewLinter().
 			WithInputModules(&input)
@@ -1832,6 +1938,7 @@ func (l *LanguageServer) handleInitialize(
 					"regal.fix.use-rego-v1",
 					"regal.fix.use-assignment-operator",
 					"regal.fix.no-whitespace-comment",
+					"regal.fix.directory-package-mismatch",
 				},
 			},
 			DocumentFormattingProvider: true,
@@ -1850,7 +1957,7 @@ func (l *LanguageServer) handleInitialize(
 	}
 
 	if l.workspaceRootURI != "" {
-		workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+		workspaceRootPath := l.workspacePath()
 
 		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{
 			WorkspacePath: workspaceRootPath,
@@ -1874,23 +1981,13 @@ func (l *LanguageServer) handleInitialize(
 }
 
 func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) ([]string, error) {
-	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+	workspaceRootPath := l.workspacePath()
 
 	changedOrNewURIs := make([]string, 0)
 
-	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("failed to walk workspace dir %q: %w", path, err)
-		}
-
-		// These directories often have thousands of items we don't care about,
-		// so don't even traverse them.
-		if d.IsDir() && (d.Name() == ".git" || d.Name() == ".idea" || d.Name() == "node_modules") {
-			return filepath.SkipDir
-		}
-
+	if err := rio.WalkFiles(workspaceRootPath, func(path string) error {
 		// TODO(charlieegan3): make this configurable for things like .rq etc?
-		if d.IsDir() || !strings.HasSuffix(path, ".rego") {
+		if !strings.HasSuffix(path, ".rego") {
 			return nil
 		}
 
@@ -1924,8 +2021,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 		changedOrNewURIs = append(changedOrNewURIs, fileURI)
 
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
@@ -2043,13 +2139,17 @@ func (l *LanguageServer) ignoreURI(fileURI string) bool {
 		[]string{uri.ToPath(l.clientIdentifier, fileURI)},
 		l.loadedConfig.Ignore.Files,
 		false,
-		uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
+		l.workspacePath(),
 	)
 	if err != nil || len(paths) == 0 {
 		return true
 	}
 
 	return false
+}
+
+func (l *LanguageServer) workspacePath() string {
+	return uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
 }
 
 func positionToOffset(text string, p types.Position) int {

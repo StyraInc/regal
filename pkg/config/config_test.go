@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -12,6 +13,7 @@ import (
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/testutil"
+	"github.com/styrainc/regal/internal/util"
 )
 
 const levelError = "error"
@@ -77,6 +79,41 @@ func TestFindConfig(t *testing.T) {
 		_, err := FindConfig(path)
 		if err == nil {
 			t.Errorf("expected no config file to be found")
+		}
+	})
+}
+
+func TestFindBundleRootDirectories(t *testing.T) {
+	t.Parallel()
+
+	cfg := `
+project:
+  roots:
+  - foo/bar
+  - baz
+`
+
+	fs := map[string]string{
+		"/.regal/config.yaml":      cfg, // root from config
+		"/bundle/.manifest":        "",  // bundle from .manifest
+		"/foo/bar/baz/policy.rego": "",  // foo/bar from config
+		"/baz":                     "",  // baz from config
+	}
+
+	test.WithTempFS(fs, func(root string) {
+		locations, err := FindBundleRootDirectories(root)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if len(locations) != 4 {
+			t.Errorf("expected 4 locations, got %d", len(locations))
+		}
+
+		expected := util.Map(util.FilepathJoiner(root), []string{"", "baz", "bundle", "foo/bar"})
+
+		if !slices.Equal(expected, locations) {
+			t.Errorf("expected %v, got %v", expected, locations)
 		}
 	})
 }

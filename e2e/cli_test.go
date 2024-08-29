@@ -778,6 +778,7 @@ func TestFix(t *testing.T) {
 	stderr := bytes.Buffer{}
 	td := t.TempDir()
 
+	// note the package name, and how it will be used to move the file to a corresponding directory
 	unformattedContents := []byte(`package wow
 
 import rego.v1
@@ -788,26 +789,22 @@ allow if {
 	true
 }
 `)
-	err := os.WriteFile(filepath.Join(td, "main.rego"), unformattedContents, 0o644)
-	if err != nil {
-		t.Fatalf("failed to write main.rego: %v", err)
-	}
-
 	unrelatedFileContents := []byte(`foobar`)
-	err = os.WriteFile(filepath.Join(td, "unrelated.txt"), unrelatedFileContents, 0o644)
-	if err != nil {
-		t.Fatalf("failed to write unrelated.txt: %v", err)
-	}
 
-	err = regal(&stdout, &stderr)("fix", td)
+	mustWriteToFile(t, filepath.Join(td, "main.rego"), string(unformattedContents))
+	mustWriteToFile(t, filepath.Join(td, "unrelated.txt"), string(unrelatedFileContents))
+
+	err := regal(&stdout, &stderr)("fix", td)
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`2 fixes applied:
-%s/main.rego:
-- no-whitespace-comment
+	exp := fmt.Sprintf(`3 fixes applied:
+In project root: %s
+main.rego -> wow/main.rego:
 - use-rego-v1
+- directory-package-mismatch
+- no-whitespace-comment
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -818,10 +815,10 @@ allow if {
 		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
 
-	// check that the file was formatted
-	bs, err := os.ReadFile(filepath.Join(td, "main.rego"))
+	// check that the (now moved) file was formatted
+	bs, err := os.ReadFile(filepath.Join(td, "wow/main.rego"))
 	if err != nil {
-		t.Fatalf("failed to read main.rego: %v", err)
+		t.Fatalf("failed to read wow/main.rego: %v", err)
 	}
 
 	expectedContent := `package wow
@@ -903,5 +900,14 @@ func expectExitCode(t *testing.T, err error, exp int, stdout *bytes.Buffer, stde
 	if act := ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s",
 			exp, act, stdout.String(), stderr.String())
+	}
+}
+
+func mustWriteToFile(t *testing.T, path string, content string) {
+	t.Helper()
+
+	err := os.WriteFile(path, []byte(content), 0o644)
+	if err != nil {
+		t.Fatalf("failed to write to %s: %v", path, err)
 	}
 }

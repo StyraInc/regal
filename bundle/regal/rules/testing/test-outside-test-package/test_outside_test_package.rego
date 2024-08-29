@@ -8,9 +8,14 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	not endswith(ast.package_name, "_test")
+	not _is_test_package(ast.package_name)
 
 	some rule in ast.tests
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(rule.head))
 }
+
+_is_test_package(package_name) if endswith(package_name, "_test")
+
+# Styra DAS convention considered OK
+_is_test_package("test")

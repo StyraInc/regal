@@ -18,7 +18,13 @@ test_fail_test_outside_test_package if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/test-outside-test-package", "testing"),
 		}],
 		"title": "test-outside-test-package",
-		"location": {"col": 1, "file": "p_test.rego", "row": 5, "text": `test_foo if { false }`},
+		"location": {
+			"col": 1,
+			"file": "p_test.rego",
+			"row": 5,
+			"end": {"col": 9, "row": 5},
+			"text": `test_foo if { false }`,
+		},
 		"level": "error",
 	}}
 }

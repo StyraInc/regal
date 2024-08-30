@@ -275,7 +275,11 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 }
 
 func (s *state) start() error {
-	return s.session.ResumeAll()
+	if err := s.session.ResumeAll(); err != nil {
+		return fmt.Errorf("failed to start debug session: %w", err)
+	}
+
+	return nil
 }
 
 func (*state) evaluate(_ *godap.EvaluateRequest) (*godap.EvaluateResponse, error) {

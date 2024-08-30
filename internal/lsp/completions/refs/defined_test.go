@@ -107,7 +107,6 @@ import rego.v1
 # title: An allow rule
 # description: A rule for things that should be allowed
 # scope: rule
-# entrypoint: true
 default allow := false
 
 allow if input.foo

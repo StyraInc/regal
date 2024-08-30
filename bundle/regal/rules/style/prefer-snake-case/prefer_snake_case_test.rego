@@ -164,7 +164,6 @@ test_success_snake_cased_every if {
 	r == set()
 }
 
-# https://github.com/open-policy-agent/opa/issues/6860
 test_fail_location_provided_even_when_not_in_ref if {
 	r := rule.report with input as ast.with_rego_v1(`foo.Bar := true`)
 	r == expected_with_locations([{

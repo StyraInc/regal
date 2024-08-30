@@ -3,6 +3,7 @@ package regal.ast
 import rego.v1
 
 import data.regal.config
+import data.regal.util
 
 scalar_types := {"boolean", "null", "number", "string"}
 
@@ -63,34 +64,6 @@ _is_name(ref, pos) if {
 }
 
 # METADATA
-# description: |
-#   answers if the body was generated or not, i.e. not seen
-#   in the original Rego file — for example `x := 1`
-# scope: document
-
-# METADATA
-# description: covers case of allow := true, which expands to allow = true { true }
-generated_body(rule) if rule.body[0].location == rule.head.value.location
-
-# METADATA
-# description: covers case of default rules
-generated_body(rule) if rule["default"] == true
-
-# METADATA
-# description: covers case of rule["message"] or rule contains "message"
-generated_body(rule) if {
-	rule.body[0].location.row == rule.head.key.location.row
-
-	# this is a quirk in the AST — the generated body will have a location
-	# set before the key, i.e. "message"
-	rule.body[0].location.col < rule.head.key.location.col
-}
-
-# METADATA
-# description: covers case of f("x")
-generated_body(rule) if rule.body[0].location == rule.head.location
-
-# METADATA
 # description: all the rules (excluding functions) in the input AST
 rules := [rule |
 	some rule in input.rules
@@ -122,7 +95,7 @@ function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 rule_and_function_names contains ref_to_string(rule.head.ref) if some rule in input.rules
 
 # METADATA
-# description: all identifers in the input AST (rule and functiin names, plus imported names)
+# description: all identifiers in the input AST (rule and function names, plus imported names)
 identifiers := rule_and_function_names | imported_identifiers
 
 # METADATA
@@ -147,28 +120,22 @@ is_ref(value) if value.type == "ref"
 
 is_ref(value) if value[0].type == "ref"
 
-refs[rule_index] contains value if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
-
-	walk(rule, [_, value])
-
-	is_ref(value)
-}
+# METADATA
+# description: |
+#   returns an array of all rule indices, as strings. this will be needed until
+#   https://github.com/open-policy-agent/opa/issues/6736 is fixed
+rule_index_strings := [s |
+	some i, _ in _rules
+	s := sprintf("%d", [i])
+]
 
 # METADATA
 # description: |
 #   a map containing all function calls (built-in and custom) in the input AST
 #   keyed by rule index
 function_calls[rule_index] contains call if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
-
-	some ref in refs[rule_index]
+	some rule_index in rule_index_strings
+	some ref in found.refs[rule_index]
 
 	name := ref_to_string(ref[0].value)
 	args := [arg |
@@ -191,10 +158,9 @@ _exclude_arg(_, _, arg) if arg.type == "call"
 # ignore here, as it's covered elsewhere
 _exclude_arg("assign", 0, _)
 
-all_rules_refs contains refs[_][_]
+all_rules_refs contains found.refs[_][_]
 
 # METADATA
-# title: all_refs
 # description: set containing all references found in the input AST
 # scope: document
 all_refs contains value if some value in all_rules_refs
@@ -202,8 +168,7 @@ all_refs contains value if some value in all_rules_refs
 all_refs contains imported.path if some imported in input.imports
 
 # METADATA
-# title: ref_to_string
-# description:  returns the "path" string of any given ref value
+# description: returns the "path" string of any given ref value
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
 
 _ref_part_to_string(0, ref) := ref.value
@@ -215,27 +180,23 @@ _ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
 	i > 0
 }
 
+# METADATA
+# description: |
+#   returns the string representation of a ref up until its first
+#   non-static (i.e. variable) value, if any:
+#   foo.bar -> foo.bar
+#   foo.bar[baz] -> foo.bar
+ref_static_to_string(ref) := ss if {
+	rs := ref_to_string(ref)
+	ss := substring(rs, 0, indexof(rs, ".$"))
+}
+
 static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"
 }
 
 static_rule_ref(ref) if every t in array.slice(ref, 1, count(ref)) {
 	t.type != "var"
-}
-
-# METADATA
-# description: |
-#   return the name of a rule if, and only if it only has static parts with
-#   no vars. This could be "username", or "user.name", but not "user[name]"
-# scope: document
-static_rule_name(rule) := rule.head.ref[0].value if count(rule.head.ref) == 1
-
-static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [ref.value |
-	some i, ref in rule.head.ref
-	i > 0
-])) if {
-	count(rule.head.ref) > 1
-	static_rule_ref(rule.head.ref)
 }
 
 # METADATA
@@ -250,8 +211,6 @@ builtin_functions_called contains name if {
 		some part in value[0].value
 		value := part.value
 	])
-
-	name in builtin_names
 }
 
 # METADATA
@@ -287,8 +246,7 @@ function_ret_in_args(fn_name, terms) if {
 }
 
 # METADATA
-# description: |
-#   answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
+# description: answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
 # scope: document
 implicit_boolean_assignment(rule) if {
 	# note the missing location attribute here, which is how we distinguish
@@ -296,6 +254,10 @@ implicit_boolean_assignment(rule) if {
 	rule.head.value == {"type": "boolean", "value": true}
 }
 
+# or sometimes, like this...
+implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
+
+# or like this...
 implicit_boolean_assignment(rule) if {
 	# This handles the *quite* special case of
 	# `a.b if true`, which is "rewritten" to `a.b = true` *and*  where a location is still added to the value
@@ -310,6 +272,7 @@ implicit_boolean_assignment(rule) if {
 	# If you write Rego like that — you're not going to use Regal anyway, are you? ¯\_(ツ)_/¯
 	rule.head.value.type == "boolean"
 	rule.head.value.value == true
+
 	rule.head.value.location.col == 1
 }
 
@@ -342,8 +305,10 @@ negated_expressions[rule] contains value if {
 #       input.baz
 #   }
 is_chained_rule_body(rule, lines) if {
-	row_text := lines[rule.head.location.row - 1]
-	col_text := substring(row_text, rule.head.location.col - 1, -1)
+	head_loc := util.to_location_object(rule.head.location)
+
+	row_text := lines[head_loc.row - 1]
+	col_text := substring(row_text, head_loc.col - 1, -1)
 
 	startswith(col_text, "{")
 }

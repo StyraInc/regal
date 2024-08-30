@@ -1,4 +1,4 @@
-package first
+package ignore_directive
 
 import rego.v1
 

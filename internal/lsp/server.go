@@ -3,7 +3,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
@@ -22,7 +22,9 @@ import (
 	"github.com/open-policy-agent/opa/storage"
 
 	"github.com/styrainc/regal/bundle"
+	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/commands"
@@ -32,12 +34,15 @@ import (
 	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/fixer"
+	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/version"
@@ -86,8 +91,11 @@ type LanguageServer struct {
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
 
-	cache     *cache.Cache
-	regoStore storage.Store
+	clientInitializationOptions types.InitializationOptions
+
+	cache       *cache.Cache
+	regoStore   storage.Store
+	bundleCache *bundles.Cache
 
 	completionsManager *completions.Manager
 
@@ -105,6 +113,7 @@ type fileUpdateEvent struct {
 	Content string
 }
 
+//nolint:gocyclo
 func (l *LanguageServer) Handle(
 	ctx context.Context,
 	conn *jsonrpc2.Conn,
@@ -144,6 +153,8 @@ func (l *LanguageServer) Handle(
 		return l.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/inlayHint":
 		return l.handleTextDocumentInlayHint(ctx, conn, req)
+	case "textDocument/codeLens":
+		return l.handleTextDocumentCodeLens(ctx, conn, req)
 	case "textDocument/completion":
 		return l.handleTextDocumentCompletion(ctx, conn, req)
 	case "workspace/didChangeWatchedFiles":
@@ -196,7 +207,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			return
 		case evt := <-l.diagnosticRequestFile:
 			// if file has been deleted, clear diagnostics in the client
-			if evt.Reason == "textDocument/didDelete" {
+			if evt.Reason == "textDocument/didDelete" ||
+				evt.Reason == "internal/workspaceStateWorker/missingFile" {
 				err := l.sendFileDiagnostics(ctx, evt.URI)
 				if err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
@@ -269,7 +281,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		case evt := <-l.builtinsPositionFile:
 			err := l.processHoverContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to process builtin positions update: %w", err))
+				l.logError(fmt.Errorf("failed to process builtin and keyword positions update: %w", err))
 			}
 		}
 	}
@@ -320,12 +332,32 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			// if the config is now blank, then we need to clear it
 			l.loadedConfigLock.Lock()
+
 			if errors.Is(err, io.EOF) {
 				l.loadedConfig = nil
 			} else {
 				l.loadedConfig = &mergedConfig
 			}
+
 			l.loadedConfigLock.Unlock()
+
+			// Capabilities URL may have changed, so we should
+			// reload it.
+			capsURL := l.loadedConfig.CapabilitiesURL
+
+			if capsURL == "" {
+				// This can happen if we have an empty config.
+				capsURL = "regal:///capabilities/default"
+			}
+
+			caps, err := capabilities.Lookup(ctx, capsURL)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
+
+				return
+			}
+
+			rego.UpdateBuiltins(caps)
 
 			// the config may now ignore files that existed in the cache before,
 			// in which case we need to remove them to stop their contents being
@@ -349,7 +381,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				}
 			}
 
-			// when a file is 'unignored', we move it's contents to the
+			// when a file is 'unignored', we move its contents to the
 			// standard file list if missing
 			for k, v := range l.cache.GetAllIgnoredFiles() {
 				if l.ignoreURI(k) {
@@ -361,7 +393,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				if !ok {
 					l.cache.SetFileContents(k, v)
 
-					// updating the parse here will enable things like go-to defn
+					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
 					_, err = updateParse(ctx, l.cache, l.regoStore, k)
@@ -442,10 +474,144 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 					params,
 				)
+			case "regal.eval":
+				if len(params.Arguments) != 3 {
+					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
+
+					break
+				}
+
+				file, ok := params.Arguments[0].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+
+					break
+				}
+
+				path, ok := params.Arguments[1].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected second argument to be a string, got %T", params.Arguments[1]))
+
+					break
+				}
+
+				line, ok := params.Arguments[2].(float64)
+				if !ok {
+					l.logError(fmt.Errorf("expected third argument to be a number, got %T", params.Arguments[2]))
+
+					break
+				}
+
+				currentModule, ok := l.cache.GetModule(file)
+				if !ok {
+					l.logError(fmt.Errorf("failed to get module for file %q", file))
+
+					break
+				}
+
+				currentContents, ok := l.cache.GetFileContents(file)
+				if !ok {
+					l.logError(fmt.Errorf("failed to get contents for file %q", file))
+
+					break
+				}
+
+				allRuleHeadLocations, err := rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to get rule head locations: %w", err))
+
+					break
+				}
+
+				// if there are none, then it's a package evaluation
+				ruleHeadLocations := allRuleHeadLocations[path]
+
+				workspacePath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+				_, input := rio.FindInput(uri.ToPath(l.clientIdentifier, file), workspacePath)
+
+				result, err := l.EvalWorkspacePath(ctx, path, input)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
+
+					cleanedMessage := strings.Replace(err.Error(), l.workspaceRootURI+"/", "", 1)
+
+					err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+						Type:    1, // error
+						Message: cleanedMessage,
+					})
+					if err != nil {
+						l.logError(fmt.Errorf("failed to notify client of eval error: %w", err))
+
+						break
+					}
+
+					break
+				}
+
+				target := "package"
+				if len(ruleHeadLocations) > 0 {
+					target = strings.TrimPrefix(path, currentModule.Package.Path.String()+".")
+				}
+
+				if l.clientIdentifier == clients.IdentifierVSCode {
+					responseParams := map[string]any{
+						"result": result,
+						"line":   line,
+						"target": target,
+						// only used when the target is 'package'
+						"package": strings.TrimPrefix(currentModule.Package.Path.String(), "data."),
+						// only used when the target is a rule
+						"rule_head_locations": ruleHeadLocations,
+					}
+
+					responseResult := map[string]any{}
+
+					err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
+					if err != nil {
+						l.logError(fmt.Errorf("regal/showEvalResult failed: %v", err.Error()))
+					}
+				} else {
+					output := filepath.Join(workspacePath, "output.json")
+
+					var f *os.File
+
+					f, err = os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
+
+					if err == nil {
+						var jsonVal []byte
+
+						value := result.Value
+						if result.IsUndefined {
+							// Display undefined as an empty object
+							// we could also go with "<undefined>" or similar
+							value = make(map[string]any)
+						}
+
+						json := encoding.JSON()
+
+						jsonVal, err = json.MarshalIndent(value, "", "  ")
+						if err == nil {
+							// staticcheck thinks err here is never used, but I think that's false?
+							_, err = f.Write(jsonVal) //nolint:staticcheck
+						}
+
+						f.Close()
+					}
+				}
 			}
 
 			if err != nil {
 				l.logError(err)
+
+				err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+					Type:    1, // error
+					Message: err.Error(),
+				})
+				if err != nil {
+					l.logError(fmt.Errorf("failed to notify client of command error: %w", err))
+
+					break
+				}
 
 				break
 			}
@@ -454,6 +620,72 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil)
 				if err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
+			}
+		}
+	}
+}
+
+// StartWorkspaceStateWorker will poll for changes to the workspaces state that
+// are not sent from the client. For example, when a file a is removed from the
+// workspace after changing branch.
+func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
+	timer := time.NewTicker(2 * time.Second)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			// first clear files that are missing from the workspaceDir
+			for fileURI := range l.cache.GetAllFiles() {
+				filePath := uri.ToPath(l.clientIdentifier, fileURI)
+
+				_, err := os.Stat(filePath)
+				if !os.IsNotExist(err) {
+					// if the file is not missing, we have no work to do
+					continue
+				}
+
+				// if the diagnostics for the file are empty, or missing
+				// then we do not need to send anything to the client and can
+				// remove the file from the cache.
+				diagnostics, ok := l.cache.GetFileDiagnostics(fileURI)
+				if !ok || len(diagnostics) == 0 {
+					l.cache.Delete(fileURI)
+
+					continue
+				}
+
+				// if there are diagnostics, we need to clear them and send a
+				// notification to the client.
+				l.cache.SetFileDiagnostics(fileURI, []types.Diagnostic{})
+				l.diagnosticRequestFile <- fileUpdateEvent{
+					URI:    fileURI,
+					Reason: "internal/workspaceStateWorker/missingFile",
+				}
+			}
+
+			// for this next operation, the workspace root must be set as it's
+			// used to scan for new files.
+			if l.workspaceRootURI == "" {
+				continue
+			}
+
+			// next, check if there are any new files that are not ignored and
+			// need to be loaded. We get new only so that files being worked
+			// on are not loaded from disk during editing.
+			changedOrNewURIs, err := l.loadWorkspaceContents(ctx, true)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to refresh workspace contents: %w", err))
+
+				continue
+			}
+
+			for _, cnURI := range changedOrNewURIs {
+				l.diagnosticRequestFile <- fileUpdateEvent{
+					URI:    cnURI,
+					Reason: "internal/workspaceStateWorker/changedOrNewFile",
 				}
 			}
 		}
@@ -547,6 +779,8 @@ func (l *LanguageServer) processTextContentUpdate(
 	return false, nil
 }
 
+// processHoverContentUpdate updates information about built in, and keyword
+// positions in the cache for use when handling hover requests.
 func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI string, content string) error {
 	if l.ignoreURI(fileURI) {
 		return nil
@@ -600,6 +834,9 @@ func (l *LanguageServer) handleTextDocumentHover(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentHoverParams
+
+	json := encoding.JSON()
+
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -676,10 +913,8 @@ func (l *LanguageServer) handleTextDocumentHover(
 	}
 
 	keywordsOnLine, ok := l.cache.GetKeywordLocations(params.TextDocument.URI)
-	// when no keywords are found, we can't return a useful hover response.
 	if !ok {
-		l.logError(fmt.Errorf("could not get keywords for uri %q", params.TextDocument.URI))
-
+		// when no keywords are found, we can't return a useful hover response.
 		// return "null" as per the spec
 		return nil, nil
 	}
@@ -719,7 +954,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.CodeActionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -800,7 +1035,8 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.ExecuteCommandParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -820,7 +1056,8 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentInlayHintParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -853,14 +1090,101 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 	return inlayHints, nil
 }
 
+func (l *LanguageServer) handleTextDocumentCodeLens(
+	_ context.Context,
+	_ *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result any, err error) {
+	var params types.CodeLensParams
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	module, ok := l.cache.GetModule(params.TextDocument.URI)
+	if !ok {
+		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
+
+		// return a null response, as per the spec
+		return nil, nil
+	}
+
+	codeLenses := make([]types.CodeLens, 0)
+
+	// Package
+
+	pkgLens := types.CodeLens{
+		Range: locationToRange(module.Package.Location),
+		Command: &types.Command{
+			Title:   "Evaluate",
+			Command: "regal.eval",
+			Arguments: &[]any{
+				module.Package.Location.File,
+				module.Package.Path.String(),
+				module.Package.Location.Row,
+			},
+		},
+	}
+
+	codeLenses = append(codeLenses, pkgLens)
+
+	// Rules
+
+	for _, rule := range module.Rules {
+		if rule.Head.Args != nil {
+			// Skip functions for now, as it's not clear how to best
+			// provide inputs for them.
+			continue
+		}
+
+		ruleLens := types.CodeLens{
+			Range: locationToRange(rule.Location),
+			Command: &types.Command{
+				Title:   "Evaluate",
+				Command: "regal.eval",
+				Arguments: &[]any{
+					module.Package.Location.File,
+					module.Package.Path.String() + "." + getRuleName(rule),
+					rule.Head.Location.Row,
+				},
+			},
+		}
+
+		codeLenses = append(codeLenses, ruleLens)
+	}
+
+	return codeLenses, nil
+}
+
+func getRuleName(rule *ast.Rule) string {
+	result := rule.Head.Ref().String()
+
+	// only evaluate the top level rule name if there are refs
+	// e.g. my[foo].bar -> my
+	//      bar.bar.bar -> bar.bar.bar
+	if i := strings.Index(result, "["); i > 0 {
+		return result[:i]
+	}
+
+	return result
+}
+
 func (l *LanguageServer) handleTextDocumentCompletion(
 	_ context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (any, error) {
 	var params types.CompletionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
+	}
+
+	// when config ignores a file, then we return an empty completion list
+	// as a no-op.
+	if l.ignoreURI(params.TextDocument.URI) {
+		return types.CompletionList{
+			IsIncomplete: false,
+			Items:        []types.CompletionItem{},
+		}, nil
 	}
 
 	// items is allocated here so that the return value is always a non-nil CompletionList
@@ -923,7 +1247,7 @@ func (l *LanguageServer) handleWorkspaceSymbol(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceSymbolParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -954,7 +1278,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DefinitionParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1010,7 +1334,7 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidOpenParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1044,7 +1368,7 @@ func (l *LanguageServer) handleTextDocumentDidClose(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidCloseParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1063,7 +1387,7 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidChangeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1100,7 +1424,7 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.TextDocumentDidSaveParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1150,7 +1474,7 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DocumentSymbolParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1181,7 +1505,7 @@ func (l *LanguageServer) handleTextDocumentFoldingRange(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.FoldingRangeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1199,17 +1523,13 @@ func (l *LanguageServer) handleTextDocumentFoldingRange(
 }
 
 func (l *LanguageServer) handleTextDocumentFormatting(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.DocumentFormattingParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
-	}
-
-	if warnings := validateFormattingOptions(params.Options); len(warnings) > 0 {
-		l.logError(fmt.Errorf("formatting params validation warnings: %v", warnings))
 	}
 
 	var oldContent string
@@ -1227,24 +1547,84 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
-	f := &fixes.Fmt{OPAFmtOpts: format.Opts{}}
+	formatter := "opa-fmt"
 
-	fixResults, err := f.Fix(&fixes.FixCandidate{
-		Filename: filepath.Base(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)),
-		Contents: []byte(oldContent),
-	}, nil)
-	if err != nil {
-		l.logError(fmt.Errorf("failed to format file: %w", err))
-
-		// return "null" as per the spec
-		return nil, nil
+	if l.clientInitializationOptions.Formatter != nil {
+		formatter = *l.clientInitializationOptions.Formatter
 	}
 
-	if len(fixResults) == 0 {
-		return []types.TextEdit{}, nil
+	var newContent []byte
+
+	switch formatter {
+	case "opa-fmt", "opa-fmt-rego-v1":
+		opts := format.Opts{}
+		if formatter == "opa-fmt-rego-v1" {
+			opts.RegoVersion = ast.RegoV0CompatV1
+		}
+
+		f := &fixes.Fmt{OPAFmtOpts: opts}
+		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
+
+		fixResults, err := f.Fix(&fixes.FixCandidate{Filename: filepath.Base(p), Contents: []byte(oldContent)}, nil)
+		if err != nil {
+			l.logError(fmt.Errorf("failed to format file: %w", err))
+
+			// return "null" as per the spec
+			return nil, nil
+		}
+
+		if len(fixResults) == 0 {
+			return []types.TextEdit{}, nil
+		}
+
+		newContent = fixResults[0].Contents
+	case "regal-fix":
+		// set up an in-memory file provider to pass to the fixer for this one file
+		memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
+			params.TextDocument.URI: []byte(oldContent),
+		})
+
+		input, err := memfp.ToInput()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create fixer input: %w", err)
+		}
+
+		f := fixer.NewFixer()
+		f.RegisterFixes(fixes.NewDefaultFixes()...)
+		f.RegisterMandatoryFixes(
+			&fixes.Fmt{
+				NameOverride: "use-rego-v1",
+				OPAFmtOpts: format.Opts{
+					RegoVersion: ast.RegoV0CompatV1,
+				},
+			},
+		)
+
+		li := linter.NewLinter().
+			WithInputModules(&input)
+
+		if l.loadedConfig != nil {
+			li = li.WithUserConfig(*l.loadedConfig)
+		}
+
+		fixReport, err := f.Fix(ctx, &li, memfp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to format: %w", err)
+		}
+
+		if fixReport.TotalFixes() == 0 {
+			return []types.TextEdit{}, nil
+		}
+
+		newContent, err = memfp.GetFile(params.TextDocument.URI)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get formatted contents: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unrecognized formatter %q", formatter)
 	}
 
-	return ComputeEdits(oldContent, string(fixResults[0].Contents)), nil
+	return ComputeEdits(oldContent, string(newContent)), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(
@@ -1253,7 +1633,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidCreateFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1262,7 +1642,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	}
 
 	for _, createOp := range params.Files {
-		_, err = cache.UpdateCacheForURIFromDisk(
+		_, _, err = cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, createOp.URI),
 			uri.ToPath(l.clientIdentifier, createOp.URI),
@@ -1289,7 +1669,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidDeleteFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1317,7 +1697,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.WorkspaceDidRenameFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
@@ -1326,7 +1706,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			continue
 		}
 
-		content, err := cache.UpdateCacheForURIFromDisk(
+		_, content, err := cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
 			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
@@ -1381,13 +1761,16 @@ func (l *LanguageServer) handleInitialize(
 	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
-) (result any, err error) {
+) (any, error) {
 	var params types.InitializeParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	l.workspaceRootURI = params.RootURI
+	// params.RootURI is not expected to have a trailing slash, but if one is
+	// present it will be removed for consistency.
+	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, string(os.PathSeparator))
+
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
@@ -1397,6 +1780,10 @@ func (l *LanguageServer) handleInitialize(
 		)
 	}
 
+	if params.InitializationOptions != nil {
+		l.clientInitializationOptions = *params.InitializationOptions
+	}
+
 	regoFilter := types.FileOperationFilter{
 		Scheme: "file",
 		Pattern: types.FileOperationPattern{
@@ -1404,7 +1791,7 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
-	result = types.InitializeResult{
+	initializeResult := types.InitializeResult{
 		Capabilities: types.ServerCapabilities{
 			TextDocumentSyncOptions: types.TextDocumentSyncOptions{
 				OpenClose: true,
@@ -1440,6 +1827,7 @@ func (l *LanguageServer) handleInitialize(
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
+					"regal.eval",
 					"regal.fix.opa-fmt",
 					"regal.fix.use-rego-v1",
 					"regal.fix.use-assignment-operator",
@@ -1457,16 +1845,24 @@ func (l *LanguageServer) handleInitialize(
 					LabelDetailsSupport: true,
 				},
 			},
+			CodeLensProvider: &types.CodeLensOptions{},
 		},
 	}
 
 	if l.workspaceRootURI != "" {
-		configFile, err := config.FindConfig(uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
+		workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+
+		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{
+			WorkspacePath: workspaceRootPath,
+			ErrorLog:      l.errorLog,
+		})
+
+		configFile, err := config.FindConfig(workspaceRootPath)
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())
 		}
 
-		err = l.loadWorkspaceContents(ctx)
+		_, err = l.loadWorkspaceContents(ctx, false)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
@@ -1474,15 +1870,23 @@ func (l *LanguageServer) handleInitialize(
 		l.diagnosticRequestWorkspace <- "server initialize"
 	}
 
-	return result, nil
+	return initializeResult, nil
 }
 
-func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
+func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) ([]string, error) {
 	workspaceRootPath := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+
+	changedOrNewURIs := make([]string, 0)
 
 	err := filepath.WalkDir(workspaceRootPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("failed to walk workspace dir %q: %w", path, err)
+		}
+
+		// These directories often have thousands of items we don't care about,
+		// so don't even traverse them.
+		if d.IsDir() && (d.Name() == ".git" || d.Name() == ".idea" || d.Name() == "node_modules") {
+			return filepath.SkipDir
 		}
 
 		// TODO(charlieegan3): make this configurable for things like .rq etc?
@@ -1496,9 +1900,20 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 			return nil
 		}
 
-		_, err = cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
+		// if the caller has requested only new files, then we can exit early
+		if _, ok := l.cache.GetModule(fileURI); newOnly && ok {
+			return nil
+		}
+
+		changed, _, err := cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
 			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
+		}
+
+		// there is no need to update the parse if the file contents
+		// was not changed in the above operation.
+		if !changed {
+			return nil
 		}
 
 		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI)
@@ -1506,13 +1921,22 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context) error {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
 
+		changedOrNewURIs = append(changedOrNewURIs, fileURI)
+
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
-	return nil
+	if l.bundleCache != nil {
+		_, err := l.bundleCache.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
+		}
+	}
+
+	return changedOrNewURIs, nil
 }
 
 func (l *LanguageServer) handleInitialized(
@@ -1550,7 +1974,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	}
 
 	var params types.WorkspaceDidChangeWatchedFilesParams
-	if err := json.Unmarshal(*req.Params, &params); err != nil {
+	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 

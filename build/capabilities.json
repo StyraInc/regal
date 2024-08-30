@@ -1810,7 +1810,7 @@
           }
         ],
         "result": {
-          "description": "deseralized from `x`",
+          "description": "deserialized from `x`",
           "name": "y",
           "type": "string"
         },
@@ -3089,7 +3089,7 @@
           }
         ],
         "result": {
-          "description": "the term deseralized from `x`",
+          "description": "the term deserialized from `x`",
           "name": "y",
           "type": "any"
         },
@@ -4187,7 +4187,7 @@
     },
     {
       "name": "product",
-      "description": "Muliplies elements of an array or set of numbers",
+      "description": "Multiplies elements of an array or set of numbers",
       "categories": [
         "aggregates"
       ],
@@ -4274,7 +4274,7 @@
     },
     {
       "name": "rand.intn",
-      "description": "Returns a random integer between `0` and `n` (`n` exlusive). If `n` is `0`, then `y` is always `0`. For any given argument pair (`str`, `n`), the output will be consistent throughout a query evaluation.",
+      "description": "Returns a random integer between `0` and `n` (`n` exclusive). If `n` is `0`, then `y` is always `0`. For any given argument pair (`str`, `n`), the output will be consistent throughout a query evaluation.",
       "categories": [
         "numbers"
       ],
@@ -4794,7 +4794,7 @@
           }
         ],
         "result": {
-          "description": "splitted parts",
+          "description": "split parts",
           "dynamic": {
             "type": "string"
           },
@@ -4979,6 +4979,33 @@
           "description": "result of the suffix check",
           "name": "result",
           "type": "boolean"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "strings.count",
+      "description": "Returns the number of non-overlapping instances of a substring in a string.",
+      "categories": [
+        "strings"
+      ],
+      "decl": {
+        "args": [
+          {
+            "description": "string to search in",
+            "name": "search",
+            "type": "string"
+          },
+          {
+            "description": "substring to look for",
+            "name": "substring",
+            "type": "string"
+          }
+        ],
+        "result": {
+          "description": "count of occurrences, `0` if not found",
+          "name": "output",
+          "type": "number"
         },
         "type": "function"
       }
@@ -5575,7 +5602,7 @@
     },
     {
       "name": "trim_left",
-      "description": "Returns `value` with all leading instances of the `cutset` chartacters removed.",
+      "description": "Returns `value` with all leading instances of the `cutset` characters removed.",
       "categories": [
         "strings"
       ],
@@ -5629,7 +5656,7 @@
     },
     {
       "name": "trim_right",
-      "description": "Returns `value` with all trailing instances of the `cutset` chartacters removed.",
+      "description": "Returns `value` with all trailing instances of the `cutset` characters removed.",
       "categories": [
         "strings"
       ],
@@ -6073,7 +6100,7 @@
           }
         ],
         "result": {
-          "description": "the term deseralized from `x`",
+          "description": "the term deserialized from `x`",
           "name": "y",
           "type": "any"
         },

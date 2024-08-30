@@ -49,6 +49,7 @@ type testCommandParams struct {
 	runRegex     string
 	count        int
 	skipExitZero bool
+	varValues    bool
 }
 
 func newTestCommandParams() *testCommandParams {
@@ -167,7 +168,8 @@ func opaTest(args []string) int {
 		WithEnablePrintStatements(!testParams.benchmark).
 		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
-		WithModuleLoader(moduleLoader(regalBundle))
+		WithModuleLoader(moduleLoader(regalBundle)).
+		WithRewriteTestRules(testParams.varValues)
 
 	if testParams.threshold > 0 && !testParams.coverage {
 		testParams.coverage = true
@@ -192,6 +194,7 @@ func opaTest(args []string) int {
 		SetCompiler(compiler).
 		SetStore(store).
 		CapturePrintOutput(true).
+		EnableTracing(testParams.verbose || testParams.varValues).
 		SetCoverageQueryTracer(coverTracer).
 		SetRuntime(Runtime()).
 		SetModules(modules).
@@ -256,6 +259,8 @@ func testReporter(cov *cover.Cover, modules map[string]*ast.Module) tester.Repor
 				BenchmarkResults:         testParams.benchmark,
 				BenchMarkShowAllocations: testParams.benchMem,
 				BenchMarkGoBenchFormat:   goBench,
+				FailureLine:              testParams.varValues,
+				LocalVars:                testParams.varValues,
 			}
 		}
 	} else {
@@ -358,6 +363,8 @@ func init() {
 		"benchmark the unit tests")
 	testCommand.Flags().StringVarP(&testParams.runRegex, "run", "r", "",
 		"run only test cases matching the regular expression.")
+	testCommand.Flags().BoolVar(&testParams.varValues,
+		"var-values", false, "show local variable values in test output")
 
 	addPprofFlag(testCommand.Flags())
 	addBundleModeFlag(testCommand.Flags(), &testParams.bundleMode, false)

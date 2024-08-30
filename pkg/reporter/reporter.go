@@ -3,17 +3,22 @@ package reporter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/fatih/color"
+	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
 	"github.com/styrainc/regal/internal/novelty"
+	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/fixer"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -53,6 +58,12 @@ type SarifReporter struct {
 	out io.Writer
 }
 
+// JUnitReporter reports violations in the JUnit XML format
+// (https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd).
+type JUnitReporter struct {
+	out io.Writer
+}
+
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {
 	return PrettyReporter{out: out}
@@ -81,6 +92,11 @@ func NewFestiveReporter(out io.Writer) FestiveReporter {
 // NewSarifReporter creates a new SarifReporter.
 func NewSarifReporter(out io.Writer) SarifReporter {
 	return SarifReporter{out: out}
+}
+
+// NewJUnitReporter creates a new JUnitReporter.
+func NewJUnitReporter(out io.Writer) JUnitReporter {
+	return JUnitReporter{out: out}
 }
 
 // Publish prints a pretty report to the configured output.
@@ -136,6 +152,38 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	}
 
 	_, err := fmt.Fprint(tr.out, table+footer+"\n")
+	if err != nil {
+		return fmt.Errorf("failed to write report: %w", err)
+	}
+
+	f := fixer.NewFixer()
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
+
+	fixableViolations := make(map[string]struct{})
+	fixableViolationsCount := 0
+
+	for _, violation := range r.Violations {
+		if fix, ok := f.GetFixForName(violation.Title); ok {
+			if _, ok := fixableViolations[fix.Name()]; !ok {
+				fixableViolations[fix.Name()] = struct{}{}
+			}
+
+			fixableViolationsCount++
+		}
+	}
+
+	if fixableViolationsCount > 0 {
+		_, err = fmt.Fprintf(
+			tr.out,
+			`
+Hint: %d/%d violations can be automatically fixed (%s)
+      Run regal fix --help for more details.
+`,
+			fixableViolationsCount,
+			r.Summary.NumViolations,
+			strings.Join(util.Keys(fixableViolations), ", "),
+		)
+	}
 
 	return err
 }
@@ -191,7 +239,11 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 		table.Append([]string{yellow("Location:"), cyan(violation.Location.String())})
 
 		if violation.Location.Text != nil {
-			table.Append([]string{yellow("Text:"), strings.TrimSpace(*violation.Location.Text)})
+			if len(*violation.Location.Text) > 117 {
+				table.Append([]string{yellow("Text:"), (*violation.Location.Text)[:117] + "..."})
+			} else {
+				table.Append([]string{yellow("Text:"), strings.TrimSpace(*violation.Location.Text)})
+			}
 		}
 
 		table.Append([]string{yellow("Documentation:"), cyan(getDocumentationURL(violation))})
@@ -245,7 +297,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 		r.Violations = []report.Violation{}
 	}
 
-	bs, err := json.MarshalIndent(r, "", "  ")
+	bs, err := encoding.JSON().MarshalIndent(r, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json marshalling of report failed: %w", err)
 	}
@@ -422,4 +474,50 @@ func getUniqueViolationURLs(violations []report.Violation) map[string]string {
 	}
 
 	return urls
+}
+
+// Publish prints a JUnit XML report to the configured output.
+func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
+	testSuites := junit.Testsuites{
+		Name: "regal",
+	}
+
+	// group by file & sort by file
+	files := make([]string, 0)
+	violationsPerFile := map[string][]report.Violation{}
+
+	for _, violation := range r.Violations {
+		files = append(files, violation.Location.File)
+		violationsPerFile[violation.Location.File] = append(violationsPerFile[violation.Location.File], violation)
+	}
+
+	sort.Strings(files)
+
+	for _, file := range files {
+		testsuite := junit.Testsuite{
+			Name: file,
+		}
+
+		for _, violation := range violationsPerFile[file] {
+			testsuite.AddTestcase(junit.Testcase{
+				Name:      fmt.Sprintf("%s/%s: %s", violation.Category, violation.Title, violation.Description),
+				Classname: violation.Location.String(),
+				Failure: &junit.Result{
+					Message: fmt.Sprintf("%s. To learn more, see: %s", violation.Description, getDocumentationURL(violation)),
+					Type:    violation.Level,
+					Data: fmt.Sprintf("Rule: %s\nDescription: %s\nCategory: %s\nLocation: %s\nText: %s\nDocumentation: %s",
+						violation.Title,
+						violation.Description,
+						violation.Category,
+						violation.Location.String(),
+						strings.TrimSpace(*violation.Location.Text),
+						getDocumentationURL(violation)),
+				},
+			})
+		}
+
+		testSuites.AddSuite(testsuite)
+	}
+
+	return testSuites.WriteXML(tr.out)
 }

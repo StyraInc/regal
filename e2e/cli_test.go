@@ -362,7 +362,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 
 	expectedViolations := []string{
-		`Naming convention violation: package name "this.fails" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
+		`Naming convention violation: package name "custom_naming_convention" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
 		`Naming convention violation: rule name "naming_convention_fail" does not match pattern '^_[a-z_]+$|^allow$'`,
 	}
 
@@ -383,7 +383,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies"))
 
 		expectExitCode(t, err, 0, &stdout, &stderr)
@@ -398,7 +398,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies/policy_1.rego"))
 
 		expectExitCode(t, err, 0, &stdout, &stderr)
@@ -413,7 +413,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 		stderr := bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/rules/custom_rules_using_aggregates.rego"),
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/three_policies"))
 
 		expectExitCode(t, err, 3, &stdout, &stderr)
@@ -710,8 +710,9 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 	// This is only an informative warning — command should not fail
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	expectOut := "1 file linted. No violations found. 2 rules skipped:\n" +
+	expectOut := "1 file linted. No violations found. 3 rules skipped:\n" +
 		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
 		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
 
 	if stdout.String() != expectOut {
@@ -736,8 +737,9 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T
 	// This is only an informative warning — command should not fail
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	expectOut := "2 files linted. No violations found. 2 rules skipped:\n" +
+	expectOut := "2 files linted. No violations found. 3 rules skipped:\n" +
 		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
 		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
 
 	if stdout.String() != expectOut {
@@ -776,7 +778,6 @@ func TestFix(t *testing.T) {
 	stderr := bytes.Buffer{}
 	td := t.TempDir()
 
-	// only violation is for the opa-fmt rule
 	unformattedContents := []byte(`package wow
 
 import rego.v1
@@ -803,11 +804,10 @@ allow if {
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`3 fixes applied:
+	exp := fmt.Sprintf(`2 fixes applied:
 %s/main.rego:
 - no-whitespace-comment
-- opa-fmt
-- use-assignment-operator
+- use-rego-v1
 `, td)
 
 	if act := stdout.String(); exp != act {

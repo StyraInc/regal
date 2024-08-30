@@ -2,11 +2,11 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"os"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/spf13/cobra"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -63,7 +63,7 @@ func parse(args []string) error {
 		return err
 	}
 
-	bs, err = json.MarshalIndent(enhancedAST, "", "  ")
+	bs, err = encoding.JSON().MarshalIndent(enhancedAST, "", "  ")
 	if err != nil {
 		return err
 	}

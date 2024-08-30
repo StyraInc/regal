@@ -29,7 +29,7 @@ jobs:
 
 Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
 
-## GitLab CICD
+## GitLab CI/CD
 
 To use Regal in GitLab CI/CD, you could for example use the following stage in your `.gitlab-ci.yml`:
 
@@ -41,9 +41,14 @@ regal_lint_policies:
     name: ghcr.io/styrainc/regal:latest
     entrypoint: ['/bin/sh', '-c']
   script:
-    - regal lint ./policy
+    - regal lint ./policy --format junit > regal-results.xml
+  artifacts:
+    reports:
+      junit: regal-results.xml
+    when: always
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 ```
 
-The above will run Regal on the `policy` directory when a merge request is created or updated.
+The above will run Regal on the `policy` directory when a merge request is created or updated and will show linting
+violations as part of the merge request.

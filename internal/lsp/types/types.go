@@ -19,15 +19,20 @@ type FileEvent struct {
 	URI  string `json:"uri"`
 }
 
+type InitializationOptions struct {
+	Formatter *string `json:"formatter,omitempty"`
+}
+
 type InitializeParams struct {
-	ProcessID        int                `json:"processId"`
-	ClientInfo       Client             `json:"clientInfo"`
-	Locale           string             `json:"locale"`
-	RootPath         string             `json:"rootPath"`
-	RootURI          string             `json:"rootUri"`
-	Capabilities     ClientCapabilities `json:"capabilities"`
-	Trace            string             `json:"trace"`
-	WorkspaceFolders []WorkspaceFolder  `json:"workspaceFolders"`
+	ProcessID             int                    `json:"processId"`
+	ClientInfo            Client                 `json:"clientInfo"`
+	Locale                string                 `json:"locale"`
+	RootPath              string                 `json:"rootPath"`
+	RootURI               string                 `json:"rootUri"`
+	Capabilities          ClientCapabilities     `json:"capabilities"`
+	Trace                 string                 `json:"trace"`
+	WorkspaceFolders      []WorkspaceFolder      `json:"workspaceFolders"`
+	InitializationOptions *InitializationOptions `json:"initializationOptions,omitempty"`
 }
 
 type WorkspaceFolder struct {
@@ -100,6 +105,7 @@ type ServerCapabilities struct {
 	WorkspaceSymbolProvider    bool                    `json:"workspaceSymbolProvider"`
 	DefinitionProvider         bool                    `json:"definitionProvider"`
 	CompletionProvider         CompletionOptions       `json:"completionProvider"`
+	CodeLensProvider           *CodeLensOptions        `json:"codeLensProvider,omitempty"`
 }
 
 type CompletionOptions struct {
@@ -182,6 +188,20 @@ type CodeAction struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
 	IsPreferred *bool        `json:"isPreferred,omitempty"`
 	Command     Command      `json:"command"`
+}
+
+type CodeLensOptions struct {
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+}
+
+type CodeLensParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type CodeLens struct {
+	Range   Range    `json:"range"`
+	Command *Command `json:"command,omitempty"`
+	Data    *any     `json:"data,omitempty"`
 }
 
 type Command struct {

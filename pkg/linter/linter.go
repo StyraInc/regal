@@ -208,7 +208,7 @@ func (l Linter) WithProfiling(enabled bool) Linter {
 }
 
 // WithRootDir sets the root directory for the linter.
-// A door directory or prefix can be use to resolve relative paths
+// A door directory or prefix can be used to resolve relative paths
 // referenced in the linter configuration with absolute file paths or URIs.
 func (l Linter) WithRootDir(rootDir string) Linter {
 	l.rootDir = rootDir

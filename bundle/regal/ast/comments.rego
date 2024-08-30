@@ -2,11 +2,13 @@ package regal.ast
 
 import rego.v1
 
+import data.regal.util
+
 # METADATA
-# description: all comments in the input AST with their "Text" attribute base64 decoded
+# description: all comments in the input AST with their `text` attribute base64 decoded
 comments_decoded := [decoded |
 	some comment in input.comments
-	decoded := object.union(comment, {"Text": base64.decode(comment.Text)})
+	decoded := object.union(comment, {"text": base64.decode(comment.text)})
 ]
 
 # METADATA
@@ -39,14 +41,15 @@ comments["annotation_match"](str) if regex.match(
 #   found in input AST, indexed by the row they're at
 ignore_directives[row] := rules if {
 	some comment in comments_decoded
-	text := trim_space(comment.Text)
+	text := trim_space(comment.text)
 
 	i := indexof(text, "regal ignore:")
 	i != -1
 
 	list := regex.replace(substring(text, i + 13, -1), `\s`, "")
+	loc := util.to_location_object(comment.location)
 
-	row := comment.Location.row + 1
+	row := loc.row + 1
 	rules := split(list, ",")
 }
 
@@ -57,7 +60,7 @@ ignore_directives[row] := rules if {
 comment_blocks(comments) := [partition |
 	rows := [row |
 		some comment in comments
-		row := comment.Location.row
+		row := util.to_location_object(comment.location).row
 	]
 	breaks := _splits(rows)
 

@@ -6,8 +6,8 @@ rules:
     annotation-without-metadata:
       level: error
     argument-always-wildcard:
+      except-function-name-pattern: '^mock_'
       level: error
-      except-function-name-pattern: "^mock_"
     constant-condition:
       level: error
     deprecated-builtin:
@@ -36,6 +36,8 @@ rules:
     rule-named-if:
       level: error
     rule-shadows-builtin:
+      level: error
+    sprintf-arguments-mismatch:
       level: error
     top-level-iteration:
       level: error
@@ -67,6 +69,9 @@ rules:
       level: error
     custom-in-construct:
       level: error
+    directory-package-mismatch:
+      level: error
+      exclude-test-suffix: true
     equals-pattern-matching:
       level: error
     no-defined-entrypoint:
@@ -82,6 +87,8 @@ rules:
     use-in-operator:
       level: error
     use-some-for-output-vars:
+      level: error
+    use-strings-count:
       level: error
   imports:
     avoid-importing-input:

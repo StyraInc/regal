@@ -1,17 +1,19 @@
 {
-    "builtins": {
-        "contains": "builtins/contains",
-        "io.jwt.decode_verify": "builtins/io_jwt/decode_verify",
-        "regex.globs_match": "builtins/regex/globs_match",
-        "regex.match": "builtins/regex/match",
-        "regex.template_match": "builtins/regex/template_match",
-        "time.clock": "builtins/time/clock",
-        "time.format": "builtins/time/format",
-        "time.now_ns": "builtins/time/now_ns",
-        "time.parse_ns": "builtins/time/parse_ns"
-    },
-    "keywords": {
-        "contains": "keywords/contains",
-        "some": "keywords/some"
-    }
+  "builtins": {
+    "contains": "builtins/contains",
+    "io.jwt.decode_verify": "builtins/io_jwt/decode_verify",
+    "regex.globs_match": "builtins/regex/globs_match",
+    "regex.match": "builtins/regex/match",
+    "regex.template_match": "builtins/regex/template_match",
+    "time.clock": "builtins/time/clock",
+    "time.format": "builtins/time/format",
+    "time.now_ns": "builtins/time/now_ns",
+    "time.parse_ns": "builtins/time/parse_ns"
+  },
+  "keywords": {
+    "contains": "keywords/contains",
+    "default": "keywords/default",
+    "if": "keywords/if",
+    "some": "keywords/some"
+  }
 }

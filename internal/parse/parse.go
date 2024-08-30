@@ -2,10 +2,10 @@ package parse
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/ast/json"
 
 	rio "github.com/styrainc/regal/internal/io"
 )
@@ -14,26 +14,6 @@ import (
 func ParserOptions() ast.ParserOptions {
 	return ast.ParserOptions{
 		ProcessAnnotation: true,
-		JSONOptions: &json.Options{
-			MarshalOptions: json.MarshalOptions{
-				IncludeLocation: json.NodeToggle{
-					Term:           true,
-					Package:        true,
-					Comment:        true,
-					Import:         true,
-					Rule:           true,
-					Head:           true,
-					Expr:           true,
-					SomeDecl:       true,
-					Every:          true,
-					With:           true,
-					Annotations:    true,
-					AnnotationsRef: true,
-				},
-				IncludeLocationText: true,
-				ExcludeLocationFile: true,
-			},
-		},
 	}
 }
 
@@ -64,6 +44,9 @@ func PrepareAST(name string, content string, module *ast.Module) (map[string]any
 		"file": map[string]any{
 			"name":  name,
 			"lines": strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"),
+		},
+		"environment": map[string]any{
+			"path_separator": string(os.PathSeparator),
 		},
 	}
 

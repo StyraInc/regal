@@ -17,9 +17,6 @@ import (
 	_ "embed"
 )
 
-//go:embed rego/ref_names.rego
-var refNamesRego string
-
 // pq is a prepared query that finds ref names used in a module.
 // pq is prepared at init time to make this functionality more
 // efficient. In local testing, this reduced time by ~95%.
@@ -53,9 +50,8 @@ func initialize() {
 
 	regoArgs := []func(*rego.Rego){
 		rego.ParsedBundle("regal", &regalRules),
-		rego.Module("mod.rego", refNamesRego),
 		rego.ParsedBundle("internal", &dataBundle),
-		rego.Query(`data.lsp.completions.ref_names`),
+		rego.Query(`data.regal.lsp.completion.ref_names`),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 	}

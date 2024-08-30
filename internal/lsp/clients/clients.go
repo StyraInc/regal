@@ -9,8 +9,13 @@ const (
 	IdentifierVSCode
 	IdentifierGoTest
 	IdentifierZed
+	IdentifierNeovim
 )
 
+// DetermineClientIdentifier is used to determine the Regal client identifier
+// based on the client name.
+// Clients with identifiers here should be featured on the 'Editor Support'
+// page in the documentation (https://docs.styra.com/regal/editor-support).
 func DetermineClientIdentifier(clientName string) Identifier {
 	switch clientName {
 	case "go test":
@@ -19,6 +24,10 @@ func DetermineClientIdentifier(clientName string) Identifier {
 		return IdentifierVSCode
 	case "Zed":
 		return IdentifierZed
+	case "Neovim":
+		// 'Neovim' is sent as the client identifier when using the
+		// nvim-lspconfig plugin.
+		return IdentifierNeovim
 	}
 
 	return IdentifierGeneric

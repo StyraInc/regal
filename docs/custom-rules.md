@@ -194,11 +194,11 @@ aggregate contains entry if {
     # ast.rules is input.rules with functions filtered out
     some rule in ast.rules
 
-    # search for rule named alllow
+    # search for rule named allow
     ast.name(rule) == "allow"
 
-    # make sure it's a default assignemnt
-    # ideally we'll want more than that, but the *requiremnt* is only
+    # make sure it's a default assignment
+    # ideally we'll want more than that, but the *requirement* is only
     # that such a rule exists...
     rule["default"] == true
 

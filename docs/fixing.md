@@ -22,3 +22,8 @@ Currently, the following rules are automatically fixable:
 Need to fix individual violations? Checkout the editors Regal supports
 [here](/regal/editor-support).
 :::
+
+## Community
+
+If you'd like to discuss Regal development or just talk about Regal in general, please join us in the `#regal`
+channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!

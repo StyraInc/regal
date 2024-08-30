@@ -19,19 +19,28 @@ imported_identifiers contains _imported_identifier(imp) if {
 	some imp in imports
 
 	imp.path.value[0].value in {"input", "data"}
+	count(imp.path.value) > 1
 }
 
 # METADATA
 # description: |
 #   map of all imported paths in the input module, keyed by their identifier or "namespace"
 resolved_imports[identifier] := path if {
-	some _import in imports
+	some identifier in imported_identifiers
 
-	_import.path.value[0].value == "data"
-	count(_import.path.value) > 1
+	# this should really be just a 1:1 mapping, but until OPA 1.0 we cannot
+	# trust that there are no duplicate imports, or imports shadowing other
+	# imports, which may render a runtime error here if two paths are written
+	# to the same identifier key ... simplify this post 1.0
+	paths := [path |
+		some imp in imports
 
-	identifier := _imported_identifier(_import)
-	path := [part.value | some part in _import.path.value]
+		_imported_identifier(imp) == identifier
+
+		path := [part.value | some part in imp.path.value]
+	]
+
+	path := paths[0]
 }
 
 # METADATA

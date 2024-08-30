@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
@@ -372,6 +374,8 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 		return reporter.NewFestiveReporter(outputWriter), nil
 	case formatSarif:
 		return reporter.NewSarifReporter(outputWriter), nil
+	case formatJunit:
+		return reporter.NewJUnitReporter(outputWriter), nil
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}
@@ -406,6 +410,29 @@ func formatError(format string, err error) error {
 		}
 
 		return fmt.Errorf("%s", string(bs))
+	} else if format == formatJunit {
+		testSuites := junit.Testsuites{
+			Name: "regal",
+		}
+		testsuite := junit.Testsuite{
+			Name: "lint",
+		}
+		testsuite.AddTestcase(junit.Testcase{
+			Name: "Command execution failed",
+			Error: &junit.Result{
+				Message: err.Error(),
+			},
+		})
+		testSuites.AddSuite(testsuite)
+
+		buf := &bytes.Buffer{}
+
+		err := testSuites.WriteXML(buf)
+		if err != nil {
+			return fmt.Errorf("failed to format errors for output: %w", err)
+		}
+
+		return fmt.Errorf("%s", buf.String())
 	}
 
 	return err

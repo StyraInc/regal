@@ -1,15 +1,16 @@
 package io
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	files "io/fs"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader/filter"
@@ -73,6 +74,8 @@ func ToMap(a any) map[string]any {
 
 // JSONRoundTrip convert any value to JSON and back again.
 func JSONRoundTrip(from any, to any) error {
+	json := encoding.JSON()
+
 	bs, err := json.Marshal(from)
 	if err != nil {
 		return fmt.Errorf("failed JSON marshalling %w", err)
@@ -88,15 +91,6 @@ func MustJSONRoundTrip(from any, to any) {
 	}
 }
 
-// MustYAMLToMap creates a map from reader, expecting YAML content, or fail.
-func MustYAMLToMap(from io.Reader) (m map[string]any) {
-	if err := yaml.NewDecoder(from).Decode(&m); err != nil {
-		log.Fatal(err)
-	}
-
-	return m
-}
-
 // CloseFileIgnore closes file ignoring errors, mainly for deferred cleanup.
 func CloseFileIgnore(file *os.File) {
 	_ = file.Close()
@@ -109,4 +103,22 @@ func ExcludeTestFilter() filter.LoaderFilter {
 			// more polished to deal with this for the time being.
 			info.Name() != "todo_test.rego"
 	}
+}
+
+// FindInput finds input.json file in workspace closest to the file, and returns
+// both the location and the reader.
+func FindInput(file string, workspacePath string) (string, io.Reader) {
+	relative := strings.TrimPrefix(file, workspacePath)
+	components := strings.Split(path.Dir(relative), string(filepath.Separator))
+
+	for i := range len(components) {
+		inputPath := path.Join(workspacePath, path.Join(components[:len(components)-i]...), "input.json")
+
+		f, err := os.Open(inputPath)
+		if err == nil {
+			return inputPath, f
+		}
+	}
+
+	return "", nil
 }

@@ -28,7 +28,7 @@ by the Regal linter.
   alt="Screenshot of diagnostics as displayed in Zed"/>
 
 Future versions of Regal may include also [compilation errors](https://github.com/StyraInc/regal/issues/745) as part of
-diagnistics messages.
+diagnostics messages.
 
 ### Hover
 
@@ -88,12 +88,17 @@ user-defined functions too.
 
 ### Formatting
 
-Regal uses the `opa fmt` formatter for formatting Rego. This is made available as a command in editors, but also via
-a [code action](#code-actions) when unformatted files are encountered.
+By default, Regal uses the `opa fmt` formatter for formatting Rego. This is made available as a command in editors,
+but also via a [code action](#code-actions) when unformatted files are encountered.
 
 <img
   src={require('./assets/lsp/format.png').default}
   alt="Screenshot of diagnostics as displayed in Zed"/>
+
+Two other formatters are also available — `opa fmt --rego-v1` and `regal fix`. See the docs on
+[Fixing Violations](fixing.md) for more information about the `fix` command. Which formatter to use
+can be set via the `formatter` configuration option, which can be passed to Regal via the client (see
+the documentation for your client for how to do that).
 
 ### Code completions
 
@@ -112,7 +117,8 @@ be suggestions for:
   src={require('./assets/lsp/completion.png').default}
   alt="Screenshot of completion suggestions as displayed in Zed"/>
 
-New completion providers are added continuosly, so if you have a suggestion for a new completion, please
+New completion providers are added continuously, so if you have a suggestion for
+a new completion, please
 [open an issue](https://github.com/StyraInc/regal/issues)!
 
 ### Code actions
@@ -131,6 +137,54 @@ Regal currently provides quick fix code actions for the following linter rules:
 - [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
 - [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
 - [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+
+### Code lenses (Evaluation)
+
+The code lens feature provides language servers a way to add actionable commands just next to the code that the action
+belongs to. Regal provides code lenses for doing **evaluation** of any package or rule directly in the editor. This
+allows for an extremely fast feedback loop, where you can see the result of writing of modifying rules directly as you
+work with them, and without having to launch external commands or terminals. In any editor that supports code lenses,
+simply press `Evaluate` on top of a package or rule declaration to have it evaluated. The result is displayed on the
+same line.
+
+<img
+  src={require('./assets/lsp/evalcodelens.png').default}
+  alt="Screenshot of evaluation performed via code lens"/>
+
+Once evaluation has completed, the result is also pretty-printed in a tooltip when hovering the rule. This is
+particularly useful when the result contains more data than can fit on a single line!
+
+Note that when evaluating incrementally defined rules, the result reflects evaluation of the whole **document**,
+not a single rule definition. To make this clear, the result will be displayed next to each definition of the
+same rule.
+
+In addition to showing the result of evaluation, the "Evaluate" code lens will also display the output of any
+`print` calls made in rule bodies. This can be really helpful when trying to figure out _why_ the rule evaluated
+the way it did, or where rule evaluation failed.
+
+<img
+  src={require('./assets/lsp/evalcodelensprint.png').default}
+  alt="Screenshot of evaluation with print call performed via code lens"/>
+
+Policy evaluation often depends on **input**. This can be provided via an `input.json` file which Regal will search
+for first in the same directory as the policy file evaluated. If not found there, Regal will proceed to search each
+parent directory up until the workspace root directory. It is recommended to add `input.json` to your `.gitignore`
+file so that you can work freely with evaluation in any directory without having your input accidentally committed.
+
+#### Editor support
+
+While the code lens feature is part of the LSP specification, the action that is triggered by a code lens
+isn't necessarily part of the standard. The language server protocol does not provide a native method for requesting
+evaluation, so Regal will handle that on its own, and differently depending on what the client supports.
+
+- Currently, only the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa) is capable of handling
+  the request to display evaluation results on the same line as the package or rule evaluated.
+- [Zed](https://github.com/StyraInc/zed-rego) does not support the code lens feature at all at this point in time. As
+  soon as it does, Regal will provide them.
+- Displaying the result of evaluation requires customized code in the client. Currently only VS Code has the required
+  modifications to handle this, and is thus the only editor to currently support "inline display" of the result.
+  For other editors that support the code lens feature, Regal will instead write the result of evaluation to an
+  `output.json` file.
 
 ## Unsupported features
 

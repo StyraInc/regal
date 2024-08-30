@@ -3,7 +3,7 @@ package regal.lsp.completion.providers.commonrule_test
 import rego.v1
 
 import data.regal.lsp.completion.providers.commonrule as provider
-import data.regal.lsp.completion.providers.utils_test as util
+import data.regal.lsp.completion.providers.test_utils as util
 
 test_common_name_completion_on_invoked if {
 	policy := `package policy

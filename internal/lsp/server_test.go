@@ -3,23 +3,30 @@ package lsp
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 const mainRegoFileName = "/main.rego"
 
-const defaultTimeout = 3 * time.Second
+// defaultTimeout is set based on the investigation done as part of
+// https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
+// maximum time observed for an operation to complete.
+const defaultTimeout = 20 * time.Second
 
 const defaultBufferedChannelSize = 5
 
@@ -47,7 +54,10 @@ func (*InMemoryReadWriteCloser) Close() error {
 const fileURIScheme = "file://"
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
-// language server my making updates to both and validating that the correct diagnostics are sent to the client.
+// language server by making updates to both and validating that the correct diagnostics are sent to the client.
+//
+// This test also ensures that updating the config to point to a non-default engine and capabilities version works
+// and causes that engine's builtins to work with completions.
 //
 //nolint:gocyclo,maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
@@ -71,8 +81,12 @@ allow = true
 `
 
 	files := map[string]string{
-		"main.rego":          mainRegoContents,
-		".regal/config.yaml": ``,
+		"main.rego": mainRegoContents,
+		".regal/config.yaml": `
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore`,
 	}
 
 	for f, fc := range files {
@@ -87,7 +101,7 @@ allow = true
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -97,7 +111,7 @@ allow = true
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = json.Unmarshal(*req.Params, &requestData)
+			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {
 				t.Fatalf("failed to unmarshal diagnostics: %s", err)
 			}
@@ -223,6 +237,9 @@ allow := true
 	// 4. Client sends workspace/didChangeWatchedFiles notification with new config
 	newConfigContents := `
 rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: ignore
@@ -261,6 +278,184 @@ rules:
 		if success {
 			break
 		}
+	}
+
+	// 5. Client sends new config with an EOPA capabilities file specified.
+	newConfigContents = `
+rules:
+  style:
+    opa-fmt:
+      level: ignore
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
+capabilities:
+  from:
+    engine: eopa
+    version: v1.23.0
+`
+
+	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600)
+	if err != nil {
+		t.Fatalf("failed to write new config file: %s", err)
+	}
+
+	// validate that the client received a new, empty diagnostics notification for the file
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			if requestData.URI != mainRegoURI {
+				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+
+				break
+			}
+
+			if len(requestData.Items) != 0 {
+				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+
+				break
+			}
+
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// NOTE(charles): the configuration is updated asynchronously from the
+	// thread the test is running in. This check prevents a race condition
+	// where the completion test runs before rego.builtIns is updated which
+	// was causing flaky tests in CI.
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		success := false
+
+		select {
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for builtins map to be updated")
+		default:
+			bis := rego.GetBuiltins()
+
+			// Search for a builtin we know is only in the EOPA capabilities.
+			if _, ok := bis["startswith"]; ok {
+				success = true
+			} else {
+				// If we hammer the mutex too hard, it may never
+				// get a chance to be updated.
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// 6. Client sends textDocument/didChange notification with new
+	// contents for main.rego no response to the call is expected. We added
+	// the start of an EOPA-specific call, so if the capabilities were
+	// loaded correctly, we should see a completion later after we ask for
+	// it.
+	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: mainRegoURI,
+		},
+		ContentChanges: []types.TextDocumentContentChangeEvent{
+			{
+				Text: `package main
+import rego.v1
+allow := neo4j.q
+`,
+			},
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("failed to send didChange notification: %s", err)
+	}
+
+	// validate that the client received a new diagnostics notification for the file
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
+
+	for {
+		var success bool
+		select {
+		case requestData := <-receivedMessages:
+			if requestData.URI != mainRegoURI {
+				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
+
+				break
+			}
+
+			if len(requestData.Items) != 0 {
+				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+
+				break
+			}
+
+			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	// 7. With our new config applied, and the file updated, we can ask the
+	// LSP for a completion. We expect to see neo4j.query show up. Since
+	// neo4j.query is an EOPA-specific builtin, it should never appear if
+	// we're using the normal OPA capabilities file.
+	resp := make(map[string]any)
+	err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
+		TextDocument: types.TextDocumentIdentifier{
+			URI: mainRegoURI,
+		},
+		Position: types.Position{
+			Line:      2,
+			Character: 16,
+		},
+	}, &resp)
+	//nolint:wsl
+	// NOTE(charles): gofumpt does not want a space here, but golint
+	// requires one to be present.
+	if err != nil {
+		t.Fatalf("failed to send completion notification: %s", err)
+	}
+
+	foundNeo4j := false
+	itemsList, ok := resp["items"].([]any)
+
+	if !ok {
+		t.Fatalf("failed to cast resp[items] to []any")
+	}
+
+	for _, itemI := range itemsList {
+		item, ok := itemI.(map[string]any)
+		if !ok {
+			t.Fatalf("completion item '%+v' was not a JSON object", itemI)
+		}
+
+		t.Logf("completion label: %s", item["label"])
+
+		if item["label"] == "neo4j.query" {
+			foundNeo4j = true
+		}
+	}
+
+	if !foundNeo4j {
+		t.Errorf("expected neo4j.query in completion results for neo4j.q")
 	}
 }
 
@@ -303,6 +498,10 @@ users = {"alice", "bob"}
 foo = 1
 `,
 		".regal/config.yaml": `
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
 ignore:
   files:
     - ignored/*.rego
@@ -331,7 +530,7 @@ ignore:
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -340,30 +539,29 @@ ignore:
 	adminsFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	ignoredFileMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method == "textDocument/publishDiagnostics" {
-			var requestData types.FileDiagnostics
-
-			err = json.Unmarshal(*req.Params, &requestData)
-			if err != nil {
-				t.Fatalf("failed to unmarshal diagnostics: %s", err)
-			}
-
-			if requestData.URI == authzRegoURI {
-				authzFileMessages <- requestData
-			}
-
-			if requestData.URI == adminsRegoURI {
-				adminsFileMessages <- requestData
-			}
-
-			if requestData.URI == ignoredRegoURI {
-				ignoredFileMessages <- requestData
-			}
+		if req.Method != "textDocument/publishDiagnostics" {
+			t.Log("unexpected request method:", req.Method)
 
 			return struct{}{}, nil
 		}
 
-		t.Fatalf("unexpected request: %v", req)
+		var requestData types.FileDiagnostics
+
+		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
+		if err != nil {
+			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		}
+
+		switch requestData.URI {
+		case authzRegoURI:
+			authzFileMessages <- requestData
+		case adminsRegoURI:
+			adminsFileMessages <- requestData
+		case ignoredRegoURI:
+			ignoredFileMessages <- requestData
+		default:
+			t.Logf("unexpected diagnostics for file: %s", requestData.URI)
+		}
 
 		return struct{}{}, nil
 	}
@@ -464,7 +662,7 @@ allow if input.user in admins.users
 		case diags := <-authzFileMessages:
 			success = testRequestDataCodes(t, diags, authzRegoURI, []string{})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -483,7 +681,7 @@ allow if input.user in admins.users
 		case requestData := <-adminsFileMessages:
 			success = testRequestDataCodes(t, requestData, adminsRegoURI, []string{"use-assignment-operator"})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -496,9 +694,9 @@ allow if input.user in admins.users
 func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 
-	ls := LanguageServer{
-		cache: cache.NewCache(),
-	}
+	ls := NewLanguageServer(&LanguageServerOptions{
+		ErrorLog: newTestLogger(t),
+	})
 
 	err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo")
 	if err != nil {
@@ -549,6 +747,9 @@ allow := true
 	files := map[string]string{
 		childDirName + mainRegoFileName: mainRegoContents,
 		".regal/config.yaml": `rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: error
@@ -571,7 +772,7 @@ allow := true
 	defer cancel()
 
 	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: os.Stderr,
+		ErrorLog: newTestLogger(t),
 	})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -581,7 +782,7 @@ allow := true
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = json.Unmarshal(*req.Params, &requestData)
+			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
 			if err != nil {
 				t.Fatalf("failed to unmarshal diagnostics: %s", err)
 			}
@@ -645,6 +846,9 @@ allow := true
 	// User updates config file contents in parent directory that is not
 	// part of the workspace
 	newConfigContents := `rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
   style:
     opa-fmt:
       level: ignore
@@ -683,31 +887,20 @@ func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileU
 		return false
 	}
 
-	if len(requestData.Items) != len(codes) {
-		t.Log("expected", len(codes), "diagnostics, got", len(requestData.Items))
-
-		return false
+	// Extract the codes from requestData.Items
+	requestCodes := make([]string, len(requestData.Items))
+	for i, item := range requestData.Items {
+		requestCodes[i] = item.Code
 	}
 
-	for _, v := range codes {
-		found := false
-		foundItems := make([]string, 0, len(requestData.Items))
+	// Sort both slices
+	sort.Strings(requestCodes)
+	sort.Strings(codes)
 
-		for _, i := range requestData.Items {
-			foundItems = append(foundItems, i.Code)
+	if !slices.Equal(requestCodes, codes) {
+		t.Logf("expected items: %v, got: %v", codes, requestCodes)
 
-			if i.Code == v {
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			t.Log("expected diagnostic", v, "not found in", foundItems)
-
-			return false
-		}
+		return false
 	}
 
 	return true
@@ -732,11 +925,28 @@ func createConnections(
 	)
 
 	cleanup := func() {
-		netConnServer.Close()
-		netConnClient.Close()
-		connServer.Close()
-		connClient.Close()
+		_ = netConnServer.Close()
+		_ = netConnClient.Close()
+		_ = connServer.Close()
+		_ = connClient.Close()
 	}
 
 	return connServer, connClient, cleanup
+}
+
+// NewTestLogger returns an io.Writer that logs to the given testing.T.
+func newTestLogger(t *testing.T) io.Writer {
+	t.Helper()
+
+	return &testLogger{t: t}
+}
+
+type testLogger struct {
+	t *testing.T
+}
+
+func (tl *testLogger) Write(p []byte) (n int, err error) {
+	tl.t.Log(strings.TrimSpace(string(p)))
+
+	return len(p), nil
 }

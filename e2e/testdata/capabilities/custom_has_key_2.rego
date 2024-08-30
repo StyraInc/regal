@@ -1,4 +1,4 @@
-package custom_has_key_2
+package capabilities
 
 import rego.v1
 

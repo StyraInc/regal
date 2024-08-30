@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v0.66.0](https://openpolicyagent.org/badge/v0.66.0)
+![OPA v0.68.0](https://openpolicyagent.org/badge/v0.68.0)
 
 Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), helping
 you write better policies and have fun while doing it!
@@ -60,7 +60,12 @@ brew install styrainc/packages/regal
 ```
 
 <details>
-  <summary><strong>Manual download options</strong></summary>
+  <summary><strong>Other Installation Options</strong></summary>
+
+Please see [Packages](https://docs.styra.com/regal/adopters#packaging)
+for a list of package repositories which distribute Regal.
+
+Manual installation commands:
 
 **MacOS (Apple Silicon)**
 ```shell
@@ -88,16 +93,8 @@ curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/down
 docker pull ghcr.io/styrainc/regal:latest
 ```
 
-**asdf**
-```shell
-asdf plugin add regal
-asdf install regal latest
-asdf global regal latest
-```
-
 See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
 published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
-
 </details>
 
 ### Try it out!
@@ -199,6 +196,7 @@ The following rules are currently available:
 | bugs        | [redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check)        | Redundant existence check                                 |
 | bugs        | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                                | Rule named "if"                                           |
 | bugs        | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                  | Rule name shadows built-in                                |
+| bugs        | [sprintf-arguments-mismatch](https://docs.styra.com/regal/rules/bugs/sprintf-arguments-mismatch)      | Mismatch in `sprintf` arguments count                     |
 | bugs        | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                    | Iteration in top-level assignment                         |
 | bugs        | [unassigned-return-value](https://docs.styra.com/regal/rules/bugs/unassigned-return-value)            | Non-boolean return value unassigned                       |
 | bugs        | [unused-output-variable](https://docs.styra.com/regal/rules/bugs/unused-output-variable)              | Unused output variable                                    |
@@ -212,6 +210,7 @@ The following rules are currently available:
 | idiomatic   | [boolean-assignment](https://docs.styra.com/regal/rules/idiomatic/boolean-assignment)                 | Prefer `if` over boolean assignment                       |
 | idiomatic   | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)     | Custom function may be replaced by `in` and `object.keys` |
 | idiomatic   | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)               | Custom function may be replaced by `in` keyword           |
+| idiomatic   | [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch) | Directory structure should mirror package                 |
 | idiomatic   | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)       | Prefer pattern matching in function arguments             |
 | idiomatic   | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)           | Missing entrypoint annotation                             |
 | idiomatic   | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)           | Use raw strings for regex patterns                        |
@@ -220,6 +219,7 @@ The following rules are currently available:
 | idiomatic   | [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)                                         | Use the `if` keyword                                      |
 | idiomatic   | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                       | Use in to check for membership                            |
 | idiomatic   | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)     | Use `some` to declare output variables                    |
+| idiomatic   | [use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count)                   | Use `strings.count` where possible                        |
 | imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)             | Avoid importing input                                     |
 | imports     | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                         | Circular import                                           |
 | imports     | [ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import)                           | Reference ignores import                                  |
@@ -566,6 +566,27 @@ capabilities:
           type: object
 ```
 
+### Loading Capabilities from URLs
+
+Starting with Regal version v0.26.0, Regal can load capabilities from URLs with the `http`, or `https` schemes using
+the `capabilities.from.url` config key. For example, to load capabilities from `https://example.org/capabilities.json`,
+this configuration could be used:
+
+```yaml
+capabilities:
+  from:
+    url: https://example.org/capabilities.json
+```
+
+### Supported Engines
+
+Regal includes capabilities files for the following engines:
+
+| Engine | Website | Description |
+|--------|---------|-------------|
+| `opa`  | [OPA website](https://www.openpolicyagent.org/) | Open Policy Agent |
+| `eopa` | [Enterprise OPA website](https://www.styra.com/enterprise-opa/) | Styra Enterprise OPA |
+
 ## Exit Codes
 
 Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be
@@ -599,12 +620,13 @@ are:
   from the linter report
 - `sarif` - [SARIF](https://sarifweb.azurewebsites.net/) JSON output, for consumption by tools processing code analysis
   reports
+- `junit` - JUnit XML output, e.g. for CI servers like GitLab that show these results in a merge request.
 
 ## OPA Check and Strict Mode
 
 Linting with Regal assumes syntactically correct Rego. If there are errors parsing any files during linting, the
 process is aborted and any parser errors are logged similarly to OPA. OPA itself provides a "linter" of sorts,
-via the `opa check` comand and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
+via the `opa check` command and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
 but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations.
 
 > **Note** It is recommended to run `opa check --strict` as part of your policy build process, and address any violations
@@ -649,6 +671,8 @@ The Regal language server currently supports the following LSP features:
   - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
   - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
   - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+- [x] [Code lenses](https://github.com/StyraInc/regal/blob/main/docs/language-server.md#code-lenses-evaluation)
+      (click to evaluate any package or rule directly in the editor)
 
 See the
 [documentation page for the language server](https://github.com/StyraInc/regal/blob/main/docs/language-server.md)
@@ -703,7 +727,7 @@ in the near future:
 
 - [ ] Make "Check on save" unnecessary by allowing diagnostics to include
       [compilation errors](https://github.com/StyraInc/regal/issues/745)
-- [ ] Add Code Lens to "Evaluate" any rule or package (VS Code only, initially)
+- [x] Add Code Lens to "Evaluate" any rule or package (VS Code only, initially)
 - [ ] Implement [Signature Help](https://github.com/StyraInc/regal/issues/695) feature
 
 The roadmap is updated when all the current items have been completed.

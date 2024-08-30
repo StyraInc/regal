@@ -1,7 +1,7 @@
 # METADATA
 # description: |
 #   This file is used for e2e tests of most of the provided linter rules. All violations can't
-#   be tested in a single file, as some are mutually exlusive (i.e. implicit-future-keywords and
+#   be tested in a single file, as some are mutually exclusive (i.e. implicit-future-keywords and
 #   rule-named-if).
 package all_violations
 
@@ -58,6 +58,8 @@ should := "fail"
 not_equals_in_loop if {
 	"foo" != input.bar[_]
 }
+
+sprintf_arguments_mismatch := sprintf("%v", [1, 2])
 
 # rule-shadows-builtin
 abs := true
@@ -136,6 +138,8 @@ boolean_assignment := 1 < input.two
 incremental if input.x
 
 incremental if input.y
+
+prefer_strings_count := count(indexof_n("foobarbaz", "a"))
 
 ### Style ###
 

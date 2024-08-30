@@ -1,0 +1,70 @@
+# this workflow is used to update the internal/lsp/examples/index.json
+# file containing an index of the content available on
+# http://docs.styra.com/opa/rego-by-example
+name: Update Examples Index
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *' # Run daily at 1 AM UTC
+
+jobs:
+  update-examples-index:
+    env:
+      RQ_VERSION: v0.0.9
+    name: Update Examples Index
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # this is needed to open a pull request
+      pull-requests: write # this is also needed to open a pull request
+    steps:
+      - name: Check out code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
+        with:
+          version: v0.68.0
+          static: true
+
+      - name: Set up go for rq
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: go.mod
+
+      - name: Restore rq cache
+        id: cache-rq
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ~/go/bin/rq
+          key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
+      - run: go install git.sr.ht/~charles/rq/cmd/rq@${{ env.RQ_VERSION }}
+        if: steps.cache-rq.outputs.cache-hit != 'true'
+      - name: Cache rq binary
+        if: steps.cache-rq.outputs.cache-hit != 'true'
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ~/go/bin/rq
+          key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
+
+      - name: Fetch sitemap and convert to JSON
+        run: |
+          set -o pipefail
+
+          TEMP_DIR=$(mktemp -d)
+
+          curl -L https://docs.styra.com/sitemap.xml -o "$TEMP_DIR/sitemap.xml"
+
+          cat "$TEMP_DIR/sitemap.xml" | \
+            rq -i xml --indent "  " | \
+            opa eval 'data.process.symbols' \
+              -d build/workflows/update-example-index/process.rego \
+              --format=pretty \
+              --stdin-input | \
+            tee internal/lsp/examples/index.json
+
+      - name: Open a pull request
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        with:
+          title: "lsp: Update rego-by-examples index"
+          commit-message: "lsp: Update rego-by-examples index"
+          base: main

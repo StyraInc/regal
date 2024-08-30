@@ -3,7 +3,7 @@ package regal.lsp.completion.providers.locals_test
 import rego.v1
 
 import data.regal.lsp.completion.providers.locals as provider
-import data.regal.lsp.completion.providers.utils_test as utils
+import data.regal.lsp.completion.providers.test_utils as utils
 
 test_no_locals_in_completion_items if {
 	workspace := {"file:///p.rego": `package policy

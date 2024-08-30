@@ -1,0 +1,74 @@
+# METADATA
+# description: Rule name repeats package
+# related_resources:
+#   - description: documentation
+#     ref: https://docs.styra.com/regal/rules/style/rule-name-repeats-package
+package regal.rules.style["rule-name-repeats-package"]
+
+import rego.v1
+
+import data.regal.ast
+import data.regal.result
+
+# METADATA
+# description: reports any location where a rule name repeats the package name
+report contains violation if {
+	some rule in input.rules
+
+	name := ast.ref_static_to_string(rule.head.ref)
+
+	strings.any_prefix_match(name, _possible_offending_prefixes)
+
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(rule.head.ref[0]))
+}
+
+_titleize(str) := upper(str) if count(str) == 1
+
+_titleize(str) := result if {
+	chrs := regex.split(``, str)
+	count(chrs) > 1
+
+	result := concat(
+		"",
+		array.concat([upper(chrs[0])], array.slice(chrs, 1, count(chrs))),
+	)
+}
+
+_package_path_components := [component.value |
+	some component in input["package"].path
+	component.type == "string"
+]
+
+_num_package_path_components := count(_package_path_components)
+
+_possible_path_component_combinations contains combination if {
+	some end in numbers.range(1, _num_package_path_components)
+
+	combination := array.slice(
+		_package_path_components,
+		_num_package_path_components - end,
+		_num_package_path_components,
+	)
+}
+
+_possible_offending_prefixes contains prefix if {
+	some combination in _possible_path_component_combinations
+
+	prefix := concat("_", combination)
+}
+
+_possible_offending_prefixes contains prefix if {
+	some combination in _possible_path_component_combinations
+
+	count(combination) > 1
+
+	formatted_combination := array.concat(
+		[combination[0]],
+		[w |
+			some word in array.slice(combination, 1, count(combination))
+			w := _titleize(word)
+		],
+	)
+
+	prefix := concat("", formatted_combination)
+}

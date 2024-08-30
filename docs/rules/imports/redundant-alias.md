@@ -20,7 +20,8 @@ import data.users.permissions
 
 ## Rationale
 
-The last component of an import path is always made referencable by its name inside the package in which it's imported.
+The last component of an import path can always be referenced by the last
+component of the import path itself inside the package in which it's imported.
 Using an alias with the same name is thus redundant, and should be omitted.
 
 ## Configuration Options
@@ -28,7 +29,7 @@ Using an alias with the same name is thus redundant, and should be omitted.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     redundant-alias:
       # one of "error", "warning", "ignore"

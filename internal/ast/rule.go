@@ -10,7 +10,7 @@ import (
 )
 
 // GetRuleDetail returns a short descriptive string value for a given rule stating
-// if the rule is contstant, multi-value, single-value etc and the type of the rule's
+// if the rule is constant, multi-value, single-value etc and the type of the rule's
 // value if known.
 func GetRuleDetail(rule *ast.Rule) string {
 	if rule.Head.Args != nil {
@@ -53,7 +53,9 @@ func GetRuleDetail(rule *ast.Rule) string {
 	case ast.Call:
 		name := v[0].String()
 
-		if builtin, ok := rego.BuiltIns[name]; ok {
+		bis := rego.GetBuiltins()
+
+		if builtin, ok := bis[name]; ok {
 			retType := builtin.Decl.NamedResult().String()
 
 			detail += fmt.Sprintf(" (%s)", simplifyType(retType))

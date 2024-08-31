@@ -418,7 +418,7 @@ allow := neo4j.q
 	// neo4j.query is an EOPA-specific builtin, it should never appear if
 	// we're using the normal OPA capabilities file.
 	resp := make(map[string]any)
-	err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
+	if err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -426,17 +426,13 @@ allow := neo4j.q
 			Line:      2,
 			Character: 16,
 		},
-	}, &resp)
-	//nolint:wsl
-	// NOTE(charles): gofumpt does not want a space here, but golint
-	// requires one to be present.
-	if err != nil {
+	}, &resp); err != nil {
 		t.Fatalf("failed to send completion notification: %s", err)
 	}
 
 	foundNeo4j := false
-	itemsList, ok := resp["items"].([]any)
 
+	itemsList, ok := resp["items"].([]any)
 	if !ok {
 		t.Fatalf("failed to cast resp[items] to []any")
 	}
@@ -455,7 +451,7 @@ allow := neo4j.q
 	}
 
 	if !foundNeo4j {
-		t.Errorf("expected neo4j.query in completion results for neo4j.q")
+		t.Errorf("expected neo4j.query in completion results for neo4j.q, got %v", itemsList)
 	}
 }
 

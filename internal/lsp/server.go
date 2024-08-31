@@ -2063,6 +2063,7 @@ func positionToOffset(text string, p types.Position) int {
 			bytesRead += len(line) + 1
 		}
 
+		//nolint:gosec
 		if i == int(p.Line)-1 {
 			return bytesRead + int(p.Character)
 		}

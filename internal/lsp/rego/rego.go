@@ -46,8 +46,8 @@ func PositionFromLocation(loc *ast.Location) types.Position {
 
 func LocationFromPosition(pos types.Position) *ast.Location {
 	return &ast.Location{
-		Row: int(pos.Line + 1),
-		Col: int(pos.Character + 1),
+		Row: int(pos.Line + 1),      // nolint: gosec
+		Col: int(pos.Character + 1), // nolint: gosec
 	}
 }
 

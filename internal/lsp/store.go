@@ -8,15 +8,19 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/storage/inmem"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 func NewRegalStore() storage.Store {
-	return inmem.NewFromObject(map[string]any{
+	return inmem.NewFromObjectWithOpts(map[string]any{
 		"workspace": map[string]any{
-			"parsed":       map[string]any{},
-			"defined_refs": map[string][]string{},
+			"parsed": map[string]any{},
+			// should map[string][]string{}, but since we don't round trip on write,
+			// we'll need to conform to the most basic "JSON" format understood by the store
+			"defined_refs": map[string]any{},
 		},
-	})
+	}, inmem.OptRoundTripOnWrite(false))
 }
 
 func transact(ctx context.Context, store storage.Store, writeMode bool, op func(txn storage.Transaction) error) error {
@@ -54,9 +58,16 @@ func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *a
 	return transact(ctx, store, true, func(txn storage.Transaction) error {
 		var stErr *storage.Error
 
-		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, mod)
+		var modMap map[string]any
+
+		err := rio.JSONRoundTrip(mod, &modMap)
+		if err != nil {
+			return fmt.Errorf("failed to marshal module to JSON: %w", err)
+		}
+
+		err = store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
 		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
-			err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, mod)
+			err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
 			if err != nil {
 				return fmt.Errorf("failed to init module in store: %w", err)
 			}

@@ -139,8 +139,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "head",
-        "body"
+        "head"
       ]
     },
     "else": {
@@ -165,8 +164,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "head",
-        "body"
+        "head"
       ]
     },
     "args": {
@@ -209,8 +207,8 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "Text",
-        "Location"
+        "text",
+        "location"
       ]
     },
     "expr": {
@@ -222,9 +220,6 @@
           "type": "array"
         },
         "terms": true,
-        "index": {
-          "type": "integer"
-        },
         "generated": {
           "type": "boolean"
         },
@@ -238,8 +233,7 @@
       "additionalProperties": false,
       "type": "object",
       "required": [
-        "terms",
-        "index"
+        "terms"
       ]
     },
     "head": {

@@ -20,7 +20,7 @@ by Regal.
 
 ## Neovim
 
-There are a number of different plugins available for Neovim which integrate
+There are a number of different plugins available for [Neovim](https://neovim.io/) which integrate
 with language servers using the Language Server Protocol.
 
 Generally, the Regal binary should be [installed](https://docs.styra.com/regal#getting-started)
@@ -40,7 +40,7 @@ Regal language server. Use the configuration below to configure Regal:
 require('lspconfig').regal.setup()
 ```
 
-## none-ls
+### none-ls
 
 [none-ls](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a
 language server to inject LSP diagnostics, code actions, and more via Lua.
@@ -71,7 +71,7 @@ Example of the diagnostics in as shown in the UI:
 
 ![regal in none-ls](./assets/editors-neovim.png)
 
-## nvim-cmp
+### nvim-cmp
 
 [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) supports the adding of language
 servers as a source.
@@ -80,7 +80,7 @@ To use Regal with `nvim-cmp`, it is recommended that you use
 the [`nvim-lspconfig` source](https://github.com/hrsh7th/cmp-nvim-lsp) and
 follow the instructions above to configure `nvim-lspconfig`.
 
-## Other plugins
+### Other plugins
 
 To see live linting of Rego, your plugin must support
 [`textDocument/diagnostic`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic)
@@ -89,3 +89,28 @@ messages.
 There are many language server integrations for Neovim, if you'd like to see
 another one listed, please [open an issue](https://github.com/StyraInc/regal/issues/new)
 or drop us a message in [Slack](http://communityinviter.com/apps/styracommunity/signup).
+
+## Helix
+
+The [Helix](https://helix-editor.com/) editor comes with a default config that tries to
+use `regols` for Rego files.
+You can make it use Regal instead via this `languages.toml` config:
+
+```toml
+[[language]]
+name = "rego"
+scope = "source.rego"
+roots = [".regal/config.yaml"]
+file-types = ["rego"]
+indent = { tab-width = 4, unit = "\t" }
+comment-token = "#"
+language-servers = [ { name = "regal" } ]
+
+[language-server.regal]
+command = "regal"
+args = ["language-server"]
+config = { provideFormatter = true }
+```
+
+[See the languages docs](https://docs.helix-editor.com/languages.html#language-configuration)
+for details.

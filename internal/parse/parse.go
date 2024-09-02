@@ -10,7 +10,9 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 )
 
-// ParserOptions provides the parse options necessary to include location data in AST results.
+// ParserOptions provides parser options with annotation processing. JSONOptions are not included,
+// as it is assumed that the caller will marshal the AST to JSON with the roast encoder rather than
+// encoding/json (and consequently, the OPA marshaller implementations).
 func ParserOptions() ast.ParserOptions {
 	return ast.ParserOptions{
 		ProcessAnnotation: true,

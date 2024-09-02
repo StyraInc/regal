@@ -88,6 +88,7 @@ func operations(a, b []string) []*operation {
 				break
 			}
 		}
+
 		add(op, x, y)
 		op = nil
 		// insert (vertical)
@@ -102,6 +103,7 @@ func operations(a, b []string) []*operation {
 
 			y++
 		}
+
 		add(op, x, y)
 		op = nil
 		// equal (diagonal)

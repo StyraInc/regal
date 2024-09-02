@@ -69,7 +69,8 @@ find_rule(rules, location) := [rule |
 # METADATA
 # description: |
 #   find local variables (declared via function arguments, some/every
-#   declarations or assignment) at the given location
+#   declarations or assignment) at the given location. note that this expects
+#   `location` as a map, not a string
 find_locals(rules, location) := ast.find_names_in_local_scope(find_rule(rules, location), location)
 
 # METADATA

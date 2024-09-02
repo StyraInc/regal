@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -264,11 +266,54 @@ func fix(args []string, params *fixCommandParams) error {
 		ignore = params.ignoreFiles.v
 	}
 
-	fileProvider := fileprovider.NewFSFileProvider(ignore, args...)
+	filtered, err := config.FilterIgnoredPaths(args, ignore, true, "")
+	if err != nil {
+		return fmt.Errorf("failed to filter ignored paths: %w", err)
+	}
+
+	slices.Sort(filtered)
+	// TODO: Figure out why filtered returns duplicates in the first place
+	filtered = slices.Compact(filtered)
+
+	fileProvider, err := fileprovider.NewInMemoryFileProviderFromFS(filtered...)
+	if err != nil {
+		return fmt.Errorf("failed to create file provider: %w", err)
+	}
 
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {
 		return fmt.Errorf("failed to fix: %w", err)
+	}
+
+	for _, file := range fileProvider.DeletedFiles() {
+		err := os.Remove(file)
+		if err != nil {
+			return fmt.Errorf("failed to delete file %s: %w", file, err)
+		}
+	}
+
+	for _, file := range fileProvider.ModifiedFiles() {
+		fc, err := fileProvider.GetFile(file)
+		if err != nil {
+			return fmt.Errorf("failed to get file %s: %w", file, err)
+		}
+
+		fileMode := fs.FileMode(0o600)
+
+		fileInfo, err := os.Stat(file)
+		if err == nil {
+			fileMode = fileInfo.Mode()
+		}
+
+		err = os.MkdirAll(filepath.Dir(file), 0o755)
+		if err != nil {
+			return fmt.Errorf("failed to create directory for file %s: %w", file, err)
+		}
+
+		err = os.WriteFile(file, fc, fileMode)
+		if err != nil {
+			return fmt.Errorf("failed to write file %s: %w", file, err)
+		}
 	}
 
 	r, err := fixer.ReporterForFormat(params.format, outputWriter)

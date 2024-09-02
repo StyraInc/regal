@@ -488,7 +488,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				renameParams, err = l.fixRenameParams(
 					"Rename file to match package path",
-					&fixes.DirectoryPackageMismatch{DryRun: true},
+					&fixes.DirectoryPackageMismatch{},
 					fileURL,
 				)
 				if err != nil {

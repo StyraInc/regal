@@ -889,7 +889,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	l := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
 	c := cache.NewCache()
-	f := &fixes.DirectoryPackageMismatch{DryRun: true}
+	f := &fixes.DirectoryPackageMismatch{}
 
 	fileURL := fmt.Sprintf("file://%s/workspace/foo/bar/policy.rego", tmpDir)
 

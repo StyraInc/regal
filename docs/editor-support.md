@@ -89,3 +89,28 @@ messages.
 There are many language server integrations for Neovim, if you'd like to see
 another one listed, please [open an issue](https://github.com/StyraInc/regal/issues/new)
 or drop us a message in [Slack](http://communityinviter.com/apps/styracommunity/signup).
+
+## Helix
+
+The [Helix](https://helix-editor.com/) editor comes with a default config that tries to
+use `regols` for Rego files.
+You can make it use Regal instead via this `languages.toml` config:
+
+```toml
+[[language]]
+name = "rego"
+scope = "source.rego"
+roots = [".regal/config.yaml"]
+file-types = ["rego"]
+indent = { tab-width = 4, unit = "\t" }
+comment-token = "#"
+language-servers = [ { name = "regal" } ]
+
+[language-server.regal]
+command = "regal"
+args = ["language-server"]
+config = { provideFormatter = true }
+```
+
+[See the languages docs](https://docs.helix-editor.com/languages.html#language-configuration)
+for details.

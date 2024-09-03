@@ -3,8 +3,11 @@
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
 ![OPA v0.68.0](https://openpolicyagent.org/badge/v0.68.0)
 
-Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), helping
-you write better policies and have fun while doing it!
+Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), making
+your Rego magnificent, and you the ruler of rules!
+
+With its extensive set of linter rules, documentation and editor integrations, Regal is the perfect companion for policy
+development, whether you're an experienced Rego developer or just starting out.
 
 <img
   src="/docs/assets/regal-banner.png"
@@ -19,15 +22,10 @@ you write better policies and have fun while doing it!
 
 ## Goals
 
+- Deliver an outstanding policy development experience by providing the best possible tools for that purpose
 - Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches
 - Provide advice on [best practices](https://github.com/StyraInc/rego-style-guide), coding style, and tooling
 - Allow users, teams and organizations to enforce custom rules on their policy code
-
-Regal rules are to as large extent as possible
-[written in Rego](https://www.styra.com/blog/linting-rego-with-rego/) themselves,
-using the JSON representation of the Rego abstract syntax tree (AST) as input, a
-few additional custom built-in functions and some indexed data structures to help
-with linting.
 
 ## What People Say About Regal
 
@@ -156,7 +154,27 @@ Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 > will likely generate a lot of violations. You can do this by passing the `--disable-category style` flag to
 > `regal lint`.
 
-### Using Regal in your build pipeline!
+### Using Regal in Your Editor
+
+Linting from the command line is a great way to get started with Regal, and even for some experienced developers
+the preferred way to work with the linter. However, not only is Regal a linter, but a full-fledged development
+companion for Rego development!
+
+Integrating Regal in your favorite editor means you'll get immediate feedback from the linter as you work on your
+policies. More than that, it'll unlock a whole new set of features that leverage Regal's
+[language server](#regal-language-server), like context-aware completion suggestions, informative tooltips on hover,
+or go-to-definition.
+
+Elevate your policy development experience with Regal in
+[VS Code](https://marketplace.visualstudio.com/items?itemName=tsandall.opa),
+[Zed](https://github.com/StyraInc/zed-rego), [Neovim](https://docs.styra.com/regal/editor-support#neovim),
+[Helix](https://docs.styra.com/regal/editor-support#helix) and
+[other editors](https://docs.styra.com/regal/editor-support)!
+
+To learn more about the features provided by the Regal language server, see the
+[Language Server](https://docs.styra.com/regal/language-server) page.
+
+### Using Regal in Your Build Pipeline
 
 To ensure Regal's rules are enforced consistently in your project or organization,
 we've made it easy to run Regal as part of your builds.
@@ -356,6 +374,12 @@ ignore:
   files:
     - file1.rego
     - "*_tmp.rego"
+
+project:
+  roots:
+    # declares the 'main' and 'lib/jwt' directories as project roots
+    - main
+    - lib/jwt
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
@@ -508,6 +532,43 @@ for the `regal lint` command:
 - `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
 
 **Note:** all CLI flags override configuration provided in file.
+
+## Project Roots
+
+While many projects consider the project's root directory (in editors often referred to as **workspace**) their
+"main" directory for policies, some projects may contain code from other languages, policy "subprojects", or multiple
+[bundles](https://www.openpolicyagent.org/docs/latest/management-bundles/). While most of Regal's features works
+independently of this — linting, for example, doesn't consider where in a workspace policies are located as long as
+those locations aren't [ignored](#ignoring-files-globally) — some features, like automatically
+[fixing](https://docs.styra.com/regal/fixing) violations, benefit from knowing when a project contains multiple roots.
+
+To provide an example, consider the
+[directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch) rule, which states
+that a file declaring a `package` path like `policy.permissions.users` should also be located in a directory structure
+that mirrors that package, i.e. `policy/permissions/users`. When a violation against this rule is reported, the
+`regal fix` command, or its equivalent [Code Action](#regal-language-server) in editors, may when invoked remediate the
+issue by moving the file to the correct location. But where should the `policy/permissions/users` directory *itself*
+reside?
+
+Normally, the answer to that question would be the **project**, or **workspace** root. But if the file was found
+in a subdirectory containing a **bundle**, the directory naturally belongs under that *bundle's root* instead. The
+`roots` configuration option under the top-level `project` object allows you to tell Regal where these roots are,
+and have features like the `directory-package-mismatch` fixer work as you'd expect.
+
+```yaml
+project:
+  roots:
+    - bundle1
+    - bundle2
+```
+
+The configuration file is not the only way Regal may determine project roots. Other ways include:
+
+- A directory containing a `.manifest` file will automatically be registered as a root
+- A directory containing a `.regal` directory will be registered as a root (this is normally the project root)
+
+If a feature that depends on project roots fails to identify any, it will either fail or fall back on the directory
+in which the command was run.
 
 ## Capabilities
 

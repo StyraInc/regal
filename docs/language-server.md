@@ -137,6 +137,7 @@ Regal currently provides quick fix code actions for the following linter rules:
 - [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
 - [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
 - [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
+- [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)
 
 ### Code lenses (Evaluation)
 

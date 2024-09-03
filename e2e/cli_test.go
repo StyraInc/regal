@@ -795,6 +795,16 @@ test_allow {
 	true
 }
 `,
+		"foo/foo.rego": `package foo
+
+import rego.v1
+
+# present and correct
+
+allow if {
+	input.admin
+}
+`,
 		"bar/main.rego": `package wow["foo-bar"].baz
 
 import rego.v1
@@ -845,6 +855,16 @@ foo/main_test.rego -> wow/main_test.rego:
 	}
 
 	expectedState := map[string]string{
+		"foo/foo.rego": `package foo
+
+import rego.v1
+
+# present and correct
+
+allow if {
+	input.admin
+}
+`,
 		"wow/foo-bar/baz/main.rego": `package wow["foo-bar"].baz
 
 import rego.v1
@@ -883,7 +903,8 @@ test_allow := true
 		}
 	}
 
-	expectedMissingDirs := []string{"foo", "bar"}
+	// foo is not removed as it contains a correct file
+	expectedMissingDirs := []string{"bar"}
 	for _, dir := range expectedMissingDirs {
 		if _, err := os.Stat(filepath.Join(td, dir)); err == nil {
 			t.Errorf("expected directory %q to have been removed", dir)

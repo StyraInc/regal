@@ -236,6 +236,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 				fixReport.AddFileFix(to, fixResult)
 
 				fixReport.MergeFixes(to, from)
+
 				err = fixReport.RegisterOldPathForFile(to, from)
 				if err != nil {
 					return nil, fmt.Errorf("failed to register old path for file %s: %w", to, err)

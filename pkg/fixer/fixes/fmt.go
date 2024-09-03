@@ -28,6 +28,10 @@ func (f *Fmt) Name() string {
 }
 
 func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
+	if opts == nil {
+		return nil, errors.New("runtime options are required")
+	}
+
 	if fc.Filename == "" {
 		return nil, errors.New("filename is required when formatting")
 	}

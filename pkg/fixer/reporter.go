@@ -3,6 +3,11 @@ package fixer
 import (
 	"fmt"
 	"io"
+	"path/filepath"
+	"slices"
+
+	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
 
 // Reporter is responsible for outputting a fix report in a specific format.
@@ -32,27 +37,80 @@ func NewPrettyReporter(outputWriter io.Writer) *PrettyReporter {
 }
 
 func (r *PrettyReporter) Report(fixReport *Report) error {
-	if fixReport.TotalFixes() == 0 {
+	switch x := fixReport.TotalFixes(); x {
+	case 0:
 		fmt.Fprintln(r.outputWriter, "No fixes applied.")
 
 		return nil
-	}
-
-	if fixReport.TotalFixes() == 1 {
+	case 1:
 		fmt.Fprintln(r.outputWriter, "1 fix applied:")
+	default:
+		fmt.Fprintf(r.outputWriter, "%d fixes applied:\n", x)
 	}
 
-	if fixReport.TotalFixes() > 1 {
-		fmt.Fprintf(r.outputWriter, "%d fixes applied:\n", fixReport.TotalFixes())
-	}
+	byRoot := make(map[string]map[string][]fixes.FixResult)
 
-	for _, file := range fixReport.FixedFiles() {
-		fmt.Fprintf(r.outputWriter, "%s:\n", file)
+	for file, fxs := range fixReport.fileFixes {
+		for _, fix := range fxs {
+			if _, ok := byRoot[fix.Root]; !ok {
+				byRoot[fix.Root] = make(map[string][]fixes.FixResult)
+			}
 
-		for _, f := range fixReport.FixedViolationsForFile(file) {
-			fmt.Fprintf(r.outputWriter, "- %s\n", f)
+			byRoot[fix.Root][file] = append(byRoot[fix.Root][file], fix)
 		}
 	}
 
+	i := 0
+
+	movedNewLocs := util.MapInvert(fixReport.movedFiles)
+	rootsSorted := util.Keys(byRoot)
+
+	slices.Sort(rootsSorted)
+
+	for _, root := range rootsSorted {
+		if i > 0 {
+			fmt.Fprintln(r.outputWriter)
+		}
+
+		fixesByFile := byRoot[root]
+		files := util.Keys(fixesByFile)
+
+		slices.Sort(files)
+		fmt.Fprintf(r.outputWriter, "In project root: %s\n", root)
+
+		for _, file := range files {
+			fxs := fixesByFile[file]
+
+			rel := relOrDefault(root, file, file)
+
+			if _, ok := movedNewLocs[file]; !ok {
+				if newLoc, ok := fixReport.movedFiles[file]; ok {
+					fmt.Fprintf(r.outputWriter, "%s -> %s:\n", rel, relOrDefault(root, newLoc, newLoc))
+				} else {
+					fmt.Fprintf(r.outputWriter, "%s:\n", rel)
+				}
+			} else if len(fxs) == 1 {
+				if oldLoc, ok := movedNewLocs[file]; ok {
+					fmt.Fprintf(r.outputWriter, "%s -> %s:\n", relOrDefault(root, oldLoc, oldLoc), rel)
+				}
+			}
+
+			for _, fix := range fxs {
+				fmt.Fprintf(r.outputWriter, "- %s\n", fix.Title)
+			}
+		}
+
+		i++
+	}
+
 	return nil
+}
+
+func relOrDefault(root, path, defaultValue string) string {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return defaultValue
+	}
+
+	return rel
 }

@@ -12,7 +12,7 @@ func (*NoWhitespaceComment) Name() string {
 	return "no-whitespace-comment"
 }
 
-func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
+func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	lines := bytes.Split(fc.Contents, []byte("\n"))
 
 	if opts == nil {
@@ -46,5 +46,9 @@ func (*NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixRe
 		return nil, nil
 	}
 
-	return []FixResult{{Contents: bytes.Join(lines, []byte("\n"))}}, nil
+	return []FixResult{{
+		Title:    n.Name(),
+		Root:     opts.BaseDir,
+		Contents: bytes.Join(lines, []byte("\n")),
+	}}, nil
 }

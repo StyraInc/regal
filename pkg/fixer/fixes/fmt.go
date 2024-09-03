@@ -27,7 +27,7 @@ func (f *Fmt) Name() string {
 	return "opa-fmt"
 }
 
-func (f *Fmt) Fix(fc *FixCandidate, _ *RuntimeOptions) ([]FixResult, error) {
+func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 	if fc.Filename == "" {
 		return nil, errors.New("filename is required when formatting")
 	}
@@ -41,9 +41,9 @@ func (f *Fmt) Fix(fc *FixCandidate, _ *RuntimeOptions) ([]FixResult, error) {
 		return nil, nil
 	}
 
-	return []FixResult{
-		{
-			Contents: formatted,
-		},
-	}, nil
+	return []FixResult{{
+		Title:    f.Name(),
+		Root:     opts.BaseDir,
+		Contents: formatted,
+	}}, nil
 }

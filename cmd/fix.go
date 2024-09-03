@@ -240,7 +240,13 @@ func fix(args []string, params *fixCommandParams) error {
 		log.Println("no user-provided config file found, will use the default config")
 	}
 
+	roots, err := config.GetPotentialRoots(args...)
+	if err != nil {
+		return fmt.Errorf("could not find potential roots: %w", err)
+	}
+
 	f := fixer.NewFixer()
+	f.RegisterRoots(roots...)
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
 	f.RegisterMandatoryFixes(
 		&fixes.Fmt{

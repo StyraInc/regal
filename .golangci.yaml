@@ -5,6 +5,7 @@ linters:
     - rowserrcheck
     - wastedassign
     # annoying
+    - gocyclo
     - tagliatelle
     - nestif
     - gocognit

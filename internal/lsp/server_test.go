@@ -17,8 +17,12 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
 
 const mainRegoFileName = "/main.rego"
@@ -59,7 +63,7 @@ const fileURIScheme = "file://"
 // This test also ensures that updating the config to point to a non-default engine and capabilities version works
 // and causes that engine's builtins to work with completions.
 //
-//nolint:gocyclo,maintidx
+//nolint:maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
 	t.Parallel()
 
@@ -460,7 +464,7 @@ allow := neo4j.q
 // workspace diagnostics are run, this test validates that the correct diagnostics are sent to the client in this
 // scenario.
 //
-// nolint:maintidx,gocyclo
+// nolint:maintidx
 func TestLanguageServerMultipleFiles(t *testing.T) {
 	t.Parallel()
 
@@ -871,6 +875,69 @@ allow := true
 		if success {
 			break
 		}
+	}
+}
+
+func TestLanguageServerFixRenameParams(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(tmpDir, "workspace/foo/bar"), 0o755); err != nil {
+		t.Fatalf("failed to create directory: %s", err)
+	}
+
+	l := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
+	c := cache.NewCache()
+	f := &fixes.DirectoryPackageMismatch{DryRun: true}
+
+	fileURL := fmt.Sprintf("file://%s/workspace/foo/bar/policy.rego", tmpDir)
+
+	c.SetFileContents(fileURL, "package authz.main.rules")
+
+	l.clientIdentifier = clients.IdentifierVSCode
+	l.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
+	l.cache = c
+	l.loadedConfig = &config.Config{
+		Rules: map[string]config.Category{
+			"idiomatic": {
+				"directory-package-mismatch": config.Rule{
+					Level: "ignore",
+					Extra: map[string]any{
+						"exclude-test-suffix": true,
+					},
+				},
+			},
+		},
+	}
+
+	params, err := l.fixRenameParams("fix my file!", f, fileURL)
+	if err != nil {
+		t.Fatalf("failed to fix rename params: %s", err)
+	}
+
+	if params.Label != "fix my file!" {
+		t.Fatalf("expected label to be 'Fix my file!', got %s", params.Label)
+	}
+
+	if len(params.Edit.DocumentChanges) != 1 {
+		t.Fatalf("expected 1 document change, got %d", len(params.Edit.DocumentChanges))
+	}
+
+	change := params.Edit.DocumentChanges[0]
+
+	if change.Kind != "rename" {
+		t.Fatalf("expected kind to be 'rename', got %s", change.Kind)
+	}
+
+	if change.OldURI != fileURL {
+		t.Fatalf("expected old URI to be %s, got %s", fileURL, change.OldURI)
+	}
+
+	expectedNewURI := fmt.Sprintf("file://%s/workspace/authz/main/rules/policy.rego", tmpDir)
+
+	if change.NewURI != expectedNewURI {
+		t.Fatalf("expected new URI to be %s, got %s", expectedNewURI, change.NewURI)
 	}
 }
 

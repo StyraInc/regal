@@ -10,6 +10,8 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/open-policy-agent/opa/bundle"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir string) ([]string, error) {
@@ -22,9 +24,10 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir st
 		filtered := make([]string, 0, len(paths))
 
 		if err := walkPaths(paths, func(path string, info os.DirEntry, err error) error {
-			if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea" || info.Name() == "node_modules") {
+			if rio.IsSkipWalkDirectory(info) {
 				return filepath.SkipDir
 			}
+
 			if !info.IsDir() && strings.HasSuffix(path, bundle.RegoExt) {
 				filtered = append(filtered, path)
 			}

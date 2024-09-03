@@ -1,49 +1,38 @@
 package fixer
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/fixer/fixes"
+)
 
 // Report contains updated file contents and summary information about the fixes that were applied
 // during a fix operation.
 type Report struct {
-	totalFixes          int
-	fileFixedViolations map[string]map[string]struct{}
+	totalFixes uint
+	fileFixes  map[string][]fixes.FixResult
+	movedFiles map[string]string
 }
 
 func NewReport() *Report {
 	return &Report{
-		fileFixedViolations: make(map[string]map[string]struct{}),
+		fileFixes:  make(map[string][]fixes.FixResult),
+		movedFiles: make(map[string]string),
 	}
 }
 
-func (r *Report) SetFileFixedViolation(file string, violation string) {
-	if _, ok := r.fileFixedViolations[file]; !ok {
-		r.fileFixedViolations[file] = make(map[string]struct{})
-	}
-
-	_, ok := r.fileFixedViolations[file][violation]
-	if !ok {
-		r.fileFixedViolations[file][violation] = struct{}{}
-		r.totalFixes++
-	}
+func (r *Report) AddFileFix(file string, fix fixes.FixResult) {
+	r.fileFixes[file] = append(r.fileFixes[file], fix)
+	r.totalFixes++
 }
 
-func (r *Report) FixedViolationsForFile(file string) []string {
-	fixedViolations := make([]string, 0)
-	for violation := range r.fileFixedViolations[file] {
-		fixedViolations = append(fixedViolations, violation)
-	}
-
-	// sort the violations for deterministic output
-	slices.Sort(fixedViolations)
-
-	return fixedViolations
+func (r *Report) FixesForFile(file string) []fixes.FixResult {
+	return r.fileFixes[file]
 }
 
 func (r *Report) FixedFiles() []string {
-	fixedFiles := make([]string, 0)
-	for file := range r.fileFixedViolations {
-		fixedFiles = append(fixedFiles, file)
-	}
+	fixedFiles := util.Keys(r.fileFixes)
 
 	// sort the files for deterministic output
 	slices.Sort(fixedFiles)
@@ -51,7 +40,13 @@ func (r *Report) FixedFiles() []string {
 	return fixedFiles
 }
 
-func (r *Report) TotalFixes() int {
+func (r *Report) TotalFixes() uint {
 	// totalFixes is incremented for each unique violation that is fixed
 	return r.totalFixes
+}
+
+// TODO replace and use MoveTo/From from fix result?
+
+func (r *Report) SetMovedFiles(movedFiles map[string]string) {
+	r.movedFiles = movedFiles
 }

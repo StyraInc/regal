@@ -64,7 +64,7 @@ deny := true
 `),
 	}
 
-	if got, exp := fixReport.TotalFixes(), 2; got != exp {
+	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 
@@ -93,15 +93,21 @@ deny := true
 		}
 
 		// check that the fixed violations are correct
-		fixedViolations := fixReport.FixedViolationsForFile(file)
+		fxs := fixReport.FixesForFile(file)
 
-		expectedViolations, ok := expectedFileFixedViolations[file]
+		expectedFixes, ok := expectedFileFixedViolations[file]
 		if !ok {
 			t.Fatalf("unexpected file waas fixed %s", file)
 		}
 
-		if !slices.Equal(fixedViolations, expectedViolations) {
-			t.Fatalf("unexpected fixed violations for %s:\ngot: %v\nexpected: %v", file, fixedViolations, expectedViolations)
+		if len(fxs) != len(expectedFixes) {
+			t.Fatalf("unexpected number of fixes for %s:\ngot: %v\nexpected: %v", file, fxs, expectedFixes)
+		}
+
+		for _, fx := range fxs {
+			if !slices.Contains(expectedFixes, fx.Title) {
+				t.Fatalf("expected fixes to contain %s:\ngot: %v", fx.Title, expectedFixes)
+			}
 		}
 	}
 }
@@ -166,7 +172,7 @@ deny := true
 `),
 	}
 
-	if got, exp := fixReport.TotalFixes(), 1; got != exp {
+	if got, exp := fixReport.TotalFixes(), uint(1); got != exp {
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 
@@ -195,15 +201,21 @@ deny := true
 		}
 
 		// check that the fixed violations are correct
-		fixedViolations := fixReport.FixedViolationsForFile(file)
+		fxs := fixReport.FixesForFile(file)
 
-		expectedViolations, ok := expectedFileFixedViolations[file]
+		expectedFixes, ok := expectedFileFixedViolations[file]
 		if !ok {
 			t.Fatalf("unexpected file waas fixed %s", file)
 		}
 
-		if !slices.Equal(fixedViolations, expectedViolations) {
-			t.Fatalf("unexpected fixed violations for %s:\ngot: %v\nexpected: %v", file, fixedViolations, expectedViolations)
+		if len(fxs) != len(expectedFixes) {
+			t.Fatalf("unexpected number of fixes for %s:\ngot: %v\nexpected: %v", file, fxs, expectedFixes)
+		}
+
+		for _, fx := range fxs {
+			if !slices.Contains(expectedFixes, fx.Title) {
+				t.Fatalf("expected fixes to contain %s:\ngot: %v", fx.Title, expectedFixes)
+			}
 		}
 	}
 }

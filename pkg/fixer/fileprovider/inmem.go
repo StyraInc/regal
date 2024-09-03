@@ -43,6 +43,12 @@ func (p *InMemoryFileProvider) PutFile(file string, content []byte) error {
 	return nil
 }
 
+func (p *InMemoryFileProvider) DeleteFile(file string) error {
+	delete(p.files, file)
+
+	return nil
+}
+
 func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
 	modules := make(map[string]*ast.Module)
 

@@ -46,6 +46,8 @@ type fixCommandParams struct {
 	outputFile      string
 	rules           repeatedStringFlag
 	timeout         time.Duration
+	dryRun          bool
+	verbose         bool
 }
 
 func (p *fixCommandParams) getConfigFile() string {
@@ -136,6 +138,12 @@ The linter rules with automatic fixes available are currently:
 
 	fixCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
 		"ignore all files matching a glob-pattern. This flag can be repeated.")
+
+	fixCommand.Flags().BoolVarP(&params.dryRun, "dry-run", "", false,
+		"run the fixer in dry-run mode, use with --verbose to see changes")
+
+	fixCommand.Flags().BoolVarP(&params.verbose, "verbose", "", false,
+		"show the full changes applied in the console")
 
 	addPprofFlag(fixCommand.Flags())
 
@@ -285,34 +293,56 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to fix: %w", err)
 	}
 
-	for _, file := range fileProvider.DeletedFiles() {
-		err := os.Remove(file)
-		if err != nil {
-			return fmt.Errorf("failed to delete file %s: %w", file, err)
+	if params.verbose {
+		fmt.Fprintln(outputWriter, "Dry run mode enabled, the following changes would be made:")
+
+		for _, file := range fileProvider.ModifiedFiles() {
+			fmt.Fprintln(outputWriter, "Set:", file, "to:")
+
+			fc, err := fileProvider.GetFile(file)
+			if err != nil {
+				return fmt.Errorf("failed to get file %s: %w", file, err)
+			}
+
+			fmt.Fprintln(outputWriter, string(fc))
+			fmt.Fprintln(outputWriter, "----------")
+		}
+
+		for _, file := range fileProvider.DeletedFiles() {
+			fmt.Fprintln(outputWriter, "Delete:", file)
 		}
 	}
 
-	for _, file := range fileProvider.ModifiedFiles() {
-		fc, err := fileProvider.GetFile(file)
-		if err != nil {
-			return fmt.Errorf("failed to get file %s: %w", file, err)
+	if !params.dryRun {
+		for _, file := range fileProvider.DeletedFiles() {
+			err := os.Remove(file)
+			if err != nil {
+				return fmt.Errorf("failed to delete file %s: %w", file, err)
+			}
 		}
 
-		fileMode := fs.FileMode(0o600)
+		for _, file := range fileProvider.ModifiedFiles() {
+			fc, err := fileProvider.GetFile(file)
+			if err != nil {
+				return fmt.Errorf("failed to get file %s: %w", file, err)
+			}
 
-		fileInfo, err := os.Stat(file)
-		if err == nil {
-			fileMode = fileInfo.Mode()
-		}
+			fileMode := fs.FileMode(0o600)
 
-		err = os.MkdirAll(filepath.Dir(file), 0o755)
-		if err != nil {
-			return fmt.Errorf("failed to create directory for file %s: %w", file, err)
-		}
+			fileInfo, err := os.Stat(file)
+			if err == nil {
+				fileMode = fileInfo.Mode()
+			}
 
-		err = os.WriteFile(file, fc, fileMode)
-		if err != nil {
-			return fmt.Errorf("failed to write file %s: %w", file, err)
+			err = os.MkdirAll(filepath.Dir(file), 0o755)
+			if err != nil {
+				return fmt.Errorf("failed to create directory for file %s: %w", file, err)
+			}
+
+			err = os.WriteFile(file, fc, fileMode)
+			if err != nil {
+				return fmt.Errorf("failed to write file %s: %w", file, err)
+			}
 		}
 	}
 
@@ -320,6 +350,8 @@ func fix(args []string, params *fixCommandParams) error {
 	if err != nil {
 		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
 	}
+
+	r.SetDryRun(params.dryRun)
 
 	err = r.Report(fixReport)
 	if err != nil {

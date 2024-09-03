@@ -13,6 +13,7 @@ import (
 // Reporter is responsible for outputting a fix report in a specific format.
 type Reporter interface {
 	Report(*Report) error
+	SetDryRun(bool)
 }
 
 // ReporterForFormat returns a suitable Reporter for outputting a fix report in the given format.
@@ -28,6 +29,7 @@ func ReporterForFormat(format string, outputWriter io.Writer) (Reporter, error) 
 // PrettyReporter outputs a fix report in a human-readable format.
 type PrettyReporter struct {
 	outputWriter io.Writer
+	dryRun       bool
 }
 
 func NewPrettyReporter(outputWriter io.Writer) *PrettyReporter {
@@ -36,16 +38,25 @@ func NewPrettyReporter(outputWriter io.Writer) *PrettyReporter {
 	}
 }
 
+func (r *PrettyReporter) SetDryRun(dryRun bool) {
+	r.dryRun = dryRun
+}
+
 func (r *PrettyReporter) Report(fixReport *Report) error {
+	action := "applied"
+	if r.dryRun {
+		action = "to apply"
+	}
+
 	switch x := fixReport.TotalFixes(); x {
 	case 0:
-		fmt.Fprintln(r.outputWriter, "No fixes applied.")
+		fmt.Fprintf(r.outputWriter, "No fixes %s.\n", action)
 
 		return nil
 	case 1:
-		fmt.Fprintln(r.outputWriter, "1 fix applied:")
+		fmt.Fprintf(r.outputWriter, "1 fix %s:\n", action)
 	default:
-		fmt.Fprintf(r.outputWriter, "%d fixes applied:\n", x)
+		fmt.Fprintf(r.outputWriter, "%d fixes %s:\n", x, action)
 	}
 
 	byRoot := make(map[string]map[string][]fixes.FixResult)

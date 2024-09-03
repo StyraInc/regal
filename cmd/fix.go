@@ -296,45 +296,49 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to fix: %w", err)
 	}
 
-	gitRepo, err := git.FindGitRepo(args...)
-	if err != nil {
-		return fmt.Errorf("failed to establish git repo: %w", err)
-	}
-
-	// if fix is being run in a git repo, we must not fix files that have been
-	// changed
-	changedFiles := make(map[string]struct{})
-
-	if gitRepo != "" {
-		cf, err := git.GetChangedFiles(gitRepo)
+	// if the fixer is being run in a git repo, we must not fix files that have
+	// been changed.
+	if !params.dryRun {
+		gitRepo, err := git.FindGitRepo(args...)
 		if err != nil {
-			return fmt.Errorf("failed to get changed files: %w", err)
+			return fmt.Errorf("failed to establish git repo: %w", err)
 		}
 
-		for _, f := range cf {
-			changedFiles[f] = struct{}{}
+		changedFiles := make(map[string]struct{})
+
+		if gitRepo != "" {
+			cf, err := git.GetChangedFiles(gitRepo)
+			if err != nil {
+				return fmt.Errorf("failed to get changed files: %w", err)
+			}
+
+			for _, f := range cf {
+				changedFiles[f] = struct{}{}
+			}
 		}
-	}
 
-	var conflictingFiles []string
+		var conflictingFiles []string
 
-	for _, file := range fileProvider.ModifiedFiles() {
-		if _, ok := changedFiles[file]; ok {
-			conflictingFiles = append(conflictingFiles, file)
+		for _, file := range fileProvider.ModifiedFiles() {
+			if _, ok := changedFiles[file]; ok {
+				conflictingFiles = append(conflictingFiles, file)
+			}
 		}
-	}
 
-	if len(conflictingFiles) > 0 {
-		return fmt.Errorf(
-			`the following files have been changed since the fixer was run:
+		if len(conflictingFiles) > 0 {
+			return fmt.Errorf(
+				`the following files have been changed since the fixer was run:
 - %s
 please run fix from a clean state to support the use of git checkout for undo`,
-			strings.Join(conflictingFiles, "\n- "),
-		)
+				strings.Join(conflictingFiles, "\n- "),
+			)
+		}
 	}
 
 	if params.verbose {
-		fmt.Fprintln(outputWriter, "Dry run mode enabled, the following changes would be made:")
+		if params.dryRun {
+			fmt.Fprintln(outputWriter, "Dry run mode enabled, the following changes would be made:")
+		}
 
 		for _, file := range fileProvider.ModifiedFiles() {
 			fmt.Fprintln(outputWriter, "Set:", file, "to:")

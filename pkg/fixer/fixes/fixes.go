@@ -52,7 +52,6 @@ type Fix interface {
 type RuntimeOptions struct {
 	// BaseDir is the base directory for the files being fixed. This is often the same as the
 	// workspace root directory, but not necessarily.
-	// TODO: use a slice and allow more than one?
 	BaseDir   string
 	Config    *config.Config
 	Client    clients.Identifier

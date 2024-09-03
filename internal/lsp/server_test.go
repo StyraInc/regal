@@ -421,41 +421,55 @@ allow := neo4j.q
 	// LSP for a completion. We expect to see neo4j.query show up. Since
 	// neo4j.query is an EOPA-specific builtin, it should never appear if
 	// we're using the normal OPA capabilities file.
-	resp := make(map[string]any)
-	if err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: mainRegoURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 16,
-		},
-	}, &resp); err != nil {
-		t.Fatalf("failed to send completion notification: %s", err)
-	}
+	timeout = time.NewTimer(defaultTimeout)
+	defer timeout.Stop()
 
-	foundNeo4j := false
+	select {
+	case <-timeout.C:
+		t.Fatalf("timed out waiting for file completion to correct")
+	default:
+		for {
+			resp := make(map[string]any)
+			if err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
+				TextDocument: types.TextDocumentIdentifier{
+					URI: mainRegoURI,
+				},
+				Position: types.Position{
+					Line:      2,
+					Character: 16,
+				},
+			}, &resp); err != nil {
+				t.Fatalf("failed to send completion notification: %s", err)
+			}
 
-	itemsList, ok := resp["items"].([]any)
-	if !ok {
-		t.Fatalf("failed to cast resp[items] to []any")
-	}
+			foundNeo4j := false
 
-	for _, itemI := range itemsList {
-		item, ok := itemI.(map[string]any)
-		if !ok {
-			t.Fatalf("completion item '%+v' was not a JSON object", itemI)
+			itemsList, ok := resp["items"].([]any)
+			if !ok {
+				t.Fatalf("failed to cast resp[items] to []any")
+			}
+
+			for _, itemI := range itemsList {
+				item, ok := itemI.(map[string]any)
+				if !ok {
+					t.Fatalf("completion item '%+v' was not a JSON object", itemI)
+				}
+
+				t.Logf("completion label: %s", item["label"])
+
+				if item["label"] == "neo4j.query" {
+					foundNeo4j = true
+
+					break
+				}
+			}
+
+			if foundNeo4j {
+				break
+			}
+
+			t.Logf("waiting for neo4j.query in completion results for neo4j.q, got %v", itemsList)
 		}
-
-		t.Logf("completion label: %s", item["label"])
-
-		if item["label"] == "neo4j.query" {
-			foundNeo4j = true
-		}
-	}
-
-	if !foundNeo4j {
-		t.Errorf("expected neo4j.query in completion results for neo4j.q, got %v", itemsList)
 	}
 }
 
@@ -889,7 +903,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	l := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
 	c := cache.NewCache()
-	f := &fixes.DirectoryPackageMismatch{DryRun: true}
+	f := &fixes.DirectoryPackageMismatch{}
 
 	fileURL := fmt.Sprintf("file://%s/workspace/foo/bar/policy.rego", tmpDir)
 

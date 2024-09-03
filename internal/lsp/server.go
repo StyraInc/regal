@@ -488,7 +488,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				renameParams, err = l.fixRenameParams(
 					"Rename file to match package path",
-					&fixes.DirectoryPackageMismatch{DryRun: true},
+					&fixes.DirectoryPackageMismatch{},
 					fileURL,
 				)
 				if err != nil {
@@ -737,9 +737,11 @@ func (l *LanguageServer) fixEditParams(
 		return false, nil, fmt.Errorf("could not get file contents for uri %q", pr.Target)
 	}
 
-	var rto *fixes.RuntimeOptions
+	rto := &fixes.RuntimeOptions{
+		BaseDir: uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
+	}
 	if pr.Location != nil {
-		rto = &fixes.RuntimeOptions{Locations: []ast.Location{*pr.Location}}
+		rto.Locations = []ast.Location{*pr.Location}
 	}
 
 	fixResults, err := fix.Fix(
@@ -787,12 +789,8 @@ func (l *LanguageServer) fixRenameParams(
 		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to get potential roots: %w", err)
 	}
 
-	fmt.Fprintf(os.Stderr, "potential roots: %v\n", roots)
-
 	file := uri.ToPath(l.clientIdentifier, fileURL)
 	baseDir := util.FindClosestMatchingRoot(file, roots)
-
-	fmt.Fprintf(os.Stderr, "base dir: %v\n", baseDir)
 
 	results, err := fix.Fix(
 		&fixes.FixCandidate{
@@ -1722,7 +1720,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return []types.TextEdit{}, nil
 		}
 
-		newContent, err = memfp.GetFile(params.TextDocument.URI)
+		newContent, err = memfp.Get(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get formatted contents: %w", err)
 		}

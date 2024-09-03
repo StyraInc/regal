@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/internal/git"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
@@ -43,6 +46,8 @@ type fixCommandParams struct {
 	outputFile      string
 	rules           repeatedStringFlag
 	timeout         time.Duration
+	dryRun          bool
+	verbose         bool
 }
 
 func (p *fixCommandParams) getConfigFile() string {
@@ -134,11 +139,20 @@ The linter rules with automatic fixes available are currently:
 	fixCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
 		"ignore all files matching a glob-pattern. This flag can be repeated.")
 
+	fixCommand.Flags().BoolVarP(&params.dryRun, "dry-run", "", false,
+		"run the fixer in dry-run mode, use with --verbose to see changes")
+
+	fixCommand.Flags().BoolVarP(&params.verbose, "verbose", "", false,
+		"show the full changes applied in the console")
+
 	addPprofFlag(fixCommand.Flags())
 
 	RootCommand.AddCommand(fixCommand)
 }
 
+// TODO: This function is too long and should be broken down
+//
+//nolint:maintidx
 func fix(args []string, params *fixCommandParams) error {
 	var err error
 
@@ -263,11 +277,122 @@ func fix(args []string, params *fixCommandParams) error {
 		ignore = params.ignoreFiles.v
 	}
 
-	fileProvider := fileprovider.NewFSFileProvider(ignore, args...)
+	filtered, err := config.FilterIgnoredPaths(args, ignore, true, "")
+	if err != nil {
+		return fmt.Errorf("failed to filter ignored paths: %w", err)
+	}
+
+	slices.Sort(filtered)
+	// TODO: Figure out why filtered returns duplicates in the first place
+	filtered = slices.Compact(filtered)
+
+	fileProvider, err := fileprovider.NewInMemoryFileProviderFromFS(filtered...)
+	if err != nil {
+		return fmt.Errorf("failed to create file provider: %w", err)
+	}
 
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {
 		return fmt.Errorf("failed to fix: %w", err)
+	}
+
+	// if the fixer is being run in a git repo, we must not fix files that have
+	// been changed.
+	if !params.dryRun {
+		gitRepo, err := git.FindGitRepo(args...)
+		if err != nil {
+			return fmt.Errorf("failed to establish git repo: %w", err)
+		}
+
+		changedFiles := make(map[string]struct{})
+
+		if gitRepo != "" {
+			cf, err := git.GetChangedFiles(gitRepo)
+			if err != nil {
+				return fmt.Errorf("failed to get changed files: %w", err)
+			}
+
+			for _, f := range cf {
+				changedFiles[f] = struct{}{}
+			}
+		}
+
+		var conflictingFiles []string
+
+		for _, file := range fileProvider.ModifiedFiles() {
+			if _, ok := changedFiles[file]; ok {
+				conflictingFiles = append(conflictingFiles, file)
+			}
+		}
+
+		if len(conflictingFiles) > 0 {
+			return fmt.Errorf(
+				`the following files have been changed since the fixer was run:
+- %s
+please run fix from a clean state to support the use of git checkout for undo`,
+				strings.Join(conflictingFiles, "\n- "),
+			)
+		}
+	}
+
+	if params.verbose {
+		if params.dryRun {
+			fmt.Fprintln(outputWriter, "Dry run mode enabled, the following changes would be made:")
+		}
+
+		for _, file := range fileProvider.ModifiedFiles() {
+			fmt.Fprintln(outputWriter, "Set:", file, "to:")
+
+			fc, err := fileProvider.Get(file)
+			if err != nil {
+				return fmt.Errorf("failed to get file %s: %w", file, err)
+			}
+
+			fmt.Fprintln(outputWriter, string(fc))
+			fmt.Fprintln(outputWriter, "----------")
+		}
+
+		for _, file := range fileProvider.DeletedFiles() {
+			fmt.Fprintln(outputWriter, "Delete:", file)
+		}
+	}
+
+	if !params.dryRun {
+		for _, file := range fileProvider.DeletedFiles() {
+			err := os.Remove(file)
+			if err != nil {
+				return fmt.Errorf("failed to delete file %s: %w", file, err)
+			}
+
+			err = deleteEmptyDirs(filepath.Dir(file))
+			if err != nil {
+				return fmt.Errorf("failed to delete empty directories: %w", err)
+			}
+		}
+
+		for _, file := range fileProvider.ModifiedFiles() {
+			fc, err := fileProvider.Get(file)
+			if err != nil {
+				return fmt.Errorf("failed to get file %s: %w", file, err)
+			}
+
+			fileMode := fs.FileMode(0o600)
+
+			fileInfo, err := os.Stat(file)
+			if err == nil {
+				fileMode = fileInfo.Mode()
+			}
+
+			err = os.MkdirAll(filepath.Dir(file), 0o755)
+			if err != nil {
+				return fmt.Errorf("failed to create directory for file %s: %w", file, err)
+			}
+
+			err = os.WriteFile(file, fc, fileMode)
+			if err != nil {
+				return fmt.Errorf("failed to write file %s: %w", file, err)
+			}
+		}
 	}
 
 	r, err := fixer.ReporterForFormat(params.format, outputWriter)
@@ -275,9 +400,36 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
 	}
 
+	r.SetDryRun(params.dryRun)
+
 	err = r.Report(fixReport)
 	if err != nil {
 		return fmt.Errorf("failed to output fix report: %w", err)
+	}
+
+	return nil
+}
+
+func deleteEmptyDirs(dir string) error {
+	for {
+		// os.Remove will only delete empty directories
+		err := os.Remove(dir)
+		if err != nil {
+			if os.IsExist(err) {
+				break
+			}
+
+			if !os.IsNotExist(err) && !os.IsPermission(err) {
+				return fmt.Errorf("failed to clean directory %s: %w", dir, err)
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+
+		dir = parent
 	}
 
 	return nil

@@ -778,8 +778,8 @@ func TestFix(t *testing.T) {
 	stderr := bytes.Buffer{}
 	td := t.TempDir()
 
-	// note the package name, and how it will be used to move the file to a corresponding directory
-	unformattedContents := []byte(`package wow
+	initialState := map[string]string{
+		"foo/main.rego": `package wow
 
 import rego.v1
 
@@ -788,23 +788,62 @@ import rego.v1
 allow if {
 	true
 }
-`)
-	unrelatedFileContents := []byte(`foobar`)
+`,
+		"foo/main_test.rego": `package wow_test
 
-	mustWriteToFile(t, filepath.Join(td, "main.rego"), string(unformattedContents))
-	mustWriteToFile(t, filepath.Join(td, "unrelated.txt"), string(unrelatedFileContents))
+test_allow {
+	true
+}
+`,
+		"foo/foo.rego": `package foo
+
+import rego.v1
+
+# present and correct
+
+allow if {
+	input.admin
+}
+`,
+		"bar/main.rego": `package wow["foo-bar"].baz
+
+import rego.v1
+`,
+		"bar/main_test.rego": `package wow["foo-bar"].baz_test
+test_allow {
+	true
+}
+`,
+		"unrelated.txt": `foobar`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), string(content))
+	}
 
 	err := regal(&stdout, &stderr)("fix", td)
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`3 fixes applied:
+	exp := fmt.Sprintf(`8 fixes applied:
 In project root: %s
-main.rego -> wow/main.rego:
-- use-rego-v1
+bar/main.rego -> wow/foo-bar/baz/main.rego:
 - directory-package-mismatch
+
+bar/main_test.rego -> wow/foo-bar/baz/main_test.rego:
+- directory-package-mismatch
+- use-rego-v1
+
+foo/main.rego -> wow/main.rego:
+- directory-package-mismatch
+- use-rego-v1
 - no-whitespace-comment
+
+foo/main_test.rego -> wow/main_test.rego:
+- directory-package-mismatch
+- use-rego-v1
+
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -815,23 +854,61 @@ main.rego -> wow/main.rego:
 		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
 
-	// check that the (now moved) file was formatted
-	bs, err := os.ReadFile(filepath.Join(td, "wow/main.rego"))
-	if err != nil {
-		t.Fatalf("failed to read wow/main.rego: %v", err)
-	}
+	expectedState := map[string]string{
+		"foo/foo.rego": `package foo
 
-	expectedContent := `package wow
+import rego.v1
+
+# present and correct
+
+allow if {
+	input.admin
+}
+`,
+		"wow/foo-bar/baz/main.rego": `package wow["foo-bar"].baz
+
+import rego.v1
+`,
+		"wow/foo-bar/baz/main_test.rego": `package wow["foo-bar"].baz_test
+
+import rego.v1
+
+test_allow := true
+`,
+		"wow/main.rego": `package wow
 
 import rego.v1
 
 # comment
 
 allow := true
-`
+`,
+		"wow/main_test.rego": `package wow_test
 
-	if act := string(bs); expectedContent != act {
-		t.Errorf("expected\n%s, got\n%s", expectedContent, act)
+import rego.v1
+
+test_allow := true
+`,
+		"unrelated.txt": `foobar`,
+	}
+
+	for file, expectedContent := range expectedState {
+		bs, err := os.ReadFile(filepath.Join(td, file))
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", file, err)
+		}
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+
+	// foo is not removed as it contains a correct file
+	expectedMissingDirs := []string{"bar"}
+	for _, dir := range expectedMissingDirs {
+		if _, err := os.Stat(filepath.Join(td, dir)); err == nil {
+			t.Errorf("expected directory %q to have been removed", dir)
+		}
 	}
 }
 
@@ -905,6 +982,10 @@ func expectExitCode(t *testing.T, err error, exp int, stdout *bytes.Buffer, stde
 
 func mustWriteToFile(t *testing.T, path string, content string) {
 	t.Helper()
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("failed to create directory %s: %v", filepath.Dir(path), err)
+	}
 
 	err := os.WriteFile(path, []byte(content), 0o644)
 	if err != nil {

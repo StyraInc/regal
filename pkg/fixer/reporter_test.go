@@ -41,12 +41,33 @@ func TestPrettyReporterOutput(t *testing.T) {
 		Root:  "/workspace/bundle2",
 	})
 
-	report.SetMovedFiles(map[string]string{
-		"/workspace/bundle1/policy1.rego": "/workspace/bundle1/main/policy1.rego",
-		"/workspace/bundle2/policy1.rego": "/workspace/bundle2/lib/policy2.rego",
-	})
+	report.MergeFixes(
+		"/workspace/bundle1/main/policy1.rego",
+		"/workspace/bundle1/policy1.rego",
+	)
 
-	err := reporter.Report(report)
+	err := report.RegisterOldPathForFile(
+		"/workspace/bundle1/main/policy1.rego",
+		"/workspace/bundle1/policy1.rego",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	report.MergeFixes(
+		"/workspace/bundle2/lib/policy2.rego",
+		"/workspace/bundle2/policy1.rego",
+	)
+
+	err = report.RegisterOldPathForFile(
+		"/workspace/bundle2/lib/policy2.rego",
+		"/workspace/bundle2/policy1.rego",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = reporter.Report(report)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -68,7 +68,7 @@ deny := true
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 
-	fpFiles, err := memfp.ListFiles()
+	fpFiles, err := memfp.List()
 	if err != nil {
 		t.Fatalf("failed to list files: %v", err)
 	}
@@ -80,7 +80,7 @@ deny := true
 			t.Fatalf("unexpected file %s", file)
 		}
 
-		content, err := memfp.GetFile(file)
+		content, err := memfp.Get(file)
 		if err != nil {
 			t.Fatalf("failed to get file %s: %v", file, err)
 		}
@@ -176,7 +176,7 @@ deny := true
 		t.Fatalf("expected %d fixed files, got %d", exp, got)
 	}
 
-	fpFiles, err := memfp.ListFiles()
+	fpFiles, err := memfp.List()
 	if err != nil {
 		t.Fatalf("failed to list files: %v", err)
 	}
@@ -188,7 +188,7 @@ deny := true
 			t.Fatalf("unexpected file %s", file)
 		}
 
-		content, err := memfp.GetFile(file)
+		content, err := memfp.Get(file)
 		if err != nil {
 			t.Fatalf("failed to get file %s: %v", file, err)
 		}

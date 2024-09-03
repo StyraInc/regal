@@ -43,18 +43,13 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 		return nil, nil // File is where it should be. We are done!
 	}
 
-	newRel, err := filepath.Rel(rootPath, newPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate relative path: %w", err)
-	}
-
 	return []FixResult{{
 		Title:    d.Name(),
 		Root:     rootPath,
 		Contents: fc.Contents,
 		Rename: &Rename{
 			FromPath: fc.Filename,
-			ToPath:   filepath.Join(rootPath, newRel),
+			ToPath:   newPath, // TODO: should we check that this is relative to base somewhere?
 		},
 	}}, nil
 }

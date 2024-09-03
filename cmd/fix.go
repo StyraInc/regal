@@ -19,8 +19,8 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 
+	"github.com/styrainc/regal/internal/git"
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
@@ -150,6 +150,9 @@ The linter rules with automatic fixes available are currently:
 	RootCommand.AddCommand(fixCommand)
 }
 
+// TODO: This function is too long and should be broken down
+//
+//nolint:maintidx
 func fix(args []string, params *fixCommandParams) error {
 	var err error
 
@@ -293,6 +296,43 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to fix: %w", err)
 	}
 
+	gitRepo, err := git.FindGitRepo(args...)
+	if err != nil {
+		return fmt.Errorf("failed to establish git repo: %w", err)
+	}
+
+	// if fix is being run in a git repo, we must not fix files that have been
+	// changed
+	changedFiles := make(map[string]struct{})
+
+	if gitRepo != "" {
+		cf, err := git.GetChangedFiles(gitRepo)
+		if err != nil {
+			return fmt.Errorf("failed to get changed files: %w", err)
+		}
+
+		for _, f := range cf {
+			changedFiles[f] = struct{}{}
+		}
+	}
+
+	var conflictingFiles []string
+
+	for _, file := range fileProvider.ModifiedFiles() {
+		if _, ok := changedFiles[file]; ok {
+			conflictingFiles = append(conflictingFiles, file)
+		}
+	}
+
+	if len(conflictingFiles) > 0 {
+		return fmt.Errorf(
+			`the following files have been changed since the fixer was run:
+- %s
+please run fix from a clean state to support the use of git checkout for undo`,
+			strings.Join(conflictingFiles, "\n- "),
+		)
+	}
+
 	if params.verbose {
 		fmt.Fprintln(outputWriter, "Dry run mode enabled, the following changes would be made:")
 
@@ -359,43 +399,4 @@ func fix(args []string, params *fixCommandParams) error {
 	}
 
 	return nil
-}
-
-func getPotentialRoots(paths []string) ([]string, error) {
-	dirMap := make(map[string]struct{})
-
-	for _, path := range paths {
-		abs, err := filepath.Abs(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
-		}
-
-		if isDir(abs) {
-			dirMap[abs] = struct{}{}
-		} else {
-			dirMap[filepath.Dir(abs)] = struct{}{}
-		}
-	}
-
-	for _, dir := range util.Keys(dirMap) {
-		brds, err := config.FindBundleRootDirectories(dir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
-		}
-
-		for _, brd := range brds {
-			dirMap[brd] = struct{}{}
-		}
-	}
-
-	return util.Keys(dirMap), nil
-}
-
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return info.IsDir()
 }

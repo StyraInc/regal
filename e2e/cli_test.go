@@ -882,6 +882,13 @@ test_allow := true
 			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
 		}
 	}
+
+	expectedMissingDirs := []string{"foo", "bar"}
+	for _, dir := range expectedMissingDirs {
+		if _, err := os.Stat(filepath.Join(td, dir)); err == nil {
+			t.Errorf("expected directory %q to have been removed", dir)
+		}
+	}
 }
 
 func binary() string {

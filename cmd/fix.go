@@ -363,6 +363,11 @@ please run fix from a clean state to support the use of git checkout for undo`,
 			if err != nil {
 				return fmt.Errorf("failed to delete file %s: %w", file, err)
 			}
+
+			err = deleteEmptyDirs(filepath.Dir(file))
+			if err != nil {
+				return fmt.Errorf("failed to delete empty directories: %w", err)
+			}
 		}
 
 		for _, file := range fileProvider.ModifiedFiles() {
@@ -400,6 +405,31 @@ please run fix from a clean state to support the use of git checkout for undo`,
 	err = r.Report(fixReport)
 	if err != nil {
 		return fmt.Errorf("failed to output fix report: %w", err)
+	}
+
+	return nil
+}
+
+func deleteEmptyDirs(dir string) error {
+	for {
+		// os.Remove will only delete empty directories
+		err := os.Remove(dir)
+		if err != nil {
+			if os.IsExist(err) {
+				break
+			}
+
+			if !os.IsNotExist(err) && !os.IsPermission(err) {
+				return fmt.Errorf("failed to clean directory %s: %w", dir, err)
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+
+		dir = parent
 	}
 
 	return nil

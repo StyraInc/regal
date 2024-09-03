@@ -1722,7 +1722,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return []types.TextEdit{}, nil
 		}
 
-		newContent, err = memfp.GetFile(params.TextDocument.URI)
+		newContent, err = memfp.Get(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get formatted contents: %w", err)
 		}

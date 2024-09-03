@@ -343,7 +343,7 @@ please run fix from a clean state to support the use of git checkout for undo`,
 		for _, file := range fileProvider.ModifiedFiles() {
 			fmt.Fprintln(outputWriter, "Set:", file, "to:")
 
-			fc, err := fileProvider.GetFile(file)
+			fc, err := fileProvider.Get(file)
 			if err != nil {
 				return fmt.Errorf("failed to get file %s: %w", file, err)
 			}
@@ -366,7 +366,7 @@ please run fix from a clean state to support the use of git checkout for undo`,
 		}
 
 		for _, file := range fileProvider.ModifiedFiles() {
-			fc, err := fileProvider.GetFile(file)
+			fc, err := fileProvider.Get(file)
 			if err != nil {
 				return fmt.Errorf("failed to get file %s: %w", file, err)
 			}

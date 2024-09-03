@@ -73,7 +73,6 @@ func (r *PrettyReporter) Report(fixReport *Report) error {
 
 	i := 0
 
-	movedNewLocs := util.MapInvert(fixReport.movedFiles)
 	rootsSorted := util.Keys(byRoot)
 
 	slices.Sort(rootsSorted)
@@ -94,20 +93,19 @@ func (r *PrettyReporter) Report(fixReport *Report) error {
 
 			rel := relOrDefault(root, file, file)
 
-			if _, ok := movedNewLocs[file]; !ok {
-				if newLoc, ok := fixReport.movedFiles[file]; ok {
-					fmt.Fprintf(r.outputWriter, "%s -> %s:\n", rel, relOrDefault(root, newLoc, newLoc))
-				} else {
-					fmt.Fprintf(r.outputWriter, "%s:\n", rel)
-				}
-			} else if len(fxs) == 1 {
-				if oldLoc, ok := movedNewLocs[file]; ok {
-					fmt.Fprintf(r.outputWriter, "%s -> %s:\n", relOrDefault(root, oldLoc, oldLoc), rel)
-				}
+			oldPath, ok := fixReport.OldPathForFile(file)
+			if ok {
+				fmt.Fprintf(r.outputWriter, "%s -> %s:\n", relOrDefault(root, oldPath, oldPath), rel)
+			} else {
+				fmt.Fprintf(r.outputWriter, "%s:\n", rel)
 			}
 
 			for _, fix := range fxs {
 				fmt.Fprintf(r.outputWriter, "- %s\n", fix.Title)
+			}
+
+			if len(files) > 3 {
+				fmt.Fprintln(r.outputWriter, "")
 			}
 		}
 

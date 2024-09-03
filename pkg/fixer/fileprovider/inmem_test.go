@@ -37,7 +37,30 @@ func TestFromFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if fc, err := fp.GetFile(tempDir + "/foo/bar/baz"); err != nil || string(fc) != "bar" {
+	if fc, err := fp.Get(tempDir + "/foo/bar/baz"); err != nil || string(fc) != "bar" {
 		t.Fatalf("expected %s, got %s", "bar", string(fc))
+	}
+}
+
+func TestRenameConflict(t *testing.T) {
+	t.Parallel()
+
+	fileA := "/foo/bar/baz"
+	fileB := "/bar/foo"
+
+	files := map[string][]byte{
+		fileA: []byte("bar"),
+		fileB: []byte("baz"),
+	}
+
+	fp := NewInMemoryFileProvider(files)
+
+	err := fp.Rename(fileA, fileB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	if err.Error() != "rename conflict: file /bar/foo already exists" {
+		t.Fatalf("expected %s, got %s", "rename conflict", err.Error())
 	}
 }

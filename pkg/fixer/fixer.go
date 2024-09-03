@@ -94,7 +94,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 	for len(f.registeredMandatoryFixes) > 0 {
 		fixMadeInIteration := false
 
-		files, err := fp.ListFiles()
+		files, err := fp.List()
 		if err != nil {
 			return nil, fmt.Errorf("failed to list files: %w", err)
 		}
@@ -106,7 +106,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 					return nil, fmt.Errorf("no mandatory fix matched %s", fix)
 				}
 
-				fc, err := fp.GetFile(file)
+				fc, err := fp.Get(file)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get file %s: %w", file, err)
 				}
@@ -122,7 +122,7 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 
 				for _, fixResult := range fixResults {
 					if !bytes.Equal(fc, fixResult.Contents) {
-						err := fp.PutFile(file, fixResult.Contents)
+						err := fp.Put(file, fixResult.Contents)
 						if err != nil {
 							return nil, fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
 						}
@@ -160,8 +160,6 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
-	movedFiles := make(map[string]string)
-
 	for {
 		fixMadeInIteration := false
 
@@ -180,17 +178,14 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 
 		for _, violation := range rep.Violations {
-			file, ok := movedFiles[violation.Location.File]
-			if !ok {
-				file = violation.Location.File
-			}
+			file := violation.Location.File
 
 			fixInstance, ok := f.GetFixForName(violation.Title)
 			if !ok {
 				return nil, fmt.Errorf("no fix for violation %s", violation.Title)
 			}
 
-			fc, err := fp.GetFile(file)
+			fc, err := fp.Get(file)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get file %s: %w", file, err)
 			}
@@ -221,40 +216,51 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 				return nil, fmt.Errorf("failed to fix %s: %w", file, err)
 			}
 
-			if len(fixResults) > 0 {
-				// Note: Only one content update fix result is currently supported
-				fixResult := fixResults[0]
+			if len(fixResults) == 0 {
+				continue
+			}
 
-				if bytes.Equal(fc, fixResult.Contents) {
-					// if file was moved, we need to update the file provider accordingly
-					if fixResult.Rename != nil {
-						err := fp.DeleteFile(fixResult.Rename.FromPath)
-						if err != nil {
-							return nil, fmt.Errorf("failed to delete file %s: %w", fixResult.Rename.FromPath, err)
-						}
+			// Note: Only one content update fix result is currently supported
+			fixResult := fixResults[0]
 
-						movedFiles[file] = fixResult.Rename.ToPath
-						file = fixResult.Rename.ToPath
-					}
-				}
+			// if file was moved, we need to update the file provider accordingly
+			if fixResult.Rename != nil {
+				to := fixResult.Rename.ToPath
+				from := fixResult.Rename.FromPath
 
-				err = fp.PutFile(file, fixResult.Contents)
+				err := fp.Rename(from, to)
 				if err != nil {
-					return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
+					return nil, fmt.Errorf("failed to rename file: %w", err)
 				}
 
-				fixReport.AddFileFix(file, fixResult)
+				fixReport.AddFileFix(to, fixResult)
+
+				fixReport.MergeFixes(to, from)
+				err = fixReport.RegisterOldPathForFile(to, from)
+				if err != nil {
+					return nil, fmt.Errorf("failed to register old path for file %s: %w", to, err)
+				}
 
 				fixMadeInIteration = true
+
+				break
 			}
+
+			// TODO: this is an extra write IFF renaming
+			err = fp.Put(file, fixResult.Contents)
+			if err != nil {
+				return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
+			}
+
+			fixReport.AddFileFix(file, fixResult)
+
+			fixMadeInIteration = true
 		}
 
 		if !fixMadeInIteration {
 			break
 		}
 	}
-
-	fixReport.SetMovedFiles(movedFiles)
 
 	return fixReport, nil
 }

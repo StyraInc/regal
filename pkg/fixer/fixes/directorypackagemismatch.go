@@ -37,11 +37,6 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 
 	rootPath = filepath.Clean(rootPath)
 
-	// We must ensure that any file provided resides under the root path!
-	if _, err = filepath.Rel(rootPath, fc.Filename); err != nil {
-		return nil, fmt.Errorf("path not relative to root path: %w", err)
-	}
-
 	newPath := filepath.Join(rootPath, pkgPath, filepath.Base(fc.Filename))
 
 	if newPath == fc.Filename {

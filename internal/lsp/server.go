@@ -1757,7 +1757,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	// if the file is empty, then the formatters will fail, so we template
-	// intstead
+	// instead
 	if oldContent == "" {
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
 		if err != nil {

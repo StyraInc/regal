@@ -20,7 +20,7 @@ import (
 func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", `package p
+	input := test.InputPolicy("p/p.rego", `package p
 
 import rego.v1
 
@@ -76,7 +76,7 @@ camelCase if {
 func TestLintWithUserConfig(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", `package p
+	input := test.InputPolicy("p/p.rego", `package p
 
 import rego.v1
 
@@ -126,7 +126,7 @@ or := 1
 	}{
 		{
 			name:          "baseline",
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
 		},
 		{
@@ -135,7 +135,7 @@ or := 1
 				"bugs":  {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
 				"style": {"opa-fmt": config.Rule{Level: "ignore"}},
 			}},
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
@@ -165,7 +165,7 @@ or := 1
 					"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
 				},
 			},
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
@@ -181,7 +181,7 @@ or := 1
 					"bugs": {"rule-shadows-builtin": config.Rule{Level: "ignore"}},
 				},
 			},
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
@@ -197,7 +197,7 @@ or := 1
 				},
 				Rules: map[string]config.Category{},
 			},
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
 			expLevels:     []string{"error", "warning", "warning"},
 		},
@@ -207,17 +207,17 @@ or := 1
 				"bugs": {"rule-shadows-builtin": config.Rule{
 					Level: "error",
 					Ignore: &config.Ignore{
-						Files: []string{"p.rego"},
+						Files: []string{"p/p.rego"},
 					},
 				}},
 				"style": {"opa-fmt": config.Rule{
 					Level: "error",
 					Ignore: &config.Ignore{
-						Files: []string{"p.rego"},
+						Files: []string{"p/p.rego"},
 					},
 				}},
 			}},
-			filename:      "p.rego",
+			filename:      "p/p.rego",
 			expViolations: []string{"top-level-iteration"},
 		},
 		{
@@ -312,7 +312,7 @@ or := 1
 func TestLintWithGoRule(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", `package p
+	input := test.InputPolicy("p/p.rego", `package p
 		import rego.v1
 
  		x := true
@@ -340,7 +340,7 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 		"style": {"opa-fmt": config.Rule{Level: "ignore"}},
 	}}
 
-	input := test.InputPolicy("p.rego", `package p
+	input := test.InputPolicy("p/p.rego", `package p
 		import rego.v1
 
 	 	x := true
@@ -360,7 +360,7 @@ func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
+	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
 
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
@@ -383,7 +383,7 @@ var testLintWithCustomEmbeddedRulesFS embed.FS
 func TestLintWithCustomEmbeddedRules(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
+	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
 
 	linter := NewLinter().
 		WithCustomRulesFromFS(testLintWithCustomEmbeddedRulesFS, "testdata").
@@ -403,7 +403,7 @@ func TestLintWithCustomEmbeddedRules(t *testing.T) {
 func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", "package p\n\nimport rego.v1\n")
+	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
 
 	userConfig := config.Config{Rules: map[string]config.Category{
 		"naming": {"acme-corp-package": config.Rule{Level: "ignore"}},

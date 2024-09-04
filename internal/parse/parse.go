@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -42,10 +43,13 @@ func PrepareAST(name string, content string, module *ast.Module) (map[string]any
 		return nil, fmt.Errorf("JSON rountrip failed for module: %w", err)
 	}
 
+	abs, _ := filepath.Abs(name)
+
 	preparedAST["regal"] = map[string]any{
 		"file": map[string]any{
 			"name":  name,
 			"lines": strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"),
+			"abs":   abs,
 		},
 		"environment": map[string]any{
 			"path_separator": string(os.PathSeparator),

@@ -758,7 +758,7 @@ func TestLintPprof(t *testing.T) {
 	cwd := testutil.Must(os.Getwd())(t)
 
 	t.Cleanup(func() {
-		os.Remove(pprofFile)
+		_ = os.Remove(pprofFile)
 	})
 
 	err := regal(&stdout, &stderr)("lint", "--pprof", "clock", cwd+filepath.FromSlash("/testdata/violations"))

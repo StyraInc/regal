@@ -64,3 +64,24 @@ jobs:
         with:
           name: regal-${{ matrix.os.name }}
           path: regal
+
+  code_coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+    - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+      with:
+        go-version-file: go.mod
+    - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
+      with:
+        version: v0.68.0
+    - run: |
+        go run main.go test --coverage bundle \
+        | opa eval -f raw -I -d build/simplecov/simplecov.rego data.build.simplecov.from_opa \
+        > coverage.json
+    - uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
+      with:
+        fail_ci_if_error: false
+        files: ./coverage.json
+        name: regal
+        token: ${{ secrets.CODECOV_TOKEN }} # required

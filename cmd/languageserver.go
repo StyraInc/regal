@@ -45,6 +45,7 @@ func init() {
 			go ls.StartCommandWorker(ctx)
 			go ls.StartConfigWorker(ctx)
 			go ls.StartWorkspaceStateWorker(ctx)
+			go ls.StartTemplateWorker(ctx)
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -75,6 +77,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		diagnosticRequestWorkspace: make(chan string, 10),
 		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
 		commandRequest:             make(chan types.ExecuteCommandParams, 10),
+		templateFile:               make(chan fileUpdateEvent, 10),
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
 		completionsManager:         completions.NewDefaultManager(c, store),
 	}
@@ -106,6 +109,7 @@ type LanguageServer struct {
 	diagnosticRequestWorkspace chan string
 	builtinsPositionFile       chan fileUpdateEvent
 	commandRequest             chan types.ExecuteCommandParams
+	templateFile               chan fileUpdateEvent
 }
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.
@@ -732,6 +736,113 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 	}
 }
 
+// StartTemplateWorker runs the process of the server that templates newly
+// created Rego files.
+func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case evt := <-l.templateFile:
+			newContents, err := l.templateContentsForFile(evt.URI)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to template new file: %w", err))
+			}
+
+			// generate the edit params for the templating operation
+			templateParams := &types.ApplyWorkspaceEditParams{
+				Label: "Template new Rego file",
+				Edit: types.WorkspaceEdit{
+					DocumentChanges: []types.TextDocumentEdit{
+						{
+							TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: evt.URI},
+							Edits:        ComputeEdits("", newContents),
+						},
+					},
+				},
+			}
+
+			err = l.conn.Call(ctx, methodWorkspaceApplyEdit, templateParams, nil)
+			if err != nil {
+				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+			}
+
+			// finally, update the cache contents and run diagnostics to clear
+			// empty module warning.
+			updateEvent := fileUpdateEvent{
+				Reason:  "internal/templateNewFile",
+				URI:     evt.URI,
+				Content: newContents,
+			}
+
+			l.diagnosticRequestFile <- updateEvent
+		}
+	}
+}
+
+func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
+	content, ok := l.cache.GetFileContents(fileURI)
+	if !ok {
+		return "", fmt.Errorf("failed to get file contents for URI %q", fileURI)
+	}
+
+	if content != "" {
+		return "", errors.New("file already has contents, templating not allowed")
+	}
+
+	path := uri.ToPath(l.clientIdentifier, fileURI)
+	dir := filepath.Dir(path)
+
+	roots, err := config.GetPotentialRoots(uri.ToPath(l.clientIdentifier, fileURI))
+	if err != nil {
+		return "", fmt.Errorf("failed to get potential roots during templating of new file: %w", err)
+	}
+
+	longestPrefixRoot := ""
+
+	for _, root := range roots {
+		if strings.HasPrefix(dir, root) && len(root) > len(longestPrefixRoot) {
+			longestPrefixRoot = root
+		}
+	}
+
+	if longestPrefixRoot == "" {
+		return "", fmt.Errorf("failed to find longest prefix root for templating of new file: %s", path)
+	}
+
+	parts := slices.Compact(strings.Split(strings.TrimPrefix(dir, longestPrefixRoot), string(os.PathSeparator)))
+
+	var pkg string
+
+	validPathComponentPattern := regexp.MustCompile(`^\w+[\w\-]*\w+$`)
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
+		if !validPathComponentPattern.MatchString(part) {
+			return "", fmt.Errorf("failed to template new file as package path contained invalid part: %s", part)
+		}
+
+		switch {
+		case strings.Contains(part, "-"):
+			pkg += fmt.Sprintf(`["%s"]`, part)
+		case pkg == "":
+			pkg += part
+		default:
+			pkg += "." + part
+		}
+	}
+
+	// if we are in the root, then we can use main as a default
+	if pkg == "" {
+		pkg = "main"
+	}
+
+	return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
+}
+
 func (l *LanguageServer) fixEditParams(
 	label string,
 	fix fixes.Fix,
@@ -1208,8 +1319,6 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
-
 		// return a null response, as per the spec
 		return nil, nil
 	}
@@ -1597,8 +1706,6 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get module for uri %q", params.TextDocument.URI))
-
 		return []types.DocumentSymbol{}, nil
 	}
 
@@ -1647,6 +1754,27 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		oldContent, ok = l.cache.GetIgnoredFileContents(params.TextDocument.URI)
 	} else {
 		oldContent, ok = l.cache.GetFileContents(params.TextDocument.URI)
+	}
+
+	// if the file is empty, then the formatters will fail, so we template
+	// instead
+	if oldContent == "" {
+		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
+		if err != nil {
+			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
+		}
+
+		l.cache.ClearFileDiagnostics()
+
+		updateEvent := fileUpdateEvent{
+			Reason:  "internal/templateFormattingFallback",
+			URI:     params.TextDocument.URI,
+			Content: newContent,
+		}
+
+		l.diagnosticRequestFile <- updateEvent
+
+		return ComputeEdits(oldContent, newContent), nil
 	}
 
 	if !ok {
@@ -1773,6 +1901,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 
 		l.diagnosticRequestFile <- evt
 		l.builtinsPositionFile <- evt
+		l.templateFile <- evt
 	}
 
 	return struct{}{}, nil

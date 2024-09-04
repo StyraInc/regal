@@ -195,7 +195,11 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 
 	// This will traverse the tree **downwards** searching for .regal directories
 	// Not using rio.WalkFiles here as we're specifically looking for directories
-	if err := filepath.WalkDir(path, func(path string, info os.DirEntry, _ error) error {
+	if err := filepath.WalkDir(path, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to walk path: %w", err)
+		}
+
 		if info.IsDir() && info.Name() == regalDirName {
 			// Opening files as part of walking is generally not a good idea...
 			// but I think we can assume the number of .regal directories in a project

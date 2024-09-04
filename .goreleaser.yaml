@@ -40,7 +40,7 @@ kos:
     build: linux-windows-build
     repository: ghcr.io/styrainc/regal
     tags:
-      - '{{.Version}}'
+      - "{{.Version}}"
       - latest
     bare: true
     base_image: cgr.dev/chainguard/busybox:latest-glibc
@@ -65,7 +65,7 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"

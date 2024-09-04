@@ -6,7 +6,7 @@ name: Update Examples Index
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * *' # Run daily at 1 AM UTC
+    - cron: "0 1 * * *" # Run daily at 1 AM UTC
 
 jobs:
   update-examples-index:

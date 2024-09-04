@@ -73,6 +73,25 @@ test_success_rule_longer_than_configured_max_length_but_comments if {
 	r == set()
 }
 
+test_success_rule_longer_than_configured_max_length_but_no_body_and_exception_configured if {
+	module := regal.parse_module("policy.rego", `package p
+
+	my_short_rule := {
+		"a": input.a,
+		"b": input.b,
+		"c": input.c,
+		"d": input.d,
+	}
+	`)
+
+	r := rule.report with input as module with config.for_rule as {
+		"level": "error",
+		"max-rule-length": 2,
+		"except-empty-body": true,
+	}
+	r == set()
+}
+
 test_success_rule_length_equals_max_length if {
 	module := regal.parse_module("policy.rego", `package p
 

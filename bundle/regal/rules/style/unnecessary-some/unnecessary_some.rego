@@ -11,8 +11,7 @@ report contains violation if {
 	# No need to traverse rules here if we're not importing `in`
 	ast.imports_keyword(input.imports, "in")
 
-	some rule_index
-	symbols := ast.found.symbols[rule_index][_]
+	symbols := ast.found.symbols[_][_]
 
 	symbols[0].type == "call"
 	symbols[0].value[0].type == "ref"

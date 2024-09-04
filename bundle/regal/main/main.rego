@@ -24,10 +24,7 @@ rules_to_run[category][title] if {
 	not config.excluded_file(category, title, input.regal.file.name)
 }
 
-notices contains notice if {
-	some category, title
-	some notice in grouped_notices[category][title]
-}
+notices contains grouped_notices[_][_][_]
 
 grouped_notices[category][title] contains notice if {
 	some category, title

@@ -283,3 +283,21 @@ test_all_refs if {
 
 	text_refs == {":=", "data.foo.bar", "data.foo.bax", "data.foo.baz"}
 }
+
+test_provided_capabilities_never_undefined if {
+	capabilities.provided == {} with data.internal as {}
+}
+
+test_function_calls if {
+	calls := ast.function_calls["0"] with input as ast.with_rego_v1(`
+	rule if {
+		x := 1
+		f(2)
+	}`)
+
+	{"assign", "f"} == {call.name | some call in calls}
+}
+
+test_implicit_boolean_assignment if {
+	ast.implicit_boolean_assignment(ast.with_rego_v1(`a.b if true`).rules[0])
+}

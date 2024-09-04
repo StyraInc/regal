@@ -29,7 +29,7 @@ report contains violation if {
 
 		# we don't need the location of each var, but using the first
 		# ref will do, and will hopefully help with caching the result
-		ast.is_output_var(rule, var, value.location)
+		ast.is_output_var(rule, var)
 	])
 
 	num_output_vars != 0

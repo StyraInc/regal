@@ -29,7 +29,7 @@ report contains violation if {
 	# "Partition" the args by their position
 	by_position := [s |
 		some i, _ in args_list[0]
-		s := [x | x := args_list[_][i]]
+		s := [item[i] | some item in args_list]
 	]
 
 	some position in by_position

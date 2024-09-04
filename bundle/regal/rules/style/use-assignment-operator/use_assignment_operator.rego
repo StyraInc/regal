@@ -20,7 +20,7 @@ report contains violation if {
 
 	loc := result.location(rule)
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
 }
 
 report contains violation if {
@@ -32,7 +32,7 @@ report contains violation if {
 
 	loc := result.location(result.location(rule.head.ref[0]))
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
 }
 
 report contains violation if {
@@ -54,12 +54,7 @@ report contains violation if {
 	# assignment
 	regex.match(`else\s*=`, loc.location.text)
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
 }
 
-default eq_col(_) := 1
-
-eq_col(loc) := pos + 1 if {
-	pos := indexof(loc.location.text, "=")
-	pos != -1
-}
+_eq_col(loc) := max([0, indexof(loc.location.text, "=")]) + 1

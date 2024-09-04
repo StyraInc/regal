@@ -22,9 +22,8 @@ import data.regal.result
 #   some x in data.foo.bar
 #   ```
 report contains violation if {
-	some rule_index, name
-
-	var_refs := _ref_vars[rule_index][name]
+	some rule_index
+	var_refs := _ref_vars[rule_index][_]
 
 	count(var_refs) == 1
 
@@ -32,10 +31,11 @@ report contains violation if {
 
 	not _var_in_head(input.rules[to_number(rule_index)].head, var.value)
 	not _var_in_call(ast.function_calls, rule_index, var.value)
+	not _ref_base_vars[rule_index][var.value]
 
 	# this is by far the most expensive condition to check, so only do
 	# so when all other conditions apply
-	ast.is_output_var(input.rules[to_number(rule_index)], var, var.location)
+	ast.is_output_var(input.rules[to_number(rule_index)], var)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(var))
 }
@@ -45,6 +45,15 @@ _ref_vars[rule_index][var.value] contains var if {
 	var := ast.found.vars[rule_index].ref[_]
 
 	not startswith(var.value, "$")
+}
+
+# "a" in "a[foo]", and not foo
+_ref_base_vars[rule_index][term.value] contains term if {
+	some rule_index
+	term := ast.found.refs[rule_index][_].value[0]
+
+	term.type == "var"
+	not startswith(term.value, "$")
 }
 
 _var_in_head(head, name) if head.value.value == name
@@ -63,6 +72,12 @@ _var_in_head(head, name) if {
 	var.value == name
 }
 
+_var_in_head(head, name) if {
+	some i, var in head.ref
+	i > 0
+	var.value == name
+}
+
 _var_in_call(calls, rule_index, name) if _var_in_arg(calls[rule_index][_].args[_], name)
 
 _var_in_arg(arg, name) if {
@@ -71,16 +86,7 @@ _var_in_arg(arg, name) if {
 }
 
 _var_in_arg(arg, name) if {
-	arg.type == "ref"
-
-	some val in arg.value
-
-	val.type == "var"
-	val.value == name
-}
-
-_var_in_arg(arg, name) if {
-	arg.type in {"array", "object"}
+	arg.type in {"array", "object", "set"}
 
 	some var in ast.find_term_vars(arg)
 

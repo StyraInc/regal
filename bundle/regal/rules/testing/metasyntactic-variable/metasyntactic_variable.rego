@@ -47,7 +47,7 @@ report contains violation if {
 
 	lower(var.value) in metasyntactic
 
-	ast.is_output_var(input.rules[to_number(i)], var, var.location)
+	ast.is_output_var(input.rules[to_number(i)], var)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(var))
 }

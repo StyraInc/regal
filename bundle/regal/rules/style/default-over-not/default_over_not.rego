@@ -46,6 +46,10 @@ _static_rule_name(rule) := concat(".", array.concat([rule.head.ref[0].value], [r
 	some i, ref in rule.head.ref
 	i > 0
 ])) if {
-	count(rule.head.ref) > 1
-	ast.static_rule_ref(rule.head.ref)
+	c := count(rule.head.ref)
+	c > 1
+
+	every t in array.slice(rule.head.ref, 1, c) {
+		t.type != "var"
+	}
 }

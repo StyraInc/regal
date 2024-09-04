@@ -12,7 +12,7 @@ import data.regal.result
 # description: Missing capability for built-in function `strings.count`
 # custom:
 #   severity: warning
-notices contains result.notice(rego.metadata.chain()) if not capabilities.has_object_keys
+notices contains result.notice(rego.metadata.chain()) if not capabilities.has_strings_count
 
 # METADATA
 # description: flag calls to `count` where the first argument is a call to `indexof_n`

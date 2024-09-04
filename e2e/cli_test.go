@@ -828,7 +828,7 @@ test_allow {
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
 	exp := fmt.Sprintf(`8 fixes applied:
-In project root: %[1]s
+In project root: %s
 bar/main.rego -> wow/foo-bar/baz/main.rego:
 - directory-package-mismatch
 

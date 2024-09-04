@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -130,4 +131,31 @@ func FilepathJoiner(base string) func(string) string {
 	return func(path string) string {
 		return filepath.Join(base, path)
 	}
+}
+
+// DeleteEmptyDirs will delete empty directories up to the root for a given
+// directory.
+func DeleteEmptyDirs(dir string) error {
+	for {
+		// os.Remove will only delete empty directories
+		err := os.Remove(dir)
+		if err != nil {
+			if os.IsExist(err) {
+				break
+			}
+
+			if !os.IsNotExist(err) && !os.IsPermission(err) {
+				return fmt.Errorf("failed to clean directory %s: %w", dir, err)
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+
+		dir = parent
+	}
+
+	return nil
 }

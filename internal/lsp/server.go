@@ -504,6 +504,17 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				if err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 				}
+
+				// clean up any left over empty edits dirs
+				if len(renameParams.Edit.DocumentChanges) > 0 {
+					dir := filepath.Dir(uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI))
+
+					err := util.DeleteEmptyDirs(dir)
+					if err != nil {
+						l.logError(fmt.Errorf("failed to delete empty directories: %w", err))
+					}
+				}
+
 			case "regal.eval":
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))

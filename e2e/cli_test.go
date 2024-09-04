@@ -779,6 +779,7 @@ func TestFix(t *testing.T) {
 	td := t.TempDir()
 
 	initialState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
 		"foo/main.rego": `package wow
 
 import rego.v1
@@ -821,13 +822,13 @@ test_allow {
 		mustWriteToFile(t, filepath.Join(td, file), string(content))
 	}
 
-	err := regal(&stdout, &stderr)("fix", td)
+	err := regal(&stdout, &stderr)("fix", filepath.Join(td, "foo"), filepath.Join(td, "bar"))
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
 	exp := fmt.Sprintf(`8 fixes applied:
-In project root: %s
+In project root: %[1]s
 bar/main.rego -> wow/foo-bar/baz/main.rego:
 - directory-package-mismatch
 

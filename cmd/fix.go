@@ -49,6 +49,7 @@ type fixCommandParams struct {
 	timeout         time.Duration
 	dryRun          bool
 	verbose         bool
+	force           bool
 }
 
 func (p *fixCommandParams) getConfigFile() string {
@@ -145,6 +146,9 @@ The linter rules with automatic fixes available are currently:
 
 	fixCommand.Flags().BoolVarP(&params.verbose, "verbose", "", false,
 		"show the full changes applied in the console")
+
+	fixCommand.Flags().BoolVarP(&params.force, "force", "", false,
+		"allow fixing of files that have uncommitted changes in git or when git is not being used")
 
 	addPprofFlag(fixCommand.Flags())
 
@@ -314,14 +318,18 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to fix: %w", err)
 	}
 
+	gitRepo, err := git.FindGitRepo(args...)
+	if err != nil {
+		return fmt.Errorf("failed to establish git repo: %w", err)
+	}
+
+	if gitRepo == "" && !params.force {
+		return errors.New("no git repo found to support undo, use --force to override")
+	}
+
 	// if the fixer is being run in a git repo, we must not fix files that have
 	// been changed.
-	if !params.dryRun {
-		gitRepo, err := git.FindGitRepo(args...)
-		if err != nil {
-			return fmt.Errorf("failed to establish git repo: %w", err)
-		}
-
+	if !params.dryRun && !params.force {
 		changedFiles := make(map[string]struct{})
 
 		if gitRepo != "" {

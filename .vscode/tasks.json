@@ -1,27 +1,27 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "regal: prepare pr",
-            "type": "shell",
-            "command": "./build/do.rq pr",
-            "detail": "Prepare PR",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "regal: regal test",
-            "type": "shell",
-            "command": "go run main.go test bundle",
-            "group": "test",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "regal: prepare pr",
+      "type": "shell",
+      "command": "./build/do.rq pr",
+      "detail": "Prepare PR",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "regal: regal test",
+      "type": "shell",
+      "command": "go run main.go test bundle",
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
+  ]
 }

@@ -175,6 +175,7 @@ lint_ci {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
 	run("markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("dprint --config build/dprint.json check")
 }
 
 check_readme {

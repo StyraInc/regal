@@ -2,7 +2,7 @@ name: "CodeQL"
 
 on:
   schedule:
-    - cron: '19 18 * * 4'
+    - cron: "19 18 * * 4"
 
 permissions:
   contents: read
@@ -20,21 +20,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'go' ]
+        language: ["go"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
-      with:
-        languages: ${{ matrix.language }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        with:
+          languages: ${{ matrix.language }}
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        with:
+          category: "/language:${{matrix.language}}"

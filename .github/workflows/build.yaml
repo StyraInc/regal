@@ -7,7 +7,7 @@ concurrency:
 on:
   push:
     branches:
-      - main
+    - main
   pull_request:
   workflow_dispatch:
 
@@ -32,38 +32,38 @@ jobs:
           static: true
     runs-on: ${{ matrix.os.runner }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
-        with:
-          go-version-file: go.mod
-      - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
-        with:
-          version: v0.68.0
-          static: ${{ matrix.os.static }}
-      - run: npm install -g markdownlint-cli
-      - name: Restore rq cache
-        id: cache-rq
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ~/go/bin/rq
-          key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
-      - run: go install git.sr.ht/~charles/rq/cmd/rq@${{ env.RQ_VERSION }}
-        if: steps.cache-rq.outputs.cache-hit != 'true'
-      - name: Cache rq binary
-        if: steps.cache-rq.outputs.cache-hit != 'true'
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ~/go/bin/rq
-          key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
-      - run: build/do.rq pull_request
-      - uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86 # v6.1.0
-        if: matrix.os.name == 'linux'
-        with:
-          version: v1.60.3
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-        with:
-          name: regal-${{ matrix.os.name }}
-          path: regal
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+    - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+      with:
+        go-version-file: go.mod
+    - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
+      with:
+        version: v0.68.0
+        static: ${{ matrix.os.static }}
+    - run: npm install -g markdownlint-cli
+    - name: Restore rq cache
+      id: cache-rq
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      with:
+        path: ~/go/bin/rq
+        key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
+    - run: go install git.sr.ht/~charles/rq/cmd/rq@${{ env.RQ_VERSION }}
+      if: steps.cache-rq.outputs.cache-hit != 'true'
+    - name: Cache rq binary
+      if: steps.cache-rq.outputs.cache-hit != 'true'
+      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      with:
+        path: ~/go/bin/rq
+        key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
+    - run: build/do.rq pull_request
+    - uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86 # v6.1.0
+      if: matrix.os.name == 'linux'
+      with:
+        version: v1.60.3
+    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      with:
+        name: regal-${{ matrix.os.name }}
+        path: regal
 
   code_coverage:
     runs-on: ubuntu-latest
@@ -81,6 +81,7 @@ jobs:
         > coverage.json
     - uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
       with:
+        codecov_yml_path: ./build/codecov.yml
         fail_ci_if_error: false
         files: ./coverage.json
         name: regal

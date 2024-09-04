@@ -822,7 +822,8 @@ test_allow {
 		mustWriteToFile(t, filepath.Join(td, file), string(content))
 	}
 
-	err := regal(&stdout, &stderr)("fix", filepath.Join(td, "foo"), filepath.Join(td, "bar"))
+	// --force is required to make the changes when there is no git repo
+	err := regal(&stdout, &stderr)("fix", "--force", filepath.Join(td, "foo"), filepath.Join(td, "bar"))
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)

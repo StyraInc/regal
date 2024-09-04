@@ -7,20 +7,6 @@ import rego.v1
 import data.regal.config
 import data.regal.result
 
-# - METADATA
-# description: |
-#   emit warning notice when package has more parts than the directory,
-# #   as this should likely **not** fail
-# notices contains _notice(message, "warning") if {
-# 	count(_file_path_values) > 0
-# 	count(_file_path_values) < count(_pkg_path_values)
-
-# 	message := sprintf(
-# 		"package '%s' has more parts than provided directory path '%s'",
-# 		[concat(".", _pkg_path_values), concat("/", _file_path_values)],
-# 	)
-# }
-
 report contains violation if {
 	# get the last n components from file path, where n == count(_pkg_path_values)
 	file_path_length_matched := array.slice(
@@ -53,7 +39,7 @@ _pkg_path_values := without_test_suffix if {
 }
 
 _file_path_values := array.slice(parts, 0, count(parts) - 1) if {
-	parts := split(input.regal.file.name, input.regal.environment.path_separator)
+	parts := split(input.regal.file.abs, input.regal.environment.path_separator)
 }
 
 # when a directory path, like `bar/baz`, is shorter than the package

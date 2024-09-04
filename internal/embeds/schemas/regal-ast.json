@@ -363,6 +363,9 @@
         },
         "file": {
           "properties": {
+            "abs": {
+              "type": "string"
+            },
             "name": {
               "type": "string"
             },

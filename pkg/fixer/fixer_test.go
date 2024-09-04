@@ -18,7 +18,7 @@ func TestFixer(t *testing.T) {
 	t.Parallel()
 
 	policies := map[string][]byte{
-		"main.rego": []byte(`package test
+		"test/main.rego": []byte(`package test
 
 allow {
 true #no space
@@ -49,10 +49,10 @@ deny = true
 
 	expectedFileFixedViolations := map[string][]string{
 		// use-assignment-operator is not expected since use-rego-v1 also addresses this in this example
-		"main.rego": {"no-whitespace-comment", "use-rego-v1"},
+		"test/main.rego": {"no-whitespace-comment", "use-rego-v1"},
 	}
 	expectedFileContents := map[string][]byte{
-		"main.rego": []byte(`package test
+		"test/main.rego": []byte(`package test
 
 import rego.v1
 

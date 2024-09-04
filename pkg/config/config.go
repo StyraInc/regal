@@ -675,22 +675,30 @@ func (rule *Rule) mapToConfig(result any) error {
 }
 
 func GetPotentialRoots(paths ...string) ([]string, error) {
+	var err error
+
 	dirMap := make(map[string]struct{})
 
-	for _, path := range paths {
-		abs, err := filepath.Abs(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+	absDirPaths := make([]string, len(paths))
+
+	for i, path := range paths {
+		abs := path
+
+		if !filepath.IsAbs(abs) {
+			abs, err = filepath.Abs(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+			}
 		}
 
 		if isDir(abs) {
-			dirMap[abs] = struct{}{}
+			absDirPaths[i] = abs
 		} else {
-			dirMap[filepath.Dir(abs)] = struct{}{}
+			absDirPaths[i] = filepath.Dir(abs)
 		}
 	}
 
-	for _, dir := range util.Keys(dirMap) {
+	for _, dir := range absDirPaths {
 		brds, err := FindBundleRootDirectories(dir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
@@ -701,7 +709,12 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 		}
 	}
 
-	return util.Keys(dirMap), nil
+	foundRoots := util.Keys(dirMap)
+	if len(foundRoots) == 0 {
+		return absDirPaths, nil
+	}
+
+	return foundRoots, nil
 }
 
 func isDir(path string) bool {

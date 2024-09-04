@@ -277,6 +277,23 @@ func fix(args []string, params *fixCommandParams) error {
 		ignore = params.ignoreFiles.v
 	}
 
+	// create a list of absolute paths, these will be used for the file from
+	// this point in order to be able to use the roots for format reporting.
+	absArgs := make([]string, len(args))
+
+	for i, arg := range args {
+		if filepath.IsAbs(arg) {
+			absArgs[i] = arg
+
+			continue
+		}
+
+		absArgs[i], err = filepath.Abs(arg)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for %s: %w", arg, err)
+		}
+	}
+
 	filtered, err := config.FilterIgnoredPaths(args, ignore, true, "")
 	if err != nil {
 		return fmt.Errorf("failed to filter ignored paths: %w", err)

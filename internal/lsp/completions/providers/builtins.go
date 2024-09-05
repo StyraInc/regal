@@ -29,6 +29,11 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 		return []types.CompletionItem{}, nil
 	}
 
+	// default rules cannot contain calls
+	if strings.HasPrefix(strings.TrimSpace(currentLine), "default ") {
+		return []types.CompletionItem{}, nil
+	}
+
 	words := patternWhiteSpace.Split(strings.TrimSpace(currentLine), -1)
 	lastWord := words[len(words)-1]
 
@@ -47,30 +52,32 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 			continue
 		}
 
-		if strings.HasPrefix(key, lastWord) {
-			items = append(items, types.CompletionItem{
-				Label:  key,
-				Kind:   completion.Function,
-				Detail: "built-in function",
-				Documentation: &types.MarkupContent{
-					Kind:  "markdown",
-					Value: hover.CreateHoverContent(builtIn),
-				},
-				TextEdit: &types.TextEdit{
-					Range: types.Range{
-						Start: types.Position{
-							Line:      params.Position.Line,
-							Character: params.Position.Character - uint(len(lastWord)),
-						},
-						End: types.Position{
-							Line:      params.Position.Line,
-							Character: params.Position.Character,
-						},
-					},
-					NewText: key,
-				},
-			})
+		if !strings.HasPrefix(key, lastWord) {
+			continue
 		}
+
+		items = append(items, types.CompletionItem{
+			Label:  key,
+			Kind:   completion.Function,
+			Detail: "built-in function",
+			Documentation: &types.MarkupContent{
+				Kind:  "markdown",
+				Value: hover.CreateHoverContent(builtIn),
+			},
+			TextEdit: &types.TextEdit{
+				Range: types.Range{
+					Start: types.Position{
+						Line:      params.Position.Line,
+						Character: params.Position.Character - uint(len(lastWord)),
+					},
+					End: types.Position{
+						Line:      params.Position.Line,
+						Character: params.Position.Character,
+					},
+				},
+				NewText: key,
+			},
+		})
 	}
 
 	return items, nil

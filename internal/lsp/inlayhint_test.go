@@ -68,7 +68,7 @@ func TestGetInlayHintsAstTerms(t *testing.T) {
 	inlayHints := getInlayHints(module)
 
 	if len(inlayHints) != 1 {
-		t.Errorf("Expected 1 inlay hints, got %d", len(inlayHints))
+		t.Fatalf("Expected 1 inlay hints, got %d", len(inlayHints))
 	}
 
 	if inlayHints[0].Label != "x:" {

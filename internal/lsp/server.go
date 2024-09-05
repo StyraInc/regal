@@ -1799,7 +1799,12 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		f := &fixes.Fmt{OPAFmtOpts: opts}
 		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
 
-		fixResults, err := f.Fix(&fixes.FixCandidate{Filename: filepath.Base(p), Contents: []byte(oldContent)}, nil)
+		fixResults, err := f.Fix(
+			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: []byte(oldContent)},
+			&fixes.RuntimeOptions{
+				BaseDir: l.workspacePath(),
+			},
+		)
 		if err != nil {
 			l.logError(fmt.Errorf("failed to format file: %w", err))
 

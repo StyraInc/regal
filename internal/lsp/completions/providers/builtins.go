@@ -30,7 +30,7 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 	}
 
 	// default rules cannot contain calls
-	if strings.HasPrefix(strings.TrimSpace(currentLine), "default") {
+	if strings.HasPrefix(strings.TrimSpace(currentLine), "default ") {
 		return []types.CompletionItem{}, nil
 	}
 

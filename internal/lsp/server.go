@@ -747,6 +747,8 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			newContents, err := l.templateContentsForFile(evt.URI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to template new file: %w", err))
+
+				continue
 			}
 
 			// generate the edit params for the templating operation
@@ -781,13 +783,26 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 }
 
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
+	fmt.Fprintln(os.Stderr, "template for", fileURI)
+
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
 		return "", fmt.Errorf("failed to get file contents for URI %q", fileURI)
 	}
 
+	fmt.Fprintln(os.Stderr, "content", content)
+
 	if content != "" {
 		return "", errors.New("file already has contents, templating not allowed")
+	}
+
+	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
+	if err == nil {
+		fmt.Fprintln(os.Stderr, "disk content", string(diskContent))
+		// then we found the file on disk
+		if string(diskContent) != "" {
+			return "", errors.New("file on disk already has contents, templating not allowed")
+		}
 	}
 
 	path := uri.ToPath(l.clientIdentifier, fileURI)
@@ -1964,6 +1979,15 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
 		}
 
+		// TODO this should be the other way around, if the buffer contents is empty, then use the disk contents.
+
+		// if the content on disk is empty, then attempt to use the state in the cache from the old file
+		if content == "" {
+			content, _ = l.cache.GetFileContents(renameOp.OldURI)
+
+			l.cache.SetFileContents(renameOp.NewURI, content)
+		}
+
 		l.cache.Delete(renameOp.OldURI)
 
 		evt := fileUpdateEvent{
@@ -1975,6 +1999,8 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.diagnosticRequestFile <- evt
 		l.builtinsPositionFile <- evt
+		// if the file being moved is empty, we template it too (if empty)
+		l.templateFile <- evt
 	}
 
 	return struct{}{}, nil

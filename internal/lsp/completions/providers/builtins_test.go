@@ -184,7 +184,7 @@ allow if c`
 	}
 }
 
-func TestBuiltIns_noDefeaultRule(t *testing.T) {
+func TestBuiltIns_noDefaultRule(t *testing.T) {
 	t.Parallel()
 
 	c := cache.NewCache()

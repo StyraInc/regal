@@ -323,7 +323,7 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to establish git repo: %w", err)
 	}
 
-	if gitRepo == "" && !params.force {
+	if gitRepo == "" && !params.dryRun && !params.force {
 		return errors.New("no git repo found to support undo, use --force to override")
 	}
 

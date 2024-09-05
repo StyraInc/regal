@@ -54,30 +54,27 @@ aggregate_report contains violation if {
 	}
 
 	some imp in all_imports
-	resolves(imp.path, all_package_paths)
+	_resolves(imp.path, all_package_paths)
 	not imp.path in all_package_paths
-	not imp.path in ignored_import_paths
+	not imp.path in _ignored_import_paths
 
 	violation := result.fail(rego.metadata.chain(), {"location": imp.location})
 }
 
-# METADATA
-# description: |
-#   returns true if the path "resolves" to *any*
-#   package part of the same length as the path
-resolves(path, pkg_paths) if count([path |
+# returns true if the path "resolves" to *any* package part of the same length as the path
+_resolves(path, pkg_paths) if count([path |
 	some pkg_path in pkg_paths
 	pkg_path == array.slice(path, 0, count(pkg_path))
 ]) > 0
 
-ignored_import_paths contains path if {
+_ignored_import_paths contains path if {
 	some item in cfg["ignore-import-paths"]
 	path := [part |
 		some i, p in split(item, ".")
-		part := normalize_part(i, p)
+		part := _normalize_part(i, p)
 	]
 }
 
-normalize_part(0, part) := part if part != "data"
+_normalize_part(0, part) := part if part != "data"
 
-normalize_part(i, part) := part if i > 0
+_normalize_part(i, part) := part if i > 0

@@ -41,6 +41,18 @@ test_success_test_inside_test_package if {
 	result == set()
 }
 
+test_success_test_inside_test_package_named_just_test if {
+	ast := regal.parse_module("test.rego", `
+	package test
+
+	import rego.v1
+
+	test_foo if { false }
+	`)
+	result := rule.report with input as ast
+	result == set()
+}
+
 # https://github.com/StyraInc/regal/issues/176
 test_success_test_prefixed_function if {
 	ast := regal.parse_module("foo_test.rego", `

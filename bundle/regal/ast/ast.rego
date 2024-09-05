@@ -104,11 +104,30 @@ rule_names contains ref_to_string(rule.head.ref) if some rule in rules
 
 # METADATA
 # description: |
-#   determine if var in ref (e.g. `x` in `input[x]`) is used as input or output
-is_output_var(rule, ref, location) if {
-	startswith(ref.value, "$")
+#   determine if var in var (e.g. `x` in `input[x]`) is used as input or output
+# scope: document
+is_output_var(rule, var) if {
+	# test the cheap and common case first, and 'else' only when it's not
+	startswith(var.value, "$")
 } else if {
-	not ref.value in (find_names_in_scope(rule, location) - find_some_decl_names_in_scope(rule, location))
+	not var.value in (rule_names | imported_identifiers) # regal ignore:external-reference
+
+	num_above := sum([1 |
+		some above in find_vars_in_local_scope(rule, var.location)
+		above.value == var.value
+	])
+	num_some := sum([1 |
+		some name in find_some_decl_names_in_scope(rule, var.location)
+		name == var.value
+	])
+
+	# only the first ref variable in scope can be an output! meaning that:
+	# allow if {
+	#     some x
+	#     input[x]    # <--- output
+	#     data.bar[x] # <--- input
+	# }
+	num_above - num_some == 0
 }
 
 # METADATA
@@ -195,10 +214,6 @@ static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"
 }
 
-static_rule_ref(ref) if every t in array.slice(ref, 1, count(ref)) {
-	t.type != "var"
-}
-
 # METADATA
 # description: provides a set of names of all built-in functions called in the input policy
 builtin_functions_called contains name if {
@@ -256,25 +271,6 @@ implicit_boolean_assignment(rule) if {
 
 # or sometimes, like this...
 implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
-
-# or like this...
-implicit_boolean_assignment(rule) if {
-	# This handles the *quite* special case of
-	# `a.b if true`, which is "rewritten" to `a.b = true` *and*  where a location is still added to the value
-	# see https://github.com/open-policy-agent/opa/issues/6184 for details
-	#
-	# Do note that technically, it is possible to write a rule where the `true` value actually is on column 1, i.e.
-	#
-	# a.b =
-	# true
-	# if true
-	#
-	# If you write Rego like that — you're not going to use Regal anyway, are you? ¯\_(ツ)_/¯
-	rule.head.value.type == "boolean"
-	rule.head.value.value == true
-
-	rule.head.value.location.col == 1
-}
 
 # METADATA
 # description: |

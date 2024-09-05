@@ -72,6 +72,28 @@ test_success_not_unused_variable_in_head_value if {
 	r == set()
 }
 
+test_success_not_unused_variable_in_head_term_value if {
+	module := ast.with_rego_v1(`
+	success := {x} if {
+		input[x]
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_not_unused_variable_in_head_term_key if {
+	module := ast.with_rego_v1(`
+	success contains {x} if {
+		input[x]
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 test_success_not_unused_variable_in_head_key if {
 	module := ast.with_rego_v1(`
 	success contains x if {
@@ -89,6 +111,19 @@ test_success_not_unused_output_variable_function_call if {
 		some x
 		input[x]
 		regex.match("[x]", x)
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_not_unused_output_variable_function_call_arg_term if {
+	module := ast.with_rego_v1(`
+	success if {
+		some x
+		input[x]
+		f({x})
 	}
 	`)
 

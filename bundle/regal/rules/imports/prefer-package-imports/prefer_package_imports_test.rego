@@ -98,14 +98,23 @@ test_success_aggregate_report_on_import_with_unresolved_path if {
 }
 
 test_success_aggregate_report_ignored_import_path if {
-	aggregate := {{"aggregate_data": {
-		"package_path": ["a"],
-		"imports": [{"path": ["b"], "location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b"}}],
-	}}}
+	aggregate := {
+		{"aggregate_data": {
+			"package_path": ["a"],
+			"imports": [{
+				"path": ["b", "c"],
+				"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "import data.b.c"},
+			}],
+		}},
+		{"aggregate_data": {
+			"package_path": ["b"],
+			"imports": [],
+		}},
+	}
 
 	r := rule.aggregate_report with input.aggregate as aggregate with config.for_rule as {
 		"level": "error",
-		"ignore-import-paths": ["data.b"],
+		"ignore-import-paths": ["data.b.c"],
 	}
 
 	r == set()

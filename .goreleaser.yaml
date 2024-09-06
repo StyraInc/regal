@@ -16,6 +16,8 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+    tags:
+      - regal_standalone
     ldflags:
       - -s -w
       - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
@@ -28,6 +30,8 @@ builds:
     goarch:
       - amd64
       - arm64
+    tags:
+      - regal_standalone
     ldflags:
       - -s -w
       - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
@@ -68,7 +72,7 @@ checksum:
   name_template: "checksums.txt"
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   use: github

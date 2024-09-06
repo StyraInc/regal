@@ -40,8 +40,10 @@ embedded_caps_dir := rq.joinpath([regal_root, "internal", "capabilities", "embed
 # placed.
 eopa_caps_dir := rq.joinpath([embedded_caps_dir, "eopa"])
 
-main contains do[what]  if some what in rq.args()
+main contains do[what] if some what in rq.args()
+
 main contains job[what] if some what in rq.args()
+
 main contains job.tasks if {
 	count(rq.args()) == 0
 	print("No task(s) provided. Available tasks:")
@@ -58,7 +60,7 @@ main contains null if {
 # METADATA
 # title: pull_request
 # description: Run all task to verify a pull request
-do.pull_request {
+do contains "pull_request" if {
 	some x in ["test", "lint", "e2e", "check_readme"]
 	github("::group::", x)
 	job[x]
@@ -68,7 +70,7 @@ do.pull_request {
 # METADATA
 # title: tasks
 # description: Prints the name of all available tasks
-job.tasks {
+job contains "tasks" if {
 	build(false)
 	some task in tasks
 	print("-", sprintf("%-20s", [task[0]]), "\t", strings.replace_n({"\n": ""}, task[1]))
@@ -83,7 +85,7 @@ job.tasks {
 #   - https://github.com/mvdan/gofumpt
 #   - https://github.com/golangci/golangci-lint
 #   - https://github.com/open-policy-agent/opa
-job.pr {
+job contains "pr" if {
 	run("go mod tidy")
 
 	build(true)
@@ -102,22 +104,21 @@ job.pr {
 # METADATA
 # title: test
 # description: Run all Regal unit tests (Go and Rego)
-job.test {
+job contains "test" if {
 	test
 }
 
 # METADATA
 # title: fetch
 # description: Fetch third-party artifacts, such as capabilities JSON files for engines.
-job.fetch {
+job contains "fetch" if {
 	fetch_engine_caps
 }
-
 
 # METADATA
 # title: lint
 # description: Run `regal lint` on the Regal bundle
-job.lint {
+job contains "lint" if {
 	build(true)
 	lint_ci
 }
@@ -125,7 +126,7 @@ job.lint {
 # METADATA
 # title: e2e
 # description: Run the Regal end-to-end tests
-job.e2e {
+job contains "e2e" if {
 	build(true)
 	e2e
 }
@@ -133,65 +134,64 @@ job.e2e {
 # METADATA
 # title: check_readme
 # description: Verify that the rules table in the README is up-to-date
-job.check_readme {
+job contains "check_readme" if {
 	build(true)
 	check_readme
 }
 
-build(true) {
-	run("go build")
+build(true) if {
+	run("go build -tags=regal_standalone")
 }
 
-build(false) {
+build(false) if {
 	not binary_present
-	run("go build")
+	run("go build -tags=regal_standalone")
 } else := true
 
 # any binary is good enough when calling `build(false)`, it doesn't need to be
 # built freshly
-binary_present {
+binary_present if {
 	some f in rq.tree(".", {"maxdepth": 1})
 	f.base == "regal"
 	f.is_dir == false
 }
 
-test {
+test if {
 	run("go test ./...")
 	run("go run main.go test bundle")
 }
 
-e2e {
+e2e if {
 	run("go test -tags e2e ./e2e")
 	run("go test -tags integration ./internal/capabilities")
 }
 
-lint {
+lint if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
 	run("markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
 }
 
-lint_ci {
+lint_ci if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
 	run("markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
 	run("dprint --config build/dprint.json check")
 }
 
-check_readme {
+check_readme if {
 	run("./regal table --compare-to-readme bundle")
 }
 
-write_readme {
+write_readme if {
 	run("./regal table --write-to-readme bundle")
 }
 
-fetch_engine_caps {
+fetch_engine_caps if {
 	fetch_eopa_caps
 }
 
-fetch_eopa_caps {
-
+fetch_eopa_caps if {
 	# git ls-remote --tags output looks like this:
 	#
 	#	...
@@ -222,20 +222,20 @@ fetch_eopa_caps {
 
 	print("fetching tags for enterprise-opa repository")
 
-	eopa_tags_result := rq.run([
+	eopa_tags_result := rq.run(
+		[
 			"git",
 			"ls-remote",
 			"--tags",
-			"https://github.com/styrainc/enterprise-opa"
-		], {
-			"stdout_spec": {
-				"format": "raw",
-				"options": {
-					"raw.fs": "/",
-					"raw.rs": "[\n\r]"
-				},
-			}
-		}
+			"https://github.com/styrainc/enterprise-opa",
+		],
+		{"stdout_spec": {
+			"format": "raw",
+			"options": {
+				"raw.fs": "/",
+				"raw.rs": "[\n\r]",
+			},
+		}},
 	)
 
 	error_nonzero(eopa_tags_result, "failed to fetch tags from GitHub")
@@ -245,9 +245,9 @@ fetch_eopa_caps {
 	# we eliminate them from consideration.
 
 	known_bad_tags := {
-		"v1.15.0",   # tag missing capabilities file (misnamed v0.15.0)
-		"v1.4.1",    # tag missing capabilities file
-		"v1.5.0",    # tag missing capabilities file
+		"v1.15.0", # tag missing capabilities file (misnamed v0.15.0)
+		"v1.4.1", # tag missing capabilities file
+		"v1.5.0", # tag missing capabilities file
 	}
 
 	# Note that we use the `not startswith` to explicitly drop any
@@ -256,8 +256,7 @@ fetch_eopa_caps {
 	# file locally.
 
 	eopa_tags := {
-		t
-		|
+	t |
 		some r in eopa_tags_result.stdout
 		t := r[2]
 		not known_bad_tags[t]
@@ -268,9 +267,8 @@ fetch_eopa_caps {
 	# only nonzero size files with JSON extensions. The size check is to
 	# avoid long-tail edge cases where we crashed after opening the file
 	# for writing but before committing any content.
-	eopa_caps_tree := {
-		p: f
-		|
+	eopa_caps_tree := {p: 
+	f |
 		f := rq.tree(eopa_caps_dir, {})[p]
 		f.size != 0
 		f.ext == "json"
@@ -279,10 +277,7 @@ fetch_eopa_caps {
 	# Determine which capabilities files are missing, what URL they
 	# should be fetched from, and where they should end up on disk.
 	missing_locally := {
-		{"local": p, "remote": r}
-
-		|
-
+	{"local": p, "remote": r} |
 		# construct the local path we expect the caps to exist at
 		t := eopa_tags[_]
 		p := rq.joinpath([eopa_caps_dir, sprintf("%s.json", [t])])
@@ -297,33 +292,30 @@ fetch_eopa_caps {
 
 	# Download the capabilities from the constructed URLs.
 	new_caps := {
-		{"local": m.local, "content": c}
-		|
+	{"local": m.local, "content": c} |
 		m := missing_locally[_]
 		print("\tfetching ", m.remote)
 		resp := http.send({"url": m.remote, "method": "GET"})
 
-		{ rq.error(sprintf("non-200 status code '%d' for URL '%s'", [resp.status_code, m.remote])) | resp.status_code != 200 }
+		{rq.error(sprintf("non-200 status code '%d' for URL '%s'", [resp.status_code, m.remote])) | resp.status_code != 200}
 
 		c := resp.raw_body
 	}
 
 	# Commit the retrieved content to disk.
 	{
-		rq.write(cap.content, {"format": "raw", "file_path": cap.local})
-		|
+	rq.write(cap.content, {"format": "raw", "file_path": cap.local}) |
 		some cap in new_caps
 	}
 }
 
-
-fmt_all {
+fmt_all if {
 	gci
 	gofumpt
 	opafmt
 }
 
-gci {
+gci if {
 	run(concat(" ", [
 		"gci write",
 		"-s standard",
@@ -336,15 +328,15 @@ gci {
 	]))
 }
 
-gofumpt {
+gofumpt if {
 	run("gofumpt -w .")
 }
 
-opafmt {
+opafmt if {
 	run("opa fmt --write bundle")
 }
 
-golangcilint {
+golangcilint if {
 	run("golangci-lint run ./...")
 }
 
@@ -354,15 +346,15 @@ tasks := sort([[annotation.title, annotation.description] |
 	annotation.scope == "rule"
 ])
 
-run(cmd) {
+run(cmd) if {
 	print(cmd)
 	args := split(cmd, " ")
 	out := rq.run(args, {})
-	{ rq.error(sprintf("\nstdout: %s\nstderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0 }
+	{rq.error(sprintf("\nstdout: %s\nstderr: %s", [out.stdout, out.stderr])) | out.exitcode != 0}
 	print(out.stdout)
 }
 
-run_quiet(cmd) {
+run_quiet(cmd) if {
 	print(cmd)
 	args := split(cmd, " ")
 	out := rq.run(args, {})
@@ -374,7 +366,7 @@ run_quiet(cmd) {
 	}
 }
 
-github(what, j) {
+github(what, j) if {
 	is_github
 	print(what, j)
 } else := true
@@ -384,6 +376,4 @@ is_github if rq.env().GITHUB_ACTION
 error_nonzero(run_result, message) if {
 	run_result.exitcode != 0
 	rq.error(sprintf("%s\nstdout:%s\nstderr:\n%s\n", [message, run_result.stdout, run_result.stderr]))
-} else {
-	true
-}
+} else = true

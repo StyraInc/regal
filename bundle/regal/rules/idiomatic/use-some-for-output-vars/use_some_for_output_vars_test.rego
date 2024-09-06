@@ -14,7 +14,16 @@ test_fail_output_var_not_declared if {
 		"category": "idiomatic",
 		"description": "Use `some` to declare output variables",
 		"level": "error",
-		"location": {"col": 31, "file": "policy.rego", "row": 4, "text": "\t\t\"admin\" == input.user.roles[i]"},
+		"location": {
+			"col": 31,
+			"file": "policy.rego",
+			"row": 4,
+			"end": {
+				"col": 32,
+				"row": 4,
+			},
+			"text": "\t\t\"admin\" == input.user.roles[i]",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-some-for-output-vars", "idiomatic"),
@@ -23,6 +32,7 @@ test_fail_output_var_not_declared if {
 	}}
 }
 
+# regal ignore:rule-length
 test_fail_multiple_output_vars_not_declared if {
 	r := rule.report with input as ast.policy(`allow {
 		foo := input.foo[i].bar[j]
@@ -32,7 +42,16 @@ test_fail_multiple_output_vars_not_declared if {
 			"category": "idiomatic",
 			"description": "Use `some` to declare output variables",
 			"level": "error",
-			"location": {"col": 20, "file": "policy.rego", "row": 4, "text": "\t\tfoo := input.foo[i].bar[j]"},
+			"location": {
+				"col": 20,
+				"file": "policy.rego",
+				"row": 4,
+				"end": {
+					"col": 21,
+					"row": 4,
+				},
+				"text": "\t\tfoo := input.foo[i].bar[j]",
+			},
 			"related_resources": [{
 				"description": "documentation",
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-some-for-output-vars", "idiomatic"),
@@ -43,7 +62,16 @@ test_fail_multiple_output_vars_not_declared if {
 			"category": "idiomatic",
 			"description": "Use `some` to declare output variables",
 			"level": "error",
-			"location": {"col": 27, "file": "policy.rego", "row": 4, "text": "\t\tfoo := input.foo[i].bar[j]"},
+			"location": {
+				"col": 27,
+				"file": "policy.rego",
+				"row": 4,
+				"end": {
+					"col": 28,
+					"row": 4,
+				},
+				"text": "\t\tfoo := input.foo[i].bar[j]",
+			},
 			"related_resources": [{
 				"description": "documentation",
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-some-for-output-vars", "idiomatic"),
@@ -63,7 +91,16 @@ test_fail_only_one_declared if {
 		"category": "idiomatic",
 		"description": "Use `some` to declare output variables",
 		"level": "error",
-		"location": {"col": 27, "file": "policy.rego", "row": 5, "text": "\t\tfoo := input.foo[i].bar[j]"},
+		"location": {
+			"col": 27,
+			"file": "policy.rego",
+			"row": 5,
+			"end": {
+				"col": 28,
+				"row": 5,
+			},
+			"text": "\t\tfoo := input.foo[i].bar[j]",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-some-for-output-vars", "idiomatic"),
@@ -76,6 +113,14 @@ test_success_uses_some if {
 	r := rule.report with input as ast.policy(`allow {
 		some i
 		"admin" == input.user.roles[i]
+	}`)
+	r == set()
+}
+
+test_success_var_in_comprehension_body if {
+	r := rule.report with input as ast.with_rego_v1(`build_obj(params) if {
+		paths := {"foo": ["bar"]}
+		param_objects := [f(paths[key], val) | some key, val in paths]
 	}`)
 	r == set()
 }

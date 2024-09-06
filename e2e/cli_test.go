@@ -145,6 +145,30 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 }
 
+func TestLintProposeToRunFix(t *testing.T) {
+	t.Parallel()
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	// using a test rego file that only yields a few violations
+	err := regal(&stdout, &stderr)("lint", cwd+filepath.FromSlash("/testdata/violations/rule_named_if.rego"))
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	act := strings.Split(stdout.String(), "\n")
+	act = act[len(act)-5:]
+	exp := []string{"1 file linted. 5 violations found.", "", "Hint: 2/5 violations can be automatically fixed (directory-package-mismatch, use-rego-v1)", "      Run regal fix --help for more details.", ""}
+	if diff := cmp.Diff(act, exp); diff != "" {
+		t.Errorf("unexpected stdout trailer: (-want, +got):\n%s", diff)
+	}
+}
+
 func TestLintAllViolations(t *testing.T) {
 	t.Parallel()
 

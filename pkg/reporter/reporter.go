@@ -15,6 +15,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
+	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/novelty"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer"
@@ -154,6 +155,10 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	_, err := fmt.Fprint(tr.out, table+footer+"\n")
 	if err != nil {
 		return fmt.Errorf("failed to write report: %w", err)
+	}
+
+	if !mode.Standalone { // don't bother advertising `regal fix` when not in standalone mode
+		return nil
 	}
 
 	f := fixer.NewFixer()

@@ -122,3 +122,29 @@ function(bar) := f if {
 	count(items) == 1
 	utils.expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
 }
+
+test_no_locals_in_completion_items_function_args if {
+	workspace := {"file:///p.rego": `package policy
+
+import rego.v1
+
+function() if {
+	foo := 1
+}
+`}
+
+	regal_module := {"regal": {
+		"file": {
+			"name": "p.rego",
+			"uri": "file:///p.rego",
+			"lines": split(workspace["file:///p.rego"], "\n"),
+		},
+		"context": {"location": {
+			"row": 5,
+			"col": 10,
+		}},
+	}}
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
+
+	count(items) == 0
+}

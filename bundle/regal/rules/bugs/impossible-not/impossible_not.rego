@@ -8,7 +8,8 @@ import data.regal.ast
 import data.regal.result
 import data.regal.util
 
-package_path := [part.value | some part in input["package"].path]
+# note: not ast.package_path as we want the "data" component here
+_package_path := [part.value | some part in input["package"].path]
 
 multivalue_rules contains path if {
 	some rule in ast.rules
@@ -21,10 +22,7 @@ multivalue_rules contains path if {
 		path.type == "string"
 	}
 
-	path := concat(".", array.concat(package_path, [p |
-		some ref in rule.head.ref
-		p := ref.value
-	]))
+	path := concat(".", array.concat(_package_path, [ref.value | some ref in rule.head.ref]))
 }
 
 negated_refs contains negated_ref if {
@@ -38,7 +36,7 @@ negated_refs contains negated_ref if {
 	ref := var_to_ref(value.terms)
 
 	# for now, ignore ref if it has variable components
-	every path in array.slice(ref, 1, count(ref)) {
+	every path in util.rest(ref) {
 		path.type == "string"
 	}
 
@@ -50,7 +48,7 @@ negated_refs contains negated_ref if {
 
 	negated_ref := {
 		"ref": ref,
-		"resolved_path": resolve(ref, package_path, ast.resolved_imports),
+		"resolved_path": resolve(ref, _package_path, ast.resolved_imports),
 	}
 }
 

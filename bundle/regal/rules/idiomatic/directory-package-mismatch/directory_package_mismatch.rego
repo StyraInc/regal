@@ -4,6 +4,7 @@ package regal.rules.idiomatic["directory-package-mismatch"]
 
 import rego.v1
 
+import data.regal.ast
 import data.regal.config
 import data.regal.result
 
@@ -17,45 +18,22 @@ report contains violation if {
 
 	file_path_length_matched != _pkg_path_values
 
-	not _known_file_path_matches(file_path_length_matched, _pkg_path_values)
-
 	violation := result.fail(rego.metadata.chain(), result.location(input["package"].path))
 }
 
-_pkg_path := [p.value |
-	some i, p in input["package"].path
-	i > 0
-]
-
-_pkg_path_values := _pkg_path if not config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
+_pkg_path_values := ast.package_path if {
+	not config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
+}
 
 _pkg_path_values := without_test_suffix if {
 	config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
 
 	without_test_suffix := array.concat(
-		array.slice(_pkg_path, 0, count(_pkg_path) - 1),
-		[trim_suffix(regal.last(_pkg_path), "_test")],
+		array.slice(ast.package_path, 0, count(ast.package_path) - 1),
+		[trim_suffix(regal.last(ast.package_path), "_test")],
 	)
 }
 
 _file_path_values := array.slice(parts, 0, count(parts) - 1) if {
 	parts := split(input.regal.file.abs, input.regal.environment.path_separator)
-}
-
-# when a directory path, like `bar/baz`, is shorter than the package
-# path, like `foo.bar.baz` this function returns true when the last
-# "known" paths match, i.e. in this case `bar/baz` and `bar.baz`
-_known_file_path_matches(file_path, pkg_path) if {
-	diff := count(pkg_path) - count(file_path)
-
-	diff > 0
-	array.slice(pkg_path, diff, count(pkg_path)) == file_path
-}
-
-_notice(message, severity) := {
-	"category": "idiomatic",
-	"description": message,
-	"level": "notice",
-	"title": "directory-package-mismatch",
-	"severity": severity,
 }

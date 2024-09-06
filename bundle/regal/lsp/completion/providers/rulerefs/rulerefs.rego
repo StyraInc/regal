@@ -9,10 +9,6 @@ import data.regal.lsp.completion.location
 
 ref_is_internal(ref) if contains(ref, "._")
 
-default determine_ref_prefix(_) := ""
-
-determine_ref_prefix(word) := word if word != ":="
-
 position := location.to_position(input.regal.context.location)
 
 line := input.regal.file.lines[position.line]
@@ -92,11 +88,10 @@ matching_rule_ref_suggestions contains ref if {
 
 	# \W is used here to match ( in the case of func() := ..., as well as the space in the case of rule := ...
 	first_word := regex.split(`\W+`, trim_space(line))[0]
-	prefix := determine_ref_prefix(word.text)
 
 	some ref in rule_ref_suggestions
 
-	startswith(ref, prefix)
+	startswith(ref, word.text)
 
 	# this is to avoid suggesting a recursive rule, e.g. rule := rule, or func() := func()
 	ref != first_word

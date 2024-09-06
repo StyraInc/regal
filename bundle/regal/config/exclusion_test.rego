@@ -4,7 +4,6 @@ import rego.v1
 
 import data.regal.config
 
-# map[pattern: string]map[filename: string]excluded: bool
 cases := {
 	"p.rego": {
 		"p.rego": true,
@@ -47,11 +46,10 @@ cases := {
 test_all_cases_are_as_expected if {
 	not_exp := {pattern: res |
 		some pattern, subcases in cases
-		res := {file: res1 |
+		res := {file |
 			some file, exp in subcases
 			act := config.exclude(pattern, file)
 			exp != act
-			res1 := {"exp": exp, "act": act}
 		}
 		count(res) > 0
 	}
@@ -96,4 +94,10 @@ test_excluded_file_cli_overrides_config if {
 	e := config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
 		with data.eval.params as object.union(params, {"ignore_files": [""]})
 	e == false
+}
+
+test_trailing_slash if {
+	config.trailing_slash("foo/**/bar") == {"foo/**/bar", "foo/**/bar/**"}
+	config.trailing_slash("foo") == {"foo", "foo/**"}
+	config.trailing_slash("foo/**") == {"foo/**"}
 }

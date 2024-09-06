@@ -215,3 +215,151 @@ test_force_exclude_file_config if {
 
 	count(report) == 0
 }
+
+# regal ignore:rule-length
+test_main_lint if {
+	ast := {
+		"package": {
+			"location": "1:1:cGFja2FnZQ==",
+			"path": [
+				{"location": "1:9:cA==", "type": "var", "value": "data"},
+				{"location": "1:9:cA==", "type": "string", "value": "p"},
+			],
+		},
+		"rules": [{
+			"location": "3:1:eCA9IDE=",
+			"head": {
+				"name": "x",
+				"ref": [{"location": "3:1:eA==", "type": "var", "value": "x"}],
+				"value": {
+					"value": 1,
+					"location": "3:5:MQ==",
+					"type": "number",
+				},
+				"location": "3:1:eCA9IDE=",
+			},
+		}],
+		"regal": {
+			"file": {
+				"name": "p.rego",
+				"lines": [
+					"package p",
+					"",
+					"x = 1",
+					"",
+				],
+				"abs": "/regal/p.rego",
+			},
+			"environment": {"path_separator": "/"},
+		},
+	}
+
+	cfg := {"rules": {"style": {"use-assignment-operator": {"level": "error"}}}}
+
+	result := main.lint with input as ast with config.merged_config as cfg
+
+	result == {
+		"aggregates": {},
+		"ignore_directives": {"p.rego": {}},
+		"notices": set(),
+		"violations": {{
+			"category": "style",
+			"description": "Prefer := over = for assignment",
+			"level": "error",
+			"location": {
+				"col": 3,
+				"file": "p.rego",
+				"row": 3,
+				"text": "x = 1",
+			},
+			"related_resources": [{
+				"description": "documentation",
+				"ref": "https://docs.styra.com/regal/rules/style/use-assignment-operator",
+			}],
+			"title": "use-assignment-operator",
+		}},
+	}
+}
+
+test_rules_to_run_not_excluded if {
+	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+
+	rules_to_run := main.rules_to_run with config.merged_config as cfg
+		with config.for_rule as {"level": "error"}
+		with input.regal.file.name as "p.rego"
+		with config.excluded_file as false
+
+	rules_to_run == {"testing": {"test"}}
+}
+
+test_notices if {
+	notice := {
+		"category": "idiomatic",
+		"description": "here's a notice",
+		"level": "notice",
+		"title": "testme notice",
+		"severity": "none",
+	}
+
+	notices := main.notices with main.rules_to_run as {"idiomatic": {"testme"}}
+		with data.regal.rules.idiomatic.testme.notices as {notice}
+
+	notices == {notice}
+}
+
+test_main_fail_when_input_not_object if {
+	violation := {
+		"category": "error",
+		"title": "invalid-input",
+		"description": "provided input must be a JSON AST",
+	}
+
+	report := main.report with input as []
+	report == {violation}
+}
+
+test_report_custom_rule_failure if {
+	report := main.report with data.custom.regal.rules as {"testing": {"testme": {"report": {{"title": "fail!"}}}}}
+		with input as {"package": {}, "regal": {"file": {"name": "p.rego"}}}
+		with config.excluded_file as false
+
+	report == {{"title": "fail!"}}
+}
+
+test_aggregate_bundled_rule if {
+	agg := main.aggregate with main.rules_to_run as {"foo": {"bar"}}
+		with data.regal.rules as {"foo": {"bar": {"aggregate": {"baz"}}}}
+
+	agg == {"foo/bar": {"baz"}}
+}
+
+test_aggregate_custom_rule if {
+	agg := main.aggregate with data.custom.regal.rules as {"foo": {"bar": {"aggregate": {"baz"}}}}
+		with config.for_rule as {"level": "error"}
+		with config.excluded_file as false
+		with input.regal.file.name as "p.rego"
+
+	agg == {"foo/bar": {"baz"}}
+}
+
+test_aggregate_report_custom_rule if {
+	mock_input := {
+		"aggregates_internal": {"custom/test": {}},
+		"regal": {"file": {"name": "p.rego"}},
+	}
+
+	mock_rules := {"custom": {"test": {"aggregate_report": {{
+		"category": "custom",
+		"title": "test",
+	}}}}}
+
+	report := main.aggregate_report with input as mock_input
+		with data.custom.regal.rules as mock_rules
+
+	report == {{"category": "custom", "title": "test"}}
+
+	violations := main.lint_aggregate.violations with input as mock_input
+		with data.custom.regal.rules as mock_rules
+
+	violations == report
+}

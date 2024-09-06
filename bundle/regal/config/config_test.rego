@@ -178,3 +178,7 @@ test_all_configured_rules_exist if {
 
 	count(missing_rules - go_rules) == 0
 }
+
+test_default_level_is_error if {
+	config.rule_level("unknown") == "error"
+}

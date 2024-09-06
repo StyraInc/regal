@@ -56,3 +56,5 @@ json_pretty(value) := json.marshal_with_options(value, {
 	"indent": "  ",
 	"pretty": true,
 })
+
+rest(arr) := array.slice(arr, 1, count(arr))

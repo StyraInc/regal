@@ -12,11 +12,12 @@ items contains item if {
 
 	line := input.regal.file.lines[position.line]
 	line != ""
+
 	location.in_rule_body(line)
 
-	word := location.word_at(line, input.regal.context.location.col)
+	not _excluded(line, position)
 
-	not excluded(line, position)
+	word := location.word_at(line, input.regal.context.location.col)
 
 	some local in location.find_locals(
 		parsed_current_file.rules,
@@ -38,7 +39,7 @@ items contains item if {
 
 # exclude local suggestions in function args definition,
 # as those would recursively contribute to themselves
-excluded(line, position) if _function_args_position(substring(line, 0, position.character))
+_excluded(line, position) if _function_args_position(substring(line, 0, position.character))
 
 _function_args_position(text) if {
 	text == trim_left(text, " \t")

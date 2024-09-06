@@ -34,8 +34,6 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.ranged_location_between(fn.args[0], regal.last(fn.args)))
 }
 
-default _repeated_explicit_argument_indexes(_) := 0
-
 # see: https://pkg.go.dev/fmt#hdr-Explicit_argument_indexes
 # each distinct explicit argument index should only contribute one value to the
 # values array. this calculates the number to subtract from the total expected

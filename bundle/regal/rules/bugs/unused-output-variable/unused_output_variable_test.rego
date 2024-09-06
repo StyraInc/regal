@@ -143,6 +143,18 @@ test_success_not_unused_output_variable_other_ref if {
 	r == set()
 }
 
+test_success_not_unused_output_variable_head_ref if {
+	module := ast.with_rego_v1(`
+	success[x] if {
+		some x
+		input[x]
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 test_success_not_output_variable_rule if {
 	module := ast.with_rego_v1(`
 	x := 1

@@ -9,6 +9,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 # METADATA
 # description: reports any location where a rule name repeats the package name
@@ -34,18 +35,13 @@ _titleize(str) := result if {
 	)
 }
 
-_package_path_components := [component.value |
-	some component in input["package"].path
-	component.type == "string"
-]
-
-_num_package_path_components := count(_package_path_components)
+_num_package_path_components := count(ast.package_path)
 
 _possible_path_component_combinations contains combination if {
 	some end in numbers.range(1, _num_package_path_components)
 
 	combination := array.slice(
-		_package_path_components,
+		ast.package_path,
 		_num_package_path_components - end,
 		_num_package_path_components,
 	)
@@ -62,13 +58,10 @@ _possible_offending_prefixes contains prefix if {
 
 	count(combination) > 1
 
-	formatted_combination := array.concat(
-		[combination[0]],
-		[w |
-			some word in array.slice(combination, 1, count(combination))
-			w := _titleize(word)
-		],
-	)
+	formatted_combination := array.concat([combination[0]], [w |
+		some word in util.rest(combination)
+		w := _titleize(word)
+	])
 
 	prefix := concat("", formatted_combination)
 }

@@ -16,7 +16,7 @@ import_paths contains path if {
 }
 
 report contains violation if {
-	some ref in ast.all_rules_refs
+	ref := ast.found.refs[_][_]
 
 	ref.value[0].type == "var"
 	ref.value[0].value in {"data", "input"}

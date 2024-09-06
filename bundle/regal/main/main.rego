@@ -16,7 +16,7 @@ lint_aggregate.violations := aggregate_report
 
 lint.violations := report
 
-rules_to_run[category][title] if {
+rules_to_run[category] contains title if {
 	some category, title
 	config.merged_config.rules[category][title]
 
@@ -78,7 +78,6 @@ report contains violation if {
 
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
-
 	not ignored(violation, ast.ignore_directives)
 }
 
@@ -148,7 +147,7 @@ aggregate_report contains violation if {
 	# for custom rules, we can't assume that the author included
 	# a location in the violation, although they _really_ should
 	file := object.get(violation, ["location", "file"], "")
-	ignore_directives := object.get(input.ignore_directives, file, {})
+	ignore_directives := object.get(input, ["ignore_directives", file], {})
 
 	not ignored(violation, util.keys_to_numbers(ignore_directives))
 }

@@ -18,3 +18,9 @@ test_json_pretty if {
   ]
 }`
 }
+
+test_rest if {
+	util.rest([1, 2, 3]) == [2, 3]
+	util.rest([1]) == []
+	util.rest([]) == []
+}

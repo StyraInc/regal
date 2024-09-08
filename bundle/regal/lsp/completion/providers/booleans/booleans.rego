@@ -5,8 +5,6 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
-parsed_current_file := data.workspace.parsed[input.regal.file.uri]
-
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 

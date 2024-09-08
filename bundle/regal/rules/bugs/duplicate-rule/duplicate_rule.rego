@@ -11,10 +11,9 @@ report contains violation if {
 	some indices in duplicates
 
 	first := indices[0]
-	rest := array.slice(indices, 1, count(indices))
 
 	dup_locations := [location |
-		some index in rest
+		some index in util.rest(indices)
 		location := util.to_location_object(input.rules[index].location)
 	]
 

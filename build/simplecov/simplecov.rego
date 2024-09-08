@@ -42,3 +42,12 @@ to_value(cm, ncm, line) := null if {
 	not cm[line]
 	not ncm[line]
 }
+
+# utility rule to evaluate when only the
+# lines not covered are of interest
+# invoke like:
+#   regal test --coverage bundle \
+#   | opa eval -f pretty -I -d build/simplecov/simplecov.rego 'data.build.simplecov.not_covered'
+not_covered[file] := info.not_covered if {
+	some file, info in input.files
+}

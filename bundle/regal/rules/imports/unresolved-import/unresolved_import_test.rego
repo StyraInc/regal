@@ -62,6 +62,19 @@ test_success_unresolved_imports_are_excepted if {
 	r == set()
 }
 
+test_success_unresolved_imports_with_wildcards_are_excepted if {
+	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
+	import data.bar.x
+	import data.bar.excepted
+
+	x := 1
+	`)
+
+	r := rule.aggregate_report with input as {"aggregate": agg1}
+		with config.for_rule as {"level": "error", "except-imports": ["data.bar.*"]}
+	r == set()
+}
+
 test_success_resolved_import_in_middle_of_explicit_paths if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 	import data.bar.x.y
@@ -126,6 +139,17 @@ test_success_general_ref_head_rule_may_resolve_so_allow if {
 	`)
 
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+	r == set()
+}
+
+test_success_custom_rule_not_flagging_regal_import if {
+	agg := rule.aggregate with input as regal.parse_module("p2.rego", `package custom.regal.bar
+	import data.regal.ast
+
+	x := 1
+	`)
+
+	r := rule.aggregate_report with input as {"aggregate": agg}
 	r == set()
 }
 

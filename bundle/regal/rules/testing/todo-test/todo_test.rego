@@ -8,7 +8,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
+	some rule in ast.rules
 
 	startswith(ast.ref_to_string(rule.head.ref), "todo_test_")
 

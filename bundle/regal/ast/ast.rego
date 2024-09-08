@@ -44,12 +44,18 @@ builtin_namespaces contains namespace if {
 
 # METADATA
 # description: |
-#   provide the package name / path as originally declared in the
-#   input policy, so "package foo.bar" would return "foo.bar"
-package_name := concat(".", [path.value |
+#   provides the package path values (strings) as an array starting _from_ "data":
+#   package foo.bar -> ["foo", "bar"]
+package_path := [path.value |
 	some i, path in input["package"].path
 	i > 0
-])
+]
+
+# METADATA
+# description: |
+#   provide the package name / path as originally declared in the
+#   input policy, so "package foo.bar" would return "foo.bar"
+package_name := concat(".", package_path)
 
 named_refs(refs) := [ref |
 	some i, ref in refs
@@ -133,8 +139,6 @@ is_output_var(rule, var) if {
 # METADATA
 # description: as the name implies, answers whether provided value is a ref
 # scope: document
-default is_ref(_) := false
-
 is_ref(value) if value.type == "ref"
 
 is_ref(value) if value[0].type == "ref"
@@ -177,12 +181,12 @@ _exclude_arg(_, _, arg) if arg.type == "call"
 # ignore here, as it's covered elsewhere
 _exclude_arg("assign", 0, _)
 
-all_rules_refs contains found.refs[_][_]
-
 # METADATA
-# description: set containing all references found in the input AST
+# description: |
+#   set containing all references found in the input AST
+#   NOTE: likely to be deprecated — prefer to use `ast.found.refs` over this
 # scope: document
-all_refs contains value if some value in all_rules_refs
+all_refs contains found.refs[_][_]
 
 all_refs contains imported.path if some imported in input.imports
 
@@ -217,15 +221,8 @@ static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 # METADATA
 # description: provides a set of names of all built-in functions called in the input policy
 builtin_functions_called contains name if {
-	some value in all_refs
-
-	value[0].value[0].type == "var"
-	not value[0].value[0].value in {"input", "data"}
-
-	name := concat(".", [value |
-		some part in value[0].value
-		value := part.value
-	])
+	name := function_calls[_][_].name
+	name in builtin_names
 }
 
 # METADATA

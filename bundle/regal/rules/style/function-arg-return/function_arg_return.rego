@@ -10,19 +10,16 @@ import data.regal.result
 
 report contains violation if {
 	cfg := config.for_rule("style", "function-arg-return")
-	except_functions := array.concat(object.get(cfg, "except-functions", []), ["print"])
 
-	some value in ast.all_refs
+	excluded_functions := {name | some name in cfg["except-functions"]} | {"print"}
+	included_functions := ast.all_function_names - excluded_functions
 
-	value[0].value[0].type == "var"
+	some rule_index in ast.rule_index_strings
+	some fn in ast.function_calls[rule_index]
 
-	fn_name := ast.ref_to_string(value[0].value)
+	fn.name in included_functions
 
-	not contains(fn_name, "$")
-	not fn_name in except_functions
-	fn_name in ast.all_function_names
+	count(fn.args) > count(ast.all_functions[fn.name].decl.args)
 
-	ast.function_ret_in_args(fn_name, value)
-
-	violation := result.fail(rego.metadata.chain(), result.location(regal.last(value)))
+	violation := result.fail(rego.metadata.chain(), result.location(regal.last(fn.args)))
 }

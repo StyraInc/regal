@@ -152,6 +152,24 @@ test_fail_multivalue_not_reference_in_same_file_reported_in_normal_report if {
 	r == expected_with_location({"col": 7, "file": "p1.rego", "row": 8, "text": "not partial"})
 }
 
+test_success_multivalue_ref_head_rule_not_accounted_for if {
+	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
+
+	import rego.v1
+
+	my.partial[rule] contains "foo" if {
+		some rule in input
+	}
+
+	test_partial if {
+		not partial
+	}
+	`)
+
+	r := rule.aggregate_report with input as {"aggregate": agg1}
+	r == set()
+}
+
 expected := {
 	"category": "bugs",
 	"description": "Impossible `not` condition",

@@ -4,14 +4,13 @@ package regal.rules.imports["prefer-package-imports"]
 
 import rego.v1
 
+import data.regal.ast
 import data.regal.config
 import data.regal.result
 
 cfg := config.for_rule("imports", "prefer-package-imports")
 
 aggregate contains entry if {
-	package_path := [part.value | some i, part in input["package"].path; i > 0]
-
 	imports_with_location := [imp |
 		some _import in input.imports
 
@@ -22,14 +21,14 @@ aggregate contains entry if {
 
 		# Special case for custom rules, where we don't want to flag e.g. `import data.regal.ast`
 		# as unknown, even though it's not a package included in evaluation.
-		not custom_regal_package_and_import(package_path, path)
+		not custom_regal_package_and_import(ast.package_path, path)
 
 		imp := object.union(result.location(_import), {"path": path})
 	]
 
 	entry := result.aggregate(rego.metadata.chain(), {
 		"imports": imports_with_location,
-		"package_path": package_path,
+		"package_path": ast.package_path,
 	})
 }
 

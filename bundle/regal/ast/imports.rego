@@ -71,6 +71,8 @@ _arr(xs) := [y.value | some y in xs.path.value]
 
 _has_keyword(["future", "keywords"], _)
 
+_has_keyword(["future", "keywords", "every"], "in")
+
 _has_keyword(["future", "keywords", keyword], keyword)
 
 _has_keyword(["rego", "v1"], _)

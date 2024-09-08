@@ -6,17 +6,13 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
-
-print_or_trace_called if {
-	some name in {"print", "trace"}
-	name in ast.builtin_functions_called
-}
+import data.regal.util
 
 report contains violation if {
 	# skip iteration of refs if no print or trace calls are registered
-	print_or_trace_called
+	util.intersects(ast.builtin_functions_called, {"print", "trace"})
 
-	some ref in ast.all_refs
+	ref := ast.found.refs[_][_]
 
 	ref[0].value[0].type == "var"
 	ref[0].value[0].value in {"print", "trace"}

@@ -58,3 +58,9 @@ json_pretty(value) := json.marshal_with_options(value, {
 })
 
 rest(arr) := array.slice(arr, 1, count(arr))
+
+to_set(x) := x if is_set(x)
+
+to_set(x) := {y | some y in x} if not is_set(x)
+
+intersects(s1, s2) if count(intersection({s1, s2})) > 0

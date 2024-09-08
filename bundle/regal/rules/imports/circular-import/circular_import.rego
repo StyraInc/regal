@@ -14,7 +14,7 @@ import data.regal.result
 import data.regal.util
 
 refs contains ref if {
-	some r in ast.all_refs
+	r := ast.found.refs[_][_]
 
 	r.value[0].value == "data"
 
@@ -23,6 +23,17 @@ refs contains ref if {
 	ref := {
 		"package_path": concat(".", [e.value | some e in r.value]),
 		"location": object.remove(util.to_location_object(r.location), {"text"}),
+	}
+}
+
+refs contains ref if {
+	some imported in ast.imports
+
+	imported.path.value[0].value == "data"
+
+	ref := {
+		"package_path": concat(".", [e.value | some e in imported.path.value]),
+		"location": object.remove(util.to_location_object(imported.path.location), {"text"}),
 	}
 }
 

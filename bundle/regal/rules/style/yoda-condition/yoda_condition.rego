@@ -8,7 +8,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some value in ast.all_refs
+	value := ast.found.refs[_][_]
 
 	value[0].value[0].type == "var"
 	value[0].value[0].value in {"equal", "neq"} # perhaps add more operators here?

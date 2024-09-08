@@ -182,15 +182,6 @@ _exclude_arg(_, _, arg) if arg.type == "call"
 _exclude_arg("assign", 0, _)
 
 # METADATA
-# description: |
-#   set containing all references found in the input AST
-#   NOTE: likely to be deprecated — prefer to use `ast.found.refs` over this
-# scope: document
-all_refs contains found.refs[_][_]
-
-all_refs contains imported.path if some imported in input.imports
-
-# METADATA
 # description: returns the "path" string of any given ref value
 ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
 

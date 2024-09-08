@@ -232,6 +232,11 @@ yoda_condition if {
 	"foo" == input.bar
 }
 
+comprehension_term_assignment := [x |
+	some y in input
+	x := y.x
+]
+
 pointless_reassignment := yoda_condition
 
 ### Testing ###

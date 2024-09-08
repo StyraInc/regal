@@ -22,9 +22,9 @@ _find_assign_vars(value) := var if {
 # [a, b, c] := [1, 2, 3]
 # or
 # {a: b} := {"foo": "bar"}
-_find_assign_vars(value) := var if {
+_find_assign_vars(value) := vars if {
 	value[1].type in {"array", "object"}
-	var := _find_nested_vars(value[1])
+	vars := _find_nested_vars(value[1])
 }
 
 # var declared via `some`, i.e. `some x` or `some x, y`
@@ -34,19 +34,19 @@ _find_some_decl_vars(value) := [v |
 ]
 
 # single var declared via `some in`, i.e. `some x in y`
-_find_some_in_decl_vars(value) := var if {
+_find_some_in_decl_vars(value) := vars if {
 	arr := value[0].value
 	count(arr) == 3
 
-	var := _find_nested_vars(arr[1])
+	vars := _find_nested_vars(arr[1])
 }
 
 # two vars declared via `some in`, i.e. `some x, y in z`
-_find_some_in_decl_vars(value) := var if {
+_find_some_in_decl_vars(value) := vars if {
 	arr := value[0].value
 	count(arr) == 4
 
-	var := [v |
+	vars := [v |
 		some i in [1, 2]
 		some v in _find_nested_vars(arr[i])
 	]
@@ -64,11 +64,17 @@ find_ref_vars(value) := [var |
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
 # or `every`, i.e. `every x, y in y {}`
-_find_every_vars(value) := var if {
-	key_var := [v | v := value.key; v.type == "var"; indexof(v.value, "$") == -1]
-	val_var := [v | v := value.value; v.type == "var"; indexof(v.value, "$") == -1]
+_find_every_vars(value) := vars if {
+	key_var := [value.key |
+		value.key.type == "var"
+		indexof(value.key.value, "$") == -1
+	]
+	val_var := [value.value |
+		value.value.type == "var"
+		indexof(value.value.value, "$") == -1
+	]
 
-	var := array.concat(key_var, val_var)
+	vars := array.concat(key_var, val_var)
 }
 
 # METADATA
@@ -213,6 +219,17 @@ found.symbols[rule_index] contains value.symbols if {
 	rule_index := sprintf("%d", [i])
 
 	walk(rule, [_, value])
+}
+
+found.comprehensions[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
+
+	value.type in {"arraycomprehension", "objectcomprehension", "setcomprehension"}
 }
 
 # METADATA

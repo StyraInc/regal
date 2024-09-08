@@ -269,7 +269,7 @@ func scaffoldCustomRule(params newRuleCommandParams) error {
 }
 
 func scaffoldBuiltinRule(params newRuleCommandParams) error {
-	rulesDir := filepath.Join(params.output, "bundle", "regal", "rules", params.category)
+	rulesDir := filepath.Join(params.output, "bundle", "regal", "rules", params.category, params.name)
 
 	if err := os.MkdirAll(rulesDir, 0o770); err != nil {
 		return err

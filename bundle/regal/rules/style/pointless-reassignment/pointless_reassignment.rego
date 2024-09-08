@@ -26,9 +26,7 @@ report contains violation if {
 
 	not expr["with"]
 
-	expr.terms[0].value[0].type == "var"
-	expr.terms[0].value[0].value == "assign"
-	expr.terms[2].type == "var"
+	ast.assignment_terms(expr)[1].type == "var"
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr.terms))
 }

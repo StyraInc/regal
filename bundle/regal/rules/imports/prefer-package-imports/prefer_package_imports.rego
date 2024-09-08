@@ -42,10 +42,7 @@ custom_regal_package_and_import(pkg_path, path) if {
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
-	all_package_paths := {pkg |
-		some entry in input.aggregate
-		pkg := entry.aggregate_data.package_path
-	}
+	all_package_paths := {entry.aggregate_data.package_path | some entry in input.aggregate}
 
 	all_imports := {imp |
 		some entry in input.aggregate

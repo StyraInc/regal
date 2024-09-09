@@ -3,56 +3,116 @@ package lsp
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
 )
 
-func TestServerTemplateContentsForFile(t *testing.T) {
+func TestTemplateContentsForFile(t *testing.T) {
 	t.Parallel()
 
-	s := NewLanguageServer(
-		&LanguageServerOptions{
-			ErrorLog: os.Stderr,
+	testCases := map[string]struct {
+		FileKey           string
+		CacheFileContents string
+		DiskContents      map[string]string
+		RequireConfig     bool
+		ExpectedContents  string
+		ExpectedError     string
+	}{
+		"existing contents in file": {
+			FileKey:           "foo/bar.rego",
+			CacheFileContents: "package foo",
+			ExpectedError:     "file already has contents",
 		},
-	)
-
-	td := t.TempDir()
-
-	filePath := filepath.Join(td, "foo/bar/baz.rego")
-	regalPath := filepath.Join(td, ".regal/config.yaml")
-
-	initialState := map[string]string{
-		filePath:  "",
-		regalPath: "",
+		"existing contents on disk": {
+			FileKey:           "foo/bar.rego",
+			CacheFileContents: "",
+			DiskContents: map[string]string{
+				"foo/bar.rego": "package foo",
+			},
+			ExpectedError: "file on disk already has contents",
+		},
+		"empty file is templated as main when no root": {
+			FileKey:           "foo/bar.rego",
+			CacheFileContents: "",
+			DiskContents: map[string]string{
+				"foo/bar.rego": "",
+			},
+			ExpectedContents: "package main\n\nimport rego.v1\n",
+		},
+		"empty file is templated based on root": {
+			FileKey:           "foo/bar.rego",
+			CacheFileContents: "",
+			DiskContents: map[string]string{
+				"foo/bar.rego":       "",
+				".regal/config.yaml": "",
+			},
+			ExpectedContents: "package foo\n\nimport rego.v1\n",
+		},
+		"empty test file is templated based on root": {
+			FileKey:           "foo/bar_test.rego",
+			CacheFileContents: "",
+			DiskContents: map[string]string{
+				"foo/bar_test.rego":  "",
+				".regal/config.yaml": "",
+			},
+			RequireConfig:    true,
+			ExpectedContents: "package foo_test\n\nimport rego.v1\n",
+		},
+		"empty deeply nested file is templated based on root": {
+			FileKey:           "foo/bar/baz/bax.rego",
+			CacheFileContents: "",
+			DiskContents: map[string]string{
+				"foo/bar/baz/bax.rego": "",
+				".regal/config.yaml":   "",
+			},
+			ExpectedContents: "package foo.bar.baz\n\nimport rego.v1\n",
+		},
 	}
 
-	// create the initial state needed for the regal config root detection
-	for file := range initialState {
-		fileDir := filepath.Dir(file)
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
-		err := os.MkdirAll(fileDir, 0o755)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+			td := t.TempDir()
 
-		err = os.WriteFile(file, []byte(""), 0o600)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-	}
+			// init the state on disk
+			for f, c := range tc.DiskContents {
+				dir := filepath.Dir(f)
 
-	fileURI := uri.FromPath(clients.IdentifierGeneric, filePath)
+				err := os.MkdirAll(filepath.Join(td, dir), 0o755)
+				if err != nil {
+					t.Fatalf("failed to create directory %s: %s", dir, err)
+				}
 
-	s.cache.SetFileContents(fileURI, "")
+				err = os.WriteFile(filepath.Join(td, f), []byte(c), 0o600)
+				if err != nil {
+					t.Fatalf("failed to write file %s: %s", f, err)
+				}
+			}
 
-	newContents, err := s.templateContentsForFile(fileURI)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+			// create a new language server
+			s := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
+			s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
-	if newContents != "package foo.bar\n\nimport rego.v1\n" {
-		t.Fatalf("unexpected contents: %v", newContents)
+			fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, tc.FileKey))
+
+			s.cache.SetFileContents(fileURI, tc.CacheFileContents)
+
+			newContents, err := s.templateContentsForFile(fileURI)
+			if tc.ExpectedError != "" {
+				if !strings.Contains(err.Error(), tc.ExpectedError) {
+					t.Fatalf("expected error to contain %q, got %q", tc.ExpectedError, err)
+				}
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if newContents != tc.ExpectedContents {
+				t.Fatalf("expected contents to be\n%s\ngot\n%s", tc.ExpectedContents, newContents)
+			}
+		})
 	}
 }

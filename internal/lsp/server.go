@@ -478,10 +478,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					break
 				}
 
-				// handle this ourselves as it's a rename and not a content edit
-				fixed = false
-
-				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
+				err := l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
 				if err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 				}
@@ -496,6 +493,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					}
 				}
 
+				// handle this ourselves as it's a rename and not a content edit
+				fixed = false
 			case "regal.eval":
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
@@ -729,6 +728,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.templateFile:
+			// determine the new contents for the file, if permitted
 			newContents, err := l.templateContentsForFile(evt.URI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to template new file: %w", err))
@@ -737,6 +737,8 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			}
 
 			// generate the edit params for the templating operation
+			// TODO: Support rename operations in here too to allow making
+			// these changes as a single operation
 			templateParams := &types.ApplyWorkspaceEditParams{
 				Label: "Template new Rego file",
 				Edit: types.WorkspaceEdit{
@@ -754,11 +756,49 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 			}
 
-			// finally, update the cache contents and run diagnostics to clear
-			// empty module warning.
+			// set the contents of the new file in the cache immediately as
+			// these must be update to date in order for fixRenameParams
+			// to work
+			l.cache.SetFileContents(evt.URI, newContents)
+
+			// determine if a rename is needed based on the new file contents
+			renameParams, err := l.fixRenameParams(
+				"Rename file to match package path",
+				&fixes.DirectoryPackageMismatch{},
+				evt.URI,
+			)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to fix directory package mismatch: %w", err))
+
+				continue
+			}
+
+			// move the file and clean up any empty directories ifd required
+			fileURI := evt.URI
+			if len(renameParams.Edit.DocumentChanges) > 0 {
+				fileURI = renameParams.Edit.DocumentChanges[0].NewURI
+				oldURI := renameParams.Edit.DocumentChanges[0].OldURI
+
+				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
+				if err != nil {
+					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				}
+
+				dir := filepath.Dir(uri.ToPath(l.clientIdentifier, oldURI))
+
+				err := util.DeleteEmptyDirs(dir)
+				if err != nil {
+					continue
+				}
+
+				l.cache.SetFileContents(fileURI, newContents)
+				l.cache.Delete(oldURI)
+			}
+
+			// finally, trigger a diagnostics run for the new file
 			updateEvent := fileUpdateEvent{
 				Reason:  "internal/templateNewFile",
-				URI:     evt.URI,
+				URI:     fileURI,
 				Content: newContents,
 			}
 
@@ -835,6 +875,10 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg = "main"
 	}
 
+	if strings.HasSuffix(fileURI, "_test.rego") {
+		pkg += "_test"
+	}
+
 	return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
 }
 
@@ -898,7 +942,7 @@ func (l *LanguageServer) fixRenameParams(
 ) (types.ApplyWorkspaceRenameEditParams, error) {
 	contents, ok := l.cache.GetFileContents(fileURL)
 	if !ok {
-		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to get module for file %q", fileURL)
+		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to file contents %q", fileURL)
 	}
 
 	roots, err := config.GetPotentialRoots(l.workspacePath())
@@ -921,6 +965,13 @@ func (l *LanguageServer) fixRenameParams(
 	)
 	if err != nil {
 		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed attempted fix: %w", err)
+	}
+
+	if len(results) == 0 {
+		return types.ApplyWorkspaceRenameEditParams{
+			Label: label,
+			Edit:  types.WorkspaceRenameEdit{},
+		}, nil
 	}
 
 	result := results[0]

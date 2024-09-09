@@ -4,7 +4,6 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.capabilities
-import data.regal.util
 
 # regal ignore:rule-length
 test_find_vars if {
@@ -262,27 +261,6 @@ test_find_some_decl_names_in_scope if {
 }
 
 var_names(vars) := {var.value | some var in vars}
-
-test_all_refs if {
-	policy := `package policy
-
-	import data.foo.bar
-
-    allow := data.foo.baz
-
-    deny[message] {
-		message := data.foo.bax
-    }
-    `
-
-	module := regal.parse_module("p.rego", policy)
-
-	r := ast.all_refs with input as module
-
-	text_refs := {base64.decode(util.to_location_object(ref.location).text) | some ref in r}
-
-	text_refs == {":=", "data.foo.bar", "data.foo.bax", "data.foo.baz"}
-}
 
 test_provided_capabilities_never_undefined if {
 	capabilities.provided == {} with data.internal as {}

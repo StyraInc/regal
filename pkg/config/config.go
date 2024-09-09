@@ -175,7 +175,7 @@ func FindRegalDirectory(path string) (*os.File, error) {
 //
 // - Configuration (`project.roots`)
 // - By the presence of a .manifest file anywhere under the path
-// - By the presence of a .regal directory anywhere under or above the path ... TODO (anders): might reconsider "above"?
+// - By the presence of a .regal directory anywhere under or above the path ...
 //
 // All returned paths are absolute paths. If the provided path itself
 // is determined to be a bundle root directory it will be included in the result.
@@ -219,7 +219,6 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 			foundBundleRoots = append(foundBundleRoots, roots...)
 		}
 
-		// rather than calling rio.FindManifestLocations later, let's
 		// check for .manifest directories as part of the same walk
 		if !info.IsDir() && info.Name() == ".manifest" {
 			foundBundleRoots = append(foundBundleRoots, filepath.Dir(path))
@@ -267,6 +266,13 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 	if err == nil && info.IsDir() {
 		foundBundleRoots = append(foundBundleRoots, customRulesDir)
 	}
+
+	manifestRoots, err := rio.FindManifestLocations(filepath.Dir(regalDir.Name()))
+	if err != nil {
+		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
+	}
+
+	foundBundleRoots = append(foundBundleRoots, util.Map(util.FilepathJoiner(parent), manifestRoots)...)
 
 	return foundBundleRoots, nil
 }

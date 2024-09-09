@@ -19,6 +19,9 @@ func FromPath(client clients.Identifier, path string) string {
 		// Convert Windows path separators to Unix separators
 		path = filepath.ToSlash(path)
 
+		// spaces must be percent-encoded
+		path = strings.ReplaceAll(path, " ", "%20")
+
 		// If the path is a Windows path, the colon after the drive letter needs to be
 		// percent-encoded.
 		if parts := strings.Split(path, ":"); len(parts) > 1 {

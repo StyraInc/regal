@@ -211,18 +211,14 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
-			success, err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
+			err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process text content update: %w", err))
 
 				continue
 			}
 
-			if !success {
-				continue
-			}
-
-			// otherwise, lint the file and send the diagnostics
+			// lint the file and send the diagnostics
 			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
@@ -936,33 +932,24 @@ func (l *LanguageServer) processTextContentUpdate(
 	ctx context.Context,
 	fileURI string,
 	content string,
-) (bool, error) {
+) error {
 	if l.ignoreURI(fileURI) {
-		return false, nil
+		return nil
 	}
 
 	currentContent, ok := l.cache.GetFileContents(fileURI)
 	if ok && currentContent == content {
-		return false, nil
+		return nil
 	}
 
 	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
+	_, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
 	if err != nil {
-		return false, fmt.Errorf("failed to update parse: %w", err)
+		return fmt.Errorf("failed to update parse: %w", err)
 	}
 
-	if success {
-		return true, nil
-	}
-
-	err = l.sendFileDiagnostics(ctx, fileURI)
-	if err != nil {
-		return false, fmt.Errorf("failed to send diagnostic: %w", err)
-	}
-
-	return false, nil
+	return nil
 }
 
 // processHoverContentUpdate updates information about built in, and keyword
@@ -2132,7 +2119,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 		}
 
 		// if the caller has requested only new files, then we can exit early
-		if _, ok := l.cache.GetModule(fileURI); newOnly && ok {
+		if _, ok := l.cache.GetFileContents(fileURI); newOnly && ok {
 			return nil
 		}
 

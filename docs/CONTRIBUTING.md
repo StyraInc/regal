@@ -48,6 +48,23 @@ Regal.
 If you're struggling with any of the above points, or you're unsure of what to do, no worries! Just say so in your PR,
 or ask for advice in the `#regal` channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
 
+### Rules Development Workflow
+
+Linter rules use a JSON representation of the AST as input. Use the `regal parse` command pointed at any Rego
+file to inspect its AST in this format. It is often more convenient to direct this output to a file, like
+`input.json` to browse it in your favorite editor, e.g. `regal parse policy.rego > input.json`.
+
+If you're using VS Code and the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa), you may
+use the [Code Lens for Evaluation](https://docs.styra.com/regal/language-server#code-lenses-evaluation) to directly
+evaluate packages and rules using the `input.json` file as input, and see the result directly in your editor on the
+line you clicked to evaluate.
+
+As another convenience, any `.rego` file where the first comment in the policy is `# regal eval:use-as-input` will have
+the evaluation feature automatically use the AST of the file as input. This allows building queries against the AST of
+the policy you're working on, providing an extremely fast feedback loop for developing new rules!
+
+![Use AST of file as input](./assets/lsp/eval_use_as_input.png)
+
 ## Building
 
 Build the `regal` executable simply by running `go build`, or with `rq` installed, by running `build/do.rq build`.

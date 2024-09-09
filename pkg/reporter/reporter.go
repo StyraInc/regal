@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -178,6 +179,9 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	}
 
 	if fixableViolationsCount > 0 {
+		violationKeys := util.Keys(fixableViolations)
+		slices.Sort(violationKeys)
+
 		_, err = fmt.Fprintf(
 			tr.out,
 			`
@@ -186,7 +190,7 @@ Hint: %d/%d violations can be automatically fixed (%s)
 `,
 			fixableViolationsCount,
 			r.Summary.NumViolations,
-			strings.Join(util.Keys(fixableViolations), ", "),
+			strings.Join(violationKeys, ", "),
 		)
 	}
 

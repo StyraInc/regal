@@ -747,6 +747,8 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			newContents, err := l.templateContentsForFile(evt.URI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to template new file: %w", err))
+
+				continue
 			}
 
 			// generate the edit params for the templating operation
@@ -788,6 +790,14 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 
 	if content != "" {
 		return "", errors.New("file already has contents, templating not allowed")
+	}
+
+	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
+	if err == nil {
+		// then we found the file on disk
+		if string(diskContent) != "" {
+			return "", errors.New("file on disk already has contents, templating not allowed")
+		}
 	}
 
 	path := uri.ToPath(l.clientIdentifier, fileURI)
@@ -1955,16 +1965,23 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			continue
 		}
 
-		_, content, err := cache.UpdateCacheForURIFromDisk(
-			l.cache,
-			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
-			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
+		content, ok := l.cache.GetFileContents(renameOp.OldURI)
+		// if the content is not in the cache then we can attempt to load from
+		// the disk instead.
+		if !ok || content == "" {
+			_, content, err = cache.UpdateCacheForURIFromDisk(
+				l.cache,
+				uri.FromPath(l.clientIdentifier, renameOp.NewURI),
+				uri.ToPath(l.clientIdentifier, renameOp.NewURI),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
+			}
 		}
 
 		l.cache.Delete(renameOp.OldURI)
+
+		l.cache.SetFileContents(renameOp.NewURI, content)
 
 		evt := fileUpdateEvent{
 			Reason:  "textDocument/didRename",
@@ -1975,6 +1992,8 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.diagnosticRequestFile <- evt
 		l.builtinsPositionFile <- evt
+		// if the file being moved is empty, we template it too (if empty)
+		l.templateFile <- evt
 	}
 
 	return struct{}{}, nil

@@ -135,6 +135,8 @@ func WalkFiles(root string, f func(path string) error) error {
 	})
 }
 
+// FindManifestLocations walks the file system rooted at root, and returns the
+// *relative* paths of directories containing a .manifest file.
 func FindManifestLocations(root string) ([]string, error) {
 	var foundBundleRoots []string
 

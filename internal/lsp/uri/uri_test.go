@@ -52,6 +52,10 @@ func TestPathToURI_VSCode(t *testing.T) {
 			path: "/foo/bar",
 			want: "file:///foo/bar",
 		},
+		"unix spaces": {
+			path: "/foo/bar baz",
+			want: "file:///foo/bar%20baz",
+		},
 		"unix prefixed": {
 			path: "file:///foo/bar",
 			want: "file:///foo/bar",

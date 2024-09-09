@@ -783,14 +783,10 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 }
 
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
-	fmt.Fprintln(os.Stderr, "template for", fileURI)
-
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
 		return "", fmt.Errorf("failed to get file contents for URI %q", fileURI)
 	}
-
-	fmt.Fprintln(os.Stderr, "content", content)
 
 	if content != "" {
 		return "", errors.New("file already has contents, templating not allowed")
@@ -798,7 +794,6 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 
 	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
 	if err == nil {
-		fmt.Fprintln(os.Stderr, "disk content", string(diskContent))
 		// then we found the file on disk
 		if string(diskContent) != "" {
 			return "", errors.New("file on disk already has contents, templating not allowed")
@@ -1970,25 +1965,23 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			continue
 		}
 
-		_, content, err := cache.UpdateCacheForURIFromDisk(
-			l.cache,
-			uri.FromPath(l.clientIdentifier, renameOp.NewURI),
-			uri.ToPath(l.clientIdentifier, renameOp.NewURI),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
-		}
-
-		// TODO this should be the other way around, if the buffer contents is empty, then use the disk contents.
-
-		// if the content on disk is empty, then attempt to use the state in the cache from the old file
-		if content == "" {
-			content, _ = l.cache.GetFileContents(renameOp.OldURI)
-
-			l.cache.SetFileContents(renameOp.NewURI, content)
+		content, ok := l.cache.GetFileContents(renameOp.OldURI)
+		// if the content is not in the cache then we can attempt to load from
+		// the disk instead.
+		if !ok || content == "" {
+			_, content, err = cache.UpdateCacheForURIFromDisk(
+				l.cache,
+				uri.FromPath(l.clientIdentifier, renameOp.NewURI),
+				uri.ToPath(l.clientIdentifier, renameOp.NewURI),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to update cache for uri %q: %w", renameOp.NewURI, err)
+			}
 		}
 
 		l.cache.Delete(renameOp.OldURI)
+
+		l.cache.SetFileContents(renameOp.NewURI, content)
 
 		evt := fileUpdateEvent{
 			Reason:  "textDocument/didRename",

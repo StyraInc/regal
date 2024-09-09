@@ -116,7 +116,6 @@ type LanguageServer struct {
 type fileUpdateEvent struct {
 	Reason  string
 	URI     string
-	OldURI  string
 	Content string
 }
 
@@ -212,27 +211,6 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
-			// if file has been deleted, clear diagnostics in the client
-			if evt.Reason == "textDocument/didDelete" ||
-				evt.Reason == "internal/workspaceStateWorker/missingFile" {
-				err := l.sendFileDiagnostics(ctx, evt.URI)
-				if err != nil {
-					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
-				}
-
-				continue
-			}
-
-			if evt.Reason == "textDocument/didRename" && evt.OldURI != "" {
-				err := l.sendFileDiagnostics(ctx, evt.OldURI)
-				if err != nil {
-					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
-				}
-
-				continue
-			}
-
-			// if there is new content, we need to update the parse errors or module first
 			success, err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to process text content update: %w", err))
@@ -691,22 +669,13 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 					continue
 				}
 
-				// if the diagnostics for the file are empty, or missing
-				// then we do not need to send anything to the client and can
-				// remove the file from the cache.
-				diagnostics, ok := l.cache.GetFileDiagnostics(fileURI)
-				if !ok || len(diagnostics) == 0 {
-					l.cache.Delete(fileURI)
+				// clear the cache first,
+				l.cache.Delete(fileURI)
 
-					continue
-				}
-
-				// if there are diagnostics, we need to clear them and send a
-				// notification to the client.
-				l.cache.SetFileDiagnostics(fileURI, []types.Diagnostic{})
-				l.diagnosticRequestFile <- fileUpdateEvent{
-					URI:    fileURI,
-					Reason: "internal/workspaceStateWorker/missingFile",
+				// then send the diagnostics message based on the cleared cache
+				err = l.sendFileDiagnostics(ctx, fileURI)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 				}
 			}
 
@@ -1923,7 +1892,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 }
 
 func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
@@ -1939,19 +1908,17 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	for _, deleteOp := range params.Files {
 		l.cache.Delete(deleteOp.URI)
 
-		evt := fileUpdateEvent{
-			Reason: "textDocument/didDelete",
-			URI:    deleteOp.URI,
+		err := l.sendFileDiagnostics(ctx, deleteOp.URI)
+		if err != nil {
+			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 		}
-
-		l.diagnosticRequestFile <- evt
 	}
 
 	return struct{}{}, nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidRenameFiles(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
@@ -1979,14 +1946,19 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			}
 		}
 
+		// clear the cache and send diagnostics for the old URI to clear the client
 		l.cache.Delete(renameOp.OldURI)
+
+		err := l.sendFileDiagnostics(ctx, renameOp.OldURI)
+		if err != nil {
+			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+		}
 
 		l.cache.SetFileContents(renameOp.NewURI, content)
 
 		evt := fileUpdateEvent{
 			Reason:  "textDocument/didRename",
 			URI:     renameOp.NewURI,
-			OldURI:  renameOp.OldURI,
 			Content: content,
 		}
 

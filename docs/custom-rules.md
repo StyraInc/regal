@@ -40,10 +40,16 @@ regal new rule --category naming --name foo-bar-baz
 ```
 
 This will create a `.regal/rules` directory in the current working directory, if one does not already exist, and place
-a directory named after `--category` in it, where it will place a policy for the rule, and another one to test it. If
-you'd rather create this directory structure in some other place than the current working directory, you may use the
+a starter policy and a test in a directory structure based on `--category` and `--name` in it. Following the above
+example would create the following directory structure under `.regal/rules`:
+
+```text
+custom/regal/rules/naming/foo-bar-baz/foo_bar_baz.rego
+custom/regal/rules/naming/foo-bar-baz/foo_bar_baz_test.rego
+```
+If you'd rather create this directory structure in some other place than the current working directory, you may use the
 `--output` flag to specify a different location. The generated rule includes a simple example, which can be verified by
-running `regal test .regal/rules/${category}`. Modify the rule and the test to suit your needs!
+running `regal test .regal/rules`. Modify the rule and the test to suit your needs!
 
 If you'd like to create a new built-in rule for submitting a PR in Regal, you may add the `--type builtin` flag to the
 command (the default is `custom`). This will create a similar scaffolding under `bundle/regal/rules` in the Regal
@@ -51,45 +57,55 @@ repository.
 
 ## Developing Rules
 
-Regal rules works primarily on the [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) as
-parsed by OPA, with a few custom additions. The AST of each policy scanned will be provided as input to the linter
-policies, and additional data useful in the context of linting, as well as some purpose-built custom functions are made
-available in any Regal policy.
+Regal rules works primarily with the [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST)
+provided by OPA's parser as input. The top level item in the AST is the
+[module](https://pkg.go.dev/github.com/open-policy-agent/opa/ast#Module), which contains nodes for everything found
+in a policy, like the package declaration, imports and rules.
 
-If we were to write the simplest policy possible, and parse it using `opa parse`, it would contain nothing but a package
-declaration:
+Since OPA expects JSON as input, the module and all its child nodes are serialized, and then made available as `input`
+in Regal linter rule policies. The `opa parse --format json` command can be used to get an idea of what the structure
+of the serialized AST looks like. However, recent versions of Regal leverage an optimized AST JSON representation called
+[roast](https://github.com/anderseknert/roast), which is both more compact and performant to traverse as part of
+linting. See the roast docs for more information on how the format differs from the "normal" OPA AST.
+
+In order to view the JSON AST representation of a policy, use the `regal parse` command. This works similarly to
+`opa parse`, but only outputs the roast JSON format, including additions made by Regal.
+
+If we were to write the simplest policy possible, and parse it using `regal parse`, it would contain nothing but a
+package declaration:
 
 **policy.rego**
 ```rego
 package policy
 ```
 
-Using `opa parse --format json --json-include locations policy.rego`, we're provided with the AST of the above policy:
+Using `regal parse policy.rego`, we're provided with the AST of the above policy:
 
 ```json
 {
-  "package": {
-    "location": {
-      "file": "policy.rego",
-      "row": 1,
-      "col": 1
+  "regal": {
+    "file": {
+      "name": "p.rego",
+      "lines": [
+        "package policy",
+        ""
+      ],
+      "abs": "/Users/anderseknert/git/styra/regal/p.rego"
     },
+    "environment": {
+      "path_separator": "/"
+    }
+  },
+  "package": {
+    "location": "2:1:cGFja2FnZQ==",
     "path": [
       {
-        "location": {
-          "file": "policy.rego",
-          "row": 1,
-          "col": 9
-        },
+        "location": "2:9:cG9saWN5",
         "type": "var",
         "value": "data"
       },
       {
-        "location": {
-          "file": "policy.rego",
-          "row": 1,
-          "col": 9
-        },
+        "location": "2:9:cG9saWN5",
         "type": "string",
         "value": "policy"
       }
@@ -195,7 +211,7 @@ aggregate contains entry if {
     some rule in ast.rules
 
     # search for rule named allow
-    ast.name(rule) == "allow"
+    ast.ref_to_string(rule.head.ref) == "allow"
 
     # make sure it's a default assignment
     # ideally we'll want more than that, but the *requirement* is only
@@ -263,7 +279,7 @@ Regal provides a few custom built-in functions tailor-made for linter policies.
 
 Works just like `rego.parse_module`, but provides an AST including location information, and custom additions added
 by Regal, like the text representation of each line in the original policy. This is useful for authoring tests to assert
-linter rules work as expected.
+linter rules work as expected. This is the built-in function equivalent of the `regal parse` command.
 
 ### `regal.last(array)`
 
@@ -271,9 +287,16 @@ This built-in function is a much more performant way to express `array[count(arr
 is almost always irrelevant in "normal" Rego policies, but can have a significant impact in linter rules where it's
 sometimes called thousands of times as part of traversing the input AST.
 
+## Rego Library
+
 In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
 [regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast/ast.rego) package to see what's available is
 recommended!
+
+Note however that at this point in time, the Rego API is not considered stable, and breaking changes are likely to
+occur between versions. If you need stable versions of rules and functions found here, consider copying them into a
+library of your own, and use in your custom rules. Or engage with the Regal community and tell us what you need and
+depend on, and we'll try to take it into account, or at least help you find ways to make it work!
 
 ## Community
 

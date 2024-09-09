@@ -221,7 +221,9 @@ func addToDataYAML(params newRuleCommandParams) error {
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {
-	rulesDir := filepath.Join(params.output, ".regal", "rules", params.category)
+	rulesDir := filepath.Join(
+		params.output, ".regal", "rules", "custom", "regal", "rules", params.category, params.name,
+	)
 
 	if err := os.MkdirAll(rulesDir, 0o770); err != nil {
 		return err

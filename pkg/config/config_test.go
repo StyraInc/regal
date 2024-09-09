@@ -94,10 +94,11 @@ project:
 `
 
 	fs := map[string]string{
-		"/.regal/config.yaml":      cfg, // root from config
-		"/bundle/.manifest":        "",  // bundle from .manifest
-		"/foo/bar/baz/policy.rego": "",  // foo/bar from config
-		"/baz":                     "",  // baz from config
+		"/.regal/config.yaml":       cfg, // root from config
+		"/.regal/rules/policy.rego": "",  // custom rules directory
+		"/bundle/.manifest":         "",  // bundle from .manifest
+		"/foo/bar/baz/policy.rego":  "",  // foo/bar from config
+		"/baz":                      "",  // baz from config
 	}
 
 	test.WithTempFS(fs, func(root string) {
@@ -106,11 +107,11 @@ project:
 			t.Error(err)
 		}
 
-		if len(locations) != 4 {
-			t.Errorf("expected 4 locations, got %d", len(locations))
+		if len(locations) != 5 {
+			t.Errorf("expected 5 locations, got %d", len(locations))
 		}
 
-		expected := util.Map(util.FilepathJoiner(root), []string{"", "baz", "bundle", "foo/bar"})
+		expected := util.Map(util.FilepathJoiner(root), []string{"", ".regal/rules", "baz", "bundle", "foo/bar"})
 
 		if !slices.Equal(expected, locations) {
 			t.Errorf("expected %v, got %v", expected, locations)

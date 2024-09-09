@@ -261,6 +261,13 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 		}
 	}
 
+	customRulesDir := filepath.Join(regalDir.Name(), "rules")
+
+	info, err := os.Stat(customRulesDir)
+	if err == nil && info.IsDir() {
+		foundBundleRoots = append(foundBundleRoots, customRulesDir)
+	}
+
 	return foundBundleRoots, nil
 }
 

@@ -6,20 +6,20 @@ import data.custom.regal.rules.{{.Category}}{{.Name}} as rule
 
 # Example test, replace with your own
 test_rule_named_foo_not_allowed if {
-    module := regal.parse_module("example.rego", `
-    package policy
+	module := regal.parse_module("example.rego", `
+	package policy
 
-    foo := true`)
+	foo := true`)
 
-    r := rule.report with input as module
+	r := rule.report with input as module
 
-    # Use print(r) here to see the report. Great for development!
+	# Use print(r) here to see the report. Great for development!
 
-    r == {{ "{{" }}
-    	"category": "{{.Category}}",
-    	"description": "Add description of rule here!",
-    	"level": "error",
-    	"location": {"col": 5, "file": "example.rego", "row": 4, "text": "    foo := true"},
-    	"title": "{{.NameOriginal}}"
-    }}
+	r == {{ "{{" }}
+		"category": "{{.Category}}",
+		"description": "Add description of rule here!",
+		"level": "error",
+		"location": {"col": 2, "file": "example.rego", "row": 4, "text": "\tfoo := true"},
+		"title": "{{.NameOriginal}}",
+	}}
 }

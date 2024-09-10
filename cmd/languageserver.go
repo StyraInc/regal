@@ -46,6 +46,7 @@ func init() {
 			go ls.StartConfigWorker(ctx)
 			go ls.StartWorkspaceStateWorker(ctx)
 			go ls.StartTemplateWorker(ctx)
+			go ls.StartWebServer(ctx)
 
 			sigChan := make(chan os.Signal, 1)
 			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

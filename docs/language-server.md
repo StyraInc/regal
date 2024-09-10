@@ -131,13 +131,19 @@ that appears on the line with a diagnostic message, or by pressing `ctrl/cmd + .
   src={require('./assets/lsp/codeaction.png').default}
   alt="Screenshot of code action displayed in Zed"/>
 
-Regal currently provides quick fix code actions for the following linter rules:
+Regal currently provides **quick fix actions** for the following linter rules:
 
 - [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)
 - [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
 - [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
 - [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
 - [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)
+
+Regal also provides **source actions** — actions that apply to a whole file and aren't triggered by linter issues:
+
+- **Explore compiler stages for policy** — Opens a browser window with an embedded version of the
+  [opa-explorer](https://github.com/srenatus/opa-explorer), where advanced users can explore the different stages
+  of the Rego compiler's output for a given policy.
 
 ### Code lenses (Evaluation)
 

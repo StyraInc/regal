@@ -185,7 +185,7 @@ type CodeActionContext struct {
 type CodeAction struct {
 	Title       string       `json:"title"`
 	Kind        string       `json:"kind"`
-	Diagnostics []Diagnostic `json:"diagnostics"`
+	Diagnostics []Diagnostic `json:"diagnostics,omitempty"`
 	IsPreferred *bool        `json:"isPreferred,omitempty"`
 	Command     Command      `json:"command"`
 }

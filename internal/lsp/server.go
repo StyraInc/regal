@@ -767,6 +767,40 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				edits = append(edits, renameParams.Edit.DocumentChanges[0])
 			}
 
+			// check if there are any dirs to clean
+			if len(renameParams.Edit.DocumentChanges) > 0 {
+				dirs, err := util.DirCleanUpPaths(
+					uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI),
+					[]string{
+						// stop at the root
+						l.workspacePath(),
+						// also preserve any dirs needed for the new file
+						uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].NewURI),
+					},
+				)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to delete empty directories: %w", err))
+
+					continue
+				}
+
+				for _, dir := range dirs {
+					edits = append(
+						edits,
+						types.DeleteFile{
+							Kind: "delete",
+							URI:  uri.FromPath(l.clientIdentifier, dir),
+							Options: &types.DeleteFileOptions{
+								Recursive:         true,
+								IgnoreIfNotExists: true,
+							},
+						},
+					)
+				}
+
+				l.cache.Delete(renameParams.Edit.DocumentChanges[0].OldURI)
+			}
+
 			err = l.conn.Call(ctx, methodWorkspaceApplyEdit, map[string]any{
 				"label": "Template new Rego file",
 				"edit": map[string]any{

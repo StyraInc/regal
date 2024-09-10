@@ -243,6 +243,17 @@ type RenameFile struct {
 	AnnotationIdentifier *string            `json:"annotationId,omitempty"`
 }
 
+type DeleteFileOptions struct {
+	Recursive         bool `json:"recursive"`
+	IgnoreIfNotExists bool `json:"ignoreIfNotExists"`
+}
+
+type DeleteFile struct {
+	Kind    string             `json:"kind"` // must always be "delete"
+	URI     string             `json:"uri"`
+	Options *DeleteFileOptions `json:"options,omitempty"`
+}
+
 // WorkspaceRenameEdit is a WorkspaceEdit that is used for renaming files.
 // Perhaps we should use generics and a union type here instead.
 type WorkspaceRenameEdit struct {

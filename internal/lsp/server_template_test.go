@@ -242,7 +242,7 @@ func TestNewFileTemplating(t *testing.T) {
 	}
 
 	// 6. Validate that the client received a workspace edit
-	timeout = time.NewTimer(defaultTimeout)
+	timeout = time.NewTimer(3 * time.Second)
 	defer timeout.Stop()
 
 	expectedMessage := fmt.Sprintf(`{
@@ -277,11 +277,19 @@ func TestNewFileTemplating(t *testing.T) {
           "ignoreIfExists": false,
           "overwrite": false
         }
+      },
+      {
+        "kind": "delete",
+        "options": {
+          "ignoreIfNotExists": true,
+          "recursive": true
+        },
+        "uri": "file://%[3]s/foo/bar"
       }
     ]
   },
   "label": "Template new Rego file"
-}`, newFileURI, expectedNewFileURI)
+}`, newFileURI, expectedNewFileURI, tempDir)
 
 	for {
 		var success bool

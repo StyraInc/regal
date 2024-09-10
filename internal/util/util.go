@@ -159,3 +159,89 @@ func DeleteEmptyDirs(dir string) error {
 
 	return nil
 }
+
+// DirCleanUpPaths will, for a given target file, list all the dirs that would
+// be empty if the target file was deleted.
+func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
+	dirs := make([]string, 0)
+
+	preserveDirs := make(map[string]struct{})
+
+	for _, p := range preserve {
+		for {
+			preserveDirs[p] = struct{}{}
+
+			p = filepath.Dir(p)
+
+			if p == "." || p == "/" {
+				break
+			}
+
+			if _, ok := preserveDirs[p]; ok {
+				break
+			}
+		}
+	}
+
+	dir := filepath.Dir(target)
+
+	for {
+		// check if we reached the preserved dir
+		_, ok := preserveDirs[dir]
+		if ok {
+			break
+		}
+
+		parts := strings.Split(dir, string(filepath.Separator))
+		if len(parts) == 1 {
+			break
+		}
+
+		info, err := os.Stat(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to stat directory %s: %w", dir, err)
+		}
+
+		if !info.IsDir() {
+			return nil, fmt.Errorf("expected directory, got file %s", dir)
+		}
+
+		files, err := os.ReadDir(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
+		}
+
+		empty := true
+
+		for _, file := range files {
+			// exclude the target
+			abs := filepath.Join(dir, file.Name())
+			if abs == target {
+				continue
+			}
+
+			// exclude any other marked dirs
+			if file.IsDir() && len(dirs) > 0 {
+				if dirs[len(dirs)-1] == abs {
+					continue
+				}
+			}
+
+			empty = false
+
+			break
+		}
+
+		if !empty {
+			break
+		}
+
+		dirs = append(dirs, dir)
+
+		fmt.Fprintln(os.Stderr, "added", dir)
+
+		dir = filepath.Dir(dir)
+	}
+
+	return dirs, nil
+}

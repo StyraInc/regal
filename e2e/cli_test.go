@@ -938,6 +938,31 @@ test_allow := true
 	}
 }
 
+// verify fix for https://github.com/StyraInc/regal/issues/1082
+func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--disable=directory-package-mismatch",
+		filepath.Join(cwd, "testdata", "bugs", "issue_1082.rego"),
+	)
+
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	if exp, act := "1 file linted. No violations found.\n", stdout.String(); exp != act {
+		t.Errorf("expected stdout %q, got %q", exp, act)
+	}
+}
+
 func binary() string {
 	var location string
 	if runtime.GOOS == "windows" {

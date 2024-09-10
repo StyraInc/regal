@@ -736,30 +736,17 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				continue
 			}
 
-			// generate the edit params for the templating operation
-			// TODO: Support rename operations in here too to allow making
-			// these changes as a single operation
-			templateParams := &types.ApplyWorkspaceEditParams{
-				Label: "Template new Rego file",
-				Edit: types.WorkspaceEdit{
-					DocumentChanges: []types.TextDocumentEdit{
-						{
-							TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: evt.URI},
-							Edits:        ComputeEdits("", newContents),
-						},
-					},
-				},
-			}
-
-			err = l.conn.Call(ctx, methodWorkspaceApplyEdit, templateParams, nil)
-			if err != nil {
-				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
-			}
-
 			// set the contents of the new file in the cache immediately as
 			// these must be update to date in order for fixRenameParams
 			// to work
 			l.cache.SetFileContents(evt.URI, newContents)
+
+			var edits []any
+
+			edits = append(edits, types.TextDocumentEdit{
+				TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: evt.URI},
+				Edits:        ComputeEdits("", newContents),
+			})
 
 			// determine if a rename is needed based on the new file contents
 			renameParams, err := l.fixRenameParams(
@@ -775,24 +762,19 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 
 			// move the file and clean up any empty directories ifd required
 			fileURI := evt.URI
+
 			if len(renameParams.Edit.DocumentChanges) > 0 {
-				fileURI = renameParams.Edit.DocumentChanges[0].NewURI
-				oldURI := renameParams.Edit.DocumentChanges[0].OldURI
+				edits = append(edits, renameParams.Edit.DocumentChanges[0])
+			}
 
-				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
-				if err != nil {
-					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
-				}
-
-				dir := filepath.Dir(uri.ToPath(l.clientIdentifier, oldURI))
-
-				err := util.DeleteEmptyDirs(dir)
-				if err != nil {
-					continue
-				}
-
-				l.cache.SetFileContents(fileURI, newContents)
-				l.cache.Delete(oldURI)
+			err = l.conn.Call(ctx, methodWorkspaceApplyEdit, map[string]any{
+				"label": "Template new Rego file",
+				"edit": map[string]any{
+					"documentChanges": edits,
+				},
+			}, nil)
+			if err != nil {
+				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 			}
 
 			// finally, trigger a diagnostics run for the new file

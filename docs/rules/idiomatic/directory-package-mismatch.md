@@ -91,11 +91,17 @@ Editors integrating Regal's [language server](https://docs.styra.com/regal/langu
 suggestions for idiomatic package paths based on the directory structure in which a policy resides. The image below
 demonstrates a new policy being created inside an `authorization/rbac/roles` directory, and the editor
 ([via Regal](https://docs.styra.com/regal/language-server#code-completions)) suggesting the package path
- `authorization.rbac.roles`.
+`authorization.rbac.roles`.
 
 <img
-  src={require('../../assets/rules/pkg_name_completion.png').default}
-  alt="Package path auto-completion in VS Code"/>
+src={require('../../assets/rules/pkg_name_completion.png').default}
+alt="Package path auto-completion in VS Code"/>
+
+In addition, empty files will be be 'formatted' to have the correct package
+based on the directory structure. Newly created Rego files are treated in much
+the same way. When a new file is created, the server will send a series of edits
+back to set the content. If `exclude-test-suffix` is set to `false`, the file
+will also be moved if required to the `_test` directory for that package.
 
 ## Configuration Options
 

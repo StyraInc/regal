@@ -179,6 +179,23 @@ Starting from top to bottom, these are the components comprising our custom rule
    will later be included in the final report provided by Regal.
 1. The `result.location` helps extract the location from the element failing the test. Make sure to use it!
 
+### Rule Development Workflow
+
+In addition to making use of the `regal parse` command to inspect the AST of a policy, using Regal's
+[language server](https://docs.styra.com/regal/language-server) for rule development provides the absolute best rule
+development experience.
+
+If you're using VS Code and the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa), you may
+use the [Code Lens for Evaluation](https://docs.styra.com/regal/language-server#code-lenses-evaluation) to directly
+evaluate packages and rules using the `input.json` file as input, and see the result directly in your editor on the
+line you clicked to evaluate.
+
+As another convenience, any `.rego` file where the first comment in the policy is `# regal eval:use-as-input` will have
+the evaluation feature automatically use the AST of the file as input. This allows building queries against the AST of
+the policy you're working on, providing an extremely fast feedback loop for developing new rules!
+
+![Use AST of file as input](./assets/lsp/eval_use_as_input.png)
+
 ## Aggregate Rules
 
 Aggregate rules are a special type of rule that allows you to collect data from multiple files before making a decision.

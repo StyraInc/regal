@@ -552,7 +552,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				// When the first comment in the file is `regal eval: use-as-input`, the AST of that module is
 				// used as the input rather than the contents of input.json. This is a development feature for
 				// working on rules (built-in or custom), allowing querying the AST of the module directly.
-				if regalEvalUseAsInputComment.Match(currentModule.Comments[0].Text) {
+				if len(currentModule.Comments) > 0 && regalEvalUseAsInputComment.Match(currentModule.Comments[0].Text) {
 					bs, err := encoding.JSON().Marshal(currentModule)
 					if err != nil {
 						l.logError(fmt.Errorf("failed to marshal module: %w", err))

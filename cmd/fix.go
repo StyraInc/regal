@@ -282,23 +282,6 @@ func fix(args []string, params *fixCommandParams) error {
 		ignore = params.ignoreFiles.v
 	}
 
-	// create a list of absolute paths, these will be used for the file from
-	// this point in order to be able to use the roots for format reporting.
-	absArgs := make([]string, len(args))
-
-	for i, arg := range args {
-		if filepath.IsAbs(arg) {
-			absArgs[i] = arg
-
-			continue
-		}
-
-		absArgs[i], err = filepath.Abs(arg)
-		if err != nil {
-			return fmt.Errorf("failed to get absolute path for %s: %w", arg, err)
-		}
-	}
-
 	filtered, err := config.FilterIgnoredPaths(args, ignore, true, "")
 	if err != nil {
 		return fmt.Errorf("failed to filter ignored paths: %w", err)
@@ -308,7 +291,24 @@ func fix(args []string, params *fixCommandParams) error {
 	// TODO: Figure out why filtered returns duplicates in the first place
 	filtered = slices.Compact(filtered)
 
-	fileProvider, err := fileprovider.NewInMemoryFileProviderFromFS(filtered...)
+	// convert the filtered paths to absolute paths before fixing to
+	// support accurate root matching.
+	absFiltered := make([]string, len(filtered))
+
+	for i, f := range filtered {
+		if filepath.IsAbs(f) {
+			absFiltered[i] = f
+
+			continue
+		}
+
+		absFiltered[i], err = filepath.Abs(f)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for %s: %w", f, err)
+		}
+	}
+
+	fileProvider, err := fileprovider.NewInMemoryFileProviderFromFS(absFiltered...)
 	if err != nil {
 		return fmt.Errorf("failed to create file provider: %w", err)
 	}
@@ -390,9 +390,16 @@ please run fix from a clean state to support the use of git checkout for undo`,
 				return fmt.Errorf("failed to delete file %s: %w", file, err)
 			}
 
-			err = util.DeleteEmptyDirs(filepath.Dir(file))
+			dirs, err := util.DirCleanUpPaths(file, roots)
 			if err != nil {
 				return fmt.Errorf("failed to delete empty directories: %w", err)
+			}
+
+			for _, dir := range dirs {
+				err := os.Remove(dir)
+				if err != nil {
+					return fmt.Errorf("failed to delete directory %s: %w", dir, err)
+				}
 			}
 		}
 

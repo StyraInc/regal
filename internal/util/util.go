@@ -238,8 +238,6 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 
 		dirs = append(dirs, dir)
 
-		fmt.Fprintln(os.Stderr, "added", dir)
-
 		dir = filepath.Dir(dir)
 	}
 

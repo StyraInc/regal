@@ -53,7 +53,7 @@ allow := true
 }
 
 test_success_attached_metadata if {
-	r := rule.report with input as ast.policy(`
+	r := rule.report with input as ast.with_rego_v1(`
 # METADATA
 # title: valid
 allow := true
@@ -62,9 +62,7 @@ allow := true
 }
 
 test_success_detached_document_scope_ok if {
-	r := rule.report with input as regal.parse_module("p.rego", `
-package p
-
+	r := rule.report with input as ast.with_rego_v1(`
 # METADATA
 # scope: document
 # description: allow allows
@@ -72,6 +70,15 @@ package p
 # METADATA
 # title: allow
 allow := true
+`)
+	r == set()
+}
+
+test_success_not_detached_by_comment_in_different_column if {
+	r := rule.report with input as ast.with_rego_v1(`
+# METADATA
+# title: allow
+allow := true # not in block
 `)
 	r == set()
 }

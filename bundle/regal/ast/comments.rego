@@ -56,21 +56,37 @@ ignore_directives[row] := rules if {
 # METADATA
 # description: |
 #   returns an array of partitions, i.e. arrays containing all comments
-#   grouped by their "blocks".
-comment_blocks(comments) := [partition |
-	rows := [row |
-		some comment in comments
-		row := util.to_location_object(comment.location).row
-	]
-	breaks := _splits(rows)
+#   grouped by their "blocks". only comments on the same column as the
+#   one before is considered to be part of a block.
+comment_blocks(comments) := blocks if {
+	row_partitions := [partition |
+		rows := [row |
+			some comment in comments
+			row := util.to_location_object(comment.location).row
+		]
+		breaks := _splits(rows)
 
-	some j, k in breaks
-	partition := array.slice(
-		comments,
-		breaks[j - 1] + 1,
-		k + 1,
-	)
-]
+		some j, k in breaks
+		partition := array.slice(
+			comments,
+			breaks[j - 1] + 1,
+			k + 1,
+		)
+	]
+
+	blocks := [block |
+		some row_partition in row_partitions
+		some block in {col: partition |
+			some comment in row_partition
+			col := util.to_location_object(comment.location).col
+
+			partition := [c |
+				some c in row_partition
+				util.to_location_object(c.location).col == col
+			]
+		}
+	]
+}
 
 _splits(xs) := array.concat(
 	array.concat(

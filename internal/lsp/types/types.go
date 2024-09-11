@@ -137,12 +137,12 @@ type CompletionItem struct {
 	Label        string                      `json:"label"`
 	LabelDetails *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
 	// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
-	Kind            completion.ItemKind `json:"kind"`
-	Detail          string              `json:"detail"`
-	Documentation   *MarkupContent      `json:"documentation,omitempty"`
-	Preselect       bool                `json:"preselect"`
-	TextEdit        *TextEdit           `json:"textEdit,omitempty"`
-	InserTextFormat *uint               `json:"insertTextFormat,omitempty"`
+	Kind             completion.ItemKind `json:"kind"`
+	Detail           string              `json:"detail"`
+	Documentation    *MarkupContent      `json:"documentation,omitempty"`
+	Preselect        bool                `json:"preselect"`
+	TextEdit         *TextEdit           `json:"textEdit,omitempty"`
+	InsertTextFormat *uint               `json:"insertTextFormat,omitempty"`
 
 	// Mandatory is used to indicate that the completion item is mandatory and should be offered
 	// as an exclusive completion. This is not part of the LSP spec, but used in regal providers

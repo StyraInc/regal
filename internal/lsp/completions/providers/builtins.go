@@ -1,8 +1,10 @@
 package providers
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/rego"
@@ -56,6 +58,8 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 			continue
 		}
 
+		insertTextFormat := uint(2) // snippet
+
 		items = append(items, types.CompletionItem{
 			Label:  key,
 			Kind:   completion.Function,
@@ -64,6 +68,7 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 				Kind:  "markdown",
 				Value: hover.CreateHoverContent(builtIn),
 			},
+			InsertTextFormat: &insertTextFormat,
 			TextEdit: &types.TextEdit{
 				Range: types.Range{
 					Start: types.Position{
@@ -75,10 +80,34 @@ func (*BuiltIns) Run(c *cache.Cache, params types.CompletionParams, _ *Options) 
 						Character: params.Position.Character,
 					},
 				},
-				NewText: key,
+				NewText: newTextForBuiltIn(builtIn),
 			},
 		})
 	}
 
 	return items, nil
+}
+
+func newTextForBuiltIn(bi *ast.Builtin) string {
+	args := make([]string, len(bi.Decl.Args()))
+
+	for i, arg := range bi.Decl.NamedFuncArgs().Args {
+		args[i] = strings.Split(arg.String(), ":")[0]
+	}
+
+	if len(args) == 0 {
+		return bi.Name + "($0)"
+	}
+
+	argString := ""
+
+	for i, arg := range args {
+		if i > 0 {
+			argString += ", "
+		}
+
+		argString += fmt.Sprintf("${%d:%s}", i+1, arg)
+	}
+
+	return fmt.Sprintf("%s(%s)", bi.Name, argString)
 }

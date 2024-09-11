@@ -6,8 +6,49 @@ import (
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
+
+func TestNewTextForBuiltIn(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		BuiltIn string
+		Output  string
+	}{
+		"print": {
+			BuiltIn: "print",
+			Output:  "print($0)",
+		},
+		"strings.count": {
+			BuiltIn: "strings.count",
+			Output:  "strings.count(${1:search}, ${2:substring})",
+		},
+		"json.patch": {
+			BuiltIn: "json.patch",
+			Output:  "json.patch(${1:object}, ${2:patches)",
+		},
+	}
+
+	bis := rego.GetBuiltins()
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			bi, ok := bis[tc.BuiltIn]
+			if !ok {
+				t.Fatalf("BuiltIn %s not found", tc.BuiltIn)
+			}
+
+			output := newTextForBuiltIn(bi)
+			if output != tc.Output {
+				t.Fatalf("Expected\n%s\ngot\n%s", tc.Output, output)
+			}
+		})
+	}
+}
 
 func TestBuiltIns_if(t *testing.T) {
 	t.Parallel()

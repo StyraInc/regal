@@ -19,7 +19,7 @@ func TestGetInlayHintsAstCall(t *testing.T) {
 	inlayHints := getInlayHints(module)
 
 	if len(inlayHints) != 2 {
-		t.Errorf("Expected 2 inlay hints, got %d", len(inlayHints))
+		t.Fatalf("Expected 2 inlay hints, got %d", len(inlayHints))
 	}
 
 	if inlayHints[0].Label != "object:" {

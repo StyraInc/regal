@@ -119,9 +119,8 @@ type LanguageServer struct {
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.
 type fileUpdateEvent struct {
-	Reason  string
-	URI     string
-	Content string
+	Reason string
+	URI    string
 }
 
 func (l *LanguageServer) Handle(
@@ -216,9 +215,11 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
-			err := l.processTextContentUpdate(ctx, evt.URI, evt.Content)
+			// updateParse will not return an error when the parsing failed,
+			// but only when it was impossible
+			_, err := updateParse(ctx, l.cache, l.regoStore, evt.URI)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to process text content update: %w", err))
+				l.logError(fmt.Errorf("failed to update module for %s: %w", evt.URI, err))
 
 				continue
 			}
@@ -227,11 +228,15 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
+
+				continue
 			}
 
 			err = l.sendFileDiagnostics(ctx, evt.URI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+
+				continue
 			}
 
 			// if the file has agg diagnostics, we trigger a run for the workspace as by changing this file,
@@ -264,9 +269,42 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.builtinsPositionFile:
-			err := l.processHoverContentUpdate(ctx, evt.URI, evt.Content)
+			fileURI := evt.URI
+
+			if l.ignoreURI(fileURI) {
+				continue
+			}
+
+			if _, ok := l.cache.GetFileContents(fileURI); !ok {
+				// If the file is not in the cache, exit early or else
+				// we might accidentally put it in the cache after it's been
+				// deleted: https://github.com/StyraInc/regal/issues/679
+				continue
+			}
+
+			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to process builtin and keyword positions update: %w", err))
+				l.logError(fmt.Errorf("failed to update parse: %w", err))
+
+				continue
+			}
+
+			if !success {
+				continue
+			}
+
+			err = hover.UpdateBuiltinPositions(l.cache, fileURI)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to update builtin positions: %w", err))
+
+				continue
+			}
+
+			err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to update keyword positions: %w", err))
+
+				continue
 			}
 		}
 	}
@@ -817,9 +855,8 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 
 			// finally, trigger a diagnostics run for the new file
 			updateEvent := fileUpdateEvent{
-				Reason:  "internal/templateNewFile",
-				URI:     fileURI,
-				Content: newContents,
+				Reason: "internal/templateNewFile",
+				URI:    fileURI,
 			}
 
 			l.diagnosticRequestFile <- updateEvent
@@ -1018,33 +1055,6 @@ func (l *LanguageServer) fixRenameParams(
 		Label: label,
 		Edit:  renameEdit,
 	}, nil
-}
-
-// processTextContentUpdate updates the cache with the new content for the file at the given URI, attempts to parse the
-// file, and returns whether the parse was successful. If it was not successful, the parse errors will be sent
-// on the diagnostic channel.
-func (l *LanguageServer) processTextContentUpdate(
-	ctx context.Context,
-	fileURI string,
-	content string,
-) error {
-	if l.ignoreURI(fileURI) {
-		return nil
-	}
-
-	currentContent, ok := l.cache.GetFileContents(fileURI)
-	if ok && currentContent == content {
-		return nil
-	}
-
-	l.cache.SetFileContents(fileURI, content)
-
-	_, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
-	if err != nil {
-		return fmt.Errorf("failed to update parse: %w", err)
-	}
-
-	return nil
 }
 
 // processHoverContentUpdate updates information about built in, and keyword
@@ -1642,10 +1652,11 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 		return struct{}{}, nil
 	}
 
+	l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
+
 	evt := fileUpdateEvent{
-		Reason:  "textDocument/didOpen",
-		URI:     params.TextDocument.URI,
-		Content: params.TextDocument.Text,
+		Reason: "textDocument/didOpen",
+		URI:    params.TextDocument.URI,
 	}
 
 	l.diagnosticRequestFile <- evt
@@ -1699,10 +1710,15 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 		return struct{}{}, nil
 	}
 
+	if len(params.ContentChanges) < 1 {
+		return struct{}{}, nil
+	}
+
+	l.cache.SetFileContents(params.TextDocument.URI, params.ContentChanges[0].Text)
+
 	evt := fileUpdateEvent{
-		Reason:  "textDocument/didChange",
-		URI:     params.TextDocument.URI,
-		Content: params.ContentChanges[0].Text,
+		Reason: "textDocument/didChange",
+		URI:    params.TextDocument.URI,
 	}
 
 	l.diagnosticRequestFile <- evt
@@ -1844,10 +1860,11 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		l.cache.ClearFileDiagnostics()
 
+		l.cache.SetFileContents(params.TextDocument.URI, newContent)
+
 		updateEvent := fileUpdateEvent{
-			Reason:  "internal/templateFormattingFallback",
-			URI:     params.TextDocument.URI,
-			Content: newContent,
+			Reason: "internal/templateFormattingFallback",
+			URI:    params.TextDocument.URI,
 		}
 
 		l.diagnosticRequestFile <- updateEvent
@@ -2056,9 +2073,8 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		l.cache.SetFileContents(renameOp.NewURI, content)
 
 		evt := fileUpdateEvent{
-			Reason:  "textDocument/didRename",
-			URI:     renameOp.NewURI,
-			Content: content,
+			Reason: "textDocument/didRename",
+			URI:    renameOp.NewURI,
 		}
 
 		l.diagnosticRequestFile <- evt
@@ -2238,7 +2254,18 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 		}
 
 		// if the caller has requested only new files, then we can exit early
-		if _, ok := l.cache.GetFileContents(fileURI); newOnly && ok {
+		if contents, ok := l.cache.GetFileContents(fileURI); newOnly && ok {
+			diskContents, err := os.ReadFile(fileURI)
+			if err != nil {
+				// then there is nothing we can do here
+				return nil
+			}
+
+			if string(diskContents) == "" && contents == "" {
+				// then there is nothing to be gained from loading from disk
+				return nil
+			}
+
 			return nil
 		}
 

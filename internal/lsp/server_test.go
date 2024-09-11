@@ -131,8 +131,7 @@ rules:
 		return struct{}{}, nil
 	}
 
-	connServer, connClient, cleanup := createConnections(ctx, ls.Handle, clientHandler)
-	defer cleanup()
+	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
 
 	ls.SetConn(connServer)
 
@@ -581,8 +580,7 @@ ignore:
 		return struct{}{}, nil
 	}
 
-	connServer, connClient, cleanup := createConnections(ctx, ls.Handle, clientHandler)
-	defer cleanup()
+	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
 
 	ls.SetConn(connServer)
 
@@ -752,8 +750,7 @@ func TestFormatting(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	connServer, connClient, cleanup := createConnections(ctx, ls.Handle, clientHandler)
-	defer cleanup()
+	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
 
 	ls.SetConn(connServer)
 
@@ -897,8 +894,7 @@ allow := true
 		return struct{}{}, nil
 	}
 
-	connServer, connClient, cleanup := createConnections(ctx, ls.Handle, clientHandler)
-	defer cleanup()
+	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
 
 	ls.SetConn(connServer)
 
@@ -1072,7 +1068,7 @@ func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileU
 func createConnections(
 	ctx context.Context,
 	serverHandler, clientHandler func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error),
-) (*jsonrpc2.Conn, *jsonrpc2.Conn, func()) {
+) (*jsonrpc2.Conn, *jsonrpc2.Conn) {
 	netConnServer, netConnClient := net.Pipe()
 
 	connServer := jsonrpc2.NewConn(
@@ -1087,14 +1083,15 @@ func createConnections(
 		jsonrpc2.HandlerWithError(clientHandler),
 	)
 
-	cleanup := func() {
-		_ = netConnServer.Close()
+	go func() {
+		<-ctx.Done()
+		// we need only close the pipe connections as the jsonrpc2.Conn accept
+		// the ctx
 		_ = netConnClient.Close()
-		_ = connServer.Close()
-		_ = connClient.Close()
-	}
+		_ = netConnServer.Close()
+	}()
 
-	return connServer, connClient, cleanup
+	return connServer, connClient
 }
 
 // NewTestLogger returns an io.Writer that logs to the given testing.T.

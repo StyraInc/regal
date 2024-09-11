@@ -47,10 +47,9 @@ test_find_vars if {
 
 	vars := ast.find_vars(module.rules)
 
-	names := {name |
+	names := {var.value |
 		some var in vars
 		var.type == "var"
-		name := var.value
 	}
 
 	names == {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"}
@@ -73,10 +72,9 @@ test_find_vars_comprehension_lhs if {
 
 	vars := ast.find_vars(module.rules)
 
-	names := {name |
+	names := {var.value |
 		some var in vars
 		var.type == "var"
-		name := var.value
 	}
 
 	names == {"a", "b", "c", "d", "e", "f", "g"}

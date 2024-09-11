@@ -108,10 +108,7 @@ var_to_ref(terms) := [terms] if terms.type == "var"
 
 var_to_ref(terms) := terms.value if terms.type == "ref"
 
-to_string(ref) := concat(".", [path |
-	some part in ref
-	path := part.value
-])
+to_string(ref) := concat(".", [part.value | some part in ref])
 
 resolve(ref, _, _) := to_string(ref) if ref[0].value == "data"
 

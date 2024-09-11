@@ -56,19 +56,17 @@ is_array_conversion(value) if {
 
 	count(body) == 1
 
-	body[0].terms[0].type == "ref"
-	body[0].terms[0].value[0].type == "var"
-	body[0].terms[0].value[0].value == "assign"
+	[lhs, rhs] := ast.assignment_terms(body[0])
 
 	# Assignment to comprehension variable
-	body[0].terms[1].type == "var"
-	body[0].terms[1].value == var
+	lhs.type == "var"
+	lhs.value == var
 
 	# On the right hand side a ref with at least one wildcard
-	body[0].terms[2].type == "ref"
-	body[0].terms[2].value[0].type == "var"
+	rhs.type == "ref"
+	rhs.value[0].type == "var"
 
-	some ref_val in body[0].terms[2].value
+	some ref_val in rhs.value
 
 	ref_val.type == "var"
 	startswith(ref_val.value, "$")

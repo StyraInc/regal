@@ -296,3 +296,9 @@ is_chained_rule_body(rule, lines) if {
 
 	startswith(col_text, "{")
 }
+
+assignment_terms(expr) := [expr.terms[1], expr.terms[2]] if {
+	expr.terms[0].type == "ref"
+	expr.terms[0].value[0].type == "var"
+	expr.terms[0].value[0].value == "assign"
+}

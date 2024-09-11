@@ -24,10 +24,9 @@ report contains violation if {
 	)
 }
 
-_block_to_string(block) := concat("\n", [line |
+_block_to_string(block) := concat("\n", [entry.text |
 	some i, entry in block
 	i > 0
-	line := entry.text
 ])
 
 _find_line(block, attribute) := [line |

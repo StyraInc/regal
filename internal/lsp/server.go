@@ -225,7 +225,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 
 			// lint the file and send the diagnostics
-			err = updateFileDiagnostics(ctx, l.cache, l.loadedConfig, evt.URI, l.workspaceRootURI)
+			err = updateFileDiagnostics(ctx, l.cache, l.getLoadedConfig(), evt.URI, l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
 
@@ -247,7 +247,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 		case <-l.diagnosticRequestWorkspace:
 			// results will be sent in response to the next workspace/diagnostics request
-			err := updateAllDiagnostics(ctx, l.cache, l.loadedConfig, l.workspaceRootURI)
+			err := updateAllDiagnostics(ctx, l.cache, l.getLoadedConfig(), l.workspaceRootURI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update aggregate diagnostics (trigger): %w", err))
 			}
@@ -310,6 +310,13 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 	}
 }
 
+func (l *LanguageServer) getLoadedConfig() *config.Config {
+	l.loadedConfigLock.Lock()
+	defer l.loadedConfigLock.Unlock()
+
+	return l.loadedConfig
+}
+
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 	err := l.configWatcher.Start(ctx)
 	if err != nil {
@@ -366,7 +373,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			// Capabilities URL may have changed, so we should
 			// reload it.
-			capsURL := l.loadedConfig.CapabilitiesURL
+			capsURL := l.getLoadedConfig().CapabilitiesURL
 
 			if capsURL == "" {
 				// This can happen if we have an empty config.
@@ -430,7 +437,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			//nolint:contextcheck
 			go func() {
-				if l.loadedConfig.Features.Remote.CheckVersion &&
+				if l.getLoadedConfig().Features.Remote.CheckVersion &&
 					os.Getenv(update.CheckVersionDisableEnvVar) != "" {
 					update.CheckAndWarn(update.Options{
 						CurrentVersion: version.Version,
@@ -1020,7 +1027,7 @@ func (l *LanguageServer) fixRenameParams(
 			Contents: []byte(contents),
 		},
 		&fixes.RuntimeOptions{
-			Config:  l.loadedConfig,
+			Config:  l.getLoadedConfig(),
 			BaseDir: baseDir,
 		},
 	)
@@ -1737,12 +1744,14 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	if params.Text != nil && l.loadedConfig != nil {
+	if params.Text != nil && l.getLoadedConfig() == nil {
 		if !strings.Contains(*params.Text, "\r\n") {
 			return struct{}{}, nil
 		}
 
-		enabled, err := linter.NewLinter().WithUserConfig(*l.loadedConfig).DetermineEnabledRules(ctx)
+		cfg := l.getLoadedConfig()
+
+		enabled, err := linter.NewLinter().WithUserConfig(*cfg).DetermineEnabledRules(ctx)
 		if err != nil {
 			l.logError(fmt.Errorf("failed to determine enabled rules: %w", err))
 
@@ -1946,8 +1955,8 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		li := linter.NewLinter().
 			WithInputModules(&input)
 
-		if l.loadedConfig != nil {
-			li = li.WithUserConfig(*l.loadedConfig)
+		if cfg := l.getLoadedConfig(); cfg != nil {
+			li = li.WithUserConfig(*cfg)
 		}
 
 		fixReport, err := f.Fix(ctx, &li, memfp)
@@ -2377,8 +2386,8 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string
 func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	ignore := make([]string, 0)
 
-	if l.loadedConfig != nil && l.loadedConfig.Ignore.Files != nil {
-		ignore = l.loadedConfig.Ignore.Files
+	if cfg := l.getLoadedConfig(); cfg != nil && cfg.Ignore.Files != nil {
+		ignore = cfg.Ignore.Files
 	}
 
 	allModules := l.cache.GetAllModules()
@@ -2398,13 +2407,14 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 }
 
 func (l *LanguageServer) ignoreURI(fileURI string) bool {
-	if l.loadedConfig == nil {
+	cfg := l.getLoadedConfig()
+	if cfg == nil {
 		return false
 	}
 
 	paths, err := config.FilterIgnoredPaths(
 		[]string{uri.ToPath(l.clientIdentifier, fileURI)},
-		l.loadedConfig.Ignore.Files,
+		cfg.Ignore.Files,
 		false,
 		l.workspacePath(),
 	)

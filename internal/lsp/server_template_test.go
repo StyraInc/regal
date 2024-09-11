@@ -210,7 +210,7 @@ func TestNewFileTemplating(t *testing.T) {
 		for {
 			time.Sleep(100 * time.Millisecond)
 
-			if ls.loadedConfig != nil {
+			if ls.getLoadedConfig() != nil {
 				break
 			}
 		}

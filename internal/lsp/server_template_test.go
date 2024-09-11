@@ -176,8 +176,7 @@ func TestNewFileTemplating(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	connServer, connClient, cleanup := createConnections(ctx, ls.Handle, clientHandler)
-	defer cleanup()
+	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
 
 	ls.SetConn(connServer)
 
@@ -210,7 +209,7 @@ func TestNewFileTemplating(t *testing.T) {
 		for {
 			time.Sleep(100 * time.Millisecond)
 
-			if ls.loadedConfig != nil {
+			if ls.getLoadedConfig() != nil {
 				break
 			}
 		}

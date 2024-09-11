@@ -56,6 +56,8 @@ jobs:
           path: ~/go/bin/rq
           key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
       - run: build/do.rq pull_request
+      - run: go test -race ./...
+        if: matrix.os.name == 'linux'
       - uses: golangci/golangci-lint-action@aaa42aa0628b4ae2578232a66b541047968fac86 # v6.1.0
         if: matrix.os.name == 'linux'
         with:

@@ -29,7 +29,7 @@ foo: bar
 	defer cancel()
 
 	go func() {
-		err = watcher.Start(ctx)
+		err := watcher.Start(ctx)
 		if err != nil {
 			t.Errorf("failed to start watcher: %v", err)
 		}

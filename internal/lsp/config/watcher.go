@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -15,7 +16,8 @@ type Watcher struct {
 	path        string
 	pathUpdates chan string
 
-	fsWatcher *fsnotify.Watcher
+	fsWatcher     *fsnotify.Watcher
+	fsWatcherLock sync.Mutex
 
 	errorWriter io.Writer
 }
@@ -46,7 +48,10 @@ func (w *Watcher) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to stop existing watcher: %w", err)
 	}
 
+	w.fsWatcherLock.Lock()
 	w.fsWatcher, err = fsnotify.NewWatcher()
+	w.fsWatcherLock.Unlock()
+
 	if err != nil {
 		return fmt.Errorf("failed to create fsnotify watcher: %w", err)
 	}
@@ -124,6 +129,9 @@ func (w *Watcher) Stop() error {
 }
 
 func (w *Watcher) IsWatching() bool {
+	w.fsWatcherLock.Lock()
+	defer w.fsWatcherLock.Unlock()
+
 	if w.fsWatcher == nil {
 		return false
 	}

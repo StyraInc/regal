@@ -43,6 +43,7 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/internal/web"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
@@ -81,6 +82,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		templateFile:               make(chan fileUpdateEvent, 10),
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
 		completionsManager:         completions.NewDefaultManager(c, store),
+		webServer:                  web.NewServer(c),
 	}
 
 	return ls
@@ -111,6 +113,8 @@ type LanguageServer struct {
 	builtinsPositionFile       chan fileUpdateEvent
 	commandRequest             chan types.ExecuteCommandParams
 	templateFile               chan fileUpdateEvent
+
+	webServer *web.Server
 }
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.
@@ -823,6 +827,10 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 	}
 }
 
+func (l *LanguageServer) StartWebServer(ctx context.Context) {
+	l.webServer.Start(ctx)
+}
+
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
@@ -1223,6 +1231,23 @@ func (l *LanguageServer) handleTextDocumentCodeAction(
 
 	if l.ignoreURI(params.TextDocument.URI) {
 		return actions, nil
+	}
+
+	// only VS Code has the capability to open a provided URL, as far as we know
+	// if we learn about others with this capability later, we should add them!
+	if l.clientIdentifier == clients.IdentifierVSCode {
+		explorerURL := l.webServer.GetBaseURL() + "/explorer" +
+			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI)
+
+		actions = append(actions, types.CodeAction{
+			Title: "Explore compiler stages for this policy",
+			Kind:  "source.explore",
+			Command: types.Command{
+				Title:     "Explore compiler stages for this policy",
+				Command:   "vscode.open",
+				Arguments: &[]any{explorerURL},
+			},
+		})
 	}
 
 	for _, diag := range params.Context.Diagnostics {
@@ -2094,6 +2119,8 @@ func (l *LanguageServer) handleInitialize(
 		)
 	}
 
+	l.webServer.SetClient(l.clientIdentifier)
+
 	if params.InitializationOptions != nil {
 		l.clientInitializationOptions = *params.InitializationOptions
 	}
@@ -2137,7 +2164,10 @@ func (l *LanguageServer) handleInitialize(
 			},
 			HoverProvider: true,
 			CodeActionProvider: types.CodeActionOptions{
-				CodeActionKinds: []string{"quickfix"},
+				CodeActionKinds: []string{
+					"quickfix",
+					"source.explore",
+				},
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
@@ -2181,6 +2211,8 @@ func (l *LanguageServer) handleInitialize(
 		if err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
+
+		l.webServer.SetWorkspaceURI(l.workspaceRootURI)
 
 		l.diagnosticRequestWorkspace <- "server initialize"
 	}

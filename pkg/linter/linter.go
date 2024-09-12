@@ -363,19 +363,21 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 		enabledRules = append(enabledRules, rule.Name())
 	}
 
-	query := ast.MustParseBody(`[rule|
-data.regal.rules[cat][rule]
-data.regal.config.for_rule(cat, rule).level != "ignore"
-]`)
+	queryStr := `[rule |
+	data.regal.rules[cat][rule]
+	data.regal.config.for_rule(cat, rule).level != "ignore"
+]`
+
+	query := ast.MustParseBody(queryStr)
 
 	regoArgs, err := l.prepareRegoArgs(query)
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query: %w", err)
+		return nil, fmt.Errorf("failed preparing query %s: %w", queryStr, err)
 	}
 
 	rs, err := rego.New(regoArgs...).Eval(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query: %w", err)
+		return nil, fmt.Errorf("failed evaluating query %s: %w", queryStr, err)
 	}
 
 	if len(rs) != 1 || len(rs[0].Expressions) != 1 {

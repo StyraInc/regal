@@ -277,3 +277,54 @@ test_function_calls if {
 test_implicit_boolean_assignment if {
 	ast.implicit_boolean_assignment(ast.with_rego_v1(`a.b if true`).rules[0])
 }
+
+test_ref_to_string if {
+	ast.ref_to_string([{"type": "var", "value": "data"}]) == `data`
+	ast.ref_to_string([{"type": "var", "value": "foo"}, {"type": "var", "value": "bar"}]) == `foo[bar]`
+	ast.ref_to_string([{"type": "var", "value": "data"}, {"type": "string", "value": "/foo/"}]) == `data["/foo/"]`
+	ast.ref_to_string([
+		{"type": "var", "value": "foo"},
+		{"type": "var", "value": "bar"},
+		{"type": "var", "value": "baz"},
+	]) == `foo[bar][baz]`
+	ast.ref_to_string([
+		{"type": "var", "value": "foo"},
+		{"type": "var", "value": "bar"},
+		{"type": "var", "value": "baz"},
+		{"type": "string", "value": "qux"},
+	]) == `foo[bar][baz].qux`
+	ast.ref_to_string([
+		{"type": "var", "value": "foo"},
+		{"type": "string", "value": "~bar~"},
+		{"type": "string", "value": "boo"},
+		{"type": "var", "value": "baz"},
+	]) == `foo["~bar~"].boo[baz]`
+	ast.ref_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "string", "value": "lsp"},
+		{"type": "string", "value": "completion_test"},
+	]) == `data.regal.lsp.completion_test`
+}
+
+test_ref_static_to_string if {
+	ast.ref_static_to_string([{"type": "var", "value": "data"}]) == `data`
+	ast.ref_static_to_string([{"type": "var", "value": "foo"}, {"type": "var", "value": "bar"}]) == `foo`
+	ast.ref_static_to_string([{"type": "var", "value": "data"}, {"type": "string", "value": "/foo/"}]) == `data["/foo/"]`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "foo"},
+		{"type": "string", "value": "bar"},
+		{"type": "var", "value": "baz"},
+	]) == `foo.bar`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "foo"},
+		{"type": "string", "value": "~bar~"},
+		{"type": "string", "value": "qux"},
+	]) == `foo["~bar~"].qux`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "string", "value": "lsp"},
+		{"type": "string", "value": "completion_test"},
+	]) == `data.regal.lsp.completion_test`
+}

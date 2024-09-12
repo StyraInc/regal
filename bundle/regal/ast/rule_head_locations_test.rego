@@ -23,7 +23,6 @@ ref_rule[foo] := true if {
 	some foo in [1,2,3]
 }
 `
-
 	result := ast.rule_head_locations with input as regal.parse_module("p.rego", policy)
 
 	result == {

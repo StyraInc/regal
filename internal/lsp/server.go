@@ -575,7 +575,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				responseParams := map[string]any{
 					"type":        "opa-debug",
-					"name":        "Debug " + path,
+					"name":        path,
 					"request":     "launch",
 					"command":     "eval",
 					"query":       path,

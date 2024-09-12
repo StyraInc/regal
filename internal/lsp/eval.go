@@ -63,7 +63,7 @@ func (l *LanguageServer) Eval(
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query: %w", err)
+		return nil, fmt.Errorf("failed preparing query %s: %w", query, err)
 	}
 
 	if input != nil {
@@ -88,9 +88,9 @@ func (l *LanguageServer) Eval(
 }
 
 type EvalPathResult struct {
-	Value       any              `json:"value"`
-	IsUndefined bool             `json:"isUndefined"`
-	PrintOutput map[int][]string `json:"printOutput"`
+	Value       any                         `json:"value"`
+	IsUndefined bool                        `json:"isUndefined"`
+	PrintOutput map[string]map[int][]string `json:"printOutput"`
 }
 
 func (l *LanguageServer) EvalWorkspacePath(
@@ -100,7 +100,7 @@ func (l *LanguageServer) EvalWorkspacePath(
 ) (EvalPathResult, error) {
 	resultQuery := "result := " + query
 
-	hook := PrintHook{Output: make(map[int][]string)}
+	hook := PrintHook{Output: make(map[string]map[int][]string)}
 
 	var bs map[string]bundle.Bundle
 	if l.bundleCache != nil {
@@ -142,11 +142,15 @@ func prepareRegoArgs(query ast.Body, bundles map[string]bundle.Bundle, printHook
 }
 
 type PrintHook struct {
-	Output map[int][]string
+	Output map[string]map[int][]string
 }
 
 func (h PrintHook) Print(ctx print.Context, msg string) error {
-	h.Output[ctx.Location.Row] = append(h.Output[ctx.Location.Row], msg)
+	if _, ok := h.Output[ctx.Location.File]; !ok {
+		h.Output[ctx.Location.File] = make(map[int][]string)
+	}
+
+	h.Output[ctx.Location.File][ctx.Location.Row] = append(h.Output[ctx.Location.File][ctx.Location.Row], msg)
 
 	return nil
 }

@@ -544,6 +544,52 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				// handle this ourselves as it's a rename and not a content edit
 				fixed = false
+			case "regal.debug":
+				if l.clientIdentifier != clients.IdentifierVSCode {
+					l.logError(errors.New("regal.debug command is only supported in VSCode"))
+
+					break
+				}
+
+				if len(params.Arguments) != 3 {
+					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
+
+					break
+				}
+
+				file, ok := params.Arguments[0].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+
+					break
+				}
+
+				path, ok := params.Arguments[1].(string)
+				if !ok {
+					l.logError(fmt.Errorf("expected second argument to be a string, got %T", params.Arguments[1]))
+
+					break
+				}
+
+				inputPath, _ := rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
+
+				responseParams := map[string]any{
+					"type":        "opa-debug",
+					"name":        "Debug " + path,
+					"request":     "launch",
+					"command":     "eval",
+					"query":       path,
+					"enablePrint": true,
+					"stopOnEntry": true,
+					"inputPath":   inputPath,
+				}
+
+				responseResult := map[string]any{}
+
+				err = l.conn.Call(ctx, "regal/startDebugging", responseParams, &responseResult)
+				if err != nil {
+					l.logError(fmt.Errorf("regal/startDebugging failed: %v", err.Error()))
+				}
 			case "regal.eval":
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
@@ -1347,7 +1393,6 @@ func (l *LanguageServer) handleWorkspaceExecuteCommand(
 	req *jsonrpc2.Request,
 ) (result any, err error) {
 	var params types.ExecuteCommandParams
-
 	if err := encoding.JSON().Unmarshal(*req.Params, &params); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
@@ -1403,7 +1448,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 }
 
 func (l *LanguageServer) handleTextDocumentCodeLens(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
@@ -1414,68 +1459,15 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		// return a null response, as per the spec
-		return nil, nil
+		return nil, nil // return a null response, as per the spec
 	}
 
-	codeLenses := make([]types.CodeLens, 0)
-
-	// Package
-
-	pkgLens := types.CodeLens{
-		Range: locationToRange(module.Package.Location),
-		Command: &types.Command{
-			Title:   "Evaluate",
-			Command: "regal.eval",
-			Arguments: &[]any{
-				module.Package.Location.File,
-				module.Package.Path.String(),
-				module.Package.Location.Row,
-			},
-		},
+	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return nil, nil // return a null response, as per the spec
 	}
 
-	codeLenses = append(codeLenses, pkgLens)
-
-	// Rules
-
-	for _, rule := range module.Rules {
-		if rule.Head.Args != nil {
-			// Skip functions for now, as it's not clear how to best
-			// provide inputs for them.
-			continue
-		}
-
-		ruleLens := types.CodeLens{
-			Range: locationToRange(rule.Location),
-			Command: &types.Command{
-				Title:   "Evaluate",
-				Command: "regal.eval",
-				Arguments: &[]any{
-					module.Package.Location.File,
-					module.Package.Path.String() + "." + getRuleName(rule),
-					rule.Head.Location.Row,
-				},
-			},
-		}
-
-		codeLenses = append(codeLenses, ruleLens)
-	}
-
-	return codeLenses, nil
-}
-
-func getRuleName(rule *ast.Rule) string {
-	result := rule.Head.Ref().String()
-
-	// only evaluate the top level rule name if there are refs
-	// e.g. my[foo].bar -> my
-	//      bar.bar.bar -> bar.bar.bar
-	if i := strings.Index(result, "["); i > 0 {
-		return result[:i]
-	}
-
-	return result
+	return rego.CodeLenses(ctx, params.TextDocument.URI, contents, module) //nolint:wrapcheck
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(
@@ -2196,6 +2188,7 @@ func (l *LanguageServer) handleInitialize(
 			},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
+					"regal.debug",
 					"regal.eval",
 					"regal.fix.opa-fmt",
 					"regal.fix.use-rego-v1",

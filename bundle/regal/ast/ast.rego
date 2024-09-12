@@ -35,6 +35,8 @@ is_constant(value) if {
 	not has_term_var(value.value)
 }
 
+default builtin_names := set()
+
 builtin_names := object.keys(config.capabilities.builtins)
 
 builtin_namespaces contains namespace if {
@@ -183,16 +185,18 @@ _exclude_arg("assign", 0, _)
 
 # METADATA
 # description: returns the "path" string of any given ref value
-ref_to_string(ref) := concat(".", [_ref_part_to_string(i, part) | some i, part in ref])
+ref_to_string(ref) := concat("", [_ref_part_to_string(i, part) | some i, part in ref])
 
-_ref_part_to_string(0, ref) := ref.value
+_ref_part_to_string(0, part) := part.value
 
-_ref_part_to_string(_, ref) := ref.value if ref.type == "string"
+_ref_part_to_string(i, part) := _format_part(part) if i > 0
 
-_ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
-	ref.type != "string"
-	i > 0
-}
+_format_part(part) := sprintf(".%s", [part.value]) if {
+	part.type == "string"
+	regex.match(`^[a-zA-Z_][a-zA-Z1-9_]*$`, part.value)
+} else := sprintf(`["%v"]`, [part.value]) if {
+	part.type == "string"
+} else := sprintf(`[%v]`, [part.value])
 
 # METADATA
 # description: |
@@ -200,10 +204,14 @@ _ref_part_to_string(i, ref) := concat("", ["$", ref.value]) if {
 #   non-static (i.e. variable) value, if any:
 #   foo.bar -> foo.bar
 #   foo.bar[baz] -> foo.bar
-ref_static_to_string(ref) := ss if {
+ref_static_to_string(ref) := str if {
 	rs := ref_to_string(ref)
-	ss := substring(rs, 0, indexof(rs, ".$"))
+	str := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1))
 }
+
+_trim_from_var(ref_str, vars) := ref_str if {
+	count(vars) == 0
+} else := substring(ref_str, 0, indexof(ref_str, vars[0]))
 
 static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"

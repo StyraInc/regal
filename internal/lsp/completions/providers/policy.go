@@ -131,7 +131,7 @@ func prepareQuery(store storage.Store, query string) (*rego.PreparedEvalQuery, e
 	// and how to present it if enabled.
 	pq, err := rego.New(regoArgs...).PrepareForEval(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query: %w", err)
+		return nil, fmt.Errorf("failed preparing query: %s, %w", query, err)
 	}
 
 	err = store.Commit(context.Background(), txn)

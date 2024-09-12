@@ -7,7 +7,7 @@ import data.regal.ast
 # ref_names returns a list of ref names that are used in the module.
 # built-in functions are not included as they are provided by another completions provider.
 ref_names contains name if {
-	name := ast.ref_to_string(ast.found.refs[_][_].value)
+	name := ast.ref_static_to_string(ast.found.refs[_][_].value)
 
 	not name in ast.builtin_names
 }

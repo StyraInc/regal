@@ -29,8 +29,8 @@ test_ref_names if {
 	ref_names == {
 		"imp",
 		"bb",
-		"input.foo.$x",
-		"data.bar.$x",
+		"input.foo",
+		"data.bar",
 		"imp.foo",
 		"data.x",
 	}

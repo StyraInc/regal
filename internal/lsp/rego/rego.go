@@ -98,13 +98,20 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 }
 
 //nolint:gochecknoglobals
-var keywordsPreparedQuery *rego.PreparedEvalQuery
-
-//nolint:gochecknoglobals
-var ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
+var (
+	keywordsPreparedQuery          *rego.PreparedEvalQuery
+	ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
+	codeLensPreparedQuery          *rego.PreparedEvalQuery
+)
 
 //nolint:gochecknoglobals
 var preparedQueriesInitOnce sync.Once
+
+type policy struct {
+	fileName string
+	contents string
+	module   *ast.Module
+}
 
 func initialize() {
 	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
@@ -134,74 +141,96 @@ func initialize() {
 	}
 
 	ruleHeadLocationsPreparedQuery = &rhlpq
+
+	codeLensRegoArgs := createArgs(rego.Query("data.regal.lsp.codelens.lenses"))
+
+	clpq, err := rego.New(codeLensRegoArgs...).PrepareForEval(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	codeLensPreparedQuery = &clpq
 }
 
 // AllKeywords returns all keywords in the module.
 func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
 	preparedQueriesInitOnce.Do(initialize)
 
-	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
+	var keywords map[string][]KeywordUse
+
+	value, err := queryToValue(ctx, keywordsPreparedQuery, policy{fileName, contents, module}, keywords)
 	if err != nil {
-		return nil, fmt.Errorf("failed enhancing input: %w", err)
+		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
 
-	rs, err := keywordsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
-	if err != nil {
-		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
-	}
-
-	if len(rs) != 1 {
-		return nil, errors.New("expected exactly one result from evaluation")
-	}
-
-	if len(rs[0].Expressions) != 1 {
-		return nil, errors.New("expected exactly one expression in result")
-	}
-
-	var result map[string][]KeywordUse
-
-	err = rio.JSONRoundTrip(rs[0].Expressions[0].Value, &result)
-	if err != nil {
-		return nil, fmt.Errorf("failed unmarshaling keywords: %w", err)
-	}
-
-	return result, nil
+	return value, nil
 }
 
 // AllRuleHeadLocations returns mapping of rules names to the head locations.
 func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
 	preparedQueriesInitOnce.Do(initialize)
 
-	enhancedInput, err := parse.PrepareAST(fileName, contents, module)
+	var ruleHeads RuleHeads
+
+	value, err := queryToValue(ctx, ruleHeadLocationsPreparedQuery, policy{fileName, contents, module}, ruleHeads)
 	if err != nil {
-		return nil, fmt.Errorf("failed enhancing input: %w", err)
+		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
 
-	rs, err := ruleHeadLocationsPreparedQuery.Eval(ctx, rego.EvalInput(enhancedInput))
+	return value, nil
+}
+
+// CodeLenses returns all code lenses in the module.
+func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) ([]types.CodeLens, error) {
+	preparedQueriesInitOnce.Do(initialize)
+
+	var codeLenses []types.CodeLens
+
+	value, err := queryToValue(ctx, codeLensPreparedQuery, policy{uri, contents, module}, codeLenses)
 	if err != nil {
-		return nil, fmt.Errorf("failed evaluating keywords: %w", err)
+		return nil, fmt.Errorf("failed querying code lenses: %w", err)
+	}
+
+	return value, nil
+}
+
+func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy policy, toValue T) (T, error) {
+	input, err := parse.PrepareAST(policy.fileName, policy.contents, policy.module)
+	if err != nil {
+		return toValue, fmt.Errorf("failed to prepare input: %w", err)
+	}
+
+	result, err := toValidResult(pq.Eval(ctx, rego.EvalInput(input)))
+	if err != nil {
+		return toValue, err //nolint:wrapcheck
+	}
+
+	err = rio.JSONRoundTrip(result.Expressions[0].Value, &toValue)
+	if err != nil {
+		return toValue, fmt.Errorf("failed unmarshaling code lenses: %w", err)
+	}
+
+	return toValue, nil
+}
+
+func toValidResult(rs rego.ResultSet, err error) (rego.Result, error) {
+	if err != nil {
+		return rego.Result{}, fmt.Errorf("evaluation failed: %w", err)
 	}
 
 	if len(rs) == 0 {
-		return nil, errors.New("no results returned from evaluation")
+		return rego.Result{}, errors.New("no results returned from evaluation")
 	}
 
 	if len(rs) != 1 {
-		return nil, errors.New("expected exactly one result from evaluation")
+		return rego.Result{}, errors.New("expected exactly one result from evaluation")
 	}
 
 	if len(rs[0].Expressions) != 1 {
-		return nil, errors.New("expected exactly one expression in result")
+		return rego.Result{}, errors.New("expected exactly one expression in result")
 	}
 
-	var result RuleHeads
-
-	err = rio.JSONRoundTrip(rs[0].Expressions[0].Value, &result)
-	if err != nil {
-		return nil, fmt.Errorf("failed unmarshaling keywords: %w", err)
-	}
-
-	return result, nil
+	return rs[0], nil
 }
 
 // ToInput prepares a module with Regal additions to be used as input for evaluation.

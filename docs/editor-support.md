@@ -20,18 +20,22 @@ by Regal.
 
 ## Neovim
 
-There are a number of different plugins available for [Neovim](https://neovim.io/) which integrate
-with language servers using the Language Server Protocol.
+[Neovim](https://neovim.io/) supports both the Language Server Protocol and the Debug Adapter Protocol.
 
 Generally, the Regal binary should be [installed](https://docs.styra.com/regal#getting-started)
 first. [`mason.vim`](https://github.com/williamboman/mason.nvim) users can install the
 Regal binary with `:MasonInstall regal`
 ([package definition](https://github.com/mason-org/mason-registry/blob/2024-07-23-asian-hate/packages/regal/package.yaml)).
 
+### Language Server Protocol (LSP)
+
+There are a number of different plugins available for Neovim which integrate
+with language servers using the Language Server Protocol.
+
 Below are a number of different plugin options to configure a language server
 client for Regal in Neovim.
 
-### nvim-lspconfig
+#### nvim-lspconfig
 
 [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) has native support for the
 Regal language server. Use the configuration below to configure Regal:
@@ -40,7 +44,7 @@ Regal language server. Use the configuration below to configure Regal:
 require('lspconfig').regal.setup()
 ```
 
-### none-ls
+#### none-ls
 
 [none-ls](https://github.com/nvimtools/none-ls.nvim) - Use Neovim as a
 language server to inject LSP diagnostics, code actions, and more via Lua.
@@ -71,7 +75,7 @@ Example of the diagnostics in as shown in the UI:
 
 ![regal in none-ls](./assets/editors-neovim.png)
 
-### nvim-cmp
+#### nvim-cmp
 
 [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) supports the adding of language
 servers as a source.
@@ -80,7 +84,7 @@ To use Regal with `nvim-cmp`, it is recommended that you use
 the [`nvim-lspconfig` source](https://github.com/hrsh7th/cmp-nvim-lsp) and
 follow the instructions above to configure `nvim-lspconfig`.
 
-### Other plugins
+#### Other plugins
 
 To see live linting of Rego, your plugin must support
 [`textDocument/diagnostic`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic)
@@ -89,6 +93,25 @@ messages.
 There are many language server integrations for Neovim, if you'd like to see
 another one listed, please [open an issue](https://github.com/StyraInc/regal/issues/new)
 or drop us a message in [Slack](http://communityinviter.com/apps/styracommunity/signup).
+
+### Debug Adapter Protocol (DAP)
+
+#### nvim-dap and nvim-dap-rego
+
+[nvim-dap](https://github.com/mfussenegger/nvim-dap) is a DAP client
+implementation for Neovim.
+This plugin provides basic functions to control debuggers from Neovim.
+
+[nvim-dap-rego](https://github.com/rinx/nvim-dap-rego) provides basic
+configurations for Regal's DAP interface.
+
+To set up Regal's debugger,
+
+```lua
+require('dap-rego').setup()
+```
+
+Then you can launch debug sessions by calling `:lua require('dap').continue()`.
 
 ## Helix
 

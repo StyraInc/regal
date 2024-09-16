@@ -1,11 +1,10 @@
 package providers
 
 import (
+	"context"
 	"slices"
 	"strings"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"

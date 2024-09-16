@@ -1,6 +1,7 @@
 package rego
 
 import (
+	"maps"
 	"strings"
 	"sync"
 
@@ -23,7 +24,7 @@ func GetBuiltins() map[string]*ast.Builtin {
 	builtInsLock.RLock()
 	defer builtInsLock.RUnlock()
 
-	return builtIns
+	return maps.Clone(builtIns)
 }
 
 func builtinMap(caps *ast.Capabilities) map[string]*ast.Builtin {

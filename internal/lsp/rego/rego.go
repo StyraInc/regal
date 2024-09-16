@@ -56,6 +56,8 @@ func LocationFromPosition(pos types.Position) *ast.Location {
 func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 	builtinCalls := make([]BuiltInCall, 0)
 
+	bis := GetBuiltins()
+
 	callVisitor := ast.NewGenericVisitor(func(x interface{}) bool {
 		var terms []*ast.Term
 
@@ -73,8 +75,6 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 		if len(terms) == 0 {
 			return false
 		}
-
-		bis := GetBuiltins()
 
 		if b, ok := bis[terms[0].Value.String()]; ok {
 			// Exclude operators and similar builtins

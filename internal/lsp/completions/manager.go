@@ -1,6 +1,7 @@
 package completions
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/open-policy-agent/opa/storage"
@@ -20,7 +21,7 @@ type Manager struct {
 type ManagerOptions struct{}
 
 type Provider interface {
-	Run(*cache.Cache, types.CompletionParams, *providers.Options) ([]types.CompletionItem, error)
+	Run(context.Context, *cache.Cache, types.CompletionParams, *providers.Options) ([]types.CompletionItem, error)
 	Name() string
 }
 
@@ -42,7 +43,11 @@ func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 	return m
 }
 
-func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([]types.CompletionItem, error) {
+func (m *Manager) Run(
+	ctx context.Context,
+	params types.CompletionParams,
+	opts *providers.Options,
+) ([]types.CompletionItem, error) {
 	if m.isInsideOfComment(params) {
 		// Exit early if caret position is inside a comment. We currently don't have any provider
 		// where doing completions inside of a comment makes much sense. Behavior is also editor-specific:
@@ -54,7 +59,7 @@ func (m *Manager) Run(params types.CompletionParams, opts *providers.Options) ([
 	var completionsList []types.CompletionItem
 
 	for _, provider := range m.providers {
-		providerCompletions, err := provider.Run(m.c, params, opts)
+		providerCompletions, err := provider.Run(ctx, m.c, params, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error running completion provider: %w", err)
 		}

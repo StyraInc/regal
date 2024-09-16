@@ -272,8 +272,8 @@ func SetInputContext(input map[string]any, context map[string]any) map[string]an
 	return input
 }
 
-func QueryRegalBundle(input map[string]any, pq rego.PreparedEvalQuery) (map[string]any, error) {
-	result, err := pq.Eval(context.Background(), rego.EvalInput(input))
+func QueryRegalBundle(ctx context.Context, input map[string]any, pq rego.PreparedEvalQuery) (map[string]any, error) {
+	result, err := pq.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating query: %w", err)
 	}

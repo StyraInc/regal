@@ -53,7 +53,12 @@ func (*Policy) Name() string {
 	return "policy"
 }
 
-func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Options) ([]types.CompletionItem, error) {
+func (p *Policy) Run(
+	ctx context.Context,
+	c *cache.Cache,
+	params types.CompletionParams,
+	opts *Options,
+) ([]types.CompletionItem, error) {
 	if opts == nil {
 		return nil, errors.New("options must be provided")
 	}
@@ -101,7 +106,7 @@ func (p *Policy) Run(c *cache.Cache, params types.CompletionParams, opts *Option
 		return []types.CompletionItem{}, nil //nolint: nilerr
 	}
 
-	result, err := rego2.QueryRegalBundle(input, p.pq)
+	result, err := rego2.QueryRegalBundle(ctx, input, p.pq)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying regal bundle: %w", err)
 	}

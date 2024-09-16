@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -17,7 +18,12 @@ func (*RuleHead) Name() string {
 	return "rulehead"
 }
 
-func (*RuleHead) Run(c *cache.Cache, params types.CompletionParams, _ *Options) ([]types.CompletionItem, error) {
+func (*RuleHead) Run(
+	_ context.Context,
+	c *cache.Cache,
+	params types.CompletionParams,
+	_ *Options,
+) ([]types.CompletionItem, error) {
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)

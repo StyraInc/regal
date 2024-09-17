@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"slices"
 	"testing"
 
@@ -59,6 +60,7 @@ allow if {
 	}
 
 	result, err := locals.Run(
+		context.Background(),
 		c,
 		params,
 		&Options{ClientIdentifier: clients.IdentifierGeneric},
@@ -133,6 +135,7 @@ allow if {
 	}
 
 	result, err := locals.Run(
+		context.Background(),
 		c,
 		params,
 		&Options{ClientIdentifier: clients.IdentifierGeneric},

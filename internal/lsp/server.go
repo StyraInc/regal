@@ -1471,7 +1471,7 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(
-	_ context.Context,
+	ctx context.Context,
 	_ *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (any, error) {
@@ -1490,7 +1490,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}
 
 	// items is allocated here so that the return value is always a non-nil CompletionList
-	items, err := l.completionsManager.Run(params, &providers.Options{
+	items, err := l.completionsManager.Run(ctx, params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 	})

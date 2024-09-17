@@ -2,6 +2,7 @@
 package providers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -31,7 +32,7 @@ deny` + " "
 		},
 	}
 
-	completions, err := p.Run(c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -83,7 +84,7 @@ deny i
 		},
 	}
 
-	completions, err := p.Run(c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -126,7 +127,7 @@ deny c
 		},
 	}
 
-	completions, err := p.Run(c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -169,7 +170,7 @@ deny contains message i
 		},
 	}
 
-	completions, err := p.Run(c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

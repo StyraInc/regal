@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,6 +13,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1095,17 +1097,39 @@ func createConnections(
 }
 
 // NewTestLogger returns an io.Writer that logs to the given testing.T.
+// This is helpful as it can be used to have the server log to the test logger
+// in server tests. It is protected from being written to after the test is
+// over.
 func newTestLogger(t *testing.T) io.Writer {
 	t.Helper()
 
-	return &testLogger{t: t}
+	tl := &testLogger{t: t, open: true}
+
+	// using cleanup ensure that no goroutines attempt to write to the logger
+	// after the test has been cleaned up
+	t.Cleanup(func() {
+		tl.mu.Lock()
+		defer tl.mu.Unlock()
+		tl.open = false
+	})
+
+	return tl
 }
 
 type testLogger struct {
-	t *testing.T
+	t    *testing.T
+	open bool
+	mu   sync.RWMutex
 }
 
 func (tl *testLogger) Write(p []byte) (n int, err error) {
+	tl.mu.RLock()
+	defer tl.mu.RUnlock()
+
+	if !tl.open {
+		return 0, errors.New("cannot log, test is over")
+	}
+
 	tl.t.Log(strings.TrimSpace(string(p)))
 
 	return len(p), nil

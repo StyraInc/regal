@@ -10,6 +10,23 @@ and open a workspace with Rego files.
 
 The plugin will automatically find and use [Regal config](https://docs.styra.com/regal#configuration).
 
+### Debug Adapter Protocol (DAP)
+
+From
+[`v0.17.0`](https://github.com/open-policy-agent/vscode-opa/blob/main/CHANGELOG.md#0170)
+onwards, the OPA extension for Visual Studio Code supports the
+[Regal Debug Adapter](/regal/debug-adapter).
+
+To start a new debug session use the code action `Debug` found above a Rego rule
+or package.
+
+<img
+  src={require('./assets/dap/codeaction.png').default}
+  alt="Code Action in VS Code"/>
+
+Breakpoints can be added by clicking in the gutter to the left of the editor.
+Print statements will be shown in the debug console.
+
 ## Zed
 
 [Zed](https://zed.dev) is a modern open-source code editor with focus on performance and simplicity.

@@ -34,9 +34,9 @@ The Regal Debug Adapter currently supports the following features:
 Breakpoints allow you to continue execution of a policy until a given point.
 This can be helpful for:
 
-- Inspection of variables at a given point in time
-- Seeing how many times a given block of Rego code is executed, if at all
-- Avoiding the need to step through code as it's run line by line
+* Inspection of variables at a given point in time
+* Seeing how many times a given block of Rego code is executed, if at all
+* Avoiding the need to step through code as it's run line by line
 
 <img
   src={require('./assets/dap/breakpoint.png').default}
@@ -61,4 +61,3 @@ Print statements are also supported, these are shown in the debug console:
 <img
   src={require('./assets/dap/print.png').default}
   alt="Print statements shown in the debug output console"/>
-

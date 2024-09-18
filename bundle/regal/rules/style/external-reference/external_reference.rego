@@ -6,6 +6,7 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
+import data.regal.util
 
 report contains violation if {
 	fn_namespaces := {split(name, ".")[0] | some name in object.keys(ast.all_functions)}
@@ -27,12 +28,10 @@ report contains violation if {
 	value.type == "var"
 	not value.value in allowed_refs
 	not startswith(value.value, "$")
-	not function_call_ctx(fn, path)
+	not _function_call_ctx(fn, path)
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }
-
-last_indexof(arr, item) := regal.last([i | some i, x in arr; x == item])
 
 # METADATA
 # scope: document
@@ -42,8 +41,8 @@ last_indexof(arr, item) := regal.last([i | some i, x in arr; x == item])
 #   note: this doesn't check for built-in calls or calls to function
 #   defined in the same package, as those are already covered by
 #   "fn_namespaces" in the report rule
-function_call_ctx(fn, path) if {
-	terms_path := array.slice(path, 0, last_indexof(path, "terms") + 2)
+_function_call_ctx(fn, path) if {
+	terms_path := array.slice(path, 0, util.last_indexof(path, "terms") + 2)
 	next_term_path := array.concat(
 		array.slice(terms_path, 0, count(terms_path) - 1), # ["body", 0, "terms", 0] -> ["body", 0, "terms"]
 		[regal.last(terms_path) + 1], # 0 -> 1
@@ -54,4 +53,4 @@ function_call_ctx(fn, path) if {
 	object.get(fn, next_term_path, null) != null
 }
 
-function_call_ctx(fn, path) if object.get(fn, array.slice(path, 0, count(path) - 4), {}).type == "call"
+_function_call_ctx(fn, path) if object.get(fn, array.slice(path, 0, count(path) - 4), {}).type == "call"

@@ -223,6 +223,7 @@ The following rules are currently available:
 | bugs        | [var-shadows-builtin](https://docs.styra.com/regal/rules/bugs/var-shadows-builtin)                      | Variable name shadows built-in                            |
 | bugs        | [zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function)                      | Avoid functions without args                              |
 | custom      | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)            | Forbidden function call                                   |
+| custom      | [missing-metadata](https://docs.styra.com/regal/rules/custom/missing-metadata)                          | Package or rule missing metadata                          |
 | custom      | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                        | Naming convention violation                               |
 | custom      | [one-liner-rule](https://docs.styra.com/regal/rules/custom/one-liner-rule)                              | Rule body could be made a one-liner                       |
 | custom      | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)                  | Prefer value in rule head                                 |

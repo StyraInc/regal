@@ -43,6 +43,9 @@ keys_to_numbers(obj) := {num: v |
 	num := to_number(k)
 }
 
+# METADATA
+# description: convert location string to location object
+# scope: document
 to_location_object(loc) := {"row": to_number(row), "col": to_number(col), "text": text} if {
 	is_string(loc)
 	[row, col, text] := split(loc, ":")
@@ -57,12 +60,19 @@ json_pretty(value) := json.marshal_with_options(value, {
 	"pretty": true,
 })
 
+# METADATA
+# description: returns all elements of arr after the first
 rest(arr) := array.slice(arr, 1, count(arr))
 
+# METADATA
+# description: converts x to set if array, returns x if set
+# scope: document
 to_set(x) := x if is_set(x)
 
 to_set(x) := {y | some y in x} if not is_set(x)
 
+# METADATA
+# description: true if s1 and s2 has any intersecting items
 intersects(s1, s2) if count(intersection({s1, s2})) > 0
 
 # METADATA
@@ -72,3 +82,11 @@ single_set_item(s) := item if {
 
 	some item in s
 }
+
+# METADATA
+# description: returns any item of a set
+any_set_item(s) := [x | some x in s][0] # this is convoluted.. but can't think of a better way
+
+# METADATA
+# description: returns last index of item, or undefined (*not* -1) if missing
+last_indexof(arr, item) := regal.last([i | some i, x in arr; x == item])

@@ -1,3 +1,7 @@
+# METADATA
+# description: |
+#   the `packagename` providers suggests completions for package
+#   name based on the directory structure whre the file is located
 package regal.lsp.completion.providers.packagename
 
 import rego.v1
@@ -5,6 +9,8 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: set of suggested package names
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
@@ -14,13 +20,13 @@ items contains item if {
 
 	ps := input.regal.context.path_separator
 
-	abs_dir := base(input.regal.file.name)
+	abs_dir := _base(input.regal.file.name)
 	rel_dir := trim_prefix(abs_dir, input.regal.context.workspace_root)
 	fix_dir := replace(replace(trim_prefix(rel_dir, ps), ".", "_"), ps, ".")
 
 	word := location.ref_at(line, input.regal.context.location.col)
 
-	some suggestion in suggestions(fix_dir, word)
+	some suggestion in _suggestions(fix_dir, word)
 
 	item := {
 		"label": suggestion,
@@ -33,9 +39,9 @@ items contains item if {
 	}
 }
 
-base(path) := substring(path, 0, regal.last(indexof_n(path, "/")))
+_base(path) := substring(path, 0, regal.last(indexof_n(path, "/")))
 
-suggestions(dir, word) := [path |
+_suggestions(dir, word) := [path |
 	parts := split(dir, ".")
 	len_p := count(parts)
 	some n in numbers.range(0, len_p)

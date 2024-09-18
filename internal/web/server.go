@@ -13,6 +13,8 @@ import (
 	"github.com/styrainc/regal/internal/explorer"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
+
+	_ "net/http/pprof" //nolint:gosec
 )
 
 const mainTemplate = "main.tpl"
@@ -124,6 +126,11 @@ func (s *Server) Start(_ context.Context) {
 	})
 
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
+
+	// pprof handlers
+	mux.HandleFunc("/debug/pprof/", http.DefaultServeMux.ServeHTTP)
+	mux.HandleFunc("/debug/pprof/profile", http.DefaultServeMux.ServeHTTP)
+	mux.HandleFunc("/debug/pprof/heap", http.DefaultServeMux.ServeHTTP)
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {

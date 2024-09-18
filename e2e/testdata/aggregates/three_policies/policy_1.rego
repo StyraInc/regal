@@ -1,3 +1,5 @@
+# METADATA
+# title: three policies
 package three_policies
 
 import rego.v1

@@ -2,3 +2,18 @@ ignore:
   files:
     - e2e/*
     - pkg/*
+
+rules:
+  custom:
+    missing-metadata:
+      level: error
+      except-rule-path-pattern: \.report$
+      # TODO: this should be in the default config, but it seems
+      #       like the ignore attribute isn't read from there
+      ignore:
+        files:
+          - "*_test.rego"
+  style:
+    line-length:
+      level: error
+      non-breakable-word-threshold: 100

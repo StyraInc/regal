@@ -1,3 +1,9 @@
+# METADATA
+# description: |
+#   utility functions related to return a result from linter rules
+#   policy authors are encouraged to use these over manually building
+#   the expected objects, as using these functions should continure to
+#   work across upgrades — i.e. if the result format changes
 package regal.result
 
 import rego.v1

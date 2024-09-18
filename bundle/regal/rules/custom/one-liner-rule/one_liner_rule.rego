@@ -10,8 +10,6 @@ import data.regal.config
 import data.regal.result
 import data.regal.util
 
-cfg := config.for_rule("custom", "one-liner-rule")
-
 # METADATA
 # description: Missing capability for keyword `if`
 # custom:
@@ -44,28 +42,31 @@ report contains violation if {
 
 	# Technically, the `if` could be on another line, but who would do that?
 	regex.match(`\s+if`, lines[0])
-	rule_body_brackets(lines)
+	_rule_body_brackets(lines)
+
+	cfg := config.for_rule("custom", "one-liner-rule")
+	max_line_length := object.get(cfg, "max-line-length", 120)
 
 	# ideally we'd take style preference into account but for now assume tab == 4 spaces
 	# then just add the sum of the line counts minus the removed '{' character
 	# redundant parens added by `opa fmt` :/
 	((4 + count(lines[0])) + count(lines[1])) - 1 < max_line_length
 
-	not comment_in_body(rule, object.get(input, "comments", []), lines)
+	not _comment_in_body(rule, object.get(input, "comments", []), lines)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 # K&R style
-rule_body_brackets(lines) if endswith(lines[0], "{")
+_rule_body_brackets(lines) if endswith(lines[0], "{")
 
 # Allman style
-rule_body_brackets(lines) if {
+_rule_body_brackets(lines) if {
 	not endswith(lines[0], "{")
 	startswith(lines[1], "{")
 }
 
-comment_in_body(rule, comments, lines) if {
+_comment_in_body(rule, comments, lines) if {
 	rule_location := util.to_location_object(rule.location)
 
 	some comment in comments
@@ -75,7 +76,3 @@ comment_in_body(rule, comments, lines) if {
 	comment_location.row > rule_location.row
 	comment_location.row < rule_location.row + count(lines)
 }
-
-default max_line_length := 120
-
-max_line_length := cfg["max-line-length"]

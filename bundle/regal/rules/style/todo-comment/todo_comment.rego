@@ -7,15 +7,10 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-# For comments, OPA uses capital-cased Text and Location rather
-# than text and location. As fixing this would potentially break
-# things, we need to take it into consideration here.
-
-todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
-
-todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
-
 report contains violation if {
+	todo_identifiers := ["todo", "TODO", "fixme", "FIXME"]
+	todo_pattern := sprintf(`^\s*(%s)`, [concat("|", todo_identifiers)])
+
 	some comment in ast.comments_decoded
 	regex.match(todo_pattern, comment.text)
 

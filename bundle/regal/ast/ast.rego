@@ -1,3 +1,7 @@
+# METADATA
+# description: |
+#   the 'ast' package provides the base functionality for working
+#   with OPA's AST, more recently in the form of RoAST
 package regal.ast
 
 import rego.v1
@@ -5,8 +9,12 @@ import rego.v1
 import data.regal.config
 import data.regal.util
 
+# METADATA
+# description: set of Rego's scalar type
 scalar_types := {"boolean", "null", "number", "string"}
 
+# METADATA
+# description: set containing names of all built-in functions counting as operators
 operators := {
 	"and",
 	"assign",
@@ -27,18 +35,28 @@ operators := {
 	"rem",
 }
 
-# regal ignore:external-reference
-is_constant(value) if value.type in scalar_types
+# METADATA
+# description: |
+#   returns true if provided term is either a scalar or a collection of ground values
+# scope: document
+is_constant(term) if term.type in scalar_types # regal ignore:external-reference
 
-is_constant(value) if {
-	value.type in {"array", "object"}
-	not has_term_var(value.value)
+is_constant(term) if {
+	term.type in {"array", "object"}
+	not has_term_var(term.value)
 }
 
 default builtin_names := set()
 
+# METADATA
+# description: set containing the name of all built-in functions (given the active capabilities)
+# scope: document
 builtin_names := object.keys(config.capabilities.builtins)
 
+# METADATA
+# description: |
+#   set containing the namespaces of all built-in functions (given the active capabilities),
+#   like "http" in `http.send` or "sum" in `sum``
 builtin_namespaces contains namespace if {
 	some name in builtin_names
 	namespace := split(name, ".")[0]
@@ -59,16 +77,18 @@ package_path := [path.value |
 #   input policy, so "package foo.bar" would return "foo.bar"
 package_name := concat(".", package_path)
 
-named_refs(refs) := [ref |
-	some i, ref in refs
-	_is_name(ref, i)
+# METADATA
+# description: provides all static string values from ref
+named_refs(ref) := [term |
+	some i, term in ref
+	_is_name(term, i)
 ]
 
-_is_name(ref, 0) if ref.type == "var"
+_is_name(term, 0) if term.type == "var"
 
-_is_name(ref, pos) if {
+_is_name(term, pos) if {
 	pos > 0
-	ref.type == "string"
+	term.type == "string"
 }
 
 # METADATA
@@ -93,6 +113,30 @@ functions := [rule |
 	some rule in input.rules
 	rule.head.args
 ]
+
+# METADATA
+# description: |
+#   all rules and functions in the input AST not denoted as private, i.e. excluding
+#   any rule/function with a `_` prefix. it's not unthinkable that more ways to denote
+#   private rules (or even packages), so using this rule should be preferred over
+#   manually checking for this using the rule ref
+public_rules_and_functions := [rule |
+	some rule in input.rules
+
+	count([part |
+		some i, part in rule.head.ref
+
+		_private_rule(i, part)
+	]) == 0
+]
+
+_private_rule(0, part) if startswith(part.value, "_")
+
+_private_rule(i, part) if {
+	i > 0
+	part.type == "string"
+	startswith(part.value, "_")
+}
 
 # METADATA
 # description: a list of the argument names for the given rule (if function)
@@ -213,6 +257,8 @@ _trim_from_var(ref_str, vars) := ref_str if {
 	count(vars) == 0
 } else := substring(ref_str, 0, indexof(ref_str, vars[0]))
 
+# METADATA
+# description: true if ref contains only static parts
 static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
 	t.type != "var"
 }
@@ -245,8 +291,12 @@ function_decls(rules) := {rule_name: decl |
 	decl := {"decl": {"args": args, "result": {"type": "any"}}}
 }
 
+# METADATA
+# description: returns the args for function past the expected number of args
 function_ret_args(fn_name, terms) := array.slice(terms, count(all_functions[fn_name].decl.args) + 1, count(terms))
 
+# METADATA
+# description: true if last argument of function is a return assignment
 function_ret_in_args(fn_name, terms) if {
 	rest := array.slice(terms, 1, count(terms))
 
@@ -268,6 +318,8 @@ implicit_boolean_assignment(rule) if {
 # or sometimes, like this...
 implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
 
+implicit_boolean_assignment(rule) if util.to_location_object(rule.head.value.location).col == 1
+
 # METADATA
 # description: |
 #   object containing all available built-in and custom functions in the
@@ -280,6 +332,8 @@ all_functions := object.union(config.capabilities.builtins, function_decls(input
 #   scope of the input AST
 all_function_names := object.keys(all_functions)
 
+# METADATA
+# description: set containing all negated expressions in input AST
 negated_expressions[rule] contains value if {
 	some rule in input.rules
 
@@ -305,8 +359,26 @@ is_chained_rule_body(rule, lines) if {
 	startswith(col_text, "{")
 }
 
+# METADATA
+# description: returns the terms in an assignment expression, or undefined if not assignment
 assignment_terms(expr) := [expr.terms[1], expr.terms[2]] if {
 	expr.terms[0].type == "ref"
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value == "assign"
+}
+
+# METADATA
+# description: |
+#   For a given rule head name, this rule contains a list of locations where
+#   there is a rule head with that name.
+rule_head_locations[name] contains {"row": loc.row, "col": loc.col} if {
+	some rule in input.rules
+
+	name := concat(".", [
+		"data",
+		package_name,
+		ref_static_to_string(rule.head.ref),
+	])
+
+	loc := util.to_location_object(rule.head.location)
 }

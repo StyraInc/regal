@@ -15,6 +15,8 @@ import data.regal.lsp.util.location
 
 # code lenses are displayed in the order they come back in the returned
 # array, and 'evaluate' somehow feels better to the left of 'debug'
+# METADATA
+# description: contains code lenses determined for module
 lenses := array.concat(
 	[l | some l in _eval_lenses],
 	[l | some l in _debug_lenses],

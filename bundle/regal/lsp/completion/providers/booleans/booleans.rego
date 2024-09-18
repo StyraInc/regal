@@ -1,3 +1,5 @@
+# METADATA
+# description: the boolean provider suggests `true`/`false` values where appropriate
 package regal.lsp.completion.providers.booleans
 
 import rego.v1
@@ -5,6 +7,8 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: completion suggestions for true/false
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 

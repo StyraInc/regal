@@ -8,10 +8,8 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
-cfg := config.for_rule("style", "default-over-else")
-
 report contains violation if {
-	some rule in considered_rules
+	some rule in _considered_rules
 
 	# walking is expensive but necessary here, since there could be
 	# any number of `else` clauses nested below. no need to traverse
@@ -27,6 +25,8 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(else_head))
 }
 
-considered_rules := input.rules if cfg["prefer-default-functions"] == true
+_cfg := config.for_rule("style", "default-over-else")
 
-considered_rules := ast.rules if not cfg["prefer-default-functions"]
+_considered_rules := input.rules if _cfg["prefer-default-functions"] == true
+
+_considered_rules := ast.rules if not _cfg["prefer-default-functions"]

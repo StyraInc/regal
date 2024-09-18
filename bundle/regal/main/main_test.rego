@@ -242,7 +242,7 @@ test_camelcase if {
 	violation := util.single_set_item(result.report)
 	violation.title == "prefer-snake-case"
 
-	{notice.title | some notice in result.notices} == {"file-missing-test-suffix", "directory-package-mismatch"}
+	{notice.title | some notice in result.lint.notices} == {"file-missing-test-suffix", "directory-package-mismatch"}
 }
 
 # regal ignore:rule-length
@@ -313,7 +313,8 @@ test_main_lint if {
 test_rules_to_run_not_excluded if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	rules_to_run := main.rules_to_run with config.merged_config as cfg
+	# regal ignore:leaked-internal-reference
+	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error"}
 		with input.regal.file.name as "p.rego"
 		with config.excluded_file as false
@@ -330,7 +331,8 @@ test_notices if {
 		"severity": "none",
 	}
 
-	notices := main.notices with main.rules_to_run as {"idiomatic": {"testme"}}
+	# regal ignore:leaked-internal-reference
+	notices := main.lint.notices with main._rules_to_run as {"idiomatic": {"testme"}}
 		with data.regal.rules.idiomatic.testme.notices as {notice}
 
 	notices == {notice}
@@ -356,7 +358,8 @@ test_report_custom_rule_failure if {
 }
 
 test_aggregate_bundled_rule if {
-	agg := main.aggregate with main.rules_to_run as {"foo": {"bar"}}
+	# regal ignore:leaked-internal-reference
+	agg := main.aggregate with main._rules_to_run as {"foo": {"bar"}}
 		with data.regal.rules as {"foo": {"bar": {"aggregate": {"baz"}}}}
 
 	agg == {"foo/bar": {"baz"}}

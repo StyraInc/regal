@@ -482,18 +482,21 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	if rep.Summary.NumViolations != 1 {
-		t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
+	if rep.Summary.NumViolations != 2 {
+		t.Errorf("expected 2 violations, got %d", rep.Summary.NumViolations)
 	}
 
-	violation := rep.Violations[0]
-	if violation.Title != "unresolved-import" {
-		t.Errorf("expected violation 'unresolved-import', got %q", violation.Title)
+	if rep.Violations[0].Title != "no-defined-entrypoint" {
+		t.Errorf("expected violation 'no-defined-entrypoint', got %q", rep.Violations[0].Title)
+	}
+
+	if rep.Violations[1].Title != "unresolved-import" {
+		t.Errorf("expected violation 'unresolved-import', got %q", rep.Violations[1].Title)
 	}
 
 	// ensure that it's the file without the ignore directive that has the violation
-	if !strings.HasSuffix(violation.Location.File, "second.rego") {
-		t.Errorf("expected violation in second.rego, got %q", violation.Location.File)
+	if !strings.HasSuffix(rep.Violations[1].Location.File, "second.rego") {
+		t.Errorf("expected violation in second.rego, got %q", rep.Violations[1].Location.File)
 	}
 }
 

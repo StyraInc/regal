@@ -1,3 +1,15 @@
+# METADATA
+# description: |
+#   the `inputdotjson` provider returns suggestions based on the `input.json`
+#   data structure (if such a file is found), so that e.g. content like:
+#   ```json
+#   {
+#     "user": {"roles": ["admin"]},
+#     "request": {"method": "GEt"}
+#   }
+#   ```
+#   would suggest `input.user`, `input.user.roles`, `input.request`,
+#   `input.request.method, and so on
 package regal.lsp.completion.providers.inputdotjson
 
 import rego.v1
@@ -6,7 +18,7 @@ import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
 # METADATA
-# description: returns suggestions based on input.json structure (if found)
+# description: items contains found suggestions from `input.json``
 items contains item if {
 	input.regal.context.input_dot_json_path
 

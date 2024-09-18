@@ -1,3 +1,5 @@
+# METADATA
+# title: ignore_directive
 package ignore_directive
 
 import rego.v1

@@ -17,14 +17,12 @@ report contains violation if {
 	ast.negated_expressions[_][node]
 
 	node.terms.type == "var"
-	strings.any_prefix_match(node.terms.value, negatives)
+	strings.any_prefix_match(node.terms.value, {
+		"cannot_",
+		"no_",
+		"non_",
+		"not_",
+	})
 
 	violation := result.fail(rego.metadata.chain(), result.location(node))
-}
-
-negatives := {
-	"cannot_",
-	"no_",
-	"non_",
-	"not_",
 }

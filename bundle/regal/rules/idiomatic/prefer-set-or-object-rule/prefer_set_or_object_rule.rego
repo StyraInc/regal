@@ -14,13 +14,13 @@ report contains violation if {
 	not rule.body
 
 	# Ignore simple conversions from array to set
-	not is_array_conversion(rule.head.value)
+	not _is_array_conversion(rule.head.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 # {s | some s in arr}
-is_array_conversion(value) if {
+_is_array_conversion(value) if {
 	value.type == "setcomprehension"
 	value.value.term.type == "var"
 
@@ -47,7 +47,7 @@ is_array_conversion(value) if {
 # {s | s := arr[_].foo}
 # or
 # {s | s := arr[_].foo[_]}
-is_array_conversion(value) if {
+_is_array_conversion(value) if {
 	value.type == "setcomprehension"
 	value.value.term.type == "var"
 

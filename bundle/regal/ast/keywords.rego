@@ -4,6 +4,9 @@ import rego.v1
 
 import data.regal.util
 
+# METADATA
+# description: collects keywords from input module by the line that they appear on
+# scope: document
 keywords[row] contains keyword if {
 	some idx, line in input.regal.file.lines
 

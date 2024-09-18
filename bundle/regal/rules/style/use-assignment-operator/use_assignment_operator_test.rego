@@ -156,6 +156,11 @@ test_success_ref_head_rule_if if {
 	r == set()
 }
 
+test_success_ref_head_rule_with_var_if if {
+	r := rule.report with input as ast.with_rego_v1(`works[x] if x := 5`)
+	r == set()
+}
+
 # regal ignore:rule-length
 test_fail_unification_in_else if {
 	r := rule.report with input as ast.with_rego_v1(`

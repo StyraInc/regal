@@ -12,7 +12,7 @@ report contains violation if {
 
 	imp.path.value[0].value in {"data", "input"}
 
-	name := significant_name(imp)
+	name := _significant_name(imp)
 	name in ast.builtin_namespaces
 
 	# AST quirk: while we'd ideally provide the location of the *path component*,
@@ -21,6 +21,6 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(imp))
 }
 
-significant_name(imp) := imp.alias
+_significant_name(imp) := imp.alias
 
-significant_name(imp) := regal.last(imp.path.value).value if not imp.alias
+_significant_name(imp) := regal.last(imp.path.value).value if not imp.alias

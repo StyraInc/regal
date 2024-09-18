@@ -8,10 +8,9 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
-cfg := config.for_rule("custom", "naming-convention")
-
 # target: package
 report contains violation if {
+	cfg := config.for_rule("custom", "naming-convention")
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -19,7 +18,7 @@ report contains violation if {
 
 	not regex.match(convention.pattern, ast.package_name)
 
-	violation := with_description(
+	violation := _with_description(
 		result.fail(rego.metadata.chain(), result.location(input["package"])),
 		sprintf(
 			"Naming convention violation: package name %q does not match pattern '%s'",
@@ -30,6 +29,7 @@ report contains violation if {
 
 # target: rule
 report contains violation if {
+	cfg := config.for_rule("custom", "naming-convention")
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -43,7 +43,7 @@ report contains violation if {
 
 	not regex.match(convention.pattern, name)
 
-	violation := with_description(
+	violation := _with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: rule name %q does not match pattern '%s'",
@@ -54,6 +54,7 @@ report contains violation if {
 
 # target: function
 report contains violation if {
+	cfg := config.for_rule("custom", "naming-convention")
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -65,7 +66,7 @@ report contains violation if {
 
 	not regex.match(convention.pattern, name)
 
-	violation := with_description(
+	violation := _with_description(
 		result.fail(rego.metadata.chain(), result.location(rule.head)),
 		sprintf(
 			"Naming convention violation: function name %q does not match pattern '%s'",
@@ -76,6 +77,7 @@ report contains violation if {
 
 # target: var
 report contains violation if {
+	cfg := config.for_rule("custom", "naming-convention")
 	some convention in cfg.conventions
 	some target in convention.targets
 
@@ -85,7 +87,7 @@ report contains violation if {
 
 	not regex.match(convention.pattern, var.value)
 
-	violation := with_description(
+	violation := _with_description(
 		result.fail(rego.metadata.chain(), result.location(var)),
 		sprintf(
 			"Naming convention violation: variable name %q does not match pattern '%s'",
@@ -94,7 +96,7 @@ report contains violation if {
 	)
 }
 
-with_description(violation, description) := json.patch(
+_with_description(violation, description) := json.patch(
 	violation,
 	[{"op": "replace", "path": "/description", "value": description}],
 )

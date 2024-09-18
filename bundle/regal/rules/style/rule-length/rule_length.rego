@@ -8,27 +8,27 @@ import data.regal.config
 import data.regal.result
 import data.regal.util
 
-cfg := config.for_rule("style", "rule-length")
-
 report contains violation if {
+	cfg := config.for_rule("style", "rule-length")
+
 	some rule in input.rules
 	lines := split(base64.decode(util.to_location_object(rule.location).text), "\n")
 
-	line_count(cfg, rule, lines) > cfg["max-rule-length"]
+	_line_count(cfg, rule, lines) > cfg["max-rule-length"]
 
-	not generated_body_exception(cfg, rule)
+	not _generated_body_exception(cfg, rule)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-generated_body_exception(conf, rule) if {
+_generated_body_exception(conf, rule) if {
 	conf["except-empty-body"] == true
 	not rule.body
 }
 
-line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
+_line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
 
-line_count(cfg, rule, lines) := n if {
+_line_count(cfg, rule, lines) := n if {
 	not cfg["count-comments"]
 
 	# Note that this assumes } on its own line

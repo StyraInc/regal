@@ -1,7 +1,7 @@
 # METADATA
 # description: |
 #   base package for completion suggestion provider policies, and acts
-#   like a router that'll collection suggestions from all provider policies
+#   like a router that collects suggestions from all provider policies
 #   under regal.lsp.completion.providers
 package regal.lsp.completion
 

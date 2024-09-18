@@ -7,7 +7,7 @@ import rego.v1
 import data.regal.ast
 import data.regal.result
 
-import_paths contains path if {
+_import_paths contains path if {
 	some imp in input.imports
 	path := [p.value | some p in imp.path.value]
 
@@ -24,7 +24,7 @@ report contains violation if {
 	most_specific_match := regal.last(sort([ip |
 		ref_path := [p.value | some p in ref.value]
 
-		some ip in import_paths
+		some ip in _import_paths
 		array.slice(ref_path, 0, count(ip)) == ip
 	]))
 

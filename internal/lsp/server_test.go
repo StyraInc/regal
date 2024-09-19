@@ -426,13 +426,21 @@ allow := neo4j.q
 	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
-	select {
-	case <-timeout.C:
-		t.Fatalf("timed out waiting for file completion to correct")
-	default:
-		for {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		foundNeo4j := false
+
+		select {
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for file completion to correct")
+		case <-ticker.C:
+			// Create a new context with timeout for each request
+			reqCtx, cancel := context.WithTimeout(ctx, time.Millisecond*100)
+
 			resp := make(map[string]any)
-			if err = connClient.Call(ctx, "textDocument/completion", types.CompletionParams{
+			err := connClient.Call(reqCtx, "textDocument/completion", types.CompletionParams{
 				TextDocument: types.TextDocumentIdentifier{
 					URI: mainRegoURI,
 				},
@@ -440,11 +448,13 @@ allow := neo4j.q
 					Line:      2,
 					Character: 16,
 				},
-			}, &resp); err != nil {
+			}, &resp)
+
+			cancel()
+
+			if err != nil {
 				t.Fatalf("failed to send completion notification: %s", err)
 			}
-
-			foundNeo4j := false
 
 			itemsList, ok := resp["items"].([]any)
 			if !ok {
@@ -457,20 +467,23 @@ allow := neo4j.q
 					t.Fatalf("completion item '%+v' was not a JSON object", itemI)
 				}
 
-				t.Logf("completion label: %s", item["label"])
+				label, ok := item["label"].(string)
+				if !ok {
+					t.Fatalf("completion item label is not a string: %+v", item["label"])
+				}
 
-				if item["label"] == "neo4j.query" {
+				if label == "neo4j.query" {
 					foundNeo4j = true
 
 					break
 				}
 			}
 
-			if foundNeo4j {
-				break
-			}
-
 			t.Logf("waiting for neo4j.query in completion results for neo4j.q, got %v", itemsList)
+		}
+
+		if foundNeo4j {
+			break
 		}
 	}
 }

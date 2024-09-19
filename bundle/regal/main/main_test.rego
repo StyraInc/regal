@@ -4,6 +4,7 @@ import rego.v1
 
 import data.regal.config
 import data.regal.main
+import data.regal.util
 
 test_basic_input_success if {
 	report := main.report with input as regal.parse_module("p.rego", `package p`)
@@ -214,6 +215,34 @@ test_force_exclude_file_config if {
 		}
 
 	count(report) == 0
+}
+
+test_lint_from_stdin_disables_rules_depending_on_filename_creates_notices if {
+	policy := `package p
+
+import rego.v1
+
+camelCase := "yes"
+
+test_camelcase if {
+	camelCase == "yes"
+}
+`
+	result := main with input as regal.parse_module("p.rego", policy)
+		with input.regal.file.name as "stdin"
+		with config.merged_config as {
+			"capabilities": {},
+			"rules": {
+				"style": {"prefer-snake-case": {"level": "error"}},
+				"testing": {"file-missing-test-suffix": {"level": "error"}},
+				"idiomatic": {"directory-package-mismatch": {"level": "error"}},
+			},
+		}
+
+	violation := util.single_set_item(result.report)
+	violation.title == "prefer-snake-case"
+
+	{notice.title | some notice in result.notices} == {"file-missing-test-suffix", "directory-package-mismatch"}
 }
 
 # regal ignore:rule-length

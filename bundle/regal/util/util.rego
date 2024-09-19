@@ -64,3 +64,11 @@ to_set(x) := x if is_set(x)
 to_set(x) := {y | some y in x} if not is_set(x)
 
 intersects(s1, s2) if count(intersection({s1, s2})) > 0
+
+# METADATA
+# description: returns the item contained in a single-item set
+single_set_item(s) := item if {
+	count(s) == 1
+
+	some item in s
+}

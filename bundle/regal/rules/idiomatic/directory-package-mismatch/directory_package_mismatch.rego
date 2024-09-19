@@ -8,6 +8,12 @@ import data.regal.ast
 import data.regal.config
 import data.regal.result
 
+# METADATA
+# description: disabled when filename is unknown
+# custom:
+#   severity: warn
+notices contains result.notice(rego.metadata.chain()) if "no_filename" in config.capabilities.special
+
 report contains violation if {
 	# get the last n components from file path, where n == count(_pkg_path_values)
 	file_path_length_matched := array.slice(

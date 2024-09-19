@@ -15,6 +15,11 @@ import (
 )
 
 func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir string) ([]string, error) {
+	// - special case for stdin, return as is
+	if len(paths) == 1 && paths[0] == "-" {
+		return paths, nil
+	}
+
 	// if set, rootDir is normalized to end with a platform appropriate separator
 	if rootDir != "" && !strings.HasSuffix(rootDir, string(filepath.Separator)) {
 		rootDir += string(filepath.Separator)

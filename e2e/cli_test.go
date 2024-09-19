@@ -947,29 +947,28 @@ func TestFixWithConflicts(t *testing.T) {
 
 	initialState := map[string]string{
 		".regal/config.yaml": "", // needed to find the root in the right place
+		// this file is in the correct location
+		"foo/foo.rego": `package foo
+
+import rego.v1
+`,
+		// this file should be at foo/foo.rego, but that file already exists
+		"quz/foo.rego": `package foo
+
+import rego.v1
+`,
+		// these thre files should all be at bar/bar.rego, but they cannot all be moved there
 		"foo/bar.rego": `package bar
 
 import rego.v1
-
-allow if {
-	true
-}
 `,
 		"baz/bar.rego": `package bar
 
 import rego.v1
-
-allow if {
-	true
-}
 `,
-		"bax/foo/bar/bar.rego": `package bar
+		"bax/foo/wow/bar.rego": `package bar
 
 import rego.v1
-
-allow if {
-	true
-}
 `,
 	}
 
@@ -983,9 +982,15 @@ allow if {
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 1, &stdout, &stderr)
 
-	expStdout := fmt.Sprintf(`Fix conflicts detected:
-In project root: %s
+	expStdout := fmt.Sprintf(`Source file conflicts:
+In project root: %[1]s
+Cannot overwrite existing file: foo/foo.rego
+- quz/foo.rego
+
+Many to one conflicts:
+In project root: %[1]s
 Cannot move multiple files to: bar/bar.rego
+- bax/foo/wow/bar.rego
 - baz/bar.rego
 - foo/bar.rego
 `, td)

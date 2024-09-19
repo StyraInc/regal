@@ -44,46 +44,79 @@ func (r *PrettyReporter) SetDryRun(dryRun bool) {
 }
 
 func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
-	byRoot := make(map[string][]string)
+	roots := util.Keys(fixReport.conflictsSourceFile)
+	slices.Sort(roots)
 
-	for _, file := range fixReport.FixedFiles() {
-		fixes := fixReport.FixesForFile(file)
-		if len(fixes) == 0 {
-			continue
-		}
+	if len(roots) > 0 {
+		fmt.Fprintln(r.outputWriter, "Source file conflicts:")
 
-		root := fixes[0].Root
+		i := 0
 
-		byRoot[root] = append(byRoot[root], file)
-	}
+		for _, rootKey := range roots {
+			if i > 0 {
+				fmt.Fprintln(r.outputWriter)
+			}
 
-	i := 0
-
-	rootsSorted := util.Keys(byRoot)
-
-	slices.Sort(rootsSorted)
-
-	fmt.Fprintln(r.outputWriter, "Fix conflicts detected:")
-
-	for _, root := range rootsSorted {
-		if i > 0 {
-			fmt.Fprintln(r.outputWriter)
-		}
-
-		fmt.Fprintln(r.outputWriter, "In project root:", root)
-
-		for _, file := range byRoot[root] {
-			oldPaths, ok := fixReport.movedFiles[file]
-			if !ok || len(oldPaths) < 2 {
+			cs, ok := fixReport.conflictsSourceFile[rootKey]
+			if !ok {
 				continue
 			}
 
-			slices.Sort(oldPaths)
+			conflictingFiles := util.Keys(cs)
+			slices.Sort(conflictingFiles)
 
-			fmt.Fprintln(r.outputWriter, "Cannot move multiple files to:", strings.TrimPrefix(file, root+"/"))
+			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
 
-			for _, oldPath := range fixReport.movedFiles[file] {
-				fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, root+"/"))
+			for _, file := range conflictingFiles {
+				conflicts := fixReport.conflictsSourceFile[rootKey][file]
+				slices.Sort(conflicts)
+
+				fmt.Fprintln(r.outputWriter, "Cannot overwrite existing file:", strings.TrimPrefix(file, rootKey+"/"))
+
+				for _, oldPath := range conflicts {
+					fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, rootKey+"/"))
+				}
+			}
+		}
+	}
+
+	roots = util.Keys(fixReport.conflictsManyToOne)
+	slices.Sort(roots)
+
+	if len(roots) > 0 {
+		if len(fixReport.conflictsSourceFile) > 0 {
+			fmt.Fprintln(r.outputWriter)
+		}
+
+		fmt.Fprintln(r.outputWriter, "Many to one conflicts:")
+
+		i := 0
+
+		for _, rootKey := range roots {
+			if i > 0 {
+				fmt.Fprintln(r.outputWriter)
+			}
+
+			cs, ok := fixReport.conflictsManyToOne[rootKey]
+			if !ok {
+				continue
+			}
+
+			conflictingFiles := util.Keys(cs)
+			slices.Sort(conflictingFiles)
+
+			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
+
+			for _, file := range conflictingFiles {
+				fmt.Fprintln(r.outputWriter, "Cannot move multiple files to:", strings.TrimPrefix(file, rootKey+"/"))
+
+				// get the old paths from the movedFiles since that includes all the files moved, not just the conflicting ones
+				oldPaths := fixReport.movedFiles[file]
+				slices.Sort(oldPaths)
+
+				for _, oldPath := range oldPaths {
+					fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, rootKey+"/"))
+				}
 			}
 		}
 	}

@@ -10,15 +10,19 @@ import (
 // Report contains updated file contents and summary information about the fixes that were applied
 // during a fix operation.
 type Report struct {
-	totalFixes uint
-	fileFixes  map[string][]fixes.FixResult
-	movedFiles map[string][]string
+	totalFixes          uint
+	fileFixes           map[string][]fixes.FixResult
+	movedFiles          map[string][]string
+	conflictsManyToOne  map[string]map[string][]string
+	conflictsSourceFile map[string]map[string][]string
 }
 
 func NewReport() *Report {
 	return &Report{
-		fileFixes:  make(map[string][]fixes.FixResult),
-		movedFiles: make(map[string][]string),
+		fileFixes:           make(map[string][]fixes.FixResult),
+		movedFiles:          make(map[string][]string),
+		conflictsManyToOne:  make(map[string]map[string][]string),
+		conflictsSourceFile: make(map[string]map[string][]string),
 	}
 }
 
@@ -36,10 +40,8 @@ func (r *Report) MergeFixes(path1, path2 string) {
 	delete(r.fileFixes, path2)
 }
 
-func (r *Report) RegisterOldPathForFile(newPath, oldPath string) error {
+func (r *Report) RegisterOldPathForFile(newPath, oldPath string) {
 	r.movedFiles[newPath] = append(r.movedFiles[newPath], oldPath)
-
-	return nil
 }
 
 func (r *Report) OldPathForFile(newPath string) (string, bool) {
@@ -66,12 +68,30 @@ func (r *Report) TotalFixes() uint {
 	return r.totalFixes
 }
 
-func (r *Report) HasConflicts() bool {
-	for _, oldPaths := range r.movedFiles {
-		if len(oldPaths) > 1 {
-			return true
-		}
+func (r *Report) RegisterConflictManyToOne(root, newPath, oldPath string) {
+	if _, ok := r.conflictsManyToOne[root]; !ok {
+		r.conflictsManyToOne[root] = make(map[string][]string)
 	}
 
-	return false
+	if _, ok := r.conflictsManyToOne[root][newPath]; !ok {
+		r.conflictsManyToOne[root][newPath] = make([]string, 0)
+	}
+
+	r.conflictsManyToOne[root][newPath] = append(r.conflictsManyToOne[root][newPath], oldPath)
+}
+
+func (r *Report) RegisterConflictSourceFile(root, newPath, oldPath string) {
+	if _, ok := r.conflictsSourceFile[root]; !ok {
+		r.conflictsSourceFile[root] = make(map[string][]string)
+	}
+
+	if _, ok := r.conflictsSourceFile[root][newPath]; !ok {
+		r.conflictsSourceFile[root][newPath] = make([]string, 0)
+	}
+
+	r.conflictsSourceFile[root][newPath] = append(r.conflictsSourceFile[root][newPath], oldPath)
+}
+
+func (r *Report) HasConflicts() bool {
+	return len(r.conflictsManyToOne) > 0 || len(r.conflictsSourceFile) > 0
 }

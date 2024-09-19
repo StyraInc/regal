@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
 
@@ -194,6 +195,11 @@ func (f *Fixer) applyLinterFixes(
 		}
 	}
 
+	startingFiles, err := fp.List()
+	if err != nil {
+		return fmt.Errorf("failed to list files: %w", err)
+	}
+
 	for {
 		fixMadeInIteration := false
 
@@ -269,10 +275,7 @@ func (f *Fixer) applyLinterFixes(
 				// A conflict occurs if attempting to rename to an existing path
 				// which exists due to another renaming fix
 				if errors.As(err, &fileprovider.RenameConflictError{}) {
-					otherOldNames, ok := fixReport.movedFiles[to]
-					if ok && len(otherOldNames) > 0 {
-						isConflict = true
-					}
+					isConflict = true
 				}
 
 				if err != nil && !isConflict {
@@ -281,15 +284,18 @@ func (f *Fixer) applyLinterFixes(
 
 				fixReport.AddFileFix(to, fixResult)
 				fixReport.MergeFixes(to, from)
+				fixReport.RegisterOldPathForFile(to, from)
 
-				if err := fixReport.RegisterOldPathForFile(to, from); err != nil {
-					return fmt.Errorf("failed to register old path for file %s: %w", to, err)
-				}
-
-				// Clean the old file to prevent repeated fixes
 				if isConflict {
+					// Clean the old file to prevent repeated fixes
 					if err := fp.Delete(from); err != nil {
 						return fmt.Errorf("failed to delete file %s: %w", from, err)
+					}
+
+					if slices.Contains(startingFiles, to) {
+						fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
+					} else {
+						fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
 					}
 				}
 

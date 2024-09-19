@@ -938,6 +938,74 @@ test_allow := true
 	}
 }
 
+func TestFixWithConflicts(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	initialState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
+		"foo/bar.rego": `package bar
+
+import rego.v1
+
+allow if {
+	true
+}
+`,
+		"baz/bar.rego": `package bar
+
+import rego.v1
+
+allow if {
+	true
+}
+`,
+		"bax/foo/bar/bar.rego": `package bar
+
+import rego.v1
+
+allow if {
+	true
+}
+`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), string(content))
+	}
+
+	// --force is required to make the changes when there is no git repo
+	err := regal(&stdout, &stderr)("fix", "--force", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 1, &stdout, &stderr)
+
+	expStdout := fmt.Sprintf(`Fix conflicts detected:
+In project root: %s
+Cannot move multiple files to: bar/bar.rego
+- baz/bar.rego
+- foo/bar.rego
+`, td)
+
+	if act := stdout.String(); expStdout != act {
+		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
+	}
+
+	for file, expectedContent := range initialState {
+		bs, err := os.ReadFile(filepath.Join(td, file))
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", file, err)
+		}
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+}
+
 // verify fix for https://github.com/StyraInc/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	t.Parallel()

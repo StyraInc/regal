@@ -1,7 +1,6 @@
 package fixer
 
 import (
-	"fmt"
 	"slices"
 
 	"github.com/styrainc/regal/internal/util"
@@ -13,13 +12,13 @@ import (
 type Report struct {
 	totalFixes uint
 	fileFixes  map[string][]fixes.FixResult
-	movedFiles map[string]string
+	movedFiles map[string][]string
 }
 
 func NewReport() *Report {
 	return &Report{
 		fileFixes:  make(map[string][]fixes.FixResult),
-		movedFiles: make(map[string]string),
+		movedFiles: make(map[string][]string),
 	}
 }
 
@@ -38,19 +37,19 @@ func (r *Report) MergeFixes(path1, path2 string) {
 }
 
 func (r *Report) RegisterOldPathForFile(newPath, oldPath string) error {
-	if _, ok := r.movedFiles[newPath]; ok {
-		return fmt.Errorf("file %s already moved from %s", newPath, r.movedFiles[newPath])
-	}
-
-	r.movedFiles[newPath] = oldPath
+	r.movedFiles[newPath] = append(r.movedFiles[newPath], oldPath)
 
 	return nil
 }
 
 func (r *Report) OldPathForFile(newPath string) (string, bool) {
-	oldPath, ok := r.movedFiles[newPath]
+	oldPaths, ok := r.movedFiles[newPath]
 
-	return oldPath, ok
+	if !ok || len(oldPaths) == 0 {
+		return "", false
+	}
+
+	return oldPaths[0], true
 }
 
 func (r *Report) FixedFiles() []string {
@@ -65,4 +64,14 @@ func (r *Report) FixedFiles() []string {
 func (r *Report) TotalFixes() uint {
 	// totalFixes is incremented for each unique violation that is fixed
 	return r.totalFixes
+}
+
+func (r *Report) HasConflicts() bool {
+	for _, oldPaths := range r.movedFiles {
+		if len(oldPaths) > 1 {
+			return true
+		}
+	}
+
+	return false
 }

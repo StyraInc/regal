@@ -5,6 +5,7 @@ import (
 	"io"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
@@ -42,10 +43,62 @@ func (r *PrettyReporter) SetDryRun(dryRun bool) {
 	r.dryRun = dryRun
 }
 
+func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
+	byRoot := make(map[string][]string)
+
+	for _, file := range fixReport.FixedFiles() {
+		fixes := fixReport.FixesForFile(file)
+		if len(fixes) == 0 {
+			continue
+		}
+
+		root := fixes[0].Root
+
+		byRoot[root] = append(byRoot[root], file)
+	}
+
+	i := 0
+
+	rootsSorted := util.Keys(byRoot)
+
+	slices.Sort(rootsSorted)
+
+	fmt.Fprintln(r.outputWriter, "Fix conflicts detected:")
+
+	for _, root := range rootsSorted {
+		if i > 0 {
+			fmt.Fprintln(r.outputWriter)
+		}
+
+		fmt.Fprintln(r.outputWriter, "In project root:", root)
+
+		for _, file := range byRoot[root] {
+			oldPaths, ok := fixReport.movedFiles[file]
+			if !ok || len(oldPaths) < 2 {
+				continue
+			}
+
+			slices.Sort(oldPaths)
+
+			fmt.Fprintln(r.outputWriter, "Cannot move multiple files to:", strings.TrimPrefix(file, root+"/"))
+
+			for _, oldPath := range fixReport.movedFiles[file] {
+				fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, root+"/"))
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *PrettyReporter) Report(fixReport *Report) error {
 	action := "applied"
 	if r.dryRun {
 		action = "to apply"
+	}
+
+	if fixReport.HasConflicts() {
+		return r.ReportConflicts(fixReport)
 	}
 
 	switch x := fixReport.TotalFixes(); x {

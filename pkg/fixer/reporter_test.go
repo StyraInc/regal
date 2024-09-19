@@ -92,3 +92,50 @@ policy3.rego:
 		t.Fatalf("unexpected output:\nexpected:\n%s\ngot:\n%s", expected, got)
 	}
 }
+
+func TestPrettyReporterOutputWithConflicts(t *testing.T) {
+	t.Parallel()
+
+	var buffer bytes.Buffer
+
+	reporter := NewPrettyReporter(&buffer)
+
+	report := NewReport()
+
+	report.AddFileFix("/workspace/bundle1/foo/policy1.rego", fixes.FixResult{
+		Title: "rego-v1",
+		Root:  "/workspace/bundle1",
+	})
+
+	err := report.RegisterOldPathForFile(
+		"/workspace/bundle1/foo/policy1.rego",
+		"/workspace/bundle1/bar/policy1.rego",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = report.RegisterOldPathForFile(
+		"/workspace/bundle1/foo/policy1.rego",
+		"/workspace/bundle1/baz/policy1.rego",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = reporter.Report(report)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := `Fix conflicts detected:
+In project root: /workspace/bundle1
+Cannot move multiple files to: foo/policy1.rego
+- bar/policy1.rego
+- baz/policy1.rego
+`
+
+	if got := buffer.String(); got != expected {
+		t.Fatalf("unexpected output:\nexpected:\n%s\ngot:\n%s", expected, got)
+	}
+}

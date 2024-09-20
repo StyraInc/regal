@@ -5,7 +5,14 @@ package regal.rules.testing["file-missing-test-suffix"]
 import rego.v1
 
 import data.regal.ast
+import data.regal.config
 import data.regal.result
+
+# METADATA
+# description: disabled when filename is unknown
+# custom:
+#   severity: warn
+notices contains result.notice(rego.metadata.chain()) if "no_filename" in config.capabilities.special
 
 report contains violation if {
 	count(ast.tests) > 0

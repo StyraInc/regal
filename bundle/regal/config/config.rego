@@ -11,7 +11,9 @@ docs["resolve_url"](url, category) := replace(
 
 merged_config := data.internal.combined_config
 
-capabilities := merged_config.capabilities
+capabilities := object.union(merged_config.capabilities, {"special": special})
+
+special contains "no_filename" if input.regal.file.name == "stdin"
 
 default for_rule(_, _) := {"level": "error"}
 

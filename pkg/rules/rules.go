@@ -3,6 +3,8 @@ package rules
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"sync"
 
@@ -58,6 +60,10 @@ func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Inp
 // paths point to valid Rego files. Use config.FilterIgnoredPaths to filter out unwanted content *before* calling this
 // function.
 func InputFromPaths(paths []string) (Input, error) {
+	if len(paths) == 1 && paths[0] == "-" {
+		return inputFromStdin()
+	}
+
 	fileContent := make(map[string]string, len(paths))
 	modules := make(map[string]*ast.Module, len(paths))
 
@@ -96,6 +102,24 @@ func InputFromPaths(paths []string) (Input, error) {
 	}
 
 	return NewInput(fileContent, modules), nil
+}
+
+func inputFromStdin() (Input, error) {
+	// Ideally, we'd just pass the reader to OPA, but as the parser materializes
+	// the input immediately anyway, there's currently no benefit to doing so.
+	bs, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return Input{}, fmt.Errorf("failed to read from reader: %w", err)
+	}
+
+	policy := string(bs)
+
+	module, err := parse.Module("stdin", policy)
+	if err != nil {
+		return Input{}, fmt.Errorf("failed to parse module from stdin: %w", err)
+	}
+
+	return NewInput(map[string]string{"stdin": policy}, map[string]*ast.Module{"stdin": module}), nil
 }
 
 // InputFromText creates a new Input from raw Rego text.

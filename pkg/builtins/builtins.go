@@ -41,12 +41,12 @@ var RegalLastMeta = &rego.Function{
 
 // RegalParseModule regal.parse_module, like rego.parse_module but with location data included in AST.
 func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Term) (*ast.Term, error) {
-	policyStr, err := builtins.StringOperand(policy.Value, 1)
+	filenameStr, err := builtins.StringOperand(filename.Value, 1)
 	if err != nil {
 		return nil, err
 	}
 
-	filenameStr, err := builtins.StringOperand(filename.Value, 2)
+	policyStr, err := builtins.StringOperand(policy.Value, 2)
 	if err != nil {
 		return nil, err
 	}

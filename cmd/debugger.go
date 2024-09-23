@@ -16,8 +16,10 @@ import (
 	"github.com/open-policy-agent/opa/ast/location"
 	"github.com/open-policy-agent/opa/debug"
 	"github.com/open-policy-agent/opa/logging"
+	"github.com/open-policy-agent/opa/rego"
 
 	"github.com/styrainc/regal/internal/dap"
+	"github.com/styrainc/regal/pkg/builtins"
 )
 
 func init() {
@@ -257,7 +259,9 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 		}
 
 		// FIXME: Should we protect this with a mutex?
-		s.session, err = s.debugger.LaunchEval(ctx, evalProps)
+		s.session, err = s.debugger.LaunchEval(ctx, evalProps,
+			debug.RegoOption(rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule)),
+			debug.RegoOption(rego.Function1(builtins.RegalLastMeta, builtins.RegalLast)))
 	case "test":
 		err = errors.New("test not supported")
 	case "":

@@ -11,15 +11,15 @@ import (
 	"strings"
 
 	godap "github.com/google/go-dap"
-	"github.com/open-policy-agent/opa/rego"
 	"github.com/spf13/cobra"
-	"github.com/styrainc/regal/pkg/builtins"
 
 	"github.com/open-policy-agent/opa/ast/location"
 	"github.com/open-policy-agent/opa/debug"
 	"github.com/open-policy-agent/opa/logging"
+	"github.com/open-policy-agent/opa/rego"
 
 	"github.com/styrainc/regal/internal/dap"
+	"github.com/styrainc/regal/pkg/builtins"
 )
 
 func init() {

@@ -16,12 +16,20 @@ import (
 	"github.com/styrainc/regal/pkg/linter"
 )
 
+type OnConflictOperation string
+
+const (
+	OnConflictError  OnConflictOperation = "error"
+	OnConflictRename OnConflictOperation = "rename"
+)
+
 // NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {
 	return &Fixer{
 		registeredFixes:          make(map[string]any),
 		registeredMandatoryFixes: make(map[string]any),
 		registeredRoots:          make([]string, 0),
+		onConflictOperation:      OnConflictError,
 	}
 }
 
@@ -30,6 +38,12 @@ type Fixer struct {
 	registeredFixes          map[string]any
 	registeredMandatoryFixes map[string]any
 	registeredRoots          []string
+	onConflictOperation      OnConflictOperation
+}
+
+// SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
+func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) {
+	f.onConflictOperation = operation
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
@@ -217,6 +231,10 @@ func (f *Fixer) applyLinterFixes(
 			return fmt.Errorf("failed to lint before fixing: %w", err)
 		}
 
+		if len(rep.Violations) == 0 {
+			break
+		}
+
 		for _, violation := range rep.Violations {
 			file := violation.Location.File
 
@@ -266,42 +284,14 @@ func (f *Fixer) applyLinterFixes(
 			fixResult := fixResults[0]
 
 			if fixResult.Rename != nil {
-				to := fixResult.Rename.ToPath
-				from := fixResult.Rename.FromPath
-
-				var isConflict bool
-
-				err := fp.Rename(from, to)
-				// A conflict occurs if attempting to rename to an existing path
-				// which exists due to another renaming fix
-				if errors.As(err, &fileprovider.RenameConflictError{}) {
-					isConflict = true
-				}
-
-				if err != nil && !isConflict {
-					return fmt.Errorf("failed to rename file: %w", err)
-				}
-
-				fixReport.AddFileFix(to, fixResult)
-				fixReport.MergeFixes(to, from)
-				fixReport.RegisterOldPathForFile(to, from)
-
-				if isConflict {
-					// Clean the old file to prevent repeated fixes
-					if err := fp.Delete(from); err != nil {
-						return fmt.Errorf("failed to delete file %s: %w", from, err)
-					}
-
-					if slices.Contains(startingFiles, to) {
-						fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
-					} else {
-						fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
-					}
+				err = f.handleRename(fp, fixReport, startingFiles, fixResult)
+				if err != nil {
+					return err
 				}
 
 				fixMadeInIteration = true
 
-				break
+				break // Restart the loop after handling a rename
 			}
 
 			// Write the fixed content to the file
@@ -318,6 +308,76 @@ func (f *Fixer) applyLinterFixes(
 			break
 		}
 	}
+
+	return nil
+}
+
+// handleRename processes the rename operation and resolves conflicts if necessary.
+func (f *Fixer) handleRename(
+	fp fileprovider.FileProvider,
+	fixReport *Report,
+	startingFiles []string,
+	fixResult fixes.FixResult,
+) error {
+	to := fixResult.Rename.ToPath
+	from := fixResult.Rename.FromPath
+
+	for {
+		err := fp.Rename(from, to)
+		if err == nil {
+			// if there is no error, and no conflict, we have nothing to do
+			break
+		}
+
+		var isConflict bool
+		if errors.As(err, &fileprovider.RenameConflictError{}) {
+			isConflict = true
+		} else {
+			return fmt.Errorf("failed to rename file: %w", err)
+		}
+
+		if isConflict {
+			switch f.onConflictOperation {
+			case OnConflictError:
+				// OnConflictError is the default, these operations are taken to
+				// ensure the correct state in the report for outputting the
+				// verbose conflict report.
+				// clean the old file to prevent repeated fixes
+				if err := fp.Delete(from); err != nil {
+					return fmt.Errorf("failed to delete file %s: %w", from, err)
+				}
+
+				if slices.Contains(startingFiles, to) {
+					fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
+				} else {
+					fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
+				}
+
+				fixReport.AddFileFix(to, fixResult)
+				fixReport.MergeFixes(to, from)
+				fixReport.RegisterOldPathForFile(to, from)
+
+				return nil
+			case OnConflictRename:
+				// OnConflictRename will select a new filename until there is no
+				// conflict.
+				to = renameCandidate(to)
+
+				continue
+			default:
+				return fmt.Errorf("unsupported conflict operation: %v", f.onConflictOperation)
+			}
+		}
+	}
+
+	// update the fix result with the new path for consistency
+	if to != fixResult.Rename.ToPath {
+		fixResult.Rename.ToPath = to
+	}
+
+	fixReport.AddFileFix(to, fixResult)
+	fixReport.MergeFixes(to, from)
+	fixReport.RegisterOldPathForFile(to, from)
 
 	return nil
 }

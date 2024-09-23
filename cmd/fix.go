@@ -50,6 +50,7 @@ type fixCommandParams struct {
 	dryRun          bool
 	verbose         bool
 	force           bool
+	conflictMode    string
 }
 
 func (p *fixCommandParams) getConfigFile() string {
@@ -149,6 +150,9 @@ The linter rules with automatic fixes available are currently:
 
 	fixCommand.Flags().BoolVarP(&params.force, "force", "", false,
 		"allow fixing of files that have uncommitted changes in git or when git is not being used")
+
+	fixCommand.Flags().StringVarP(&params.conflictMode, "on-conflict", "", "error",
+		"configure behavior when filename conflicts are detected. Options are 'error' (default) or 'rename'")
 
 	addPprofFlag(fixCommand.Flags())
 
@@ -275,6 +279,15 @@ func fix(args []string, params *fixCommandParams) error {
 			},
 		},
 	)
+
+	if !slices.Contains([]string{"error", "rename"}, params.conflictMode) {
+		return fmt.Errorf("invalid conflict mode: %s, expected 'error' or 'rename'", params.conflictMode)
+	}
+
+	// the default is error, so this is only set when it's rename
+	if params.conflictMode == "rename" {
+		f.SetOnConflictOperation(fixer.OnConflictRename)
+	}
 
 	ignore := userConfig.Ignore.Files
 

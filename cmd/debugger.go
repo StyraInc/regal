@@ -11,7 +11,9 @@ import (
 	"strings"
 
 	godap "github.com/google/go-dap"
+	"github.com/open-policy-agent/opa/rego"
 	"github.com/spf13/cobra"
+	"github.com/styrainc/regal/pkg/builtins"
 
 	"github.com/open-policy-agent/opa/ast/location"
 	"github.com/open-policy-agent/opa/debug"
@@ -257,7 +259,9 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 		}
 
 		// FIXME: Should we protect this with a mutex?
-		s.session, err = s.debugger.LaunchEval(ctx, evalProps)
+		s.session, err = s.debugger.LaunchEval(ctx, evalProps,
+			debug.RegoOption(rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule)),
+			debug.RegoOption(rego.Function1(builtins.RegalLastMeta, builtins.RegalLast)))
 	case "test":
 		err = errors.New("test not supported")
 	case "":

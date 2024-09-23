@@ -336,12 +336,13 @@ capabilities:
 		}
 	}
 
-	// NOTE(charles): the configuration is updated asynchronously from the
-	// thread the test is running in. This check prevents a race condition
-	// where the completion test runs before rego.builtIns is updated which
-	// was causing flaky tests in CI.
+	// manually inspect the server's list of builtins to ensure that the EOPA
+	// capabilities were loaded correctly.
 	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
 
 	for {
 		success := false
@@ -349,17 +350,15 @@ capabilities:
 		select {
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for builtins map to be updated")
-		default:
+		case <-ticker.C:
 			bis := rego.GetBuiltins()
 
 			// Search for a builtin we know is only in the EOPA capabilities.
-			if _, ok := bis["startswith"]; ok {
+			if _, ok := bis["neo4j.query"]; ok {
 				success = true
-			} else {
-				// If we hammer the mutex too hard, it may never
-				// get a chance to be updated.
-				time.Sleep(100 * time.Millisecond)
 			}
+
+			t.Logf("waiting for neo4j.query builtin to be present, got %v", bis)
 		}
 
 		if success {
@@ -426,7 +425,7 @@ allow := neo4j.q
 	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker = time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {

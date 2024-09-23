@@ -318,6 +318,8 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
 	}
 
+	r.SetDryRun(params.dryRun)
+
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {
 		return fmt.Errorf("failed to fix: %w", err)

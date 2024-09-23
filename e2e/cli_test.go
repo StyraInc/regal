@@ -957,7 +957,7 @@ import rego.v1
 
 import rego.v1
 `,
-		// these thre files should all be at bar/bar.rego, but they cannot all be moved there
+		// these three files should all be at bar/bar.rego, but they cannot all be moved there
 		"foo/bar.rego": `package bar
 
 import rego.v1

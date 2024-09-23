@@ -938,6 +938,189 @@ test_allow := true
 	}
 }
 
+func TestFixWithConflicts(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	initialState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
+		// this file is in the correct location
+		"foo/foo.rego": `package foo
+
+import rego.v1
+`,
+		// this file should be at foo/foo.rego, but that file already exists
+		"quz/foo.rego": `package foo
+
+import rego.v1
+`,
+		// these three files should all be at bar/bar.rego, but they cannot all be moved there
+		"foo/bar.rego": `package bar
+
+import rego.v1
+`,
+		"baz/bar.rego": `package bar
+
+import rego.v1
+`,
+		"bax/foo/wow/bar.rego": `package bar
+
+import rego.v1
+`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), string(content))
+	}
+
+	// --force is required to make the changes when there is no git repo
+	err := regal(&stdout, &stderr)("fix", "--force", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 1, &stdout, &stderr)
+
+	expStdout := fmt.Sprintf(`Source file conflicts:
+In project root: %[1]s
+Cannot overwrite existing file: foo/foo.rego
+- quz/foo.rego
+
+Many to one conflicts:
+In project root: %[1]s
+Cannot move multiple files to: bar/bar.rego
+- bax/foo/wow/bar.rego
+- baz/bar.rego
+- foo/bar.rego
+`, td)
+
+	if act := stdout.String(); expStdout != act {
+		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
+	}
+
+	for file, expectedContent := range initialState {
+		bs, err := os.ReadFile(filepath.Join(td, file))
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", file, err)
+		}
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+}
+
+func TestFixWithConflictRenaming(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	initialState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
+		// this file is in the correct location
+		"foo/foo.rego": `package foo
+
+import rego.v1
+`,
+		// this file is in the correct location
+		"foo/foo_test.rego": `package foo_test
+
+import rego.v1
+`,
+		// this file should be at foo/foo.rego, but that file already exists
+		"quz/foo.rego": `package foo
+
+import rego.v1
+`,
+		// this file should be at foo/foo_test.rego, but that file already exists
+		"quz/foo_test.rego": `package foo_test
+
+import rego.v1
+`,
+		// this file should be at bar/bar.rego and is not a conflict
+		"foo/bar.rego": `package bar
+
+import rego.v1
+`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), string(content))
+	}
+
+	// --force is required to make the changes when there is no git repo
+	// --conflict=rename will rename inbound files when there is a conflict
+	err := regal(&stdout, &stderr)("fix", "--force", "--on-conflict=rename", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	expStdout := fmt.Sprintf(`3 fixes applied:
+In project root: %[1]s
+foo/bar.rego -> bar/bar.rego:
+- directory-package-mismatch
+quz/foo.rego -> foo/foo_1.rego:
+- directory-package-mismatch
+quz/foo_test.rego -> foo/foo_1_test.rego:
+- directory-package-mismatch
+`, td)
+
+	if act := stdout.String(); expStdout != act {
+		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
+	}
+
+	expectedState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
+		// unchanged
+		"foo/foo.rego": `package foo
+
+import rego.v1
+`,
+		// renamed to permit its new location
+		"foo/foo_1.rego": `package foo
+
+import rego.v1
+`,
+		// renamed to permit its new location
+		"foo/foo_1_test.rego": `package foo_test
+
+import rego.v1
+`,
+		// unchanged
+		"bar/bar.rego": `package bar
+
+import rego.v1
+`,
+	}
+
+	for file, expectedContent := range expectedState {
+		bs, err := os.ReadFile(filepath.Join(td, file))
+		if err != nil {
+			t.Errorf("failed to read %s: %v", file, err)
+
+			continue
+		}
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+
+	expectedMissing := []string{
+		"quz/foo.rego",
+		"quz/foo_test.rego",
+	}
+
+	for _, file := range expectedMissing {
+		if _, err := os.Stat(filepath.Join(td, file)); err == nil {
+			t.Errorf("expected %s to have been removed", file)
+		}
+	}
+}
+
 // verify fix for https://github.com/StyraInc/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	t.Parallel()

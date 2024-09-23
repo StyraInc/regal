@@ -3,8 +3,10 @@ package fixer
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/open-policy-agent/opa/ast"
 
@@ -14,12 +16,20 @@ import (
 	"github.com/styrainc/regal/pkg/linter"
 )
 
+type OnConflictOperation string
+
+const (
+	OnConflictError  OnConflictOperation = "error"
+	OnConflictRename OnConflictOperation = "rename"
+)
+
 // NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {
 	return &Fixer{
 		registeredFixes:          make(map[string]any),
 		registeredMandatoryFixes: make(map[string]any),
 		registeredRoots:          make([]string, 0),
+		onConflictOperation:      OnConflictError,
 	}
 }
 
@@ -28,6 +38,12 @@ type Fixer struct {
 	registeredFixes          map[string]any
 	registeredMandatoryFixes map[string]any
 	registeredRoots          []string
+	onConflictOperation      OnConflictOperation
+}
+
+// SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
+func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) {
+	f.onConflictOperation = operation
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
@@ -90,41 +106,71 @@ func (f *Fixer) GetMandatoryFixForName(name string) (fixes.Fix, bool) {
 func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileProvider) (*Report, error) {
 	fixReport := NewReport()
 
-	// first, run the mandatory fixes against all files
-	for len(f.registeredMandatoryFixes) > 0 {
+	// Early return if there are no registered mandatory fixes
+	if len(f.registeredMandatoryFixes) == 0 && len(f.registeredFixes) == 0 {
+		return fixReport, nil
+	}
+
+	// Apply mandatory fixes
+	if err := f.applyMandatoryFixes(fp, fixReport); err != nil {
+		return nil, err
+	}
+
+	// If there are no registered fixes that require a linter, return the report
+	if len(f.registeredFixes) == 0 {
+		return fixReport, nil
+	}
+
+	// Apply fixes that require linter violation triggers
+	if err := f.applyLinterFixes(ctx, l, fp, fixReport); err != nil {
+		return nil, err
+	}
+
+	return fixReport, nil
+}
+
+// applyMandatoryFixes handles the application of mandatory fixes to all files.
+func (f *Fixer) applyMandatoryFixes(fp fileprovider.FileProvider, fixReport *Report) error {
+	if len(f.registeredMandatoryFixes) == 0 {
+		return nil
+	}
+
+	for {
 		fixMadeInIteration := false
 
 		files, err := fp.List()
 		if err != nil {
-			return nil, fmt.Errorf("failed to list files: %w", err)
+			return fmt.Errorf("failed to list files: %w", err)
 		}
 
 		for _, file := range files {
 			for fix := range f.registeredMandatoryFixes {
 				fixInstance, ok := f.GetMandatoryFixForName(fix)
 				if !ok {
-					return nil, fmt.Errorf("no mandatory fix matched %s", fix)
+					return fmt.Errorf("no mandatory fix matched %s", fix)
 				}
 
 				fc, err := fp.Get(file)
 				if err != nil {
-					return nil, fmt.Errorf("failed to get file %s: %w", file, err)
+					return fmt.Errorf("failed to get file %s: %w", file, err)
 				}
 
-				fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
+				fixCandidate := fixes.FixCandidate{
+					Filename: file,
+					Contents: fc,
+				}
 
 				fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
 					BaseDir: util.FindClosestMatchingRoot(file, f.registeredRoots),
 				})
 				if err != nil {
-					return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+					return fmt.Errorf("failed to fix %s: %w", file, err)
 				}
 
 				for _, fixResult := range fixResults {
 					if !bytes.Equal(fc, fixResult.Contents) {
-						err := fp.Put(file, fixResult.Contents)
-						if err != nil {
-							return nil, fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
+						if err := fp.Put(file, fixResult.Contents); err != nil {
+							return fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
 						}
 
 						fixReport.AddFileFix(file, fixResult)
@@ -140,16 +186,19 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
-	// if there are no registeredFixes (fixes that require a linter), then
-	// we are done
-	if len(f.registeredFixes) == 0 {
-		return fixReport, nil
-	}
+	return nil
+}
 
-	// next, run the fixes that require a linter violation trigger
+// applyLinterFixes handles the application of fixes that require linter violation triggers.
+func (f *Fixer) applyLinterFixes(
+	ctx context.Context,
+	l *linter.Linter,
+	fp fileprovider.FileProvider,
+	fixReport *Report,
+) error {
 	enabledRules, err := l.DetermineEnabledRules(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to determine enabled rules: %w", err)
+		return fmt.Errorf("failed to determine enabled rules: %w", err)
 	}
 
 	var fixableEnabledRules []string
@@ -160,12 +209,17 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
+	startingFiles, err := fp.List()
+	if err != nil {
+		return fmt.Errorf("failed to list files: %w", err)
+	}
+
 	for {
 		fixMadeInIteration := false
 
 		in, err := fp.ToInput()
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate linter input: %w", err)
+			return fmt.Errorf("failed to generate linter input: %w", err)
 		}
 
 		fixLinter := l.WithDisableAll(true).
@@ -174,7 +228,11 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 
 		rep, err := fixLinter.Lint(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to lint before fixing: %w", err)
+			return fmt.Errorf("failed to lint before fixing: %w", err)
+		}
+
+		if len(rep.Violations) == 0 {
+			break
 		}
 
 		for _, violation := range rep.Violations {
@@ -182,24 +240,27 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 
 			fixInstance, ok := f.GetFixForName(violation.Title)
 			if !ok {
-				return nil, fmt.Errorf("no fix for violation %s", violation.Title)
+				return fmt.Errorf("no fix for violation %s", violation.Title)
 			}
 
 			fc, err := fp.Get(file)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get file %s: %w", file, err)
+				return fmt.Errorf("failed to get file %s: %w", file, err)
 			}
 
-			fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
+			fixCandidate := fixes.FixCandidate{
+				Filename: file,
+				Contents: fc,
+			}
 
 			config, err := l.GetConfig()
 			if err != nil {
-				return nil, fmt.Errorf("failed to get config: %w", err)
+				return fmt.Errorf("failed to get config: %w", err)
 			}
 
 			abs, err := filepath.Abs(file)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get absolute path for %s: %w", file, err)
+				return fmt.Errorf("failed to get absolute path for %s: %w", file, err)
 			}
 
 			fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
@@ -213,44 +274,29 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 				},
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+				return fmt.Errorf("failed to fix %s: %w", file, err)
 			}
 
 			if len(fixResults) == 0 {
 				continue
 			}
 
-			// Note: Only one content update fix result is currently supported
 			fixResult := fixResults[0]
 
-			// if file was moved, we need to update the file provider accordingly
 			if fixResult.Rename != nil {
-				to := fixResult.Rename.ToPath
-				from := fixResult.Rename.FromPath
-
-				err := fp.Rename(from, to)
+				err = f.handleRename(fp, fixReport, startingFiles, fixResult)
 				if err != nil {
-					return nil, fmt.Errorf("failed to rename file: %w", err)
-				}
-
-				fixReport.AddFileFix(to, fixResult)
-
-				fixReport.MergeFixes(to, from)
-
-				err = fixReport.RegisterOldPathForFile(to, from)
-				if err != nil {
-					return nil, fmt.Errorf("failed to register old path for file %s: %w", to, err)
+					return err
 				}
 
 				fixMadeInIteration = true
 
-				break
+				break // Restart the loop after handling a rename
 			}
 
-			// TODO: this is an extra write IFF renaming
-			err = fp.Put(file, fixResult.Contents)
-			if err != nil {
-				return nil, fmt.Errorf("failed to write fixed content to file %s: %w", violation.Location.File, err)
+			// Write the fixed content to the file
+			if err := fp.Put(file, fixResult.Contents); err != nil {
+				return fmt.Errorf("failed to write fixed content to file %s: %w", file, err)
 			}
 
 			fixReport.AddFileFix(file, fixResult)
@@ -263,5 +309,75 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 		}
 	}
 
-	return fixReport, nil
+	return nil
+}
+
+// handleRename processes the rename operation and resolves conflicts if necessary.
+func (f *Fixer) handleRename(
+	fp fileprovider.FileProvider,
+	fixReport *Report,
+	startingFiles []string,
+	fixResult fixes.FixResult,
+) error {
+	to := fixResult.Rename.ToPath
+	from := fixResult.Rename.FromPath
+
+	for {
+		err := fp.Rename(from, to)
+		if err == nil {
+			// if there is no error, and no conflict, we have nothing to do
+			break
+		}
+
+		var isConflict bool
+		if errors.As(err, &fileprovider.RenameConflictError{}) {
+			isConflict = true
+		} else {
+			return fmt.Errorf("failed to rename file: %w", err)
+		}
+
+		if isConflict {
+			switch f.onConflictOperation {
+			case OnConflictError:
+				// OnConflictError is the default, these operations are taken to
+				// ensure the correct state in the report for outputting the
+				// verbose conflict report.
+				// clean the old file to prevent repeated fixes
+				if err := fp.Delete(from); err != nil {
+					return fmt.Errorf("failed to delete file %s: %w", from, err)
+				}
+
+				if slices.Contains(startingFiles, to) {
+					fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
+				} else {
+					fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
+				}
+
+				fixReport.AddFileFix(to, fixResult)
+				fixReport.MergeFixes(to, from)
+				fixReport.RegisterOldPathForFile(to, from)
+
+				return nil
+			case OnConflictRename:
+				// OnConflictRename will select a new filename until there is no
+				// conflict.
+				to = renameCandidate(to)
+
+				continue
+			default:
+				return fmt.Errorf("unsupported conflict operation: %v", f.onConflictOperation)
+			}
+		}
+	}
+
+	// update the fix result with the new path for consistency
+	if to != fixResult.Rename.ToPath {
+		fixResult.Rename.ToPath = to
+	}
+
+	fixReport.AddFileFix(to, fixResult)
+	fixReport.MergeFixes(to, from)
+	fixReport.RegisterOldPathForFile(to, from)
+
+	return nil
 }

@@ -60,7 +60,9 @@ func TestRenameConflict(t *testing.T) {
 		t.Fatal("expected error")
 	}
 
-	if err.Error() != "rename conflict: file /bar/foo already exists" {
-		t.Fatalf("expected %s, got %s", "rename conflict", err.Error())
+	exp := `rename conflict: "/foo/bar/baz" cannot be renamed as the target location "/bar/foo" already exists`
+
+	if got := err.Error(); got != exp {
+		t.Fatalf("expected %s, got %s", exp, got)
 	}
 }

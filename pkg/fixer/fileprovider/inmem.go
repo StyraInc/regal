@@ -11,6 +11,15 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 )
 
+type RenameConflictError struct {
+	From string
+	To   string
+}
+
+func (e RenameConflictError) Error() string {
+	return fmt.Sprintf("rename conflict: %q cannot be renamed as the target location %q already exists", e.From, e.To)
+}
+
 type InMemoryFileProvider struct {
 	files         map[string][]byte
 	modifiedFiles map[string]struct{}
@@ -78,7 +87,10 @@ func (p *InMemoryFileProvider) Rename(from, to string) error {
 
 	_, ok = p.files[to]
 	if ok {
-		return fmt.Errorf("rename conflict: file %s already exists", to)
+		return RenameConflictError{
+			From: from,
+			To:   to,
+		}
 	}
 
 	err := p.Put(to, content)

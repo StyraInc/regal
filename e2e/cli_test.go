@@ -938,6 +938,79 @@ test_allow := true
 	}
 }
 
+func TestFixWithConflicts(t *testing.T) {
+	t.Parallel()
+
+	stdout := bytes.Buffer{}
+	stderr := bytes.Buffer{}
+	td := t.TempDir()
+
+	initialState := map[string]string{
+		".regal/config.yaml": "", // needed to find the root in the right place
+		// this file is in the correct location
+		"foo/foo.rego": `package foo
+
+import rego.v1
+`,
+		// this file should be at foo/foo.rego, but that file already exists
+		"quz/foo.rego": `package foo
+
+import rego.v1
+`,
+		// these three files should all be at bar/bar.rego, but they cannot all be moved there
+		"foo/bar.rego": `package bar
+
+import rego.v1
+`,
+		"baz/bar.rego": `package bar
+
+import rego.v1
+`,
+		"bax/foo/wow/bar.rego": `package bar
+
+import rego.v1
+`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), string(content))
+	}
+
+	// --force is required to make the changes when there is no git repo
+	err := regal(&stdout, &stderr)("fix", "--force", td)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 1, &stdout, &stderr)
+
+	expStdout := fmt.Sprintf(`Source file conflicts:
+In project root: %[1]s
+Cannot overwrite existing file: foo/foo.rego
+- quz/foo.rego
+
+Many to one conflicts:
+In project root: %[1]s
+Cannot move multiple files to: bar/bar.rego
+- bax/foo/wow/bar.rego
+- baz/bar.rego
+- foo/bar.rego
+`, td)
+
+	if act := stdout.String(); expStdout != act {
+		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
+	}
+
+	for file, expectedContent := range initialState {
+		bs, err := os.ReadFile(filepath.Join(td, file))
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", file, err)
+		}
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+}
+
 // verify fix for https://github.com/StyraInc/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	t.Parallel()

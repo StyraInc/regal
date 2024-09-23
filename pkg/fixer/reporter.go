@@ -5,6 +5,7 @@ import (
 	"io"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
@@ -42,10 +43,95 @@ func (r *PrettyReporter) SetDryRun(dryRun bool) {
 	r.dryRun = dryRun
 }
 
+func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
+	roots := util.Keys(fixReport.conflictsSourceFile)
+	slices.Sort(roots)
+
+	if len(roots) > 0 {
+		fmt.Fprintln(r.outputWriter, "Source file conflicts:")
+
+		i := 0
+
+		for _, rootKey := range roots {
+			if i > 0 {
+				fmt.Fprintln(r.outputWriter)
+			}
+
+			cs, ok := fixReport.conflictsSourceFile[rootKey]
+			if !ok {
+				continue
+			}
+
+			conflictingFiles := util.Keys(cs)
+			slices.Sort(conflictingFiles)
+
+			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
+
+			for _, file := range conflictingFiles {
+				conflicts := fixReport.conflictsSourceFile[rootKey][file]
+				slices.Sort(conflicts)
+
+				fmt.Fprintln(r.outputWriter, "Cannot overwrite existing file:", strings.TrimPrefix(file, rootKey+"/"))
+
+				for _, oldPath := range conflicts {
+					fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, rootKey+"/"))
+				}
+			}
+		}
+	}
+
+	roots = util.Keys(fixReport.conflictsManyToOne)
+	slices.Sort(roots)
+
+	if len(roots) > 0 {
+		if len(fixReport.conflictsSourceFile) > 0 {
+			fmt.Fprintln(r.outputWriter)
+		}
+
+		fmt.Fprintln(r.outputWriter, "Many to one conflicts:")
+
+		i := 0
+
+		for _, rootKey := range roots {
+			if i > 0 {
+				fmt.Fprintln(r.outputWriter)
+			}
+
+			cs, ok := fixReport.conflictsManyToOne[rootKey]
+			if !ok {
+				continue
+			}
+
+			conflictingFiles := util.Keys(cs)
+			slices.Sort(conflictingFiles)
+
+			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
+
+			for _, file := range conflictingFiles {
+				fmt.Fprintln(r.outputWriter, "Cannot move multiple files to:", strings.TrimPrefix(file, rootKey+"/"))
+
+				// get the old paths from the movedFiles since that includes all the files moved, not just the conflicting ones
+				oldPaths := fixReport.movedFiles[file]
+				slices.Sort(oldPaths)
+
+				for _, oldPath := range oldPaths {
+					fmt.Fprintln(r.outputWriter, "-", strings.TrimPrefix(oldPath, rootKey+"/"))
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *PrettyReporter) Report(fixReport *Report) error {
 	action := "applied"
 	if r.dryRun {
 		action = "to apply"
+	}
+
+	if fixReport.HasConflicts() {
+		return r.ReportConflicts(fixReport)
 	}
 
 	switch x := fixReport.TotalFixes(); x {

@@ -313,9 +313,25 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("failed to create file provider: %w", err)
 	}
 
+	r, err := fixer.ReporterForFormat(params.format, outputWriter)
+	if err != nil {
+		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
+	}
+
+	r.SetDryRun(params.dryRun)
+
 	fixReport, err := f.Fix(ctx, &l, fileProvider)
 	if err != nil {
 		return fmt.Errorf("failed to fix: %w", err)
+	}
+
+	if fixReport.HasConflicts() {
+		err = r.Report(fixReport)
+		if err != nil {
+			return fmt.Errorf("failed to output fix report: %w", err)
+		}
+
+		return errors.New("fixing failed due to conflicts")
 	}
 
 	gitRepo, err := git.FindGitRepo(args...)
@@ -427,13 +443,6 @@ please run fix from a clean state to support the use of git checkout for undo`,
 			}
 		}
 	}
-
-	r, err := fixer.ReporterForFormat(params.format, outputWriter)
-	if err != nil {
-		return fmt.Errorf("failed to create reporter for format %s: %w", params.format, err)
-	}
-
-	r.SetDryRun(params.dryRun)
 
 	err = r.Report(fixReport)
 	if err != nil {

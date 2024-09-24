@@ -1,3 +1,5 @@
+# METADATA
+# description: provides completion suggestions for the `package` keyword where applicable
 package regal.lsp.completion.providers["package"]
 
 import rego.v1
@@ -5,6 +7,8 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: completion suggestions for package keyword
 items contains item if {
 	not strings.any_prefix_match(input.regal.file.lines, "package ")
 

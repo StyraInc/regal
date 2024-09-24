@@ -1,3 +1,5 @@
+# METADATA
+# description: provides completion suggestions for the `default` keyword where applicable
 package regal.lsp.completion.providers["default"]
 
 import rego.v1
@@ -7,6 +9,9 @@ import data.regal.ast
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: all completion suggestions for default keyword
+# scope: document
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]

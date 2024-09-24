@@ -849,15 +849,13 @@ func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
 
 	if binding, ok := resultSet[0].Bindings["lint"]; ok {
 		if err := rio.JSONRoundTrip(binding, &r); err != nil {
-			return report.Report{},
-				fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+			return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
 		}
 	}
 
 	if binding, ok := resultSet[0].Bindings["lint_aggregate"]; ok {
 		if err := rio.JSONRoundTrip(binding, &r); err != nil {
-			return report.Report{},
-				fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+			return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
 		}
 	}
 

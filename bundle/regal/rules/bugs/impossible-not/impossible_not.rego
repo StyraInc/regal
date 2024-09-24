@@ -11,7 +11,7 @@ import data.regal.util
 # note: not ast.package_path as we want the "data" component here
 _package_path := [part.value | some part in input["package"].path]
 
-multivalue_rules contains path if {
+_multivalue_rules contains path if {
 	some rule in ast.rules
 
 	rule.head.key
@@ -25,7 +25,7 @@ multivalue_rules contains path if {
 	path := concat(".", array.concat(_package_path, [ref.value | some ref in rule.head.ref]))
 }
 
-negated_refs contains negated_ref if {
+_negated_refs contains negated_ref if {
 	some rule, value
 	ast.negated_expressions[rule][value]
 
@@ -33,7 +33,7 @@ negated_refs contains negated_ref if {
 	is_object(value.terms)
 	value.terms.type in {"ref", "var"}
 
-	ref := var_to_ref(value.terms)
+	ref := _var_to_ref(value.terms)
 
 	# for now, ignore ref if it has variable components
 	every path in util.rest(ref) {
@@ -48,14 +48,16 @@ negated_refs contains negated_ref if {
 
 	negated_ref := {
 		"ref": ref,
-		"resolved_path": resolve(ref, _package_path, ast.resolved_imports),
+		"resolved_path": _resolve(ref, _package_path, ast.resolved_imports),
 	}
 }
 
+# METADATA
+# description: collects imported symbols, multi-value rules and negated refs
 aggregate contains result.aggregate(rego.metadata.chain(), {
 	"imported_symbols": ast.resolved_imports,
-	"multivalue_rules": multivalue_rules,
-	"negated_refs": negated_refs,
+	"multivalue_rules": _multivalue_rules,
+	"negated_refs": _negated_refs,
 })
 
 report contains violation if {
@@ -69,7 +71,7 @@ report contains violation if {
 		# note that the "not" isn't present in the AST, so we'll add it manually to the text
 		# in the location to try and make it clear where the issue is (as opposed to just
 		# printing the ref)
-		"text": sprintf("not %s", [to_string(negated.ref)]),
+		"text": sprintf("not %s", [_to_string(negated.ref)]),
 	}})
 
 	violation := result.fail(rego.metadata.chain(), loc)
@@ -98,22 +100,22 @@ aggregate_report contains violation if {
 		# note that the "not" isn't present in the AST, so we'll add it manually to the text
 		# in the location to try and make it clear where the issue is (as opposed to just
 		# printing the ref)
-		"text": sprintf("not %s", [to_string(negated.ref)]),
+		"text": sprintf("not %s", [_to_string(negated.ref)]),
 	}})
 
 	violation := result.fail(rego.metadata.chain(), loc)
 }
 
-var_to_ref(terms) := [terms] if terms.type == "var"
+_var_to_ref(terms) := [terms] if terms.type == "var"
 
-var_to_ref(terms) := terms.value if terms.type == "ref"
+_var_to_ref(terms) := terms.value if terms.type == "ref"
 
-to_string(ref) := concat(".", [part.value | some part in ref])
+_to_string(ref) := concat(".", [part.value | some part in ref])
 
-resolve(ref, _, _) := to_string(ref) if ref[0].value == "data"
+_resolve(ref, _, _) := _to_string(ref) if ref[0].value == "data"
 
 # imported symbol
-resolve(ref, _, imported_symbols) := concat(".", resolved) if {
+_resolve(ref, _, imported_symbols) := concat(".", resolved) if {
 	ref[0].value != "data"
 
 	resolved := array.concat(
@@ -123,7 +125,7 @@ resolve(ref, _, imported_symbols) := concat(".", resolved) if {
 }
 
 # not imported — must be local or package
-resolve(ref, pkg_path, imported_symbols) := concat(".", resolved) if {
+_resolve(ref, pkg_path, imported_symbols) := concat(".", resolved) if {
 	ref[0].value != "data"
 
 	not imported_symbols[ref[0].value]

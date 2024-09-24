@@ -64,5 +64,7 @@ func init() {
 
 	languageServerCommand.Flags().BoolVarP(&verboseLogging, "verbose", "v", verboseLogging, "Enable verbose logging")
 
+	addPprofFlag(languageServerCommand.Flags())
+
 	RootCommand.AddCommand(languageServerCommand)
 }

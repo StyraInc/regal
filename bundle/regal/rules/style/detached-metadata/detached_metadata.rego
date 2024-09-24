@@ -18,13 +18,13 @@ report contains violation if {
 	# no need to +1 the index here as rows start counting from 1
 	trim_space(input.regal.file.lines[last_row]) == ""
 
-	annotation := annotation_at_row(util.to_location_object(block[0].location).row)
+	annotation := _annotation_at_row(util.to_location_object(block[0].location).row)
 	annotation.scope != "document"
 
 	violation := result.fail(rego.metadata.chain(), result.location(block[0]))
 }
 
-annotation_at_row(row) := annotation if {
+_annotation_at_row(row) := annotation if {
 	some annotation in input.annotations
 
 	util.to_location_object(annotation.location).row == row

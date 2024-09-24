@@ -2,43 +2,45 @@ package regal.config
 
 import rego.v1
 
+# METADATA
+# description: determines if file should be excluded by the given rule
 excluded_file(category, title, file) if {
-	force_exclude_file(file)
+	_force_exclude_file(file)
 } else if {
 	rule_config := for_rule(category, title)
 	ex := rule_config.ignore.files
 	is_array(ex)
 	some pattern in ex
-	exclude(pattern, file)
+	_exclude(pattern, file)
 } else := false
 
-force_exclude_file(file) if {
+_force_exclude_file(file) if {
 	# regal ignore:external-reference
-	some pattern in global_ignore_patterns
-	exclude(pattern, file)
+	some pattern in _global_ignore_patterns
+	_exclude(pattern, file)
 }
 
-global_ignore_patterns := merged_config.ignore.files if {
+_global_ignore_patterns := merged_config.ignore.files if {
 	not data.eval.params.ignore_files
 } else := data.eval.params.ignore_files
 
 # exclude imitates Gits .gitignore pattern matching as best it can
 # Ref: https://git-scm.com/docs/gitignore#_pattern_format
-exclude(pattern, file) if {
-	patterns := pattern_compiler(pattern)
+_exclude(pattern, file) if {
+	patterns := _pattern_compiler(pattern)
 	some p in patterns
 	glob.match(p, ["/"], file)
 } else := false
 
 # pattern_compiler transforms a glob pattern into a set of glob patterns to make the
 # combined set behave as Gits .gitignore
-pattern_compiler(pattern) := ps1 if {
-	p := internal_slashes(pattern)
-	p1 := leading_slash(p)
-	ps := leading_doublestar_pattern(p1)
+_pattern_compiler(pattern) := ps1 if {
+	p := _internal_slashes(pattern)
+	p1 := _leading_slash(p)
+	ps := _leading_doublestar_pattern(p1)
 	ps1 := {pat |
 		some _p, _ in ps
-		nps := trailing_slash(_p)
+		nps := _trailing_slash(_p)
 		some pat, _ in nps
 	}
 }
@@ -48,14 +50,14 @@ pattern_compiler(pattern) := ps1 if {
 #
 # myfiledir and mydir/ turns into **/myfiledir and **/mydir/
 # mydir/p and mydir/d/ are returned as is
-internal_slashes(pattern) := pattern if {
+_internal_slashes(pattern) := pattern if {
 	s := substring(pattern, 0, count(pattern) - 1)
 	contains(s, "/")
 } else := concat("", ["**/", pattern])
 
 # **/pattern might match my/dir/pattern and pattern
 # So we branch it into itself and one with the leading **/ removed
-leading_doublestar_pattern(pattern) := {pattern, p} if {
+_leading_doublestar_pattern(pattern) := {pattern, p} if {
 	startswith(pattern, "**/")
 	p := substring(pattern, 3, -1)
 } else := {pattern}
@@ -63,7 +65,7 @@ leading_doublestar_pattern(pattern) := {pattern, p} if {
 # If a pattern does not end with a "/", then it can both
 # - match a folder => pattern + "/**"
 # - match a file => pattern
-trailing_slash(pattern) := {pattern, np} if {
+_trailing_slash(pattern) := {pattern, np} if {
 	not endswith(pattern, "/")
 	not endswith(pattern, "**")
 	np := concat("", [pattern, "/**"])
@@ -74,6 +76,6 @@ trailing_slash(pattern) := {pattern, np} if {
 
 # If a pattern starts with a "/", the leading slash is ignored but according to
 # the .gitignore rule of internal slashes, it is relative to root
-leading_slash(pattern) := substring(pattern, 1, -1) if {
+_leading_slash(pattern) := substring(pattern, 1, -1) if {
 	startswith(pattern, "/")
 } else := pattern

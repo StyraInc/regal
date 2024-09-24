@@ -7,6 +7,9 @@ import rego.v1
 import data.regal.result
 import data.regal.util
 
+# METADATA
+# description: |
+#   collects `entrypoint: true` annotations from any given module
 aggregate contains entry if {
 	some annotation in input.annotations
 	annotation.entrypoint == true

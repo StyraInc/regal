@@ -160,7 +160,7 @@ function_arg_return if {
 	i == 1
 }
 
-line_length_should_be_no_longer_than_120_characters_but_this_line_is_really_long_and_will_exceed_that_limit_which_is := "bad"
+line_length := "should be no longer than 120 characters but this line is really long and will exceed that limit which is kinda bad"
 
 #no-whitespace-comment
 

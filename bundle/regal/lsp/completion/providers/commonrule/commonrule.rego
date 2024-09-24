@@ -1,3 +1,6 @@
+# METADATA
+# description: |
+#   provides completions for common rule names, like 'allow' or 'deny'
 package regal.lsp.completion.providers.commonrule
 
 import rego.v1
@@ -5,17 +8,19 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
-suggested_names := {
+_suggested_names := {
 	"allow",
 	"authorized",
 	"deny",
 }
 
+# METADATA
+# description: all completion suggestions for common rule names
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	some label in suggested_names
+	some label in _suggested_names
 
 	startswith(label, line)
 

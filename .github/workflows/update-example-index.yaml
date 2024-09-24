@@ -56,7 +56,7 @@ jobs:
 
           cat "$TEMP_DIR/sitemap.xml" | \
             rq -i xml --indent "  " | \
-            opa eval 'data.process.symbols' \
+            opa eval 'data.build.workflows.symbols' \
               -d build/workflows/update-example-index/process.rego \
               --format=pretty \
               --stdin-input | \

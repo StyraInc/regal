@@ -53,6 +53,8 @@ rules:
     forbidden-function-call:
       forbidden-functions: []
       level: ignore
+    missing-metadata:
+      level: ignore
     naming-convention:
       level: ignore
     one-liner-rule:
@@ -70,8 +72,8 @@ rules:
     custom-in-construct:
       level: error
     directory-package-mismatch:
-      level: error
       exclude-test-suffix: true
+      level: error
     equals-pattern-matching:
       level: error
     no-defined-entrypoint:
@@ -158,6 +160,7 @@ rules:
       level: error
     prefer-some-in-iteration:
       ignore-nesting-level: 2
+      ignore-if-sub-attribute: true
       level: error
     rule-length:
       count-comments: false

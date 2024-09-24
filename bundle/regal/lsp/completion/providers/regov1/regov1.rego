@@ -1,3 +1,7 @@
+# METADATA
+# description: |
+#   the `regov1`` provider provides completion suggestions for
+#   `rego.v1` following an `import` declaration
 package regal.lsp.completion.providers.regov1
 
 import rego.v1
@@ -5,6 +9,8 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: completion suggestion for rego.v1
 items contains item if {
 	not strings.any_prefix_match(input.regal.file.lines, "import rego.v1")
 

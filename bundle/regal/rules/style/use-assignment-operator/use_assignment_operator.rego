@@ -29,6 +29,7 @@ report contains violation if {
 	rule.head.key
 	rule.head.value
 	not rule.head.assign
+	not ast.implicit_boolean_assignment(rule)
 
 	loc := result.location(result.location(rule.head.ref[0]))
 

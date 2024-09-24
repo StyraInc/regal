@@ -30,7 +30,7 @@ report contains violation if {
 	# `with` statements can't be moved to the rule head
 	not rule.body[0]["with"]
 
-	assignment_expr(rule.body[0].terms)
+	_assignment_expr(rule.body[0].terms)
 
 	# Of var declared in rule head
 	rule.body[0].terms[1].type == "var"
@@ -51,7 +51,7 @@ report contains violation if {
 
 	not rule.body[0]["with"]
 
-	assignment_expr(rule.body[0].terms)
+	_assignment_expr(rule.body[0].terms)
 
 	rule.body[0].terms[1].type == "var"
 	rule.body[0].terms[1].value == rule.head.key.value
@@ -60,7 +60,7 @@ report contains violation if {
 }
 
 # Assignment using either = or :=
-assignment_expr(terms) if {
+_assignment_expr(terms) if {
 	terms[0].type == "ref"
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value in {"eq", "assign"}

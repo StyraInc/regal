@@ -1,8 +1,16 @@
-# regal ignore:directory-package-mismatch
-package process
+# METADATA
+# description: updates the rego by example index page
+# related_resources:
+#   - description: documentation
+#     ref: http://docs.styra.com/opa/rego-by-example
+#   - description: workflow
+#     ref: file:///./../../.github/workflows/update-example-index.yaml
+package build.workflows
 
 import rego.v1
 
+# METADATA
+# entrypoint: true
 symbols := {"keywords": _keywords, "builtins": _builtins}
 
 _keywords[name] := path if {

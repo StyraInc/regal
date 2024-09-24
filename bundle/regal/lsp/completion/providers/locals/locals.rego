@@ -1,3 +1,5 @@
+# METADATA
+# description: provides completion suggestions for local symbols in scope
 package regal.lsp.completion.providers.locals
 
 import rego.v1
@@ -5,8 +7,8 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
-parsed_current_file := data.workspace.parsed[input.regal.file.uri]
-
+# METADATA
+# description: completion suggestions for local symbols
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 
@@ -18,6 +20,7 @@ items contains item if {
 	not _excluded(line, position)
 
 	word := location.word_at(line, input.regal.context.location.col)
+	parsed_current_file := data.workspace.parsed[input.regal.file.uri]
 
 	some local in location.find_locals(
 		parsed_current_file.rules,

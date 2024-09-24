@@ -30,6 +30,8 @@ comments["metadata_attributes"] := {
 	"custom",
 }
 
+# METADATA
+# description: true if comment matches a metadata annotation attribute
 comments["annotation_match"](str) if regex.match(
 	`^(scope|title|description|related_resources|authors|organizations|schemas|entrypoint|custom)\s*:`,
 	str,

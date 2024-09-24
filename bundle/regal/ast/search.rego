@@ -52,8 +52,10 @@ _find_some_in_decl_vars(value) := vars if {
 	]
 }
 
-# find vars like input[x].foo[y] where x and y are vars
-# note: value.type == "ref" check must have been done before calling this function
+# METADATA
+# description: |
+#   find vars like input[x].foo[y] where x and y are vars
+#   note: value.type == "ref" check must have been done before calling this function
 find_ref_vars(value) := [var |
 	some i, var in value.value
 
@@ -201,6 +203,8 @@ found.vars[rule_index][context] contains var if {
 	some var in vars
 }
 
+# METADATA
+# description: all refs foundd in module
 found.refs[rule_index] contains value if {
 	some i, rule in _rules
 
@@ -212,6 +216,8 @@ found.refs[rule_index] contains value if {
 	is_ref(value)
 }
 
+# METADATA
+# description: all symbols foundd in module
 found.symbols[rule_index] contains value.symbols if {
 	some i, rule in _rules
 
@@ -221,6 +227,8 @@ found.symbols[rule_index] contains value.symbols if {
 	walk(rule, [_, value])
 }
 
+# METADATA
+# description: all comprehensions foundd in module
 found.comprehensions[rule_index] contains value if {
 	some i, rule in _rules
 
@@ -314,6 +322,8 @@ find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	_before_location(rule, some_var, location)
 }
 
+# METADATA
+# description: all expressions in module
 exprs[rule_index][expr_index] := expr if {
 	some rule_index, rule in input.rules
 	some expr_index, expr in rule.body

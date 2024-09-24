@@ -60,8 +60,8 @@ function(bar) if {
 	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 2
-	utils.expect_item(items, "bar", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
-	utils.expect_item(items, "baz", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+	_expect_item(items, "bar", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
+	_expect_item(items, "baz", {"end": {"character": 9, "line": 8}, "start": {"character": 8, "line": 8}})
 }
 
 test_locals_in_completion_items_function_call if {
@@ -92,8 +92,8 @@ function(bar) if {
 	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 2
-	utils.expect_item(items, "bar", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
-	utils.expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
+	_expect_item(items, "bar", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
+	_expect_item(items, "baz", {"end": {"character": 24, "line": 8}, "start": {"character": 23, "line": 8}})
 }
 
 test_locals_in_completion_items_rule_head_assignment if {
@@ -120,7 +120,7 @@ function(bar) := f if {
 	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 1
-	utils.expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
+	_expect_item(items, "foo", {"end": {"character": 18, "line": 4}, "start": {"character": 17, "line": 4}})
 }
 
 test_no_locals_in_completion_items_function_args if {
@@ -147,4 +147,18 @@ function() if {
 	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 0
+}
+
+_expect_item(items, label, range) if {
+	expected := {"detail": "local variable", "kind": 6}
+
+	item := object.union(expected, {
+		"label": label,
+		"textEdit": {
+			"newText": label,
+			"range": range,
+		},
+	})
+
+	item in items
 }

@@ -1,3 +1,11 @@
+# METADATA
+# description: |
+#   provides completion suggestions for **snippets** in locations where
+#   it makes sense to do so. note that while snippets originally were specific
+#   to VS Code, they are also supported by e.g. Zed and other editors
+# related_resources:
+#   - description: documentation
+#     ref: https://code.visualstudio.com/docs/editor/userdefinedsnippets
 package regal.lsp.completion.providers.snippet
 
 import rego.v1
@@ -5,6 +13,9 @@ import rego.v1
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 
+# METADATA
+# description: all completion suggestions for snippets
+# scope: document
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
@@ -39,16 +50,30 @@ items contains item if {
 
 	word := location.word_at(line, input.regal.context.location.col)
 
-	item := {
-		"label": "metadata annotation (snippet)",
-		"kind": kind.snippet,
-		"detail": "metadata annotation",
-		"textEdit": {
-			"range": location.word_range(word, position),
-			"newText": "# METADATA\n# title: ${1:title}\n# description: ${2:description}",
+	items := {
+		{
+			"label": "metadata annotation [title, description] (snippet)",
+			"kind": kind.snippet,
+			"detail": "metadata annotation",
+			"textEdit": {
+				"range": location.word_range(word, position),
+				"newText": "# METADATA\n# title: ${1:title}\n# description: ${2:description}",
+			},
+			"insertTextFormat": 2, # snippet
 		},
-		"insertTextFormat": 2, # snippet
+		{
+			"label": "metadata annotation [description] (snippet)",
+			"kind": kind.snippet,
+			"detail": "metadata annotation",
+			"textEdit": {
+				"range": location.word_range(word, position),
+				"newText": "# METADATA\n# description: ${1:description}",
+			},
+			"insertTextFormat": 2, # snippet
+		},
 	}
+
+	some item in items
 }
 
 _snippets := {

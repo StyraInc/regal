@@ -23,14 +23,14 @@ report contains violation if {
 
 	path := _location_path(rule, elem.location)
 
-	not var_in_comprehension_body(elem, rule, path)
+	not _var_in_comprehension_body(elem, rule, path)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(elem))
 }
 
 _location_path(rule, location) := path if walk(rule, [path, location])
 
-var_in_comprehension_body(var, rule, path) if {
+_var_in_comprehension_body(var, rule, path) if {
 	some v in _comprehension_body_vars(rule, path)
 	v.type == var.type
 	v.value == var.value

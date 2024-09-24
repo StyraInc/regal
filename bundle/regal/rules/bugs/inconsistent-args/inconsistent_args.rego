@@ -15,11 +15,11 @@ report contains violation if {
 	# to have block level scoped ignore directives...
 	function_args_by_name := {name: args_list |
 		some i
-		name := ast.ref_to_string(ast.functions[i].head.ref) # regal ignore:prefer-some-in-iteration
+		name := ast.ref_to_string(ast.functions[i].head.ref)
 		args_list := [args |
 			some j
-			ast.ref_to_string(ast.functions[j].head.ref) == name # regal ignore:prefer-some-in-iteration
-			args := ast.functions[j].head.args # regal ignore:prefer-some-in-iteration
+			ast.ref_to_string(ast.functions[j].head.ref) == name
+			args := ast.functions[j].head.args
 		]
 		count(args_list) > 1
 	}
@@ -34,9 +34,9 @@ report contains violation if {
 
 	some position in by_position
 
-	inconsistent_args(position)
+	_inconsistent_args(position)
 
-	violation := result.fail(rego.metadata.chain(), _args_location(find_function_by_name(name)))
+	violation := result.fail(rego.metadata.chain(), _args_location(_find_function_by_name(name)))
 }
 
 _args_location(fn) := loc if {
@@ -57,7 +57,7 @@ _args_location(fn) := loc if {
 	}})
 }
 
-inconsistent_args(position) if {
+_inconsistent_args(position) if {
 	named_vars := {arg.value |
 		some arg in position
 		arg.type == "var"
@@ -68,7 +68,7 @@ inconsistent_args(position) if {
 
 # Return the _second_ function found by name, as that
 # is reasonably the location the inconsistency is found
-find_function_by_name(name) := [fn |
+_find_function_by_name(name) := [fn |
 	some fn in ast.functions
 	ast.ref_to_string(fn.head.ref) == name
 ][1]

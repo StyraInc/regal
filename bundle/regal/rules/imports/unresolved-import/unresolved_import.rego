@@ -9,6 +9,8 @@ import data.regal.config
 import data.regal.result
 import data.regal.util
 
+# METADATA
+# description: collects imports and exported refs from each module
 aggregate contains entry if {
 	imports_with_location := [imp |
 		some _import in input.imports

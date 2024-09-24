@@ -28,8 +28,8 @@ var tpl = template.Must(template.New("main.tpl").ParseFS(assets, "assets/main.tp
 type Server struct {
 	cache        *cache.Cache
 	workspaceURI string
-	client       clients.Identifier
 	baseURL      string
+	client       clients.Identifier
 }
 
 func NewServer(cache *cache.Cache) *Server {
@@ -54,10 +54,10 @@ type state struct {
 }
 
 type stringResult struct {
-	Show   bool
 	Class  string
 	Stage  string
 	Output string
+	Show   bool
 }
 
 func (s *Server) Start(_ context.Context) {

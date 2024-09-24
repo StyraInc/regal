@@ -33,24 +33,24 @@ import (
 )
 
 type lintCommandParams struct {
-	timeout         time.Duration
 	configFile      string
 	format          string
 	outputFile      string
 	failLevel       string
 	rules           repeatedStringFlag
+	disable         repeatedStringFlag
+	disableCategory repeatedStringFlag
+	enable          repeatedStringFlag
+	enableCategory  repeatedStringFlag
+	ignoreFiles     repeatedStringFlag
+	timeout         time.Duration
 	noColor         bool
 	debug           bool
 	enablePrint     bool
 	metrics         bool
 	profile         bool
-	disable         repeatedStringFlag
 	disableAll      bool
-	disableCategory repeatedStringFlag
-	enable          repeatedStringFlag
 	enableAll       bool
-	enableCategory  repeatedStringFlag
-	ignoreFiles     repeatedStringFlag
 }
 
 func (p *lintCommandParams) getConfigFile() string {

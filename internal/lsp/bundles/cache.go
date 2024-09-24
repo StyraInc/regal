@@ -20,14 +20,14 @@ import (
 // Cache is a struct that maintains a number of bundles in memory and
 // provides a way to refresh them when the source files change.
 type Cache struct {
-	workspacePath string
-	bundles       map[string]*cacheBundle
 	errorLog      io.Writer
+	bundles       map[string]*cacheBundle
+	workspacePath string
 }
 
 type CacheOptions struct {
-	WorkspacePath string
 	ErrorLog      io.Writer
+	WorkspacePath string
 }
 
 func NewCache(opts *CacheOptions) *Cache {
@@ -135,8 +135,8 @@ func (c *Cache) All() map[string]bundle.Bundle {
 // hash of each source file in the bundle. Hashes are used to determine if
 // the bundle should be reloaded.
 type cacheBundle struct {
-	bundle        bundle.Bundle
 	sourceDigests map[string][]byte
+	bundle        bundle.Bundle
 }
 
 // Refresh loads the bundle from disk and updates the cache if any of the

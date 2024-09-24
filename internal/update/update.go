@@ -40,8 +40,8 @@ type Options struct {
 }
 
 type latestVersionFileContents struct {
-	LatestVersion string    `json:"latest_version"`
 	CheckedAt     time.Time `json:"checked_at"`
+	LatestVersion string    `json:"latest_version"`
 }
 
 func CheckAndWarn(opts Options, w io.Writer) {

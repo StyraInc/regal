@@ -266,14 +266,14 @@ func TestJSONReporterPublish(t *testing.T) {
         }
       ],
       "location": {
-        "col": 1,
-        "row": 1,
         "end": {
           "row": 1,
           "col": 14
         },
+        "text": "package illegal",
         "file": "a.rego",
-        "text": "package illegal"
+        "col": 1,
+        "row": 1
       }
     },
     {
@@ -288,10 +288,10 @@ func TestJSONReporterPublish(t *testing.T) {
         }
       ],
       "location": {
-        "col": 18,
-        "row": 22,
+        "text": "default allow = true",
         "file": "b.rego",
-        "text": "default allow = true"
+        "col": 18,
+        "row": 22
       }
     }
   ],

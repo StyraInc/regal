@@ -10,11 +10,11 @@ import (
 // Report contains updated file contents and summary information about the fixes that were applied
 // during a fix operation.
 type Report struct {
-	totalFixes          uint
 	fileFixes           map[string][]fixes.FixResult
 	movedFiles          map[string][]string
 	conflictsManyToOne  map[string]map[string][]string
 	conflictsSourceFile map[string]map[string][]string
+	totalFixes          uint
 }
 
 func NewReport() *Report {

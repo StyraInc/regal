@@ -37,17 +37,17 @@ const (
 )
 
 type testCommandParams struct {
-	verbose      bool
 	outputFormat *util.EnumFlag
-	coverage     bool
+	runRegex     string
+	ignore       []string
 	threshold    float64
 	timeout      time.Duration
-	ignore       []string
+	count        int
+	verbose      bool
+	coverage     bool
 	bundleMode   bool
 	benchmark    bool
 	benchMem     bool
-	runRegex     string
-	count        int
 	skipExitZero bool
 	varValues    bool
 }

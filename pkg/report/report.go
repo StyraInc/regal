@@ -27,12 +27,12 @@ type Position struct {
 // But as opposed to adding an optional End attribute, changing the structure of the existing
 // struct would break all existing API clients.
 type Location struct {
+	End    *Position `json:"end,omitempty"`
+	Text   *string   `json:"text,omitempty"`
+	File   string    `json:"file"`
 	Column int       `json:"col"`
 	Row    int       `json:"row"`
-	End    *Position `json:"end,omitempty"`
 	Offset int       `json:"offset,omitempty"`
-	File   string    `json:"file"`
-	Text   *string   `json:"text,omitempty"`
 }
 
 // Violation describes any violation found by Regal.
@@ -70,16 +70,16 @@ type Summary struct {
 
 // Report aggregate of Violation as returned by a linter run.
 type Report struct {
-	Violations []Violation `json:"violations"`
 	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
 	// to avoid surfacing a null/empty field.
 	Aggregates       map[string][]Aggregate         `json:"aggregates,omitempty"`
-	Notices          []Notice                       `json:"notices,omitempty"`
-	Summary          Summary                        `json:"summary"`
 	Metrics          map[string]any                 `json:"metrics,omitempty"`
 	AggregateProfile map[string]ProfileEntry        `json:"-"`
-	Profile          []ProfileEntry                 `json:"profile,omitempty"`
 	IgnoreDirectives map[string]map[string][]string `json:"ignore_directives,omitempty"`
+	Violations       []Violation                    `json:"violations"`
+	Notices          []Notice                       `json:"notices,omitempty"`
+	Profile          []ProfileEntry                 `json:"profile,omitempty"`
+	Summary          Summary                        `json:"summary"`
 }
 
 // ProfileEntry is a single entry of profiling information, keyed by location.

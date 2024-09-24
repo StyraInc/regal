@@ -20,21 +20,21 @@ const bom = 0xFEFF
 // Scanner is used to tokenize an input stream of
 // Rego source code.
 type Scanner struct {
+	keywords         map[string]tokens.Token
+	bs               []byte
+	errors           []Error
 	offset           int
 	row              int
 	col              int
-	bs               []byte
-	curr             rune
 	width            int
-	errors           []Error
-	keywords         map[string]tokens.Token
+	curr             rune
 	regoV1Compatible bool
 }
 
 // Error represents a scanner error.
 type Error struct {
-	Pos     Position
 	Message string
+	Pos     Position
 }
 
 // Position represents a point in the scanned source code.

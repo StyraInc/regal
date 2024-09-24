@@ -90,23 +90,18 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 }
 
 type LanguageServer struct {
-	conn *jsonrpc2.Conn
-
 	errorLog io.Writer
 
-	configWatcher      *lsconfig.Watcher
-	loadedConfig       *config.Config
-	loadedConfigLock   sync.Mutex
-	loadedBuiltins     map[string]map[string]*ast.Builtin
-	loadedBuiltinsLock sync.RWMutex
+	regoStore storage.Store
+	conn      *jsonrpc2.Conn
 
-	workspaceRootURI string
-	clientIdentifier clients.Identifier
+	configWatcher  *lsconfig.Watcher
+	loadedConfig   *config.Config
+	loadedBuiltins map[string]map[string]*ast.Builtin
 
 	clientInitializationOptions types.InitializationOptions
 
 	cache       *cache.Cache
-	regoStore   storage.Store
 	bundleCache *bundles.Cache
 
 	completionsManager *completions.Manager
@@ -118,6 +113,13 @@ type LanguageServer struct {
 	templateFile               chan fileUpdateEvent
 
 	webServer *web.Server
+
+	workspaceRootURI string
+	clientIdentifier clients.Identifier
+
+	loadedBuiltinsLock sync.RWMutex
+
+	loadedConfigLock sync.Mutex
 }
 
 // fileUpdateEvent is sent to a channel when an update is required for a file.

@@ -9,12 +9,12 @@ import (
 )
 
 type Fmt struct {
-	// NameOverride allows this fix config to also be registered under another name, see note
-	// in Name().
-	NameOverride string
 	// OPAFmtOpts are the options to pass to OPA's format.SourceWithOpts
 	// function.
 	OPAFmtOpts format.Opts
+	// NameOverride allows this fix config to also be registered under another name, see note
+	// in Name().
+	NameOverride string
 }
 
 func (f *Fmt) Name() string {

@@ -29,10 +29,10 @@ const (
 // https://www.codeproject.com/Articles/42279/%2FArticles%2F42279%2FInvestigating-Myers-diff-algorithm-Part-1-of-2
 
 type operation struct {
-	Kind    OpKind
 	Content []string // content from b
-	I1, I2  uint     // indices of the line in a
-	J1      uint     // indices of the line in b, J2 implied by len(Content)
+	Kind    OpKind
+	I1, I2  uint // indices of the line in a
+	J1      uint // indices of the line in b, J2 implied by len(Content)
 }
 
 // operations returns the list of operations to convert a into b, consolidating

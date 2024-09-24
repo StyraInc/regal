@@ -37,8 +37,8 @@ func NewFixer() *Fixer {
 type Fixer struct {
 	registeredFixes          map[string]any
 	registeredMandatoryFixes map[string]any
-	registeredRoots          []string
 	onConflictOperation      OnConflictOperation
+	registeredRoots          []string
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.

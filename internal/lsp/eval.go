@@ -89,8 +89,8 @@ func (l *LanguageServer) Eval(
 
 type EvalPathResult struct {
 	Value       any                         `json:"value"`
-	IsUndefined bool                        `json:"isUndefined"`
 	PrintOutput map[string]map[int][]string `json:"printOutput"`
+	IsUndefined bool                        `json:"isUndefined"`
 }
 
 func (l *LanguageServer) EvalWorkspacePath(

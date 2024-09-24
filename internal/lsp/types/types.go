@@ -15,8 +15,8 @@ type WorkspaceDidChangeWatchedFilesParams struct {
 }
 
 type FileEvent struct {
-	Type uint   `json:"type"`
 	URI  string `json:"uri"`
+	Type uint   `json:"type"`
 }
 
 type InitializationOptions struct {
@@ -24,15 +24,15 @@ type InitializationOptions struct {
 }
 
 type InitializeParams struct {
-	ProcessID             int                    `json:"processId"`
+	InitializationOptions *InitializationOptions `json:"initializationOptions,omitempty"`
 	ClientInfo            Client                 `json:"clientInfo"`
 	Locale                string                 `json:"locale"`
 	RootPath              string                 `json:"rootPath"`
 	RootURI               string                 `json:"rootUri"`
-	Capabilities          ClientCapabilities     `json:"capabilities"`
 	Trace                 string                 `json:"trace"`
 	WorkspaceFolders      []WorkspaceFolder      `json:"workspaceFolders"`
-	InitializationOptions *InitializationOptions `json:"initializationOptions,omitempty"`
+	Capabilities          ClientCapabilities     `json:"capabilities"`
+	ProcessID             int                    `json:"processId"`
 }
 
 type WorkspaceFolder struct {
@@ -46,10 +46,10 @@ type Client struct {
 }
 
 type ClientCapabilities struct {
-	Workspace WorkspaceClientCapabilities    `json:"workspace"`
-	Text      TextDocumentClientCapabilities `json:"textDocument"`
-	Window    WindowClientCapabilities       `json:"window"`
 	General   GeneralClientCapabilities      `json:"general"`
+	Text      TextDocumentClientCapabilities `json:"textDocument"`
+	Workspace WorkspaceClientCapabilities    `json:"workspace"`
+	Window    WindowClientCapabilities       `json:"window"`
 }
 
 type WorkspaceClientCapabilities struct {
@@ -78,13 +78,13 @@ type GeneralClientCapabilities struct {
 }
 
 type ShowMessageParams struct {
-	Type    uint   `json:"type"`
 	Message string `json:"message"`
+	Type    uint   `json:"type"`
 }
 
 type StaleRequestSupportClientCapabilities struct {
-	Cancel                 bool     `json:"cancel"`
 	RetryOnContentModified []string `json:"retryOnContentModified"`
+	Cancel                 bool     `json:"cancel"`
 }
 
 type InitializeResult struct {
@@ -92,20 +92,20 @@ type InitializeResult struct {
 }
 
 type ServerCapabilities struct {
-	TextDocumentSyncOptions    TextDocumentSyncOptions `json:"textDocumentSync"`
-	DiagnosticProvider         DiagnosticOptions       `json:"diagnosticProvider"`
+	CodeLensProvider           *CodeLensOptions        `json:"codeLensProvider,omitempty"`
 	Workspace                  WorkspaceOptions        `json:"workspace"`
-	InlayHintProvider          InlayHintOptions        `json:"inlayHintProvider"`
-	HoverProvider              bool                    `json:"hoverProvider"`
+	DiagnosticProvider         DiagnosticOptions       `json:"diagnosticProvider"`
 	CodeActionProvider         CodeActionOptions       `json:"codeActionProvider"`
 	ExecuteCommandProvider     ExecuteCommandOptions   `json:"executeCommandProvider"`
+	TextDocumentSyncOptions    TextDocumentSyncOptions `json:"textDocumentSync"`
+	CompletionProvider         CompletionOptions       `json:"completionProvider"`
+	InlayHintProvider          InlayHintOptions        `json:"inlayHintProvider"`
+	HoverProvider              bool                    `json:"hoverProvider"`
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
 	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
 	WorkspaceSymbolProvider    bool                    `json:"workspaceSymbolProvider"`
 	DefinitionProvider         bool                    `json:"definitionProvider"`
-	CompletionProvider         CompletionOptions       `json:"completionProvider"`
-	CodeLensProvider           *CodeLensOptions        `json:"codeLensProvider,omitempty"`
 }
 
 type CompletionOptions struct {
@@ -119,40 +119,40 @@ type CompletionItemOptions struct {
 
 type CompletionParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
-	Position     Position               `json:"position"`
 	Context      CompletionContext      `json:"context"`
+	Position     Position               `json:"position"`
 }
 
 type CompletionContext struct {
-	TriggerKind      completion.TriggerKind `json:"triggerKind"`
 	TriggerCharacter string                 `json:"triggerCharacter"`
+	TriggerKind      completion.TriggerKind `json:"triggerKind"`
 }
 
 type CompletionList struct {
-	IsIncomplete bool             `json:"isIncomplete"`
 	Items        []CompletionItem `json:"items"`
+	IsIncomplete bool             `json:"isIncomplete"`
 }
 
 type CompletionItem struct {
-	Label        string                      `json:"label"`
-	LabelDetails *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
+	LabelDetails    *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
+	Documentation   *MarkupContent              `json:"documentation,omitempty"`
+	TextEdit        *TextEdit                   `json:"textEdit,omitempty"`
+	InserTextFormat *uint                       `json:"insertTextFormat,omitempty"`
+
+	// Regal is used to store regal-specific metadata about the completion item.
+	// This is not part of the LSP spec, but used in the manager to post process
+	// items before returning them to the client.
+	Regal  *CompletionItemRegalMetadata `json:"_regal,omitempty"`
+	Label  string                       `json:"label"`
+	Detail string                       `json:"detail"`
 	// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
-	Kind            completion.ItemKind `json:"kind"`
-	Detail          string              `json:"detail"`
-	Documentation   *MarkupContent      `json:"documentation,omitempty"`
-	Preselect       bool                `json:"preselect"`
-	TextEdit        *TextEdit           `json:"textEdit,omitempty"`
-	InserTextFormat *uint               `json:"insertTextFormat,omitempty"`
+	Kind      completion.ItemKind `json:"kind"`
+	Preselect bool                `json:"preselect"`
 
 	// Mandatory is used to indicate that the completion item is mandatory and should be offered
 	// as an exclusive completion. This is not part of the LSP spec, but used in regal providers
 	// to indicate that the completion item is the only valid completion.
 	Mandatory bool `json:"-"`
-
-	// Regal is used to store regal-specific metadata about the completion item.
-	// This is not part of the LSP spec, but used in the manager to post process
-	// items before returning them to the client.
-	Regal *CompletionItemRegalMetadata `json:"_regal,omitempty"`
 }
 
 type CompletionItemRegalMetadata struct {
@@ -174,8 +174,8 @@ type CodeActionOptions struct {
 
 type CodeActionParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
-	Range        Range                  `json:"range"`
 	Context      CodeActionContext      `json:"context"`
+	Range        Range                  `json:"range"`
 }
 
 type CodeActionContext struct {
@@ -183,11 +183,11 @@ type CodeActionContext struct {
 }
 
 type CodeAction struct {
+	Command     Command      `json:"command"`
+	IsPreferred *bool        `json:"isPreferred,omitempty"`
 	Title       string       `json:"title"`
 	Kind        string       `json:"kind"`
 	Diagnostics []Diagnostic `json:"diagnostics,omitempty"`
-	IsPreferred *bool        `json:"isPreferred,omitempty"`
-	Command     Command      `json:"command"`
 }
 
 type CodeLensOptions struct {
@@ -199,16 +199,16 @@ type CodeLensParams struct {
 }
 
 type CodeLens struct {
-	Range   Range    `json:"range"`
 	Command *Command `json:"command,omitempty"`
 	Data    *any     `json:"data,omitempty"`
+	Range   Range    `json:"range"`
 }
 
 type Command struct {
+	Arguments *[]any `json:"arguments,omitempty"`
 	Title     string `json:"title"`
 	Tooltip   string `json:"tooltip"`
 	Command   string `json:"command"`
-	Arguments *[]any `json:"arguments,omitempty"`
 }
 
 type ExecuteCommandOptions struct {
@@ -236,11 +236,11 @@ type RenameFileOptions struct {
 }
 
 type RenameFile struct {
+	Options              *RenameFileOptions `json:"options,omitempty"`
+	AnnotationIdentifier *string            `json:"annotationId,omitempty"`
 	Kind                 string             `json:"kind"` // must always be "rename"
 	OldURI               string             `json:"oldUri"`
 	NewURI               string             `json:"newUri"`
-	Options              *RenameFileOptions `json:"options,omitempty"`
-	AnnotationIdentifier *string            `json:"annotationId,omitempty"`
 }
 
 type DeleteFileOptions struct {
@@ -249,9 +249,9 @@ type DeleteFileOptions struct {
 }
 
 type DeleteFile struct {
+	Options *DeleteFileOptions `json:"options,omitempty"`
 	Kind    string             `json:"kind"` // must always be "delete"
 	URI     string             `json:"uri"`
-	Options *DeleteFileOptions `json:"options,omitempty"`
 }
 
 // WorkspaceRenameEdit is a WorkspaceEdit that is used for renaming files.
@@ -272,8 +272,8 @@ type TextDocumentEdit struct {
 }
 
 type TextEdit struct {
-	Range   Range  `json:"range"`
 	NewText string `json:"newText"`
+	Range   Range  `json:"range"`
 }
 
 type DocumentFormattingParams struct {
@@ -286,12 +286,12 @@ type DocumentSymbolParams struct {
 }
 
 type DocumentSymbol struct {
-	Name           string             `json:"name"`
 	Detail         *string            `json:"detail,omitempty"`
-	Kind           symbols.SymbolKind `json:"kind"`
+	Children       *[]DocumentSymbol  `json:"children,omitempty"`
+	Name           string             `json:"name"`
 	Range          Range              `json:"range"`
 	SelectionRange Range              `json:"selectionRange"`
-	Children       *[]DocumentSymbol  `json:"children,omitempty"`
+	Kind           symbols.SymbolKind `json:"kind"`
 }
 
 type WorkspaceSymbolParams struct {
@@ -299,10 +299,10 @@ type WorkspaceSymbolParams struct {
 }
 
 type WorkspaceSymbol struct {
-	Name          string             `json:"name"`
-	Kind          symbols.SymbolKind `json:"kind"`
-	Location      Location           `json:"location"`
 	ContainerName *string            `json:"containerName,omitempty"`
+	Name          string             `json:"name"`
+	Location      Location           `json:"location"`
+	Kind          symbols.SymbolKind `json:"kind"`
 }
 
 type FoldingRangeParams struct {
@@ -310,11 +310,11 @@ type FoldingRangeParams struct {
 }
 
 type FoldingRange struct {
-	StartLine      uint   `json:"startLine"`
 	StartCharacter *uint  `json:"startCharacter,omitempty"`
-	EndLine        uint   `json:"endLine"`
 	EndCharacter   *uint  `json:"endCharacter,omitempty"`
 	Kind           string `json:"kind"`
+	StartLine      uint   `json:"startLine"`
+	EndLine        uint   `json:"endLine"`
 }
 
 type FormattingOptions struct {
@@ -354,12 +354,12 @@ type InlayHintOptions struct {
 }
 
 type InlayHint struct {
-	Position     Position      `json:"position"`
+	Tooltip      MarkupContent `json:"tooltip"`
 	Label        string        `json:"label"`
+	Position     Position      `json:"position"`
 	Kind         uint          `json:"kind"`
 	PaddingLeft  bool          `json:"paddingLeft"`
 	PaddingRight bool          `json:"paddingRight"`
-	Tooltip      MarkupContent `json:"tooltip"`
 }
 
 type TextDocumentInlayHintParams struct {
@@ -372,13 +372,13 @@ type TextDocumentSaveOptions struct {
 }
 
 type TextDocumentDidSaveParams struct {
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Text         *string                `json:"text,omitempty"`
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
 type TextDocumentSyncOptions struct {
-	OpenClose bool                    `json:"openClose"`
 	Change    uint                    `json:"change"`
+	OpenClose bool                    `json:"openClose"`
 	Save      TextDocumentSaveOptions `json:"save"`
 }
 
@@ -387,10 +387,10 @@ type TextDocumentIdentifier struct {
 }
 
 type OptionalVersionedTextDocumentIdentifier struct {
-	URI string `json:"uri"`
 	// Version is optional (i.e. it can be null), but it cannot be undefined when used in some requests
 	// (see workspace/applyEdit).
-	Version *uint `json:"version"`
+	Version *uint  `json:"version"`
+	URI     string `json:"uri"`
 }
 
 type TextDocumentDidChangeParams struct {
@@ -403,12 +403,12 @@ type TextDocumentContentChangeEvent struct {
 }
 
 type Diagnostic struct {
-	Range           Range            `json:"range"`
+	CodeDescription *CodeDescription `json:"codeDescription,omitempty"`
 	Message         string           `json:"message"`
-	Severity        uint             `json:"severity"`
 	Source          string           `json:"source"`
 	Code            string           `json:"code"`
-	CodeDescription *CodeDescription `json:"codeDescription,omitempty"`
+	Range           Range            `json:"range"`
+	Severity        uint             `json:"severity"`
 }
 
 type CodeDescription struct {
@@ -461,8 +461,8 @@ type Location struct {
 }
 
 type TextDocumentHoverParams struct {
-	Position     Position               `json:"position"`
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
 }
 
 type WorkspaceDidCreateFilesParams struct {

@@ -31,10 +31,10 @@ func New() *Oracle {
 
 // DefinitionQuery defines a Rego definition query.
 type DefinitionQuery struct {
-	Filename string                 // name of file to search for position inside of
-	Pos      int                    // position to search for
 	Modules  map[string]*ast.Module // workspace modules; buffer may shadow a file inside the workspace
+	Filename string                 // name of file to search for position inside of
 	Buffer   []byte                 // buffer that overrides module with filename
+	Pos      int                    // position to search for
 }
 
 var (

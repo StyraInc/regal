@@ -36,26 +36,26 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
-	inputPaths           []string
+	customRuleFS         fs.FS
+	printHook            print.Hook
+	metrics              metrics.Metrics
 	inputModules         *rules.Input
-	rootDir              string
-	ruleBundles          []*bundle.Bundle
 	userConfig           *config.Config
 	combinedCfg          *config.Config
 	dataBundle           *bundle.Bundle
-	customRulesPaths     []string
-	customRuleFS         fs.FS
+	rootDir              string
 	customRuleFSRootPath string
-	debugMode            bool
-	printHook            print.Hook
+	inputPaths           []string
+	ruleBundles          []*bundle.Bundle
+	customRulesPaths     []string
 	disable              []string
-	disableAll           bool
 	disableCategory      []string
 	enable               []string
-	enableAll            bool
 	enableCategory       []string
 	ignoreFiles          []string
-	metrics              metrics.Metrics
+	debugMode            bool
+	disableAll           bool
+	enableAll            bool
 	profiling            bool
 }
 

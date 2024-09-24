@@ -34,23 +34,23 @@ import (
 // control the behavior of lint rules used.
 type fixCommandParams struct {
 	configFile      string
-	debug           bool
+	format          string
+	outputFile      string
+	conflictMode    string
 	disable         repeatedStringFlag
-	disableAll      bool
 	disableCategory repeatedStringFlag
 	enable          repeatedStringFlag
-	enableAll       bool
 	enableCategory  repeatedStringFlag
-	format          string
 	ignoreFiles     repeatedStringFlag
-	noColor         bool
-	outputFile      string
 	rules           repeatedStringFlag
 	timeout         time.Duration
+	debug           bool
+	disableAll      bool
+	enableAll       bool
+	noColor         bool
 	dryRun          bool
 	verbose         bool
 	force           bool
-	conflictMode    string
 }
 
 func (p *fixCommandParams) getConfigFile() string {

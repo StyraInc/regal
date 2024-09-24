@@ -17,8 +17,8 @@ type ParseOptions struct {
 }
 
 type ParseResult struct {
-	Target   string
 	Location *ast.Location
+	Target   string
 }
 
 // Parse is responsible for extracting the target and location from the given params command params sent from the client

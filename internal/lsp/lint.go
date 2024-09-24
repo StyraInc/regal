@@ -309,9 +309,9 @@ func updateAllDiagnostics(
 
 // astError is copied from OPA but drop details as I (charlieegan3) had issues unmarshalling the field.
 type astError struct {
+	Location *ast.Location `json:"location,omitempty"`
 	Code     string        `json:"code"`
 	Message  string        `json:"message"`
-	Location *ast.Location `json:"location,omitempty"`
 }
 
 func getRangeForViolation(item report.Violation) types.Range {

@@ -19,12 +19,12 @@ import (
 
 // Input represents the input for a linter evaluation.
 type Input struct {
-	// FileNames is used to maintain consistent order between runs.
-	FileNames []string
 	// FileContent carries the string contents of each file
 	FileContent map[string]string
 	// Modules is the set of modules to lint.
 	Modules map[string]*ast.Module
+	// FileNames is used to maintain consistent order between runs.
+	FileNames []string
 }
 
 // Rule represents a linter rule.

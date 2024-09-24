@@ -27,19 +27,15 @@ const (
 )
 
 type Config struct {
-	Rules        map[string]Category `json:"rules"                  yaml:"rules"`
-	Ignore       Ignore              `json:"ignore,omitempty"       yaml:"ignore,omitempty"`
-	Capabilities *Capabilities       `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
-
 	// Defaults state is loaded from configuration under rules and so is not (un)marshalled
 	// in the same way.
-	Defaults Defaults `json:"-" yaml:"-"`
-
-	Features *Features `json:"features,omitempty" yaml:"features,omitempty"`
-
-	CapabilitiesURL string `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
-
-	Project *Project `json:"project,omitempty" yaml:"project,omitempty"`
+	Defaults        Defaults            `json:"-"                          yaml:"-"`
+	Rules           map[string]Category `json:"rules"                      yaml:"rules"`
+	Capabilities    *Capabilities       `json:"capabilities,omitempty"     yaml:"capabilities,omitempty"`
+	Features        *Features           `json:"features,omitempty"         yaml:"features,omitempty"`
+	Project         *Project            `json:"project,omitempty"          yaml:"project,omitempty"`
+	CapabilitiesURL string              `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
+	Ignore          Ignore              `json:"ignore,omitempty"           yaml:"ignore,omitempty"`
 }
 
 type Project struct {
@@ -51,8 +47,8 @@ type Category map[string]Rule
 // Defaults is used to store information about global and category
 // defaults for rules.
 type Defaults struct {
-	Global     Default
 	Categories map[string]Default
+	Global     Default
 }
 
 // Default represents global or category settings for rules,
@@ -90,9 +86,9 @@ type Ignore struct {
 type ExtraAttributes map[string]any
 
 type Rule struct {
-	Level  string
 	Ignore *Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
 	Extra  ExtraAttributes
+	Level  string
 }
 
 type Capabilities struct {
@@ -102,8 +98,8 @@ type Capabilities struct {
 }
 
 type Decl struct {
-	Args   []string `json:"args"   yaml:"args"`
 	Result string   `json:"result" yaml:"result"`
+	Args   []string `json:"args"   yaml:"args"`
 }
 
 type Builtin struct {
@@ -343,7 +339,7 @@ type marshallingIntermediary struct {
 	// rules are unmarshalled as any since the defaulting needs to be extracted from here
 	// and configured elsewhere in the struct.
 	Rules        map[string]any `yaml:"rules"`
-	Ignore       Ignore         `yaml:"ignore"`
+	Project      *Project       `yaml:"project"`
 	Capabilities struct {
 		From struct {
 			Engine  string `yaml:"engine"`
@@ -360,12 +356,12 @@ type marshallingIntermediary struct {
 			} `yaml:"builtins"`
 		} `yaml:"minus"`
 	} `yaml:"capabilities"`
+	Ignore   Ignore `yaml:"ignore"`
 	Features struct {
 		RemoteFeatures struct {
 			CheckVersion bool `yaml:"check_version"`
 		} `yaml:"remote"`
 	} `yaml:"features"`
-	Project *Project `yaml:"project"`
 }
 
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {

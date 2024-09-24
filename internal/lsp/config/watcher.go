@@ -10,16 +10,16 @@ import (
 )
 
 type Watcher struct {
-	Reload chan string
-	Drop   chan struct{}
+	errorWriter io.Writer
+	Reload      chan string
+	Drop        chan struct{}
 
-	path        string
 	pathUpdates chan string
 
-	fsWatcher     *fsnotify.Watcher
-	fsWatcherLock sync.Mutex
+	fsWatcher *fsnotify.Watcher
 
-	errorWriter io.Writer
+	path          string
+	fsWatcherLock sync.Mutex
 }
 
 type WatcherOpts struct {

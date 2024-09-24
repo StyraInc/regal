@@ -15,45 +15,53 @@ import (
 // diagnostics for each file (including diagnostics gathered from linting files alongside other files).
 type Cache struct {
 	// fileContents is a map of file URI to raw file contents received from the client
-	fileContents   map[string]string
-	fileContentsMu sync.Mutex
+	fileContents map[string]string
 
 	// ignoredFileContents is a similar map of file URI to raw file contents
 	// but it's not queried for project level operations like goto definition,
 	// linting etc.
 	// ignoredFileContents is also cleared on the delete operation.
-	ignoredFileContents   map[string]string
-	ignoredFileContentsMu sync.Mutex
+	ignoredFileContents map[string]string
 
 	// modules is a map of file URI to parsed AST modules from the latest file contents value
-	modules  map[string]*ast.Module
-	moduleMu sync.Mutex
+	modules map[string]*ast.Module
 
 	// diagnosticsFile is a map of file URI to diagnostics for that file
-	diagnosticsFile   map[string][]types.Diagnostic
-	diagnosticsFileMu sync.Mutex
+	diagnosticsFile map[string][]types.Diagnostic
 
 	// diagnosticsAggregate is a map of file URI to aggregate diagnostics for that file
-	diagnosticsAggregate   map[string][]types.Diagnostic
-	diagnosticsAggregateMu sync.Mutex
+	diagnosticsAggregate map[string][]types.Diagnostic
 
 	// diagnosticsParseErrors is a map of file URI to parse errors for that file
 	diagnosticsParseErrors map[string][]types.Diagnostic
-	diagnosticsParseMu     sync.Mutex
 
 	// builtinPositionsFile is a map of file URI to builtin positions for that file
 	builtinPositionsFile map[string]map[uint][]types.BuiltinPosition
-	builtinPositionsMu   sync.Mutex
 
 	// keywordLocationsFile is a map of file URI to Rego keyword locations for that file
 	// to be used for hover hints.
 	keywordLocationsFile map[string]map[uint][]types.KeywordLocation
-	keywordLocationsMu   sync.Mutex
 
 	// fileRefs is a map of file URI to refs that are defined in that file. These are
 	// intended to be used for completions in other files.
 	// fileRefs is expected to be updated when a file is successfully parsed.
-	fileRefs  map[string]map[string]types.Ref
+	fileRefs       map[string]map[string]types.Ref
+	fileContentsMu sync.Mutex
+
+	ignoredFileContentsMu sync.Mutex
+
+	moduleMu sync.Mutex
+
+	diagnosticsFileMu sync.Mutex
+
+	diagnosticsAggregateMu sync.Mutex
+
+	diagnosticsParseMu sync.Mutex
+
+	builtinPositionsMu sync.Mutex
+
+	keywordLocationsMu sync.Mutex
+
 	fileRefMu sync.Mutex
 }
 

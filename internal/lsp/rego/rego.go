@@ -106,9 +106,9 @@ var (
 var preparedQueriesInitOnce sync.Once
 
 type policy struct {
+	module   *ast.Module
 	fileName string
 	contents string
-	module   *ast.Module
 }
 
 func initialize() {
@@ -156,7 +156,7 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 
 	var keywords map[string][]KeywordUse
 
-	value, err := queryToValue(ctx, keywordsPreparedQuery, policy{fileName, contents, module}, keywords)
+	value, err := queryToValue(ctx, keywordsPreparedQuery, policy{module, fileName, contents}, keywords)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
@@ -170,7 +170,7 @@ func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module
 
 	var ruleHeads RuleHeads
 
-	value, err := queryToValue(ctx, ruleHeadLocationsPreparedQuery, policy{fileName, contents, module}, ruleHeads)
+	value, err := queryToValue(ctx, ruleHeadLocationsPreparedQuery, policy{module, fileName, contents}, ruleHeads)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
@@ -184,7 +184,7 @@ func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (
 
 	var codeLenses []types.CodeLens
 
-	value, err := queryToValue(ctx, codeLensPreparedQuery, policy{uri, contents, module}, codeLenses)
+	value, err := queryToValue(ctx, codeLensPreparedQuery, policy{module, uri, contents}, codeLenses)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}

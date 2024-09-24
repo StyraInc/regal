@@ -38,15 +38,15 @@ type ConnectionOptions struct {
 type ConnectionLoggingConfig struct {
 	Writer io.Writer
 
-	LogInbound  bool
-	LogOutbound bool
-
 	// IncludeMethods is a list of methods to include in the request log.
 	// If empty, all methods are included. IncludeMethods takes precedence
 	// over ExcludeMethods.
 	IncludeMethods []string
 	// ExcludeMethods is a list of methods to exclude from the request log.
 	ExcludeMethods []string
+
+	LogInbound  bool
+	LogOutbound bool
 }
 
 func (cfg *ConnectionLoggingConfig) ShouldLog(method string) bool {

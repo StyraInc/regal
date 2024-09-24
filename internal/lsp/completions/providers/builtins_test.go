@@ -6,7 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
@@ -33,7 +36,9 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -68,7 +73,9 @@ allow := c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -105,7 +112,9 @@ allow if {
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -140,7 +149,9 @@ allow if gt`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -173,7 +184,9 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -208,7 +221,9 @@ default allow := f`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
+	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

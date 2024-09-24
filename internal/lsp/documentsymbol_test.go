@@ -5,6 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
@@ -69,7 +70,9 @@ func TestDocumentSymbols(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			syms := documentSymbols(tc.policy, module)
+			bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+
+			syms := documentSymbols(tc.policy, module, bis)
 
 			pkg := syms[0]
 			if pkg.Name != tc.expected.Name {

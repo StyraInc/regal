@@ -5,8 +5,11 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/refs"
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 )
@@ -37,6 +40,8 @@ funckyfunc := true
 `,
 	}
 
+	builtins := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+
 	for uri, contents := range regoFiles {
 		mod, err := parse.Module(uri, contents)
 		if err != nil {
@@ -45,7 +50,7 @@ funckyfunc := true
 
 		c.SetFileContents(uri, contents)
 		c.SetModule(uri, mod)
-		c.SetFileRefs(uri, refs.DefinedInModule(mod))
+		c.SetFileRefs(uri, refs.DefinedInModule(mod, builtins))
 	}
 
 	p := &RuleHead{}

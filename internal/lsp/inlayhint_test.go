@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/lsp/rego"
 )
 
 // A function call may either be represented as an ast.Call.
@@ -16,7 +18,8 @@ func TestGetInlayHintsAstCall(t *testing.T) {
 
 	module := ast.MustParseModule(policy)
 
-	inlayHints := getInlayHints(module)
+	bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+	inlayHints := getInlayHints(module, bis)
 
 	if len(inlayHints) != 2 {
 		t.Fatalf("Expected 2 inlay hints, got %d", len(inlayHints))
@@ -65,7 +68,9 @@ func TestGetInlayHintsAstTerms(t *testing.T) {
 
 	module := ast.MustParseModule(policy)
 
-	inlayHints := getInlayHints(module)
+	bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+
+	inlayHints := getInlayHints(module, bis)
 
 	if len(inlayHints) != 1 {
 		t.Fatalf("Expected 1 inlay hints, got %d", len(inlayHints))

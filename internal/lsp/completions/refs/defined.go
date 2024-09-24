@@ -15,7 +15,7 @@ import (
 
 // DefinedInModule returns a map of refs and details about them to be used in completions that
 // were found in the given module.
-func DefinedInModule(module *ast.Module) map[string]types.Ref {
+func DefinedInModule(module *ast.Module, builtins map[string]*ast.Builtin) map[string]types.Ref {
 	modKey := module.Package.Path.String()
 
 	// first, create a reference for the package using the metadata
@@ -92,7 +92,7 @@ func DefinedInModule(module *ast.Module) map[string]types.Ref {
 		items[ruleKey] = types.Ref{
 			Kind:        kind,
 			Label:       ruleKey,
-			Detail:      rast.GetRuleDetail(rs[0]),
+			Detail:      rast.GetRuleDetail(rs[0], builtins),
 			Description: ruleDescription,
 		}
 	}

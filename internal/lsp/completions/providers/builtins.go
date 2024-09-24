@@ -2,11 +2,11 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/hover"
-	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
 )
@@ -21,8 +21,12 @@ func (*BuiltIns) Run(
 	_ context.Context,
 	c *cache.Cache,
 	params types.CompletionParams,
-	_ *Options,
+	opts *Options,
 ) ([]types.CompletionItem, error) {
+	if opts == nil {
+		return nil, errors.New("builtins provider requires options")
+	}
+
 	fileURI := params.TextDocument.URI
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
@@ -45,9 +49,7 @@ func (*BuiltIns) Run(
 
 	items := []types.CompletionItem{}
 
-	bis := rego.GetBuiltins()
-
-	for _, builtIn := range bis {
+	for _, builtIn := range opts.Builtins {
 		key := builtIn.Name
 
 		if builtIn.Infix != "" {

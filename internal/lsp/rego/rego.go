@@ -53,10 +53,8 @@ func LocationFromPosition(pos types.Position) *ast.Location {
 
 // AllBuiltinCalls returns all built-in calls in the module, excluding operators
 // and any other function identified by an infix.
-func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
+func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []BuiltInCall {
 	builtinCalls := make([]BuiltInCall, 0)
-
-	bis := GetBuiltins()
 
 	callVisitor := ast.NewGenericVisitor(func(x interface{}) bool {
 		var terms []*ast.Term
@@ -76,7 +74,7 @@ func AllBuiltinCalls(module *ast.Module) []BuiltInCall {
 			return false
 		}
 
-		if b, ok := bis[terms[0].Value.String()]; ok {
+		if b, ok := builtins[terms[0].Value.String()]; ok {
 			// Exclude operators and similar builtins
 			if b.Infix != "" {
 				return false

@@ -15,6 +15,7 @@ import (
 func documentSymbols(
 	contents string,
 	module *ast.Module,
+	builtins map[string]*ast.Builtin,
 ) []types.DocumentSymbol {
 	// Only pkgSymbols would likely suffice, but we're keeping docSymbols around in case
 	// we ever want to add more top-level symbols than the package.
@@ -62,7 +63,7 @@ func documentSymbols(
 				SelectionRange: ruleRange,
 			}
 
-			if detail := rast.GetRuleDetail(rule); detail != "" {
+			if detail := rast.GetRuleDetail(rule, builtins); detail != "" {
 				ruleSymbol.Detail = &detail
 			}
 
@@ -88,7 +89,7 @@ func documentSymbols(
 				SelectionRange: groupRange,
 			}
 
-			detail := rast.GetRuleDetail(rules[0])
+			detail := rast.GetRuleDetail(rules[0], builtins)
 			if detail != "" {
 				groupSymbol.Detail = &detail
 			}
@@ -104,7 +105,7 @@ func documentSymbols(
 					SelectionRange: childRange,
 				}
 
-				childDetail := rast.GetRuleDetail(rule)
+				childDetail := rast.GetRuleDetail(rule, builtins)
 				if childDetail != "" {
 					childRule.Detail = &childDetail
 				}

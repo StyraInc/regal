@@ -5,14 +5,12 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
-
-	"github.com/styrainc/regal/internal/lsp/rego"
 )
 
 // GetRuleDetail returns a short descriptive string value for a given rule stating
 // if the rule is constant, multi-value, single-value etc and the type of the rule's
 // value if known.
-func GetRuleDetail(rule *ast.Rule) string {
+func GetRuleDetail(rule *ast.Rule, builtins map[string]*ast.Builtin) string {
 	if rule.Head.Args != nil {
 		return "function" + rule.Head.Args.String()
 	}
@@ -53,9 +51,7 @@ func GetRuleDetail(rule *ast.Rule) string {
 	case ast.Call:
 		name := v[0].String()
 
-		bis := rego.GetBuiltins()
-
-		if builtin, ok := bis[name]; ok {
+		if builtin, ok := builtins[name]; ok {
 			retType := builtin.Decl.NamedResult().String()
 
 			detail += fmt.Sprintf(" (%s)", simplifyType(retType))

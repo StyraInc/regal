@@ -22,7 +22,6 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
@@ -336,36 +335,6 @@ capabilities:
 		}
 	}
 
-	// manually inspect the server's list of builtins to ensure that the EOPA
-	// capabilities were loaded correctly.
-	timeout = time.NewTimer(defaultTimeout)
-	defer timeout.Stop()
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		success := false
-
-		select {
-		case <-timeout.C:
-			t.Fatalf("timed out waiting for builtins map to be updated")
-		case <-ticker.C:
-			bis := rego.GetBuiltins()
-
-			// Search for a builtin we know is only in the EOPA capabilities.
-			if _, ok := bis["neo4j.query"]; ok {
-				success = true
-			}
-
-			t.Logf("waiting for neo4j.query builtin to be present, got %v", bis)
-		}
-
-		if success {
-			break
-		}
-	}
-
 	// 6. Client sends textDocument/didChange notification with new
 	// contents for main.rego no response to the call is expected. We added
 	// the start of an EOPA-specific call, so if the capabilities were
@@ -425,7 +394,7 @@ allow := neo4j.q
 	timeout = time.NewTimer(defaultTimeout)
 	defer timeout.Stop()
 
-	ticker = time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -1071,10 +1040,12 @@ func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileU
 	sort.Strings(codes)
 
 	if !slices.Equal(requestCodes, codes) {
-		t.Logf("expected items: %v, got: %v", codes, requestCodes)
+		t.Logf("waiting for items: %v, got: %v", codes, requestCodes)
 
 		return false
 	}
+
+	t.Logf("got expected items")
 
 	return true
 }

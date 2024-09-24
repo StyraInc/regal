@@ -1,35 +1,15 @@
 package rego
 
 import (
-	"maps"
 	"strings"
-	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 )
 
-var (
-	builtInsLock = &sync.RWMutex{}                              //nolint:gochecknoglobals
-	builtIns     = builtinMap(ast.CapabilitiesForThisVersion()) //nolint:gochecknoglobals
-)
-
-// Update updates the builtins database with the provided capabilities.
-func UpdateBuiltins(caps *ast.Capabilities) {
-	builtInsLock.Lock()
-	builtIns = builtinMap(caps)
-	builtInsLock.Unlock()
-}
-
-func GetBuiltins() map[string]*ast.Builtin {
-	builtInsLock.RLock()
-	defer builtInsLock.RUnlock()
-
-	return maps.Clone(builtIns)
-}
-
-func builtinMap(caps *ast.Capabilities) map[string]*ast.Builtin {
+// BuiltinsForCapabilities returns a list of builtins from the provided capabilities.
+func BuiltinsForCapabilities(capabilities *ast.Capabilities) map[string]*ast.Builtin {
 	m := make(map[string]*ast.Builtin)
-	for _, b := range caps.Builtins {
+	for _, b := range capabilities.Builtins {
 		m[b.Name] = b
 	}
 

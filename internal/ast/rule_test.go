@@ -3,6 +3,9 @@ package ast
 import (
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/parse"
 )
 
@@ -47,7 +50,9 @@ func TestGetRuleDetail(t *testing.T) {
 
 			rule := mod.Rules[0]
 
-			result := GetRuleDetail(rule)
+			bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+
+			result := GetRuleDetail(rule, bis)
 			if result != tc.expected {
 				t.Errorf("Expected %s, got %s", tc.expected, result)
 			}

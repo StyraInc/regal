@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
 )
@@ -32,7 +35,9 @@ func TestForModule_Package(t *testing.T) {
 package example
 `)
 
-	items := DefinedInModule(mod)
+	bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+
+	items := DefinedInModule(mod, bis)
 
 	expectedRefs := map[string]types.Ref{
 		"data.example": {
@@ -121,8 +126,9 @@ deny contains "strings" if true
 
 pi := 3.14
 `)
+	bis := rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
 
-	items := DefinedInModule(mod)
+	items := DefinedInModule(mod, bis)
 
 	expectedRefs := map[string]types.Ref{
 		"data.example": {

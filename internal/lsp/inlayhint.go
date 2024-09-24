@@ -18,10 +18,10 @@ func createInlayTooltip(named *types.NamedType) string {
 	return fmt.Sprintf("%s\n\nType: `%s`", named.Descr, named.Type.String())
 }
 
-func getInlayHints(module *ast.Module) []types2.InlayHint {
+func getInlayHints(module *ast.Module, builtins map[string]*ast.Builtin) []types2.InlayHint {
 	inlayHints := make([]types2.InlayHint, 0)
 
-	for _, call := range rego.AllBuiltinCalls(module) {
+	for _, call := range rego.AllBuiltinCalls(module, builtins) {
 		for i, arg := range call.Builtin.Decl.NamedFuncArgs().Args {
 			if len(call.Args) <= i {
 				// avoid panic if provided a builtin function where the args

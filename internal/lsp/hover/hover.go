@@ -135,7 +135,7 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 	return result
 }
 
-func UpdateBuiltinPositions(cache *cache.Cache, uri string) error {
+func UpdateBuiltinPositions(cache *cache.Cache, uri string, builtins map[string]*ast.Builtin) error {
 	module, ok := cache.GetModule(uri)
 	if !ok {
 		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
@@ -143,7 +143,7 @@ func UpdateBuiltinPositions(cache *cache.Cache, uri string) error {
 
 	builtinsOnLine := map[uint][]types2.BuiltinPosition{}
 
-	for _, call := range rego.AllBuiltinCalls(module) {
+	for _, call := range rego.AllBuiltinCalls(module, builtins) {
 		line := uint(call.Location.Row)
 
 		builtinsOnLine[line] = append(builtinsOnLine[line], types2.BuiltinPosition{

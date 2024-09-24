@@ -83,6 +83,7 @@ func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
 		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
 		completionsManager:         completions.NewDefaultManager(c, store),
 		webServer:                  web.NewServer(c),
+		loadedBuiltins:             make(map[string]map[string]*ast.Builtin),
 	}
 
 	return ls
@@ -93,9 +94,11 @@ type LanguageServer struct {
 
 	errorLog io.Writer
 
-	configWatcher    *lsconfig.Watcher
-	loadedConfig     *config.Config
-	loadedConfigLock sync.Mutex
+	configWatcher      *lsconfig.Watcher
+	loadedConfig       *config.Config
+	loadedConfigLock   sync.Mutex
+	loadedBuiltins     map[string]map[string]*ast.Builtin
+	loadedBuiltinsLock sync.RWMutex
 
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
@@ -215,9 +218,11 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case evt := <-l.diagnosticRequestFile:
+			bis := l.builtinsForCurrentCapabilities()
+
 			// updateParse will not return an error when the parsing failed,
 			// but only when it was impossible
-			_, err := updateParse(ctx, l.cache, l.regoStore, evt.URI)
+			_, err := updateParse(ctx, l.cache, l.regoStore, evt.URI, bis)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update module for %s: %w", evt.URI, err))
 
@@ -282,7 +287,9 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 				continue
 			}
 
-			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
+			bis := l.builtinsForCurrentCapabilities()
+
+			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update parse: %w", err))
 
@@ -293,7 +300,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 				continue
 			}
 
-			err = hover.UpdateBuiltinPositions(l.cache, fileURI)
+			err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to update builtin positions: %w", err))
 
@@ -337,7 +344,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case path := <-l.configWatcher.Reload:
-			configFile, err := os.Open(path)
+			configFileBs, err := os.ReadFile(path)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to open config file: %w", err))
 
@@ -346,7 +353,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			var userConfig config.Config
 
-			err = yaml.NewDecoder(configFile).Decode(&userConfig)
+			err = yaml.Unmarshal(configFileBs, &userConfig)
 			if err != nil && !errors.Is(err, io.EOF) {
 				l.logError(fmt.Errorf("failed to reload config: %w", err))
 
@@ -371,23 +378,26 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			l.loadedConfigLock.Unlock()
 
-			// Capabilities URL may have changed, so we should
-			// reload it.
-			capsURL := l.getLoadedConfig().CapabilitiesURL
+			// Capabilities URL may have changed, so we should reload it.
+			cfg := l.getLoadedConfig()
 
-			if capsURL == "" {
-				// This can happen if we have an empty config.
-				capsURL = "regal:///capabilities/default"
+			capsURL := "regal:///capabilities/default"
+			if cfg != nil && cfg.CapabilitiesURL != "" {
+				capsURL = cfg.CapabilitiesURL
 			}
 
 			caps, err := capabilities.Lookup(ctx, capsURL)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to lookup capabilities: %w", err))
+				l.logError(fmt.Errorf("failed to load capabilities for URL %q: %w", capsURL, err))
 
 				return
 			}
 
-			rego.UpdateBuiltins(caps)
+			bis := rego.BuiltinsForCapabilities(caps)
+
+			l.loadedBuiltinsLock.Lock()
+			l.loadedBuiltins[capsURL] = bis
+			l.loadedBuiltinsLock.Unlock()
 
 			// the config may now ignore files that existed in the cache before,
 			// in which case we need to remove them to stop their contents being
@@ -426,7 +436,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
-					_, err = updateParse(ctx, l.cache, l.regoStore, k)
+					_, err = updateParse(ctx, l.cache, l.regoStore, k, bis)
 					if err != nil {
 						l.logError(fmt.Errorf("failed to update parse for previously ignored file %q: %w", k, err))
 					}
@@ -1133,7 +1143,9 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 
 	l.cache.SetFileContents(fileURI, content)
 
-	success, err := updateParse(ctx, l.cache, l.regoStore, fileURI)
+	bis := l.builtinsForCurrentCapabilities()
+
+	success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
 	if err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	}
@@ -1142,7 +1154,7 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 		return nil
 	}
 
-	err = hover.UpdateBuiltinPositions(l.cache, fileURI)
+	err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis)
 	if err != nil {
 		return fmt.Errorf("failed to update builtin positions: %w", err)
 	}
@@ -1429,6 +1441,8 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 		return []types.InlayHint{}, nil
 	}
 
+	bis := l.builtinsForCurrentCapabilities()
+
 	// when a file cannot be parsed, we do a best effort attempt to provide inlay hints
 	// by finding the location of the first parse error and attempting to parse up to that point
 	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
@@ -1439,7 +1453,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 			return []types.InlayHint{}, nil
 		}
 
-		return partialInlayHints(parseErrors, contents, params.TextDocument.URI), nil
+		return partialInlayHints(parseErrors, contents, params.TextDocument.URI, bis), nil
 	}
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
@@ -1449,7 +1463,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 		return []types.InlayHint{}, nil
 	}
 
-	inlayHints := getInlayHints(module)
+	inlayHints := getInlayHints(module, bis)
 
 	return inlayHints, nil
 }
@@ -1500,6 +1514,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	items, err := l.completionsManager.Run(ctx, params, &providers.Options{
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
+		Builtins:         l.builtinsForCurrentCapabilities(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -1519,7 +1534,12 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 	}, nil
 }
 
-func partialInlayHints(parseErrors []types.Diagnostic, contents, fileURI string) []types.InlayHint {
+func partialInlayHints(
+	parseErrors []types.Diagnostic,
+	contents,
+	fileURI string,
+	builtins map[string]*ast.Builtin,
+) []types.InlayHint {
 	firstErrorLine := uint(0)
 	for _, parseError := range parseErrors {
 		if parseError.Range.Start.Line > firstErrorLine {
@@ -1547,7 +1567,7 @@ func partialInlayHints(parseErrors []types.Diagnostic, contents, fileURI string)
 		return []types.InlayHint{}
 	}
 
-	return getInlayHints(module)
+	return getInlayHints(module, builtins)
 }
 
 func (l *LanguageServer) handleWorkspaceSymbol(
@@ -1568,9 +1588,11 @@ func (l *LanguageServer) handleWorkspaceSymbol(
 	// But perhaps a good one to do at some point, and I'm not sure all clients
 	// do this filtering.
 
+	bis := l.builtinsForCurrentCapabilities()
+
 	for moduleURL, module := range l.cache.GetAllModules() {
 		content := contents[moduleURL]
-		docSyms := documentSymbols(content, module)
+		docSyms := documentSymbols(content, module, bis)
 		wrkSyms := make([]types.WorkspaceSymbol, 0)
 
 		toWorkspaceSymbols(docSyms, moduleURL, &wrkSyms)
@@ -1811,7 +1833,9 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 		return []types.DocumentSymbol{}, nil
 	}
 
-	return documentSymbols(contents, module), nil
+	bis := l.builtinsForCurrentCapabilities()
+
+	return documentSymbols(contents, module, bis), nil
 }
 
 func (l *LanguageServer) handleTextDocumentFoldingRange(
@@ -2289,7 +2313,9 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 			return nil
 		}
 
-		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI)
+		bis := l.builtinsForCurrentCapabilities()
+
+		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
 		if err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
@@ -2427,6 +2453,26 @@ func (l *LanguageServer) ignoreURI(fileURI string) bool {
 
 func (l *LanguageServer) workspacePath() string {
 	return uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+}
+
+// builtinsForCurrentCapabilities returns the map of builtins for use
+// in the server based on the currently loaded capabilities. If there is no
+// config, then the default for the Regal OPA version is used.
+func (l *LanguageServer) builtinsForCurrentCapabilities() map[string]*ast.Builtin {
+	l.loadedBuiltinsLock.RLock()
+	defer l.loadedBuiltinsLock.RUnlock()
+
+	cfg := l.getLoadedConfig()
+	if cfg == nil {
+		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+	}
+
+	bis, ok := l.loadedBuiltins[cfg.CapabilitiesURL]
+	if !ok {
+		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+	}
+
+	return bis
 }
 
 func positionToOffset(text string, p types.Position) int {

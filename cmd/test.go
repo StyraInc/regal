@@ -26,7 +26,6 @@ import (
 	"github.com/open-policy-agent/opa/version"
 
 	"github.com/styrainc/regal/internal/compile"
-	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
@@ -136,7 +135,7 @@ func opaTest(args []string) int {
 		return 1
 	}
 
-	regalBundle := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
+	regalBundle := rio.GetRegalBundle()
 
 	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {
@@ -213,7 +212,7 @@ func opaTest(args []string) int {
 	return 0
 }
 
-func moduleLoader(regal bundle.Bundle) ast.ModuleLoader {
+func moduleLoader(regal *bundle.Bundle) ast.ModuleLoader {
 	// We use the package declarations to know which modules we still need, and return
 	// those from the embedded regal bundle.
 	extra := make(map[string]struct{}, len(regal.Modules))

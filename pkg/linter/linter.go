@@ -23,7 +23,6 @@ import (
 	"github.com/open-policy-agent/opa/topdown"
 	"github.com/open-policy-agent/opa/topdown/print"
 
-	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/parse"
@@ -73,10 +72,8 @@ var (
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	return Linter{
-		ruleBundles: []*bundle.Bundle{&regalRules},
+		ruleBundles: []*bundle.Bundle{rio.GetRegalBundle()},
 	}
 }
 

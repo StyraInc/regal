@@ -9,7 +9,6 @@ import (
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
 
-	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
@@ -32,8 +31,6 @@ var pqInitOnce sync.Once
 // This function is only used by language server code paths and so init() is not
 // used.
 func initialize() {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	dataBundle := bundle.Bundle{
 		Manifest: bundle.Manifest{
 			Roots:    &[]string{"internal"},
@@ -49,7 +46,7 @@ func initialize() {
 	}
 
 	regoArgs := []func(*rego.Rego){
-		rego.ParsedBundle("regal", &regalRules),
+		rego.ParsedBundle("regal", rio.GetRegalBundle()),
 		rego.ParsedBundle("internal", &dataBundle),
 		rego.Query(`data.regal.lsp.completion.ref_names`),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),

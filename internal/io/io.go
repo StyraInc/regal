@@ -9,48 +9,59 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader/filter"
+
+	rbundle "github.com/styrainc/regal/bundle"
 )
 
 const PathSeparator = string(os.PathSeparator)
 
-// LoadRegalBundleFS loads bundle embedded from policy and data directory.
-func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
-	embedLoader, err := bundle.NewFSLoader(fs)
-	if err != nil {
-		return bundle.Bundle{}, fmt.Errorf("failed to load bundle from filesystem: %w", err)
-	}
+// nolint:gochecknoglobals
+var (
+	once        sync.Once
+	regalBundle *bundle.Bundle
+)
 
-	//nolint:wrapcheck
-	return bundle.NewCustomReader(embedLoader.WithFilter(ExcludeTestFilter())).
-		WithSkipBundleVerification(true).
-		WithProcessAnnotations(true).
-		WithBundleName("regal").
-		Read()
+func GetRegalBundle() *bundle.Bundle {
+	once.Do(func() {
+		var err error
+
+		regalBundle, err = loadRegalBundleFS(rbundle.Bundle)
+		if err != nil {
+			log.Fatalf("failed to load embedded regal bundle: %v", err)
+		}
+	})
+
+	return regalBundle
 }
 
 // LoadRegalBundlePath loads bundle from path.
-func LoadRegalBundlePath(path string) (bundle.Bundle, error) {
-	//nolint:wrapcheck
-	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(ExcludeTestFilter())).
+func LoadRegalBundlePath(path string) (*bundle.Bundle, error) {
+	return readRegalBundle(bundle.NewDirectoryLoader(path).WithFilter(ExcludeTestFilter())) // nolint:wrapcheck
+}
+
+func loadRegalBundleFS(fs files.FS) (*bundle.Bundle, error) {
+	embedLoader, err := bundle.NewFSLoader(fs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bundle from filesystem: %w", err)
+	}
+
+	return readRegalBundle(embedLoader.WithFilter(ExcludeTestFilter())) // nolint:wrapcheck
+}
+
+func readRegalBundle(loader bundle.DirectoryLoader) (*bundle.Bundle, error) {
+	b, err := bundle.NewCustomReader(loader).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
 		Read()
-}
 
-// MustLoadRegalBundleFS loads bundle embedded from policy and data directory, exit on failure.
-func MustLoadRegalBundleFS(fs files.FS) bundle.Bundle {
-	regalBundle, err := LoadRegalBundleFS(fs)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return regalBundle
+	return &b, err // nolint:wrapcheck
 }
 
 // ToMap convert any value to map[string]any, or panics on failure.

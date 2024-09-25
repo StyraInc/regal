@@ -14,12 +14,6 @@
           },
           "type": "array"
         },
-        "annotations": {
-          "items": {
-            "$ref": "#/$defs/annotations"
-          },
-          "type": "array"
-        },
         "rules": {
           "items": {
             "$ref": "#/$defs/rule"
@@ -273,6 +267,12 @@
         },
         "location": {
           "$ref": "#/$defs/location"
+        },
+        "annotations": {
+          "items": {
+            "$ref": "#/$defs/annotations"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,

@@ -28,10 +28,7 @@ none := false
 				"foo.bar.none": {false},
 				"foo.bar.rule": {true},
 			},
-			"rule_locations": {
-				"foo.bar.none": "9:1:bm9uZSA6PSBmYWxzZQ==",
-				"foo.bar.rule": "7:1:cnVsZSA6PSB0cnVl",
-			},
+			"rule_locations": {"foo.bar.none": "9:1:bm9uZSA6PSBmYWxzZQ=="},
 		},
 		"aggregate_source": {
 			"file": "p.rego",

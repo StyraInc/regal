@@ -53,6 +53,7 @@ type Linter struct {
 	enable               []string
 	enableCategory       []string
 	ignoreFiles          []string
+	additionalAggregates map[string][]report.Aggregate
 	debugMode            bool
 	disableAll           bool
 	enableAll            bool
@@ -224,6 +225,12 @@ func (l Linter) WithPopulateAggregates(enabled bool) Linter {
 	return l
 }
 
+func (l Linter) WithAggregates(aggregates map[string][]report.Aggregate) Linter {
+	l.additionalAggregates = aggregates
+
+	return l
+}
+
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLint)
@@ -325,8 +332,21 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		}
 	}
 
-	if len(input.FileNames) > 1 {
-		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, regoReport.Aggregates, regoReport.IgnoreDirectives)
+	if len(input.FileNames) > 1 || len(l.additionalAggregates) > 0 {
+		allAggregates := make(map[string][]report.Aggregate)
+		for k, aggregates := range l.additionalAggregates {
+			allAggregates[k] = append(allAggregates[k], aggregates...)
+		}
+
+		for k, aggregates := range goReport.Aggregates {
+			allAggregates[k] = append(allAggregates[k], aggregates...)
+		}
+
+		for k, aggregates := range regoReport.Aggregates {
+			allAggregates[k] = append(allAggregates[k], aggregates...)
+		}
+
+		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 		}

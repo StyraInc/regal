@@ -624,3 +624,42 @@ import data.foo.bar.unresolved
 		t.Errorf("expected aggregates to contain 'imports/unresolved-import'")
 	}
 }
+
+func TestLintWithAggregates(t *testing.T) {
+	t.Parallel()
+
+	contents := `package p
+
+import data.foo.bar.unresolved
+`
+
+	input := test.InputPolicy("p.rego", contents)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithPopulateAggregates(true).
+		WithInputModules(&input)
+
+	result1 := testutil.Must(linter.Lint(context.Background()))(t)
+
+	linter2 := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithAggregates(result1.Aggregates).
+		WithInputModules(&input)
+
+	result := testutil.Must(linter2.Lint(context.Background()))(t)
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected one violation, got %d", len(result.Violations))
+	}
+
+	violation := result.Violations[0]
+
+	if violation.Title != "unresolved-import" {
+		t.Errorf("expected violation to be 'unresolved-import', got %q", violation.Title)
+	}
+}

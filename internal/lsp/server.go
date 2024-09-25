@@ -334,12 +334,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		return
 	}
 
-	regalRules, err := rio.LoadRegalBundleFS(bundle.Bundle)
-	if err != nil {
-		l.logError(fmt.Errorf("failed to load regal bundle for defaulting of user config: %w", err))
-
-		return
-	}
+	regalRules := bundle.LoadedBundle()
 
 	for {
 		select {
@@ -362,7 +357,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				return
 			}
 
-			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, &userConfig)
+			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(regalRules, &userConfig)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to load config: %w", err))
 

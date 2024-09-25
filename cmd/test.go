@@ -25,8 +25,8 @@ import (
 	"github.com/open-policy-agent/opa/util"
 	"github.com/open-policy-agent/opa/version"
 
+	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/compile"
-	"github.com/styrainc/regal/internal/embeds"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
@@ -136,8 +136,6 @@ func opaTest(args []string) int {
 		return 1
 	}
 
-	regalBundle := rio.MustLoadRegalBundleFS(embeds.EmbedBundleFS)
-
 	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -145,9 +143,13 @@ func opaTest(args []string) int {
 		return 1
 	}
 
-	if err := store.Write(ctx, txn, storage.AddOp,
+	if err := store.Write(
+		ctx,
+		txn,
+		storage.AddOp,
 		storage.MustParsePath("/regal"),
-		regalBundle.Data["regal"]); err != nil {
+		rbundle.LoadedBundle().Data["regal"],
+	); err != nil {
 		panic(err)
 	}
 
@@ -168,7 +170,7 @@ func opaTest(args []string) int {
 		WithEnablePrintStatements(!testParams.benchmark).
 		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
-		WithModuleLoader(moduleLoader(regalBundle)).
+		WithModuleLoader(moduleLoader(rbundle.LoadedBundle())).
 		WithRewriteTestRules(testParams.varValues)
 
 	if testParams.threshold > 0 && !testParams.coverage {
@@ -213,12 +215,12 @@ func opaTest(args []string) int {
 	return 0
 }
 
-func moduleLoader(regal bundle.Bundle) ast.ModuleLoader {
+func moduleLoader(regalRules *bundle.Bundle) ast.ModuleLoader {
 	// We use the package declarations to know which modules we still need, and return
 	// those from the embedded regal bundle.
-	extra := make(map[string]struct{}, len(regal.Modules))
+	extra := make(map[string]struct{}, len(regalRules.Modules))
 
-	for _, mod := range regal.Modules {
+	for _, mod := range regalRules.Modules {
 		extra[mod.Parsed.Package.Path.String()] = struct{}{}
 	}
 
@@ -229,7 +231,7 @@ func moduleLoader(regal bundle.Bundle) ast.ModuleLoader {
 
 		extraMods := map[string]*ast.Module{}
 
-		for id, mod := range regal.ParsedModules("bundle") {
+		for id, mod := range regalRules.ParsedModules("bundle") {
 			if _, ok := extra[mod.Package.Path.String()]; ok {
 				extraMods[id] = mod
 			}

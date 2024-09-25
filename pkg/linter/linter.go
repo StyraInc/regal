@@ -73,10 +73,8 @@ var (
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	return Linter{
-		ruleBundles: []*bundle.Bundle{&regalRules},
+		ruleBundles: []*bundle.Bundle{rbundle.LoadedBundle()},
 	}
 }
 
@@ -102,8 +100,8 @@ func (l Linter) WithInputModules(input *rules.Input) Linter {
 }
 
 // WithAddedBundle adds a bundle of rules and data to include in evaluation.
-func (l Linter) WithAddedBundle(b bundle.Bundle) Linter {
-	l.ruleBundles = append(l.ruleBundles, &b)
+func (l Linter) WithAddedBundle(b *bundle.Bundle) Linter {
+	l.ruleBundles = append(l.ruleBundles, b)
 
 	return l
 }

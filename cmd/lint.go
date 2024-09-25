@@ -249,13 +249,8 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigSearch).Stop()
 	}
 
-	// regal rules are loaded here and passed to the linter separately
-	// as the configuration is also used to determine feature toggles
-	// and the defaults from the data.yaml here.
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	regal := linter.NewEmptyLinter().
-		WithAddedBundle(regalRules).
+		WithAddedBundle(rbundle.LoadedBundle()).
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).
@@ -324,7 +319,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigParse).Stop()
 	}
 
-	go updateCheckAndWarn(params, regalRules, &userConfig)
+	go updateCheckAndWarn(params, rbundle.LoadedBundle(), &userConfig)
 
 	result, err := regal.Lint(ctx)
 	if err != nil {
@@ -339,8 +334,8 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	return result, rep.Publish(ctx, result) //nolint:wrapcheck
 }
 
-func updateCheckAndWarn(params *lintCommandParams, regalRules bundle.Bundle, userConfig *config.Config) {
-	mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, userConfig)
+func updateCheckAndWarn(params *lintCommandParams, regalRules *bundle.Bundle, userConfig *config.Config) {
+	mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(regalRules, userConfig)
 	if err != nil {
 		if params.debug {
 			log.Printf("failed to merge user config with default config when checking version: %v", err)

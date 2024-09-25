@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -595,5 +596,31 @@ func TestEnabledRules(t *testing.T) {
 
 	if enabledRules[1] != "opa-fmt" {
 		t.Errorf("expected first enabled rule to be 'opa-fmt', got %q", enabledRules[1])
+	}
+}
+
+func TestLintWithPopulateAggregates(t *testing.T) {
+	t.Parallel()
+
+	input := test.InputPolicy("p.rego", `package p
+
+import data.foo.bar.unresolved
+`)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithPopulateAggregates(true).
+		WithInputModules(&input)
+
+	result := testutil.Must(linter.Lint(context.Background()))(t)
+
+	if len(result.Aggregates) != 1 {
+		t.Fatalf("expected one aggregate, got %d", len(result.Aggregates))
+	}
+
+	if _, ok := result.Aggregates["imports/unresolved-import"]; !ok {
+		t.Errorf("expected aggregates to contain 'imports/unresolved-import'")
 	}
 }

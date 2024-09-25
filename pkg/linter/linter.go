@@ -57,6 +57,7 @@ type Linter struct {
 	disableAll           bool
 	enableAll            bool
 	profiling            bool
+	populateAggregates   bool
 }
 
 //nolint:gochecknoglobals
@@ -214,6 +215,15 @@ func (l Linter) WithRootDir(rootDir string) Linter {
 	return l
 }
 
+// WithPopulateAggregates enables the population of aggregate data even when
+// linting a single file. This is useful when needing to incrementally build
+// aggregate state from multiple different linting runs.
+func (l Linter) WithPopulateAggregates(enabled bool) Linter {
+	l.populateAggregates = enabled
+
+	return l
+}
+
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLint)
@@ -329,6 +339,17 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		FilesFailed:   len(finalReport.ViolationsFileCount()),
 		RulesSkipped:  rulesSkippedCounter,
 		NumViolations: len(finalReport.Violations),
+	}
+
+	if l.populateAggregates {
+		finalReport.Aggregates = make(map[string][]report.Aggregate)
+		for k, aggregates := range goReport.Aggregates {
+			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
+		}
+
+		for k, aggregates := range regoReport.Aggregates {
+			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
+		}
 	}
 
 	if l.metrics != nil {
@@ -664,7 +685,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	defer cancel()
 
 	var query ast.Body
-	if len(input.FileNames) > 1 {
+	if len(input.FileNames) > 1 || l.populateAggregates {
 		query = lintAndCollectQuery
 	} else {
 		query = lintQuery

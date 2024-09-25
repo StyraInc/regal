@@ -74,7 +74,7 @@ var (
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
 	return Linter{
-		ruleBundles: []*bundle.Bundle{rbundle.LoadedBundle()},
+		ruleBundles: []*bundle.Bundle{&rbundle.LoadedBundle},
 	}
 }
 

@@ -148,7 +148,7 @@ func opaTest(args []string) int {
 		txn,
 		storage.AddOp,
 		storage.MustParsePath("/regal"),
-		rbundle.LoadedBundle().Data["regal"],
+		rbundle.LoadedBundle.Data["regal"],
 	); err != nil {
 		panic(err)
 	}
@@ -170,7 +170,7 @@ func opaTest(args []string) int {
 		WithEnablePrintStatements(!testParams.benchmark).
 		WithSchemas(compile.RegalSchemaSet()).
 		WithUseTypeCheckAnnotations(true).
-		WithModuleLoader(moduleLoader(rbundle.LoadedBundle())).
+		WithModuleLoader(moduleLoader(&rbundle.LoadedBundle)).
 		WithRewriteTestRules(testParams.varValues)
 
 	if testParams.threshold > 0 && !testParams.coverage {

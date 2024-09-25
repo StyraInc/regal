@@ -250,7 +250,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	}
 
 	regal := linter.NewEmptyLinter().
-		WithAddedBundle(rbundle.LoadedBundle()).
+		WithAddedBundle(&rbundle.LoadedBundle).
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).
@@ -319,7 +319,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigParse).Stop()
 	}
 
-	go updateCheckAndWarn(params, rbundle.LoadedBundle(), &userConfig)
+	go updateCheckAndWarn(params, &rbundle.LoadedBundle, &userConfig)
 
 	result, err := regal.Lint(ctx)
 	if err != nil {

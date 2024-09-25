@@ -47,7 +47,7 @@ func initialize() {
 	}
 
 	regoArgs := []func(*rego.Rego){
-		rego.ParsedBundle("regal", rbundle.LoadedBundle()),
+		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.ParsedBundle("internal", &dataBundle),
 		rego.Query(`data.regal.lsp.completion.ref_names`),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),

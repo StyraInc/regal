@@ -143,7 +143,7 @@ func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
 	return []func(*rego.Rego){
 		rego.Store(store),
 		rego.ParsedQuery(query),
-		rego.ParsedBundle("regal", rbundle.LoadedBundle()),
+		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 		// TODO: remove later

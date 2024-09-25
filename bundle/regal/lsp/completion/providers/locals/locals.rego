@@ -22,12 +22,11 @@ items contains item if {
 	word := location.word_at(line, input.regal.context.location.col)
 	parsed_current_file := data.workspace.parsed[input.regal.file.uri]
 
-	some local in location.find_locals(
-		parsed_current_file.rules,
-		input.regal.context.location,
-	)
+	some local in location.find_locals(parsed_current_file.rules, input.regal.context.location)
 
 	startswith(local, word.text)
+
+	not local in _same_line_loop_vars(line)
 
 	item := {
 		"label": local,
@@ -48,4 +47,18 @@ _function_args_position(text) if {
 	text == trim_left(text, " \t")
 	contains(text, "(")
 	not contains(text, "=")
+}
+
+default _same_line_loop_vars(_) := []
+
+_same_line_loop_vars(line) := d if {
+	expr := trim_space(line)
+
+	strings.any_prefix_match(expr, {"some", "every"})
+
+	# ---------------------------------------------------> "some k, v in coll"
+	a := substring(expr, 0, indexof(expr, " in")) # -----> "some k, v"
+	b := trim_prefix(trim_prefix(a, "some"), "every") # -> "k, v"
+	c := replace(b, " ", "") # --------------------------> "k,v"
+	d := split(c, ",") # --------------------------------> [k, v] or [v]
 }

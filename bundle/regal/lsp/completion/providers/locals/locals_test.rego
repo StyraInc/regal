@@ -2,6 +2,8 @@ package regal.lsp.completion.providers.locals_test
 
 import rego.v1
 
+import data.regal.util
+
 import data.regal.lsp.completion.providers.locals as provider
 import data.regal.lsp.completion.providers.test_utils as utils
 
@@ -147,6 +149,33 @@ function() if {
 	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
 
 	count(items) == 0
+}
+
+test_no_some_in_vars_suggested_on_same_line if {
+	workspace := {"file:///p.rego": `package policy
+
+import rego.v1
+
+allow if {
+	xyz := 1
+	some xxx, yyy in x
+}
+`}
+
+	regal_module := {"regal": {
+		"file": {
+			"name": "p.rego",
+			"uri": "file:///p.rego",
+			"lines": split(workspace["file:///p.rego"], "\n"),
+		},
+		"context": {"location": {
+			"row": 7,
+			"col": 19,
+		}},
+	}}
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
+
+	util.single_set_item(items).label == "xyz"
 }
 
 _expect_item(items, label, range) if {

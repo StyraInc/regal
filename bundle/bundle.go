@@ -2,6 +2,8 @@ package bundle
 
 import (
 	"embed"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 // Bundle FS will include the tests as well, but since that has negligible impact on the size of the binary,
@@ -9,3 +11,8 @@ import (
 //
 //go:embed *
 var Bundle embed.FS
+
+// LoadedBundle contains the loaded contents of the Bundle.
+//
+//nolint:gochecknoglobals
+var LoadedBundle = rio.MustLoadRegalBundleFS(Bundle)

@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/topdown"
@@ -27,13 +26,6 @@ import (
 type Policy struct {
 	pq rego.PreparedEvalQuery
 }
-
-//nolint:gochecknoglobals
-var regalRules = func() bundle.Bundle {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
-	return regalRules
-}()
 
 // NewPolicy creates a new Policy provider. This provider is distinctly different from the other providers
 // as it acts like the entrypoint for all Rego-based providers, and not a single provider "function" like
@@ -151,7 +143,7 @@ func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
 	return []func(*rego.Rego){
 		rego.Store(store),
 		rego.ParsedQuery(query),
-		rego.ParsedBundle("regal", &regalRules),
+		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 		// TODO: remove later

@@ -112,11 +112,9 @@ type policy struct {
 }
 
 func initialize() {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	createArgs := func(args ...func(*rego.Rego)) []func(*rego.Rego) {
 		return append([]func(*rego.Rego){
-			rego.ParsedBundle("regal", &regalRules),
+			rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 			rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 			rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 		}, args...)

@@ -24,7 +24,7 @@ import (
 	"github.com/open-policy-agent/opa/format"
 	"github.com/open-policy-agent/opa/storage"
 
-	"github.com/styrainc/regal/bundle"
+	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/bundles"
@@ -334,13 +334,6 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		return
 	}
 
-	regalRules, err := rio.LoadRegalBundleFS(bundle.Bundle)
-	if err != nil {
-		l.logError(fmt.Errorf("failed to load regal bundle for defaulting of user config: %w", err))
-
-		return
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -362,7 +355,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				return
 			}
 
-			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&regalRules, &userConfig)
+			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, &userConfig)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to load config: %w", err))
 

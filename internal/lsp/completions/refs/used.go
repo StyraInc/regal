@@ -32,8 +32,6 @@ var pqInitOnce sync.Once
 // This function is only used by language server code paths and so init() is not
 // used.
 func initialize() {
-	regalRules := rio.MustLoadRegalBundleFS(rbundle.Bundle)
-
 	dataBundle := bundle.Bundle{
 		Manifest: bundle.Manifest{
 			Roots:    &[]string{"internal"},
@@ -49,7 +47,7 @@ func initialize() {
 	}
 
 	regoArgs := []func(*rego.Rego){
-		rego.ParsedBundle("regal", &regalRules),
+		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.ParsedBundle("internal", &dataBundle),
 		rego.Query(`data.regal.lsp.completion.ref_names`),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),

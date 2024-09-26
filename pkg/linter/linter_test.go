@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -595,5 +596,70 @@ func TestEnabledRules(t *testing.T) {
 
 	if enabledRules[1] != "opa-fmt" {
 		t.Errorf("expected first enabled rule to be 'opa-fmt', got %q", enabledRules[1])
+	}
+}
+
+func TestLintWithPopulateAggregates(t *testing.T) {
+	t.Parallel()
+
+	input := test.InputPolicy("p.rego", `package p
+
+import data.foo.bar.unresolved
+`)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithAlwaysAggregate(true).
+		WithInputModules(&input)
+
+	result := testutil.Must(linter.Lint(context.Background()))(t)
+
+	if len(result.Aggregates) != 1 {
+		t.Fatalf("expected one aggregate, got %d", len(result.Aggregates))
+	}
+
+	if _, ok := result.Aggregates["imports/unresolved-import"]; !ok {
+		t.Errorf("expected aggregates to contain 'imports/unresolved-import'")
+	}
+}
+
+func TestLintWithAggregates(t *testing.T) {
+	t.Parallel()
+
+	contents := `package p
+
+import data.foo.bar.unresolved
+`
+
+	input := test.InputPolicy("p.rego", contents)
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithAlwaysAggregate(true).
+		WithInputModules(&input)
+
+	result1 := testutil.Must(linter.Lint(context.Background()))(t)
+
+	linter2 := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("unresolved-import").
+		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
+		WithAggregates(result1.Aggregates).
+		WithInputModules(&input)
+
+	result := testutil.Must(linter2.Lint(context.Background()))(t)
+
+	if len(result.Violations) != 1 {
+		t.Fatalf("expected one violation, got %d", len(result.Violations))
+	}
+
+	violation := result.Violations[0]
+
+	if violation.Title != "unresolved-import" {
+		t.Errorf("expected violation to be 'unresolved-import', got %q", violation.Title)
 	}
 }

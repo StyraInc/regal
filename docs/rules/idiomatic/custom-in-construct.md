@@ -48,6 +48,10 @@ rules:
       level: error
 ```
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/custom-in-construct/custom_in_construct.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

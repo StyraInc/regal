@@ -55,7 +55,7 @@ automatically at any applicable location by the `opa fmt` tool.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   idiomatic:
     use-contains:
       # one of "error", "warning", "ignore"
@@ -66,6 +66,7 @@ rules:
 
 - Regal Docs: [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)
 - OPA Docs: [Future Keywords](https://www.openpolicyagent.org/docs/latest/policy-language/#future-keywords)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/use-contains/use_contains.rego)
 
 ## Community
 

@@ -15,7 +15,7 @@ e.g. `policy.rego` and `policy_test.rego`.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   testing:
     file-missing-test-suffix:
       # one of "error", "warning", "ignore"
@@ -25,6 +25,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/latest/policy-testing/)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/file-missing-test-suffix/file_missing_test_suffix.rego)
 
 ## Community
 

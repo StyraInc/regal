@@ -58,6 +58,7 @@ rules:
 - OPA Docs: [Imports](https://www.openpolicyagent.org/docs/latest/policy-language/#imports)
 - OPA Docs: [Collaboration Using Import](https://www.openpolicyagent.org/docs/latest/faq/#collaboration-using-import)
 - OPA Issues: [Missing import should create error](https://github.com/open-policy-agent/opa/issues/491)
+  - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/unresolved-import/unresolved_import.rego)
 
 ## Community
 

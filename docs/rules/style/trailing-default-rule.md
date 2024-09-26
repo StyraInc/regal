@@ -49,6 +49,10 @@ rules:
       level: error
 ```
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/trailing-default-rule/trailing_default_rule.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

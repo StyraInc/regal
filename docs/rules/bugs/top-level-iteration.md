@@ -30,12 +30,16 @@ data.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     top-level-iteration:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/top-level-iteration/top_level_iteration.rego)
 
 ## Community
 

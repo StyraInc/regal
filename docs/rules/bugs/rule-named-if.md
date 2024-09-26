@@ -36,12 +36,16 @@ it isn't — consider using a better name for your rule!
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     rule-named-if:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/rule-named-if/rule_named_if.rego)
 
 ## Community
 

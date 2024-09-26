@@ -48,6 +48,10 @@ rules:
       level: error
 ```
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/rule-name-repeats-package/rule_name_repeats_package.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

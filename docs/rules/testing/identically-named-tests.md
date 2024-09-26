@@ -45,7 +45,7 @@ test names within the same test package.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   testing:
     identically-named-tests:
       # one of "error", "warning", "ignore"
@@ -56,6 +56,7 @@ rules:
 
 - OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/latest/policy-testing/)
 - OPA GitHub: [Support running of individual test rules sharing same name](https://github.com/open-policy-agent/opa/issues/5766)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/identically-named-tests/identically_named_tests.rego)
 
 ## Community
 

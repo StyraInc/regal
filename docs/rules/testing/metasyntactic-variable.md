@@ -84,6 +84,7 @@ rules:
 
 - Regal Docs: [Naming convention rule](https://docs.styra.com/regal/rules/custom/naming-convention)
 - Wikipedia: [Metasyntactic variable](https://en.wikipedia.org/wiki/Metasyntactic_variable)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/metasyntactic-variable/metasyntactic_variable.rego)
 
 ## Community
 

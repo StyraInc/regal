@@ -39,10 +39,10 @@ whether the rule could be rewritten without the negative. For example, `not no_f
 Access control policy often includes rules using some form of double negatives, like `allow if not deny`. That's
 considered OK, and the `double-negative` rule is limited to check for a limited list of words:
 
-* `not cannot_`
-* `not no_`
-* `not non_`
-* `not not_`,
+- `not cannot_`
+- `not no_`
+- `not non_`
+- `not not_`,
 
 ## Configuration Options
 
@@ -55,6 +55,10 @@ rules:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/double-negative/double_negative.rego)
 
 ## Community
 

@@ -79,6 +79,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Prefer using arguments over input, data or rule references](https://github.com/StyraInc/rego-style-guide#prefer-using-arguments-over-input-data-or-rule-references)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/external-reference/external_reference.rego)
 
 ## Community
 

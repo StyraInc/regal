@@ -91,6 +91,10 @@ rules:
       except-function-name-pattern: "^mock_"
 ```
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/argument-always-wildcard/argument_always_wildcard.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

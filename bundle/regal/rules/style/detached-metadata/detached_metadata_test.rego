@@ -61,7 +61,7 @@ allow := true
 	r == set()
 }
 
-test_success_detached_document_scope_ok if {
+test_success_detached_but_more_metadata_on_rule if {
 	r := rule.report with input as ast.with_rego_v1(`
 # METADATA
 # scope: document
@@ -72,6 +72,44 @@ test_success_detached_document_scope_ok if {
 allow := true
 `)
 	r == set()
+}
+
+test_success_detached_but_more_metadata_on_package if {
+	r := rule.report with input as regal.parse_module("p.rego", `
+# METADATA
+# scope: package
+# description: foo
+
+# METADATA
+# title: allow
+# scope: subpackages
+package p
+`)
+	r == set()
+}
+
+test_fail_second_block_detached_first_not_reported if {
+	r := rule.report with input as regal.parse_module("p.rego", `# METADATA
+# scope: package
+# description: foo
+
+# METADATA
+# title: allow
+# scope: subpackages
+
+package p
+`)
+	r == {{
+		"category": "style",
+		"description": "Detached metadata annotation",
+		"level": "error",
+		"location": {"col": 1, "file": "p.rego", "row": 5, "text": "# METADATA"},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/detached-metadata", "style"),
+		}],
+		"title": "detached-metadata",
+	}}
 }
 
 test_success_not_detached_by_comment_in_different_column if {

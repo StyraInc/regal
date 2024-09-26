@@ -12,7 +12,7 @@ import future.keywords
 
 report contains violation if {
     not "developer" in input.user.roles
-    
+
     violation := "Required role 'developer' missing"
 }
 ```
@@ -27,7 +27,7 @@ import future.keywords.in
 
 report contains violation if {
     not "developer" in input.user.roles
-    
+
     violation := "Required role 'developer' missing"
 }
 ```
@@ -43,7 +43,7 @@ variable names in your policy.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     implicit-future-keywords:
       # one of "error", "warning", "ignore"
@@ -53,6 +53,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Use explicit imports for future keywords](https://github.com/StyraInc/rego-style-guide#use-explicit-imports-for-future-keywords)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/implicit-future-keywords/implicit_future_keywords.rego)
 
 ## Community
 

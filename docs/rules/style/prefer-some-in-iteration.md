@@ -142,6 +142,7 @@ rules:
 - Regal Docs: [Use `some` to declare output variables](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)
 - OPA Docs: [Membership and Iteration: `in`](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
 - OPA Docs: [Some Keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#some-keyword)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/prefer-some-in-iteration/prefer_some_in_iteration.rego)
 
 ## Community
 

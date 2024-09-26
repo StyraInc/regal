@@ -53,6 +53,7 @@ rules:
 
 - OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
 - OPA Docs: [Accessing Annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#accessing-annotations)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/detached-metadata/detached_metadata.rego)
 
 ## Community
 

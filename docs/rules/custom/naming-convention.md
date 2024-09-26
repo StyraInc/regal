@@ -50,6 +50,10 @@ rules:
 patterns. Additionally, you'll most often want to include anchors for the start and end of the string (`^` and `$`) in
 your patterns, or else your pattern might accidentally match only parts of the name rather than the whole name.
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/custom/naming-convention/naming_convention.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

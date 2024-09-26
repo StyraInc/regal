@@ -20,12 +20,16 @@ Just like `input`, `data` is always globally available and does not need to be i
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     redundant-data-import:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/redundant-data-import/redundant_data_import.rego)
 
 ## Community
 

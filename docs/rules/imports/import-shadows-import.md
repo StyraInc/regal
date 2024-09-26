@@ -32,7 +32,7 @@ Duplicate imports are redundant, and while harmless, should just be removed.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     import-shadows-import:
       # one of "error", "warning", "ignore"
@@ -42,6 +42,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/import-shadows-import/import_shadows_import.rego)
 
 ## Community
 

@@ -55,6 +55,10 @@ rules:
       level: error
 ```
 
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/pointless-reassignment/pointless_reassignment.rego)
+
 ## Community
 
 If you think you've found a problem with this rule or its documentation, would like to suggest improvements, new rules,

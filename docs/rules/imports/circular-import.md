@@ -117,12 +117,16 @@ This will make your code easier to navigate and maintain.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   imports:
     circular-import:
       # one of "error", "warning", "ignore"
       level: error
 ```
+
+## Related Resources
+
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/circular-import/circular_import.rego)
 
 ## Community
 

@@ -40,7 +40,7 @@ it will remove the parentheses from a zero-arity function definition for you.
 This linter rule provides the following configuration options:
 
 ```yaml
-rules: 
+rules:
   bugs:
     zero-arity-function:
       # one of "error", "warning", "ignore"
@@ -49,8 +49,9 @@ rules:
 
 ## Related Resources
 
-OPA Docs: [The OPA Document Model](https://www.openpolicyagent.org/docs/latest/philosophy/#the-opa-document-model)
-OPA Issues: [Allow user-defined zero-argument functions in Rego](https://github.com/open-policy-agent/opa/issues/6315)
+- OPA Docs: [The OPA Document Model](https://www.openpolicyagent.org/docs/latest/philosophy/#the-opa-document-model)
+- OPA Issues: [Allow user-defined zero-argument functions in Rego](https://github.com/open-policy-agent/opa/issues/6315)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/zero-arity-function/zero_arity_function.rego)
 
 ## Community
 

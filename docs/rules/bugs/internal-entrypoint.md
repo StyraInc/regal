@@ -53,7 +53,8 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Optionally, use leading underscore for rules intended for internal use](https://docs.styra.com/opa/rego-style-guide#optionally-use-leading-underscore-for-rules-intended-for-internal-use)
-- Regal  Docs: [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)
+- Regal Docs: [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/internal-entrypoint/internal_entrypoint.rego)
 
 ## Community
 

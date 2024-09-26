@@ -77,6 +77,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/impossible-not/impossible_not.rego)
 
 ## Community
 

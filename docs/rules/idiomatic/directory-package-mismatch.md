@@ -127,6 +127,7 @@ rules:
 - Regal Docs: [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package)
 - OPA Docs: [Bundles](https://www.openpolicyagent.org/docs/latest/management-bundles/)
 - Styra Docs: [Styra DAS](https://docs.styra.com/das)
+- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/directory-package-mismatch/directory_package_mismatch.rego)
 
 ## Community
 

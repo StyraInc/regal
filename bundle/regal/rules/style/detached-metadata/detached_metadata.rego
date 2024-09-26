@@ -25,7 +25,7 @@ report contains violation if {
 }
 
 _annotation_at_row(row) := annotation if {
-	some annotation in input.annotations
+	some annotation in ast.annotations
 
 	util.to_location_object(annotation.location).row == row
 }

@@ -563,7 +563,7 @@ func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 
 	expStart := "1 error occurred: "
 	expEnd := "rego_type_error: undefined ref: input.foo\n\tinput.foo\n\t      ^\n\t      " +
-		"have: \"foo\"\n\t      want (one of): [\"annotations\" \"comments\" \"imports\" \"package\" \"regal\" \"rules\"]\n"
+		"have: \"foo\"\n\t      want (one of): [\"comments\" \"imports\" \"package\" \"regal\" \"rules\"]\n"
 
 	if !strings.HasPrefix(stderr.String(), expStart) {
 		t.Errorf("expected stdout error message starting with %q, got %q", expStart, stderr.String())

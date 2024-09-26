@@ -20,32 +20,28 @@ aggregate contains result.aggregate(rego.metadata.chain(), {
 
 default _package_annotated := false
 
-_package_annotated if {
-	some annotation in input.annotations
-	annotation.scope in {"package", "subpackages"}
-}
+_package_annotated if input["package"].annotations
 
-_rule_annotations[path] contains annotated if {
+_rule_annotations[rule_path] contains annotated if {
 	some rule in ast.public_rules_and_functions
 	every part in rule.head.ref {
 		not startswith(part.value, "_")
 	}
 
-	path := concat(".", [ast.package_name, ast.ref_static_to_string(rule.head.ref)])
-
+	rule_path := concat(".", [ast.package_name, ast.ref_static_to_string(rule.head.ref)])
 	annotated := count(object.get(rule, "annotations", [])) > 0
 }
 
-_rule_locations[path] := location if {
-	head := ast.public_rules_and_functions[_].head
-	rref := ast.ref_static_to_string(head.ref)
+_rule_locations[rule_path] := location if {
+	some rule_path, annotated in _rule_annotations
+
+	# we only care about locations of non-annotated rules
+	not true in annotated
 
 	location := [h.location |
 		h := ast.public_rules_and_functions[_].head
-		ast.ref_static_to_string(h.ref) == rref
+		concat(".", [ast.package_name, ast.ref_static_to_string(h.ref)]) == rule_path
 	][0]
-
-	path := concat(".", [ast.package_name, rref])
 }
 
 # METADATA
@@ -116,14 +112,12 @@ _package_path_aggs[pkg_path] contains item if {
 #   - input: schema.regal.aggregate
 _rule_path_aggs[rule_path] contains agg if {
 	some item in input.aggregate
-
 	some rule_path, annotations in item.aggregate_data.rule_annotations
-	annotated := annotations != {false}
 
 	agg := {
 		"file": item.aggregate_source.file,
 		"location": item.aggregate_data.rule_locations[rule_path],
-		"annotated": annotated,
+		"annotated": true in annotations,
 	}
 }
 

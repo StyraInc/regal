@@ -36,29 +36,30 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
-	customRuleFS         fs.FS
-	printHook            print.Hook
-	metrics              metrics.Metrics
-	inputModules         *rules.Input
-	userConfig           *config.Config
-	combinedCfg          *config.Config
-	dataBundle           *bundle.Bundle
-	rootDir              string
-	customRuleFSRootPath string
-	inputPaths           []string
-	ruleBundles          []*bundle.Bundle
-	customRulesPaths     []string
-	disable              []string
-	disableCategory      []string
-	enable               []string
-	enableCategory       []string
-	ignoreFiles          []string
-	additionalAggregates map[string][]report.Aggregate
-	debugMode            bool
-	disableAll           bool
-	enableAll            bool
-	profiling            bool
-	populateAggregates   bool
+	customRuleFS            fs.FS
+	printHook               print.Hook
+	metrics                 metrics.Metrics
+	inputModules            *rules.Input
+	userConfig              *config.Config
+	combinedCfg             *config.Config
+	dataBundle              *bundle.Bundle
+	rootDir                 string
+	customRuleFSRootPath    string
+	inputPaths              []string
+	ruleBundles             []*bundle.Bundle
+	customRulesPaths        []string
+	disable                 []string
+	disableCategory         []string
+	enable                  []string
+	enableCategory          []string
+	ignoreFiles             []string
+	additionalAggregates    map[string][]report.Aggregate
+	aggregatesAlwaysCollect bool
+	debugMode               bool
+	exportAggregates        bool
+	disableAll              bool
+	enableAll               bool
+	profiling               bool
 }
 
 //nolint:gochecknoglobals
@@ -216,11 +217,19 @@ func (l Linter) WithRootDir(rootDir string) Linter {
 	return l
 }
 
-// WithAlwaysAggregate enables the population of aggregate data even when
-// linting a single file. This is useful when needing to incrementally build
+// WithExportAggregates enables the setting of intermediate aggregate data
+// on the final report. This is useful when you want to collect and
 // aggregate state from multiple different linting runs.
+func (l Linter) WithExportAggregates(enabled bool) Linter {
+	l.exportAggregates = enabled
+
+	return l
+}
+
+// WithAlwaysAggregate forcibly enables the collect query even when there is
+// only one file to lint.
 func (l Linter) WithAlwaysAggregate(enabled bool) Linter {
-	l.populateAggregates = enabled
+	l.aggregatesAlwaysCollect = enabled
 
 	return l
 }
@@ -364,7 +373,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		NumViolations: len(finalReport.Violations),
 	}
 
-	if l.populateAggregates {
+	if l.exportAggregates {
 		finalReport.Aggregates = make(map[string][]report.Aggregate)
 		for k, aggregates := range goReport.Aggregates {
 			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
@@ -454,7 +463,7 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
 	}
 
-	aggregate := report.Report{}
+	goReport := report.Report{}
 
 	for _, rule := range goRules {
 		inp, err := inputForRule(input, rule)
@@ -467,10 +476,10 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
 		}
 
-		aggregate.Violations = append(aggregate.Violations, result.Violations...)
+		goReport.Violations = append(goReport.Violations, result.Violations...)
 	}
 
-	return aggregate, err
+	return goReport, err
 }
 
 func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
@@ -708,7 +717,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	defer cancel()
 
 	var query ast.Body
-	if len(input.FileNames) > 1 || l.populateAggregates {
+	if len(input.FileNames) > 1 || l.aggregatesAlwaysCollect {
 		query = lintAndCollectQuery
 	} else {
 		query = lintQuery
@@ -724,9 +733,9 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
-	aggregate := report.Report{}
-	aggregate.Aggregates = make(map[string][]report.Aggregate)
-	aggregate.IgnoreDirectives = make(map[string]map[string][]string)
+	regoReport := report.Report{}
+	regoReport.Aggregates = make(map[string][]report.Aggregate)
+	regoReport.IgnoreDirectives = make(map[string]map[string][]string)
 
 	var wg sync.WaitGroup
 
@@ -789,19 +798,19 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			}
 
 			mu.Lock()
-			aggregate.Violations = append(aggregate.Violations, result.Violations...)
-			aggregate.Notices = append(aggregate.Notices, result.Notices...)
+			regoReport.Violations = append(regoReport.Violations, result.Violations...)
+			regoReport.Notices = append(regoReport.Notices, result.Notices...)
 
 			for k := range result.Aggregates {
-				aggregate.Aggregates[k] = append(aggregate.Aggregates[k], result.Aggregates[k]...)
+				regoReport.Aggregates[k] = append(regoReport.Aggregates[k], result.Aggregates[k]...)
 			}
 
 			for k := range result.IgnoreDirectives {
-				aggregate.IgnoreDirectives[k] = result.IgnoreDirectives[k]
+				regoReport.IgnoreDirectives[k] = result.IgnoreDirectives[k]
 			}
 
 			if l.profiling {
-				aggregate.AddProfileEntries(result.AggregateProfile)
+				regoReport.AddProfileEntries(result.AggregateProfile)
 			}
 			mu.Unlock()
 		}(name)
@@ -818,7 +827,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	case err := <-errCh:
 		return report.Report{}, fmt.Errorf("error encountered in rule evaluation %w", err)
 	case <-doneCh:
-		return aggregate, nil
+		return regoReport, nil
 	}
 }
 

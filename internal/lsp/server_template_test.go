@@ -98,8 +98,10 @@ func TestTemplateContentsForFile(t *testing.T) {
 				}
 			}
 
+			ctx := context.Background()
+
 			// create a new language server
-			s := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
+			s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
 			s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
 			fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, tc.FileKey))
@@ -137,26 +139,9 @@ func TestNewFileTemplating(t *testing.T) {
 `,
 	}
 
-	for f, fc := range files {
-		if err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, f)), 0o755); err != nil {
-			t.Fatalf("failed to create directory %s: %s", filepath.Dir(filepath.Join(tempDir, f)), err)
-		}
-
-		if err := os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600); err != nil {
-			t.Fatalf("failed to write file %s: %s", f, err)
-		}
-	}
-
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: newTestLogger(t),
-	})
-
-	go ls.StartConfigWorker(ctx)
-	go ls.StartTemplateWorker(ctx)
 
 	receivedMessages := make(chan []byte, 10)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
@@ -170,29 +155,14 @@ func TestNewFileTemplating(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	connServer, connClient := createConnections(ctx, ls.Handle, clientHandler)
-
-	ls.SetConn(connServer)
-
-	// 1. Client sends initialize request
-	request := types.InitializeParams{
-		RootURI:    fileURIScheme + tempDir,
-		ClientInfo: types.Client{Name: "go test"},
+	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
+	if err != nil {
+		t.Fatalf("failed to create and init language server: %s", err)
 	}
 
-	var response types.InitializeResult
+	go ls.StartTemplateWorker(ctx)
 
-	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
-		t.Fatalf("failed to send initialize request: %s", err)
-	}
-
-	// 2. Client sends initialized notification no response to the call is
-	// expected
-	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
-		t.Fatalf("failed to send initialized notification: %s", err)
-	}
-
-	// 3. wait for the server to load it's config
+	// wait for the server to load it's config
 	timeout := time.NewTimer(defaultTimeout)
 	select {
 	case <-timeout.C:
@@ -207,7 +177,7 @@ func TestNewFileTemplating(t *testing.T) {
 		}
 	}
 
-	// 4. Touch the new file on disk
+	// Touch the new file on disk
 	newFilePath := filepath.Join(tempDir, "foo/bar/policy_test.rego")
 	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
 	expectedNewFileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(tempDir, "foo/bar_test/policy_test.rego"))
@@ -220,7 +190,7 @@ func TestNewFileTemplating(t *testing.T) {
 		t.Fatalf("failed to write file %s: %s", newFilePath, err)
 	}
 
-	// 5. Client sends workspace/didCreateFiles notification
+	// Client sends workspace/didCreateFiles notification
 	if err := connClient.Call(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
 		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
 			{URI: newFileURI},
@@ -229,9 +199,8 @@ func TestNewFileTemplating(t *testing.T) {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
-	// 6. Validate that the client received a workspace edit
-	timeout = time.NewTimer(3 * time.Second)
-	defer timeout.Stop()
+	// Validate that the client received a workspace edit
+	timeout.Reset(defaultTimeout)
 
 	expectedMessage := fmt.Sprintf(`{
   "edit": {

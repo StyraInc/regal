@@ -30,8 +30,8 @@ type Policy struct {
 // NewPolicy creates a new Policy provider. This provider is distinctly different from the other providers
 // as it acts like the entrypoint for all Rego-based providers, and not a single provider "function" like
 // the Go providers do.
-func NewPolicy(store storage.Store) *Policy {
-	pq, err := prepareQuery(store, "completions := data.regal.lsp.completion.items")
+func NewPolicy(ctx context.Context, store storage.Store) *Policy {
+	pq, err := prepareQuery(ctx, store, "completions := data.regal.lsp.completion.items")
 	if err != nil {
 		panic(fmt.Sprintf("failed preparing query for static bundle: %v", err))
 	}
@@ -112,10 +112,10 @@ func (p *Policy) Run(
 	return completions, nil
 }
 
-func prepareQuery(store storage.Store, query string) (*rego.PreparedEvalQuery, error) {
+func prepareQuery(ctx context.Context, store storage.Store, query string) (*rego.PreparedEvalQuery, error) {
 	regoArgs := prepareRegoArgs(store, ast.MustParseBody(query))
 
-	txn, err := store.NewTransaction(context.TODO(), storage.WriteParams)
+	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating transaction: %w", err)
 	}
@@ -125,12 +125,12 @@ func prepareQuery(store storage.Store, query string) (*rego.PreparedEvalQuery, e
 	// Note that we currently don't provide metrics or profiling here, and
 	// most likely we should — need to consider how to best make that conditional
 	// and how to present it if enabled.
-	pq, err := rego.New(regoArgs...).PrepareForEval(context.Background())
+	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed preparing query: %s, %w", query, err)
 	}
 
-	if err = store.Commit(context.Background(), txn); err != nil {
+	if err = store.Commit(ctx, txn); err != nil {
 		return nil, fmt.Errorf("failed committing transaction: %w", err)
 	}
 

@@ -28,7 +28,7 @@ func init() {
 				ErrorLog: os.Stderr,
 			}
 
-			ls := lsp.NewLanguageServer(opts)
+			ls := lsp.NewLanguageServer(ctx, opts)
 
 			conn := lsp.NewConnectionFromLanguageServer(ctx, ls.Handle, &lsp.ConnectionOptions{
 				LoggingConfig: lsp.ConnectionLoggingConfig{

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -598,7 +597,7 @@ func TestEnabledRules(t *testing.T) {
 	}
 }
 
-func TestLintWithPopulateAggregates(t *testing.T) {
+func TestLintWithAlwaysAggregate(t *testing.T) {
 	t.Parallel()
 
 	input := test.InputPolicy("p.rego", `package p
@@ -609,8 +608,8 @@ import data.foo.bar.unresolved
 	linter := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithAlwaysAggregate(true).
+		WithAlwaysAggregate(true).  // needed since we have a single file input
+		WithExportAggregates(true). // needed to be able to test the aggregates are set
 		WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)
@@ -624,7 +623,7 @@ import data.foo.bar.unresolved
 	}
 }
 
-func TestLintWithAggregates(t *testing.T) {
+func TestLintWithAlwaysAggregateAndAggregates(t *testing.T) {
 	t.Parallel()
 
 	contents := `package p
@@ -637,8 +636,8 @@ import data.foo.bar.unresolved
 	linter := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
 		WithAlwaysAggregate(true).
+		WithExportAggregates(true).
 		WithInputModules(&input)
 
 	result1 := testutil.Must(linter.Lint(context.Background()))(t)
@@ -646,7 +645,6 @@ import data.foo.bar.unresolved
 	linter2 := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
 		WithAggregates(result1.Aggregates).
 		WithInputModules(&input)
 

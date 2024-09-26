@@ -9,6 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and
@@ -26,11 +27,14 @@ type Cache struct {
 	// modules is a map of file URI to parsed AST modules from the latest file contents value
 	modules map[string]*ast.Module
 
+	// aggregateData stores the aggregate data from evaluations for each file.
+	// This is used to cache the results of expensive evaluations and can be used
+	// to update aggregate diagostics incrementally.
+	aggregateData   map[string][]report.Aggregate
+	aggregateDataMu sync.Mutex
+
 	// diagnosticsFile is a map of file URI to diagnostics for that file
 	diagnosticsFile map[string][]types.Diagnostic
-
-	// diagnosticsAggregate is a map of file URI to aggregate diagnostics for that file
-	diagnosticsAggregate map[string][]types.Diagnostic
 
 	// diagnosticsParseErrors is a map of file URI to parse errors for that file
 	diagnosticsParseErrors map[string][]types.Diagnostic
@@ -54,8 +58,6 @@ type Cache struct {
 
 	diagnosticsFileMu sync.Mutex
 
-	diagnosticsAggregateMu sync.Mutex
-
 	diagnosticsParseMu sync.Mutex
 
 	builtinPositionsMu sync.Mutex
@@ -72,8 +74,9 @@ func NewCache() *Cache {
 
 		modules: make(map[string]*ast.Module),
 
+		aggregateData: make(map[string][]report.Aggregate),
+
 		diagnosticsFile:        make(map[string][]types.Diagnostic),
-		diagnosticsAggregate:   make(map[string][]types.Diagnostic),
 		diagnosticsParseErrors: make(map[string][]types.Diagnostic),
 
 		builtinPositionsFile: make(map[string]map[uint][]types.BuiltinPosition),
@@ -81,27 +84,6 @@ func NewCache() *Cache {
 
 		fileRefs: make(map[string]map[string]types.Ref),
 	}
-}
-
-func (c *Cache) GetAllDiagnosticsForURI(fileURI string) []types.Diagnostic {
-	parseDiags, ok := c.GetParseErrors(fileURI)
-	if ok && len(parseDiags) > 0 {
-		return parseDiags
-	}
-
-	allDiags := make([]types.Diagnostic, 0)
-
-	aggDiags, ok := c.GetAggregateDiagnostics(fileURI)
-	if ok {
-		allDiags = append(allDiags, aggDiags...)
-	}
-
-	fileDiags, ok := c.GetFileDiagnostics(fileURI)
-	if ok {
-		allDiags = append(allDiags, fileDiags...)
-	}
-
-	return allDiags
 }
 
 func (c *Cache) GetAllFiles() map[string]string {
@@ -180,6 +162,96 @@ func (c *Cache) SetModule(fileURI string, module *ast.Module) {
 	c.modules[fileURI] = module
 }
 
+// SetFileAggregates will only set aggregate data for the provided URI. Even if
+// data for other files is provided, only the specified URI is updated.
+func (c *Cache) SetFileAggregates(fileURI string, data map[string][]report.Aggregate) {
+	c.aggregateDataMu.Lock()
+	defer c.aggregateDataMu.Unlock()
+
+	flattenedAggregates := make([]report.Aggregate, 0)
+
+	for _, aggregates := range data {
+		for _, aggregate := range aggregates {
+			if aggregate.SourceFile() != fileURI {
+				continue
+			}
+
+			flattenedAggregates = append(flattenedAggregates, aggregate)
+		}
+	}
+
+	c.aggregateData[fileURI] = flattenedAggregates
+}
+
+func (c *Cache) SetAggregates(data map[string][]report.Aggregate) {
+	c.aggregateDataMu.Lock()
+	defer c.aggregateDataMu.Unlock()
+
+	// clear the state
+	c.aggregateData = make(map[string][]report.Aggregate)
+
+	for _, aggregates := range data {
+		for _, aggregate := range aggregates {
+			c.aggregateData[aggregate.SourceFile()] = append(c.aggregateData[aggregate.SourceFile()], aggregate)
+		}
+	}
+}
+
+// GetFileComplimentAggregates returns all aggregate data other than for the
+// provided fileURIs. This is used when running file diagnostics while also
+// requiring the previous aggregate state to provide aggregate rule linting.
+func (c *Cache) GetFileComplimentAggregates(fileURIs ...string) map[string][]report.Aggregate {
+	c.aggregateDataMu.Lock()
+	defer c.aggregateDataMu.Unlock()
+
+	excludedFiles := make(map[string]struct{}, len(fileURIs))
+	for _, fileURI := range fileURIs {
+		excludedFiles[fileURI] = struct{}{}
+	}
+
+	allAggregates := make(map[string][]report.Aggregate)
+
+	for sourceFile, aggregates := range c.aggregateData {
+		if _, excluded := excludedFiles[sourceFile]; excluded {
+			continue
+		}
+
+		for _, aggregate := range aggregates {
+			allAggregates[aggregate.IndexKey()] = append(allAggregates[aggregate.IndexKey()], aggregate)
+		}
+	}
+
+	return allAggregates
+}
+
+// GetFileAggregates is used to get aggregate data for a given list of files.
+// This is only used in tests to validate the cache state.
+func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggregate {
+	c.aggregateDataMu.Lock()
+	defer c.aggregateDataMu.Unlock()
+
+	includedFiles := make(map[string]struct{}, len(fileURIs))
+	for _, fileURI := range fileURIs {
+		includedFiles[fileURI] = struct{}{}
+	}
+
+	getAll := len(fileURIs) == 0
+
+	allAggregates := make(map[string][]report.Aggregate)
+
+	for sourceFile, aggregates := range c.aggregateData {
+		if _, included := includedFiles[sourceFile]; !included && !getAll {
+			continue
+		}
+
+		for _, aggregate := range aggregates {
+			allAggregates[aggregate.IndexKey()] = append(allAggregates[aggregate.IndexKey()], aggregate)
+		}
+	}
+
+	return allAggregates
+}
+
 func (c *Cache) GetFileDiagnostics(uri string) ([]types.Diagnostic, bool) {
 	c.diagnosticsFileMu.Lock()
 	defer c.diagnosticsFileMu.Unlock()
@@ -201,29 +273,6 @@ func (c *Cache) ClearFileDiagnostics() {
 	defer c.diagnosticsFileMu.Unlock()
 
 	c.diagnosticsFile = make(map[string][]types.Diagnostic)
-}
-
-func (c *Cache) GetAggregateDiagnostics(fileURI string) ([]types.Diagnostic, bool) {
-	c.diagnosticsAggregateMu.Lock()
-	defer c.diagnosticsAggregateMu.Unlock()
-
-	val, ok := c.diagnosticsAggregate[fileURI]
-
-	return val, ok
-}
-
-func (c *Cache) SetAggregateDiagnostics(fileURI string, diags []types.Diagnostic) {
-	c.diagnosticsAggregateMu.Lock()
-	defer c.diagnosticsAggregateMu.Unlock()
-
-	c.diagnosticsAggregate[fileURI] = diags
-}
-
-func (c *Cache) ClearAggregateDiagnostics() {
-	c.diagnosticsAggregateMu.Lock()
-	defer c.diagnosticsAggregateMu.Unlock()
-
-	c.diagnosticsAggregate = make(map[string][]types.Diagnostic)
 }
 
 func (c *Cache) GetParseErrors(uri string) ([]types.Diagnostic, bool) {
@@ -313,13 +362,13 @@ func (c *Cache) Delete(fileURI string) {
 	delete(c.modules, fileURI)
 	c.moduleMu.Unlock()
 
+	c.aggregateDataMu.Lock()
+	delete(c.aggregateData, fileURI)
+	c.aggregateDataMu.Unlock()
+
 	c.diagnosticsFileMu.Lock()
 	delete(c.diagnosticsFile, fileURI)
 	c.diagnosticsFileMu.Unlock()
-
-	c.diagnosticsAggregateMu.Lock()
-	delete(c.diagnosticsAggregate, fileURI)
-	c.diagnosticsAggregateMu.Unlock()
 
 	c.diagnosticsParseMu.Lock()
 	delete(c.diagnosticsParseErrors, fileURI)

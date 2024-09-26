@@ -611,7 +611,7 @@ import data.foo.bar.unresolved
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
 		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithPopulateAggregates(true).
+		WithAlwaysAggregate(true).
 		WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)
@@ -639,7 +639,7 @@ import data.foo.bar.unresolved
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
 		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithPopulateAggregates(true).
+		WithAlwaysAggregate(true).
 		WithInputModules(&input)
 
 	result1 := testutil.Must(linter.Lint(context.Background()))(t)

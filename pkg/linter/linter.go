@@ -216,15 +216,18 @@ func (l Linter) WithRootDir(rootDir string) Linter {
 	return l
 }
 
-// WithPopulateAggregates enables the population of aggregate data even when
+// WithAlwaysAggregate enables the population of aggregate data even when
 // linting a single file. This is useful when needing to incrementally build
 // aggregate state from multiple different linting runs.
-func (l Linter) WithPopulateAggregates(enabled bool) Linter {
+func (l Linter) WithAlwaysAggregate(enabled bool) Linter {
 	l.populateAggregates = enabled
 
 	return l
 }
 
+// WithAggregates supplies additional aggregate data to a linter instance.
+// Likely generated in a previous run, and used to provide a global context to
+// a subsequent run of a single file lint.
 func (l Linter) WithAggregates(aggregates map[string][]report.Aggregate) Linter {
 	l.additionalAggregates = aggregates
 

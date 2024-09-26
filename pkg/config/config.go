@@ -246,8 +246,7 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 	if err == nil {
 		var conf Config
 
-		err = yaml.Unmarshal(file, &conf)
-		if err != nil {
+		if err = yaml.Unmarshal(file, &conf); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
 		}
 
@@ -285,8 +284,7 @@ func FindConfig(path string) (*os.File, error) {
 func FromMap(confMap map[string]any) (Config, error) {
 	var conf Config
 
-	err := rio.JSONRoundTrip(confMap, &conf)
-	if err != nil {
+	if err := rio.JSONRoundTrip(confMap, &conf); err != nil {
 		return conf, fmt.Errorf("failed to convert config map to config struct: %w", err)
 	}
 
@@ -296,8 +294,7 @@ func FromMap(confMap map[string]any) (Config, error) {
 func (config Config) MarshalYAML() (any, error) {
 	var unstructuredConfig map[string]any
 
-	err := rio.JSONRoundTrip(config, &unstructuredConfig)
-	if err != nil {
+	if err := rio.JSONRoundTrip(config, &unstructuredConfig); err != nil {
 		return nil, fmt.Errorf("failed to created unstructured config: %w", err)
 	}
 
@@ -372,13 +369,11 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	// this call will walk the rule config and load and defaults into the config
-	err := extractDefaults(config, &result)
-	if err != nil {
+	if err := extractDefaults(config, &result); err != nil {
 		return fmt.Errorf("extracting defaults failed: %w", err)
 	}
 
-	err = extractRules(config, &result)
-	if err != nil {
+	if err := extractRules(config, &result); err != nil {
 		return fmt.Errorf("extracting rules failed: %w", err)
 	}
 
@@ -497,8 +492,7 @@ func extractRules(config *Config, result *marshallingIntermediary) error {
 
 			var r Rule
 
-			err := r.mapToConfig(ruleData)
-			if err != nil {
+			if err := r.mapToConfig(ruleData); err != nil {
 				return fmt.Errorf("unmarshalling rule failed: %w", err)
 			}
 
@@ -519,8 +513,7 @@ func extractDefaults(c *Config, result *marshallingIntermediary) error {
 
 	rawGlobalDefault, ok := result.Rules["default"]
 	if ok {
-		err := c.Defaults.Global.mapToConfig(rawGlobalDefault)
-		if err != nil {
+		if err := c.Defaults.Global.mapToConfig(rawGlobalDefault); err != nil {
 			return fmt.Errorf("unmarshalling global defaults failed: %w", err)
 		}
 	}
@@ -535,8 +528,7 @@ func extractDefaults(c *Config, result *marshallingIntermediary) error {
 		if ok {
 			var categoryDefault Default
 
-			err := categoryDefault.mapToConfig(rawCategoryDefault)
-			if err != nil {
+			if err := categoryDefault.mapToConfig(rawCategoryDefault); err != nil {
 				return fmt.Errorf("unmarshalling category defaults failed: %w", err)
 			}
 
@@ -671,8 +663,7 @@ func (rule *Rule) mapToConfig(result any) error {
 	if ignore, ok := ruleMap[keyIgnore]; ok {
 		var dst Ignore
 
-		err := rio.JSONRoundTrip(ignore, &dst)
-		if err != nil {
+		if err := rio.JSONRoundTrip(ignore, &dst); err != nil {
 			return fmt.Errorf("unmarshalling rule ignore failed: %w", err)
 		}
 

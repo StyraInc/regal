@@ -61,8 +61,7 @@ func TestPrettyReporterOutput(t *testing.T) {
 		"/workspace/bundle2/policy1.rego",
 	)
 
-	err := reporter.Report(report)
-	if err != nil {
+	if err := reporter.Report(report); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -135,8 +134,7 @@ func TestPrettyReporterOutputWithConflicts(t *testing.T) {
 		"/workspace/bundle1/baz.rego",
 	)
 
-	err := reporter.Report(report)
-	if err != nil {
+	if err := reporter.Report(report); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

@@ -3,6 +3,7 @@ package reporter
 import (
 	"bytes"
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -85,39 +86,13 @@ func TestPrettyReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	pr := NewPrettyReporter(&buf)
-
-	err := pr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewPrettyReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
-	// The actual output has trailing tabs, which go fmt strips out,
-	// so we'll need to compare line by line with the trailing tabs removed
-	expectLines := strings.Split(`Rule:         	breaking-the-law
-Description:  	Rego must not break the law!
-Category:     	legal
-Location:     	a.rego:1:1
-Text:         	package illegal
-Documentation:	https://example.com/illegal
-
-Rule:         	questionable-decision
-Description:  	Questionable decision found
-Category:     	really?
-Location:     	b.rego:22:18
-Text:         	default allow = true
-Documentation:	https://example.com/questionable
-
-3 files linted. 2 violations found in 2 files. 1 rule skipped:
-- rule-missing-capability: Rule missing capability bar
-
-`, "\n")
-
-	for i, line := range strings.Split(buf.String(), "\n") {
-		if strings.TrimRight(line, " \t") != expectLines[i] {
-			t.Errorf("expected %q, got %q", expectLines[i], line)
-		}
+	expect := MustReadFile(t, "testdata/pretty/reporter.txt")
+	if buf.String() != expect {
+		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 
@@ -154,29 +129,12 @@ func TestPrettyReporterPublishLongText(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	pr := NewPrettyReporter(&buf)
-
-	err := pr.Publish(context.Background(), longRep)
-	if err != nil {
+	if err := NewPrettyReporter(&buf).Publish(context.Background(), longRep); err != nil {
 		t.Fatal(err)
 	}
 
-	//nolint:lll
-	expectLines := strings.Split(`Rule:         	long-violation
-Description:  	violation with a long description
-Category:     	long
-Location:     	b.rego:22:18
-Text:         	long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,lo...
-Documentation:	https://example.com/to-long
-
-3 files linted. 1 violation found.
-
-`, "\n")
-
-	for i, line := range strings.Split(buf.String(), "\n") {
-		if got, want := strings.TrimSpace(line), expectLines[i]; got != want {
-			t.Fatalf("expected\n%q\ngot\n%q", want, got)
-		}
+	if expect := MustReadFile(t, "testdata/pretty/reporter-long-text.txt"); expect != buf.String() {
+		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 
@@ -184,11 +142,7 @@ func TestPrettyReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	pr := NewPrettyReporter(&buf)
-
-	err := pr.Publish(context.Background(), report.Report{})
-	if err != nil {
+	if err := NewPrettyReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -201,11 +155,7 @@ func TestCompactReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	cr := NewCompactReporter(&buf)
-
-	err := cr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewCompactReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -217,7 +167,6 @@ func TestCompactReporterPublish(t *testing.T) {
 +--------------+------------------------------+
 
 `
-
 	if buf.String() != expect {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
@@ -227,11 +176,7 @@ func TestCompactReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	cr := NewCompactReporter(&buf)
-
-	err := cr.Publish(context.Background(), report.Report{})
-	if err != nil {
+	if err := NewCompactReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -244,82 +189,11 @@ func TestJSONReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	jr := NewJSONReporter(&buf)
-
-	err := jr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewJSONReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `{
-  "violations": [
-    {
-      "title": "breaking-the-law",
-      "description": "Rego must not break the law!",
-      "category": "legal",
-      "level": "error",
-      "related_resources": [
-        {
-          "description": "documentation",
-          "ref": "https://example.com/illegal"
-        }
-      ],
-      "location": {
-        "end": {
-          "row": 1,
-          "col": 14
-        },
-        "text": "package illegal",
-        "file": "a.rego",
-        "col": 1,
-        "row": 1
-      }
-    },
-    {
-      "title": "questionable-decision",
-      "description": "Questionable decision found",
-      "category": "really?",
-      "level": "warning",
-      "related_resources": [
-        {
-          "description": "documentation",
-          "ref": "https://example.com/questionable"
-        }
-      ],
-      "location": {
-        "text": "default allow = true",
-        "file": "b.rego",
-        "col": 18,
-        "row": 22
-      }
-    }
-  ],
-  "notices": [
-    {
-      "title": "rule-made-obsolete",
-      "description": "Rule made obsolete by capability foo",
-      "category": "some-category",
-      "level": "notice",
-      "severity": "none"
-    },
-    {
-      "title": "rule-missing-capability",
-      "description": "Rule missing capability bar",
-      "category": "some-category",
-      "level": "notice",
-      "severity": "warning"
-    }
-  ],
-  "summary": {
-    "files_scanned": 3,
-    "files_failed": 2,
-    "rules_skipped": 1,
-    "num_violations": 2
-  }
-}
-`
-	if buf.String() != expect {
+	if expect := MustReadFile(t, "testdata/json/reporter.json"); expect != buf.String() {
 		t.Errorf("expected %q, got %q", expect, buf.String())
 	}
 }
@@ -328,45 +202,26 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	jr := NewJSONReporter(&buf)
-
-	err := jr.Publish(context.Background(), report.Report{})
-	if err != nil {
+	if err := NewJSONReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
-	if buf.String() != `{
-  "violations": [],
-  "summary": {
-    "files_scanned": 0,
-    "files_failed": 0,
-    "rules_skipped": 0,
-    "num_violations": 0
-  }
-}
-` {
-		t.Errorf("expected %q, got %q", `{"violations":[]}`, buf.String())
+	if expect := MustReadFile(t, "testdata/json/reporter-no-violations.json"); expect != buf.String() {
+		t.Errorf("expected %q, got %q", expect, buf.String())
 	}
 }
 
-//nolint:paralleltest
+// nolint:paralleltest
 func TestGitHubReporterPublish(t *testing.T) {
 	// Can't use t.Parallel() here because t.Setenv() forbids that
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
 
 	var buf bytes.Buffer
-
-	cr := NewGitHubReporter(&buf)
-
-	err := cr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewGitHubReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
-	expectTable := "Rule:         \tbreaking-the-law"
-
-	if !strings.Contains(buf.String(), expectTable) {
+	if expectTable := "Rule:         \tbreaking-the-law"; !strings.Contains(buf.String(), expectTable) {
 		t.Errorf("expected table output %q, got %q", expectTable, buf.String())
 	}
 
@@ -374,23 +229,18 @@ func TestGitHubReporterPublish(t *testing.T) {
 	expectGithub := `::error file=a.rego,line=1,col=1::Rego must not break the law!. To learn more, see: https://example.com/illegal
 ::warning file=b.rego,line=22,col=18::Questionable decision found. To learn more, see: https://example.com/questionable
 `
-
 	if !strings.Contains(buf.String(), expectGithub) {
 		t.Errorf("expected workflow command output %q, got %q", expectGithub, buf.String())
 	}
 }
 
-//nolint:paralleltest
+// nolint:paralleltest
 func TestGitHubReporterPublishNoViolations(t *testing.T) {
 	// Can't use t.Parallel() here because t.Setenv() forbids that
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
 
 	var buf bytes.Buffer
-
-	cr := NewGitHubReporter(&buf)
-
-	err := cr.Publish(context.Background(), report.Report{})
-	if err != nil {
+	if err := NewGitHubReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -403,130 +253,11 @@ func TestSarifReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	sr := NewSarifReporter(&buf)
-
-	err := sr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewSarifReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `{
-  "version": "2.1.0",
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
-  "runs": [
-    {
-      "tool": {
-        "driver": {
-          "informationUri": "https://docs.styra.com/regal",
-          "name": "Regal",
-          "rules": [
-            {
-              "id": "breaking-the-law",
-              "shortDescription": {
-                "text": "Rego must not break the law!"
-              },
-              "helpUri": "https://example.com/illegal",
-              "properties": {
-                "category": "legal"
-              }
-            },
-            {
-              "id": "questionable-decision",
-              "shortDescription": {
-                "text": "Questionable decision found"
-              },
-              "helpUri": "https://example.com/questionable",
-              "properties": {
-                "category": "really?"
-              }
-            },
-            {
-              "id": "rule-missing-capability",
-              "shortDescription": {
-                "text": "Rule missing capability bar"
-              },
-              "properties": {
-                "category": "some-category"
-              }
-            }
-          ]
-        }
-      },
-      "artifacts": [
-        {
-          "location": {
-            "uri": "a.rego"
-          },
-          "length": -1
-        },
-        {
-          "location": {
-            "uri": "b.rego"
-          },
-          "length": -1
-        }
-      ],
-      "results": [
-        {
-          "ruleId": "breaking-the-law",
-          "ruleIndex": 0,
-          "level": "error",
-          "message": {
-            "text": "Rego must not break the law!"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "a.rego"
-                },
-                "region": {
-                  "startLine": 1,
-                  "startColumn": 1,
-                  "endLine": 1,
-                  "endColumn": 14
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "questionable-decision",
-          "ruleIndex": 1,
-          "level": "warning",
-          "message": {
-            "text": "Questionable decision found"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "b.rego"
-                },
-                "region": {
-                  "startLine": 22,
-                  "startColumn": 18
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "rule-missing-capability",
-          "ruleIndex": 2,
-          "kind": "informational",
-          "level": "none",
-          "message": {
-            "text": "Rule missing capability bar"
-          }
-        }
-      ]
-    }
-  ]
-}`
-
-	if buf.String() != expect {
+	if expect := MustReadFile(t, "testdata/sarif/reporter.json"); buf.String() != expect {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
@@ -536,10 +267,7 @@ func TestSarifReporterViolationWithoutRegion(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	sr := NewSarifReporter(&buf)
-
-	err := sr.Publish(context.Background(), report.Report{
+	if err := NewSarifReporter(&buf).Publish(context.Background(), report.Report{
 		Violations: []report.Violation{
 			{
 				Title:       "opa-fmt",
@@ -557,66 +285,11 @@ func TestSarifReporterViolationWithoutRegion(t *testing.T) {
 				Level: "error",
 			},
 		},
-	})
-	if err != nil {
+	}); err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `{
-  "version": "2.1.0",
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
-  "runs": [
-    {
-      "tool": {
-        "driver": {
-          "informationUri": "https://docs.styra.com/regal",
-          "name": "Regal",
-          "rules": [
-            {
-              "id": "opa-fmt",
-              "shortDescription": {
-                "text": "File should be formatted with ` + "`opa fmt`" + `"
-              },
-              "helpUri": "https://docs.styra.com/regal/rules/style/opa-fmt",
-              "properties": {
-                "category": "style"
-              }
-            }
-          ]
-        }
-      },
-      "artifacts": [
-        {
-          "location": {
-            "uri": "policy.rego"
-          },
-          "length": -1
-        }
-      ],
-      "results": [
-        {
-          "ruleId": "opa-fmt",
-          "ruleIndex": 0,
-          "level": "error",
-          "message": {
-            "text": "File should be formatted with ` + "`opa fmt`" + `"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "policy.rego"
-                }
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}`
-
-	if buf.String() != expect {
+	if expect := MustReadFile(t, "testdata/sarif/reporter-no-region.json"); buf.String() != expect {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
@@ -625,75 +298,26 @@ func TestSarifReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	sr := NewSarifReporter(&buf)
-
-	err := sr.Publish(context.Background(), report.Report{})
-	if err != nil {
+	if err := NewSarifReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `{
-  "version": "2.1.0",
-  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
-  "runs": [
-    {
-      "tool": {
-        "driver": {
-          "informationUri": "https://docs.styra.com/regal",
-          "name": "Regal",
-          "rules": []
-        }
-      },
-      "results": []
-    }
-  ]
-}`
-
-	if buf.String() != expect {
+	if expect := MustReadFile(t, "testdata/sarif/reporter-no-violation.json"); buf.String() != expect {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 
-//nolint:lll // the expected output is unfortunately longer than the allowed max line length
+// nolint:lll // the expected output is unfortunately longer than the allowed max line length
 func TestJUnitReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-
-	sr := NewJUnitReporter(&buf)
-
-	err := sr.Publish(context.Background(), rep)
-	if err != nil {
+	if err := NewJUnitReporter(&buf).Publish(context.Background(), rep); err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `<testsuites name="regal" tests="2" failures="2">
-	<testsuite name="a.rego" tests="1" failures="1" errors="0" id="0" time="">
-		<testcase name="legal/breaking-the-law: Rego must not break the law!" classname="a.rego:1:1">
-			<failure message="Rego must not break the law!. To learn more, see: https://example.com/illegal" type="error"><![CDATA[Rule: breaking-the-law
-Description: Rego must not break the law!
-Category: legal
-Location: a.rego:1:1
-Text: package illegal
-Documentation: https://example.com/illegal]]></failure>
-		</testcase>
-	</testsuite>
-	<testsuite name="b.rego" tests="1" failures="1" errors="0" id="0" time="">
-		<testcase name="really?/questionable-decision: Questionable decision found" classname="b.rego:22:18">
-			<failure message="Questionable decision found. To learn more, see: https://example.com/questionable" type="warning"><![CDATA[Rule: questionable-decision
-Description: Questionable decision found
-Category: really?
-Location: b.rego:22:18
-Text: default allow = true
-Documentation: https://example.com/questionable]]></failure>
-		</testcase>
-	</testsuite>
-</testsuites>
-`
-
-	if buf.String() != expect {
-		t.Errorf("expected \n%s, got \n%s", expect, buf.String())
+	if expect := MustReadFile(t, "testdata/junit/reporter.xml"); buf.String() != expect {
+		t.Errorf("expected %s, got %s", expect, buf.String())
 	}
 }
 
@@ -701,18 +325,22 @@ func TestJUnitReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
+	if err := NewJUnitReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+		t.Fatal(err)
+	}
 
-	sr := NewJUnitReporter(&buf)
+	if expect := "<testsuites name=\"regal\"></testsuites>\n"; buf.String() != expect {
+		t.Errorf("expected \n%s, got \n%s", expect, buf.String())
+	}
+}
 
-	err := sr.Publish(context.Background(), report.Report{})
+func MustReadFile(t *testing.T, path string) string {
+	t.Helper()
+
+	bs, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expect := `<testsuites name="regal"></testsuites>
-`
-
-	if buf.String() != expect {
-		t.Errorf("expected \n%s, got \n%s", expect, buf.String())
-	}
+	return string(bs)
 }

@@ -45,8 +45,7 @@ func updateParse(
 
 		cache.SetModule(fileURI, module)
 
-		err := PutFileMod(ctx, store, fileURI, module)
-		if err != nil {
+		if err := PutFileMod(ctx, store, fileURI, module); err != nil {
 			return false, fmt.Errorf("failed to update rego store with parsed module: %w", err)
 		}
 
@@ -65,8 +64,7 @@ func updateParse(
 			ruleRefs = append(ruleRefs, ref.Label)
 		}
 
-		err = PutFileRefs(ctx, store, fileURI, ruleRefs)
-		if err != nil {
+		if err = PutFileRefs(ctx, store, fileURI, ruleRefs); err != nil {
 			return false, fmt.Errorf("failed to update rego store with defined refs: %w", err)
 		}
 

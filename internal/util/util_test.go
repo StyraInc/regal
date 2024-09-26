@@ -115,13 +115,11 @@ func TestDirCleanUpPaths(t *testing.T) {
 			tempDir := t.TempDir()
 
 			for k, v := range test.State {
-				err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, k)), 0o755)
-				if err != nil {
+				if err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, k)), 0o755); err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
 
-				err = os.WriteFile(filepath.Join(tempDir, k), []byte(v), 0o600)
-				if err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, k), []byte(v), 0o600); err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
 			}

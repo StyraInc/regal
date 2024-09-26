@@ -16,8 +16,7 @@ func TestCheckAndWarn(t *testing.T) {
 
 	localReleasesServer := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			_, err := w.Write([]byte(`{"tag_name": "v0.2.0"}`))
-			if err != nil {
+			if _, err := w.Write([]byte(`{"tag_name": "v0.2.0"}`)); err != nil {
 				t.Fatal(err)
 			}
 

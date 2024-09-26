@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-// Dir is the config directory that will be used for user-wide configuration.
+// GlobalDir is the config directory that will be used for user-wide configuration.
 // This is different from the .regal directories that are searched for when
 // linting.
 func GlobalDir() string {

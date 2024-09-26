@@ -20,14 +20,12 @@ func TestFromFS(t *testing.T) {
 
 	for file, content := range files {
 		/// make the dir
-		err := os.MkdirAll(filepath.Dir(file), 0o755)
-		if err != nil {
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 			t.Fatal(err)
 		}
 
 		// write the file
-		err = os.WriteFile(file, []byte(content), 0o600)
-		if err != nil {
+		if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}

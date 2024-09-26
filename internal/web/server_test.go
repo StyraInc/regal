@@ -13,8 +13,7 @@ func TestTemplateFoundAndParsed(t *testing.T) {
 
 	st := state{Code: "package main\n\nimport rego.v1\n"}
 
-	err := tpl.ExecuteTemplate(&buf, mainTemplate, st)
-	if err != nil {
+	if err := tpl.ExecuteTemplate(&buf, mainTemplate, st); err != nil {
 		t.Fatal(err)
 	}
 

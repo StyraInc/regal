@@ -93,13 +93,11 @@ func (p *InMemoryFileProvider) Rename(from, to string) error {
 		}
 	}
 
-	err := p.Put(to, content)
-	if err != nil {
+	if err := p.Put(to, content); err != nil {
 		return fmt.Errorf("failed to put file %s: %w", to, err)
 	}
 
-	err = p.Delete(from)
-	if err != nil {
+	if err := p.Delete(from); err != nil {
 		return fmt.Errorf("failed to delete file %s: %w", from, err)
 	}
 

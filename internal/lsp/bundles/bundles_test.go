@@ -78,8 +78,7 @@ func TestLoadDataBundle(t *testing.T) {
 					t.Fatalf("failed to create directory %s: %v", dir, err)
 				}
 
-				err := os.WriteFile(filePath, []byte(contents), 0o600)
-				if err != nil {
+				if err := os.WriteFile(filePath, []byte(contents), 0o600); err != nil {
 					t.Fatalf("failed to write file %s: %v", filePath, err)
 				}
 			}

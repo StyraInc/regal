@@ -76,8 +76,7 @@ func (l *LanguageServer) Eval(
 
 		json := encoding.JSON()
 
-		err = json.Unmarshal(in, &inputMap)
-		if err != nil {
+		if err = json.Unmarshal(in, &inputMap); err != nil {
 			return nil, fmt.Errorf("failed unmarshalling input: %w", err)
 		}
 

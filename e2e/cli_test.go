@@ -39,9 +39,7 @@ func readProvidedConfig(t *testing.T) config.Config {
 	}
 
 	var cfg config.Config
-
-	err = yaml.Unmarshal(bs, &cfg)
-	if err != nil {
+	if err = yaml.Unmarshal(bs, &cfg); err != nil {
 		t.Fatalf("failed to unmarshal config: %v", err)
 	}
 
@@ -103,14 +101,11 @@ func TestLintEmptyDir(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.format, func(t *testing.T) {
 			t.Parallel()
 
 			out := bytes.Buffer{}
-
-			err := regal(&out)("lint", "--format", tc.format, t.TempDir())
-			if err != nil {
+			if err := regal(&out)("lint", "--format", tc.format, t.TempDir()); err != nil {
 				t.Fatalf("%v %[1]T", err)
 			}
 
@@ -126,8 +121,7 @@ func TestLintNonExistentDir(t *testing.T) {
 
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	td := t.TempDir()
 
 	err := regal(&stdout, &stderr)("lint", td+filepath.FromSlash("/what/ever"))
@@ -147,8 +141,7 @@ func TestLintNonExistentDir(t *testing.T) {
 
 func TestLintProposeToRunFix(t *testing.T) {
 	t.Parallel()
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	cwd := testutil.Must(os.Getwd())(t)
 
@@ -171,9 +164,7 @@ func TestLintProposeToRunFix(t *testing.T) {
 
 func TestLintAllViolations(t *testing.T) {
 	t.Parallel()
-
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	cwd := testutil.Must(os.Getwd())(t)
 	cfg := readProvidedConfig(t)
@@ -187,9 +178,7 @@ func TestLintAllViolations(t *testing.T) {
 	}
 
 	var rep report.Report
-
-	err = json.Unmarshal(stdout.Bytes(), &rep)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
@@ -230,8 +219,7 @@ func TestLintAllViolations(t *testing.T) {
 func TestLintNotRegoV1Violations(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	cwd := testutil.Must(os.Getwd())(t)
 
@@ -246,9 +234,7 @@ func TestLintNotRegoV1Violations(t *testing.T) {
 	}
 
 	var rep report.Report
-
-	err = json.Unmarshal(stdout.Bytes(), &rep)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
@@ -287,8 +273,7 @@ func TestLintFailsNonExistentConfigFile(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	err := regal(&stdout, &stderr)("lint", "--config-file",
 		cwd+filepath.FromSlash("/testdata/configs/non_existent_test_file.yaml"),
@@ -306,8 +291,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
 		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
@@ -320,9 +304,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 	}
 
 	var rep report.Report
-
-	err = json.Unmarshal(stdout.Bytes(), &rep)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
@@ -341,9 +323,7 @@ func TestLintWithDebugOption(t *testing.T) {
 	t.Parallel()
 
 	cwd := testutil.Must(os.Getwd())(t)
-
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	err := regal(&stdout, &stderr)("lint", "--debug", "--config-file",
 		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
@@ -360,9 +340,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	t.Parallel()
 
 	cwd := testutil.Must(os.Getwd())(t)
-
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
 		cwd+filepath.FromSlash("/testdata/configs/custom_naming_convention.yaml"),
@@ -375,9 +353,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 
 	var rep report.Report
-
-	err = json.Unmarshal(stdout.Bytes(), &rep)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
@@ -403,8 +379,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	basedir := cwd + filepath.FromSlash("/testdata/aggregates")
 
 	t.Run("two policies — no violations expected", func(t *testing.T) {
-		stdout := bytes.Buffer{}
-		stderr := bytes.Buffer{}
+		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
@@ -418,8 +393,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	})
 
 	t.Run("single policy — no aggregate violations expected", func(t *testing.T) {
-		stdout := bytes.Buffer{}
-		stderr := bytes.Buffer{}
+		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
@@ -433,8 +407,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	})
 
 	t.Run("three policies - violation expected", func(t *testing.T) {
-		stdout := bytes.Buffer{}
-		stderr := bytes.Buffer{}
+		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
@@ -461,9 +434,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 func TestLintAggregateIgnoreDirective(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("lint", "--format", "json",
@@ -477,8 +448,7 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 
 	var rep report.Report
 
-	err = json.Unmarshal(stdout.Bytes(), &rep)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
@@ -503,9 +473,7 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 func TestTestRegalBundledBundle(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+filepath.FromSlash("/../bundle"))
@@ -518,8 +486,7 @@ func TestTestRegalBundledBundle(t *testing.T) {
 
 	var res []tester.Result
 
-	err = json.Unmarshal(stdout.Bytes(), &res)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &res); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 }
@@ -527,13 +494,10 @@ func TestTestRegalBundledBundle(t *testing.T) {
 func TestTestRegalBundledRules(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("test", "--format", "json",
-		cwd+filepath.FromSlash("/testdata/custom_rules"))
+	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+filepath.FromSlash("/testdata/custom_rules"))
 
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
@@ -542,9 +506,7 @@ func TestTestRegalBundledRules(t *testing.T) {
 	}
 
 	var res []tester.Result
-
-	err = json.Unmarshal(stdout.Bytes(), &res)
-	if err != nil {
+	if err = json.Unmarshal(stdout.Bytes(), &res); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 }
@@ -552,9 +514,7 @@ func TestTestRegalBundledRules(t *testing.T) {
 func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("test", cwd+filepath.FromSlash("/testdata/ast_type_failure"))
@@ -586,8 +546,7 @@ func TestCreateNewCustomRuleFromTemplate(t *testing.T) {
 		t.Skip("temporarily skipping this test on Windows")
 	}
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	tmpDir := t.TempDir()
 
 	expectExitCode(t, regal(&stdout, &stderr)(
@@ -611,8 +570,7 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 		t.Skip("temporarily skipping this test on Windows")
 	}
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	tmpDir := t.TempDir()
 
 	expectExitCode(t, regal(&stdout, &stderr)(
@@ -632,9 +590,7 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	// No violations from the built-in configuration in the policy provided, but
@@ -649,9 +605,7 @@ func TestMergeRuleConfigWithoutLevel(t *testing.T) {
 func TestConfigDefaultingWithDisableDirective(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)(
@@ -686,9 +640,7 @@ func TestConfigDefaultingWithDisableDirective(t *testing.T) {
 func TestConfigDefaultingWithEnableDirective(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)(
@@ -723,9 +675,7 @@ func TestConfigDefaultingWithEnableDirective(t *testing.T) {
 func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
@@ -750,9 +700,7 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
 func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
@@ -779,9 +727,7 @@ func TestLintPprof(t *testing.T) {
 
 	const pprofFile = "clock.pprof"
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
-
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	t.Cleanup(func() {
@@ -792,8 +738,7 @@ func TestLintPprof(t *testing.T) {
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
-	_, err = os.Stat(pprofFile)
-	if err != nil {
+	if _, err = os.Stat(pprofFile); err != nil {
 		t.Fatalf("expected to find %s, got error: %v", pprofFile, err)
 	}
 }
@@ -801,8 +746,7 @@ func TestLintPprof(t *testing.T) {
 func TestFix(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	td := t.TempDir()
 
 	initialState := map[string]string{
@@ -922,10 +866,7 @@ test_allow := true
 	}
 
 	for file, expectedContent := range expectedState {
-		bs, err := os.ReadFile(filepath.Join(td, file))
-		if err != nil {
-			t.Fatalf("failed to read %s: %v", file, err)
-		}
+		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
 
 		if act := string(bs); expectedContent != act {
 			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
@@ -1003,10 +944,7 @@ Cannot move multiple files to: bar/bar.rego
 	}
 
 	for file, expectedContent := range initialState {
-		bs, err := os.ReadFile(filepath.Join(td, file))
-		if err != nil {
-			t.Fatalf("failed to read %s: %v", file, err)
-		}
+		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
 
 		if act := string(bs); expectedContent != act {
 			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
@@ -1224,8 +1162,7 @@ func mustWriteToFile(t *testing.T, path string, content string) {
 		t.Fatalf("failed to create directory %s: %v", filepath.Dir(path), err)
 	}
 
-	err := os.WriteFile(path, []byte(content), 0o644)
-	if err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatalf("failed to write to %s: %v", path, err)
 	}
 }

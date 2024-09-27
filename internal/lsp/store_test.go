@@ -19,8 +19,7 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	fileURI := "file:///example.rego"
 	module := parse.MustParseModule("package example\n\nrule := true")
 
-	err := PutFileMod(ctx, store, fileURI, module)
-	if err != nil {
+	if err := PutFileMod(ctx, store, fileURI, module); err != nil {
 		t.Fatalf("PutFileMod failed: %v", err)
 	}
 
@@ -89,8 +88,7 @@ func TestPutFileRefs(t *testing.T) {
 	ctx := context.Background()
 	fileURI := "file:///example.rego"
 
-	err := PutFileRefs(ctx, store, fileURI, []string{"foo", "bar"})
-	if err != nil {
+	if err := PutFileRefs(ctx, store, fileURI, []string{"foo", "bar"}); err != nil {
 		t.Fatalf("PutFileRefs failed: %v", err)
 	}
 

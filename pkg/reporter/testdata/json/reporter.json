@@ -1,0 +1,66 @@
+{
+  "violations": [
+    {
+      "title": "breaking-the-law",
+      "description": "Rego must not break the law!",
+      "category": "legal",
+      "level": "error",
+      "related_resources": [
+        {
+          "description": "documentation",
+          "ref": "https://example.com/illegal"
+        }
+      ],
+      "location": {
+        "end": {
+          "row": 1,
+          "col": 14
+        },
+        "text": "package illegal",
+        "file": "a.rego",
+        "col": 1,
+        "row": 1
+      }
+    },
+    {
+      "title": "questionable-decision",
+      "description": "Questionable decision found",
+      "category": "really?",
+      "level": "warning",
+      "related_resources": [
+        {
+          "description": "documentation",
+          "ref": "https://example.com/questionable"
+        }
+      ],
+      "location": {
+        "text": "default allow = true",
+        "file": "b.rego",
+        "col": 18,
+        "row": 22
+      }
+    }
+  ],
+  "notices": [
+    {
+      "title": "rule-made-obsolete",
+      "description": "Rule made obsolete by capability foo",
+      "category": "some-category",
+      "level": "notice",
+      "severity": "none"
+    },
+    {
+      "title": "rule-missing-capability",
+      "description": "Rule missing capability bar",
+      "category": "some-category",
+      "level": "notice",
+      "severity": "warning"
+    }
+  ],
+  "summary": {
+    "files_scanned": 3,
+    "files_failed": 2,
+    "rules_skipped": 1,
+    "num_violations": 2
+  }
+}

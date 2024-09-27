@@ -74,8 +74,7 @@ func (w *Watcher) loop(ctx context.Context) {
 				}
 			}
 
-			err := w.fsWatcher.Add(path)
-			if err != nil {
+			if err := w.fsWatcher.Add(path); err != nil {
 				fmt.Fprintf(w.errorWriter, "failed to add watch: %v\n", err)
 			}
 
@@ -101,8 +100,7 @@ func (w *Watcher) loop(ctx context.Context) {
 		case err := <-w.fsWatcher.Errors:
 			fmt.Fprintf(w.errorWriter, "config watcher error: %v\n", err)
 		case <-ctx.Done():
-			err := w.Stop()
-			if err != nil {
+			if err := w.Stop(); err != nil {
 				fmt.Fprintf(w.errorWriter, "failed to stop watcher: %v\n", err)
 			}
 
@@ -117,8 +115,7 @@ func (w *Watcher) Watch(configFilePath string) {
 
 func (w *Watcher) Stop() error {
 	if w.fsWatcher != nil {
-		err := w.fsWatcher.Close()
-		if err != nil {
+		if err := w.fsWatcher.Close(); err != nil {
 			return fmt.Errorf("failed to close fsnotify watcher: %w", err)
 		}
 

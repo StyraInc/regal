@@ -206,8 +206,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 	yamlEncoder := yaml.NewEncoder(&b)
 	yamlEncoder.SetIndent(2)
 
-	err = yamlEncoder.Encode(existingConfig)
-	if err != nil {
+	if err = yamlEncoder.Encode(existingConfig); err != nil {
 		return err
 	}
 
@@ -241,8 +240,7 @@ func scaffoldCustomRule(params newRuleCommandParams) error {
 		return err
 	}
 
-	err = ruleTmpl.Execute(ruleFile, templateValues(params))
-	if err != nil {
+	if err = ruleTmpl.Execute(ruleFile, templateValues(params)); err != nil {
 		return err
 	}
 
@@ -258,8 +256,7 @@ func scaffoldCustomRule(params newRuleCommandParams) error {
 		return err
 	}
 
-	err = testTmpl.Execute(testFile, templateValues(params))
-	if err != nil {
+	if err = testTmpl.Execute(testFile, templateValues(params)); err != nil {
 		return err
 	}
 
@@ -287,8 +284,7 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 		return err
 	}
 
-	err = ruleTmpl.Execute(ruleFile, templateValues(params))
-	if err != nil {
+	if err = ruleTmpl.Execute(ruleFile, templateValues(params)); err != nil {
 		return err
 	}
 
@@ -304,8 +300,7 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 		return err
 	}
 
-	err = testTmpl.Execute(testFile, templateValues(params))
-	if err != nil {
+	if err = testTmpl.Execute(testFile, templateValues(params)); err != nil {
 		return err
 	}
 
@@ -335,8 +330,7 @@ func createBuiltinDocs(params newRuleCommandParams) error {
 		return err
 	}
 
-	err = docTmpl.Execute(docFile, templateValues(params))
-	if err != nil {
+	if err = docTmpl.Execute(docFile, templateValues(params)); err != nil {
 		return err
 	}
 

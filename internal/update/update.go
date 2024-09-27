@@ -119,8 +119,7 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 
 			json := encoding.JSON()
 
-			err = json.NewDecoder(file).Decode(&preExistingState)
-			if err != nil {
+			if err := json.NewDecoder(file).Decode(&preExistingState); err != nil {
 				return "", fmt.Errorf("failed to decode existing version state file: %w", err)
 			}
 
@@ -169,9 +168,7 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 	}
 
 	json := encoding.JSON()
-
-	err = json.NewDecoder(resp.Body).Decode(&responseData)
-	if err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
 		return "", fmt.Errorf("failed to decode response: %w", err)
 	}
 
@@ -183,8 +180,7 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 		return "", fmt.Errorf("failed to marshal state file: %w", err)
 	}
 
-	err = os.WriteFile(opts.StateDir+"/latest_version.json", stateBs, 0o600)
-	if err != nil {
+	if err = os.WriteFile(opts.StateDir+"/latest_version.json", stateBs, 0o600); err != nil {
 		return "", fmt.Errorf("failed to write state file: %w", err)
 	}
 

@@ -15,8 +15,7 @@ func HappyHolidays() error {
 
 	flakes := []string{flake1, flake2, flake3, flake4, flake5, flake6, flake7}
 
-	err := tm.Init()
-	if err != nil {
+	if err := tm.Init(); err != nil {
 		return fmt.Errorf("termbox init failed: %w", err)
 	}
 	defer tm.Close()

@@ -200,15 +200,12 @@ Hint: %d/%d violations can be automatically fixed (%s)
 // Publish prints a festive report to the configured output.
 func (tr FestiveReporter) Publish(ctx context.Context, r report.Report) error {
 	if os.Getenv("CI") == "" && len(r.Violations) == 0 {
-		err := novelty.HappyHolidays()
-		if err != nil {
+		if err := novelty.HappyHolidays(); err != nil {
 			return fmt.Errorf("novelty message display failed: %w", err)
 		}
 	}
 
-	pretty := NewPrettyReporter(tr.out)
-
-	return pretty.Publish(ctx, r)
+	return NewPrettyReporter(tr.out).Publish(ctx, r)
 }
 
 func buildPrettyViolationsTable(violations []report.Violation) string {
@@ -320,8 +317,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 // to print the GitHub Actions annotations for each violation. Finally, it prints a summary of the report suitable
 // for the GitHub Actions UI.
 func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
-	err := NewPrettyReporter(tr.out).Publish(ctx, r)
-	if err != nil {
+	if err := NewPrettyReporter(tr.out).Publish(ctx, r); err != nil {
 		return err
 	}
 
@@ -330,15 +326,14 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 	}
 
 	for _, violation := range r.Violations {
-		_, err := fmt.Fprintf(tr.out,
+		if _, err := fmt.Fprintf(tr.out,
 			"::%s file=%s,line=%d,col=%d::%s\n",
 			violation.Level,
 			violation.Location.File,
 			violation.Location.Row,
 			violation.Location.Column,
 			fmt.Sprintf("%s. To learn more, see: %s", violation.Description, getDocumentationURL(violation)),
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 	}

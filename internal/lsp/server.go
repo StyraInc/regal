@@ -191,8 +191,7 @@ func (l *LanguageServer) Handle(
 	case "exit":
 		// now we can close the channel, this will cause the program to exit and the
 		// context for all workers to be cancelled
-		err := l.conn.Close()
-		if err != nil {
+		if err := l.conn.Close(); err != nil {
 			return nil, fmt.Errorf("failed to close connection: %w", err)
 		}
 
@@ -224,23 +223,20 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 
 			// updateParse will not return an error when the parsing failed,
 			// but only when it was impossible
-			_, err := updateParse(ctx, l.cache, l.regoStore, evt.URI, bis)
-			if err != nil {
+			if _, err := updateParse(ctx, l.cache, l.regoStore, evt.URI, bis); err != nil {
 				l.logError(fmt.Errorf("failed to update module for %s: %w", evt.URI, err))
 
 				continue
 			}
 
 			// lint the file and send the diagnostics
-			err = updateFileDiagnostics(ctx, l.cache, l.getLoadedConfig(), evt.URI, l.workspaceRootURI)
-			if err != nil {
+			if err := updateFileDiagnostics(ctx, l.cache, l.getLoadedConfig(), evt.URI, l.workspaceRootURI); err != nil {
 				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
 
 				continue
 			}
 
-			err = l.sendFileDiagnostics(ctx, evt.URI)
-			if err != nil {
+			if err := l.sendFileDiagnostics(ctx, evt.URI); err != nil {
 				l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 
 				continue
@@ -254,15 +250,13 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 		case <-l.diagnosticRequestWorkspace:
 			// results will be sent in response to the next workspace/diagnostics request
-			err := updateAllDiagnostics(ctx, l.cache, l.getLoadedConfig(), l.workspaceRootURI)
-			if err != nil {
+			if err := updateAllDiagnostics(ctx, l.cache, l.getLoadedConfig(), l.workspaceRootURI); err != nil {
 				l.logError(fmt.Errorf("failed to update aggregate diagnostics (trigger): %w", err))
 			}
 
 			// send diagnostics for all files
 			for fileURI := range l.cache.GetAllFiles() {
-				err = l.sendFileDiagnostics(ctx, fileURI)
-				if err != nil {
+				if err := l.sendFileDiagnostics(ctx, fileURI); err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 				}
 			}
@@ -302,15 +296,13 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 				continue
 			}
 
-			err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis)
-			if err != nil {
+			if err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis); err != nil {
 				l.logError(fmt.Errorf("failed to update builtin positions: %w", err))
 
 				continue
 			}
 
-			err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI)
-			if err != nil {
+			if err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI); err != nil {
 				l.logError(fmt.Errorf("failed to update keyword positions: %w", err))
 
 				continue
@@ -327,8 +319,7 @@ func (l *LanguageServer) getLoadedConfig() *config.Config {
 }
 
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
-	err := l.configWatcher.Start(ctx)
-	if err != nil {
+	if err := l.configWatcher.Start(ctx); err != nil {
 		l.logError(fmt.Errorf("failed to start config watcher: %w", err))
 
 		return
@@ -348,8 +339,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			var userConfig config.Config
 
-			err = yaml.Unmarshal(configFileBs, &userConfig)
-			if err != nil && !errors.Is(err, io.EOF) {
+			if err = yaml.Unmarshal(configFileBs, &userConfig); err != nil && !errors.Is(err, io.EOF) {
 				l.logError(fmt.Errorf("failed to reload config: %w", err))
 
 				return
@@ -410,8 +400,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					l.cache.SetIgnoredFileContents(k, contents)
 				}
 
-				err := RemoveFileMod(ctx, l.regoStore, k)
-				if err != nil {
+				if err := RemoveFileMod(ctx, l.regoStore, k); err != nil {
 					l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
 				}
 			}
@@ -431,8 +420,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
-					_, err = updateParse(ctx, l.cache, l.regoStore, k, bis)
-					if err != nil {
+					if _, err = updateParse(ctx, l.cache, l.regoStore, k, bis); err != nil {
 						l.logError(fmt.Errorf("failed to update parse for previously ignored file %q: %w", k, err))
 					}
 				}
@@ -532,17 +520,15 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					break
 				}
 
-				err := l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil)
-				if err != nil {
+				if err := l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil); err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 				}
 
-				// clean up any left over empty edits dirs
+				// clean up any empty edits dirs left over
 				if len(renameParams.Edit.DocumentChanges) > 0 {
 					dir := filepath.Dir(uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI))
 
-					err := util.DeleteEmptyDirs(dir)
-					if err != nil {
+					if err := util.DeleteEmptyDirs(dir); err != nil {
 						l.logError(fmt.Errorf("failed to delete empty directories: %w", err))
 					}
 				}
@@ -591,8 +577,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				responseResult := map[string]any{}
 
-				err = l.conn.Call(ctx, "regal/startDebugging", responseParams, &responseResult)
-				if err != nil {
+				if err = l.conn.Call(ctx, "regal/startDebugging", responseParams, &responseResult); err != nil {
 					l.logError(fmt.Errorf("regal/startDebugging failed: %v", err.Error()))
 				}
 			case "regal.eval":
@@ -679,14 +664,11 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 					cleanedMessage := strings.Replace(err.Error(), l.workspaceRootURI+"/", "", 1)
 
-					err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+					if err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
 						Type:    1, // error
 						Message: cleanedMessage,
-					})
-					if err != nil {
+					}); err != nil {
 						l.logError(fmt.Errorf("failed to notify client of eval error: %w", err))
-
-						break
 					}
 
 					break
@@ -710,8 +692,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 					responseResult := map[string]any{}
 
-					err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult)
-					if err != nil {
+					if err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult); err != nil {
 						l.logError(fmt.Errorf("regal/showEvalResult failed: %v", err.Error()))
 					}
 				} else {
@@ -747,22 +728,18 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 			if err != nil {
 				l.logError(err)
 
-				err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
+				if err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
 					Type:    1, // error
 					Message: err.Error(),
-				})
-				if err != nil {
+				}); err != nil {
 					l.logError(fmt.Errorf("failed to notify client of command error: %w", err))
-
-					break
 				}
 
 				break
 			}
 
 			if fixed {
-				err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil)
-				if err != nil {
+				if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil); err != nil {
 					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 				}
 			}
@@ -795,8 +772,7 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 				l.cache.Delete(fileURI)
 
 				// then send the diagnostics message based on the cleared cache
-				err = l.sendFileDiagnostics(ctx, fileURI)
-				if err != nil {
+				if err = l.sendFileDiagnostics(ctx, fileURI); err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 				}
 			}
@@ -908,13 +884,12 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				l.cache.Delete(renameParams.Edit.DocumentChanges[0].OldURI)
 			}
 
-			err = l.conn.Call(ctx, methodWorkspaceApplyEdit, map[string]any{
+			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, map[string]any{
 				"label": "Template new Rego file",
 				"edit": map[string]any{
 					"documentChanges": edits,
 				},
-			}, nil)
-			if err != nil {
+			}, nil); err != nil {
 				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
 			}
 
@@ -1149,13 +1124,11 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 		return nil
 	}
 
-	err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis)
-	if err != nil {
+	if err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis); err != nil {
 		return fmt.Errorf("failed to update builtin positions: %w", err)
 	}
 
-	err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI)
-	if err != nil {
+	if err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI); err != nil {
 		return fmt.Errorf("failed to update keyword locations: %w", err)
 	}
 
@@ -1790,8 +1763,7 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 				Message: "CRLF line ending detected. Please change editor setting to use LF for line endings.",
 			}
 
-			err := l.conn.Notify(ctx, "window/showMessage", resp)
-			if err != nil {
+			if err := l.conn.Notify(ctx, "window/showMessage", resp); err != nil {
 				l.logError(fmt.Errorf("failed to notify: %w", err))
 
 				return struct{}{}, nil
@@ -2012,12 +1984,11 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 	}
 
 	for _, createOp := range params.Files {
-		_, _, err = cache.UpdateCacheForURIFromDisk(
+		if _, _, err = cache.UpdateCacheForURIFromDisk(
 			l.cache,
 			uri.FromPath(l.clientIdentifier, createOp.URI),
 			uri.ToPath(l.clientIdentifier, createOp.URI),
-		)
-		if err != nil {
+		); err != nil {
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", createOp.URI, err)
 		}
 
@@ -2051,8 +2022,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 	for _, deleteOp := range params.Files {
 		l.cache.Delete(deleteOp.URI)
 
-		err := l.sendFileDiagnostics(ctx, deleteOp.URI)
-		if err != nil {
+		if err := l.sendFileDiagnostics(ctx, deleteOp.URI); err != nil {
 			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 		}
 	}
@@ -2092,8 +2062,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		// clear the cache and send diagnostics for the old URI to clear the client
 		l.cache.Delete(renameOp.OldURI)
 
-		err := l.sendFileDiagnostics(ctx, renameOp.OldURI)
-		if err != nil {
+		if err := l.sendFileDiagnostics(ctx, renameOp.OldURI); err != nil {
 			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
 		}
 
@@ -2251,8 +2220,7 @@ func (l *LanguageServer) handleInitialize(
 			l.configWatcher.Watch(configFile.Name())
 		}
 
-		_, err = l.loadWorkspaceContents(ctx, false)
-		if err != nil {
+		if _, err = l.loadWorkspaceContents(ctx, false); err != nil {
 			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
 		}
 
@@ -2310,8 +2278,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 
 		bis := l.builtinsForCurrentCapabilities()
 
-		_, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
-		if err != nil {
+		if _, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis); err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
 
@@ -2323,8 +2290,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 	}
 
 	if l.bundleCache != nil {
-		_, err := l.bundleCache.Refresh()
-		if err != nil {
+		if _, err := l.bundleCache.Refresh(); err != nil {
 			return nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
 		}
 	}
@@ -2396,8 +2362,7 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string
 		URI:   fileURI,
 	}
 
-	err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp)
-	if err != nil {
+	if err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp); err != nil {
 		return fmt.Errorf("failed to notify: %w", err)
 	}
 

@@ -89,13 +89,11 @@ func TestTemplateContentsForFile(t *testing.T) {
 			for f, c := range tc.DiskContents {
 				dir := filepath.Dir(f)
 
-				err := os.MkdirAll(filepath.Join(td, dir), 0o755)
-				if err != nil {
+				if err := os.MkdirAll(filepath.Join(td, dir), 0o755); err != nil {
 					t.Fatalf("failed to create directory %s: %s", dir, err)
 				}
 
-				err = os.WriteFile(filepath.Join(td, f), []byte(c), 0o600)
-				if err != nil {
+				if err := os.WriteFile(filepath.Join(td, f), []byte(c), 0o600); err != nil {
 					t.Fatalf("failed to write file %s: %s", f, err)
 				}
 			}
@@ -127,8 +125,6 @@ func TestTemplateContentsForFile(t *testing.T) {
 func TestNewFileTemplating(t *testing.T) {
 	t.Parallel()
 
-	var err error
-
 	// set up the workspace content with some example rego and regal config
 	tempDir := t.TempDir()
 
@@ -142,13 +138,11 @@ func TestNewFileTemplating(t *testing.T) {
 	}
 
 	for f, fc := range files {
-		err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, f)), 0o755)
-		if err != nil {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, f)), 0o755); err != nil {
 			t.Fatalf("failed to create directory %s: %s", filepath.Dir(filepath.Join(tempDir, f)), err)
 		}
 
-		err = os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600)
-		if err != nil {
+		if err := os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600); err != nil {
 			t.Fatalf("failed to write file %s: %s", f, err)
 		}
 	}
@@ -188,15 +182,13 @@ func TestNewFileTemplating(t *testing.T) {
 
 	var response types.InitializeResult
 
-	err = connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
 	// 2. Client sends initialized notification no response to the call is
 	// expected
-	err = connClient.Call(ctx, "initialized", struct{}{}, nil)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
@@ -220,23 +212,20 @@ func TestNewFileTemplating(t *testing.T) {
 	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
 	expectedNewFileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(tempDir, "foo/bar_test/policy_test.rego"))
 
-	err = os.MkdirAll(filepath.Dir(newFilePath), 0o755)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(newFilePath), 0o755); err != nil {
 		t.Fatalf("failed to create directory %s: %s", filepath.Dir(newFilePath), err)
 	}
 
-	err = os.WriteFile(newFilePath, []byte(""), 0o600)
-	if err != nil {
+	if err := os.WriteFile(newFilePath, []byte(""), 0o600); err != nil {
 		t.Fatalf("failed to write file %s: %s", newFilePath, err)
 	}
 
 	// 5. Client sends workspace/didCreateFiles notification
-	err = connClient.Call(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
+	if err := connClient.Call(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
 		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
 			{URI: newFileURI},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 

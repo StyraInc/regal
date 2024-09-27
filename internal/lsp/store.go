@@ -60,15 +60,13 @@ func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *a
 
 		var modMap map[string]any
 
-		err := rio.JSONRoundTrip(mod, &modMap)
-		if err != nil {
+		if err := rio.JSONRoundTrip(mod, &modMap); err != nil {
 			return fmt.Errorf("failed to marshal module to JSON: %w", err)
 		}
 
-		err = store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
+		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
 		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
-			err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
-			if err != nil {
+			if err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, modMap); err != nil {
 				return fmt.Errorf("failed to init module in store: %w", err)
 			}
 		}
@@ -95,8 +93,7 @@ func RemoveFileMod(ctx context.Context, store storage.Store, fileURI string) err
 			return fmt.Errorf("failed to read module from store: %w", err)
 		}
 
-		err = store.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", fileURI}, nil)
-		if err != nil {
+		if err = store.Write(ctx, txn, storage.RemoveOp, storage.Path{"workspace", "parsed", fileURI}, nil); err != nil {
 			return fmt.Errorf("failed to remove module from store: %w", err)
 		}
 

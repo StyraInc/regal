@@ -513,8 +513,7 @@ func TestLintWithPrintHook(t *testing.T) {
 		WithPrintHook(topdown.NewPrintHook(&bb)).
 		WithInputModules(&input)
 
-	_, err := linter.Lint(context.Background())
-	if err != nil {
+	if _, err := linter.Lint(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 

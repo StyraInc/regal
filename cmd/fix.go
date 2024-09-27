@@ -98,8 +98,7 @@ The linter rules with automatic fixes available are currently:
 		},
 
 		RunE: wrapProfiling(func(args []string) error {
-			err := fix(args, params)
-			if err != nil {
+			if err := fix(args, params); err != nil {
 				log.SetOutput(os.Stderr)
 				log.Println(err)
 
@@ -339,8 +338,7 @@ func fix(args []string, params *fixCommandParams) error {
 	}
 
 	if fixReport.HasConflicts() {
-		err = r.Report(fixReport)
-		if err != nil {
+		if err = r.Report(fixReport); err != nil {
 			return fmt.Errorf("failed to output fix report: %w", err)
 		}
 
@@ -425,8 +423,7 @@ please run fix from a clean state to support the use of git checkout for undo`,
 			}
 
 			for _, dir := range dirs {
-				err := os.Remove(dir)
-				if err != nil {
+				if err := os.Remove(dir); err != nil {
 					return fmt.Errorf("failed to delete directory %s: %w", dir, err)
 				}
 			}
@@ -445,20 +442,17 @@ please run fix from a clean state to support the use of git checkout for undo`,
 				fileMode = fileInfo.Mode()
 			}
 
-			err = os.MkdirAll(filepath.Dir(file), 0o755)
-			if err != nil {
+			if err = os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 				return fmt.Errorf("failed to create directory for file %s: %w", file, err)
 			}
 
-			err = os.WriteFile(file, fc, fileMode)
-			if err != nil {
+			if err = os.WriteFile(file, fc, fileMode); err != nil {
 				return fmt.Errorf("failed to write file %s: %w", file, err)
 			}
 		}
 	}
 
-	err = r.Report(fixReport)
-	if err != nil {
+	if err = r.Report(fixReport); err != nil {
 		return fmt.Errorf("failed to output fix report: %w", err)
 	}
 

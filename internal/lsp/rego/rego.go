@@ -201,8 +201,7 @@ func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy
 		return toValue, err //nolint:wrapcheck
 	}
 
-	err = rio.JSONRoundTrip(result.Expressions[0].Value, &toValue)
-	if err != nil {
+	if err := rio.JSONRoundTrip(result.Expressions[0].Value, &toValue); err != nil {
 		return toValue, fmt.Errorf("failed unmarshaling code lenses: %w", err)
 	}
 

@@ -58,8 +58,7 @@ func walkPaths(paths []string, filter func(path string, info os.DirEntry, err er
 	for _, path := range paths {
 		// We need to stat the initial set of paths, as filepath.WalkDir
 		// will panic on non-existent paths.
-		_, err := os.Stat(path)
-		if err != nil {
+		if _, err := os.Stat(path); err != nil {
 			errs = errors.Join(errs, err)
 
 			continue

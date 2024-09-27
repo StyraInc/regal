@@ -18,8 +18,7 @@ func TestWatcher(t *testing.T) {
 foo: bar
 `
 
-	err := os.WriteFile(configFilePath, []byte(configFileContents), 0o600)
-	if err != nil {
+	if err := os.WriteFile(configFilePath, []byte(configFileContents), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -29,8 +28,7 @@ foo: bar
 	defer cancel()
 
 	go func() {
-		err := watcher.Start(ctx)
-		if err != nil {
+		if err := watcher.Start(ctx); err != nil {
 			t.Errorf("failed to start watcher: %v", err)
 		}
 	}()
@@ -47,8 +45,7 @@ foo: bar
 foo: baz
 `
 
-	err = os.WriteFile(configFilePath, []byte(newConfigFileContents), 0o600)
-	if err != nil {
+	if err := os.WriteFile(configFilePath, []byte(newConfigFileContents), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -58,8 +55,7 @@ foo: baz
 		t.Fatal("timeout waiting for config event")
 	}
 
-	err = os.Rename(configFilePath, configFilePath+".new")
-	if err != nil {
+	if err := os.Rename(configFilePath, configFilePath+".new"); err != nil {
 		t.Fatal(err)
 	}
 

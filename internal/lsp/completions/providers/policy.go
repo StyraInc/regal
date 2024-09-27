@@ -105,8 +105,7 @@ func (p *Policy) Run(
 
 	completions := make([]types.CompletionItem, 8)
 
-	err = rio.JSONRoundTrip(result["completions"], &completions)
-	if err != nil {
+	if err = rio.JSONRoundTrip(result["completions"], &completions); err != nil {
 		return nil, fmt.Errorf("failed converting completions: %w", err)
 	}
 
@@ -131,8 +130,7 @@ func prepareQuery(store storage.Store, query string) (*rego.PreparedEvalQuery, e
 		return nil, fmt.Errorf("failed preparing query: %s, %w", query, err)
 	}
 
-	err = store.Commit(context.Background(), txn)
-	if err != nil {
+	if err = store.Commit(context.Background(), txn); err != nil {
 		return nil, fmt.Errorf("failed committing transaction: %w", err)
 	}
 

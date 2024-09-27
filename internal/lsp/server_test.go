@@ -69,14 +69,11 @@ const fileURIScheme = "file://"
 func TestLanguageServerSingleFile(t *testing.T) {
 	t.Parallel()
 
-	var err error
-
 	// set up the workspace content with some example rego and regal config
 	tempDir := t.TempDir()
 	mainRegoURI := fileURIScheme + tempDir + mainRegoFileName
 
-	err = os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755); err != nil {
 		t.Fatalf("failed to create .regal directory: %s", err)
 	}
 
@@ -96,8 +93,7 @@ rules:
 	}
 
 	for f, fc := range files {
-		err = os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600)
-		if err != nil {
+		if err := os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600); err != nil {
 			t.Fatalf("failed to write file %s: %s", f, err)
 		}
 	}
@@ -117,8 +113,7 @@ rules:
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-			if err != nil {
+			if err := encoding.JSON().Unmarshal(*req.Params, &requestData); err != nil {
 				t.Fatalf("failed to unmarshal diagnostics: %s", err)
 			}
 
@@ -144,8 +139,7 @@ rules:
 
 	var response types.InitializeResult
 
-	err = connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
@@ -179,8 +173,7 @@ rules:
 
 	// 2. Client sends initialized notification
 	// no response to the call is expected
-	err = connClient.Call(ctx, "initialized", struct{}{}, nil)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
@@ -204,7 +197,7 @@ rules:
 
 	// 3. Client sends textDocument/didChange notification with new contents for main.rego
 	// no response to the call is expected
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -216,8 +209,7 @@ allow := true
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -250,8 +242,7 @@ rules:
       level: ignore
 `
 
-	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600)
-	if err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600); err != nil {
 		t.Fatalf("failed to write new config file: %s", err)
 	}
 
@@ -300,8 +291,7 @@ capabilities:
     version: v1.23.0
 `
 
-	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600)
-	if err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600); err != nil {
 		t.Fatalf("failed to write new config file: %s", err)
 	}
 
@@ -340,7 +330,7 @@ capabilities:
 	// the start of an EOPA-specific call, so if the capabilities were
 	// loaded correctly, we should see a completion later after we ask for
 	// it.
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -352,8 +342,7 @@ allow := neo4j.q
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -465,8 +454,6 @@ allow := neo4j.q
 func TestLanguageServerMultipleFiles(t *testing.T) {
 	t.Parallel()
 
-	var err error
-
 	// set up the workspace content with some example rego and regal config
 	tempDir := t.TempDir()
 	authzRegoURI := fileURIScheme + tempDir + "/authz.rego"
@@ -505,19 +492,16 @@ ignore:
 `,
 	}
 
-	err = os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755); err != nil {
 		t.Fatalf("failed to create .regal directory: %s", err)
 	}
 
-	err = os.MkdirAll(filepath.Join(tempDir, "ignored"), 0o755)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Join(tempDir, "ignored"), 0o755); err != nil {
 		t.Fatalf("failed to create ignored directory: %s", err)
 	}
 
 	for f, fc := range files {
-		err = os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600)
-		if err != nil {
+		if err := os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600); err != nil {
 			t.Fatalf("failed to write file %s: %s", f, err)
 		}
 	}
@@ -526,9 +510,7 @@ ignore:
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ls := NewLanguageServer(&LanguageServerOptions{
-		ErrorLog: newTestLogger(t),
-	})
+	ls := NewLanguageServer(&LanguageServerOptions{ErrorLog: newTestLogger(t)})
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
 
@@ -543,9 +525,7 @@ ignore:
 		}
 
 		var requestData types.FileDiagnostics
-
-		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-		if err != nil {
+		if err := encoding.JSON().Unmarshal(*req.Params, &requestData); err != nil {
 			t.Fatalf("failed to unmarshal diagnostics: %s", err)
 		}
 
@@ -575,15 +555,13 @@ ignore:
 
 	var response types.InitializeResult
 
-	err = connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
 	// 2. Client sends initialized notification
 	// no response to the call is expected
-	err = connClient.Call(ctx, "initialized", struct{}{}, nil)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
@@ -625,7 +603,7 @@ ignore:
 
 	// 3. Client sends textDocument/didChange notification with new contents for authz.rego
 	// no response to the call is expected
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: authzRegoURI,
 		},
@@ -643,8 +621,7 @@ allow if input.user in admins.users
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -694,8 +671,7 @@ func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 		ErrorLog: newTestLogger(t),
 	})
 
-	err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo")
-	if err != nil {
+	if err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -745,8 +721,7 @@ func TestFormatting(t *testing.T) {
 
 	var response types.InitializeResult
 
-	err := connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
@@ -837,8 +812,7 @@ allow := true
 	}
 
 	for f, fc := range files {
-		err = os.WriteFile(filepath.Join(parentDir, f), []byte(fc), 0o600)
-		if err != nil {
+		if err := os.WriteFile(filepath.Join(parentDir, f), []byte(fc), 0o600); err != nil {
 			t.Fatalf("failed to write file %s: %s", f, err)
 		}
 	}
@@ -862,9 +836,8 @@ allow := true
 		if req.Method == methodTextDocumentPublishDiagnostics {
 			var requestData types.FileDiagnostics
 
-			err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-			if err != nil {
-				t.Fatalf("failed to unmarshal diagnostics: %s", err)
+			if err2 := encoding.JSON().Unmarshal(*req.Params, &requestData); err2 != nil {
+				t.Fatalf("failed to unmarshal diagnostics: %s", err2)
 			}
 
 			receivedMessages <- requestData
@@ -889,8 +862,7 @@ allow := true
 
 	var response types.InitializeResult
 
-	err = connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
 		t.Fatalf("failed to send initialize request: %s", err)
 	}
 
@@ -900,8 +872,7 @@ allow := true
 
 	// Client sends initialized notification
 	// the response to the call is expected to be empty and is ignored
-	err = connClient.Call(ctx, "initialized", struct{}{}, nil)
-	if err != nil {
+	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
 		t.Fatalf("failed to send initialized notification: %s", err)
 	}
 
@@ -933,8 +904,8 @@ allow := true
       level: ignore
 `
 
-	err = os.WriteFile(filepath.Join(parentDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600)
-	if err != nil {
+	path := filepath.Join(parentDir, ".regal/config.yaml")
+	if err := os.WriteFile(path, []byte(newConfigContents), 0o600); err != nil {
 		t.Fatalf("failed to write new config file: %s", err)
 	}
 

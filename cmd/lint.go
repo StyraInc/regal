@@ -422,8 +422,7 @@ func formatError(format string, err error) error {
 
 		buf := &bytes.Buffer{}
 
-		err := testSuites.WriteXML(buf)
-		if err != nil {
+		if err := testSuites.WriteXML(buf); err != nil {
 			return fmt.Errorf("failed to format errors for output: %w", err)
 		}
 

@@ -78,8 +78,7 @@ func TestFindInput(t *testing.T) {
 		t.Errorf("expected input at %s, got %s", content, res)
 	}
 
-	err := os.Remove(tmpDir + "/workspace/foo/bar/input.json")
-	if err != nil {
+	if err := os.Remove(tmpDir + "/workspace/foo/bar/input.json"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -100,8 +99,7 @@ func createWithContent(t *testing.T, path string, content string) {
 
 	defer f.Close()
 
-	_, err = f.WriteString(content)
-	if err != nil {
+	if _, err = f.WriteString(content); err != nil {
 		t.Fatal(err)
 	}
 }

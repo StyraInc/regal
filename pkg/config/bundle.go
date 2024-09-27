@@ -38,8 +38,7 @@ func LoadConfigWithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Co
 
 	providedRuleLevels := providedConfLevels(&defaultConfig)
 
-	err = mergo.Merge(&defaultConfig, userConfig, mergo.WithOverride)
-	if err != nil {
+	if err = mergo.Merge(&defaultConfig, userConfig, mergo.WithOverride); err != nil {
 		return Config{}, fmt.Errorf("failed to merge user config: %w", err)
 	}
 

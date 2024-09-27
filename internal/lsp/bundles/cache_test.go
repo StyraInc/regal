@@ -28,8 +28,7 @@ func TestRefresh(t *testing.T) {
 				t.Fatalf("failed to create directory %s: %v", dir, err)
 			}
 
-			err := os.WriteFile(filePath, []byte(contents), 0o600)
-			if err != nil {
+			if err := os.WriteFile(filePath, []byte(contents), 0o600); err != nil {
 				t.Fatalf("failed to write file %s: %v", filePath, err)
 			}
 		}
@@ -149,13 +148,11 @@ func TestRefresh(t *testing.T) {
 	}
 
 	// remove the foo bundle
-	err = os.RemoveAll(filepath.Join(workspacePath, "foo"))
-	if err != nil {
+	if err = os.RemoveAll(filepath.Join(workspacePath, "foo")); err != nil {
 		t.Fatalf("failed to remove foo bundle: %v", err)
 	}
 
-	_, err = c.Refresh()
-	if err != nil {
+	if _, err = c.Refresh(); err != nil {
 		t.Fatalf("failed to refresh cache: %v", err)
 	}
 

@@ -138,8 +138,7 @@ func FilepathJoiner(base string) func(string) string {
 func DeleteEmptyDirs(dir string) error {
 	for {
 		// os.Remove will only delete empty directories
-		err := os.Remove(dir)
-		if err != nil {
+		if err := os.Remove(dir); err != nil {
 			if os.IsExist(err) {
 				break
 			}

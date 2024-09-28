@@ -11,7 +11,7 @@ var Version = ""
 
 // Additional Regal metadata to be injected at build time.
 var (
-	Vcs       = ""
+	Commit    = ""
 	Timestamp = ""
 	Hostname  = ""
 )
@@ -54,7 +54,7 @@ func New() Info {
 		Version:   unknownString(Version),
 		GoVersion: goVersion,
 		Platform:  platform,
-		Commit:    unknownString(Vcs),
+		Commit:    unknownString(Commit),
 		Timestamp: unknownString(Timestamp),
 		Hostname:  unknownString(Hostname),
 	}

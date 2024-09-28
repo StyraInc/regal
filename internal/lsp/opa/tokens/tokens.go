@@ -145,9 +145,3 @@ func Keywords() map[string]Token {
 	}
 	return cpy
 }
-
-// IsKeyword returns if a token is a keyword
-func IsKeyword(tok Token) bool {
-	_, ok := keywords[strings[tok]]
-	return ok
-}

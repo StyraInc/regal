@@ -3,6 +3,6 @@
 package mode
 
 // Standalone lets us change the output of some commands when Regal
-// us used as a binary, as opposed to when it's embedded via its
+// is used as a binary, as opposed to when it's embedded via its
 // Go module.
 const Standalone = false

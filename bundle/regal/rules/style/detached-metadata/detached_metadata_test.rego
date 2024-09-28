@@ -15,11 +15,21 @@ package p
 
 allow := true
 `)
+
 	r == {{
 		"category": "style",
 		"description": "Detached metadata annotation",
 		"level": "error",
-		"location": {"col": 1, "file": "p.rego", "row": 4, "text": "# METADATA"},
+		"location": {
+			"col": 1,
+			"file": "p.rego",
+			"row": 4,
+			"end": {
+				"col": 36,
+				"row": 5,
+			},
+			"text": "# METADATA",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/detached-metadata", "style"),
@@ -43,7 +53,16 @@ allow := true
 		"category": "style",
 		"description": "Detached metadata annotation",
 		"level": "error",
-		"location": {"col": 1, "file": "p.rego", "row": 4, "text": "# METADATA"},
+		"location": {
+			"col": 1,
+			"file": "p.rego",
+			"row": 4,
+			"end": {
+				"col": 36,
+				"row": 5,
+			},
+			"text": "# METADATA",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/detached-metadata", "style"),
@@ -103,7 +122,16 @@ package p
 		"category": "style",
 		"description": "Detached metadata annotation",
 		"level": "error",
-		"location": {"col": 1, "file": "p.rego", "row": 5, "text": "# METADATA"},
+		"location": {
+			"col": 1,
+			"file": "p.rego",
+			"row": 5,
+			"end": {
+				"col": 21,
+				"row": 7,
+			},
+			"text": "# METADATA",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/detached-metadata", "style"),

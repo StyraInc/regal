@@ -16,7 +16,16 @@ test_fail_unification_in_regular_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 5, "file": "policy.rego", "row": 3, "text": "foo = false"},
+		"location": {
+			"col": 5,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 6,
+				"row": 3,
+			},
+			"text": "foo = false",
+		},
 		"level": "error",
 	}}
 }
@@ -31,7 +40,16 @@ test_fail_not_implicit_boolean_assignment_with_body if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 7, "file": "policy.rego", "row": 3, "text": "allow = true { true }"},
+		"location": {
+			"col": 7,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 8,
+				"row": 3,
+			},
+			"text": "allow = true { true }",
+		},
 		"level": "error",
 	}}
 }
@@ -46,7 +64,16 @@ test_fail_not_implicit_boolean_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 5, "file": "policy.rego", "row": 3, "text": "foo = true"},
+		"location": {
+			"col": 5,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 6,
+				"row": 3,
+			},
+			"text": "foo = true",
+		},
 		"level": "error",
 	}}
 }
@@ -66,7 +93,16 @@ test_fail_unification_in_default_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 11, "file": "policy.rego", "row": 3, "text": "default x = false"},
+		"location": {
+			"col": 11,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 12,
+				"row": 3,
+			},
+			"text": "default x = false",
+		},
 		"level": "error",
 	}}
 }
@@ -81,7 +117,16 @@ test_fail_unification_in_default_function_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 14, "file": "policy.rego", "row": 3, "text": "default x(_) = false"},
+		"location": {
+			"col": 14,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 15,
+				"row": 3,
+			},
+			"text": "default x(_) = false",
+		},
 		"level": "error",
 	}}
 }
@@ -106,7 +151,16 @@ test_fail_unification_in_object_rule_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 8, "file": "policy.rego", "row": 3, "text": `x["a"] = 1`},
+		"location": {
+			"col": 8,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 9,
+				"row": 3,
+			},
+			"text": `x["a"] = 1`,
+		},
 		"level": "error",
 	}}
 }
@@ -126,7 +180,16 @@ test_fail_unification_in_function_assignment if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 		}],
 		"title": "use-assignment-operator",
-		"location": {"col": 10, "file": "policy.rego", "row": 3, "text": `foo(bar) = "baz"`},
+		"location": {
+			"col": 10,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 11,
+				"row": 3,
+			},
+			"text": `foo(bar) = "baz"`,
+		},
 		"level": "error",
 	}}
 }
@@ -179,7 +242,10 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 9, "file": "policy.rego", "row": 8, "text": "\t} else = true if {"},
+			"location": {"col": 9, "file": "policy.rego", "row": 8, "text": "\t} else = true if {", "end": {
+				"col": 10,
+				"row": 8,
+			}},
 			"level": "error",
 		},
 		{
@@ -190,7 +256,10 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 9, "file": "policy.rego", "row": 10, "text": "\t} else = false"},
+			"location": {"col": 9, "file": "policy.rego", "row": 10, "text": "\t} else = false", "end": {
+				"col": 10,
+				"row": 10,
+			}},
 			"level": "error",
 		},
 	}

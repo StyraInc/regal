@@ -247,45 +247,14 @@ test_camelcase if {
 
 # regal ignore:rule-length
 test_main_lint if {
-	ast := {
-		"package": {
-			"location": "1:1:cGFja2FnZQ==",
-			"path": [
-				{"location": "1:9:cA==", "type": "var", "value": "data"},
-				{"location": "1:9:cA==", "type": "string", "value": "p"},
-			],
-		},
-		"rules": [{
-			"location": "3:1:eCA9IDE=",
-			"head": {
-				"name": "x",
-				"ref": [{"location": "3:1:eA==", "type": "var", "value": "x"}],
-				"value": {
-					"value": 1,
-					"location": "3:5:MQ==",
-					"type": "number",
-				},
-				"location": "3:1:eCA9IDE=",
-			},
-		}],
-		"regal": {
-			"file": {
-				"name": "p.rego",
-				"lines": [
-					"package p",
-					"",
-					"x = 1",
-					"",
-				],
-				"abs": "/regal/p.rego",
-			},
-			"environment": {"path_separator": "/"},
-		},
-	}
+	policy := `package p
+	x = 1`
+
+	module := regal.parse_module("p.rego", policy)
 
 	cfg := {"rules": {"style": {"use-assignment-operator": {"level": "error"}}}}
 
-	result := main.lint with input as ast with config.merged_config as cfg
+	result := main.lint with input as module with config.merged_config as cfg
 
 	result == {
 		"aggregates": {},
@@ -296,10 +265,14 @@ test_main_lint if {
 			"description": "Prefer := over = for assignment",
 			"level": "error",
 			"location": {
-				"col": 3,
+				"col": 4,
 				"file": "p.rego",
-				"row": 3,
-				"text": "x = 1",
+				"row": 2,
+				"end": {
+					"col": 5,
+					"row": 2,
+				},
+				"text": "\tx = 1",
 			},
 			"related_resources": [{
 				"description": "documentation",

@@ -17,9 +17,10 @@ test_fail_yoda_conditions if {
 		]
 	}`)
 	r := rule.report with input as module
+
 	r == expected_with_location([
-		{"col": 9, "file": "policy.rego", "row": 4, "text": "\t\t\"foo\" == input.bar"},
-		{"col": 10, "file": "policy.rego", "row": 8, "text": "\t\t\t\"foo\" == foo"},
+		{"col": 3, "end": {"row": 4, "col": 21}, "file": "policy.rego", "row": 4, "text": "\t\t\"foo\" == input.bar"},
+		{"col": 4, "end": {"row": 8, "col": 16}, "file": "policy.rego", "row": 8, "text": "\t\t\t\"foo\" == foo"},
 	])
 }
 
@@ -34,8 +35,8 @@ test_fail_yoda_conditions_not_equals if {
 	}`)
 	r := rule.report with input as module
 	r == expected_with_location([
-		{"col": 9, "file": "policy.rego", "row": 4, "text": "\t\t\"foo\" != input.bar"},
-		{"col": 10, "file": "policy.rego", "row": 8, "text": "\t\t\t\"foo\" != foo"},
+		{"col": 3, "end": {"col": 21, "row": 4}, "file": "policy.rego", "row": 4, "text": "\t\t\"foo\" != input.bar"},
+		{"col": 4, "end": {"col": 16, "row": 8}, "file": "policy.rego", "row": 8, "text": "\t\t\t\"foo\" != foo"},
 	])
 }
 

@@ -29,7 +29,7 @@ report contains violation if {
 	ref[1].value[0].value[0].value == "indexof_n"
 
 	loc1 := result.location(ref[0])
-	loc2 := result.ranged_location_from_text(ref[1])
+	loc2 := result.location(ref[1])
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc1, {"location": {"end": loc2.location.end}}))
+	violation := result.fail(rego.metadata.chain(), result.ranged_location_between(loc1, loc2))
 }

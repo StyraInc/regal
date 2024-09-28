@@ -10,13 +10,31 @@ import data.regal.rules.style["external-reference"] as rule
 test_fail_function_references_input if {
 	r := rule.report with input as ast.policy(`f(_) { input.foo }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 8, "file": "policy.rego", "row": 3, "text": `f(_) { input.foo }`})
+	r == expected_with_location({
+		"col": 8,
+		"file": "policy.rego",
+		"row": 3,
+		"end": {
+			"col": 13,
+			"row": 3,
+		},
+		"text": `f(_) { input.foo }`,
+	})
 }
 
 test_fail_function_references_data if {
 	r := rule.report with input as ast.policy(`f(_) { data.foo }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 8, "file": "policy.rego", "row": 3, "text": `f(_) { data.foo }`})
+	r == expected_with_location({
+		"col": 8,
+		"file": "policy.rego",
+		"row": 3,
+		"end": {
+			"col": 12,
+			"row": 3,
+		},
+		"text": `f(_) { data.foo }`,
+	})
 }
 
 test_fail_function_references_data_in_expr if {
@@ -24,7 +42,16 @@ test_fail_function_references_data_in_expr if {
 		x == data.foo
 	}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 8, "file": "policy.rego", "row": 4, "text": "\t\tx == data.foo"})
+	r == expected_with_location({
+		"col": 8,
+		"file": "policy.rego",
+		"row": 4,
+		"end": {
+			"col": 12,
+			"row": 4,
+		},
+		"text": "\t\tx == data.foo",
+	})
 }
 
 test_fail_function_references_rule if {
@@ -37,19 +64,46 @@ f(x, y) {
 }
 	`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 7, "file": "policy.rego", "row": 8, "text": `	y == foo`})
+	r == expected_with_location({
+		"col": 7,
+		"file": "policy.rego",
+		"row": 8,
+		"end": {
+			"col": 10,
+			"row": 8,
+		},
+		"text": `	y == foo`,
+	})
 }
 
 test_fail_external_reference_in_head_assignment if {
 	r := rule.report with input as ast.policy(`f(_) := r`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 9, "file": "policy.rego", "row": 3, "text": "f(_) := r"})
+	r == expected_with_location({
+		"col": 9,
+		"file": "policy.rego",
+		"row": 3,
+		"end": {
+			"col": 10,
+			"row": 3,
+		},
+		"text": "f(_) := r",
+	})
 }
 
 test_fail_external_reference_in_head_terms if {
 	r := rule.report with input as ast.policy(`f(_) := {"r": r}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == expected_with_location({"col": 15, "file": "policy.rego", "row": 3, "text": "f(_) := {\"r\": r}"})
+	r == expected_with_location({
+		"col": 15,
+		"file": "policy.rego",
+		"row": 3,
+		"end": {
+			"col": 16,
+			"row": 3,
+		},
+		"text": "f(_) := {\"r\": r}",
+	})
 }
 
 test_success_function_references_no_input_or_data if {

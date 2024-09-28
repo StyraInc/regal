@@ -255,7 +255,7 @@ find_vars_in_local_scope(rule, location) := [var |
 
 _end_location(location) := end if {
 	loc := util.to_location_object(location)
-	lines := split(base64.decode(loc.text), "\n")
+	lines := split(loc.text, "\n")
 	end := {
 		"row": (loc.row + count(lines)) - 1,
 		"col": loc.col + count(regal.last(lines)),

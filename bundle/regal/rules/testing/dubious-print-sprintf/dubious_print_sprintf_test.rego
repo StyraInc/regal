@@ -20,7 +20,13 @@ test_fail_print_sprintf if {
 		"description": "Dubious use of print and sprintf",
 		"level": "error",
 		"location": {
-			"col": 9, "file": "policy.rego", "row": 4,
+			"col": 9,
+			"file": "policy.rego",
+			"row": 4,
+			"end": {
+				"col": 16,
+				"row": 4,
+			},
 			"text": "\t\tprint(sprintf(\"name is: %s domain is: %s\", [input.name, input.domain]))",
 		},
 		"related_resources": [{
@@ -45,7 +51,16 @@ test_fail_bodies_print_sprintf if {
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",
 		"level": "error",
-		"location": {"col": 10, "file": "policy.rego", "row": 6, "text": "\t\t\tprint(sprintf(\"x is: %s\", [x]))"},
+		"location": {
+			"col": 10,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"col": 17,
+				"row": 6,
+			},
+			"text": "\t\t\tprint(sprintf(\"x is: %s\", [x]))",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/dubious-print-sprintf", "testing"),

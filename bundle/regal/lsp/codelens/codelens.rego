@@ -23,7 +23,7 @@ lenses := array.concat(
 )
 
 _eval_lenses contains {
-	"range": location.to_range(result.ranged_location_from_text(input["package"]).location),
+	"range": location.to_range(result.location(input["package"]).location),
 	"command": {
 		"title": "Evaluate",
 		"command": "regal.eval",
@@ -40,7 +40,7 @@ _eval_lenses contains _rule_lens(rule, "regal.eval", "Evaluate") if {
 }
 
 _debug_lenses contains {
-	"range": location.to_range(result.ranged_location_from_text(input["package"]).location),
+	"range": location.to_range(result.location(input["package"]).location),
 	"command": {
 		"title": "Debug",
 		"command": "regal.debug",
@@ -60,7 +60,7 @@ _debug_lenses contains _rule_lens(rule, "regal.debug", "Debug") if {
 }
 
 _rule_lens(rule, command, title) := {
-	"range": location.to_range(result.ranged_location_from_text(rule).location),
+	"range": location.to_range(result.location(rule).location),
 	"command": {
 		"title": title,
 		"command": command,

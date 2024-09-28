@@ -12,7 +12,7 @@ report contains violation if {
 
 	some rule in ast.tests
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(rule.head))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
 _is_test_package(package_name) if endswith(package_name, "_test")

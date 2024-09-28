@@ -7,6 +7,9 @@ import data.regal.util
 # METADATA
 # description: collects keywords from input module by the line that they appear on
 # scope: document
+
+# METADATA
+# description: collects the `if` keyword. this isn't present in the AST, so we'll simply scan the input lines
 keywords[row] contains keyword if {
 	some idx, line in input.regal.file.lines
 
@@ -26,6 +29,8 @@ keywords[row] contains keyword if {
 	}
 }
 
+# METADATA
+# description: collects the `package` keyword
 keywords[loc.row] contains keyword if {
 	pkg := input["package"]
 	loc := util.to_location_object(pkg.location)
@@ -39,6 +44,8 @@ keywords[loc.row] contains keyword if {
 	}
 }
 
+# METADATA
+# description: collects the `import` keyword
 keywords[loc.row] contains keyword if {
 	some imp in input.imports
 
@@ -53,11 +60,13 @@ keywords[loc.row] contains keyword if {
 	}
 }
 
+# METADATA
+# description: collects the `contains` keyword
 keywords[loc.row] contains keyword if {
 	some rule in input.rules
 
 	loc := util.to_location_object(rule.head.location)
-	col := indexof(base64.decode(loc.text), " contains ")
+	col := indexof(loc.text, " contains ")
 
 	col > 0
 
@@ -70,78 +79,48 @@ keywords[loc.row] contains keyword if {
 	}
 }
 
-keywords[loc.row] contains keyword if {
-	expr := exprs[_][_]
+# METADATA
+# description: collects the `some`, `every` and `in` keywords
+keywords[keyword.location.row] contains keyword if {
+	walk(input.rules, [_, value])
 
-	walk(expr.terms, [path, value])
-
-	regal.last(path) == "location"
-
-	loc := util.to_location_object(value)
-	name := _keyword_b64s[loc.text]
-
-	parent_path := array.slice(path, 0, count(path) - 1)
-	context := object.get(expr.terms, parent_path, {})
-
-	some keyword in _determine_keywords(context, loc, name)
+	some keyword in _keywords_with_location(value)
 }
 
-keywords[loc.row] contains keyword if {
-	some rule in input.rules
-	rule.head.assign
+_keywords_with_location(value) := keywords if {
+	value.terms.symbols
 
-	walk(rule.head.value, [path, value])
-
-	regal.last(path) == "location"
-
-	loc := util.to_location_object(value)
-
-	name := _keyword_b64s[loc.text]
-
-	parent_path := array.slice(path, 0, count(path) - 1)
-	context := object.get(rule.head.value, parent_path, {})
-
-	some keyword in _determine_keywords(context, loc, name)
+	location := util.to_location_object(value.terms.location)
+	keywords := array.concat([{"name": "some", "location": location}], _in_on_row(location))
 }
 
-_determine_keywords(_, value, name) := {keyword} if {
-	name in {"in", "some"}
+_keywords_with_location(value) := keywords if {
+	value.domain
 
+	location := util.to_location_object(value.location)
+	keywords := array.concat([{"name": "every", "location": location}], _in_on_row(location))
+}
+
+_in_on_row(location) := [keyword |
+	in_col := indexof(input.regal.file.lines[location.row - 1], " in ")
 	keyword := {
-		"name": name,
+		"name": "in",
 		"location": {
-			"row": value.row,
-			"col": value.col,
+			"row": location.row,
+			"col": in_col + 2,
+			"end": {
+				"row": location.row,
+				"col": in_col + 4,
+			},
+			"text": "in",
 		},
 	}
-}
-
-_determine_keywords(context, value, "every") := keywords if {
-	ctx_loc := util.to_location_object(context.value.location)
-	text := base64.decode(ctx_loc.text)
-
-	keywords := {
-		{
-			"name": "every",
-			"location": {
-				"row": value.row,
-				"col": value.col,
-			},
-		},
-		{
-			"name": "in",
-			"location": {
-				"row": value.row,
-				"col": (ctx_loc.col + count(text)) + 1,
-			},
-		},
-	}
-}
+]
 
 _comment_row_index contains util.to_location_object(comment.location).row if some comment in input.comments
 
-_keyword_b64s := {
-	"aW4=": "in",
-	"c29tZQ==": "some",
-	"ZXZlcnk=": "every",
+_keywords := {
+	"in",
+	"some",
+	"every",
 }

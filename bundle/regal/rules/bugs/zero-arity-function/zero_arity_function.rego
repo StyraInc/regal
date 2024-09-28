@@ -11,11 +11,11 @@ import data.regal.util
 report contains violation if {
 	# notably, not ast.functions, as zero-arity functions are treated
 	# as regular rules (i.e. they have no `args` key in the head)
-	some rule in ast.rules
+	head := ast.rules[_].head
 
-	text := base64.decode(util.to_location_object(rule.location).text)
+	text := util.to_location_object(head.location).text
 
 	regex.match(`^[a-zA-z1-9_\.\[\]"]+\(\)`, text)
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(head.ref))
 }

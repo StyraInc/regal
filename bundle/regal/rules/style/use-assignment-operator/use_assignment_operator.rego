@@ -19,8 +19,18 @@ report contains violation if {
 	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
 	loc := result.location(rule)
+	eq_col := _eq_col(loc)
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(
+		loc,
+		{"location": {
+			"col": eq_col,
+			"end": {
+				"row": loc.location.row,
+				"col": eq_col + 1,
+			},
+		}},
+	))
 }
 
 report contains violation if {
@@ -32,8 +42,18 @@ report contains violation if {
 	not ast.implicit_boolean_assignment(rule)
 
 	loc := result.location(result.location(rule.head.ref[0]))
+	eq_col := _eq_col(loc)
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(
+		loc,
+		{"location": {
+			"col": eq_col,
+			"end": {
+				"row": loc.location.row,
+				"col": eq_col + 1,
+			},
+		}},
+	))
 }
 
 report contains violation if {
@@ -54,8 +74,18 @@ report contains violation if {
 	# extract the text from location to see if '=' is used for
 	# assignment
 	regex.match(`else\s*=`, loc.location.text)
+	eq_col := _eq_col(loc)
 
-	violation := result.fail(rego.metadata.chain(), object.union(loc, {"location": {"col": _eq_col(loc)}}))
+	violation := result.fail(rego.metadata.chain(), object.union(
+		loc,
+		{"location": {
+			"col": eq_col,
+			"end": {
+				"row": loc.location.row,
+				"col": eq_col + 1,
+			},
+		}},
+	))
 }
 
 _eq_col(loc) := max([0, indexof(loc.location.text, "=")]) + 1

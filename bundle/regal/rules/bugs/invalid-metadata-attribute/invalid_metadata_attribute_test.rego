@@ -13,11 +13,21 @@ test_fail_invalid_attribute if {
 # is_true: yes
 allow := true
 `)
+
 	r == {{
 		"category": "bugs",
 		"description": "Invalid attribute in metadata annotation",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 6, "text": "# is_true: yes"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"col": 15,
+				"row": 6,
+			},
+			"text": "# is_true: yes",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/invalid-metadata-attribute", "bugs"),
@@ -33,5 +43,6 @@ test_success_valid_metadata if {
 # description: also valid
 allow := true
 `)
+
 	r == set()
 }

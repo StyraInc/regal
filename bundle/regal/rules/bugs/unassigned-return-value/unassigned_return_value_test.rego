@@ -12,11 +12,21 @@ test_fail_unused_return_value if {
 		indexof("s", "s")
 	}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == {{
 		"category": "bugs",
 		"description": "Non-boolean return value unassigned",
 		"level": "error",
-		"location": {"col": 3, "file": "policy.rego", "row": 6, "text": "\t\tindexof(\"s\", \"s\")"},
+		"location": {
+			"col": 3,
+			"row": 6,
+			"end": {
+				"col": 10,
+				"row": 6,
+			},
+			"file": "policy.rego",
+			"text": "\t\tindexof(\"s\", \"s\")",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/unassigned-return-value", "bugs"),

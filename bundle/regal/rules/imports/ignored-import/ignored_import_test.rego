@@ -13,13 +13,22 @@ test_fail_ignored_import if {
 
 	bar := data.foo
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "imports",
 		"description": "Reference ignores import of data.foo",
 		"level": "error",
-		"location": {"col": 9, "file": "policy.rego", "row": 6, "text": "\tbar := data.foo"},
+		"location": {
+			"col": 9,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"col": 17,
+				"row": 6,
+			},
+			"text": "\tbar := data.foo",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/ignored-import", "imports"),
@@ -35,13 +44,22 @@ test_fail_ignored_most_specific_import if {
 
 	bar := data.foo.bar
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "imports",
 		"description": "Reference ignores import of data.foo.bar",
 		"level": "error",
-		"location": {"col": 9, "file": "policy.rego", "row": 7, "text": "\tbar := data.foo.bar"},
+		"location": {
+			"col": 9,
+			"file": "policy.rego",
+			"row": 7,
+			"end": {
+				"col": 21,
+				"row": 7,
+			},
+			"text": "\tbar := data.foo.bar",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/ignored-import", "imports"),

@@ -10,13 +10,22 @@ import data.regal.rules.bugs["var-shadows-builtin"] as rule
 
 test_fail_var_shadows_builtin if {
 	module := ast.with_rego_v1(`allow if http := "yes"`)
-
 	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == {{
 		"category": "bugs",
 		"description": "Variable name shadows built-in",
 		"level": "error",
-		"location": {"col": 10, "file": "policy.rego", "row": 5, "text": "allow if http := \"yes\""},
+		"location": {
+			"col": 10,
+			"row": 5,
+			"end": {
+				"col": 14,
+				"row": 5,
+			},
+			"file": "policy.rego",
+			"text": "allow if http := \"yes\"",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/var-shadows-builtin", "bugs"),

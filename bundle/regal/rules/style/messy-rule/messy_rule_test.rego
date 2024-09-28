@@ -15,8 +15,8 @@ test_success_non_messy_definition if {
 
 	bar if false
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -28,9 +28,17 @@ test_fail_messy_definition if {
 
 	foo if 5 == 1
 	`)
-
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tfoo if 5 == 1"})
+
+	r == expected_with_location({
+		"col": 2,
+		"row": 10,
+		"end": {
+			"col": 15,
+			"row": 10,
+		},
+		"text": "\tfoo if 5 == 1",
+	})
 }
 
 test_fail_messy_default_definition if {
@@ -41,9 +49,17 @@ test_fail_messy_default_definition if {
 
 	foo if 5 == 1
 	`)
-
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tfoo if 5 == 1"})
+
+	r == expected_with_location({
+		"col": 2,
+		"row": 10,
+		"end": {
+			"col": 15,
+			"row": 10,
+		},
+		"text": "\tfoo if 5 == 1",
+	})
 }
 
 test_fail_messy_nested_rule_definition if {
@@ -54,9 +70,17 @@ test_fail_messy_nested_rule_definition if {
 
 	base.foo if 5 == 1
 	`)
-
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tbase.foo if 5 == 1"})
+
+	r == expected_with_location({
+		"col": 2,
+		"row": 10,
+		"end": {
+			"col": 20,
+			"row": 10,
+		},
+		"text": "\tbase.foo if 5 == 1",
+	})
 }
 
 test_success_non_incremental_nested_rule_definition if {
@@ -67,8 +91,8 @@ test_success_non_incremental_nested_rule_definition if {
 
 	base.bar if 5 == 1
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -93,9 +117,17 @@ test_fail_messy_incremental_nested_variable_rule_definitiion if {
 
 	base[x].foo := 1 if { x := 1 }
 	`)
-
 	r := rule.report with input as module
-	r == expected_with_location({"col": 2, "file": "policy.rego", "row": 10, "text": "\tbase[x].foo := 1 if { x := 1 }"})
+
+	r == expected_with_location({
+		"col": 2,
+		"row": 10,
+		"end": {
+			"col": 32,
+			"row": 10,
+		},
+		"text": "\tbase[x].foo := 1 if { x := 1 }",
+	})
 }
 
 expected := {
@@ -107,6 +139,7 @@ expected := {
 		"ref": config.docs.resolve_url("$baseUrl/$category/messy-rule", "style"),
 	}],
 	"title": "messy-rule",
+	"location": {"file": "policy.rego"},
 }
 
 # regal ignore:external-reference

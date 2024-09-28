@@ -133,17 +133,17 @@ allow := true
 `
 
 	module := regal.parse_module("p.rego", policy)
-	blocks := ast.comment_blocks(module.comments)
+	blocks := ast.comment_blocks(module.comments) with input as module
 	blocks == [
 		[
-			{"location": "3:1:IyBNRVRBREFUQQojIHRpdGxlOiBmb28KIyBiYXI6IGludmFsaWQ=", "text": "IE1FVEFEQVRB"},
-			{"location": "4:1:IyB0aXRsZTogZm9v", "text": "IHRpdGxlOiBmb28="},
-			{"location": "5:1:IyBiYXI6IGludmFsaWQ=", "text": "IGJhcjogaW52YWxpZA=="},
+			{"location": "3:1:5:15", "text": "IE1FVEFEQVRB"},
+			{"location": "4:1:4:13", "text": "IHRpdGxlOiBmb28="},
+			{"location": "5:1:5:15", "text": "IGJhcjogaW52YWxpZA=="},
 		],
-		[{"location": "8:1:IyBub3QgbWV0YWRhdGE=", "text": "IG5vdCBtZXRhZGF0YQ=="}],
+		[{"location": "8:1:8:15", "text": "IG5vdCBtZXRhZGF0YQ=="}],
 		[
-			{"location": "10:1:IyBhbm90aGVy", "text": "IGFub3RoZXI="},
-			{"location": "11:1:IyBibG9jaw==", "text": "IGJsb2Nr"},
+			{"location": "10:1:10:10", "text": "IGFub3RoZXI="},
+			{"location": "11:1:11:8", "text": "IGJsb2Nr"},
 		],
 	]
 }

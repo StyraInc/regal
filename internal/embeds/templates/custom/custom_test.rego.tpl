@@ -19,7 +19,16 @@ test_rule_named_foo_not_allowed if {
 		"category": "{{.Category}}",
 		"description": "Add description of rule here!",
 		"level": "error",
-		"location": {"col": 2, "file": "example.rego", "row": 4, "text": "\tfoo := true"},
+		"location": {
+			"file": "example.rego",
+			"row": 4,
+			"col": 2,
+			"end": {
+				"row": 4,
+				"col": 13,
+			},
+			"text": "\tfoo := true"
+		},
 		"title": "{{.NameOriginal}}",
 	}}
 }

@@ -6,6 +6,7 @@ import data.regal.config
 
 import data.regal.rules.imports["prefer-package-imports"] as rule
 
+# regal ignore:rule-length
 test_aggregate_collects_imports_with_location if {
 	r := rule.aggregate with input as regal.parse_module("p.rego", `
 	package a
@@ -17,8 +18,32 @@ test_aggregate_collects_imports_with_location if {
 	r == {{
 		"aggregate_data": {
 			"imports": [
-				{"location": {"col": 2, "file": "p.rego", "row": 4, "text": "\timport data.b"}, "path": ["b"]},
-				{"location": {"col": 2, "file": "p.rego", "row": 5, "text": "\timport data.c.d"}, "path": ["c", "d"]},
+				{
+					"location": {
+						"col": 2,
+						"file": "p.rego",
+						"row": 4,
+						"end": {
+							"col": 8,
+							"row": 4,
+						},
+						"text": "\timport data.b",
+					},
+					"path": ["b"],
+				},
+				{
+					"location": {
+						"col": 2,
+						"file": "p.rego",
+						"row": 5,
+						"end": {
+							"col": 8,
+							"row": 5,
+						},
+						"text": "\timport data.c.d",
+					},
+					"path": ["c", "d"],
+				},
 			],
 			"package_path": ["a"],
 		},
@@ -132,7 +157,16 @@ test_aggregate_ignores_imports_of_regal_in_custom_rule if {
 	r == {{
 		"aggregate_data": {
 			"imports": [{
-				"location": {"col": 2, "file": "p.rego", "row": 6, "text": "\timport data.a.b.c"},
+				"location": {
+					"col": 2,
+					"file": "p.rego",
+					"row": 6,
+					"end": {
+						"col": 8,
+						"row": 6,
+					},
+					"text": "\timport data.a.b.c",
+				},
 				"path": ["a", "b", "c"],
 			}],
 			"package_path": ["custom", "regal", "rules", "foo", "bar"],

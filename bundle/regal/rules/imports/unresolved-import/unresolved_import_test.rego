@@ -6,6 +6,7 @@ import data.regal.config
 
 import data.regal.rules.imports["unresolved-import"] as rule
 
+# regal ignore:rule-length
 test_fail_identifies_unresolved_imports if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 	import data.bar
@@ -21,11 +22,29 @@ test_fail_identifies_unresolved_imports if {
 
 	x := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == {
-		with_location({"file": "p1.rego", "row": 5, "col": 2, "text": "\timport data.nope"}),
-		with_location({"file": "p1.rego", "row": 4, "col": 2, "text": "\timport data.bar.nope"}),
+		with_location({
+			"file": "p1.rego",
+			"row": 5,
+			"col": 2,
+			"end": {
+				"col": 8,
+				"row": 5,
+			},
+			"text": "\timport data.nope",
+		}),
+		with_location({
+			"file": "p1.rego",
+			"row": 4,
+			"col": 2,
+			"end": {
+				"col": 8,
+				"row": 4,
+			},
+			"text": "\timport data.bar.nope",
+		}),
 	}
 }
 
@@ -40,8 +59,8 @@ test_success_no_unresolved_imports if {
 
 	x := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -56,9 +75,9 @@ test_success_unresolved_imports_are_excepted if {
 
 	x := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
 		with config.for_rule as {"level": "error", "except-imports": ["data.bar.excepted"]}
+
 	r == set()
 }
 
@@ -69,9 +88,9 @@ test_success_unresolved_imports_with_wildcards_are_excepted if {
 
 	x := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": agg1}
 		with config.for_rule as {"level": "error", "except-imports": ["data.bar.*"]}
+
 	r == set()
 }
 
@@ -83,8 +102,8 @@ test_success_resolved_import_in_middle_of_explicit_paths if {
 
 	x.y.z := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -101,8 +120,8 @@ test_success_map_rule_resolves if {
 		z := {"foo": y + 1}
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -119,8 +138,8 @@ test_success_map_rule_may_resolve_so_allow if {
 		z := {"foo": y + 1}
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -137,8 +156,8 @@ test_success_general_ref_head_rule_may_resolve_so_allow if {
 		z := {"foo": y + 1}
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -148,8 +167,8 @@ test_success_custom_rule_not_flagging_regal_import if {
 
 	x := 1
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": agg}
+
 	r == set()
 }
 

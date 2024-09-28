@@ -18,7 +18,7 @@ report contains violation if {
 	]
 
 	violation := result.fail(rego.metadata.chain(), object.union(
-		result.ranged_location_from_text(input.rules[first]),
+		result.location(input.rules[first]),
 		{"description": _message(dup_locations)},
 	))
 }
@@ -35,7 +35,7 @@ _message(locations) := sprintf(
 	count(locations) > 1
 }
 
-_rules_as_text := [base64.decode(util.to_location_object(rule.location).text) | some rule in input.rules]
+_rules_as_text := [util.to_location_object(rule.location).text | some rule in input.rules]
 
 _duplicates contains indices if {
 	# Remove whitespace from textual representation of rule and create a hash from the result.

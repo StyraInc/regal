@@ -30,7 +30,7 @@ report contains violation if {
 	# however meaningless it may be. Maybe consider for another rule?
 	expr.terms.type in ast.scalar_types
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr.terms))
+	violation := result.fail(rego.metadata.chain(), result.location(expr.terms))
 }
 
 # METADATA
@@ -45,5 +45,5 @@ report contains violation if {
 	expr.terms[1].type in ast.scalar_types
 	expr.terms[2].type in ast.scalar_types
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr))
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }

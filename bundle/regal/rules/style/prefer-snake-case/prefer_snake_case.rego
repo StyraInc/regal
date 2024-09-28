@@ -13,12 +13,12 @@ report contains violation if {
 	some part in ast.named_refs(rule.head.ref)
 	not util.is_snake_case(part.value)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(part))
+	violation := result.fail(rego.metadata.chain(), result.location(part))
 }
 
 report contains violation if {
 	var := ast.found.vars[_][_][_]
 	not util.is_snake_case(var.value)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(var))
+	violation := result.fail(rego.metadata.chain(), result.location(var))
 }

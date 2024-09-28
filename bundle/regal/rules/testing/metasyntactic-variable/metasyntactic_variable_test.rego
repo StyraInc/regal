@@ -16,7 +16,10 @@ test_fail_rule_named_foo if {
 		"file": "policy.rego",
 		"row": 3,
 		"text": "foo := true",
-		"end": {"col": 4, "row": 3},
+		"end": {
+			"col": 4,
+			"row": 3,
+		},
 	})}
 }
 
@@ -33,14 +36,20 @@ test_fail_metasyntactic_vars if {
 			"file": "policy.rego",
 			"row": 4,
 			"text": "\t\tfooBar := true",
-			"end": {"col": 9, "row": 4},
+			"end": {
+				"col": 9,
+				"row": 4,
+			},
 		}),
 		expected_with_location({
 			"col": 9,
 			"file": "policy.rego",
 			"row": 5,
 			"text": "\t\tinput[baz]",
-			"end": {"col": 12, "row": 5},
+			"end": {
+				"col": 12,
+				"row": 5,
+			},
 		}),
 	}
 }

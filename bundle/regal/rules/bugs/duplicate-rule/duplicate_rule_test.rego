@@ -17,13 +17,19 @@ test_fail_simple_duplicate_rule if {
 		input.foo
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Duplicate rule found at line 10",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 6, "text": "\tallow if {", "end": {"col": 4, "row": 8}},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 6,
+			"text": "\tallow if {",
+			"end": {"col": 3, "row": 8},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/duplicate-rule", "bugs"),
@@ -38,11 +44,12 @@ test_success_similar_but_not_duplicate_rule if {
 
 	allow if input.foo == "bar "
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
+# regal ignore:rule-length
 test_fail_multiple_duplicate_rules if {
 	module := ast.with_rego_v1(`
 
@@ -61,13 +68,22 @@ test_fail_multiple_duplicate_rules if {
 		  input.foo
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Duplicate rules found at lines 14, 18",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 10, "text": "\tallow if {", "end": {"col": 4, "row": 12}},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 10,
+			"text": "\tallow if {",
+			"end": {
+				"col": 3,
+				"row": 12,
+			},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/duplicate-rule", "bugs"),

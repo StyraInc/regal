@@ -13,13 +13,22 @@ test_fail_some_unnecessary_value if {
 		some "x" in ["x"]
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "style",
 		"description": "Unnecessary use of `some`",
 		"level": "error",
-		"location": {"col": 8, "file": "policy.rego", "row": 7, "text": "\t\tsome \"x\" in [\"x\"]"},
+		"location": {
+			"col": 8,
+			"file": "policy.rego",
+			"row": 7,
+			"end": {
+				"col": 20,
+				"row": 7,
+			},
+			"text": "\t\tsome \"x\" in [\"x\"]",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/unnecessary-some", "style"),
@@ -34,13 +43,22 @@ test_fail_some_unnecessary_key_value if {
 		some "x", 1 in {"x": 1}
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "style",
 		"description": "Unnecessary use of `some`",
 		"level": "error",
-		"location": {"col": 8, "file": "policy.rego", "row": 7, "text": "\t\tsome \"x\", 1 in {\"x\": 1}"},
+		"location": {
+			"col": 8,
+			"file": "policy.rego",
+			"row": 7,
+			"end": {
+				"col": 26,
+				"row": 7,
+			},
+			"text": "\t\tsome \"x\", 1 in {\"x\": 1}",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/unnecessary-some", "style"),
@@ -55,8 +73,8 @@ test_success_some_value_using_var if {
 		some var in input.vars
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -66,8 +84,8 @@ test_success_some_key_value_using_var_for_value if {
 		some "x", var in {"x": 1}
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -77,14 +95,13 @@ test_success_some_key_value_using_var_for_key if {
 		some var, 1 in {"x": 1}
 	}
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_just_in_head if {
-	module := ast.with_rego_v1(`rule := [1 in []]`)
+	r := rule.report with input as ast.with_rego_v1(`rule := [1 in []]`)
 
-	r := rule.report with input as module
 	r == set()
 }

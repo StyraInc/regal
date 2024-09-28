@@ -10,11 +10,21 @@ import data.regal.rules.bugs["if-empty-object"] as rule
 test_fail_if_empty_object if {
 	module := ast.with_rego_v1("rule if {}")
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Empty object following `if`",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 5, "text": "rule if {}"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 5,
+			"text": "rule if {}",
+			"end": {
+				"col": 11,
+				"row": 5,
+			},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/if-empty-object", "bugs"),

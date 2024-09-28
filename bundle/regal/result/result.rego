@@ -182,6 +182,10 @@ _resource_urls(related_resources, category) := [r |
 	r := object.union(object.remove(item, ["ref"]), {"ref": config.docs.resolve_url(item.ref, category)})
 ]
 
+# Note that the `text` attribute always returns the entire line and *not*
+# based on the location range. This is intentional, as the context is often
+# needed when this is printed out in the console. LSP diagnostics however use
+# the range and will highlight based on that rather than `text`.
 _with_text(loc_obj) := loc if {
 	loc := {"location": object.union(loc_obj, {
 		"file": input.regal.file.name, # regal ignore:external-reference
@@ -201,27 +205,26 @@ location(x) := _with_text(util.to_location_object(x.location))
 
 location(x) := _with_text(util.to_location_object(x[0].location)) if is_array(x)
 
-# METADATA
-# description: |
-#   similar to `location` but includes an `end` attribute where `end.row` is the same
-#   value as x.location.row, and `end.col` is the start col + the length of the text
-#   original attribute value base64 decoded from x.location
-ranged_location_from_text(x) := end if {
-	otext := base64.decode(util.to_location_object(x.location).text)
-	lines := split(otext, "\n")
-
-	loc := location(x)
-	end := object.union(loc, {"location": {"end": {
-		# note the use of the _original_ location text here, as loc.location.text
-		# will be the entire line where the violation occurred
-		"row": (loc.location.row + count(lines)) - 1,
-		"col": loc.location.col + count(regal.last(lines)),
-	}}})
-}
+location(x) := _with_text(util.to_location_object(x)) if is_string(x)
 
 # METADATA
 # description: creates a location where x is the start, and y is the end (calculated from `text`)
 ranged_location_between(x, y) := object.union(
 	location(x),
-	{"location": {"end": ranged_location_from_text(y).location.end}},
+	{"location": {"end": location(y).location.end}},
 )
+
+# METADATA
+# description: creates a location where the first term location is the start, and the last term location is the end
+ranged_from_ref(ref) := ranged_location_between(ref[0], regal.last(ref))
+
+# METADATA
+# description: |
+#   creates a ranged location where the start location is the left hand side of an infix
+#   expression, like `"foo" == "bar"`, and the end location is the end of the expression
+infix_expr_location(expr) := location(range) if {
+	[row, col, _, _] := split(expr[1].location, ":")
+	[_, _, end_row, end_col] := split(regal.last(expr).location, ":")
+
+	range := sprintf("%v:%v:%v:%v", [row, col, end_row, end_col])
+}

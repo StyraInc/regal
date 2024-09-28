@@ -6,6 +6,7 @@ import data.regal.config
 
 import data.regal.rules.idiomatic["no-defined-entrypoint"] as rule
 
+# regal ignore:rule-length
 test_aggregate_entrypoints if {
 	module := regal.parse_module("policy.rego", `
 # METADATA
@@ -19,12 +20,28 @@ allow := false`)
 	aggregate := rule.aggregate with input as module
 	aggregate == {
 		{
-			"aggregate_data": {"entrypoint": {"col": 1, "row": 2, "text": "IyBNRVRBREFUQQojIGVudHJ5cG9pbnQ6IHRydWU="}},
+			"aggregate_data": {"entrypoint": {
+				"col": 1,
+				"row": 2,
+				"end": {
+					"col": 19,
+					"row": 3,
+				},
+				"text": "# METADATA\n# entrypoint: true",
+			}},
 			"aggregate_source": {"file": "policy.rego", "package_path": ["p"]},
 			"rule": {"category": "idiomatic", "title": "no-defined-entrypoint"},
 		},
 		{
-			"aggregate_data": {"entrypoint": {"col": 1, "row": 6, "text": "IyBNRVRBREFUQQojIGVudHJ5cG9pbnQ6IHRydWU="}},
+			"aggregate_data": {"entrypoint": {
+				"col": 1,
+				"row": 6,
+				"end": {
+					"col": 19,
+					"row": 7,
+				},
+				"text": "# METADATA\n# entrypoint: true",
+			}},
 			"aggregate_source": {"file": "policy.rego", "package_path": ["p"]},
 			"rule": {"category": "idiomatic", "title": "no-defined-entrypoint"},
 		},

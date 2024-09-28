@@ -11,11 +11,21 @@ test_fail_function_arg_return_value if {
 	r := rule.report with input as ast.policy(`foo := i { indexof("foo", "o", i) }`)
 		with config.for_rule as {"level": "error"}
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == {{
 		"category": "style",
 		"description": "Function argument used for return value",
 		"level": "error",
-		"location": {"col": 32, "file": "policy.rego", "row": 3, "text": "foo := i { indexof(\"foo\", \"o\", i) }"},
+		"location": {
+			"col": 32,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 33,
+				"row": 3,
+			},
+			"text": "foo := i { indexof(\"foo\", \"o\", i) }",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/function-arg-return", "style"),
@@ -32,7 +42,16 @@ test_fail_function_arg_return_value_multi_part_ref if {
 		"category": "style",
 		"description": "Function argument used for return value",
 		"level": "error",
-		"location": {"col": 38, "file": "policy.rego", "row": 3, "text": `foo := r { regex.match("foo", "foo", r) }`},
+		"location": {
+			"col": 38,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 39,
+				"row": 3,
+			},
+			"text": `foo := r { regex.match("foo", "foo", r) }`,
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/function-arg-return", "style"),

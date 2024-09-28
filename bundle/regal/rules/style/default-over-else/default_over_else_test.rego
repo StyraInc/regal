@@ -15,9 +15,18 @@ test_fail_conditionless_else_simple_rule if {
 		input.y
 	} else := 3
 	`)
-
 	r := rule.report with input as module
-	r == with_location({"col": 4, "file": "policy.rego", "row": 8, "text": "\t} else := 3"})
+
+	r == with_location({
+		"col": 4,
+		"file": "policy.rego",
+		"row": 8,
+		"end": {
+			"col": 13,
+			"row": 8,
+		},
+		"text": "\t} else := 3",
+	})
 }
 
 test_fail_conditionless_else_object_assignment if {
@@ -26,9 +35,18 @@ test_fail_conditionless_else_object_assignment if {
 		input.x
 	} else := {"bar": "foo"}
 	`)
-
 	r := rule.report with input as module
-	r == with_location({"col": 4, "file": "policy.rego", "row": 6, "text": "\t} else := {\"bar\": \"foo\"}"})
+
+	r == with_location({
+		"col": 4,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 26,
+			"row": 6,
+		},
+		"text": "\t} else := {\"bar\": \"foo\"}",
+	})
 }
 
 test_success_conditionless_else_not_constant if {
@@ -39,8 +57,8 @@ test_success_conditionless_else_not_constant if {
 		input.x
 	} else := {"bar": y}
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -50,8 +68,8 @@ test_success_conditionless_else_input_ref if {
 		input.x
 	} else := input.foo
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -61,8 +79,8 @@ test_success_conditionless_else_custom_function if {
 		input.foo
 	} else := 1
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -72,12 +90,21 @@ test_fail_conditionless_else_custom_function_prefer_default_functions if {
 		input.foo
 	} else := 1
 	`)
-
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"prefer-default-functions": true,
 	}
-	r == with_location({"col": 4, "file": "policy.rego", "row": 6, "text": "\t} else := 1"})
+
+	r == with_location({
+		"col": 4,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 13,
+			"row": 6,
+		},
+		"text": "\t} else := 1",
+	})
 }
 
 test_success_conditionless_else_custom_function_not_constant if {
@@ -86,11 +113,11 @@ test_success_conditionless_else_custom_function_not_constant if {
 		input.foo
 	} else := y
 	`)
-
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"prefer-default-functions": true,
 	}
+
 	r == set()
 }
 

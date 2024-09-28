@@ -23,7 +23,7 @@ report contains violation if {
 
 	not _scalar_fail(cfg, last.terms[2], ast.scalar_types)
 
-	violation := result.fail(rego.metadata.chain(), result.location(last))
+	violation := result.fail(rego.metadata.chain(), result.location(last.terms[2]))
 }
 
 _var_in_head(rule) := rule.head.value.value if rule.head.value.type == "var"

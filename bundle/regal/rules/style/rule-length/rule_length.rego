@@ -12,7 +12,8 @@ report contains violation if {
 	cfg := config.for_rule("style", "rule-length")
 
 	some rule in input.rules
-	lines := split(base64.decode(util.to_location_object(rule.location).text), "\n")
+
+	lines := split(util.to_location_object(rule.location).text, "\n")
 
 	_line_count(cfg, rule, lines) > cfg["max-rule-length"]
 

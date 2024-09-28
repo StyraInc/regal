@@ -13,13 +13,22 @@ test_fail_should_use_if if {
 	] {
 		input.attribute
 	}`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Use the `if` keyword",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "rule := [true |"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 3,
+				"row": 7,
+			},
+			"text": "rule := [true |",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-if", "idiomatic"),
@@ -34,14 +43,13 @@ test_success_uses_if if {
 	] if {
 		input.attribute
 	}`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_no_body_no_if if {
-	module := ast.with_rego_v1(`rule := "without body"`)
+	r := rule.report with input as ast.with_rego_v1(`rule := "without body"`)
 
-	r := rule.report with input as module
 	r == set()
 }

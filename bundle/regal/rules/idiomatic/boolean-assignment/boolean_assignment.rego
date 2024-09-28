@@ -20,5 +20,5 @@ report contains violation if {
 
 	config.capabilities.builtins[ref_name].decl.result == "boolean"
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

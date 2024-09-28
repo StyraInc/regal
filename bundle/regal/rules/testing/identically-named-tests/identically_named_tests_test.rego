@@ -13,6 +13,7 @@ test_fail_identically_named_tests if {
 	test_foo { true }
 	`)
 	r := rule.report with input as ast
+
 	r == {{
 		"category": "testing",
 		"description": "Multiple tests with same name",
@@ -21,7 +22,16 @@ test_fail_identically_named_tests if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/identically-named-tests", "testing"),
 		}],
 		"title": "identically-named-tests",
-		"location": {"col": 2, "file": "foo_test.rego", "row": 5, "text": "\ttest_foo { true }"},
+		"location": {
+			"row": 5,
+			"col": 2,
+			"end": {
+				"col": 10,
+				"row": 5,
+			},
+			"file": "foo_test.rego",
+			"text": "\ttest_foo { true }",
+		},
 		"level": "error",
 	}}
 }

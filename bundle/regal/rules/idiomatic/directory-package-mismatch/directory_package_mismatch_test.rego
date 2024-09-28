@@ -17,7 +17,16 @@ test_fail_directory_structure_package_path_mismatch if {
 	module := regal.parse_module("foo/bar/baz/p.rego", "package foo.baz.bar")
 	r := rule.report with input as module with config.for_rule as _default_config
 
-	r == with_location({"col": 9, "file": "foo/bar/baz/p.rego", "row": 1, "text": "package foo.baz.bar"})
+	r == with_location({
+		"col": 9,
+		"file": "foo/bar/baz/p.rego",
+		"row": 1,
+		"end": {
+			"col": 20,
+			"row": 1,
+		},
+		"text": "package foo.baz.bar",
+	})
 }
 
 test_success_directory_structure_package_path_match_longer_directory_path if {

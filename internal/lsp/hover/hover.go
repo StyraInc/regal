@@ -178,12 +178,12 @@ func UpdateKeywordLocations(ctx context.Context, cache *cache.Cache, uri string)
 	keywordLocations := make(map[uint][]types2.KeywordLocation)
 
 	for line, uses := range keywords {
-		lineNumber64, err := strconv.ParseUint(line, 10, 64)
+		lineNumber32, err := strconv.ParseUint(line, 10, 32)
 		if err != nil {
 			return fmt.Errorf("failed to parse line number: %w", err)
 		}
 
-		lineNumber := uint(lineNumber64)
+		lineNumber := uint(lineNumber32)
 
 		for _, use := range uses {
 			keywordLocations[lineNumber] = append(keywordLocations[lineNumber], types2.KeywordLocation{

@@ -30,7 +30,7 @@ report contains violation if {
 
 	chr == `"`
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(value[pos]))
+	violation := result.fail(rego.metadata.chain(), result.location(value[pos]))
 }
 
 # Mapping of regex.* functions and the position(s)

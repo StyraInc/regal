@@ -36,16 +36,26 @@ test_aggregate_rule_contains_single_self_ref if {
 
     import data.example
     `)
-
 	aggregate := rule.aggregate with input as module
 
 	aggregate == {{
-		"aggregate_data": {"refs": {{"location": {"col": 12, "row": 4}, "package_path": "data.example"}}},
+		"aggregate_data": {"refs": {{
+			"location": {
+				"col": 12,
+				"row": 4,
+				"end": {
+					"col": 24,
+					"row": 4,
+				},
+			},
+			"package_path": "data.example",
+		}}},
 		"aggregate_source": {"file": "example.rego", "package_path": ["example"]},
 		"rule": {"category": "imports", "title": "circular-import"},
 	}}
 }
 
+# regal ignore:rule-length
 test_aggregate_rule_surfaces_refs if {
 	module := regal.parse_module("example.rego", `
     package policy.foo
@@ -66,9 +76,18 @@ test_aggregate_rule_surfaces_refs if {
 
 	aggregate == {{
 		"aggregate_data": {"refs": {
-			{"location": {"col": 7, "row": 11}, "package_path": "data.config.deny.enabled"},
-			{"location": {"col": 12, "row": 6}, "package_path": "data.foo.bar"},
-			{"location": {"col": 14, "row": 8}, "package_path": "data.baz.qux"},
+			{
+				"location": {"col": 7, "end": {"col": 31, "row": 11}, "row": 11},
+				"package_path": "data.config.deny.enabled",
+			},
+			{
+				"location": {"col": 12, "end": {"col": 24, "row": 6}, "row": 6},
+				"package_path": "data.foo.bar",
+			},
+			{
+				"location": {"col": 14, "end": {"col": 26, "row": 8}, "row": 8},
+				"package_path": "data.baz.qux",
+			},
 		}},
 		"aggregate_source": {
 			"file": "example.rego",

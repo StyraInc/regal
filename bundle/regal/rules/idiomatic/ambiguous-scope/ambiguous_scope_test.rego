@@ -15,13 +15,22 @@ allow if input.x
 
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Ambiguous metadata scope",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 6, "text": "# METADATA"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"col": 15,
+				"row": 7,
+			},
+			"text": "# METADATA",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/ambiguous-scope", "idiomatic"),
@@ -38,13 +47,22 @@ func(x) if x < 10
 
 func(x) if x < "10"
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Ambiguous metadata scope",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 6, "text": "# METADATA"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 6,
+			"text": "# METADATA",
+			"end": {
+				"col": 14,
+				"row": 7,
+			},
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/ambiguous-scope", "idiomatic"),
@@ -63,8 +81,8 @@ allow if input.x
 # description: input has y
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -77,8 +95,8 @@ allow if input.x
 
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -90,8 +108,8 @@ allow if input.x
 
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -107,8 +125,8 @@ allow if input.x
 
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -121,7 +139,7 @@ allow if input.x
 
 allow if input.y
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }

@@ -12,13 +12,22 @@ test_fail_comprehension_term_assignment_last_expr if {
 		some y in input
 		x := y
 	]`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "style",
 		"description": "Assignment can be moved to comprehension term",
 		"level": "error",
-		"location": {"col": 3, "end": {"col": 9, "row": 7}, "file": "policy.rego", "row": 7, "text": "\t\tx := y"},
+		"location": {
+			"col": 3,
+			"end": {
+				"col": 9,
+				"row": 7,
+			},
+			"file": "policy.rego",
+			"row": 7,
+			"text": "\t\tx := y",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/comprehension-term-assignment", "style"),

@@ -7,6 +7,7 @@ import rego.v1
 import data.regal.ast
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 # METADATA
 # description: disabled when filename is unknown
@@ -24,7 +25,11 @@ report contains violation if {
 
 	file_path_length_matched != _pkg_path_values
 
-	violation := result.fail(rego.metadata.chain(), result.location(input["package"].path))
+	violation := result.fail(
+		rego.metadata.chain(),
+		# skip the "data" part of the path, as it has no location
+		result.ranged_from_ref(util.rest(input["package"].path)),
+	)
 }
 
 _pkg_path_values := ast.package_path if {

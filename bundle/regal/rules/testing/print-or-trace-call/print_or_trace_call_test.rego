@@ -18,12 +18,14 @@ test_fail_call_to_print_and_trace if {
 			"col": 3,
 			"file": "policy.rego",
 			"row": 4,
+			"end": {"col": 8, "row": 4},
 			"text": "\t\tprint(\"foo\")",
 		}),
 		expected_with_location({
 			"col": 20,
 			"file": "policy.rego",
 			"row": 6,
+			"end": {"col": 25, "row": 6},
 			"text": "\t\tx := [i | i = 0; trace(\"bar\")]",
 		}),
 	}

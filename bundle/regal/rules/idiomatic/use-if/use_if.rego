@@ -22,8 +22,8 @@ report contains violation if {
 	some rule in input.rules
 	rule.body
 
-	head_len := count(base64.decode(util.to_location_object(rule.head.location).text))
-	text := trim_space(substring(base64.decode(util.to_location_object(rule.location).text), head_len, -1))
+	head_len := count(util.to_location_object(rule.head.location).text)
+	text := trim_space(substring(util.to_location_object(rule.location).text, head_len, -1))
 
 	not startswith(text, "if")
 

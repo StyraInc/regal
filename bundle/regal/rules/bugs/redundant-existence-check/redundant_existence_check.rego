@@ -26,7 +26,7 @@ report contains violation if {
 
 	ast.ref_to_string(term.value) == ref_str
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }
 
 # METADATA
@@ -43,5 +43,5 @@ report contains violation if {
 	expr.terms.type == "ref"
 	ast.ref_to_string(expr.terms.value) == ref_str
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr.terms))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }

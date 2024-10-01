@@ -14,13 +14,22 @@ test_fail_should_use_contains if {
 	rule[item] {
 		some item in input.items
 	}`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Use the `contains` keyword",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 6, "text": "\trule[item] {"},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"row": 6,
+				"col": 12,
+			},
+			"text": "\trule[item] {",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-contains", "idiomatic"),
@@ -33,8 +42,8 @@ test_success_uses_contains if {
 	module := ast.with_rego_v1(`rule contains item if {
 		some item in input.items
 	}`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -43,7 +52,7 @@ test_success_object_rule if {
 		foo := "bar"
 		bar := "baz"
 	}`)
-
 	r := rule.report with input as module
+
 	r == set()
 }

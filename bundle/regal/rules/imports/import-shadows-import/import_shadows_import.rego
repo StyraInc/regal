@@ -19,5 +19,5 @@ report contains violation if {
 
 	identifier in array.slice(_identifiers, 0, i)
 
-	violation := result.fail(rego.metadata.chain(), result.location(input.imports[i].path.value[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(input.imports[i].path))
 }

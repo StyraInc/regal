@@ -25,7 +25,7 @@ report contains violation if {
 
 	not _var_in_comprehension_body(elem, rule, path)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(elem))
+	violation := result.fail(rego.metadata.chain(), result.location(elem))
 }
 
 _location_path(rule, location) := path if walk(rule, [path, location])

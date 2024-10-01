@@ -19,5 +19,5 @@ report contains violation if {
 	count(rule.body) == 1
 	rule.body[0].terms.type == "object"
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(rule.body[0].terms))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.body[0].terms))
 }

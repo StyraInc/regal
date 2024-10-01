@@ -10,11 +10,21 @@ test_fail_custom_has_key if {
 	r := rule.report with input as ast.policy(`has_key(name, coll) {
 		_ = coll[name]
 	}`)
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Custom function may be replaced by `in` and `object.keys`",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "has_key(name, coll) {"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 20,
+				"row": 3,
+			},
+			"text": "has_key(name, coll) {",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/custom-has-key-construct", "idiomatic"),
@@ -27,11 +37,21 @@ test_fail_custom_has_key_reversed if {
 	r := rule.report with input as ast.policy(`has_key(name, coll) {
 		coll[name] = _
 	}`)
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Custom function may be replaced by `in` and `object.keys`",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "has_key(name, coll) {"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 20,
+				"row": 3,
+			},
+			"text": "has_key(name, coll) {",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/custom-has-key-construct", "idiomatic"),
@@ -49,11 +69,21 @@ test_fail_custom_has_key_multiple_wildcards if {
 	has_key(name, coll) {
 		coll[name] = _
 	}`)
+
 	r == {{
 		"category": "idiomatic",
 		"description": "Custom function may be replaced by `in` and `object.keys`",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 8, "text": "\thas_key(name, coll) {"},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 8,
+			"end": {
+				"col": 21,
+				"row": 8,
+			},
+			"text": "\thas_key(name, coll) {",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/custom-has-key-construct", "idiomatic"),

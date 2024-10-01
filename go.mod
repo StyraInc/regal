@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	dario.cat/mergo v1.0.1
-	github.com/anderseknert/roast v0.3.0
+	github.com/anderseknert/roast v0.4.1
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.17.0
 	github.com/fsnotify/fsnotify v1.7.0
@@ -15,7 +15,7 @@ require (
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-policy-agent/opa v0.68.1-0.20240923144505-09c1bdfc7c77
+	github.com/open-policy-agent/opa v0.69.0
 	github.com/owenrumney/go-sarif/v2 v2.3.3
 	github.com/pdevine/go-asciisprite v0.1.6
 	github.com/pkg/profile v1.7.0
@@ -29,7 +29,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
-	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect

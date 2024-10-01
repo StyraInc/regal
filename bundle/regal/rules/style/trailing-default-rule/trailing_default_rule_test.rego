@@ -13,8 +13,8 @@ test_success_default_declared_first if {
 
 	foo if true
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -24,13 +24,22 @@ test_fail_default_declared_after if {
 
 	default foo := true
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "style",
 		"description": "Default rule should be declared first",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 8, "text": "\tdefault foo := true"},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 8,
+			"end": {
+				"col": 9,
+				"row": 8,
+			},
+			"text": "\tdefault foo := true",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/trailing-default-rule", "style"),

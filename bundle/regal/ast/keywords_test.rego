@@ -133,13 +133,13 @@ test_keywords_some_no_body if {
 	_keyword_on_row(
 		kwds,
 		6,
-		{"name": "some", "location": {"row": 6, "col": 2}},
+		{"name": "some", "location": {"row": 6, "col": 2, "end": {"col": 6, "row": 6}, "text": "some"}},
 	)
 
 	_keyword_on_row(
 		kwds,
 		6,
-		{"name": "in", "location": {"row": 6, "col": 9}},
+		{"name": "in", "location": {"row": 6, "col": 9, "end": {"col": 11, "row": 6}, "text": "in"}},
 	)
 }
 
@@ -193,7 +193,6 @@ test_keywords_every if {
 allow if {
 	every k in [1,2,3] {
 		k == "foo"
-		v == 1
 	}
 }`)
 
@@ -204,13 +203,13 @@ allow if {
 	_keyword_on_row(
 		kwds,
 		7,
-		{"name": "every", "location": {"row": 7, "col": 2}},
+		{"name": "every", "location": {"row": 7, "col": 2, "end": {"col": 7, "row": 7}}},
 	)
 
 	_keyword_on_row(
 		kwds,
 		7,
-		{"name": "in", "location": {"row": 7, "col": 10}},
+		{"name": "in", "location": {"row": 7, "col": 10, "end": {"col": 12, "row": 7}}},
 	)
 }
 

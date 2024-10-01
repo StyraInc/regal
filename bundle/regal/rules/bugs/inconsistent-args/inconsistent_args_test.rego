@@ -15,12 +15,15 @@ test_fail_inconsistent_args if {
 	bar(b, a) if b > a
 	`)
 	r := rule.report with input as module
+
 	r == expected_with_location({
-		"col": 6,
-		"file": "policy.rego",
 		"row": 7,
+		"col": 6,
+		"end": {
+			"row": 7,
+			"col": 10,
+		},
 		"text": "\tfoo(b, a) if b > a",
-		"end": {"col": 10, "row": 7},
 	})
 }
 
@@ -32,10 +35,12 @@ test_fail_nested_inconsistent_args if {
 	r := rule.report with input as module
 	r == expected_with_location({
 		"col": 10,
-		"file": "policy.rego",
 		"row": 7,
 		"text": "\ta.b.foo(b, a) if b > a",
-		"end": {"col": 14, "row": 7},
+		"end": {
+			"col": 14,
+			"row": 7,
+		},
 	})
 }
 
@@ -50,6 +55,7 @@ test_success_not_inconsistent_args if {
 	qux(c, a) if c == a
 	`)
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -61,6 +67,7 @@ test_success_using_wildcard if {
 	qux(c, a) if c == a
 	`)
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -72,6 +79,7 @@ test_success_using_pattern_matching if {
 	qux(c, a) if c == a
 	`)
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -84,6 +92,7 @@ expected := {
 		"ref": config.docs.resolve_url("$baseUrl/$category/inconsistent-args", "bugs"),
 	}],
 	"title": "inconsistent-args",
+	"location": {"file": "policy.rego"},
 }
 
 # regal ignore:external-reference

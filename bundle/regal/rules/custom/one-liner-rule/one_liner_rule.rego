@@ -34,7 +34,7 @@ report contains violation if {
 
 	# Note that this will give us the text representation of the whole rule,
 	# which we'll need as the "if" is only visible here ¯\_(ツ)_/¯
-	text := base64.decode(util.to_location_object(rule.location).text)
+	text := util.to_location_object(rule.location).text
 	lines := [line |
 		some s in split(text, "\n")
 		line := trim_space(s)

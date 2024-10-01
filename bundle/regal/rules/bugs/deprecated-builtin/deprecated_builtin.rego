@@ -23,5 +23,5 @@ report contains violation if {
 
 	ast.ref_to_string(call.value) in deprecated_builtins
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(call))
+	violation := result.fail(rego.metadata.chain(), result.location(call))
 }

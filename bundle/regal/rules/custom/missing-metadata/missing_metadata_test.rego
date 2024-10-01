@@ -23,12 +23,28 @@ none := false
 	aggregated == {{
 		"aggregate_data": {
 			"package_annotated": true,
-			"package_location": "3:1:cGFja2FnZQ==",
+			"package_location": {
+				"col": 1,
+				"row": 3,
+				"end": {
+					"col": 8,
+					"row": 3,
+				},
+				"text": "package",
+			},
 			"rule_annotations": {
 				"foo.bar.none": {false},
 				"foo.bar.rule": {true},
 			},
-			"rule_locations": {"foo.bar.none": "9:1:bm9uZSA6PSBmYWxzZQ=="},
+			"rule_locations": {"foo.bar.none": {
+				"col": 1,
+				"row": 9,
+				"end": {
+					"col": 14,
+					"row": 9,
+				},
+				"text": "none := false",
+			}},
 		},
 		"aggregate_source": {
 			"file": "p.rego",
@@ -57,6 +73,7 @@ test_fail_missing_package_metadata_report if {
 	module := regal.parse_module("p.rego", "package foo.bar")
 	aggregated := rule.aggregate with input as module
 	r := rule.aggregate_report with input.aggregate as aggregated
+
 	r == {{
 		"category": "custom",
 		"description": "Package or rule missing metadata",
@@ -64,6 +81,10 @@ test_fail_missing_package_metadata_report if {
 		"location": {
 			"col": 1,
 			"row": 1,
+			"end": {
+				"col": 8,
+				"row": 1,
+			},
 			"text": "package",
 			"file": "p.rego",
 		},
@@ -75,7 +96,6 @@ test_fail_missing_package_metadata_report if {
 	}}
 }
 
-# regal ignore:rule-length
 test_success_one_missing_one_found_package_metadata_report if {
 	module1 := regal.parse_module("p.rego", "package foo.bar")
 	module2 := regal.parse_module("p.rego", `# METADATA
@@ -113,7 +133,6 @@ package foo.bar
 
 baz := true
 `)
-
 	a := rule.aggregate with input as module
 	r := rule.aggregate_report with input.aggregate as a with config.for_rule as {"level": "error"}
 
@@ -125,6 +144,10 @@ baz := true
 			"col": 1,
 			"file": "p.rego",
 			"row": 5,
+			"end": {
+				"col": 12,
+				"row": 5,
+			},
 			"text": "baz := true",
 		},
 		"related_resources": [{

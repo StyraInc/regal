@@ -15,7 +15,17 @@ test_fail_simple_iteration if {
 	r := rule.report with config.for_rule as allow_nesting(2)
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 10, "file": "policy.rego", "row": 6, "text": "\t\tvar := input.foo[_]"})
+
+	r == with_location({
+		"col": 10,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 22,
+			"row": 6,
+		},
+		"text": "\t\tvar := input.foo[_]",
+	})
 }
 
 test_fail_simple_iteration_comprehension if {
@@ -25,7 +35,17 @@ test_fail_simple_iteration_comprehension if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 8, "file": "policy.rego", "row": 6, "text": "\t\tp := input.foo[_]"})
+
+	r == with_location({
+		"col": 8,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 20,
+			"row": 6,
+		},
+		"text": "\t\tp := input.foo[_]",
+	})
 }
 
 test_fail_simple_iteration_output_var if {
@@ -35,7 +55,17 @@ test_fail_simple_iteration_output_var if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 3, "file": "policy.rego", "row": 6, "text": "\t\tinput.foo[x]"})
+
+	r == with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 15,
+			"row": 6,
+		},
+		"text": "\t\tinput.foo[x]",
+	})
 }
 
 test_fail_simple_iteration_output_var_some_decl if {
@@ -46,7 +76,17 @@ test_fail_simple_iteration_output_var_some_decl if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 3, "file": "policy.rego", "row": 7, "text": "\t\tinput.foo[x]"})
+
+	r == with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 7,
+		"end": {
+			"col": 15,
+			"row": 7,
+		},
+		"text": "\t\tinput.foo[x]",
+	})
 }
 
 test_success_some_in_var_input if {
@@ -57,6 +97,7 @@ test_success_some_in_var_input if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -68,6 +109,7 @@ test_success_allow_nesting_zero if {
 
 	r := rule.report with config.for_rule as allow_nesting(0) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -78,6 +120,7 @@ test_success_allow_nesting_one if {
 
 	r := rule.report with config.for_rule as allow_nesting(1) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -88,6 +131,7 @@ test_success_allow_nesting_two if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -98,7 +142,17 @@ test_fail_allow_nesting_two if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 3, "file": "policy.rego", "row": 6, "text": "\t\tinput.foo[_]"})
+
+	r == with_location({
+		"col": 3,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 15,
+			"row": 6,
+		},
+		"text": "\t\tinput.foo[_]",
+	})
 }
 
 test_success_not_output_vars if {
@@ -112,6 +166,7 @@ test_success_not_output_vars if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -127,10 +182,11 @@ test_success_output_var_to_input_var if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
-test_success_complex_comprehension_term if {
+test_fail_complex_comprehension_term if {
 	policy := ast.with_rego_v1(`
 
 	foo := [{"foo": bar} | input[bar]]
@@ -138,6 +194,7 @@ test_success_complex_comprehension_term if {
 
 	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -154,6 +211,7 @@ test_success_allow_if_subattribute if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -170,7 +228,17 @@ test_fail_ignore_if_subattribute_disabled if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r == with_location({"col": 10, "file": "policy.rego", "row": 6, "text": "\t\tbar := input.foo[_].bar"})
+
+	r == with_location({
+		"col": 10,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 26,
+			"row": 6,
+		},
+		"text": "\t\tbar := input.foo[_].bar",
+	})
 }
 
 test_success_allow_if_inside_array if {
@@ -185,6 +253,7 @@ test_success_allow_if_inside_array if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -198,6 +267,7 @@ test_success_allow_if_inside_set if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -211,6 +281,7 @@ test_success_allow_if_inside_object if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -224,6 +295,7 @@ test_success_allow_if_inside_rule_head_key if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -238,6 +310,7 @@ test_success_allow_if_contains_check_eq if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -252,6 +325,7 @@ test_success_allow_if_contains_check_equal if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -266,6 +340,7 @@ test_success_iteration_in_args if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -278,6 +353,7 @@ test_success_iteration_in_args_call_in_comprehension_head if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 
@@ -290,6 +366,7 @@ test_success_top_level_iteration if {
 	}
 		with input as policy
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == set()
 }
 

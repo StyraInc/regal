@@ -5,7 +5,7 @@ package regal.lsp.util.location
 import rego.v1
 
 # METADATA
-# description: turns an AST location _with end attribute_ into an LSP range
+# description: turns an AST location (with `end`` attribute) into an LSP range
 to_range(location) := {
 	"start": {
 		"line": location.row - 1,

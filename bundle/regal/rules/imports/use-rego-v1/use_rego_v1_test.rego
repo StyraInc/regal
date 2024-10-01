@@ -13,6 +13,7 @@ test_fail_missing_rego_v1_import if {
 	foo if not bar
 	`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	r == {{
 		"category": "imports",
 		"description": "Use `import rego.v1`",
@@ -21,7 +22,16 @@ test_fail_missing_rego_v1_import if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/use-rego-v1", "imports"),
 		}],
 		"title": "use-rego-v1",
-		"location": {"col": 1, "file": "policy.rego", "row": 1, "text": "package policy"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 1,
+			"end": {
+				"col": 8,
+				"row": 1,
+			},
+			"text": "package policy",
+		},
 		"level": "error",
 	}}
 }

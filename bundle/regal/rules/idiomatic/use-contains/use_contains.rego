@@ -24,9 +24,9 @@ report contains violation if {
 	rule.head.key
 	not rule.head.value
 
-	text := base64.decode(util.to_location_object(rule.head.location).text)
+	text := split(util.to_location_object(rule.location).text, "\n")[0]
 
 	not contains(text, " contains ")
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule))
+	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

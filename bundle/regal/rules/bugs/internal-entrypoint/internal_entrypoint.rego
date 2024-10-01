@@ -17,7 +17,7 @@ report contains violation if {
 
 	_any_internal(i, part)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(part))
+	violation := result.fail(rego.metadata.chain(), result.location(part))
 }
 
 _any_internal(0, part) if startswith(part.value, "_")

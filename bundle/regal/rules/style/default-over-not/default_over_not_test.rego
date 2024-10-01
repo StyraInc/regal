@@ -13,11 +13,21 @@ test_fail_default_over_not if {
 	user := "foo" if not input.user
 	`)
 	r := rule.report with input as module
+
 	r == {{
 		"category": "style",
 		"description": "Prefer default assignment over negated condition",
 		"level": "error",
-		"location": {"col": 19, "file": "policy.rego", "row": 7, "text": "\tuser := \"foo\" if not input.user"},
+		"location": {
+			"col": 19,
+			"file": "policy.rego",
+			"row": 7,
+			"end": {
+				"col": 33,
+				"row": 7,
+			},
+			"text": "\tuser := \"foo\" if not input.user",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/default-over-not", "style"),

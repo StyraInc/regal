@@ -36,7 +36,7 @@ report contains violation if {
 	rule.body[0].terms[1].type == "var"
 	rule.body[0].terms[1].value == rule.head.value.value
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.body[0].terms[1]))
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(rule.body[0].terms))
 }
 
 # Multi-value rules
@@ -56,7 +56,7 @@ report contains violation if {
 	rule.body[0].terms[1].type == "var"
 	rule.body[0].terms[1].value == rule.head.key.value
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.body[0].terms[1]))
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(rule.body[0].terms))
 }
 
 # Assignment using either = or :=

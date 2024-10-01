@@ -6,6 +6,8 @@ import data.regal.config
 
 import data.regal.rules.style["rule-length"] as rule
 
+# yes, ironic
+# regal ignore:rule-length
 test_fail_rule_longer_than_configured_max_length if {
 	module := regal.parse_module("policy.rego", `package p
 
@@ -16,17 +18,26 @@ test_fail_rule_longer_than_configured_max_length if {
 		input.x
 	}
 	`)
-
 	r := rule.report with input as module with config.for_rule as {
 		"level": "error",
 		"max-rule-length": 3,
 		"count-comments": true,
 	}
+
 	r == {{
 		"category": "style",
 		"description": "Max rule length exceeded",
 		"level": "error",
-		"location": {"col": 2, "file": "policy.rego", "row": 3, "text": "\tmy_long_rule {"},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 3,
+			"end": {
+				"col": 14,
+				"row": 3,
+			},
+			"text": "\tmy_long_rule {",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/rule-length", "style"),

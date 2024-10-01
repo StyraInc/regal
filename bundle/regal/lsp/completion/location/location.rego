@@ -45,7 +45,7 @@ from_start_of_line_to_position(position) := {
 #   estimate where the location "ends" based on its text attribute,
 #   both line and column
 end_location_estimate(location) := end if {
-	lines := split(base64.decode(location.text), "\n")
+	lines := split(location.text, "\n")
 	end := {
 		"row": (location.row + count(lines)) - 1,
 		"col": count(regal.last(lines)),
@@ -71,7 +71,10 @@ find_rule(rules, location) := [rule |
 #   find local variables (declared via function arguments, some/every
 #   declarations or assignment) at the given location. note that this expects
 #   `location` as a map, not a string
-find_locals(rules, location) := ast.find_names_in_local_scope(find_rule(rules, location), location)
+find_locals(rules, location) := tmp if {
+	rul := find_rule(rules, location)
+	tmp := ast.find_names_in_local_scope(rul, location)
+}
 
 # METADATA
 # description: |

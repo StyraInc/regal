@@ -42,7 +42,7 @@ report contains violation if {
 	rhs.type in {"var", "ref"}
 	not _dynamic_ref(rhs)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr))
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(expr.terms))
 }
 
 # METADATA
@@ -68,7 +68,7 @@ report contains violation if {
 	rhs.type in {"var", "ref"}
 	not _dynamic_ref(rhs)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(expr))
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(expr.terms))
 }
 
 _dynamic_ref(value) if {

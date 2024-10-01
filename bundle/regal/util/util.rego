@@ -46,12 +46,61 @@ keys_to_numbers(obj) := {num: v |
 # METADATA
 # description: convert location string to location object
 # scope: document
-to_location_object(loc) := {"row": to_number(row), "col": to_number(col), "text": text} if {
+to_location_object(loc) := {
+	"row": row,
+	"col": col,
+	"text": text,
+	"end": {
+		"row": end_row,
+		"col": end_col,
+	},
+} if {
 	is_string(loc)
-	[row, col, text] := split(loc, ":")
+
+	[r, c, er, ec] := split(loc, ":")
+
+	row := to_number(r)
+	col := to_number(c)
+	end_row := to_number(er)
+	end_col := to_number(ec)
+
+	text := _location_to_text(row, col, end_row, end_col)
 }
 
 to_location_object(loc) := loc if is_object(loc)
+
+_location_to_text(row, col, end_row, end_col) := substring(
+	input.regal.file.lines[row - 1],
+	col - 1,
+	end_col - col,
+) if {
+	row == end_row
+}
+
+_location_to_text(row, col, end_row, end_col) := text if {
+	row != end_row
+
+	lines := array.slice(input.regal.file.lines, row - 1, end_row)
+	text := concat("\n", [new |
+		len := count(lines) - 1
+
+		some i, line in lines
+
+		new := _cut_col(i, len, line, col, end_col)
+	])
+}
+
+_cut_col(0, 1, line, col, end_col) := substring(line, col - 1, end_col - 1)
+
+_cut_col(0, len, line, _, _) := line if {
+	len > 1
+}
+
+_cut_col(i, len, line, _, end_col) := substring(line, 0, end_col) if {
+	i == len
+} else := line if {
+	i > 0
+}
 
 # METADATA
 # description: short-hand helper to prepare values for pretty-printing

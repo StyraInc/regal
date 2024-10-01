@@ -46,8 +46,10 @@ _negated_refs contains negated_ref if {
 		some var in ast.find_vars_in_local_scope(rule, util.to_location_object(value.location))
 	}
 
+	term1 := object.union(ref[0], {"location": util.to_location_object(ref[0].location)})
+
 	negated_ref := {
-		"ref": ref,
+		"ref": array.concat([term1], util.rest(ref)),
 		"resolved_path": _resolve(ref, _package_path, ast.resolved_imports),
 	}
 }

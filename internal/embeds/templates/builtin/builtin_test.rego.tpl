@@ -19,7 +19,16 @@ test_rule_named_foo_not_allowed if {
 		"category": "{{.Category}}",
 		"description": "Add description of rule here!",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 3, "text": "foo := true"},
+		"location": {
+			"file": "policy.rego",
+			"row": 1,
+			"col": 1,
+			"end": {
+				"row": 1,
+				"col": 12,
+			},
+			"text": "foo := true"
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/{{.NameOriginal}}", "{{.Category}}"),

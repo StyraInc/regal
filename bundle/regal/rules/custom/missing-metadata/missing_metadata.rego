@@ -13,7 +13,7 @@ import data.regal.util
 # description: aggregates annotations on package declarations and rules
 aggregate contains result.aggregate(rego.metadata.chain(), {
 	"package_annotated": _package_annotated,
-	"package_location": input["package"].location,
+	"package_location": util.to_location_object(input["package"].location),
 	"rule_annotations": _rule_annotations,
 	"rule_locations": _rule_locations,
 })
@@ -32,7 +32,7 @@ _rule_annotations[rule_path] contains annotated if {
 	annotated := count(object.get(rule, "annotations", [])) > 0
 }
 
-_rule_locations[rule_path] := location if {
+_rule_locations[rule_path] := util.to_location_object(location) if {
 	some rule_path, annotated in _rule_annotations
 
 	# we only care about locations of non-annotated rules
@@ -58,16 +58,11 @@ aggregate_report contains violation if {
 
 	first_item := [item | some item in aggs][0]
 
-	# get the location from the first package, just to have something...
-	# but metadata could of course be added to any package definition, so a
-	# future improvement might be to show the location of all packages 🤔
-	loc := util.to_location_object(first_item.aggregate_data.package_location)
-
 	violation := result.fail(rego.metadata.chain(), {"location": object.union(
-		loc,
+		first_item.aggregate_data.package_location,
 		{
 			"file": first_item.aggregate_source.file,
-			"text": split(base64.decode(loc.text), "\n")[0],
+			"text": split(first_item.aggregate_data.package_location.text, "\n")[0],
 		},
 	)})
 }
@@ -87,13 +82,11 @@ aggregate_report contains violation if {
 
 	any_item := util.any_set_item(aggregates)
 
-	loc := util.to_location_object(any_item.location)
-
 	violation := result.fail(rego.metadata.chain(), {"location": object.union(
-		loc,
+		any_item.location,
 		{
 			"file": any_item.file,
-			"text": split(base64.decode(loc.text), "\n")[0],
+			"text": split(any_item.location.text, "\n")[0],
 		},
 	)})
 }

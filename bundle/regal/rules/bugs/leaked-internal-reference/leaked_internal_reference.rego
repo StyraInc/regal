@@ -12,7 +12,7 @@ report contains violation if {
 
 	contains(ast.ref_to_string(ref.value), "._")
 
-	violation := result.fail(rego.metadata.chain(), result.location(ref))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(ref.value))
 }
 
 report contains violation if {
@@ -20,5 +20,5 @@ report contains violation if {
 
 	contains(ast.ref_to_string(imported.path.value), "._")
 
-	violation := result.fail(rego.metadata.chain(), result.location(imported.path.value))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(imported.path.value))
 }

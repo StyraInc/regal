@@ -12,13 +12,22 @@ test_fail_annotation_without_metadata if {
 # title: allow
 allow := false
 	`)
-
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Annotation without metadata",
 		"level": "error",
-		"location": {"col": 1, "file": "policy.rego", "row": 6, "text": "# title: allow"},
+		"location": {
+			"col": 1,
+			"file": "policy.rego",
+			"row": 6,
+			"end": {
+				"col": 15,
+				"row": 6,
+			},
+			"text": "# title: allow",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/annotation-without-metadata", "bugs"),
@@ -33,8 +42,8 @@ test_success_annotation_with_metadata if {
 # title: allow
 allow := false
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -42,8 +51,8 @@ test_success_annotation_but_no_metadata_location if {
 	module := ast.with_rego_v1(`
 allow := false # title: allow
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -54,7 +63,7 @@ test_success_annotation_without_metadata_but_comment_preceding if {
 # title: allow
 allow := false
 	`)
-
 	r := rule.report with input as module
+
 	r == set()
 }

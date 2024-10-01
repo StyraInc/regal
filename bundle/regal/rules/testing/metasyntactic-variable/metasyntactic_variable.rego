@@ -38,7 +38,7 @@ report contains violation if {
 	# }
 	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(part))
+	violation := result.fail(rego.metadata.chain(), result.location(part))
 }
 
 report contains violation if {
@@ -49,5 +49,5 @@ report contains violation if {
 
 	ast.is_output_var(input.rules[to_number(i)], var)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(var))
+	violation := result.fail(rego.metadata.chain(), result.location(var))
 }

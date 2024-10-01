@@ -38,15 +38,14 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	// down elsewhere.
 	expect := `{
   "package": {
-    "location": "1:1:cGFja2FnZQ==",
+    "location": "1:1:1:8",
     "path": [
       {
-        "location": "1:9:ZXhhbXBsZQ==",
         "type": "var",
         "value": "data"
       },
       {
-        "location": "1:9:ZXhhbXBsZQ==",
+        "location": "1:9:1:16",
         "type": "string",
         "value": "example"
       }
@@ -56,22 +55,21 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
     {
       "head": {
         "assign": true,
-        "location": "3:1:cnVsZSA6PSB0cnVl",
-        "name": "rule",
+        "location": "3:1:3:13",
         "ref": [
           {
-            "location": "3:1:cnVsZQ==",
+            "location": "3:1:3:5",
             "type": "var",
             "value": "rule"
           }
         ],
         "value": {
-          "location": "3:9:dHJ1ZQ==",
+          "location": "3:9:3:13",
           "type": "boolean",
           "value": true
         }
       },
-      "location": "3:1:cnVsZSA6PSB0cnVl"
+      "location": "3:1:3:13"
     }
   ]
 }`

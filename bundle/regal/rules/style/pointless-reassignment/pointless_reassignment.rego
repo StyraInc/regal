@@ -28,5 +28,5 @@ report contains violation if {
 
 	ast.assignment_terms(expr)[1].type == "var"
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr.terms))
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(expr.terms))
 }

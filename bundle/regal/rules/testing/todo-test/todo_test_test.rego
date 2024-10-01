@@ -14,6 +14,7 @@ test_fail_todo_test if {
 	test_bar { true }
 	`)
 	r := rule.report with input as ast
+
 	r == {{
 		"category": "testing",
 		"description": "TODO test encountered",
@@ -22,7 +23,16 @@ test_fail_todo_test if {
 			"ref": config.docs.resolve_url("$baseUrl/$category/todo-test", "testing"),
 		}],
 		"title": "todo-test",
-		"location": {"col": 2, "file": "foo_test.rego", "row": 4, "text": "\ttodo_test_foo { false }"},
+		"location": {
+			"col": 2,
+			"file": "foo_test.rego",
+			"row": 4,
+			"end": {
+				"col": 15,
+				"row": 4,
+			},
+			"text": "\ttodo_test_foo { false }",
+		},
 		"level": "error",
 	}}
 }

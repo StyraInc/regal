@@ -22,7 +22,7 @@ report contains violation if {
 
 	not _function_name_excepted(config.for_rule("bugs", "argument-always-wildcard"), name)
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_location_from_text(fn.head.args[pos]))
+	violation := result.fail(rego.metadata.chain(), result.location(fn.head.args[pos]))
 }
 
 _function_groups[name] contains fn if {

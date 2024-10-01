@@ -22,9 +22,18 @@ test_fail_multivalue_not_reference_same_package if {
 		not partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	r == expected_with_location({"col": 7, "file": "p2.rego", "row": 6, "text": "not partial"})
+
+	r == expected_with_location({
+		"col": 7,
+		"file": "p2.rego",
+		"row": 6,
+		"end": {
+			"col": 14,
+			"row": 6,
+		},
+		"text": "not partial",
+	})
 }
 
 test_fail_multivalue_not_reference_different_package_using_direct_reference if {
@@ -43,11 +52,21 @@ test_fail_multivalue_not_reference_different_package_using_direct_reference if {
 		not data.foo.partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	r == expected_with_location({"col": 7, "file": "p2.rego", "row": 6, "text": "not data.foo.partial"})
+
+	r == expected_with_location({
+		"col": 7,
+		"file": "p2.rego",
+		"row": 6,
+		"end": {
+			"col": 11,
+			"row": 6,
+		},
+		"text": "not data.foo.partial",
+	})
 }
 
+# regal ignore:rule-length
 test_fail_multivalue_not_reference_different_package_using_import if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 
@@ -68,9 +87,18 @@ test_fail_multivalue_not_reference_different_package_using_import if {
 		not foo.partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	r == expected_with_location({"col": 7, "file": "p2.rego", "row": 8, "text": "not foo.partial"})
+
+	r == expected_with_location({
+		"col": 7,
+		"file": "p2.rego",
+		"row": 8,
+		"end": {
+			"col": 10,
+			"row": 8,
+		},
+		"text": "not foo.partial",
+	})
 }
 
 test_success_multivalue_not_reference_invalidated_by_local_var if {
@@ -92,8 +120,8 @@ test_success_multivalue_not_reference_invalidated_by_local_var if {
 		not foo.partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -115,8 +143,8 @@ test_success_multivalue_not_reference_invalidated_by_function_argument if {
 		not foo.partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -131,8 +159,8 @@ test_success_multivalue_not_reference_in_same_file_not_reported_in_aggregate_rep
 		not partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": agg1}
+
 	r == set()
 }
 
@@ -147,9 +175,17 @@ test_fail_multivalue_not_reference_in_same_file_reported_in_normal_report if {
 		not partial
 	}
 	`)
-
 	r := rule.report with input as module
-	r == expected_with_location({"col": 7, "file": "p1.rego", "row": 8, "text": "not partial"})
+
+	r == expected_with_location({
+		"col": 7,
+		"file": "p1.rego",
+		"end": {
+			"col": 14,
+			"row": 8,
+		},
+		"row": 8, "text": "not partial",
+	})
 }
 
 test_success_multivalue_ref_head_rule_not_accounted_for if {
@@ -165,8 +201,8 @@ test_success_multivalue_ref_head_rule_not_accounted_for if {
 		not partial
 	}
 	`)
-
 	r := rule.aggregate_report with input as {"aggregate": agg1}
+
 	r == set()
 }
 

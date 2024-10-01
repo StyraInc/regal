@@ -24,6 +24,10 @@ test_fail_forbidden_function if {
 			"col": 8,
 			"file": "policy.rego",
 			"row": 3,
+			"end": {
+				"col": 17,
+				"row": 3,
+			},
 			"text": `foo := http.send({"method": "GET", "url": "https://example.com"})`,
 		},
 		"related_resources": [{

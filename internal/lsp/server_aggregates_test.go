@@ -8,44 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/report"
 )
 
+//nolint:maintidx
 func TestLanguageServerLintsUsingAggregateState(t *testing.T) {
 	t.Parallel()
-
-	messages := make(map[string]chan []string)
-
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method != "textDocument/publishDiagnostics" {
-			t.Log("unexpected request method:", req.Method)
-
-			return struct{}{}, nil
-		}
-
-		var requestData types.FileDiagnostics
-
-		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
-		}
-
-		violations := make([]string, len(requestData.Items))
-		for i, item := range requestData.Items {
-			violations[i] = item.Code
-		}
-
-		slices.Sort(violations)
-
-		messages[filepath.Base(requestData.URI)] <- violations
-
-		return struct{}{}, nil
-	}
 
 	files := map[string]string{
 		"foo.rego": `package foo
@@ -66,9 +37,9 @@ import rego.v1
 		".regal/config.yaml": ``,
 	}
 
-	for _, file := range util.Keys(files) {
-		messages[file] = make(chan []string, 10)
-	}
+	messages := createMessageChannels(files)
+
+	clientHandler := createClientHandler(t, messages)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -80,7 +51,7 @@ import rego.v1
 		t.Fatalf("failed to create and init language server: %s", err)
 	}
 
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
 	// no unresolved-imports at this stage
@@ -104,9 +75,11 @@ import rego.v1
 		}
 	}
 
+	barURI := fileURIScheme + filepath.Join(tempDir, "bar.rego")
+
 	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURIScheme + filepath.Join(tempDir, "bar.rego"),
+			URI: barURI,
 		},
 		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
@@ -122,7 +95,7 @@ import rego.v1
 	}
 
 	// unresolved-imports is now expected
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -144,9 +117,11 @@ import rego.v1
 		}
 	}
 
+	fooURI := fileURIScheme + filepath.Join(tempDir, "foo.rego")
+
 	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURIScheme + filepath.Join(tempDir, "foo.rego"),
+			URI: fooURI,
 		},
 		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
@@ -165,7 +140,7 @@ import data.qux # new name for bar.rego package
 	}
 
 	// unresolved-imports is again not expected
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -224,7 +199,7 @@ import data.quz
 	}
 
 	// 1. check the Aggregates are set at start up
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
@@ -313,7 +288,7 @@ import data.wow # new
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		success := false
@@ -352,6 +327,8 @@ func TestLanguageServerAggregateViolationFixedAndReintroducedInUnviolatingFileCh
 import rego.v1
 
 import data.bax # initially unresolved-import
+
+variable = "string" # use-assignment-operator
 `,
 		"bar.rego": `package bar
 
@@ -360,36 +337,9 @@ import rego.v1
 		".regal/config.yaml": ``,
 	}
 
-	messages := make(map[string]chan []string)
-	for _, file := range util.Keys(files) {
-		messages[file] = make(chan []string, 10)
-	}
+	messages := createMessageChannels(files)
 
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method != "textDocument/publishDiagnostics" {
-			t.Log("unexpected request method:", req.Method)
-
-			return struct{}{}, nil
-		}
-
-		var requestData types.FileDiagnostics
-
-		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
-		}
-
-		violations := make([]string, len(requestData.Items))
-		for i, item := range requestData.Items {
-			violations[i] = item.Code
-		}
-
-		slices.Sort(violations)
-
-		messages[filepath.Base(requestData.URI)] <- violations
-
-		return struct{}{}, nil
-	}
+	clientHandler := createClientHandler(t, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
@@ -401,7 +351,7 @@ import rego.v1
 	}
 
 	// wait for foo.rego to have the correct violations
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
 	for {
@@ -414,9 +364,15 @@ import rego.v1
 				continue
 			}
 
+			if !slices.Contains(violations, "use-assignment-operator") {
+				t.Logf("waiting for violations to contain use-assignment-operator")
+
+				continue
+			}
+
 			success = true
 		case <-timeout.C:
-			t.Fatalf("timed out waiting foo.rego diagnostics")
+			t.Fatalf("timed out waiting for foo.rego diagnostics")
 		}
 
 		if success {
@@ -425,9 +381,11 @@ import rego.v1
 	}
 
 	// update the contents of the bar.rego file to address the unresolved-import
+	barURI := fileURIScheme + filepath.Join(tempDir, "bar.rego")
+
 	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURIScheme + filepath.Join(tempDir, "bar.rego"),
+			URI: barURI,
 		},
 		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
@@ -443,7 +401,7 @@ import rego.v1
 	}
 
 	// wait for foo.rego to have the correct violations
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -455,9 +413,15 @@ import rego.v1
 				continue
 			}
 
+			if !slices.Contains(violations, "use-assignment-operator") {
+				t.Logf("use-assignment-operator should still be present")
+
+				continue
+			}
+
 			success = true
 		case <-timeout.C:
-			t.Fatalf("timed out waiting foo.rego diagnostics")
+			t.Fatalf("timed out waiting for foo.rego diagnostics")
 		}
 
 		if success {
@@ -468,7 +432,7 @@ import rego.v1
 	// update the contents of the bar.rego to bring back the violation
 	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
-			URI: fileURIScheme + filepath.Join(tempDir, "bar.rego"),
+			URI: barURI,
 		},
 		ContentChanges: []types.TextDocumentContentChangeEvent{
 			{
@@ -484,7 +448,7 @@ import rego.v1
 	}
 
 	// check the violation is back
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -496,9 +460,15 @@ import rego.v1
 				continue
 			}
 
+			if !slices.Contains(violations, "use-assignment-operator") {
+				t.Logf("use-assignment-operator should still be present")
+
+				continue
+			}
+
 			success = true
 		case <-timeout.C:
-			t.Fatalf("timed out waiting foo.rego diagnostics")
+			t.Fatalf("timed out waiting for foo.rego diagnostics")
 		}
 
 		if success {

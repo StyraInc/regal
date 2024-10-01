@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -83,7 +84,7 @@ allow := true
 		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
 	}
 
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
 	for {
@@ -117,7 +118,7 @@ allow := true
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -126,6 +127,177 @@ allow := true
 			success = testRequestDataCodes(t, requestData, mainRegoFileURI, []string{})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
+		}
+
+		if success {
+			break
+		}
+	}
+}
+
+func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
+	t.Parallel()
+
+	var err error
+
+	tempDir := t.TempDir()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// no op handler
+	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+		t.Logf("message received: %s", req.Method)
+
+		return struct{}{}, nil
+	}
+
+	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, map[string]string{}, clientHandler)
+	if err != nil {
+		t.Fatalf("failed to create and init language server: %s", err)
+	}
+
+	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.clientIdentifier, tempDir); exp != got {
+		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
+	}
+
+	timeout := time.NewTimer(3 * time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
+
+	for {
+		var success bool
+		select {
+		case <-ticker.C:
+			enabledRules := ls.getEnabledNonAggregateRules()
+			enabledAggRules := ls.getEnabledAggregateRules()
+
+			if len(enabledRules) == 0 || len(enabledAggRules) == 0 {
+				t.Log("no enabled rules yet...")
+
+				continue
+			}
+
+			success = true
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for enabled rules to be correct")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	err = os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755)
+	if err != nil {
+		t.Fatalf("failed to create regal config dir: %s", err)
+	}
+
+	configContents := `
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
+  imports:
+    unresolved-import:
+      level: ignore
+`
+
+	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(configContents), 0o600)
+	if err != nil {
+		t.Fatalf("failed to write regal config file: %s", err)
+	}
+
+	// this event is sent to allow the server to detect the new config
+	if err := connClient.Call(ctx, "workspace/didChangeWatchedFiles", types.WorkspaceDidChangeWatchedFilesParams{
+		Changes: []types.FileEvent{
+			{
+				URI:  fileURIScheme + filepath.Join(tempDir, ".regal/config.yaml"),
+				Type: 1, // created
+			},
+		},
+	}, nil); err != nil {
+		t.Fatalf("failed to send didChange notification: %s", err)
+	}
+
+	timeout.Reset(determineTimeout())
+
+	for {
+		var success bool
+		select {
+		case <-ticker.C:
+			enabledRules := ls.getEnabledNonAggregateRules()
+			enabledAggRules := ls.getEnabledAggregateRules()
+
+			if slices.Contains(enabledRules, "directory-package-mismatch") {
+				t.Log("enabledRules still contains directory-package-mismatch")
+
+				continue
+			}
+
+			if slices.Contains(enabledAggRules, "unresolved-import") {
+				t.Log("enabledAggRules still contains unresolved-import")
+
+				continue
+			}
+
+			success = true
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for enabled rules to be correct")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	configContents2 := `
+rules:
+  style:
+    opa-fmt:
+      level: ignore
+  idiomatic:
+    directory-package-mismatch:
+      level: error
+  imports:
+    unresolved-import:
+      level: error
+`
+
+	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(configContents2), 0o600)
+	if err != nil {
+		t.Fatalf("failed to write regal config file: %s", err)
+	}
+
+	timeout.Reset(determineTimeout())
+
+	for {
+		var success bool
+		select {
+		case <-ticker.C:
+			enabledRules := ls.getEnabledNonAggregateRules()
+			enabledAggRules := ls.getEnabledAggregateRules()
+
+			if slices.Contains(enabledRules, "opa-fmt") {
+				t.Log("enabledRules still contains opa-fmt")
+
+				continue
+			}
+
+			if !slices.Contains(enabledRules, "directory-package-mismatch") {
+				t.Log("enabledRules must contain directory-package-mismatch")
+
+				continue
+			}
+
+			if !slices.Contains(enabledAggRules, "unresolved-import") {
+				t.Log("enabledAggRules must contain unresolved-import")
+
+				continue
+			}
+
+			success = true
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for enabled rules to be correct")
 		}
 
 		if success {

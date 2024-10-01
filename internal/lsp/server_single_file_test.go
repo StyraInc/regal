@@ -81,7 +81,7 @@ rules:
 	}
 
 	// validate that the client received a diagnostics notification for the file
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
 	for {
@@ -117,7 +117,7 @@ allow := true
 	}
 
 	// validate that the client received a new diagnostics notification for the file
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -133,7 +133,7 @@ allow := true
 		}
 	}
 
-	// Client sends workspace/didChangeWatchedFiles notification with new config
+	// config update is caught by the config watcher
 	newConfigContents := `
 rules:
   idiomatic:
@@ -149,7 +149,7 @@ rules:
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -158,18 +158,23 @@ rules:
 			if requestData.URI != mainRegoURI {
 				t.Logf("expected diagnostics to be sent for main.rego, got %s", requestData.URI)
 
-				break
+				continue
+			}
+
+			codes := []string{}
+			for _, d := range requestData.Items {
+				codes = append(codes, d.Code)
 			}
 
 			if len(requestData.Items) != 0 {
-				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+				t.Logf("expected empty diagnostics, got %v", codes)
 
-				break
+				continue
 			}
 
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for main.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -197,7 +202,7 @@ capabilities:
 	}
 
 	// validate that the client received a new, empty diagnostics notification for the file
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -209,15 +214,20 @@ capabilities:
 				break
 			}
 
-			if len(requestData.Items) != 0 {
-				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+			codes := []string{}
+			for _, d := range requestData.Items {
+				codes = append(codes, d.Code)
+			}
 
-				break
+			if len(requestData.Items) != 0 {
+				t.Logf("expected empty diagnostics, got %v", codes)
+
+				continue
 			}
 
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
 		case <-timeout.C:
-			t.Fatalf("timed out waiting for file diagnostics to be sent")
+			t.Fatalf("timed out waiting for main.rego diagnostics to be sent")
 		}
 
 		if success {
@@ -250,7 +260,7 @@ allow := neo4j.q
 	}
 
 	// validate that the client received a new diagnostics notification for the file
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
@@ -262,10 +272,15 @@ allow := neo4j.q
 				break
 			}
 
-			if len(requestData.Items) != 0 {
-				t.Logf("expected 0 diagnostic, got %d", len(requestData.Items))
+			codes := []string{}
+			for _, d := range requestData.Items {
+				codes = append(codes, d.Code)
+			}
 
-				break
+			if len(requestData.Items) != 0 {
+				t.Logf("expected empty diagnostics, got %v", codes)
+
+				continue
 			}
 
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
@@ -282,7 +297,7 @@ allow := neo4j.q
 	// LSP for a completion. We expect to see neo4j.query show up. Since
 	// neo4j.query is an EOPA-specific builtin, it should never appear if
 	// we're using the normal OPA capabilities file.
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()

@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -89,12 +90,6 @@ func TestManageAggregates(t *testing.T) {
 		t.Fatalf("unexpected number of aggregates for file2.rego: %d", len(aggs2))
 	}
 
-	file1ComplimentAggs := c.GetFileComplimentAggregates("file1.rego")
-
-	if !reflect.DeepEqual(file1ComplimentAggs, aggs2) {
-		t.Fatalf("unexpected compliment aggregates for file1.rego, exp\n%v\ngot\n%v", aggs2, file1ComplimentAggs)
-	}
-
 	allAggs := c.GetFileAggregates()
 
 	if len(allAggs) != 2 {
@@ -124,5 +119,43 @@ func TestManageAggregates(t *testing.T) {
 
 	if len(allAggs) != 0 {
 		t.Fatalf("unexpected number of aggregates: %d", len(allAggs))
+	}
+}
+
+func TestPartialDiagnosticsUpdate(t *testing.T) {
+	t.Parallel()
+
+	c := NewCache()
+
+	diag1 := types.Diagnostic{Code: "code1"}
+	diag2 := types.Diagnostic{Code: "code2"}
+	diag3 := types.Diagnostic{Code: "code3"}
+
+	c.SetFileDiagnostics("foo.rego", []types.Diagnostic{
+		diag1, diag2,
+	})
+
+	foundDiags, ok := c.GetFileDiagnostics("foo.rego")
+	if !ok {
+		t.Fatalf("expected to get diags for foo.rego")
+	}
+
+	if !reflect.DeepEqual(foundDiags, []types.Diagnostic{diag1, diag2}) {
+		t.Fatalf("unexpected diagnostics: %v", foundDiags)
+	}
+
+	c.SetFileDiagnosticsForRules(
+		"foo.rego",
+		[]string{"code2", "code3"},
+		[]types.Diagnostic{diag3},
+	)
+
+	foundDiags, ok = c.GetFileDiagnostics("foo.rego")
+	if !ok {
+		t.Fatalf("expected to get diags for foo.rego")
+	}
+
+	if !reflect.DeepEqual(foundDiags, []types.Diagnostic{diag1, diag3}) {
+		t.Fatalf("unexpected diagnostics: %v", foundDiags)
 	}
 }

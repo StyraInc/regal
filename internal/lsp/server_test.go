@@ -15,9 +15,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/util"
 )
 
 const mainRegoFileName = "/main.rego"
@@ -28,6 +30,19 @@ const mainRegoFileName = "/main.rego"
 const defaultTimeout = 20 * time.Second
 
 const defaultBufferedChannelSize = 5
+
+// determineTimeout returns a timeout duration based on whether
+// the test suite is running with race detection, if so, a more permissive
+// timeout is used.
+func determineTimeout() time.Duration {
+	if isRaceEnabled() {
+		// based on the upper bound here, 20x slower
+		// https://go.dev/doc/articles/race_detector#Runtime_Overheads
+		return defaultTimeout * 20
+	}
+
+	return defaultTimeout
+}
 
 const fileURIScheme = "file://"
 
@@ -147,6 +162,55 @@ func createAndInitServer(
 	}
 
 	return ls, connClient, nil
+}
+
+func createClientHandler(
+	t *testing.T,
+	messages map[string]chan []string,
+) func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+	t.Helper()
+
+	return func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+		if req.Method != "textDocument/publishDiagnostics" {
+			t.Log("unexpected request method:", req.Method)
+
+			return struct{}{}, nil
+		}
+
+		var requestData types.FileDiagnostics
+
+		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
+		if err != nil {
+			t.Fatalf("failed to unmarshal diagnostics: %s", err)
+		}
+
+		violations := make([]string, len(requestData.Items))
+		for i, item := range requestData.Items {
+			violations[i] = item.Code
+		}
+
+		slices.Sort(violations)
+
+		fileBase := filepath.Base(requestData.URI)
+		t.Log("queue", fileBase, len(messages[fileBase]))
+
+		select {
+		case messages[fileBase] <- violations:
+		case <-time.After(1 * time.Second):
+			t.Fatalf("timeout writing to messages channel for %s", fileBase)
+		}
+
+		return struct{}{}, nil
+	}
+}
+
+func createMessageChannels(files map[string]string) map[string]chan []string {
+	messages := make(map[string]chan []string)
+	for _, file := range util.Keys(files) {
+		messages[file] = make(chan []string, 10)
+	}
+
+	return messages
 }
 
 func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileURI string, codes []string) bool {

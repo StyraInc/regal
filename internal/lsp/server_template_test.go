@@ -163,7 +163,7 @@ func TestNewFileTemplating(t *testing.T) {
 	go ls.StartTemplateWorker(ctx)
 
 	// wait for the server to load it's config
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	select {
 	case <-timeout.C:
 		t.Fatalf("timed out waiting for server to load config")
@@ -200,7 +200,7 @@ func TestNewFileTemplating(t *testing.T) {
 	}
 
 	// Validate that the client received a workspace edit
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	expectedMessage := fmt.Sprintf(`{
   "edit": {

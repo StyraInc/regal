@@ -197,33 +197,6 @@ func (c *Cache) SetAggregates(data map[string][]report.Aggregate) {
 	}
 }
 
-// GetFileComplimentAggregates returns all aggregate data other than for the
-// provided fileURIs. This is used when running file diagnostics while also
-// requiring the previous aggregate state to provide aggregate rule linting.
-func (c *Cache) GetFileComplimentAggregates(fileURIs ...string) map[string][]report.Aggregate {
-	c.aggregateDataMu.Lock()
-	defer c.aggregateDataMu.Unlock()
-
-	excludedFiles := make(map[string]struct{}, len(fileURIs))
-	for _, fileURI := range fileURIs {
-		excludedFiles[fileURI] = struct{}{}
-	}
-
-	allAggregates := make(map[string][]report.Aggregate)
-
-	for sourceFile, aggregates := range c.aggregateData {
-		if _, excluded := excludedFiles[sourceFile]; excluded {
-			continue
-		}
-
-		for _, aggregate := range aggregates {
-			allAggregates[aggregate.IndexKey()] = append(allAggregates[aggregate.IndexKey()], aggregate)
-		}
-	}
-
-	return allAggregates
-}
-
 // GetFileAggregates is used to get aggregate data for a given list of files.
 // This is only used in tests to validate the cache state.
 func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggregate {
@@ -266,6 +239,28 @@ func (c *Cache) SetFileDiagnostics(fileURI string, diags []types.Diagnostic) {
 	defer c.diagnosticsFileMu.Unlock()
 
 	c.diagnosticsFile[fileURI] = diags
+}
+
+// SetFileDiagnosticsForRules will perform a partial update of the diagnostics
+// for a file given a list of evaluated rules.
+func (c *Cache) SetFileDiagnosticsForRules(fileURI string, rules []string, diags []types.Diagnostic) {
+	c.diagnosticsFileMu.Lock()
+	defer c.diagnosticsFileMu.Unlock()
+
+	ruleKeys := make(map[string]struct{}, len(rules))
+	for _, rule := range rules {
+		ruleKeys[rule] = struct{}{}
+	}
+
+	preservedDiagnostics := make([]types.Diagnostic, 0)
+
+	for _, diag := range c.diagnosticsFile[fileURI] {
+		if _, ok := ruleKeys[diag.Code]; !ok {
+			preservedDiagnostics = append(preservedDiagnostics, diag)
+		}
+	}
+
+	c.diagnosticsFile[fileURI] = append(preservedDiagnostics, diags...)
 }
 
 func (c *Cache) ClearFileDiagnostics() {

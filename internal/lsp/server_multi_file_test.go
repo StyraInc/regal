@@ -7,11 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-	"github.com/sourcegraph/jsonrpc2"
-
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/util"
 )
 
 // TestLanguageServerMultipleFiles tests that changes to multiple files are handled correctly. When there are multiple
@@ -58,36 +54,9 @@ ignore:
 `,
 	}
 
-	messages := make(map[string]chan []string)
-	for _, file := range util.Keys(files) {
-		messages[file] = make(chan []string, 10)
-	}
+	messages := createMessageChannels(files)
 
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method != "textDocument/publishDiagnostics" {
-			t.Log("unexpected request method:", req.Method)
-
-			return struct{}{}, nil
-		}
-
-		var requestData types.FileDiagnostics
-
-		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
-		}
-
-		violations := make([]string, len(requestData.Items))
-		for i, item := range requestData.Items {
-			violations[i] = item.Code
-		}
-
-		slices.Sort(violations)
-
-		messages[filepath.Base(requestData.URI)] <- violations
-
-		return struct{}{}, nil
-	}
+	clientHandler := createClientHandler(t, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
@@ -99,7 +68,7 @@ ignore:
 	}
 
 	// validate that the client received a diagnostics notification for authz.rego
-	timeout := time.NewTimer(defaultTimeout)
+	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
 	for {
@@ -107,7 +76,7 @@ ignore:
 		select {
 		case violations := <-messages["authz.rego"]:
 			if !slices.Contains(violations, "prefer-package-imports") {
-				t.Logf("waiting for violations to contain prefer-package-imports")
+				t.Logf("waiting for violations to contain prefer-package-imports, have: %v", violations)
 
 				continue
 			}
@@ -122,15 +91,15 @@ ignore:
 		}
 	}
 
-	// validate that the client received a diagnostics notification admins.rego
-	timeout.Reset(defaultTimeout)
+	// validate that the client received a diagnostics notification for admins.rego
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
 		select {
 		case violations := <-messages["admins.rego"]:
 			if !slices.Contains(violations, "use-assignment-operator") {
-				t.Logf("waiting for violations to contain use-assignment-operator")
+				t.Logf("waiting for violations to contain use-assignment-operator, have: %v", violations)
 
 				continue
 			}
@@ -145,8 +114,8 @@ ignore:
 		}
 	}
 
-	// 3. Client sends textDocument/didChange notification with new contents for authz.rego
-	// no response to the call is expected
+	// 3. Client sends textDocument/didChange notification with new contents
+	// for authz.rego no response to the call is expected
 	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURIScheme + filepath.Join(tempDir, "authz.rego"),
@@ -173,14 +142,14 @@ allow if input.user in admins.users
 	}
 
 	// authz.rego should now have no violations
-	timeout.Reset(defaultTimeout)
+	timeout.Reset(determineTimeout())
 
 	for {
 		var success bool
 		select {
 		case violations := <-messages["authz.rego"]:
 			if len(violations) > 0 {
-				t.Logf("waiting for violations to be empty for authz.rego")
+				t.Logf("waiting for violations to be empty for authz.rego, have: %v", violations)
 
 				continue
 			}

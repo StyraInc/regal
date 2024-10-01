@@ -69,7 +69,7 @@ the policy you're working on, providing an extremely fast feedback loop for deve
 
 Build the `regal` executable simply by running `go build`, or with `rq` installed, by running `build/do.rq build`.
 
-Occasionally you may want to run the `fetch_builtin_data.sh` script from inside the `build` directory. This will
+Occasionally you may want to run the `build/do.rq fetch` script. This will
 populate the `data` directory with any data necessary for linting (such as the built-in function metadata from OPA).
 
 ## Testing

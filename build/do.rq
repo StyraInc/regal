@@ -162,7 +162,8 @@ test if {
 }
 
 e2e if {
-	run("go test -tags e2e ./e2e")
+	# NOTE: e2e tests depend on the executable, so go should not cache their result (count=1 enforces that)
+	run("go test -tags e2e ./e2e -count=1")
 	run("go test -tags integration ./internal/capabilities")
 }
 
@@ -267,8 +268,7 @@ fetch_eopa_caps if {
 	# only nonzero size files with JSON extensions. The size check is to
 	# avoid long-tail edge cases where we crashed after opening the file
 	# for writing but before committing any content.
-	eopa_caps_tree := {p: 
-	f |
+	eopa_caps_tree := {p: f |
 		f := rq.tree(eopa_caps_dir, {})[p]
 		f.size != 0
 		f.ext == "json"

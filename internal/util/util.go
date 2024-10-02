@@ -86,16 +86,6 @@ func Map[T, U any](f func(T) U, a []T) []U {
 	return b
 }
 
-// MapInvert inverts a map (swaps keys and values).
-func MapInvert[K comparable, V comparable](m map[K]V) map[V]K {
-	n := make(map[V]K, len(m))
-	for k, v := range m {
-		n[v] = k
-	}
-
-	return n
-}
-
 // FindClosestMatchingRoot finds the closest matching root for a given path.
 // If no matching root is found, an empty string is returned.
 func FindClosestMatchingRoot(path string, roots []string) string {

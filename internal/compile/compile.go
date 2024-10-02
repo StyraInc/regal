@@ -2,7 +2,7 @@ package compile
 
 import (
 	"github.com/open-policy-agent/opa/ast"
-	opa_util "github.com/open-policy-agent/opa/util"
+	opaUtil "github.com/open-policy-agent/opa/util"
 
 	"github.com/styrainc/regal/internal/embeds"
 	"github.com/styrainc/regal/internal/util"
@@ -26,14 +26,13 @@ func Capabilities() *ast.Capabilities {
 
 func RegalSchemaSet() *ast.SchemaSet {
 	schemaSet := ast.NewSchemaSet()
-
 	astSchema := util.Must(embeds.SchemasFS.ReadFile("schemas/regal-ast.json"))
 
-	schemaSet.Put(ast.MustParseRef("schema.regal.ast"), opa_util.MustUnmarshalJSON(astSchema))
+	schemaSet.Put(ast.MustParseRef("schema.regal.ast"), opaUtil.MustUnmarshalJSON(astSchema))
 
 	aggregateSchema := util.Must(embeds.SchemasFS.ReadFile("schemas/aggregate.json"))
 
-	schemaSet.Put(ast.MustParseRef("schema.regal.aggregate"), opa_util.MustUnmarshalJSON(aggregateSchema))
+	schemaSet.Put(ast.MustParseRef("schema.regal.aggregate"), opaUtil.MustUnmarshalJSON(aggregateSchema))
 
 	return schemaSet
 }

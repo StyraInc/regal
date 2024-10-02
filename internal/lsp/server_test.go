@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -35,27 +34,6 @@ const mainRegoFileName = "/main.rego"
 const defaultTimeout = 20 * time.Second
 
 const defaultBufferedChannelSize = 5
-
-// InMemoryReadWriteCloser is an in-memory implementation of jsonrpc2.ReadWriteCloser.
-type InMemoryReadWriteCloser struct {
-	Buffer bytes.Buffer
-}
-
-func (m *InMemoryReadWriteCloser) Read(p []byte) (int, error) {
-	c, err := m.Buffer.Read(p)
-
-	return c, fmt.Errorf("in memory read failed with error: %w", err)
-}
-
-func (m *InMemoryReadWriteCloser) Write(p []byte) (int, error) {
-	c, err := m.Buffer.Write(p)
-
-	return c, fmt.Errorf("in memory write failed with error: %w", err)
-}
-
-func (*InMemoryReadWriteCloser) Close() error {
-	return nil // No-op for in-memory implementation
-}
 
 const fileURIScheme = "file://"
 

@@ -50,9 +50,7 @@ func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
 	if len(roots) > 0 {
 		fmt.Fprintln(r.outputWriter, "Source file conflicts:")
 
-		i := 0
-
-		for _, rootKey := range roots {
+		for i, rootKey := range roots {
 			if i > 0 {
 				fmt.Fprintln(r.outputWriter)
 			}
@@ -90,9 +88,7 @@ func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
 
 		fmt.Fprintln(r.outputWriter, "Many to one conflicts:")
 
-		i := 0
-
-		for _, rootKey := range roots {
+		for i, rootKey := range roots {
 			if i > 0 {
 				fmt.Fprintln(r.outputWriter)
 			}

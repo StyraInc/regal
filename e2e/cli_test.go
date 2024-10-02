@@ -790,7 +790,7 @@ test_allow {
 	}
 
 	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), string(content))
+		mustWriteToFile(t, filepath.Join(td, file), content)
 	}
 
 	// --force is required to make the changes when there is no git repo
@@ -917,7 +917,7 @@ import rego.v1
 	}
 
 	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), string(content))
+		mustWriteToFile(t, filepath.Join(td, file), content)
 	}
 
 	// --force is required to make the changes when there is no git repo
@@ -989,7 +989,7 @@ import rego.v1
 	}
 
 	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), string(content))
+		mustWriteToFile(t, filepath.Join(td, file), content)
 	}
 
 	// --force is required to make the changes when there is no git repo

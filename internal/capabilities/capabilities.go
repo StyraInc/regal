@@ -1,4 +1,4 @@
-// package capabilities provides convenient access to OPA capabilities
+// Package capabilities provides convenient access to OPA capabilities
 // definitions that are embedded within Regal.
 package capabilities
 
@@ -17,7 +17,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 
-	embedded "github.com/styrainc/regal/internal/capabilities/embedded"
+	"github.com/styrainc/regal/internal/capabilities/embedded"
 )
 
 const (

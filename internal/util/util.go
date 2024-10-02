@@ -20,17 +20,6 @@ func Keys[K comparable, V any](m map[K]V) []K {
 	return ks
 }
 
-// Contains checks if slice contains element.
-func Contains[T comparable](s []T, e T) bool {
-	for _, v := range s {
-		if v == e {
-			return true
-		}
-	}
-
-	return false
-}
-
 // NullToEmpty returns empty slice if provided slice is nil.
 func NullToEmpty[T any](a []T) []T {
 	if a == nil {

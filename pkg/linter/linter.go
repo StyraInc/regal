@@ -326,7 +326,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	rulesSkippedCounter := 0
 
 	for _, notice := range regoReport.Notices {
-		if !util.Contains(finalReport.Notices, notice) {
+		if !slices.Contains(finalReport.Notices, notice) {
 			finalReport.Notices = append(finalReport.Notices, notice)
 
 			if notice.Severity != "none" {
@@ -587,7 +587,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 		params["ignore_files"] = l.ignoreFiles
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"eval": map[string]any{
 			"params": params,
 		},
@@ -944,7 +944,7 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 	if l.disableAll {
 		for _, rule := range rules.AllGoRules(config.Config{}) {
-			if util.Contains(l.enableCategory, rule.Category()) || util.Contains(l.enable, rule.Name()) {
+			if slices.Contains(l.enableCategory, rule.Category()) || slices.Contains(l.enable, rule.Name()) {
 				enabledGoRules = append(enabledGoRules, rule)
 			}
 		}
@@ -954,7 +954,7 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 	if l.enableAll {
 		for _, rule := range rules.AllGoRules(config.Config{}) {
-			if !util.Contains(l.disableCategory, rule.Category()) && !util.Contains(l.disable, rule.Name()) {
+			if !slices.Contains(l.disableCategory, rule.Category()) && !slices.Contains(l.disable, rule.Name()) {
 				enabledGoRules = append(enabledGoRules, rule)
 			}
 		}
@@ -969,23 +969,23 @@ func (l Linter) enabledGoRules() ([]rules.Rule, error) {
 
 	for _, rule := range rules.AllGoRules(*conf) {
 		// disabling specific rule has the highest precedence
-		if util.Contains(l.disable, rule.Name()) {
+		if slices.Contains(l.disable, rule.Name()) {
 			continue
 		}
 
 		// likewise for enabling specific rule
-		if util.Contains(l.enable, rule.Name()) {
+		if slices.Contains(l.enable, rule.Name()) {
 			enabledGoRules = append(enabledGoRules, rule)
 
 			continue
 		}
 
 		// next highest precedence is disabling / enabling a category
-		if util.Contains(l.disableCategory, rule.Category()) {
+		if slices.Contains(l.disableCategory, rule.Category()) {
 			continue
 		}
 
-		if util.Contains(l.enableCategory, rule.Category()) {
+		if slices.Contains(l.enableCategory, rule.Category()) {
 			enabledGoRules = append(enabledGoRules, rule)
 
 			continue

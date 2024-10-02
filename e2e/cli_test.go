@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/open-policy-agent/opa/tester"
 
 	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -367,7 +367,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 	}
 
 	for _, violation := range rep.Violations {
-		if !util.Contains(expectedViolations, violation.Description) {
+		if !slices.Contains(expectedViolations, violation.Description) {
 			t.Errorf("unexpected violation: %s", violation.Description)
 		}
 	}

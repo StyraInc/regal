@@ -298,6 +298,9 @@ function_ret_args(fn_name, terms) := array.slice(terms, count(all_functions[fn_n
 # METADATA
 # description: true if last argument of function is a return assignment
 function_ret_in_args(fn_name, terms) if {
+	# special case: print does not have a last argument as it's variadic
+	fn_name != "print"
+
 	rest := array.slice(terms, 1, count(terms))
 
 	# for now, bail out of nested calls

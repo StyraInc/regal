@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 
@@ -64,6 +66,10 @@ func InputFromPaths(paths []string) (Input, error) {
 		return inputFromStdin()
 	}
 
+	return inputFromPathsFS(os.DirFS("/"), paths)
+}
+
+func inputFromPathsFS(fsys fs.FS, paths []string) (Input, error) {
 	fileContent := make(map[string]string, len(paths))
 	modules := make(map[string]*ast.Module, len(paths))
 
@@ -79,14 +85,13 @@ func InputFromPaths(paths []string) (Input, error) {
 		go func(path string) {
 			defer wg.Done()
 
-			result, err := loader.RegoWithOpts(path, parse.ParserOptions())
+			result, err := readAndParse(fsys, path)
 
 			mu.Lock()
 			defer mu.Unlock()
 
 			if err != nil {
 				errors = append(errors, err)
-
 				return
 			}
 
@@ -102,6 +107,37 @@ func InputFromPaths(paths []string) (Input, error) {
 	}
 
 	return NewInput(fileContent, modules), nil
+}
+
+func readAndParse(fsys fs.FS, path string) (*loader.RegoFile, error) {
+	if path[0] != '/' { // make relative OS path absolute
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("get working directory: %w", err)
+		}
+
+		path = filepath.Join(cwd, path)
+	}
+
+	if path[0] == '/' {
+		path = path[1:] // fs.FS doesn't consider paths starting with '/' valid: https://pkg.go.dev/io/fs#ValidPath
+	}
+
+	bs, err := fs.ReadFile(fsys, path)
+	if err != nil {
+		return nil, fmt.Errorf("read file from %v%s: %w", fsys, path, err)
+	}
+
+	module, err := ast.ParseModuleWithOpts(path, string(bs), parse.ParserOptions())
+	if err != nil {
+		return nil, fmt.Errorf("parse file from %v%s: %w", fsys, path, err)
+	}
+
+	return &loader.RegoFile{
+		Name:   path,
+		Parsed: module,
+		Raw:    bs,
+	}, nil
 }
 
 func inputFromStdin() (Input, error) {

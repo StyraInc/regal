@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+	"sync/atomic"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/loader"
@@ -51,11 +52,59 @@ func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Inp
 	filenames := util.Keys(modules)
 	sort.Strings(filenames)
 
-	return Input{
+	i := Input{
 		FileContent: fileContent,
 		FileNames:   filenames,
 		Modules:     modules,
 	}
+
+	if vi := virtualInput.Load(); vi != nil {
+		return i.Merge(*vi)
+	}
+
+	return i
+}
+
+func (i Input) Merge(o Input) Input {
+	for _, name := range o.FileNames {
+		i.FileContent[name] = o.FileContent[name]
+		i.Modules[name] = o.Modules[name]
+		i.FileNames = append(i.FileNames, name)
+	}
+
+	return i
+}
+
+var virtualInput atomic.Pointer[Input] //nolint:gochecknoglobals
+
+// SetVirtualInput allows adding rego files to Regal's input from the outside, but
+// not from the OS filesystem. It's used when a Regal-wrapping go module needs to
+// add statically embedded rego code to the LSP completion provider, or linter.
+// When called, all .rego files in the fs.FS are collected and passed along to the
+// usual parser code path. On success, the files are added to each and every call
+// to `NewInput()`, merged together with the other files/modules passed to that
+// function.
+func SetVirtualInput(fsys fs.FS) error {
+	paths := []string{}
+
+	if err := fs.WalkDir(fsys, ".", func(p string, _ fs.DirEntry, _ error) error {
+		if filepath.Ext(p) == ".rego" {
+			paths = append(paths, filepath.Join("/", p))
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("walking fs.FS: %w", err)
+	}
+
+	in, err := inputFromPathsFS(fsys, paths)
+	if err != nil {
+		return fmt.Errorf("read input from fs.FS: %w", err)
+	}
+
+	virtualInput.Store(&in)
+
+	return nil
 }
 
 // InputFromPaths creates a new Input from a set of file or directory paths. Note that this function assumes that the
@@ -92,6 +141,7 @@ func inputFromPathsFS(fsys fs.FS, paths []string) (Input, error) {
 
 			if err != nil {
 				errors = append(errors, err)
+
 				return
 			}
 

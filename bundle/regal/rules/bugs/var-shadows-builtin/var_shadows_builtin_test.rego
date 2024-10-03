@@ -40,3 +40,11 @@ test_success_var_does_not_shadow_builtin if {
 	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
+
+# https://github.com/StyraInc/regal/issues/1163
+test_success_print_excluded if {
+	module := ast.with_rego_v1(`x if print([y - 1])`)
+
+	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r == set()
+}

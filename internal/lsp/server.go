@@ -250,7 +250,6 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case job := <-l.lintFileJobs:
-				fmt.Fprintln(l.errorLog, "file job", filepath.Base(job.URI), job.Reason)
 				bis := l.builtinsForCurrentCapabilities()
 
 				// updateParse will not return an error when the parsing failed,
@@ -363,8 +362,6 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				if len(l.cache.GetAllFiles()) == 0 {
 					continue
 				}
-
-				fmt.Fprintln(l.errorLog, "workspace job", job.Reason)
 
 				targetRules := l.getEnabledAggregateRules()
 				if !job.AggregateReportOnly {

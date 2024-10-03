@@ -356,10 +356,10 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case job := <-workspaceLintRuns:
-				// if there are no files in the cache, then there is no need to
-				// run the aggregate report. This can happen if the server is
-				// very slow to start up.
-				if len(l.cache.GetAllFiles()) == 0 {
+				// if there are no parsed modules in the cache, then there is
+				// no need to run the aggregate report. This can happen if the
+				// server is very slow to start up.
+				if len(l.cache.GetAllModules()) == 0 {
 					continue
 				}
 
@@ -989,7 +989,9 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			// determine the new contents for the file, if permitted
 			newContents, err := l.templateContentsForFile(job.URI)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to template new file: %w", err))
+				if !errors.Is(err, &templatingInRootError{}) {
+					l.logError(fmt.Errorf("failed to template new file: %w", err))
+				}
 
 				continue
 			}
@@ -1083,6 +1085,12 @@ func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }
 
+type templatingInRootError struct{}
+
+func (*templatingInRootError) Error() string {
+	return "templating is not supported in the root of the workspace"
+}
+
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
@@ -1091,6 +1099,11 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 
 	if content != "" {
 		return "", errors.New("file already has contents, templating not allowed")
+	}
+
+	if filepath.Dir(uri.ToPath(l.clientIdentifier, fileURI)) ==
+		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+		return "", &templatingInRootError{}
 	}
 
 	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
@@ -1108,6 +1121,16 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("failed to get potential roots during templating of new file: %w", err)
 	}
+
+	// handle the case where the root is unknown by providing the server's root
+	// dir as a defacto root. This allows templating of files when there is no
+	// known root, but the package could be determined based on the file path
+	// relative to the server's workspace root
+	if len(roots) == 1 && roots[0] == dir {
+		roots = []string{uri.ToPath(l.clientIdentifier, l.workspaceRootURI)}
+	}
+
+	roots = append(roots, uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
 
 	longestPrefixRoot := ""
 
@@ -2028,7 +2051,9 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	// instead
 	if oldContent == "" {
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
-		if err != nil {
+		if err != nil && errors.Is(err, &templatingInRootError{}) {
+			return nil, nil
+		} else if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
 		}
 

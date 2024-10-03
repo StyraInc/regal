@@ -110,9 +110,17 @@ func createAndInitServer(
 		}
 	}
 
+	// This is set due to eventing being so slow in go test -race that we
+	// get flakes. TODO, work out how to avoid needing this in lsp tests.
+	pollingInterval := time.Duration(0)
+	if isRaceEnabled() {
+		pollingInterval = 10 * time.Second
+	}
+
 	// set up the server and client connections
 	ls := NewLanguageServer(ctx, &LanguageServerOptions{
-		ErrorLog: logger,
+		ErrorLog:                 logger,
+		WorkspaceDiagnosticsPoll: pollingInterval,
 	})
 
 	go ls.StartDiagnosticsWorker(ctx)

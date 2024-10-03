@@ -65,6 +65,13 @@ const (
 
 type LanguageServerOptions struct {
 	ErrorLog io.Writer
+
+	// WorkspaceDiagnosticsPoll, if set > 0 will cause a full workspace lint
+	// to run on this interval. This is intended to be used where eventing
+	// is not working, as expected. E.g. with a client that does not send
+	// changes or when running in extremely slow environments like GHA with
+	// the go race detector on. TODO, work out why this is required.
+	WorkspaceDiagnosticsPoll time.Duration
 }
 
 func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *LanguageServer {
@@ -72,18 +79,19 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	store := NewRegalStore()
 
 	ls := &LanguageServer{
-		cache:                c,
-		regoStore:            store,
-		errorLog:             opts.ErrorLog,
-		lintFileJobs:         make(chan lintFileJob, 10),
-		lintWorkspaceJobs:    make(chan lintWorkspaceJob, 10),
-		builtinsPositionJobs: make(chan lintFileJob, 10),
-		commandRequest:       make(chan types.ExecuteCommandParams, 10),
-		templateFileJobs:     make(chan lintFileJob, 10),
-		configWatcher:        lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
-		completionsManager:   completions.NewDefaultManager(ctx, c, store),
-		webServer:            web.NewServer(c),
-		loadedBuiltins:       make(map[string]map[string]*ast.Builtin),
+		cache:                    c,
+		regoStore:                store,
+		errorLog:                 opts.ErrorLog,
+		lintFileJobs:             make(chan lintFileJob, 10),
+		lintWorkspaceJobs:        make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:     make(chan lintFileJob, 10),
+		commandRequest:           make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:         make(chan lintFileJob, 10),
+		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
+		completionsManager:       completions.NewDefaultManager(ctx, c, store),
+		webServer:                web.NewServer(c),
+		loadedBuiltins:           make(map[string]map[string]*ast.Builtin),
+		workspaceDiagnosticsPoll: opts.WorkspaceDiagnosticsPoll,
 	}
 
 	return ls
@@ -123,6 +131,8 @@ type LanguageServer struct {
 
 	// this is also used to lock the updates to the cache of enabled rules
 	loadedConfigLock sync.Mutex
+
+	workspaceDiagnosticsPoll time.Duration
 }
 
 // lintFileJob is sent to the lintFileJobs channel to trigger a
@@ -314,6 +324,28 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			}
 		}
 	}()
+
+	if l.workspaceDiagnosticsPoll > 0 {
+		wg.Add(1)
+
+		ticker := time.NewTicker(l.workspaceDiagnosticsPoll)
+
+		go func() {
+			defer wg.Done()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					workspaceLintRuns <- lintWorkspaceJob{
+						Reason:              "poll ticker",
+						OverwriteAggregates: true,
+					}
+				}
+			}
+		}()
+	}
 
 	wg.Add(1)
 
@@ -932,14 +964,14 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 			// next, check if there are any new files that are not ignored and
 			// need to be loaded. We get new only so that files being worked
 			// on are not loaded from disk during editing.
-			changedOrNewURIs, err := l.loadWorkspaceContents(ctx, true)
+			newURIs, err := l.loadWorkspaceContents(ctx, true)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to refresh workspace contents: %w", err))
 
 				continue
 			}
 
-			for _, cnURI := range changedOrNewURIs {
+			for _, cnURI := range newURIs {
 				l.lintFileJobs <- lintFileJob{
 					URI:    cnURI,
 					Reason: "internal/workspaceStateWorker/changedOrNewFile",

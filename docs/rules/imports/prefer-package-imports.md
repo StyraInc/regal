@@ -15,7 +15,7 @@ import rego.v1
 # Rule imported directly
 import data.users.first_names
 
-has_waldo {
+has_waldo if {
     # Not obvious where "first_names" comes from
     "Waldo" in first_names
 }
@@ -30,7 +30,7 @@ import rego.v1
 # Package imported rather than rule
 import data.users
 
-has_waldo {
+has_waldo if {
     # Obvious where "first_names" comes from
     "Waldo" in users.first_names
 }

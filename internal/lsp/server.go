@@ -65,25 +65,33 @@ const (
 
 type LanguageServerOptions struct {
 	ErrorLog io.Writer
+
+	// WorkspaceDiagnosticsPoll, if set > 0 will cause a full workspace lint
+	// to run on this interval. This is intended to be used where eventing
+	// is not working, as expected. E.g. with a client that does not send
+	// changes or when running in extremely slow environments like GHA with
+	// the go race detector on. TODO, work out why this is required.
+	WorkspaceDiagnosticsPoll time.Duration
 }
 
-func NewLanguageServer(opts *LanguageServerOptions) *LanguageServer {
+func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *LanguageServer {
 	c := cache.NewCache()
 	store := NewRegalStore()
 
 	ls := &LanguageServer{
-		cache:                      c,
-		regoStore:                  store,
-		errorLog:                   opts.ErrorLog,
-		diagnosticRequestFile:      make(chan fileUpdateEvent, 10),
-		diagnosticRequestWorkspace: make(chan string, 10),
-		builtinsPositionFile:       make(chan fileUpdateEvent, 10),
-		commandRequest:             make(chan types.ExecuteCommandParams, 10),
-		templateFile:               make(chan fileUpdateEvent, 10),
-		configWatcher:              lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
-		completionsManager:         completions.NewDefaultManager(c, store),
-		webServer:                  web.NewServer(c),
-		loadedBuiltins:             make(map[string]map[string]*ast.Builtin),
+		cache:                    c,
+		regoStore:                store,
+		errorLog:                 opts.ErrorLog,
+		lintFileJobs:             make(chan lintFileJob, 10),
+		lintWorkspaceJobs:        make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:     make(chan lintFileJob, 10),
+		commandRequest:           make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:         make(chan lintFileJob, 10),
+		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
+		completionsManager:       completions.NewDefaultManager(ctx, c, store),
+		webServer:                web.NewServer(c),
+		loadedBuiltins:           make(map[string]map[string]*ast.Builtin),
+		workspaceDiagnosticsPoll: opts.WorkspaceDiagnosticsPoll,
 	}
 
 	return ls
@@ -95,9 +103,11 @@ type LanguageServer struct {
 	regoStore storage.Store
 	conn      *jsonrpc2.Conn
 
-	configWatcher  *lsconfig.Watcher
-	loadedConfig   *config.Config
-	loadedBuiltins map[string]map[string]*ast.Builtin
+	configWatcher                        *lsconfig.Watcher
+	loadedConfig                         *config.Config
+	loadedConfigEnabledNonAggregateRules []string
+	loadedConfigEnabledAggregateRules    []string
+	loadedBuiltins                       map[string]map[string]*ast.Builtin
 
 	clientInitializationOptions types.InitializationOptions
 
@@ -106,11 +116,11 @@ type LanguageServer struct {
 
 	completionsManager *completions.Manager
 
-	diagnosticRequestFile      chan fileUpdateEvent
-	diagnosticRequestWorkspace chan string
-	builtinsPositionFile       chan fileUpdateEvent
-	commandRequest             chan types.ExecuteCommandParams
-	templateFile               chan fileUpdateEvent
+	commandRequest       chan types.ExecuteCommandParams
+	lintWorkspaceJobs    chan lintWorkspaceJob
+	lintFileJobs         chan lintFileJob
+	builtinsPositionJobs chan lintFileJob
+	templateFileJobs     chan lintFileJob
 
 	webServer *web.Server
 
@@ -119,13 +129,27 @@ type LanguageServer struct {
 
 	loadedBuiltinsLock sync.RWMutex
 
+	// this is also used to lock the updates to the cache of enabled rules
 	loadedConfigLock sync.Mutex
+
+	workspaceDiagnosticsPoll time.Duration
 }
 
-// fileUpdateEvent is sent to a channel when an update is required for a file.
-type fileUpdateEvent struct {
+// lintFileJob is sent to the lintFileJobs channel to trigger a
+// diagnostic update for a file.
+type lintFileJob struct {
 	Reason string
 	URI    string
+}
+
+// lintWorkspaceJob is sent to lintWorkspaceJobs when a full workspace
+// diagnostic update is needed.
+type lintWorkspaceJob struct {
+	Reason string
+	// OverwriteAggregates for a workspace is only run once at start up. All
+	// later updates to aggregate state is made as files are changed.
+	OverwriteAggregates bool
+	AggregateReportOnly bool
 }
 
 func (l *LanguageServer) Handle(
@@ -214,54 +238,162 @@ func (l *LanguageServer) SetConn(conn *jsonrpc2.Conn) {
 }
 
 func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt := <-l.diagnosticRequestFile:
-			bis := l.builtinsForCurrentCapabilities()
+	var wg sync.WaitGroup
 
-			// updateParse will not return an error when the parsing failed,
-			// but only when it was impossible
-			if _, err := updateParse(ctx, l.cache, l.regoStore, evt.URI, bis); err != nil {
-				l.logError(fmt.Errorf("failed to update module for %s: %w", evt.URI, err))
+	wg.Add(1)
 
-				continue
-			}
+	go func() {
+		defer wg.Done()
 
-			// lint the file and send the diagnostics
-			if err := updateFileDiagnostics(ctx, l.cache, l.getLoadedConfig(), evt.URI, l.workspaceRootURI); err != nil {
-				l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case job := <-l.lintFileJobs:
+				bis := l.builtinsForCurrentCapabilities()
 
-				continue
-			}
+				// updateParse will not return an error when the parsing failed,
+				// but only when it was impossible
+				if _, err := updateParse(ctx, l.cache, l.regoStore, job.URI, bis); err != nil {
+					l.logError(fmt.Errorf("failed to update module for %s: %w", job.URI, err))
 
-			if err := l.sendFileDiagnostics(ctx, evt.URI); err != nil {
-				l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+					continue
+				}
 
-				continue
-			}
+				// lint the file and send the diagnostics
+				if err := updateFileDiagnostics(
+					ctx,
+					l.cache,
+					l.getLoadedConfig(),
+					job.URI,
+					l.workspaceRootURI,
+					// updateFileDiagnostics only ever updates the diagnostics
+					// of non aggregate rules
+					l.getEnabledNonAggregateRules(),
+				); err != nil {
+					l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
 
-			// if the file has agg diagnostics, we trigger a run for the workspace as by changing this file,
-			// these may now be out of date
-			aggDiags, ok := l.cache.GetAggregateDiagnostics(evt.URI)
-			if ok && len(aggDiags) > 0 {
-				l.diagnosticRequestWorkspace <- fmt.Sprintf("file %q with aggregate violation changed", evt.URI)
-			}
-		case <-l.diagnosticRequestWorkspace:
-			// results will be sent in response to the next workspace/diagnostics request
-			if err := updateAllDiagnostics(ctx, l.cache, l.getLoadedConfig(), l.workspaceRootURI); err != nil {
-				l.logError(fmt.Errorf("failed to update aggregate diagnostics (trigger): %w", err))
-			}
+					continue
+				}
 
-			// send diagnostics for all files
-			for fileURI := range l.cache.GetAllFiles() {
-				if err := l.sendFileDiagnostics(ctx, fileURI); err != nil {
+				if err := l.sendFileDiagnostics(ctx, job.URI); err != nil {
 					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+
+					continue
+				}
+
+				l.lintWorkspaceJobs <- lintWorkspaceJob{
+					Reason: fmt.Sprintf("file %s %s", job.URI, job.Reason),
+					// this run is expected to used the cached aggregate state
+					// for other files.
+					// The aggregate state for this file will still be updated.
+					OverwriteAggregates: false,
+					// when a file has changed, then there is no need to run
+					// any other rules globally other than aggregate rules.
+					AggregateReportOnly: true,
 				}
 			}
 		}
+	}()
+
+	wg.Add(1)
+
+	workspaceLintRunBufferSize := 10
+	workspaceLintRuns := make(chan lintWorkspaceJob, workspaceLintRunBufferSize)
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case job := <-l.lintWorkspaceJobs:
+				// AggregateReportOnly is set when updating aggregate
+				// violations on character changes. Since these happen so
+				// frequently, we stop adding to the channel if there already
+				// jobs set to preserve performance
+				if job.AggregateReportOnly && len(workspaceLintRuns) > workspaceLintRunBufferSize/2 {
+					fmt.Fprintln(l.errorLog, "rate limiting aggregate reports")
+
+					continue
+				}
+
+				workspaceLintRuns <- job
+			}
+		}
+	}()
+
+	if l.workspaceDiagnosticsPoll > 0 {
+		wg.Add(1)
+
+		ticker := time.NewTicker(l.workspaceDiagnosticsPoll)
+
+		go func() {
+			defer wg.Done()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					workspaceLintRuns <- lintWorkspaceJob{
+						Reason:              "poll ticker",
+						OverwriteAggregates: true,
+					}
+				}
+			}
+		}()
 	}
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case job := <-workspaceLintRuns:
+				// if there are no files in the cache, then there is no need to
+				// run the aggregate report. This can happen if the server is
+				// very slow to start up.
+				if len(l.cache.GetAllFiles()) == 0 {
+					continue
+				}
+
+				targetRules := l.getEnabledAggregateRules()
+				if !job.AggregateReportOnly {
+					targetRules = append(targetRules, l.getEnabledNonAggregateRules()...)
+				}
+
+				err := updateAllDiagnostics(
+					ctx,
+					l.cache,
+					l.getLoadedConfig(),
+					l.workspacePath(),
+					// this is intended to only be set to true once at start up,
+					// on following runs, cached aggregate data is used.
+					job.OverwriteAggregates,
+					job.AggregateReportOnly,
+					targetRules,
+				)
+				if err != nil {
+					l.logError(fmt.Errorf("failed to update all diagnostics: %w", err))
+				}
+
+				for fileURI := range l.cache.GetAllFiles() {
+					if err := l.sendFileDiagnostics(ctx, fileURI); err != nil {
+						l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+					}
+				}
+			}
+		}
+	}()
+
+	<-ctx.Done()
+	wg.Wait()
 }
 
 func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
@@ -269,8 +401,8 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case evt := <-l.builtinsPositionFile:
-			fileURI := evt.URI
+		case job := <-l.builtinsPositionJobs:
+			fileURI := job.URI
 
 			if l.ignoreURI(fileURI) {
 				continue
@@ -318,6 +450,50 @@ func (l *LanguageServer) getLoadedConfig() *config.Config {
 	return l.loadedConfig
 }
 
+func (l *LanguageServer) getEnabledNonAggregateRules() []string {
+	l.loadedConfigLock.Lock()
+	defer l.loadedConfigLock.Unlock()
+
+	return l.loadedConfigEnabledNonAggregateRules
+}
+
+func (l *LanguageServer) getEnabledAggregateRules() []string {
+	l.loadedConfigLock.Lock()
+	defer l.loadedConfigLock.Unlock()
+
+	return l.loadedConfigEnabledAggregateRules
+}
+
+// loadEnabledRulesFromConfig is used to cache the enabled rules for the current
+// config. These take some time to compute and only change when config changes,
+// so we can store them on the server to speed up diagnostic runs.
+func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
+	l.loadedConfigLock.Lock()
+	defer l.loadedConfigLock.Unlock()
+
+	enabledRules, err := linter.NewLinter().WithUserConfig(cfg).DetermineEnabledRules(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to determine enabled rules: %w", err)
+	}
+
+	enabledAggregateRules, err := linter.NewLinter().WithUserConfig(cfg).DetermineEnabledAggregateRules(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to determine enabled aggregate rules: %w", err)
+	}
+
+	l.loadedConfigEnabledNonAggregateRules = []string{}
+
+	for _, r := range enabledRules {
+		if !slices.Contains(enabledAggregateRules, r) {
+			l.loadedConfigEnabledNonAggregateRules = append(l.loadedConfigEnabledNonAggregateRules, r)
+		}
+	}
+
+	l.loadedConfigEnabledAggregateRules = enabledAggregateRules
+
+	return nil
+}
+
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 	if err := l.configWatcher.Start(ctx); err != nil {
 		l.logError(fmt.Errorf("failed to start config watcher: %w", err))
@@ -339,29 +515,28 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			var userConfig config.Config
 
+			// EOF errors are ignored here as then we just use the default config
 			if err = yaml.Unmarshal(configFileBs, &userConfig); err != nil && !errors.Is(err, io.EOF) {
 				l.logError(fmt.Errorf("failed to reload config: %w", err))
 
-				return
+				continue
 			}
 
 			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, &userConfig)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to load config: %w", err))
 
-				return
+				continue
 			}
 
-			// if the config is now blank, then we need to clear it
 			l.loadedConfigLock.Lock()
-
-			if errors.Is(err, io.EOF) {
-				l.loadedConfig = nil
-			} else {
-				l.loadedConfig = &mergedConfig
-			}
-
+			l.loadedConfig = &mergedConfig
 			l.loadedConfigLock.Unlock()
+
+			err = l.loadEnabledRulesFromConfig(ctx, mergedConfig)
+			if err != nil {
+				l.logError(fmt.Errorf("failed to cache enabled rules: %w", err))
+			}
 
 			// Capabilities URL may have changed, so we should reload it.
 			cfg := l.getLoadedConfig()
@@ -375,7 +550,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			if err != nil {
 				l.logError(fmt.Errorf("failed to load capabilities for URL %q: %w", capsURL, err))
 
-				return
+				continue
 			}
 
 			bis := rego.BuiltinsForCapabilities(caps)
@@ -441,13 +616,13 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				}
 			}()
 
-			l.diagnosticRequestWorkspace <- "config file changed"
+			l.lintWorkspaceJobs <- lintWorkspaceJob{Reason: "config file changed"}
 		case <-l.configWatcher.Drop:
 			l.loadedConfigLock.Lock()
 			l.loadedConfig = nil
 			l.loadedConfigLock.Unlock()
 
-			l.diagnosticRequestWorkspace <- "config file dropped"
+			l.lintWorkspaceJobs <- lintWorkspaceJob{Reason: "config file dropped"}
 		}
 	}
 }
@@ -786,15 +961,15 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 			// next, check if there are any new files that are not ignored and
 			// need to be loaded. We get new only so that files being worked
 			// on are not loaded from disk during editing.
-			changedOrNewURIs, err := l.loadWorkspaceContents(ctx, true)
+			newURIs, err := l.loadWorkspaceContents(ctx, true)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to refresh workspace contents: %w", err))
 
 				continue
 			}
 
-			for _, cnURI := range changedOrNewURIs {
-				l.diagnosticRequestFile <- fileUpdateEvent{
+			for _, cnURI := range newURIs {
+				l.lintFileJobs <- lintFileJob{
 					URI:    cnURI,
 					Reason: "internal/workspaceStateWorker/changedOrNewFile",
 				}
@@ -810,9 +985,9 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case evt := <-l.templateFile:
+		case job := <-l.templateFileJobs:
 			// determine the new contents for the file, if permitted
-			newContents, err := l.templateContentsForFile(evt.URI)
+			newContents, err := l.templateContentsForFile(job.URI)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to template new file: %w", err))
 
@@ -822,12 +997,12 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			// set the contents of the new file in the cache immediately as
 			// these must be update to date in order for fixRenameParams
 			// to work
-			l.cache.SetFileContents(evt.URI, newContents)
+			l.cache.SetFileContents(job.URI, newContents)
 
 			var edits []any
 
 			edits = append(edits, types.TextDocumentEdit{
-				TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: evt.URI},
+				TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
 				Edits:        ComputeEdits("", newContents),
 			})
 
@@ -835,7 +1010,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			renameParams, err := l.fixRenameParams(
 				"Rename file to match package path",
 				&fixes.DirectoryPackageMismatch{},
-				evt.URI,
+				job.URI,
 			)
 			if err != nil {
 				l.logError(fmt.Errorf("failed to fix directory package mismatch: %w", err))
@@ -844,7 +1019,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			}
 
 			// move the file and clean up any empty directories ifd required
-			fileURI := evt.URI
+			fileURI := job.URI
 
 			if len(renameParams.Edit.DocumentChanges) > 0 {
 				edits = append(edits, renameParams.Edit.DocumentChanges[0])
@@ -894,12 +1069,12 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			}
 
 			// finally, trigger a diagnostics run for the new file
-			updateEvent := fileUpdateEvent{
+			updateEvent := lintFileJob{
 				Reason: "internal/templateNewFile",
 				URI:    fileURI,
 			}
 
-			l.diagnosticRequestFile <- updateEvent
+			l.lintFileJobs <- updateEvent
 		}
 	}
 }
@@ -1650,14 +1825,14 @@ func (l *LanguageServer) handleTextDocumentDidOpen(
 
 	l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
 
-	evt := fileUpdateEvent{
+	job := lintFileJob{
 		Reason: "textDocument/didOpen",
 		URI:    params.TextDocument.URI,
 	}
 
-	l.diagnosticRequestFile <- evt
+	l.lintFileJobs <- job
 
-	l.builtinsPositionFile <- evt
+	l.builtinsPositionJobs <- job
 
 	return struct{}{}, nil
 }
@@ -1712,13 +1887,13 @@ func (l *LanguageServer) handleTextDocumentDidChange(
 
 	l.cache.SetFileContents(params.TextDocument.URI, params.ContentChanges[0].Text)
 
-	evt := fileUpdateEvent{
+	job := lintFileJob{
 		Reason: "textDocument/didChange",
 		URI:    params.TextDocument.URI,
 	}
 
-	l.diagnosticRequestFile <- evt
-	l.builtinsPositionFile <- evt
+	l.lintFileJobs <- job
+	l.builtinsPositionJobs <- job
 
 	return struct{}{}, nil
 }
@@ -1861,12 +2036,12 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		l.cache.SetFileContents(params.TextDocument.URI, newContent)
 
-		updateEvent := fileUpdateEvent{
+		updateEvent := lintFileJob{
 			Reason: "internal/templateFormattingFallback",
 			URI:    params.TextDocument.URI,
 		}
 
-		l.diagnosticRequestFile <- updateEvent
+		l.lintFileJobs <- updateEvent
 
 		return ComputeEdits(oldContent, newContent), nil
 	}
@@ -1992,14 +2167,14 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", createOp.URI, err)
 		}
 
-		evt := fileUpdateEvent{
+		job := lintFileJob{
 			Reason: "textDocument/didCreate",
 			URI:    createOp.URI,
 		}
 
-		l.diagnosticRequestFile <- evt
-		l.builtinsPositionFile <- evt
-		l.templateFile <- evt
+		l.lintFileJobs <- job
+		l.builtinsPositionJobs <- job
+		l.templateFileJobs <- job
 	}
 
 	return struct{}{}, nil
@@ -2068,15 +2243,15 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.cache.SetFileContents(renameOp.NewURI, content)
 
-		evt := fileUpdateEvent{
+		job := lintFileJob{
 			Reason: "textDocument/didRename",
 			URI:    renameOp.NewURI,
 		}
 
-		l.diagnosticRequestFile <- evt
-		l.builtinsPositionFile <- evt
+		l.lintFileJobs <- job
+		l.builtinsPositionJobs <- job
 		// if the file being moved is empty, we template it too (if empty)
-		l.templateFile <- evt
+		l.templateFileJobs <- job
 	}
 
 	return struct{}{}, nil
@@ -2098,11 +2273,16 @@ func (l *LanguageServer) handleWorkspaceDiagnostic(
 		return workspaceReport, nil
 	}
 
+	wkspceDiags, ok := l.cache.GetFileDiagnostics(l.workspaceRootURI)
+	if !ok {
+		wkspceDiags = []types.Diagnostic{}
+	}
+
 	workspaceReport.Items = append(workspaceReport.Items, types.WorkspaceFullDocumentDiagnosticReport{
 		URI:     l.workspaceRootURI,
 		Kind:    "full",
 		Version: nil,
-		Items:   l.cache.GetAllDiagnosticsForURI(l.workspaceRootURI),
+		Items:   wkspceDiags,
 	})
 
 	return workspaceReport, nil
@@ -2207,6 +2387,20 @@ func (l *LanguageServer) handleInitialize(
 		},
 	}
 
+	defaultConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load default config: %w", err)
+	}
+
+	l.loadedConfigLock.Lock()
+	l.loadedConfig = &defaultConfig
+	l.loadedConfigLock.Unlock()
+
+	err = l.loadEnabledRulesFromConfig(ctx, defaultConfig)
+	if err != nil {
+		l.logError(fmt.Errorf("failed to cache enabled rules: %w", err))
+	}
+
 	if l.workspaceRootURI != "" {
 		workspaceRootPath := l.workspacePath()
 
@@ -2226,7 +2420,13 @@ func (l *LanguageServer) handleInitialize(
 
 		l.webServer.SetWorkspaceURI(l.workspaceRootURI)
 
-		l.diagnosticRequestWorkspace <- "server initialize"
+		l.lintWorkspaceJobs <- lintWorkspaceJob{
+			Reason: "server initialize",
+			// 'OverwriteAggregates' is set to populate the cache's
+			// initial aggregate state. Subsequent runs of lintWorkspaceJobs
+			// will not set this and use the cached state.
+			OverwriteAggregates: true,
+		}
 	}
 
 	return initializeResult, nil
@@ -2306,7 +2506,7 @@ func (l *LanguageServer) handleInitialized(
 	// if running without config, then we should send the diagnostic request now
 	// otherwise it'll happen when the config is loaded
 	if !l.configWatcher.IsWatching() {
-		l.diagnosticRequestWorkspace <- "initialized"
+		l.lintWorkspaceJobs <- lintWorkspaceJob{Reason: "server initialized"}
 	}
 
 	return struct{}{}, nil
@@ -2337,6 +2537,15 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 		return nil, fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
+	// this handles the case of a new config file being created when one did
+	// not exist before
+	if len(params.Changes) > 0 && strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") {
+		configFile, err := config.FindConfig(l.workspacePath())
+		if err == nil {
+			l.configWatcher.Watch(configFile.Name())
+		}
+	}
+
 	// when a file is changed (saved), then we send trigger a full workspace lint
 	regoFiles := make([]string, 0)
 
@@ -2349,17 +2558,23 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	}
 
 	if len(regoFiles) > 0 {
-		l.diagnosticRequestWorkspace <- fmt.Sprintf(
-			"workspace/didChangeWatchedFiles (%s)", strings.Join(regoFiles, ", "))
+		l.lintWorkspaceJobs <- lintWorkspaceJob{
+			Reason: fmt.Sprintf("workspace/didChangeWatchedFiles (%s)", strings.Join(regoFiles, ", ")),
+		}
 	}
 
 	return struct{}{}, nil
 }
 
 func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string) error {
+	fileDiags, ok := l.cache.GetFileDiagnostics(fileURI)
+	if !ok {
+		fileDiags = []types.Diagnostic{}
+	}
+
 	resp := types.FileDiagnostics{
-		Items: l.cache.GetAllDiagnosticsForURI(fileURI),
 		URI:   fileURI,
+		Items: fileDiags,
 	}
 
 	if err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp); err != nil {

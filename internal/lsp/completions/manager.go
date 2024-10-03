@@ -29,7 +29,7 @@ func NewManager(c *cache.Cache, opts *ManagerOptions) *Manager {
 	return &Manager{c: c, opts: opts}
 }
 
-func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
+func NewDefaultManager(ctx context.Context, c *cache.Cache, store storage.Store) *Manager {
 	m := NewManager(c, &ManagerOptions{})
 
 	m.RegisterProvider(&providers.BuiltIns{})
@@ -38,7 +38,7 @@ func NewDefaultManager(c *cache.Cache, store storage.Store) *Manager {
 	m.RegisterProvider(&providers.RuleHeadKeyword{})
 	m.RegisterProvider(&providers.Input{})
 
-	m.RegisterProvider(providers.NewPolicy(store))
+	m.RegisterProvider(providers.NewPolicy(ctx, store))
 
 	return m
 }

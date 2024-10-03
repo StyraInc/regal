@@ -53,12 +53,13 @@ type Linter struct {
 	enable               []string
 	enableCategory       []string
 	ignoreFiles          []string
-	additionalAggregates map[string][]report.Aggregate
+	overriddenAggregates map[string][]report.Aggregate
+	useCollectQuery      bool
 	debugMode            bool
+	exportAggregates     bool
 	disableAll           bool
 	enableAll            bool
 	profiling            bool
-	populateAggregates   bool
 }
 
 //nolint:gochecknoglobals
@@ -216,20 +217,28 @@ func (l Linter) WithRootDir(rootDir string) Linter {
 	return l
 }
 
-// WithAlwaysAggregate enables the population of aggregate data even when
-// linting a single file. This is useful when needing to incrementally build
+// WithExportAggregates enables the setting of intermediate aggregate data
+// on the final report. This is useful when you want to collect and
 // aggregate state from multiple different linting runs.
-func (l Linter) WithAlwaysAggregate(enabled bool) Linter {
-	l.populateAggregates = enabled
+func (l Linter) WithExportAggregates(enabled bool) Linter {
+	l.exportAggregates = enabled
 
 	return l
 }
 
-// WithAggregates supplies additional aggregate data to a linter instance.
+// WithCollectQuery forcibly enables the collect query even when there is
+// only one file to lint.
+func (l Linter) WithCollectQuery(enabled bool) Linter {
+	l.useCollectQuery = enabled
+
+	return l
+}
+
+// WithAggregates supplies aggregate data to a linter instance.
 // Likely generated in a previous run, and used to provide a global context to
 // a subsequent run of a single file lint.
 func (l Linter) WithAggregates(aggregates map[string][]report.Aggregate) Linter {
-	l.additionalAggregates = aggregates
+	l.overriddenAggregates = aggregates
 
 	return l
 }
@@ -240,7 +249,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	finalReport := report.Report{}
 
-	if len(l.inputPaths) == 0 && l.inputModules == nil {
+	if len(l.inputPaths) == 0 && l.inputModules == nil && len(l.overriddenAggregates) == 0 {
 		return report.Report{}, errors.New("nothing provided to lint")
 	}
 
@@ -335,12 +344,13 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		}
 	}
 
-	if len(input.FileNames) > 1 || len(l.additionalAggregates) > 0 {
-		allAggregates := make(map[string][]report.Aggregate)
-		for k, aggregates := range l.additionalAggregates {
+	allAggregates := make(map[string][]report.Aggregate)
+
+	if len(l.overriddenAggregates) > 0 {
+		for k, aggregates := range l.overriddenAggregates {
 			allAggregates[k] = append(allAggregates[k], aggregates...)
 		}
-
+	} else if len(input.FileNames) > 1 {
 		for k, aggregates := range goReport.Aggregates {
 			allAggregates[k] = append(allAggregates[k], aggregates...)
 		}
@@ -348,7 +358,9 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		for k, aggregates := range regoReport.Aggregates {
 			allAggregates[k] = append(allAggregates[k], aggregates...)
 		}
+	}
 
+	if len(allAggregates) > 0 {
 		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
@@ -364,7 +376,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		NumViolations: len(finalReport.Violations),
 	}
 
-	if l.populateAggregates {
+	if l.exportAggregates {
 		finalReport.Aggregates = make(map[string][]report.Aggregate)
 		for k, aggregates := range goReport.Aggregates {
 			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
@@ -390,9 +402,10 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	return finalReport, nil
 }
 
-// DetermineEnabledRules returns the list of rules that are enabled based on the supplied configuration.
-// This makes use of the Rego and Go rule settings to produce a single list of the rules that are to be run
-// on this linter instance.
+// DetermineEnabledRules returns the list of rules that are enabled based on
+// the supplied configuration. This makes use of the Rego and Go rule settings
+// to produce a single list of the rules that are to be run on this linter
+// instance.
 func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 	enabledRules := make([]string, 0)
 
@@ -405,10 +418,91 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 		enabledRules = append(enabledRules, rule.Name())
 	}
 
+	conf, err := l.GetConfig()
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	l.dataBundle = &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{"internal"},
+			Metadata: map[string]any{"name": "internal"},
+		},
+		Data: map[string]any{
+			"internal": map[string]any{
+				"combined_config": config.ToMap(*conf),
+				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+			},
+		},
+	}
+
 	queryStr := `[rule |
-	data.regal.rules[cat][rule]
-	data.regal.config.for_rule(cat, rule).level != "ignore"
-]`
+        data.regal.rules[cat][rule]
+        data.regal.config.for_rule(cat, rule).level != "ignore"
+    ]`
+
+	query := ast.MustParseBody(queryStr)
+
+	regoArgs, err := l.prepareRegoArgs(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query %s: %w", queryStr, err)
+	}
+
+	rs, err := rego.New(regoArgs...).Eval(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed evaluating query %s: %w", queryStr, err)
+	}
+
+	if len(rs) != 1 || len(rs[0].Expressions) != 1 {
+		return nil, fmt.Errorf("expected exactly one expression, got %d", len(rs[0].Expressions))
+	}
+
+	list, ok := rs[0].Expressions[0].Value.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected list, got %T", rs[0].Expressions[0].Value)
+	}
+
+	for _, item := range list {
+		rule, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string, got %T", item)
+		}
+
+		enabledRules = append(enabledRules, rule)
+	}
+
+	slices.Sort(enabledRules)
+
+	return enabledRules, nil
+}
+
+// DetermineEnabledAggregateRules returns the list of aggregate rules that are
+// enabled based on the configuration. This does not include any go rules.
+func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, error) {
+	enabledRules := make([]string, 0)
+
+	conf, err := l.GetConfig()
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	l.dataBundle = &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{"internal"},
+			Metadata: map[string]any{"name": "internal"},
+		},
+		Data: map[string]any{
+			"internal": map[string]any{
+				"combined_config": config.ToMap(*conf),
+				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+			},
+		},
+	}
+
+	queryStr := `[rule |
+        data.regal.rules[cat][rule].aggregate
+        data.regal.config.for_rule(cat, rule).level != "ignore"
+    ]`
 
 	query := ast.MustParseBody(queryStr)
 
@@ -454,7 +548,7 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
 	}
 
-	aggregate := report.Report{}
+	goReport := report.Report{}
 
 	for _, rule := range goRules {
 		inp, err := inputForRule(input, rule)
@@ -467,10 +561,10 @@ func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.
 			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
 		}
 
-		aggregate.Violations = append(aggregate.Violations, result.Violations...)
+		goReport.Violations = append(goReport.Violations, result.Violations...)
 	}
 
-	return aggregate, err
+	return goReport, err
 }
 
 func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
@@ -708,7 +802,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	defer cancel()
 
 	var query ast.Body
-	if len(input.FileNames) > 1 || l.populateAggregates {
+	if len(input.FileNames) > 1 || l.useCollectQuery {
 		query = lintAndCollectQuery
 	} else {
 		query = lintQuery
@@ -724,9 +818,9 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
 	}
 
-	aggregate := report.Report{}
-	aggregate.Aggregates = make(map[string][]report.Aggregate)
-	aggregate.IgnoreDirectives = make(map[string]map[string][]string)
+	regoReport := report.Report{}
+	regoReport.Aggregates = make(map[string][]report.Aggregate)
+	regoReport.IgnoreDirectives = make(map[string]map[string][]string)
 
 	var wg sync.WaitGroup
 
@@ -789,19 +883,19 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			}
 
 			mu.Lock()
-			aggregate.Violations = append(aggregate.Violations, result.Violations...)
-			aggregate.Notices = append(aggregate.Notices, result.Notices...)
+			regoReport.Violations = append(regoReport.Violations, result.Violations...)
+			regoReport.Notices = append(regoReport.Notices, result.Notices...)
 
 			for k := range result.Aggregates {
-				aggregate.Aggregates[k] = append(aggregate.Aggregates[k], result.Aggregates[k]...)
+				regoReport.Aggregates[k] = append(regoReport.Aggregates[k], result.Aggregates[k]...)
 			}
 
 			for k := range result.IgnoreDirectives {
-				aggregate.IgnoreDirectives[k] = result.IgnoreDirectives[k]
+				regoReport.IgnoreDirectives[k] = result.IgnoreDirectives[k]
 			}
 
 			if l.profiling {
-				aggregate.AddProfileEntries(result.AggregateProfile)
+				regoReport.AddProfileEntries(result.AggregateProfile)
 			}
 			mu.Unlock()
 		}(name)
@@ -818,7 +912,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	case err := <-errCh:
 		return report.Report{}, fmt.Errorf("error encountered in rule evaluation %w", err)
 	case <-doneCh:
-		return aggregate, nil
+		return regoReport, nil
 	}
 }
 

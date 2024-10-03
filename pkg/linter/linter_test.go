@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"os"
 	"path/filepath"
+	"slices"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown"
@@ -15,6 +17,7 @@ import (
 	"github.com/styrainc/regal/internal/test"
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -598,7 +601,79 @@ func TestEnabledRules(t *testing.T) {
 	}
 }
 
-func TestLintWithPopulateAggregates(t *testing.T) {
+func TestEnabledRulesWithConfig(t *testing.T) {
+	t.Parallel()
+
+	configFileBs := []byte(`
+rules:
+  style:
+    opa-fmt:
+      level: ignore # go rule
+  imports:
+    unresolved-import: # agg rule
+      level: ignore
+  idiomatic:
+    directory-package-mismatch: # non agg rule
+      level: ignore
+`)
+
+	var userConfig config.Config
+
+	if err := yaml.Unmarshal(configFileBs, &userConfig); err != nil {
+		t.Fatalf("failed to load config: %s", err)
+	}
+
+	linter := NewLinter().WithUserConfig(userConfig)
+
+	enabledRules, err := linter.DetermineEnabledRules(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	enabledAggRules, err := linter.DetermineEnabledAggregateRules(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(enabledRules) == 0 {
+		t.Fatalf("expected enabledRules, got none")
+	}
+
+	if slices.Contains(enabledRules, "directory-package-mismatch") {
+		t.Errorf("did not expect directory-package-mismatch to be in enabled rules")
+	}
+
+	if slices.Contains(enabledRules, "opa-fmt") {
+		t.Errorf("did not expect opa-fmt to be in enabled rules")
+	}
+
+	if slices.Contains(enabledAggRules, "unresolved-import") {
+		t.Errorf("did not expect unresolved-import to be in enabled aggregate rules")
+	}
+}
+
+func TestEnabledAggregateRules(t *testing.T) {
+	t.Parallel()
+
+	linter := NewLinter().
+		WithDisableAll(true).
+		WithEnabledRules("opa-fmt", "unresolved-import", "use-assignment-operator")
+
+	enabledRules, err := linter.DetermineEnabledAggregateRules(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(enabledRules) != 1 {
+		t.Fatalf("expected 1 enabled rules, got %d", len(enabledRules))
+	}
+
+	if enabledRules[0] != "unresolved-import" {
+		t.Errorf("expected first enabled rule to be 'unresolved-import', got %q", enabledRules[0])
+	}
+}
+
+func TestLintWithCollectQuery(t *testing.T) {
 	t.Parallel()
 
 	input := test.InputPolicy("p.rego", `package p
@@ -609,8 +684,8 @@ import data.foo.bar.unresolved
 	linter := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithAlwaysAggregate(true).
+		WithCollectQuery(true).     // needed since we have a single file input
+		WithExportAggregates(true). // needed to be able to test the aggregates are set
 		WithInputModules(&input)
 
 	result := testutil.Must(linter.Lint(context.Background()))(t)
@@ -624,41 +699,64 @@ import data.foo.bar.unresolved
 	}
 }
 
-func TestLintWithAggregates(t *testing.T) {
+func TestLintWithCollectQueryAndAggregates(t *testing.T) {
 	t.Parallel()
 
-	contents := `package p
+	files := map[string]string{
+		"foo.rego": `package foo
 
-import data.foo.bar.unresolved
-`
+import data.unresolved`,
+		"bar.rego": `package foo
 
-	input := test.InputPolicy("p.rego", contents)
+import data.unresolved`,
+		"baz.rego": `package foo
+
+import data.unresolved`,
+	}
+
+	allAggregates := make(map[string][]report.Aggregate)
+
+	for file, content := range files {
+		input := test.InputPolicy(file, content)
+
+		linter := NewLinter().
+			WithDisableAll(true).
+			WithEnabledRules("unresolved-import").
+			WithCollectQuery(true). // runs collect for a single file input
+			WithExportAggregates(true).
+			WithInputModules(&input)
+
+		result := testutil.Must(linter.Lint(context.Background()))(t)
+
+		for k, aggs := range result.Aggregates {
+			allAggregates[k] = append(allAggregates[k], aggs...)
+		}
+	}
 
 	linter := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithAlwaysAggregate(true).
-		WithInputModules(&input)
+		WithAggregates(allAggregates)
 
-	result1 := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(context.Background()))(t)
 
-	linter2 := NewLinter().
-		WithDisableAll(true).
-		WithEnabledRules("unresolved-import").
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithAggregates(result1.Aggregates).
-		WithInputModules(&input)
-
-	result := testutil.Must(linter2.Lint(context.Background()))(t)
-
-	if len(result.Violations) != 1 {
+	if len(result.Violations) != 3 {
 		t.Fatalf("expected one violation, got %d", len(result.Violations))
 	}
 
-	violation := result.Violations[0]
+	foundFiles := []string{}
 
-	if violation.Title != "unresolved-import" {
-		t.Errorf("expected violation to be 'unresolved-import', got %q", violation.Title)
+	for _, v := range result.Violations {
+		if v.Title != "unresolved-import" {
+			t.Errorf("unexpected title: %s", v.Title)
+		}
+
+		foundFiles = append(foundFiles, v.Location.File)
+	}
+
+	slices.Sort(foundFiles)
+
+	if exp, got := []string{"bar.rego", "baz.rego", "foo.rego"}, foundFiles; !slices.Equal(exp, got) {
+		t.Fatalf("unexpected files: %v", got)
 	}
 }

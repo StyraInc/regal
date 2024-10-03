@@ -47,7 +47,7 @@ allow if {
 		},
 	}, inmem.OptRoundTripOnWrite(false))
 
-	locals := NewPolicy(store)
+	locals := NewPolicy(context.Background(), store)
 
 	params := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
@@ -109,7 +109,7 @@ import data.example
 		},
 	})
 
-	locals := NewPolicy(store)
+	locals := NewPolicy(context.Background(), store)
 	fileEdited := `package example2
 
 import rego.v1

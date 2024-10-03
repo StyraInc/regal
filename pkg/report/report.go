@@ -61,6 +61,42 @@ type Notice struct {
 // while working with large Rego code repositories.
 type Aggregate map[string]any
 
+func (a Aggregate) SourceFile() string {
+	source, ok := a["aggregate_source"].(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	file, ok := source["file"].(string)
+	if !ok {
+		return ""
+	}
+
+	return file
+}
+
+// IndexKey is the category/title of the rule that generated the aggregate.
+// This key is generated in Rego during linting, this function replicates the
+// functionality in Go for use in the cache when indexing aggregates.
+func (a Aggregate) IndexKey() string {
+	rule, ok := a["rule"].(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	cat, ok := rule["category"].(string)
+	if !ok {
+		return ""
+	}
+
+	title, ok := rule["title"].(string)
+	if !ok {
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s", cat, title)
+}
+
 type Summary struct {
 	FilesScanned  int `json:"files_scanned"`
 	FilesFailed   int `json:"files_failed"`

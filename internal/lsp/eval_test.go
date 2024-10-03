@@ -14,7 +14,7 @@ import (
 func TestEvalWorkspacePath(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(&LanguageServerOptions{ErrorLog: os.Stderr})
+	ls := NewLanguageServer(context.Background(), &LanguageServerOptions{ErrorLog: os.Stderr})
 
 	policy1 := `package policy1
 

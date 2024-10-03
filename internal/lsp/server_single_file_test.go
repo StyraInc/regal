@@ -308,8 +308,9 @@ allow := neo4j.q
 		select {
 		case <-ticker.C:
 			// Create a new context with timeout for each request, this is
-			// timed out after 1s as GHA runner sometimes takes a while.
-			reqCtx, reqCtxCancel := context.WithTimeout(ctx, time.Second)
+			// timed out after using the default as the GHA runner is super
+			// slow in the race detector
+			reqCtx, reqCtxCancel := context.WithTimeout(ctx, determineTimeout())
 
 			resp := make(map[string]any)
 			err := connClient.Call(reqCtx, "textDocument/completion", types.CompletionParams{

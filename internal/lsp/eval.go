@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
 
+	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 )
@@ -27,12 +29,18 @@ func (l *LanguageServer) Eval(
 	modules := l.cache.GetAllModules()
 	moduleFiles := make([]bundle.ModuleFile, 0, len(modules))
 
+	var hasCustomRules bool
+
 	for fileURI, module := range modules {
 		moduleFiles = append(moduleFiles, bundle.ModuleFile{
 			URL:    fileURI,
 			Parsed: module,
 			Path:   uri.ToPath(l.clientIdentifier, fileURI),
 		})
+
+		if strings.Contains(module.Package.Path.String(), "custom.regal.rules") {
+			hasCustomRules = true
+		}
 	}
 
 	allBundles := make(map[string]bundle.Bundle)
@@ -57,6 +65,12 @@ func (l *LanguageServer) Eval(
 		Modules: moduleFiles,
 		// Data is all sourced from the dataBundles instead
 		Data: make(map[string]any),
+	}
+
+	if hasCustomRules {
+		// If someone evaluates a custom Regal rule, provide them the Regal bundle
+		// in order to make all Regal functions available
+		allBundles["regal"] = rbundle.LoadedBundle
 	}
 
 	regoArgs := prepareRegoArgs(ast.MustParseBody(query), allBundles, printHook)

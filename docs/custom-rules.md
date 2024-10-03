@@ -83,33 +83,32 @@ Using `regal parse policy.rego`, we're provided with the AST of the above policy
 
 ```json
 {
-  "regal": {
-    "file": {
-      "name": "p.rego",
-      "lines": [
-        "package policy",
-        ""
-      ],
-      "abs": "/Users/anderseknert/git/styra/regal/p.rego"
-    },
-    "environment": {
-      "path_separator": "/"
-    }
-  },
   "package": {
-    "location": "2:1:cGFja2FnZQ==",
+    "location": "1:1:1:8",
     "path": [
       {
-        "location": "2:9:cG9saWN5",
         "type": "var",
         "value": "data"
       },
       {
-        "location": "2:9:cG9saWN5",
+        "location": "1:9:1:15",
         "type": "string",
         "value": "policy"
       }
     ]
+  },
+  "regal": {
+    "file": {
+      "name": "policy.rego",
+      "lines": [
+        "package policy",
+        ""
+      ],
+      "abs": "/Users/anderseknert/tmp/custom/policy.rego"
+    },
+    "environment": {
+      "path_separator": "/"
+    }
   }
 }
 ```
@@ -185,16 +184,67 @@ In addition to making use of the `regal parse` command to inspect the AST of a p
 [language server](https://docs.styra.com/regal/language-server) for rule development provides the absolute best rule
 development experience.
 
+#### Code Lens for Evaluation
+
 If you're using VS Code and the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa), you may
 use the [Code Lens for Evaluation](https://docs.styra.com/regal/language-server#code-lenses-evaluation) to directly
 evaluate packages and rules using the `input.json` file as input, and see the result directly in your editor on the
 line you clicked to evaluate.
+
+To start evaluating a policy against your custom rule. First turn the parse result of the policy into an input file:
+
+```shell
+regal parse path/to/policy.rego > input.json
+```
+
+You should now be able evaluate your custom rule against the `input.json` AST:
+
+![Code Lens for Evaluation of custom rule](./assets/evalcustom.png)
+
+**Tips:**
+
+- You can hover the inlined result to see the full output
+- Calls to `print` inside rule bodies will have the print output displayed on the same line
 
 As another convenience, any `.rego` file where the first comment in the policy is `# regal eval:use-as-input` will have
 the evaluation feature automatically use the AST of the file as input. This allows building queries against the AST of
 the policy you're working on, providing an extremely fast feedback loop for developing new rules!
 
 ![Use AST of file as input](./assets/lsp/eval_use_as_input.png)
+
+#### Test-Driven Development
+
+Using a test-driven approach to custom rule development is a great way to both understand how your rule works, and to
+assert that it works as expected even as you make changes to the code. Use the `regal test` command the same way as you
+would use `opa test`:
+
+```shell
+regal test .regal/rules
+```
+
+To debug failures in your test, the `--var-values` flag can help by providing more information about which values
+failed to match the expected output. You can also use the `print` function anywhere in your policy, which will have
+it's output printed by the test runner.
+
+Tests commonly first parse a policy, then provide that as input to the rule being tested. You can either use the
+built-in `regal.parse_module(name, policy)` function to parse a policy, or one of the provided helpers in the
+`regal.ast` package:
+
+Using `ast.with_rego_v1(policy)` will have a package declararation and `import rego.v1` added to the policy, allowing
+you to get straight to what you actually want to test for:
+
+```rego
+test_fail_constant_condition if {
+    module := ast.with_rego_v1(`allow if true`)
+    report := rule.report with input as module
+
+    count(report) == 1
+    some violation in report
+    violation.title == "constant-conditoon"
+}
+```
+
+The `ast.policy(policy)` adds only a package declaration and not `import rego.v1`.
 
 ## Aggregate Rules
 

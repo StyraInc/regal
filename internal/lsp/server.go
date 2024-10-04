@@ -711,8 +711,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				// handle this ourselves as it's a rename and not a content edit
 				fixed = false
 			case "regal.debug":
-				if l.clientIdentifier != clients.IdentifierVSCode {
-					l.logError(errors.New("regal.debug command is only supported in VSCode"))
+				if l.clientIdentifier != clients.IdentifierVSCode && l.clientIdentifier != clients.IdentifierNeovim {
+					l.logError(errors.New("regal.debug command is only supported in VSCode and Neovim"))
 
 					break
 				}

@@ -711,12 +711,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				// handle this ourselves as it's a rename and not a content edit
 				fixed = false
 			case "regal.debug":
-				if l.clientIdentifier != clients.IdentifierVSCode {
-					l.logError(errors.New("regal.debug command is only supported in VSCode"))
-
-					break
-				}
-
 				if len(params.Arguments) != 3 {
 					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
 
@@ -854,7 +848,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					target = strings.TrimPrefix(path, currentModule.Package.Path.String()+".")
 				}
 
-				if l.clientIdentifier == clients.IdentifierVSCode {
+				if l.clientInitializationOptions.EvalCodelensDisplayInline != nil &&
+					*l.clientInitializationOptions.EvalCodelensDisplayInline {
 					responseParams := map[string]any{
 						"result": result,
 						"line":   line,
@@ -1654,7 +1649,25 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 		return nil, nil // return a null response, as per the spec
 	}
 
-	return rego.CodeLenses(ctx, params.TextDocument.URI, contents, module) //nolint:wrapcheck
+	ls, err := rego.CodeLenses(ctx, params.TextDocument.URI, contents, module)
+	if err != nil {
+		return nil, err
+	}
+
+	if l.clientInitializationOptions.EnableDebugCodelens != nil &&
+		*l.clientInitializationOptions.EnableDebugCodelens {
+		return ls, nil
+	}
+
+	// filter out `regal.debug` codelens
+	lenses := make([]types.CodeLens, 0, len(ls))
+	for _, lens := range ls {
+		if lens.Command.Command != "regal.debug" {
+			lenses = append(lenses, lens)
+		}
+	}
+
+	return lenses, nil
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(

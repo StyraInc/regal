@@ -20,7 +20,9 @@ type FileEvent struct {
 }
 
 type InitializationOptions struct {
-	Formatter *string `json:"formatter,omitempty"`
+	Formatter                 *string `json:"formatter,omitempty"`
+	EnableDebugCodelens       *bool   `json:"enableDebugCodelens,omitempty"`
+	EvalCodelensDisplayInline *bool   `json:"evalCodelensDisplayInline,omitempty"`
 }
 
 type InitializeParams struct {

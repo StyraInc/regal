@@ -20,7 +20,15 @@ type FileEvent struct {
 }
 
 type InitializationOptions struct {
+	// Formatter specifies the formatter to use. Options: 'opa fmt' (default),
+	// 'opa fmt --rego-v1' or 'regal fix'.
 	Formatter *string `json:"formatter,omitempty"`
+	// EnableDebugCodelens, if set, will enable debug codelens
+	// when clients request code lenses for a file.
+	EnableDebugCodelens *bool `json:"enableDebugCodelens,omitempty"`
+	// EvalCodelensDisplayInline, if set, will show evaluation results natively
+	// in the calling editor, rather than in an output file.
+	EvalCodelensDisplayInline *bool `json:"evalCodelensDisplayInline,omitempty"`
 }
 
 type InitializeParams struct {

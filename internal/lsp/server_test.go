@@ -174,13 +174,14 @@ func createAndInitServer(
 
 func createClientHandler(
 	t *testing.T,
+	logger io.Writer,
 	messages map[string]chan []string,
 ) func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	t.Helper()
 
 	return func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method != "textDocument/publishDiagnostics" {
-			t.Log("unexpected request method:", req.Method)
+			fmt.Fprintln(logger, "unexpected request method:", req.Method)
 
 			return struct{}{}, nil
 		}
@@ -200,7 +201,7 @@ func createClientHandler(
 		slices.Sort(violations)
 
 		fileBase := filepath.Base(requestData.URI)
-		t.Log("queue", fileBase, len(messages[fileBase]))
+		fmt.Fprintln(logger, "queue", fileBase, len(messages[fileBase]))
 
 		select {
 		case messages[fileBase] <- violations:

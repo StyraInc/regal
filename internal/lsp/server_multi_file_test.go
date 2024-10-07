@@ -54,15 +54,17 @@ ignore:
 `,
 	}
 
+	logger := newTestLogger(t)
+
 	messages := createMessageChannels(files)
 
-	clientHandler := createClientHandler(t, messages)
+	clientHandler := createClientHandler(t, logger, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
+	_, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
 	if err != nil {
 		t.Fatalf("failed to create and init language server: %s", err)
 	}

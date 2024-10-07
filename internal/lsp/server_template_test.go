@@ -41,14 +41,6 @@ func TestTemplateContentsForFile(t *testing.T) {
 			},
 			ExpectedError: "file on disk already has contents",
 		},
-		"empty file is templated as main when no root": {
-			FileKey:           "foo/bar.rego",
-			CacheFileContents: "",
-			DiskContents: map[string]string{
-				"foo/bar.rego": "",
-			},
-			ExpectedContents: "package main\n\nimport rego.v1\n",
-		},
 		"empty file is templated based on root": {
 			FileKey:           "foo/bar.rego",
 			CacheFileContents: "",
@@ -100,7 +92,6 @@ func TestTemplateContentsForFile(t *testing.T) {
 
 			ctx := context.Background()
 
-			// create a new language server
 			s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
 			s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
@@ -121,6 +112,73 @@ func TestTemplateContentsForFile(t *testing.T) {
 				t.Fatalf("expected contents to be\n%s\ngot\n%s", tc.ExpectedContents, newContents)
 			}
 		})
+	}
+}
+
+func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
+	t.Parallel()
+
+	td := t.TempDir()
+
+	err := os.MkdirAll(filepath.Join(td, ".regal"), 0o755)
+	if err != nil {
+		t.Fatalf("failed to create directory %s: %s", filepath.Join(td, ".regal"), err)
+	}
+
+	err = os.WriteFile(filepath.Join(td, ".regal/config.yaml"), []byte{}, 0o600)
+	if err != nil {
+		t.Fatalf("failed to create file %s: %s", filepath.Join(td, ".regal"), err)
+	}
+
+	ctx := context.Background()
+
+	s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
+	s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+
+	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo.rego"))
+
+	s.cache.SetFileContents(fileURI, "")
+
+	_, err = s.templateContentsForFile(fileURI)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	if !strings.Contains(err.Error(), "this function does not template files in the workspace root") {
+		t.Fatalf("expected error about root templating, got %s", err.Error())
+	}
+}
+
+func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
+	t.Parallel()
+
+	td := t.TempDir()
+
+	ctx := context.Background()
+
+	s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
+	s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+
+	err := os.MkdirAll(filepath.Join(td, "foo"), 0o755)
+	if err != nil {
+		t.Fatalf("failed to create directory %s: %s", filepath.Join(td, "foo"), err)
+	}
+
+	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo/bar.rego"))
+
+	s.cache.SetFileContents(fileURI, "")
+
+	newContents, err := s.templateContentsForFile(fileURI)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	exp := `package foo
+
+import rego.v1
+`
+	if exp != newContents {
+		t.Errorf("unexpected content: %s, want %s", newContents, exp)
 	}
 }
 

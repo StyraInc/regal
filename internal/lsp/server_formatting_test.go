@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"path/filepath"
 	"testing"
 
 	"github.com/sourcegraph/jsonrpc2"
@@ -30,7 +31,7 @@ func TestFormatting(t *testing.T) {
 		t.Fatalf("failed to create and init language server: %s", err)
 	}
 
-	mainRegoURI := fileURIScheme + tempDir + mainRegoFileName
+	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main/main.rego")
 
 	// Simple as possible — opa fmt should just remove a newline
 	content := `package main

@@ -986,12 +986,16 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case job := <-l.templateFileJobs:
+			// disable the templating feature for files in the workspace root.
+			if filepath.Dir(uri.ToPath(l.clientIdentifier, job.URI)) ==
+				uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+				continue
+			}
+
 			// determine the new contents for the file, if permitted
 			newContents, err := l.templateContentsForFile(job.URI)
 			if err != nil {
-				if !errors.Is(err, &templatingInRootError{}) {
-					l.logError(fmt.Errorf("failed to template new file: %w", err))
-				}
+				l.logError(fmt.Errorf("failed to template new file: %w", err))
 
 				continue
 			}
@@ -1085,13 +1089,14 @@ func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }
 
-type templatingInRootError struct{}
-
-func (*templatingInRootError) Error() string {
-	return "templating is not supported in the root of the workspace"
-}
-
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
+	// this function should not be called with files in the root, but if it is,
+	// then it is an error to prevent unwanted behavior.
+	if filepath.Dir(uri.ToPath(l.clientIdentifier, fileURI)) ==
+		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+		return "", errors.New("this function does not template files in the workspace root")
+	}
+
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
 		return "", fmt.Errorf("failed to get file contents for URI %q", fileURI)
@@ -1099,11 +1104,6 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 
 	if content != "" {
 		return "", errors.New("file already has contents, templating not allowed")
-	}
-
-	if filepath.Dir(uri.ToPath(l.clientIdentifier, fileURI)) ==
-		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
-		return "", &templatingInRootError{}
 	}
 
 	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
@@ -2047,13 +2047,17 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		oldContent, ok = l.cache.GetFileContents(params.TextDocument.URI)
 	}
 
+	// disable the templating feature for files in the workspace root.
+	if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
+		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+		return []types.TextEdit{}, nil
+	}
+
 	// if the file is empty, then the formatters will fail, so we template
 	// instead
 	if oldContent == "" {
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
-		if err != nil && errors.Is(err, &templatingInRootError{}) {
-			return nil, nil
-		} else if err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
 		}
 

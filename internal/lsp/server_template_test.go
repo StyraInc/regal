@@ -3,7 +3,6 @@ package lsp
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -145,7 +144,7 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 		t.Fatalf("expected error")
 	}
 
-	if !errors.Is(err, &templatingInRootError{}) {
+	if !strings.Contains(err.Error(), "this function does not template files in the workspace root") {
 		t.Fatalf("expected error to be templatingInRootError, got %T", err)
 	}
 }

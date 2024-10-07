@@ -127,7 +127,7 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 
 	err = os.WriteFile(filepath.Join(td, ".regal/config.yaml"), []byte{}, 0o600)
 	if err != nil {
-		t.Fatalf("failed to create directory %s: %s", filepath.Join(td, ".regal"), err)
+		t.Fatalf("failed to create file %s: %s", filepath.Join(td, ".regal"), err)
 	}
 
 	ctx := context.Background()
@@ -145,7 +145,7 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 	}
 
 	if !strings.Contains(err.Error(), "this function does not template files in the workspace root") {
-		t.Fatalf("expected error to be templatingInRootError, got %T", err)
+		t.Fatalf("expected error about root templating, got %s", err.Error())
 	}
 }
 

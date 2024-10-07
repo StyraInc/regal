@@ -1649,25 +1649,26 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 		return nil, nil // return a null response, as per the spec
 	}
 
-	ls, err := rego.CodeLenses(ctx, params.TextDocument.URI, contents, module)
+	lenses, err := rego.CodeLenses(ctx, params.TextDocument.URI, contents, module)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get code lenses: %w", err)
 	}
 
 	if l.clientInitializationOptions.EnableDebugCodelens != nil &&
 		*l.clientInitializationOptions.EnableDebugCodelens {
-		return ls, nil
+		return lenses, nil
 	}
 
 	// filter out `regal.debug` codelens
-	lenses := make([]types.CodeLens, 0, len(ls))
-	for _, lens := range ls {
+	filteredLenses := make([]types.CodeLens, 0, len(lenses))
+
+	for _, lens := range lenses {
 		if lens.Command.Command != "regal.debug" {
 			lenses = append(lenses, lens)
 		}
 	}
 
-	return lenses, nil
+	return filteredLenses, nil
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(

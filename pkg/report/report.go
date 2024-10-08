@@ -2,13 +2,7 @@ package report
 
 import (
 	"fmt"
-	"io"
 	"sort"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/olekukonko/tablewriter"
 )
 
 // RelatedResource provides documentation on a violation.
@@ -165,54 +159,6 @@ func (r *Report) AggregateProfileToSortedProfile(numResults int) {
 	}
 
 	r.Profile = r.Profile[:numResults]
-}
-
-// TODO: This does not belong here and is only for internal testing purposes at this point in time. Profile reports are
-// currently only publicly available for the JSON reporter. Some variation of this will eventually be moved to the table
-// reporter. (this code borrowed from OPA).
-func (r Report) printProfile(w io.Writer) { //nolint:unused
-	tableProfile := generateTableProfile(w)
-
-	for i, rs := range r.Profile {
-		timeNs := time.Duration(rs.TotalTimeNs) * time.Nanosecond
-		line := []string{
-			timeNs.String(),
-			strconv.Itoa(rs.NumEval),
-			strconv.Itoa(rs.NumRedo),
-			strconv.Itoa(rs.NumGenExpr),
-			rs.Location,
-		}
-		tableProfile.Append(line)
-
-		if i == 0 {
-			tableProfile.SetFooter([]string{"", "", "", "", ""})
-		}
-	}
-
-	if tableProfile.NumLines() > 0 {
-		tableProfile.Render()
-	}
-}
-
-func generateTableWithKeys(writer io.Writer, keys ...string) *tablewriter.Table { //nolint:unused
-	table := tablewriter.NewWriter(writer)
-	aligns := make([]int, 0, len(keys))
-	hdrs := make([]string, 0, len(keys))
-
-	for _, k := range keys {
-		hdrs = append(hdrs, strings.Title(k)) //nolint:staticcheck // SA1019, no unicode here
-		aligns = append(aligns, tablewriter.ALIGN_LEFT)
-	}
-
-	table.SetHeader(hdrs)
-	table.SetAlignment(tablewriter.ALIGN_CENTER)
-	table.SetColumnAlignment(aligns)
-
-	return table
-}
-
-func generateTableProfile(writer io.Writer) *tablewriter.Table { //nolint:unused
-	return generateTableWithKeys(writer, "Time", "Num Eval", "Num Redo", "Num Gen Expr", "Location")
 }
 
 // ViolationsFileCount returns the number of files containing violations.

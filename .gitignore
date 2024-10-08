@@ -10,3 +10,5 @@ dist/
 # ends up unless the client supports presenting it in a different way.
 input.json
 output.json
+
+build/node_modules/

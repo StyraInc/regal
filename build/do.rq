@@ -87,6 +87,7 @@ job contains "tasks" if {
 #   - https://github.com/open-policy-agent/opa
 job contains "pr" if {
 	run("go mod tidy")
+	run("npm install --silent --prefix build")
 
 	build(true)
 

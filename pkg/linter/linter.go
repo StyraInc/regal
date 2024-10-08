@@ -883,6 +883,8 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			}
 
 			mu.Lock()
+			defer mu.Unlock()
+
 			regoReport.Violations = append(regoReport.Violations, result.Violations...)
 			regoReport.Notices = append(regoReport.Notices, result.Notices...)
 
@@ -897,7 +899,6 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 			if l.profiling {
 				regoReport.AddProfileEntries(result.AggregateProfile)
 			}
-			mu.Unlock()
 		}(name)
 	}
 

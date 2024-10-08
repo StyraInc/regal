@@ -826,7 +826,10 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 	var mu sync.Mutex
 
-	errCh := make(chan error)
+	// the error channel is buffered to prevent blocking
+	// caused by the context cancellation happening before
+	// errors are sent and the per-file goroutines can exit.
+	errCh := make(chan error, len(input.FileNames))
 	doneCh := make(chan bool)
 
 	for _, name := range input.FileNames {

@@ -170,14 +170,15 @@ e2e if {
 lint if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
-	run("markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("npx --prefix build dprint --config build/dprint.json check")
 }
 
 lint_ci if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
-	run("markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
-	run("dprint --config build/dprint.json check")
+	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("npx --prefix build dprint --config build/dprint.json check")
 }
 
 check_readme if {

@@ -167,6 +167,8 @@ func (l *LanguageServer) Handle(
 	conn *jsonrpc2.Conn,
 	req *jsonrpc2.Request,
 ) (result any, err error) {
+	l.logf(log.LevelDebug, "received request: %s", req.Method)
+
 	// null params are allowed, but only for certain methods
 	if req.Params == nil && req.Method != "shutdown" && req.Method != "exit" {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
@@ -260,6 +262,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case job := <-l.lintFileJobs:
+				l.logf(log.LevelDebug, "linting file %s (%s)", job.URI, job.Reason)
 				bis := l.builtinsForCurrentCapabilities()
 
 				// updateParse will not return an error when the parsing failed,
@@ -302,6 +305,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					// any other rules globally other than aggregate rules.
 					AggregateReportOnly: true,
 				}
+
+				l.logf(log.LevelDebug, "linting file %s done", job.URI)
 			}
 		}
 	}()
@@ -366,6 +371,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case job := <-workspaceLintRuns:
+				l.logf(log.LevelDebug, "linting workspace: %#v", job)
+
 				// if there are no parsed modules in the cache, then there is
 				// no need to run the aggregate report. This can happen if the
 				// server is very slow to start up.
@@ -398,6 +405,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 						l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 					}
 				}
+
+				l.log(log.LevelDebug, "linting workspace done")
 			}
 		}
 	}()

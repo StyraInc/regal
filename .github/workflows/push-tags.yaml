@@ -6,15 +6,18 @@ on:
       - v[0-9].**
 
 permissions:
-  # this is needed to create a release
-  contents: write
-  # this is needed to create artifacts in ghcr
-  packages: write
+  contents: read
 
 jobs:
   goreleaser:
     name: GoReleaser
     runs-on: ubuntu-22.04
+    permissions:
+      # this is needed to create a release
+      contents: write
+      # this is needed to create artifacts in ghcr
+      packages: write
+
     steps:
       - name: Check out code
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0

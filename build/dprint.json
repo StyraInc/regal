@@ -4,6 +4,7 @@
   },
   "json": {},
   "excludes": [
+    ".lsp/**",
     "**/testdata/**"
   ],
   "plugins": [

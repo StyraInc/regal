@@ -15,6 +15,7 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 )
@@ -47,7 +48,7 @@ func (l *LanguageServer) Eval(
 
 	for k, v := range dataBundles {
 		if v.Manifest.Roots == nil {
-			l.logError(fmt.Errorf("bundle %s has no roots and will be skipped", k))
+			l.logf(log.LevelMessage, "bundle %s has no roots and will be skipped", k)
 
 			continue
 		}

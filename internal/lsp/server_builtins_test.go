@@ -3,15 +3,20 @@ package lsp
 import (
 	"context"
 	"testing"
+
+	"github.com/styrainc/regal/internal/lsp/log"
 )
 
 // https://github.com/StyraInc/regal/issues/679
 func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(context.Background(), &LanguageServerOptions{
-		ErrorLog: newTestLogger(t),
-	})
+	logger := newTestLogger(t)
+
+	ls := NewLanguageServer(
+		context.Background(),
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
 
 	if err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo"); err != nil {
 		t.Fatal(err)

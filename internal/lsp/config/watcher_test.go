@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/styrainc/regal/internal/lsp/log"
 )
 
 func TestWatcher(t *testing.T) {
@@ -22,7 +24,9 @@ foo: bar
 		t.Fatal(err)
 	}
 
-	watcher := NewWatcher(&WatcherOpts{ErrorWriter: os.Stderr})
+	watcher := NewWatcher(&WatcherOpts{LogFunc: func(l log.Level, s string, a ...any) {
+		t.Logf(l.String()+": "+s, a...)
+	}})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

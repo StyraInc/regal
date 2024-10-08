@@ -18,6 +18,7 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util"
 )
@@ -119,7 +120,8 @@ func createAndInitServer(
 
 	// set up the server and client connections
 	ls := NewLanguageServer(ctx, &LanguageServerOptions{
-		ErrorLog:                 logger,
+		LogWriter:                logger,
+		LogLevel:                 log.LevelDebug,
 		WorkspaceDiagnosticsPoll: pollingInterval,
 	})
 
@@ -181,7 +183,7 @@ func createClientHandler(
 
 	return func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 		if req.Method != "textDocument/publishDiagnostics" {
-			fmt.Fprintln(logger, "unexpected request method:", req.Method)
+			fmt.Fprintln(logger, "createClientHandler: unexpected request method:", req.Method)
 
 			return struct{}{}, nil
 		}
@@ -201,7 +203,7 @@ func createClientHandler(
 		slices.Sort(violations)
 
 		fileBase := filepath.Base(requestData.URI)
-		fmt.Fprintln(logger, "queue", fileBase, len(messages[fileBase]))
+		fmt.Fprintln(logger, "createClientHandler: queue", fileBase, len(messages[fileBase]))
 
 		select {
 		case messages[fileBase] <- violations:

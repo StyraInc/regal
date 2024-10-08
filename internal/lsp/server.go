@@ -36,6 +36,7 @@ import (
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
 	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/hover"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -64,7 +65,13 @@ const (
 )
 
 type LanguageServerOptions struct {
-	ErrorLog io.Writer
+	// LogWriter is the io.Writer where all logged messages will be written.
+	LogWriter io.Writer
+
+	// log.Level controls the verbosity of the logs, with log.LevelOff, no messages
+	// are logged, log.LevelMessage logs only messages and errors, and log.LevelDebug
+	// Logs all messages.
+	LogLevel log.Level
 
 	// WorkspaceDiagnosticsPoll, if set > 0 will cause a full workspace lint
 	// to run on this interval. This is intended to be used where eventing
@@ -78,16 +85,18 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	c := cache.NewCache()
 	store := NewRegalStore()
 
-	ls := &LanguageServer{
+	var ls *LanguageServer
+	ls = &LanguageServer{
 		cache:                    c,
 		regoStore:                store,
-		errorLog:                 opts.ErrorLog,
+		logWriter:                opts.LogWriter,
+		logLevel:                 opts.LogLevel,
 		lintFileJobs:             make(chan lintFileJob, 10),
 		lintWorkspaceJobs:        make(chan lintWorkspaceJob, 10),
 		builtinsPositionJobs:     make(chan lintFileJob, 10),
 		commandRequest:           make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:         make(chan lintFileJob, 10),
-		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{ErrorWriter: opts.ErrorLog}),
+		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
 		completionsManager:       completions.NewDefaultManager(ctx, c, store),
 		webServer:                web.NewServer(c),
 		loadedBuiltins:           make(map[string]map[string]*ast.Builtin),
@@ -98,7 +107,8 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 }
 
 type LanguageServer struct {
-	errorLog io.Writer
+	logWriter io.Writer
+	logLevel  log.Level
 
 	regoStore storage.Store
 	conn      *jsonrpc2.Conn
@@ -255,7 +265,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				// updateParse will not return an error when the parsing failed,
 				// but only when it was impossible
 				if _, err := updateParse(ctx, l.cache, l.regoStore, job.URI, bis); err != nil {
-					l.logError(fmt.Errorf("failed to update module for %s: %w", job.URI, err))
+					l.logf(log.LevelMessage, "failed to update module for %s: %s", job.URI, err)
 
 					continue
 				}
@@ -271,13 +281,13 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					// of non aggregate rules
 					l.getEnabledNonAggregateRules(),
 				); err != nil {
-					l.logError(fmt.Errorf("failed to update file diagnostics: %w", err))
+					l.logf(log.LevelMessage, "failed to update file diagnostics: %s", err)
 
 					continue
 				}
 
 				if err := l.sendFileDiagnostics(ctx, job.URI); err != nil {
-					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+					l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 
 					continue
 				}
@@ -314,7 +324,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				// frequently, we stop adding to the channel if there already
 				// jobs set to preserve performance
 				if job.AggregateReportOnly && len(workspaceLintRuns) > workspaceLintRunBufferSize/2 {
-					fmt.Fprintln(l.errorLog, "rate limiting aggregate reports")
+					l.log(log.LevelDebug, "rate limiting aggregate reports")
 
 					continue
 				}
@@ -380,12 +390,12 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					targetRules,
 				)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to update all diagnostics: %w", err))
+					l.logf(log.LevelMessage, "failed to update all diagnostics: %s", err)
 				}
 
 				for fileURI := range l.cache.GetAllFiles() {
 					if err := l.sendFileDiagnostics(ctx, fileURI); err != nil {
-						l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+						l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 					}
 				}
 			}
@@ -419,7 +429,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 
 			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to update parse: %w", err))
+				l.logf(log.LevelMessage, "failed to update parse: %s", err)
 
 				continue
 			}
@@ -429,13 +439,13 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 			}
 
 			if err = hover.UpdateBuiltinPositions(l.cache, fileURI, bis); err != nil {
-				l.logError(fmt.Errorf("failed to update builtin positions: %w", err))
+				l.logf(log.LevelMessage, "failed to update builtin positions: %s", err)
 
 				continue
 			}
 
 			if err = hover.UpdateKeywordLocations(ctx, l.cache, fileURI); err != nil {
-				l.logError(fmt.Errorf("failed to update keyword positions: %w", err))
+				l.logf(log.LevelMessage, "failed to update keyword positions: %s", err)
 
 				continue
 			}
@@ -496,7 +506,7 @@ func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg con
 
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 	if err := l.configWatcher.Start(ctx); err != nil {
-		l.logError(fmt.Errorf("failed to start config watcher: %w", err))
+		l.logf(log.LevelMessage, "failed to start config watcher: %s", err)
 
 		return
 	}
@@ -508,7 +518,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		case path := <-l.configWatcher.Reload:
 			configFileBs, err := os.ReadFile(path)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to open config file: %w", err))
+				l.logf(log.LevelMessage, "failed to open config file: %s", err)
 
 				continue
 			}
@@ -517,14 +527,14 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			// EOF errors are ignored here as then we just use the default config
 			if err = yaml.Unmarshal(configFileBs, &userConfig); err != nil && !errors.Is(err, io.EOF) {
-				l.logError(fmt.Errorf("failed to reload config: %w", err))
+				l.logf(log.LevelMessage, "failed to reload config: %s", err)
 
 				continue
 			}
 
 			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, &userConfig)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to load config: %w", err))
+				l.logf(log.LevelMessage, "failed to load config: %s", err)
 
 				continue
 			}
@@ -535,7 +545,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			err = l.loadEnabledRulesFromConfig(ctx, mergedConfig)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to cache enabled rules: %w", err))
+				l.logf(log.LevelMessage, "failed to cache enabled rules: %s", err)
 			}
 
 			// Capabilities URL may have changed, so we should reload it.
@@ -548,7 +558,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			caps, err := capabilities.Lookup(ctx, capsURL)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to load capabilities for URL %q: %w", capsURL, err))
+				l.logf(log.LevelMessage, "failed to load capabilities for URL %q: %s", capsURL, err)
 
 				continue
 			}
@@ -576,7 +586,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				}
 
 				if err := RemoveFileMod(ctx, l.regoStore, k); err != nil {
-					l.logError(fmt.Errorf("failed to remove mod from store: %w", err))
+					l.logf(log.LevelMessage, "failed to remove mod from store: %s", err)
 				}
 			}
 
@@ -596,7 +606,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					// to start working right away without the need for a file content
 					// update to run updateParse.
 					if _, err = updateParse(ctx, l.cache, l.regoStore, k, bis); err != nil {
-						l.logError(fmt.Errorf("failed to update parse for previously ignored file %q: %w", k, err))
+						l.logf(log.LevelMessage, "failed to update parse for previously ignored file %q: %s", k, err)
 					}
 				}
 
@@ -679,7 +689,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 				fileURL, ok := params.Arguments[0].(string)
 				if !ok {
-					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
 
 					break
 				}
@@ -690,13 +700,13 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					fileURL,
 				)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to fix directory package mismatch: %w", err))
+					l.logf(log.LevelMessage, "failed to fix directory package mismatch: %s", err)
 
 					break
 				}
 
 				if err := l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil); err != nil {
-					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+					l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
 				}
 
 				// clean up any empty edits dirs left over
@@ -704,7 +714,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					dir := filepath.Dir(uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI))
 
 					if err := util.DeleteEmptyDirs(dir); err != nil {
-						l.logError(fmt.Errorf("failed to delete empty directories: %w", err))
+						l.logf(log.LevelMessage, "failed to delete empty directories: %s", err)
 					}
 				}
 
@@ -712,21 +722,21 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				fixed = false
 			case "regal.debug":
 				if len(params.Arguments) != 3 {
-					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
+					l.logf(log.LevelMessage, "expected three arguments, got %d", len(params.Arguments))
 
 					break
 				}
 
 				file, ok := params.Arguments[0].(string)
 				if !ok {
-					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
 
 					break
 				}
 
 				path, ok := params.Arguments[1].(string)
 				if !ok {
-					l.logError(fmt.Errorf("expected second argument to be a string, got %T", params.Arguments[1]))
+					l.logf(log.LevelMessage, "expected second argument to be a string, got %T", params.Arguments[1])
 
 					break
 				}
@@ -747,53 +757,53 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				responseResult := map[string]any{}
 
 				if err = l.conn.Call(ctx, "regal/startDebugging", responseParams, &responseResult); err != nil {
-					l.logError(fmt.Errorf("regal/startDebugging failed: %v", err.Error()))
+					l.logf(log.LevelMessage, "regal/startDebugging failed: %v", err.Error())
 				}
 			case "regal.eval":
 				if len(params.Arguments) != 3 {
-					l.logError(fmt.Errorf("expected three arguments, got %d", len(params.Arguments)))
+					l.logf(log.LevelMessage, "expected three arguments, got %d", len(params.Arguments))
 
 					break
 				}
 
 				file, ok := params.Arguments[0].(string)
 				if !ok {
-					l.logError(fmt.Errorf("expected first argument to be a string, got %T", params.Arguments[0]))
+					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
 
 					break
 				}
 
 				path, ok := params.Arguments[1].(string)
 				if !ok {
-					l.logError(fmt.Errorf("expected second argument to be a string, got %T", params.Arguments[1]))
+					l.logf(log.LevelMessage, "expected second argument to be a string, got %T", params.Arguments[1])
 
 					break
 				}
 
 				line, ok := params.Arguments[2].(float64)
 				if !ok {
-					l.logError(fmt.Errorf("expected third argument to be a number, got %T", params.Arguments[2]))
+					l.logf(log.LevelMessage, "expected third argument to be a number, got %T", params.Arguments[2])
 
 					break
 				}
 
 				currentModule, ok := l.cache.GetModule(file)
 				if !ok {
-					l.logError(fmt.Errorf("failed to get module for file %q", file))
+					l.logf(log.LevelMessage, "failed to get module for file %q", file)
 
 					break
 				}
 
 				currentContents, ok := l.cache.GetFileContents(file)
 				if !ok {
-					l.logError(fmt.Errorf("failed to get contents for file %q", file))
+					l.logf(log.LevelMessage, "failed to get contents for file %q", file)
 
 					break
 				}
 
 				allRuleHeadLocations, err := rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to get rule head locations: %w", err))
+					l.logf(log.LevelMessage, "failed to get rule head locations: %s", err)
 
 					break
 				}
@@ -809,14 +819,14 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				if len(currentModule.Comments) > 0 && regalEvalUseAsInputComment.Match(currentModule.Comments[0].Text) {
 					inputMap, err := rparse.PrepareAST(file, currentContents, currentModule)
 					if err != nil {
-						l.logError(fmt.Errorf("failed to prepare module: %w", err))
+						l.logf(log.LevelMessage, "failed to prepare module: %s", err)
 
 						break
 					}
 
 					bs, err := encoding.JSON().Marshal(inputMap)
 					if err != nil {
-						l.logError(fmt.Errorf("failed to marshal module: %w", err))
+						l.logf(log.LevelMessage, "failed to marshal module: %s", err)
 
 						break
 					}
@@ -837,7 +847,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 						Type:    1, // error
 						Message: cleanedMessage,
 					}); err != nil {
-						l.logError(fmt.Errorf("failed to notify client of eval error: %w", err))
+						l.logf(log.LevelMessage, "failed to notify client of eval error: %s", err)
 					}
 
 					break
@@ -863,7 +873,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					responseResult := map[string]any{}
 
 					if err = l.conn.Call(ctx, "regal/showEvalResult", responseParams, &responseResult); err != nil {
-						l.logError(fmt.Errorf("regal/showEvalResult failed: %v", err.Error()))
+						l.logf(log.LevelMessage, "regal/showEvalResult failed: %v", err.Error())
 					}
 				} else {
 					output := filepath.Join(l.workspacePath(), "output.json")
@@ -896,13 +906,13 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 			}
 
 			if err != nil {
-				l.logError(err)
+				l.logf(log.LevelMessage, "command failed: %s", err)
 
 				if err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
 					Type:    1, // error
 					Message: err.Error(),
 				}); err != nil {
-					l.logError(fmt.Errorf("failed to notify client of command error: %w", err))
+					l.logf(log.LevelMessage, "failed to notify client of command error: %s", err)
 				}
 
 				break
@@ -910,7 +920,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 			if fixed {
 				if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil); err != nil {
-					l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+					l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
 				}
 			}
 		}
@@ -943,7 +953,7 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 
 				// then send the diagnostics message based on the cleared cache
 				if err = l.sendFileDiagnostics(ctx, fileURI); err != nil {
-					l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+					l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 				}
 			}
 
@@ -958,7 +968,7 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 			// on are not loaded from disk during editing.
 			newURIs, err := l.loadWorkspaceContents(ctx, true)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to refresh workspace contents: %w", err))
+				l.logf(log.LevelMessage, "failed to refresh workspace contents: %s", err)
 
 				continue
 			}
@@ -990,7 +1000,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			// determine the new contents for the file, if permitted
 			newContents, err := l.templateContentsForFile(job.URI)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to template new file: %w", err))
+				l.logf(log.LevelMessage, "failed to template new file: %s", err)
 
 				continue
 			}
@@ -1014,7 +1024,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				job.URI,
 			)
 			if err != nil {
-				l.logError(fmt.Errorf("failed to fix directory package mismatch: %w", err))
+				l.logf(log.LevelMessage, "failed to fix directory package mismatch: %s", err)
 
 				continue
 			}
@@ -1038,7 +1048,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 					},
 				)
 				if err != nil {
-					l.logError(fmt.Errorf("failed to delete empty directories: %w", err))
+					l.logf(log.LevelMessage, "failed to delete empty directories: %s", err)
 
 					continue
 				}
@@ -1066,7 +1076,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 					"documentChanges": edits,
 				},
 			}, nil); err != nil {
-				l.logError(fmt.Errorf("failed %s notify: %v", methodWorkspaceApplyEdit, err.Error()))
+				l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
 			}
 
 			// finally, trigger a diagnostics run for the new file
@@ -1328,9 +1338,17 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 	return nil
 }
 
-func (l *LanguageServer) logError(err error) {
-	if l.errorLog != nil {
-		fmt.Fprintf(l.errorLog, "ERROR: %s\n", err)
+func (l *LanguageServer) logf(level log.Level, format string, args ...any) {
+	l.log(level, fmt.Sprintf(format, args...))
+}
+
+func (l *LanguageServer) log(level log.Level, message string) {
+	if !l.logLevel.ShouldLog(level) {
+		return
+	}
+
+	if l.logWriter != nil {
+		fmt.Fprintln(l.logWriter, message)
 	}
 }
 
@@ -1400,7 +1418,7 @@ func (l *LanguageServer) handleTextDocumentHover(
 	// when no builtins are found, we can't return a useful hover response.
 	// log the error, but return an empty struct to avoid an error being shown in the client.
 	if !ok {
-		l.logError(fmt.Errorf("could not get builtins for uri %q", params.TextDocument.URI))
+		l.logf(log.LevelMessage, "could not get builtins for uri %q", params.TextDocument.URI)
 
 		// return "null" as per the spec
 		return nil, nil
@@ -1619,7 +1637,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI))
+		l.logf(log.LevelMessage, "failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI)
 
 		return []types.InlayHint{}, nil
 	}
@@ -1822,7 +1840,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 			return nil, nil
 		}
 
-		l.logError(fmt.Errorf("failed to find definition: %w", err))
+		l.logf(log.LevelMessage, "failed to find definition: %s", err)
 
 		// return "null" as per the spec
 		return nil, nil
@@ -1954,7 +1972,7 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 
 		enabled, err := linter.NewLinter().WithUserConfig(*cfg).DetermineEnabledRules(ctx)
 		if err != nil {
-			l.logError(fmt.Errorf("failed to determine enabled rules: %w", err))
+			l.logf(log.LevelMessage, "failed to determine enabled rules: %s", err)
 
 			return struct{}{}, nil
 		}
@@ -1976,7 +1994,7 @@ func (l *LanguageServer) handleTextDocumentDidSave(
 			}
 
 			if err := l.conn.Notify(ctx, "window/showMessage", resp); err != nil {
-				l.logError(fmt.Errorf("failed to notify: %w", err))
+				l.logf(log.LevelMessage, "failed to notify: %s", err)
 
 				return struct{}{}, nil
 			}
@@ -2002,7 +2020,7 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(
 
 	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
 	if !ok {
-		l.logError(fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI))
+		l.logf(log.LevelMessage, "failed to get file contents for uri %q", params.TextDocument.URI)
 
 		return []types.DocumentSymbol{}, nil
 	}
@@ -2118,7 +2136,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			},
 		)
 		if err != nil {
-			l.logError(fmt.Errorf("failed to format file: %w", err))
+			l.logf(log.LevelMessage, "failed to format file: %s", err)
 
 			// return "null" as per the spec
 			return nil, nil
@@ -2241,7 +2259,7 @@ func (l *LanguageServer) handleWorkspaceDidDeleteFiles(
 		l.cache.Delete(deleteOp.URI)
 
 		if err := l.sendFileDiagnostics(ctx, deleteOp.URI); err != nil {
-			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+			l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 		}
 	}
 
@@ -2281,7 +2299,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		l.cache.Delete(renameOp.OldURI)
 
 		if err := l.sendFileDiagnostics(ctx, renameOp.OldURI); err != nil {
-			l.logError(fmt.Errorf("failed to send diagnostic: %w", err))
+			l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 		}
 
 		l.cache.SetFileContents(renameOp.NewURI, content)
@@ -2348,9 +2366,10 @@ func (l *LanguageServer) handleInitialize(
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
-		l.logError(
-			fmt.Errorf("unable to match client identifier for initializing client, using generic functionality: %s",
-				params.ClientInfo.Name),
+		l.logf(
+			log.LevelMessage,
+			"unable to match client identifier for initializing client, using generic functionality: %s",
+			params.ClientInfo.Name,
 		)
 	}
 
@@ -2441,7 +2460,7 @@ func (l *LanguageServer) handleInitialize(
 
 	err = l.loadEnabledRulesFromConfig(ctx, defaultConfig)
 	if err != nil {
-		l.logError(fmt.Errorf("failed to cache enabled rules: %w", err))
+		l.logf(log.LevelMessage, "failed to cache enabled rules: %s", err)
 	}
 
 	if l.workspaceRootURI != "" {
@@ -2449,7 +2468,7 @@ func (l *LanguageServer) handleInitialize(
 
 		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{
 			WorkspacePath: workspaceRootPath,
-			ErrorLog:      l.errorLog,
+			ErrorLog:      l.logWriter,
 		})
 
 		configFile, err := config.FindConfig(workspaceRootPath)

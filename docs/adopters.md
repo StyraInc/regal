@@ -60,6 +60,7 @@ Companies and organizations using Regal (not counting organizations behind the o
 - [Miro](https://miro.com)
 - [Stacklok](https://stacklok.com)
 - [Styra](https://www.styra.com)
+- [UNIwise](https://uniwise.eu/)
 <!-- cspell:enable-->
 
 ## Community

@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 )
@@ -90,16 +91,20 @@ func TestTemplateContentsForFile(t *testing.T) {
 				}
 			}
 
-			ctx := context.Background()
+			logger := newTestLogger(t)
 
-			s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
-			s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+			ls := NewLanguageServer(
+				context.Background(),
+				&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+			)
+
+			ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
 			fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, tc.FileKey))
 
-			s.cache.SetFileContents(fileURI, tc.CacheFileContents)
+			ls.cache.SetFileContents(fileURI, tc.CacheFileContents)
 
-			newContents, err := s.templateContentsForFile(fileURI)
+			newContents, err := ls.templateContentsForFile(fileURI)
 			if tc.ExpectedError != "" {
 				if !strings.Contains(err.Error(), tc.ExpectedError) {
 					t.Fatalf("expected error to contain %q, got %q", tc.ExpectedError, err)
@@ -130,16 +135,20 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 		t.Fatalf("failed to create file %s: %s", filepath.Join(td, ".regal"), err)
 	}
 
-	ctx := context.Background()
+	logger := newTestLogger(t)
 
-	s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
-	s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+	ls := NewLanguageServer(
+		context.Background(),
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
+
+	ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
 	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo.rego"))
 
-	s.cache.SetFileContents(fileURI, "")
+	ls.cache.SetFileContents(fileURI, "")
 
-	_, err = s.templateContentsForFile(fileURI)
+	_, err = ls.templateContentsForFile(fileURI)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -154,10 +163,14 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 
 	td := t.TempDir()
 
-	ctx := context.Background()
+	logger := newTestLogger(t)
 
-	s := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
-	s.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+	ls := NewLanguageServer(
+		context.Background(),
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
+
+	ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
 	err := os.MkdirAll(filepath.Join(td, "foo"), 0o755)
 	if err != nil {
@@ -166,9 +179,9 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 
 	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo/bar.rego"))
 
-	s.cache.SetFileContents(fileURI, "")
+	ls.cache.SetFileContents(fileURI, "")
 
-	newContents, err := s.templateContentsForFile(fileURI)
+	newContents, err := ls.templateContentsForFile(fileURI)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}

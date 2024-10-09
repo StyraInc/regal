@@ -8,13 +8,19 @@ import (
 	"testing"
 
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/parse"
 )
 
 func TestEvalWorkspacePath(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(context.Background(), &LanguageServerOptions{ErrorLog: os.Stderr})
+	logger := newTestLogger(t)
+
+	ls := NewLanguageServer(
+		context.Background(),
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
 
 	policy1 := `package policy1
 

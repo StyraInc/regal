@@ -3,16 +3,17 @@ package config
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+
+	"github.com/styrainc/regal/internal/lsp/log"
 )
 
 type Watcher struct {
-	errorWriter io.Writer
-	Reload      chan string
-	Drop        chan struct{}
+	logFunc func(log.Level, string, ...any)
+	Reload  chan string
+	Drop    chan struct{}
 
 	pathUpdates chan string
 
@@ -23,8 +24,8 @@ type Watcher struct {
 }
 
 type WatcherOpts struct {
-	ErrorWriter io.Writer
-	Path        string
+	LogFunc func(log.Level, string, ...any)
+	Path    string
 }
 
 func NewWatcher(opts *WatcherOpts) *Watcher {
@@ -35,7 +36,7 @@ func NewWatcher(opts *WatcherOpts) *Watcher {
 	}
 
 	if opts != nil {
-		w.errorWriter = opts.ErrorWriter
+		w.logFunc = opts.LogFunc
 		w.path = opts.Path
 	}
 
@@ -70,12 +71,12 @@ func (w *Watcher) loop(ctx context.Context) {
 			if w.path != "" {
 				err := w.fsWatcher.Remove(w.path)
 				if err != nil {
-					fmt.Fprintf(w.errorWriter, "failed to remove existing watch: %v\n", err)
+					w.logFunc(log.LevelMessage, "failed to remove existing watch: %v\n", err)
 				}
 			}
 
 			if err := w.fsWatcher.Add(path); err != nil {
-				fmt.Fprintf(w.errorWriter, "failed to add watch: %v\n", err)
+				w.logFunc(log.LevelDebug, "failed to add watch: %v\n", err)
 			}
 
 			w.path = path
@@ -84,7 +85,7 @@ func (w *Watcher) loop(ctx context.Context) {
 			w.Reload <- path
 		case event, ok := <-w.fsWatcher.Events:
 			if !ok {
-				fmt.Fprintf(w.errorWriter, "config watcher event channel closed\n")
+				w.logFunc(log.LevelMessage, "config watcher event channel closed\n")
 
 				return
 			}
@@ -98,10 +99,10 @@ func (w *Watcher) loop(ctx context.Context) {
 				w.Drop <- struct{}{}
 			}
 		case err := <-w.fsWatcher.Errors:
-			fmt.Fprintf(w.errorWriter, "config watcher error: %v\n", err)
+			w.logFunc(log.LevelMessage, "config watcher error: %v\n", err)
 		case <-ctx.Done():
 			if err := w.Stop(); err != nil {
-				fmt.Fprintf(w.errorWriter, "failed to stop watcher: %v\n", err)
+				w.logFunc(log.LevelMessage, "failed to stop watcher: %v\n", err)
 			}
 
 			return

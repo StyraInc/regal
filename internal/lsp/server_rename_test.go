@@ -9,6 +9,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
@@ -24,7 +25,13 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	ctx := context.Background()
 
-	l := NewLanguageServer(ctx, &LanguageServerOptions{ErrorLog: newTestLogger(t)})
+	logger := newTestLogger(t)
+
+	ls := NewLanguageServer(
+		ctx,
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
+
 	c := cache.NewCache()
 	f := &fixes.DirectoryPackageMismatch{}
 
@@ -32,10 +39,10 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	c.SetFileContents(fileURL, "package authz.main.rules")
 
-	l.clientIdentifier = clients.IdentifierVSCode
-	l.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
-	l.cache = c
-	l.loadedConfig = &config.Config{
+	ls.clientIdentifier = clients.IdentifierVSCode
+	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
+	ls.cache = c
+	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
 			"idiomatic": {
 				"directory-package-mismatch": config.Rule{
@@ -48,7 +55,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 		},
 	}
 
-	params, err := l.fixRenameParams("fix my file!", f, fileURL)
+	params, err := ls.fixRenameParams("fix my file!", f, fileURL)
 	if err != nil {
 		t.Fatalf("failed to fix rename params: %s", err)
 	}

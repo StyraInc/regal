@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/internal/lsp"
+	"github.com/styrainc/regal/internal/lsp/log"
 )
 
 func init() {
@@ -25,7 +26,8 @@ func init() {
 			defer cancel()
 
 			opts := &lsp.LanguageServerOptions{
-				ErrorLog: os.Stderr,
+				LogWriter: os.Stderr,
+				LogLevel:  log.LevelMessage,
 			}
 
 			ls := lsp.NewLanguageServer(ctx, opts)

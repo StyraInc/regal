@@ -2,6 +2,7 @@
   "builtins": {
     "contains": "builtins/contains",
     "io.jwt.decode_verify": "builtins/io_jwt/decode_verify",
+    "print": "builtins/print",
     "regex.find_all_string_submatch_n": "builtins/regex/find_all_string_submatch_n",
     "regex.globs_match": "builtins/regex/globs_match",
     "regex.match": "builtins/regex/match",

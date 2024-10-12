@@ -40,5 +40,6 @@ jobs:
         uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
         with:
           title: "automated: update capabilities"
+          branch: create-pull-request/caps
           add-paths: |
             internal/capabilities/embedded/eopa/*.json

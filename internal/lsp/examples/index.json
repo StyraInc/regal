@@ -16,6 +16,7 @@
     "contains": "keywords/contains",
     "default": "keywords/default",
     "if": "keywords/if",
+    "import": "keywords/import",
     "some": "keywords/some"
   }
 }

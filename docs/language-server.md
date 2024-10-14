@@ -184,12 +184,18 @@ While the code lens feature is part of the LSP specification, the action that is
 isn't necessarily part of the standard. The language server protocol does not provide a native method for requesting
 evaluation, so Regal will handle that on its own, and differently depending on what the client supports.
 
-- Currently, only the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa) is capable of handling
+- Currently, only the [OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa) and
+  [nvim-dap-rego](https://github.com/rinx/nvim-dap-rego/) is capable of handling
   the request to display evaluation results on the same line as the package or rule evaluated.
+- [Neovim](https://neovim.io/) does not support the requests natively, but
+  [nvim-dap-rego](https://github.com/rinx/nvim-dap-rego/) provides handlers to support them.
+  Please follow [the instructions](https://github.com/rinx/nvim-dap-rego/blob/main/README.md#lsp-handlers) in
+  nvim-dap-rego README.
 - [Zed](https://github.com/StyraInc/zed-rego) does not support the code lens feature at all at this point in time. As
   soon as it does, Regal will provide them.
-- Displaying the result of evaluation requires customized code in the client. Currently only VS Code has the required
-  modifications to handle this, and is thus the only editor to currently support "inline display" of the result.
+- Displaying the result of evaluation requires customized code in the client. Currently only VS Code and Neovim
+  has the required modifications to handle this, and is thus the only editor to currently support "inline display"
+  of the result.
   For other editors that support the code lens feature, Regal will instead write the result of evaluation to an
   `output.json` file.
 

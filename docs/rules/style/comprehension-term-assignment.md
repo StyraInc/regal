@@ -69,7 +69,7 @@ This linter rule provides the following configuration options:
 ```yaml
 rules:
   style:
-    comprehension-tail-assignment:
+    comprehension-term-assignment:
       # one of "error", "warning", "ignore"
       level: error
 ```

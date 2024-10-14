@@ -49,7 +49,7 @@ This linter rule provides the following configuration options:
 ```yaml
 rules:
   bugs:
-    duplicated-rule:
+    duplicate-rule:
       # one of "error", "warning", "ignore"
       level: error
 ```

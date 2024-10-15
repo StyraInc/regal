@@ -22,6 +22,25 @@ test_success_snake_cased_rule_name if {
 	r == set()
 }
 
+test_fail_camel_cased_package_name if {
+	r := rule.report with input as regal.parse_module("p.rego", `package camelCase`)
+	r == expected_with_locations([{
+		"col": 9,
+		"end": {
+			"col": 18,
+			"row": 1,
+		},
+		"file": "p.rego",
+		"row": 1,
+		"text": "package camelCase",
+	}])
+}
+
+test_success_snake_cased_package_name if {
+	r := rule.report with input as regal.parse_module("p.rego", `package snake_case`)
+	r == set()
+}
+
 test_fail_camel_cased_some_declaration if {
 	r := rule.report with input as ast.policy(`p {some fooBar; input[_]}`)
 	r == expected_with_locations([{

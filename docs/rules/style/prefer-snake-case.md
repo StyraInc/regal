@@ -26,8 +26,8 @@ user_is_admin if "admin" in input.user.roles
 
 ## Rationale
 
-The built-in functions use `snake_case` for naming — follow that convention for your own rules, functions, and
-variables, unless you have a really good reason not to.
+The built-in functions use `snake_case` for naming — follow that convention for your own packages, rules, functions,
+and variables, unless you have a really good reason not to.
 
 ## Exceptions
 

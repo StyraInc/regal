@@ -340,7 +340,7 @@ type marshallingIntermediary struct {
 	Capabilities struct {
 		From struct {
 			Engine  string `yaml:"engine"`
-			Version string `yaml:"version"`
+			Version any    `yaml:"version"`
 			File    string `yaml:"file"`
 			URL     string `yaml:"url"`
 		} `yaml:"from"`
@@ -368,7 +368,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("unmarshalling config failed %w", err)
 	}
 
-	// this call will walk the rule config and load and defaults into the config
+	// this call will walk the rule config and load defaults into the config
 	if err := extractDefaults(config, &result); err != nil {
 		return fmt.Errorf("extracting defaults failed: %w", err)
 	}
@@ -411,7 +411,16 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	if capabilitiesEngine != "" {
-		capabilitiesURL = "regal:///capabilities/" + capabilitiesEngine + "/" + capabilitiesEngineVersion
+		version, ok := capabilitiesEngineVersion.(string)
+		if !ok {
+			return errors.New("capabilities: from.version must be a string")
+		}
+
+		if capabilitiesEngine == capabilitiesEngineOPA && !strings.HasPrefix(version, "v") {
+			return errors.New("capabilities: from.version must be a valid OPA version (with a 'v' prefix)")
+		}
+
+		capabilitiesURL = "regal:///capabilities/" + capabilitiesEngine + "/" + version
 	}
 
 	if capabilitiesFile != "" {

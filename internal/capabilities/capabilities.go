@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -190,9 +191,18 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 }
 
 func lookupFileURL(parsedURL *url.URL) (*ast.Capabilities, error) {
-	fd, err := os.Open(parsedURL.Path)
+	// the provided URL's path could be either a windows path or a unix one
+	// we must account for both cases by stripping the leading / if found
+	driveLetterPattern := regexp.MustCompile(`^\/[a-zA-Z]:`)
+
+	path := parsedURL.Path
+	if driveLetterPattern.MatchString(path) {
+		path = path[1:]
+	}
+
+	fd, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("error opening file '%s': %w", parsedURL.Path, err)
+		return nil, fmt.Errorf("error opening file '%s': %w", path, err)
 	}
 
 	caps, err := ast.LoadCapabilitiesJSON(fd)

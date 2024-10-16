@@ -64,36 +64,46 @@ rules_config_ignore_delta := {"rules": {"test": {"test-case": {"ignore": {"files
 config_ignore := {"ignore": {"files": ["p.rego"]}}
 
 test_excluded_file_default if {
-	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
+	not config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
 		with config.merged_config as rules_config_error
-
-	e == false
 }
 
 test_excluded_file_with_ignore if {
 	c := object.union(rules_config_error, rules_config_ignore_delta)
-	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
+
+	config.excluded_file("test", "test-case", "p.rego") with data.eval.params as params
 		with config.merged_config as c
-	e == true
 }
 
 test_excluded_file_config if {
-	e := config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
-	e == true
+	config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
 }
 
 test_excluded_file_cli_flag if {
-	e := config.excluded_file("test", "test-case", "p.rego") with data.eval.params as object.union(
+	config.excluded_file("test", "test-case", "p.rego") with data.eval.params as object.union(
 		params,
 		{"ignore_files": ["p.rego"]},
 	)
-	e == true
 }
 
 test_excluded_file_cli_overrides_config if {
-	e := config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
+	not config.excluded_file("test", "test-case", "p.rego") with config.merged_config as config_ignore
 		with data.eval.params as object.union(params, {"ignore_files": [""]})
-	e == false
+}
+
+test_excluded_file_using_uri if {
+	conf := {"rules": {"test": {"rule": {
+		"level": "error",
+		"ignore": {"files": ["foo/**/p.rego"]},
+	}}}}
+
+	config.excluded_file("test", "rule", "file:///workspace/folder/foo/bar/p.rego") with config.merged_config as conf
+}
+
+test_not_excluded_file_using_uri if {
+	conf := {"rules": {"test": {"rule": {"level": "error"}}}}
+
+	not config.excluded_file("test", "rule", "file:///workspace/folder/foo/bar/p.rego") with config.merged_config as conf
 }
 
 test_trailing_slash if {

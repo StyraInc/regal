@@ -3,46 +3,61 @@ package regal.config
 import rego.v1
 
 # METADATA
-# description: determines if file should be excluded by the given rule
+# description: |
+#   determines if file should be excluded, either because it's globally
+#   ignored, or because the specific rule configuration excludes it
 excluded_file(category, title, file) if {
-	_force_exclude_file(file)
-} else if {
-	rule_config := for_rule(category, title)
-	ex := rule_config.ignore.files
-	is_array(ex)
-	some pattern in ex
-	_exclude(pattern, file)
-} else := false
-
-_force_exclude_file(file) if {
 	# regal ignore:external-reference
 	some pattern in _global_ignore_patterns
-	_exclude(pattern, file)
+	_exclude(pattern, _relative_to_pattern(pattern, file))
+} else if {
+	some pattern in for_rule(category, title).ignore.files
+	_exclude(pattern, _relative_to_pattern(pattern, file))
 }
 
-_global_ignore_patterns := merged_config.ignore.files if {
-	not data.eval.params.ignore_files
-} else := data.eval.params.ignore_files
+# NOTE
+# this is an awful hack which is needed when the language server
+# invokes linting, as it currently will provide filenames in the
+# form of URIs rather than as relative paths... and as we do not
+# know the base/workspace path here, we can only try to make the
+# path relative to the *pattern* providedm which is something...
+#
+# pattern: foo/**/bar.rego
+# file:    file://my/workspace/foo/baz/bar.rego
+# returns: foo/baz/bar.rego
+#
+_relative_to_pattern(pattern, file) := relative if {
+	startswith(file, "file://")
 
-# exclude imitates Gits .gitignore pattern matching as best it can
-# Ref: https://git-scm.com/docs/gitignore#_pattern_format
+	absolute := trim_suffix(trim_prefix(file, "file://"), "/")
+	file_parts := indexof_n(absolute, "/")
+
+	relative := substring(
+		absolute,
+		array.slice(
+			file_parts, (count(file_parts) - strings.count(pattern, "/")) - 1,
+			count(file_parts),
+		)[0] + 1,
+		-1,
+	)
+} else := file
+
+_global_ignore_patterns := data.eval.params.ignore_files
+
+_global_ignore_patterns := merged_config.ignore.files if not data.eval.params.ignore_files
+
+# exclude imitates .gitignore pattern matching as best it can
+# ref: https://git-scm.com/docs/gitignore#_pattern_format
 _exclude(pattern, file) if {
-	patterns := _pattern_compiler(pattern)
-	some p in patterns
+	some p in _pattern_compiler(pattern)
 	glob.match(p, ["/"], file)
-} else := false
+}
 
-# pattern_compiler transforms a glob pattern into a set of glob patterns to make the
-# combined set behave as Gits .gitignore
-_pattern_compiler(pattern) := ps1 if {
-	p := _internal_slashes(pattern)
-	p1 := _leading_slash(p)
-	ps := _leading_doublestar_pattern(p1)
-	ps1 := {pat |
-		some _p, _ in ps
-		nps := _trailing_slash(_p)
-		some pat, _ in nps
-	}
+# pattern_compiler transforms a glob pattern into a set of glob
+# patterns to make the combined set behave as .gitignore
+_pattern_compiler(pattern) := {pat |
+	some p in _leading_doublestar_pattern(trim_prefix(_internal_slashes(pattern), "/"))
+	some pat in _trailing_slash(p)
 }
 
 # Internal slashes means that the path is relative to root,
@@ -73,9 +88,3 @@ _trailing_slash(pattern) := {pattern, np} if {
 	endswith(pattern, "/")
 	np := concat("", [pattern, "**"])
 } else := {pattern}
-
-# If a pattern starts with a "/", the leading slash is ignored but according to
-# the .gitignore rule of internal slashes, it is relative to root
-_leading_slash(pattern) := substring(pattern, 1, -1) if {
-	startswith(pattern, "/")
-} else := pattern

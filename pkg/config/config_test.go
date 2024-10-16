@@ -394,3 +394,33 @@ func TestUnmarshalConfigDefaultCapabilities(t *testing.T) {
 		}
 	}
 }
+
+func TestUnmarshalConfigWithNumericOPAVersion(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`
+capabilities:
+  from:
+    engine: opa
+    version: 68
+`)
+	if err := yaml.Unmarshal(bs, &Config{}); err == nil ||
+		err.Error() != "capabilities: from.version must be a string" {
+		t.Errorf("expected error, got %v", err)
+	}
+}
+
+func TestUnmarshalConfigWithMissingVPrefixOPAVersion(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`
+capabilities:
+  from:
+    engine: opa
+    version: 0.68.0
+`)
+	if err := yaml.Unmarshal(bs, &Config{}); err == nil ||
+		err.Error() != "capabilities: from.version must be a valid OPA version (with a 'v' prefix)" {
+		t.Errorf("expected error, got %v", err)
+	}
+}

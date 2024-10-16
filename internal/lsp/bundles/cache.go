@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/open-policy-agent/opa/bundle"
@@ -144,14 +145,20 @@ type cacheBundle struct {
 func (c *cacheBundle) Refresh(path string) (bool, error) {
 	onDiskSourceDigests := make(map[string][]byte)
 
+	filter := []string{".manifest", "data.json", "data.yml", "data.yaml"}
+
 	// walk the bundle path and calculate the MD5 hash of each file on disk
 	// at the moment
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(path, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if info.IsDir() || dataFileLoaderFilter(path, info, 0) {
+		if rio.IsSkipWalkDirectory(entry) {
+			return filepath.SkipDir
+		}
+
+		if entry.IsDir() || !slices.Contains(filter, entry.Name()) {
 			return nil
 		}
 

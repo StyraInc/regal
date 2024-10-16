@@ -433,6 +433,12 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 			)
 		}
 
+		// prepending a / is done here to ensure that windows drive letter paths
+		// are parsed as paths and not host:ports in URLs.
+		if !strings.HasPrefix(absfp, "/") {
+			absfp = "/" + absfp
+		}
+
 		capabilitiesURL = "file://" + absfp
 	}
 

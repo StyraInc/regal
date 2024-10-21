@@ -238,6 +238,13 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 		}
 
 		table.Append([]string{yellow("Rule:"), violation.Title})
+
+		// if there is no support for color, then we show the level in addition
+		// so that the level of the violation is still clear
+		if color.NoColor {
+			table.Append([]string{"Level:", violation.Level})
+		}
+
 		table.Append([]string{yellow("Description:"), description})
 		table.Append([]string{yellow("Category:"), violation.Category})
 		// End location ignored here as it's not too interesting in this format and line:column

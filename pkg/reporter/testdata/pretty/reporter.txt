@@ -1,4 +1,5 @@
 Rule:         	breaking-the-law                	
+Level:        	error                           	
 Description:  	Rego must not break the law!    	
 Category:     	legal                           	
 Location:     	a.rego:1:1                      	
@@ -6,6 +7,7 @@ Text:         	package illegal
 Documentation:	https://example.com/illegal     	
               	
 Rule:         	questionable-decision           	
+Level:        	warning                         	
 Description:  	Questionable decision found     	
 Category:     	really?                         	
 Location:     	b.rego:22:18                    	

@@ -1,4 +1,5 @@
 Rule:         	long-violation                                                                                                          	
+Level:        	warning                                                                                                                 	
 Description:  	violation with a long description                                                                                       	
 Category:     	long                                                                                                                    	
 Location:     	b.rego:22:18                                                                                                            	

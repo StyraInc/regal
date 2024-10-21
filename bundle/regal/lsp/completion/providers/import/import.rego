@@ -12,9 +12,10 @@ import data.regal.lsp.completion.location
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
-	word := location.word_at(line, input.regal.context.location.col)
 
 	startswith("import", line)
+
+	word := location.word_at(line, input.regal.context.location.col)
 
 	item := {
 		"label": "import",

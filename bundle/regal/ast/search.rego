@@ -228,7 +228,7 @@ found.symbols[rule_index] contains value.symbols if {
 }
 
 # METADATA
-# description: all comprehensions foundd in module
+# description: all comprehensions found in module
 found.comprehensions[rule_index] contains value if {
 	some i, rule in _rules
 
@@ -268,10 +268,12 @@ _before_location(rule, _, location) if {
 	loc := util.to_location_object(location)
 
 	value_start := util.to_location_object(rule.head.value.location)
-	value_end := _end_location(util.to_location_object(rule.head.value.location))
 
 	loc.row >= value_start.row
 	loc.col >= value_start.col
+
+	value_end := _end_location(util.to_location_object(rule.head.value.location))
+
 	loc.row <= value_end.row
 	loc.col <= value_end.col
 }

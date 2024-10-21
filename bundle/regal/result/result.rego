@@ -120,19 +120,17 @@ fail(metadata, details) := _fail_annotated(metadata, details)
 #   ignored because the set capabilities does not include a dependency (like a built-in function)
 #   needed by the rule
 notice(metadata) := result if {
-	is_array(metadata)
 	rule_meta := metadata[0]
-	annotations := rule_meta.annotations
 
 	some category, title
 	["regal", "rules", category, title, "notices"] = rule_meta.path
 
 	result := {
 		"category": category,
-		"description": annotations.description,
+		"description": rule_meta.annotations.description,
 		"level": "notice",
 		"title": title,
-		"severity": annotations.custom.severity,
+		"severity": rule_meta.annotations.custom.severity,
 	}
 }
 

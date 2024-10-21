@@ -45,11 +45,6 @@ report contains violation if {
 	fn.body
 	not fn["else"]
 
-	arg_var_names := {arg.value |
-		some arg in fn.head.args
-		arg.type == "var"
-	}
-
 	# FOR NOW: Limit to a lone comparison
 	# More elaborate cases are certainly doable,
 	# but we'd need to keep track of whatever else
@@ -64,6 +59,11 @@ report contains violation if {
 	expr.terms[0].value[0].value == "equal"
 
 	terms := _normalize_eq_terms(expr.terms, ast.scalar_types)
+	arg_var_names := {arg.value |
+		some arg in fn.head.args
+		arg.type == "var"
+	}
+
 	terms[0].value in arg_var_names
 
 	violation := result.fail(rego.metadata.chain(), result.location(fn))

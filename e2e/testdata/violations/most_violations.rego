@@ -281,3 +281,9 @@ all_violations := true
 with_outside_test if {
 	foo with input as {}
 }
+
+defer_assignment if {
+	x := 1
+	input.foo == "bar"
+	x == 1
+}

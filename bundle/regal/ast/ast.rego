@@ -363,12 +363,35 @@ is_chained_rule_body(rule, lines) if {
 }
 
 # METADATA
-# description: returns the terms in an assignment expression, or undefined if not assignment
-assignment_terms(expr) := [expr.terms[1], expr.terms[2]] if {
+# description: answers wether variable of `name` is found anywhere in provided rule `head`
+# scope: document
+var_in_head(head, name) if {
+	head.value.value == name
+} else if {
+	head.key.value == name
+} else if {
+	some var in find_term_vars(head.value.value)
+	var.value == name
+} else if {
+	some var in find_term_vars(head.key.value)
+	var.value == name
+} else if {
+	some i, var in head.ref
+	i > 0
+	var.value == name
+}
+
+# METADATA
+# description: answers wether provided expression is an assignment (using `:=`)
+is_assignment(expr) if {
 	expr.terms[0].type == "ref"
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value == "assign"
 }
+
+# METADATA
+# description: returns the terms in an assignment (`:=`) expression, or undefined if not assignment
+assignment_terms(expr) := [expr.terms[1], expr.terms[2]] if is_assignment(expr)
 
 # METADATA
 # description: |

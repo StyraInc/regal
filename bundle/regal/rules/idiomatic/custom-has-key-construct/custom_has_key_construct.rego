@@ -17,8 +17,6 @@ notices contains result.notice(rego.metadata.chain()) if not capabilities.has_ob
 report contains violation if {
 	some rule in ast.functions
 
-	arg_names := ast.function_arg_names(rule)
-
 	count(rule.body) == 1
 
 	terms := rule.body[0].terms
@@ -29,6 +27,9 @@ report contains violation if {
 	[_, ref] := _normalize_eq_terms(terms)
 
 	ref.value[0].type == "var"
+
+	arg_names := ast.function_arg_names(rule)
+
 	ref.value[0].value in arg_names
 	ref.value[1].type == "var"
 	ref.value[1].value in arg_names

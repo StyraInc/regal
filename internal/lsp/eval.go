@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -18,6 +19,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 func (l *LanguageServer) Eval(
@@ -74,7 +76,12 @@ func (l *LanguageServer) Eval(
 		allBundles["regal"] = rbundle.LoadedBundle
 	}
 
-	regoArgs := prepareRegoArgs(ast.MustParseBody(query), allBundles, printHook)
+	regoArgs := prepareRegoArgs(
+		ast.MustParseBody(query),
+		allBundles,
+		printHook,
+		l.getLoadedConfig(),
+	)
 
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
@@ -138,13 +145,18 @@ func (l *LanguageServer) EvalWorkspacePath(
 	return EvalPathResult{Value: res, PrintOutput: hook.Output}, nil
 }
 
-func prepareRegoArgs(query ast.Body, bundles map[string]bundle.Bundle, printHook print.Hook) []func(*rego.Rego) {
+func prepareRegoArgs(
+	query ast.Body,
+	bundles map[string]bundle.Bundle,
+	printHook print.Hook,
+	cfg *config.Config,
+) []func(*rego.Rego) {
 	bundleArgs := make([]func(*rego.Rego), 0, len(bundles))
 	for key, b := range bundles {
 		bundleArgs = append(bundleArgs, rego.ParsedBundle(key, &b))
 	}
 
-	baseArgs := []func(*rego.Rego){
+	args := []func(*rego.Rego){
 		rego.ParsedQuery(query),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
@@ -152,7 +164,38 @@ func prepareRegoArgs(query ast.Body, bundles map[string]bundle.Bundle, printHook
 		rego.PrintHook(printHook),
 	}
 
-	return append(baseArgs, bundleArgs...)
+	args = append(args, bundleArgs...)
+
+	var caps *config.Capabilities
+	if cfg != nil && cfg.Capabilities != nil {
+		caps = cfg.Capabilities
+	} else {
+		caps = config.CapabilitiesForThisVersion()
+	}
+
+	var evalConfig config.Config
+	if cfg != nil {
+		evalConfig = *cfg
+	}
+
+	internalBundle := &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{"internal"},
+			Metadata: map[string]any{"name": "internal"},
+		},
+		Data: map[string]any{
+			"internal": map[string]any{
+				"combined_config": config.ToMap(evalConfig),
+				"capabilities":    caps,
+			},
+		},
+	}
+
+	fmt.Fprintln(os.Stderr, "Loaded internal bundle")
+
+	args = append(args, rego.ParsedBundle("internal", internalBundle))
+
+	return args
 }
 
 type PrintHook struct {

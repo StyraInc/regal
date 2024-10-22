@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -57,6 +58,46 @@ func TestEvalWorkspacePath(t *testing.T) {
 
 	if val, ok := res.Value.(bool); !ok || val != true {
 		t.Fatalf("expected true, got false")
+	}
+}
+
+func TestEvalWorkspacePathInternalData(t *testing.T) {
+	t.Parallel()
+
+	logger := newTestLogger(t)
+
+	ls := NewLanguageServer(
+		context.Background(),
+		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+	)
+
+	res, err := ls.EvalWorkspacePath(context.TODO(), "object.keys(data.internal)", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	val, ok := res.Value.([]any)
+	if !ok {
+		t.Fatalf("expected []any, got %T", res.Value)
+	}
+
+	valStr := make([]string, 0, len(val))
+
+	for _, v := range val {
+		str, ok := v.(string)
+		if !ok {
+			t.Fatalf("expected string, got %T", v)
+		}
+
+		valStr = append(valStr, str)
+	}
+
+	slices.Sort(valStr)
+
+	exp := []string{"capabilities", "combined_config"}
+
+	if !slices.Equal(valStr, exp) {
+		t.Fatalf("expected %v, got %v", exp, valStr)
 	}
 }
 

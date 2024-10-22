@@ -3,6 +3,7 @@ package regal.lsp.completion.location_test
 import rego.v1
 
 import data.regal.ast
+import data.regal.capabilities
 
 import data.regal.lsp.completion.location
 
@@ -69,21 +70,26 @@ another if {
 
 	r2 := location.find_locals(module.rules, {"row": 6, "col": 10}) with input as module
 		with input.regal.file.lines as lines
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r2 == {"x"}
 
 	r3 := location.find_locals(module.rules, {"row": 10, "col": 1}) with input as module
 		with input.regal.file.lines as lines
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r3 == {"a", "b"}
 
 	r4 := location.find_locals(module.rules, {"row": 10, "col": 6}) with input as module
 		with input.regal.file.lines as lines
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r4 == {"a", "b", "c"}
 
 	r5 := location.find_locals(module.rules, {"row": 15, "col": 1}) with input as module
 		with input.regal.file.lines as lines
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r5 == {"x", "y"}
 
 	r6 := location.find_locals(module.rules, {"row": 16, "col": 1}) with input as module
 		with input.regal.file.lines as lines
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r6 == {"x", "y", "z"}
 }

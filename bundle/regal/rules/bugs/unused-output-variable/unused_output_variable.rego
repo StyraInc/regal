@@ -30,7 +30,7 @@ report contains violation if {
 	some var in var_refs
 
 	not ast.var_in_head(input.rules[to_number(rule_index)].head, var.value)
-	not _var_in_call(ast.function_calls, rule_index, var.value)
+	not ast.var_in_call(ast.function_calls, rule_index, var.value)
 	not _ref_base_vars[rule_index][var.value]
 
 	# this is by far the most expensive condition to check, so only do
@@ -44,7 +44,7 @@ _ref_vars[rule_index][var.value] contains var if {
 	some rule_index
 	var := ast.found.vars[rule_index].ref[_]
 
-	not startswith(var.value, "$")
+	not ast.is_wildcard(var)
 }
 
 # "a" in "a[foo]", and not foo
@@ -52,21 +52,5 @@ _ref_base_vars[rule_index][term.value] contains term if {
 	some rule_index
 	term := ast.found.refs[rule_index][_].value[0]
 
-	term.type == "var"
-	not startswith(term.value, "$")
-}
-
-_var_in_call(calls, rule_index, name) if _var_in_arg(calls[rule_index][_].args[_], name)
-
-_var_in_arg(arg, name) if {
-	arg.type == "var"
-	arg.value == name
-}
-
-_var_in_arg(arg, name) if {
-	arg.type in {"array", "object", "set"}
-
-	some var in ast.find_term_vars(arg)
-
-	var.value == name
+	not ast.is_wildcard(term)
 }

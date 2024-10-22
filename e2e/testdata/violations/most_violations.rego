@@ -287,3 +287,8 @@ defer_assignment if {
 	input.foo == "bar"
 	x == 1
 }
+
+walk_no_path if {
+	walk(input, [path, value])
+	value == "violation"
+}

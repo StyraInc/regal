@@ -17,7 +17,7 @@ report contains violation if {
 
 	every function in functions {
 		function.head.args[pos].type == "var"
-		startswith(function.head.args[pos].value, "$")
+		ast.is_wildcard(function.head.args[pos])
 	}
 
 	not _function_name_excepted(config.for_rule("bugs", "argument-always-wildcard"), name)

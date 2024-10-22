@@ -3,6 +3,7 @@ package regal.rules.custom["naming-convention_test"]
 import rego.v1
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 import data.regal.rules.custom["naming-convention"] as rule
 
@@ -162,7 +163,9 @@ test_fail_multiple_conventions if {
 		{"targets": ["package"], "pattern": `^acmecorp\.[a-z_\.]+$`},
 		{"targets": ["rule", "variable"], "pattern": "^bar$|^foo_bar$"},
 	]}
-	r := rule.report with input as policy with config.for_rule as cfg
+	r := rule.report with input as policy
+		with config.for_rule as cfg
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
 
 	r == {
 		expected(

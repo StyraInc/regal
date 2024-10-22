@@ -11,8 +11,7 @@ default needs_update := false
 # scope: document
 needs_update if {
 	current_version := trim(input.current_version, "v")
-	latest_version := trim(input.latest_version, "v")
 
 	semver.is_valid(current_version)
-	semver.compare(current_version, latest_version) == -1
+	semver.compare(current_version, trim(input.latest_version, "v")) == -1
 }

@@ -71,13 +71,11 @@ report contains violation if {
 
 # normalize var to always always be on the left hand side
 _normalize_eq_terms(terms, scalar_types) := [terms[1], terms[2]] if {
-	terms[1].type == "var"
-	not startswith(terms[1].value, "$")
+	not ast.is_wildcard(terms[1])
 	terms[2].type in scalar_types
 }
 
 _normalize_eq_terms(terms, scalar_types) := [terms[2], terms[1]] if {
 	terms[1].type in scalar_types
-	terms[2].type == "var"
-	not startswith(terms[2].value, "$")
+	not ast.is_wildcard(terms[2])
 }

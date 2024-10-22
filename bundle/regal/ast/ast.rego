@@ -46,6 +46,13 @@ is_constant(term) if {
 	not has_term_var(term.value)
 }
 
+# METADATA
+# description: true if provided term represents a wildcard (`_`) variable
+is_wildcard(term) if {
+	term.type == "var"
+	startswith(term.value, "$")
+}
+
 default builtin_names := set()
 
 # METADATA
@@ -160,7 +167,7 @@ rule_names contains ref_to_string(rule.head.ref) if some rule in rules
 # scope: document
 is_output_var(rule, var) if {
 	# test the cheap and common case first, and 'else' only when it's not
-	startswith(var.value, "$")
+	is_wildcard(var)
 } else if {
 	not var.value in (rule_names | imported_identifiers) # regal ignore:external-reference
 
@@ -378,6 +385,26 @@ var_in_head(head, name) if {
 } else if {
 	some i, var in head.ref
 	i > 0
+	var.value == name
+}
+
+# METADATA
+# description: |
+#   true if var of `name` is referenced in any `calls` (likely,
+#   `ast.function_calls`) in the rule of given `rule_index`
+# scope: document
+var_in_call(calls, rule_index, name) if _var_in_arg(calls[rule_index][_].args[_], name)
+
+_var_in_arg(arg, name) if {
+	arg.type == "var"
+	arg.value == name
+}
+
+_var_in_arg(arg, name) if {
+	arg.type in {"array", "object", "set"}
+
+	some var in find_term_vars(arg)
+
 	var.value == name
 }
 

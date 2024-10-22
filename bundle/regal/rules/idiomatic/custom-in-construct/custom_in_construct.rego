@@ -10,8 +10,6 @@ import data.regal.result
 report contains violation if {
 	some rule in ast.functions
 
-	arg_names := ast.function_arg_names(rule)
-
 	# while there could be more convoluted ways of doing this
 	# we'll settle for the likely most common case (`item == coll[_]`)
 	count(rule.body) == 1
@@ -22,6 +20,8 @@ report contains violation if {
 	terms[0].value[0].value in {"eq", "equal"}
 
 	[var, ref] := _normalize_eq_terms(terms)
+
+	arg_names := ast.function_arg_names(rule)
 
 	var.value in arg_names
 	ref.value[0].value in arg_names

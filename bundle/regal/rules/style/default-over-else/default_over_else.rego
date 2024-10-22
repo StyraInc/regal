@@ -16,9 +16,9 @@ report contains violation if {
 	# the rule if there isn't a single `else` present though!
 	walk(rule["else"], [_, value])
 
-	else_head := value.head
-
 	not value.body
+
+	else_head := value.head
 
 	ast.is_constant(else_head.value)
 

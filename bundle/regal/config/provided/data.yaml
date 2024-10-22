@@ -118,6 +118,8 @@ rules:
     use-rego-v1:
       level: error
   performance:
+    defer-assignment:
+      level: error
     with-outside-test-context:
       level: error
   style:
@@ -159,8 +161,8 @@ rules:
     prefer-snake-case:
       level: error
     prefer-some-in-iteration:
-      ignore-nesting-level: 2
       ignore-if-sub-attribute: true
+      ignore-nesting-level: 2
       level: error
     rule-length:
       count-comments: false

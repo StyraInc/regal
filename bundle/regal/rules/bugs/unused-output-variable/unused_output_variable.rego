@@ -29,7 +29,7 @@ report contains violation if {
 
 	some var in var_refs
 
-	not _var_in_head(input.rules[to_number(rule_index)].head, var.value)
+	not ast.var_in_head(input.rules[to_number(rule_index)].head, var.value)
 	not _var_in_call(ast.function_calls, rule_index, var.value)
 	not _ref_base_vars[rule_index][var.value]
 
@@ -54,28 +54,6 @@ _ref_base_vars[rule_index][term.value] contains term if {
 
 	term.type == "var"
 	not startswith(term.value, "$")
-}
-
-_var_in_head(head, name) if head.value.value == name
-
-_var_in_head(head, name) if {
-	some var in ast.find_term_vars(head.value.value)
-
-	var.value == name
-}
-
-_var_in_head(head, name) if head.key.value == name
-
-_var_in_head(head, name) if {
-	some var in ast.find_term_vars(head.key.value)
-
-	var.value == name
-}
-
-_var_in_head(head, name) if {
-	some i, var in head.ref
-	i > 0
-	var.value == name
 }
 
 _var_in_call(calls, rule_index, name) if _var_in_arg(calls[rule_index][_].args[_], name)

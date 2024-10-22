@@ -24,6 +24,8 @@ report contains violation if {
 	some rule_index, fn
 	ast.function_calls[rule_index][fn].name == "sprintf"
 
+	fn.args[1].type == "array" # can only check static arrays, not vars
+
 	# this could come either from a term directly (the common case):
 	#     sprintf("%d", [1])
 	# or a variable (quite uncommon):
@@ -34,8 +36,6 @@ report contains violation if {
 	# another variable. tbh, that's a waste of time. what we should make sure is
 	# to not report anything erroneously.
 	format_term := _first_arg_value(rule_index, fn.args[0])
-
-	fn.args[1].type == "array" # can only check static arrays, not vars
 
 	values_in_arr := count(fn.args[1].value)
 	str_no_escape := replace(format_term.value, "%%", "") # don't include '%%' as it's used to "escape" %

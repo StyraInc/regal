@@ -19,9 +19,10 @@ import data.regal.lsp.completion.location
 items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
-	word := location.word_at(line, input.regal.context.location.col)
 
 	location.in_rule_body(line)
+
+	word := location.word_at(line, input.regal.context.location.col)
 
 	some label, snippet in _snippets
 

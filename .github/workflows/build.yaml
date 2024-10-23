@@ -43,7 +43,7 @@ jobs:
       - run: npm install --prefix build
       - name: Restore rq cache
         id: cache-rq
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ~/go/bin/rq
           key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
@@ -51,7 +51,7 @@ jobs:
         if: steps.cache-rq.outputs.cache-hit != 'true'
       - name: Cache rq binary
         if: steps.cache-rq.outputs.cache-hit != 'true'
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: ~/go/bin/rq
           key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}

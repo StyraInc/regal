@@ -68,6 +68,5 @@ _is_array_conversion(value) if {
 
 	some ref_val in rhs.value
 
-	ref_val.type == "var"
-	startswith(ref_val.value, "$")
+	ast.is_wildcard(ref_val)
 }

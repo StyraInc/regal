@@ -59,7 +59,6 @@ _find_some_in_decl_vars(value) := vars if {
 find_ref_vars(value) := [var |
 	some i, var in value.value
 
-	# ignore first element, as it is the base ref (like input or data)
 	i > 0
 	var.type == "var"
 ]
@@ -249,7 +248,7 @@ found.comprehensions[rule_index] contains value if {
 find_vars_in_local_scope(rule, location) := [var |
 	var := found.vars[_rule_index(rule)][_][_] # regal ignore:external-reference
 
-	not startswith(var.value, "$")
+	not is_wildcard(var)
 	_before_location(rule, var, util.to_location_object(location))
 ]
 

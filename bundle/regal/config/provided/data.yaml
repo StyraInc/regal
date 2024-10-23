@@ -15,7 +15,6 @@ rules:
     duplicate-rule:
       level: error
     if-empty-object:
-      # deprecated with the introduction of if-object-literal
       level: ignore
     if-object-literal:
       level: error
@@ -119,6 +118,8 @@ rules:
       level: error
   performance:
     defer-assignment:
+      level: error
+    walk-no-path:
       level: error
     with-outside-test-context:
       level: error

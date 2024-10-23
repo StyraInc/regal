@@ -18,8 +18,7 @@ report contains violation if {
 	neq_term.type == "ref"
 
 	some value in neq_term.value
-	value.type == "var"
-	startswith(value.value, "$")
+	ast.is_wildcard(value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr.terms[0]))
 }

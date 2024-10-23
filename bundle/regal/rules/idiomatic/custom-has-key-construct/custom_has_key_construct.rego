@@ -39,13 +39,11 @@ report contains violation if {
 
 # normalize var to always always be on the left hand side
 _normalize_eq_terms(terms) := [terms[1], terms[2]] if {
-	terms[1].type == "var"
-	startswith(terms[1].value, "$")
+	ast.is_wildcard(terms[1])
 	terms[2].type == "ref"
 }
 
 _normalize_eq_terms(terms) := [terms[2], terms[1]] if {
 	terms[1].type == "ref"
-	terms[2].type == "var"
-	startswith(terms[2].value, "$")
+	ast.is_wildcard(terms[2])
 }

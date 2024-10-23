@@ -15,7 +15,7 @@ report contains violation if {
 	# first item can't be a loop or key ref
 	i != 0
 	elem.type == "var"
-	not startswith(elem.value, "$")
+	not ast.is_wildcard(elem)
 
 	rule := input.rules[to_number(rule_index)]
 

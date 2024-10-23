@@ -37,9 +37,8 @@ _non_loop_term(terms) := [{"pos": i + 1, "term": term} |
 _loop_term(term) if {
 	term.type == "ref"
 	term.value[0].type == "var"
-	last := regal.last(term.value)
-	last.type == "var"
-	startswith(last.value, "$")
+
+	ast.is_wildcard(regal.last(term.value))
 }
 
 _static_term(term) if term.type in {"array", "boolean", "object", "null", "number", "set", "string", "var"}

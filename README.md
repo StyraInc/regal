@@ -254,6 +254,7 @@ The following rules are currently available:
 | imports     | [unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import)                       | Unresolved import                                         |
 | imports     | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                                   | Use `import rego.v1`                                      |
 | performance | [defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment)                     | Assignment can be deferred                                |
+| performance | [walk-no-path](https://docs.styra.com/regal/rules/performance/walk-no-path)                             | Call to `walk` can be optimized                           |
 | performance | [with-outside-test-context](https://docs.styra.com/regal/rules/performance/with-outside-test-context)   | `with` used outside test context                          |
 | style       | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)         | Avoid `get_` and `list_` prefix for rules and functions   |
 | style       | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                         | Avoid chaining rule bodies                                |

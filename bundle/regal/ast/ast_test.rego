@@ -45,7 +45,7 @@ test_find_vars if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	vars := ast.find_vars(module.rules)
+	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
 
 	names := {var.value |
 		some var in vars
@@ -70,7 +70,7 @@ test_find_vars_comprehension_lhs if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	vars := ast.find_vars(module.rules)
+	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
 
 	names := {var.value |
 		some var in vars
@@ -236,6 +236,8 @@ test_find_names_in_scope if {
 	allow_rule := module.rules[3]
 
 	in_scope := ast.find_names_in_scope(allow_rule, {"col": 1, "row": 30}) with input as module
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
+
 	in_scope == {"bar", "global", "comp", "allow", "a", "b", "c", "d", "e"}
 }
 

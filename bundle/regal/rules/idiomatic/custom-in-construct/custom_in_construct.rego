@@ -25,8 +25,7 @@ report contains violation if {
 
 	var.value in arg_names
 	ref.value[0].value in arg_names
-	ref.value[1].type == "var"
-	startswith(ref.value[1].value, "$")
+	ast.is_wildcard(ref.value[1])
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }

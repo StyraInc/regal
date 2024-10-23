@@ -27,7 +27,7 @@ report contains violation if {
 
 	value.type == "var"
 	not value.value in allowed_refs
-	not startswith(value.value, "$")
+	not ast.is_wildcard(value)
 	not _function_call_ctx(fn, path)
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -190,8 +189,6 @@ func prepareRegoArgs(
 			},
 		},
 	}
-
-	fmt.Fprintln(os.Stderr, "Loaded internal bundle")
 
 	args = append(args, rego.ParsedBundle("internal", internalBundle))
 

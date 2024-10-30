@@ -9,38 +9,11 @@ import rego.v1
 excluded_file(category, title, file) if {
 	# regal ignore:external-reference
 	some pattern in _global_ignore_patterns
-	_exclude(pattern, _relative_to_pattern(pattern, file))
+	_exclude(pattern, file)
 } else if {
 	some pattern in for_rule(category, title).ignore.files
-	_exclude(pattern, _relative_to_pattern(pattern, file))
+	_exclude(pattern, file)
 }
-
-# NOTE
-# this is an awful hack which is needed when the language server
-# invokes linting, as it currently will provide filenames in the
-# form of URIs rather than as relative paths... and as we do not
-# know the base/workspace path here, we can only try to make the
-# path relative to the *pattern* providedm which is something...
-#
-# pattern: foo/**/bar.rego
-# file:    file://my/workspace/foo/baz/bar.rego
-# returns: foo/baz/bar.rego
-#
-_relative_to_pattern(pattern, file) := relative if {
-	startswith(file, "file://")
-
-	absolute := trim_suffix(trim_prefix(file, "file://"), "/")
-	file_parts := indexof_n(absolute, "/")
-
-	relative := substring(
-		absolute,
-		array.slice(
-			file_parts, (count(file_parts) - strings.count(pattern, "/")) - 1,
-			count(file_parts),
-		)[0] + 1,
-		-1,
-	)
-} else := file
 
 _global_ignore_patterns := data.eval.params.ignore_files
 

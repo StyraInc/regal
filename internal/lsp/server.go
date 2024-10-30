@@ -389,7 +389,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					ctx,
 					l.cache,
 					l.getLoadedConfig(),
-					l.workspacePath(),
+					l.workspaceRootURI,
 					// this is intended to only be set to true once at start up,
 					// on following runs, cached aggregate data is used.
 					job.OverwriteAggregates,

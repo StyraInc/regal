@@ -9,6 +9,13 @@ package regal.config
 import rego.v1
 
 # METADATA
+# description: the rootDir value set on the current linter instance
+# scope: document
+default root_dir := ""
+
+root_dir := data.internal.root_dir
+
+# METADATA
 # description: the base URL for documentation of linter rules
 docs["base_url"] := "https://docs.styra.com/regal/rules"
 

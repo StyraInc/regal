@@ -209,7 +209,7 @@ func (l Linter) WithProfiling(enabled bool) Linter {
 }
 
 // WithRootDir sets the root directory for the linter.
-// A door directory or prefix can be used to resolve relative paths
+// A root directory or prefix can be used to resolve relative paths
 // referenced in the linter configuration with absolute file paths or URIs.
 func (l Linter) WithRootDir(rootDir string) Linter {
 	l.rootDir = rootDir
@@ -267,6 +267,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			"internal": map[string]any{
 				"combined_config": config.ToMap(*conf),
 				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+				"root_dir":        l.rootDir,
 			},
 		},
 	}

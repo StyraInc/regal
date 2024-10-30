@@ -149,7 +149,7 @@ func updateFileDiagnostics(
 	cache *cache.Cache,
 	regalConfig *config.Config,
 	fileURI string,
-	workspaceRootDir string,
+	workspaceRootURI string,
 	updateDiagnosticsForRules []string,
 ) error {
 	module, ok := cache.GetModule(fileURI)
@@ -171,7 +171,7 @@ func updateFileDiagnostics(
 		// needed to get the aggregateData out so we can update the cache
 		WithExportAggregates(true).
 		WithInputModules(&input).
-		WithRootDir(workspaceRootDir)
+		WithRootDir(workspaceRootURI)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
@@ -182,7 +182,7 @@ func updateFileDiagnostics(
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootDir)
+	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootURI)
 
 	files := cache.GetAllFiles()
 
@@ -213,7 +213,7 @@ func updateAllDiagnostics(
 	ctx context.Context,
 	cache *cache.Cache,
 	regalConfig *config.Config,
-	workspaceRootDir string,
+	workspaceRootURI string,
 	overwriteAggregates bool,
 	aggregatesReportOnly bool,
 	updateDiagnosticsForRules []string,
@@ -224,9 +224,10 @@ func updateAllDiagnostics(
 	files := cache.GetAllFiles()
 
 	regalInstance := linter.NewLinter().
-		WithRootDir(workspaceRootDir).
+		WithRootDir(workspaceRootURI).
 		// aggregates need only be exported if they're to be used to overwrite.
-		WithExportAggregates(overwriteAggregates)
+		WithExportAggregates(overwriteAggregates).
+		WithRootDir(workspaceRootURI)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
@@ -245,7 +246,7 @@ func updateAllDiagnostics(
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootDir)
+	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootURI)
 
 	for uri := range files {
 		parseErrs, ok := cache.GetParseErrors(uri)

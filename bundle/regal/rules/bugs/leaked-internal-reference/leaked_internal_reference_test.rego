@@ -68,6 +68,30 @@ test_fail_leaked_internal_reference_in_nested_comprehension if {
 	})
 }
 
+test_ignore_test_file_by_default if {
+	r := rule.report with input as ast.with_rego_v1(`foo := data.bar._wow`)
+		with input.regal.file.name as "p_test.rego"
+
+	r == set()
+}
+
+test_ignore_test_file_can_be_disabled if {
+	r := rule.report with input as ast.with_rego_v1(`foo := data.bar._wow`)
+		with input.regal.file.name as "p_test.rego"
+		with config.for_rule as {"include-test-files": true}
+
+	r == expected_with_location({
+		"file": "p_test.rego",
+		"col": 8,
+		"row": 5,
+		"end": {
+			"col": 21,
+			"row": 5,
+		},
+		"text": "foo := data.bar._wow",
+	})
+}
+
 expected := {
 	"category": "bugs",
 	"description": "Outside reference to internal rule or function",

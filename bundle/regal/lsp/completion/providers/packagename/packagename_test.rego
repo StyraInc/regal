@@ -140,18 +140,14 @@ test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 }
 
 test_build_suggestions if {
-	# regal ignore:leaked-internal-reference
 	provider._suggestions("foo.bar.baz", {"text": "foo"}) == ["foo.bar.baz"]
 
-	# regal ignore:leaked-internal-reference
 	provider._suggestions("foo.bar.baz", {"text": "bar"}) == ["bar.baz"]
 
-	# regal ignore:leaked-internal-reference
 	provider._suggestions("foo.bar.baz", {"text": "ba"}) == ["bar.baz", "baz"]
 }
 
 test_build_suggestions_invoked if {
-	# regal ignore:leaked-internal-reference
 	provider._suggestions("foo.bar.baz", {"text": ""}) == [
 		"foo.bar.baz",
 		"bar.baz",

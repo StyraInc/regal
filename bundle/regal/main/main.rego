@@ -40,7 +40,7 @@ _rules_to_run[category] contains title if {
 
 	config.for_rule(category, title).level != "ignore"
 
-	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.root_dir, "/"]))
+	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
 
 	not config.excluded_file(
 		category,
@@ -103,7 +103,7 @@ report contains violation if {
 
 	config.for_rule(category, title).level != "ignore"
 
-	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.root_dir, "/"]))
+	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
 
 	not config.excluded_file(
 		category,

@@ -9,11 +9,11 @@ package regal.config
 import rego.v1
 
 # METADATA
-# description: the rootDir value set on the current linter instance
+# description: the path prefix value set on the current linter instance
 # scope: document
-default root_dir := ""
+default path_prefix := ""
 
-root_dir := data.internal.root_dir
+path_prefix := data.internal.path_prefix
 
 # METADATA
 # description: the base URL for documentation of linter rules

@@ -171,7 +171,7 @@ func updateFileDiagnostics(
 		// needed to get the aggregateData out so we can update the cache
 		WithExportAggregates(true).
 		WithInputModules(&input).
-		WithRootDir(workspaceRootURI)
+		WithPathPrefix(workspaceRootURI)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
@@ -224,10 +224,9 @@ func updateAllDiagnostics(
 	files := cache.GetAllFiles()
 
 	regalInstance := linter.NewLinter().
-		WithRootDir(workspaceRootURI).
+		WithPathPrefix(workspaceRootURI).
 		// aggregates need only be exported if they're to be used to overwrite.
-		WithExportAggregates(overwriteAggregates).
-		WithRootDir(workspaceRootURI)
+		WithExportAggregates(overwriteAggregates)
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)

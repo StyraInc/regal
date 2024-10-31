@@ -272,7 +272,7 @@ or := 1
 
 			linter := NewLinter()
 
-			linter = linter.WithRootDir(tc.rootDir)
+			linter = linter.WithPathPrefix(tc.rootDir)
 
 			if tc.userConfig != nil {
 				linter = linter.WithUserConfig(*tc.userConfig)

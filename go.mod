@@ -7,7 +7,7 @@ require (
 	github.com/anderseknert/roast v0.4.2
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.18.0
-	github.com/fsnotify/fsnotify v1.7.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.6.0

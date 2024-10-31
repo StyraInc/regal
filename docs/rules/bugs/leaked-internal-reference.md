@@ -47,10 +47,11 @@ mean that the benefits listed above won't apply to your project.
 
 ## Exceptions
 
-In test files and packages, it can be useful to reference internal rules and
-functions to ensure good test coverage. If you want to run this rule for test
-files too, you can set `include-test-files: true` in the configuration for this
-rule.
+This rule is not enabled by default for test files. In tests, it can be useful
+to reference internal rules and functions to achieve good test coverage, which
+would be a violation of this rule. If you want to run this rule for tests
+too, you can set `include-test-files: true` in the configuration for this rule
+in your Regal config file.
 
 ## Configuration Options
 

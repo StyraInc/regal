@@ -194,7 +194,6 @@ test_exclude_files_rule_config if {
 test_exclude_files_rule_config_with_path_prefix_relative_name if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
 		with input.regal.file.name as "bar/p.rego"
@@ -206,7 +205,6 @@ test_exclude_files_rule_config_with_path_prefix_relative_name if {
 test_not_exclude_files_rule_config_with_path_prefix_relative_name if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
 		with input.regal.file.name as "bar/p.rego"
@@ -218,7 +216,6 @@ test_not_exclude_files_rule_config_with_path_prefix_relative_name if {
 test_exclude_files_rule_config_with_path_prefix if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
 		with input.regal.file.name as "/foo/bar/p.rego"
@@ -230,7 +227,6 @@ test_exclude_files_rule_config_with_path_prefix if {
 test_not_exclude_files_rule_config_with_path_prefix if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
 		with input.regal.file.name as "/foo/bar/p.rego"
@@ -242,7 +238,6 @@ test_not_exclude_files_rule_config_with_path_prefix if {
 test_exclude_files_rule_config_with_uri_and_path_prefix if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
 		with input.regal.file.name as "file:///foo/bar/p.rego"
@@ -254,7 +249,6 @@ test_exclude_files_rule_config_with_uri_and_path_prefix if {
 test_not_exclude_files_rule_config_with_uri_and_path_prefix if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
 		with input.regal.file.name as "file:///foo/bar/p.rego"

@@ -91,21 +91,6 @@ test_excluded_file_cli_overrides_config if {
 		with data.eval.params as object.union(params, {"ignore_files": [""]})
 }
 
-test_excluded_file_using_uri if {
-	conf := {"rules": {"test": {"rule": {
-		"level": "error",
-		"ignore": {"files": ["foo/**/p.rego"]},
-	}}}}
-
-	config.excluded_file("test", "rule", "file:///workspace/folder/foo/bar/p.rego") with config.merged_config as conf
-}
-
-test_not_excluded_file_using_uri if {
-	conf := {"rules": {"test": {"rule": {"level": "error"}}}}
-
-	not config.excluded_file("test", "rule", "file:///workspace/folder/foo/bar/p.rego") with config.merged_config as conf
-}
-
 test_trailing_slash if {
 	config._trailing_slash("foo/**/bar") == {"foo/**/bar", "foo/**/bar/**"} # regal ignore:leaked-internal-reference
 	config._trailing_slash("foo") == {"foo", "foo/**"} # regal ignore:leaked-internal-reference

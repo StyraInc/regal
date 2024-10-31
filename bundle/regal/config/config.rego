@@ -9,6 +9,13 @@ package regal.config
 import rego.v1
 
 # METADATA
+# description: the path prefix value set on the current linter instance
+# scope: document
+default path_prefix := ""
+
+path_prefix := data.internal.path_prefix
+
+# METADATA
 # description: the base URL for documentation of linter rules
 docs["base_url"] := "https://docs.styra.com/regal/rules"
 

@@ -85,7 +85,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 
 	contents := "package p\n\nimport rego.v1\n\ncamelCase := 1\n"
 	module := parse.MustParseModule(contents)
-	workspacePath := "/workspace"
+	workspaceRootURI := "file:///workspace"
 	fileURI := "file:///workspace/ignore/p.rego"
 	state := cache.NewCache()
 
@@ -98,7 +98,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		state,
 		conf,
 		fileURI,
-		workspacePath,
+		workspaceRootURI,
 		[]string{"prefer-snake-case"},
 	); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -132,7 +132,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		state,
 		conf,
 		fileURI,
-		workspacePath,
+		workspaceRootURI,
 		[]string{"prefer-snake-case"},
 	); err != nil {
 		t.Fatalf("Expected no error, got %v", err)

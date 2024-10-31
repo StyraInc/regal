@@ -43,7 +43,7 @@ type Linter struct {
 	userConfig           *config.Config
 	combinedCfg          *config.Config
 	dataBundle           *bundle.Bundle
-	rootDir              string
+	pathPrefix           string
 	customRuleFSRootPath string
 	inputPaths           []string
 	ruleBundles          []*bundle.Bundle
@@ -208,11 +208,11 @@ func (l Linter) WithProfiling(enabled bool) Linter {
 	return l
 }
 
-// WithRootDir sets the root directory for the linter.
-// A door directory or prefix can be used to resolve relative paths
+// WithPathPrefix sets the root path prefix for the linter.
+// A root directory prefix can be used to resolve relative paths
 // referenced in the linter configuration with absolute file paths or URIs.
-func (l Linter) WithRootDir(rootDir string) Linter {
-	l.rootDir = rootDir
+func (l Linter) WithPathPrefix(pathPrefix string) Linter {
+	l.pathPrefix = pathPrefix
 
 	return l
 }
@@ -267,6 +267,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			"internal": map[string]any{
 				"combined_config": config.ToMap(*conf),
 				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+				"path_prefix":     l.pathPrefix,
 			},
 		},
 	}
@@ -279,7 +280,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	l.startTimer(regalmetrics.RegalFilterIgnoredFiles)
 
-	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true, l.rootDir)
+	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true, l.pathPrefix)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -303,7 +304,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			l.inputModules.FileNames,
 			ignore,
 			false,
-			l.rootDir,
+			l.pathPrefix,
 		)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)

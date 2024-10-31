@@ -14,15 +14,15 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 )
 
-func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir string) ([]string, error) {
+func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, pathPrefix string) ([]string, error) {
 	// - special case for stdin, return as is
 	if len(paths) == 1 && paths[0] == "-" {
 		return paths, nil
 	}
 
-	// if set, rootDir is normalized to end with a platform appropriate separator
-	if rootDir != "" && !strings.HasSuffix(rootDir, string(filepath.Separator)) {
-		rootDir += string(filepath.Separator)
+	// if set, pathPrefix is normalized to end with a platform appropriate separator
+	if pathPrefix != "" && !strings.HasSuffix(pathPrefix, string(filepath.Separator)) {
+		pathPrefix += string(filepath.Separator)
 	}
 
 	if checkFileExists {
@@ -42,14 +42,14 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, rootDir st
 			return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 		}
 
-		return filterPaths(filtered, ignore, rootDir)
+		return filterPaths(filtered, ignore, pathPrefix)
 	}
 
 	if len(ignore) == 0 {
 		return paths, nil
 	}
 
-	return filterPaths(paths, ignore, rootDir)
+	return filterPaths(paths, ignore, pathPrefix)
 }
 
 func walkPaths(paths []string, filter func(path string, info os.DirEntry, err error) error) error {
@@ -72,7 +72,7 @@ func walkPaths(paths []string, filter func(path string, info os.DirEntry, err er
 	return errs
 }
 
-func filterPaths(policyPaths []string, ignore []string, rootDir string) ([]string, error) {
+func filterPaths(policyPaths []string, ignore []string, pathPrefix string) ([]string, error) {
 	filtered := make([]string, 0, len(policyPaths))
 
 outer:
@@ -82,7 +82,7 @@ outer:
 				continue
 			}
 
-			excluded, err := excludeFile(pattern, f, rootDir)
+			excluded, err := excludeFile(pattern, f, pathPrefix)
 			if err != nil {
 				return nil, fmt.Errorf("failed to check for exclusion using pattern %s: %w", pattern, err)
 			}
@@ -100,11 +100,11 @@ outer:
 
 // excludeFile imitates the pattern matching of .gitignore files
 // See `exclusion.rego` for details on the implementation.
-func excludeFile(pattern, filename, rootDir string) (bool, error) {
+func excludeFile(pattern, filename, pathPrefix string) (bool, error) {
 	n := len(pattern)
 
-	if rootDir != "" {
-		filename = strings.TrimPrefix(filename, rootDir)
+	if pathPrefix != "" {
+		filename = strings.TrimPrefix(filename, pathPrefix)
 	}
 
 	// Internal slashes means path is relative to root, otherwise it can

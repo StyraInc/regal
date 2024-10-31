@@ -98,7 +98,6 @@ test_aggregate_rule_surfaces_refs if {
 }
 
 test_import_graph if {
-	# regal ignore:leaked-internal-reference
 	r := rule._import_graph with input as {"aggregate": {
 		{
 			"aggregate_data": {"refs": {{"location": {"col": 12, "row": 3}, "package_path": "data.policy.b"}}},
@@ -130,7 +129,6 @@ test_import_graph if {
 }
 
 test_import_graph_self_import if {
-	# regal ignore:leaked-internal-reference
 	r := rule._import_graph with input as {"aggregate": {{
 		"aggregate_data": {"refs": {{"location": {"col": 12, "row": 4}, "package_path": "data.example"}}},
 		"aggregate_source": {"file": "example.rego", "package_path": ["example"]},
@@ -141,7 +139,6 @@ test_import_graph_self_import if {
 }
 
 test_self_reachable if {
-	# regal ignore:leaked-internal-reference
 	r := rule._self_reachable with rule._import_graph as {
 		"data.policy.a": {"data.policy.b"},
 		"data.policy.b": {"data.policy.c"}, "data.policy.c": {"data.policy.a"},
@@ -151,7 +148,6 @@ test_self_reachable if {
 }
 
 test_groups if {
-	# regal ignore:leaked-internal-reference
 	r := rule._groups with rule._import_graph as {
 		"data.policy.a": {"data.policy.b"},
 		"data.policy.b": {"data.policy.c"},
@@ -170,14 +166,12 @@ test_groups if {
 }
 
 test_groups_empty_graph if {
-	# regal ignore:leaked-internal-reference
 	r := rule._groups with rule._import_graph as {"data.policy.a": {}}
 
 	r == set()
 }
 
 test_package_locations if {
-	# regal ignore:leaked-internal-reference
 	r := rule._package_locations with input as {"aggregate": {
 		{
 			"aggregate_data": {"refs": {{"location": {"col": 12, "row": 3}, "package_path": "data.policy.b"}}},

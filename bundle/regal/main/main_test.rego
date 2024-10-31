@@ -352,7 +352,6 @@ test_main_lint if {
 test_rules_to_run_not_excluded if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
-	# regal ignore:leaked-internal-reference
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
 		with config.for_rule as {"level": "error"}
 		with input.regal.file.name as "p.rego"
@@ -370,7 +369,6 @@ test_notices if {
 		"severity": "none",
 	}
 
-	# regal ignore:leaked-internal-reference
 	notices := main.lint.notices with main._rules_to_run as {"idiomatic": {"testme"}}
 		with data.regal.rules.idiomatic.testme.notices as {notice}
 
@@ -397,7 +395,6 @@ test_report_custom_rule_failure if {
 }
 
 test_aggregate_bundled_rule if {
-	# regal ignore:leaked-internal-reference
 	agg := main.aggregate with main._rules_to_run as {"foo": {"bar"}}
 		with data.regal.rules as {"foo": {"bar": {"aggregate": {"baz"}}}}
 

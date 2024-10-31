@@ -48,7 +48,7 @@ test_all_cases_are_as_expected if {
 		some pattern, subcases in cases
 		res := {file |
 			some file, exp in subcases
-			act := config._exclude(pattern, file) # regal ignore:leaked-internal-reference
+			act := config._exclude(pattern, file)
 			exp != act
 		}
 		count(res) > 0
@@ -92,7 +92,7 @@ test_excluded_file_cli_overrides_config if {
 }
 
 test_trailing_slash if {
-	config._trailing_slash("foo/**/bar") == {"foo/**/bar", "foo/**/bar/**"} # regal ignore:leaked-internal-reference
-	config._trailing_slash("foo") == {"foo", "foo/**"} # regal ignore:leaked-internal-reference
-	config._trailing_slash("foo/**") == {"foo/**"} # regal ignore:leaked-internal-reference
+	config._trailing_slash("foo/**/bar") == {"foo/**/bar", "foo/**/bar/**"}
+	config._trailing_slash("foo") == {"foo", "foo/**"}
+	config._trailing_slash("foo/**") == {"foo/**"}
 }

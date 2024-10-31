@@ -5,6 +5,7 @@
 **Category**: Bugs
 
 **Avoid**
+
 ```rego
 package policy
 
@@ -44,6 +45,14 @@ Do note that if you disagree with this rule, you don't need to disable it unless
 something else. If you don't use underscore prefixes, nothing will be reported by this rule anyway. It does however
 mean that the benefits listed above won't apply to your project.
 
+## Exceptions
+
+This rule is not enabled by default for test files. In tests, it can be useful
+to reference internal rules and functions to achieve good test coverage, which
+would be a violation of this rule. If you want to run this rule for tests
+too, you can set `include-test-files: true` in the configuration for this rule
+in your Regal config file.
+
 ## Configuration Options
 
 This linter rule provides the following configuration options:
@@ -54,6 +63,7 @@ rules:
     leaked-internal-reference:
       # one of "error", "warning", "ignore"
       level: error
+      include-test-files: false # default is false
 ```
 
 ## Related Resources

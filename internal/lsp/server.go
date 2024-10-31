@@ -2079,24 +2079,22 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	var oldContent string
 
-	var ok bool
-
 	// Fetch the contents used for formatting from the appropriate cache location.
 	if l.ignoreURI(params.TextDocument.URI) {
-		oldContent, ok = l.cache.GetIgnoredFileContents(params.TextDocument.URI)
+		oldContent, _ = l.cache.GetIgnoredFileContents(params.TextDocument.URI)
 	} else {
-		oldContent, ok = l.cache.GetFileContents(params.TextDocument.URI)
-	}
-
-	// disable the templating feature for files in the workspace root.
-	if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
-		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
-		return []types.TextEdit{}, nil
+		oldContent, _ = l.cache.GetFileContents(params.TextDocument.URI)
 	}
 
 	// if the file is empty, then the formatters will fail, so we template
 	// instead
 	if oldContent == "" {
+		// disable the templating feature for files in the workspace root.
+		if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
+			uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+			return []types.TextEdit{}, nil
+		}
+
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
@@ -2116,10 +2114,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return ComputeEdits(oldContent, newContent), nil
 	}
 
-	if !ok {
-		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
-	}
-
+	// opa-fmt is the default formatter if not set in the client options
 	formatter := "opa-fmt"
 
 	if l.clientInitializationOptions.Formatter != nil {

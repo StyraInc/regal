@@ -63,16 +63,7 @@ type Linter struct {
 }
 
 //nolint:gochecknoglobals
-var (
-	// Single file provided as input.
-	lintQuery = ast.MustParseBody(`lint := {
-		"violations": data.regal.main.lint.violations,
-		"notices": data.regal.main.lint.notices,
-	}`)
-	// More than one file provided as input.
-	lintAndCollectQuery     = ast.MustParseBody("lint := data.regal.main.lint")
-	lintWithAggregatesQuery = ast.MustParseBody("lint_aggregate := data.regal.main.lint_aggregate")
-)
+var lintQuery = ast.MustParseBody("lint := data.regal.main.lint")
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
@@ -326,7 +317,17 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	finalReport.Violations = append(finalReport.Violations, goReport.Violations...)
 
-	regoReport, err := l.lintWithRegoRules(ctx, input)
+	regoArgs, err := l.prepareRegoArgs(lintQuery)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	regoReport, err := l.lintWithRegoRules(ctx, &pq, input)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
@@ -362,7 +363,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if len(allAggregates) > 0 {
-		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
+		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, &pq, allAggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 		}
@@ -795,33 +796,25 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 	return files, nil
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) lintWithRegoRules(
+	ctx context.Context,
+	pq *rego.PreparedEvalQuery,
+	input rules.Input,
+) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var query ast.Body
-	if len(input.FileNames) > 1 || l.useCollectQuery {
-		query = lintAndCollectQuery
-	} else {
-		query = lintQuery
-	}
-
-	regoArgs, err := l.prepareRegoArgs(query)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
-
-	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
-
 	regoReport := report.Report{}
 	regoReport.Aggregates = make(map[string][]report.Aggregate)
 	regoReport.IgnoreDirectives = make(map[string]map[string][]string)
+
+	var operationCollect bool
+	if len(input.FileNames) > 1 || l.useCollectQuery {
+		operationCollect = true
+	}
 
 	var wg sync.WaitGroup
 
@@ -846,6 +839,14 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				return
 			}
 
+			regalInput, ok := enhancedAST["regal"].(map[string]any)
+			if ok {
+				regalInput["operations"] = map[string]bool{
+					"lint":    true,
+					"collect": operationCollect,
+				}
+			}
+
 			evalArgs := []rego.EvalOption{
 				rego.EvalInput(enhancedAST),
 			}
@@ -867,7 +868,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 				return
 			}
 
-			result, err := resultSetToReport(resultSet)
+			result, err := resultSetToReport(resultSet, false)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
 
@@ -923,6 +924,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 
 func (l Linter) lintWithRegoAggregateRules(
 	ctx context.Context,
+	pq *rego.PreparedEvalQuery,
 	aggregates map[string][]report.Aggregate,
 	ignoreDirectives map[string]map[string][]string,
 ) (report.Report, error) {
@@ -931,16 +933,6 @@ func (l Linter) lintWithRegoAggregateRules(
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	regoArgs, err := l.prepareRegoArgs(lintWithAggregatesQuery)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
-
-	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
 
 	input := map[string]any{
 		// This will be replaced by the routing policy to provide each
@@ -951,6 +943,7 @@ func (l Linter) lintWithRegoAggregateRules(
 		// refer to input.regal in an aggregate_report rule
 		"ignore_directives": ignoreDirectives,
 		"regal": map[string]any{
+			"operations": map[string]bool{"aggregate": true},
 			"file": map[string]any{
 				"name":  "__aggregate_report__",
 				"lines": []string{},
@@ -969,7 +962,7 @@ func (l Linter) lintWithRegoAggregateRules(
 		return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 	}
 
-	result, err := resultSetToReport(resultSet)
+	result, err := resultSetToReport(resultSet, true)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
 	}
@@ -981,22 +974,26 @@ func (l Linter) lintWithRegoAggregateRules(
 	return result, nil
 }
 
-func resultSetToReport(resultSet rego.ResultSet) (report.Report, error) {
+func resultSetToReport(resultSet rego.ResultSet, aggregate bool) (report.Report, error) {
 	if len(resultSet) != 1 {
 		return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
 	}
 
 	r := report.Report{}
 
-	if binding, ok := resultSet[0].Bindings["lint"]; ok {
-		if err := rio.JSONRoundTrip(binding, &r); err != nil {
-			return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+	if aggregate {
+		if binding, ok := resultSet[0].Bindings["lint"].(map[string]any); ok {
+			if aggregateBinding, ok := binding["aggregate"]; ok {
+				if err := rio.JSONRoundTrip(aggregateBinding, &r); err != nil {
+					return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+				}
+			}
 		}
-	}
-
-	if binding, ok := resultSet[0].Bindings["lint_aggregate"]; ok {
-		if err := rio.JSONRoundTrip(binding, &r); err != nil {
-			return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+	} else {
+		if binding, ok := resultSet[0].Bindings["lint"]; ok {
+			if err := rio.JSONRoundTrip(binding, &r); err != nil {
+				return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+			}
 		}
 	}
 

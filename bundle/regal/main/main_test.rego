@@ -143,7 +143,10 @@ test_ignore_directive_collected_in_aggregate_rule if {
 	# regal ignore:unresolved-import
 	import data.unresolved
 	`)
-	lint := main.lint with input as module
+
+	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+
+	lint := main.lint with input as mock_input
 
 	lint.ignore_directives == {"p.rego": {6: ["unresolved-import"]}}
 }
@@ -294,7 +297,11 @@ test_camelcase if {
 	camelCase == "yes"
 }
 `
-	result := main with input as regal.parse_module("p.rego", policy)
+
+	module := regal.parse_module("p.rego", policy)
+	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+
+	result := main with input as mock_input
 		with input.regal.file.name as "stdin"
 		with config.merged_config as {
 			"capabilities": {},
@@ -318,35 +325,34 @@ test_main_lint if {
 
 	module := regal.parse_module("p.rego", policy)
 
+	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+
 	cfg := {"rules": {"style": {"use-assignment-operator": {"level": "error"}}}}
 
-	result := main.lint with input as module with config.merged_config as cfg
+	result := main.lint with input as mock_input with config.merged_config as cfg
 
-	result == {
-		"aggregates": {},
-		"ignore_directives": {"p.rego": {}},
-		"notices": set(),
-		"violations": {{
-			"category": "style",
-			"description": "Prefer := over = for assignment",
-			"level": "error",
-			"location": {
-				"col": 4,
-				"file": "p.rego",
+	result.violations == {{
+		"category": "style",
+		"description": "Prefer := over = for assignment",
+		"level": "error",
+		"location": {
+			"col": 4,
+			"file": "p.rego",
+			"row": 2,
+			"end": {
+				"col": 5,
 				"row": 2,
-				"end": {
-					"col": 5,
-					"row": 2,
-				},
-				"text": "\tx = 1",
 			},
-			"related_resources": [{
-				"description": "documentation",
-				"ref": "https://docs.styra.com/regal/rules/style/use-assignment-operator",
-			}],
-			"title": "use-assignment-operator",
-		}},
-	}
+			"text": "\tx = 1",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": "https://docs.styra.com/regal/rules/style/use-assignment-operator",
+		}],
+		"title": "use-assignment-operator",
+	}}
+	result.ignore_directives == {"p.rego": {}}
+	result.notices == set()
 }
 
 test_rules_to_run_not_excluded if {
@@ -371,6 +377,7 @@ test_notices if {
 
 	notices := main.lint.notices with main._rules_to_run as {"idiomatic": {"testme"}}
 		with data.regal.rules.idiomatic.testme.notices as {notice}
+		with input.regal.operations.lint as true
 
 	notices == {notice}
 }
@@ -413,7 +420,10 @@ test_aggregate_custom_rule if {
 test_aggregate_report_custom_rule if {
 	mock_input := {
 		"aggregates_internal": {"custom/test": {}},
-		"regal": {"file": {"name": "p.rego"}},
+		"regal": {
+			"file": {"name": "p.rego"},
+			"operations": {"aggregate": true},
+		},
 	}
 
 	mock_rules := {"custom": {"test": {"aggregate_report": {{
@@ -426,7 +436,7 @@ test_aggregate_report_custom_rule if {
 
 	report == {{"category": "custom", "title": "test"}}
 
-	violations := main.lint_aggregate.violations with input as mock_input
+	violations := main.lint.aggregate.violations with input as mock_input
 		with data.custom.regal.rules as mock_rules
 
 	violations == report

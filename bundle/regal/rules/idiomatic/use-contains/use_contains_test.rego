@@ -56,3 +56,15 @@ test_success_object_rule if {
 
 	r == set()
 }
+
+# https://github.com/StyraInc/regal/issues/1212
+test_success_contains_without_rule_body if {
+	module := ast.policy(`
+	import future.keywords.contains
+
+	mask contains "foo"
+	`)
+	r := rule.report with input as module
+
+	r == set()
+}

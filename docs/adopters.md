@@ -61,6 +61,7 @@ Companies and organizations using Regal (not counting organizations behind the o
 - [Stacklok](https://stacklok.com)
 - [Styra](https://www.styra.com)
 - [UNIwise](https://uniwise.eu/)
+- [VodafoneZiggo](https://www.vodafoneziggo.nl)
 <!-- cspell:enable-->
 
 ## Community

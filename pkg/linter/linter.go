@@ -841,10 +841,13 @@ func (l Linter) lintWithRegoRules(
 
 			regalInput, ok := enhancedAST["regal"].(map[string]any)
 			if ok {
-				regalInput["operations"] = map[string]bool{
-					"lint":    true,
-					"collect": operationCollect,
+				operations := []string{"lint"}
+
+				if operationCollect {
+					operations = append(operations, "collect")
 				}
+
+				regalInput["operations"] = operations
 			}
 
 			evalArgs := []rego.EvalOption{
@@ -943,7 +946,7 @@ func (l Linter) lintWithRegoAggregateRules(
 		// refer to input.regal in an aggregate_report rule
 		"ignore_directives": ignoreDirectives,
 		"regal": map[string]any{
-			"operations": map[string]bool{"aggregate": true},
+			"operations": []string{"aggregate"},
 			"file": map[string]any{
 				"name":  "__aggregate_report__",
 				"lines": []string{},

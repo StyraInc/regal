@@ -144,7 +144,7 @@ test_ignore_directive_collected_in_aggregate_rule if {
 	import data.unresolved
 	`)
 
-	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+	mock_input := object.union(module, {"regal": {"operations": ["lint"]}})
 
 	lint := main.lint with input as mock_input
 
@@ -299,7 +299,7 @@ test_camelcase if {
 `
 
 	module := regal.parse_module("p.rego", policy)
-	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+	mock_input := object.union(module, {"regal": {"operations": ["lint"]}})
 
 	result := main with input as mock_input
 		with input.regal.file.name as "stdin"
@@ -325,7 +325,7 @@ test_main_lint if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	mock_input := object.union(module, {"regal": {"operations": {"lint": true}}})
+	mock_input := object.union(module, {"regal": {"operations": ["lint"]}})
 
 	cfg := {"rules": {"style": {"use-assignment-operator": {"level": "error"}}}}
 
@@ -377,7 +377,7 @@ test_notices if {
 
 	notices := main.lint.notices with main._rules_to_run as {"idiomatic": {"testme"}}
 		with data.regal.rules.idiomatic.testme.notices as {notice}
-		with input.regal.operations.lint as true
+		with input.regal.operations as ["lint"]
 
 	notices == {notice}
 }
@@ -422,7 +422,7 @@ test_aggregate_report_custom_rule if {
 		"aggregates_internal": {"custom/test": {}},
 		"regal": {
 			"file": {"name": "p.rego"},
-			"operations": {"aggregate": true},
+			"operations": ["aggregate"],
 		},
 	}
 

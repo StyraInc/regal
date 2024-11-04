@@ -382,17 +382,9 @@
           "type": "object"
         },
         "operations": {
-          "type": "object",
-          "properties": {
-            "lint": {
-              "type": "boolean"
-            },
-            "collect": {
-              "type": "boolean"
-            },
-            "aggregate": {
-              "type": "boolean"
-            }
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "context": {

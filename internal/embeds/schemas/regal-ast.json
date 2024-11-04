@@ -381,6 +381,12 @@
           },
           "type": "object"
         },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "context": {
           "description": "extra attributes provided in the specific evaluation context",
           "type": "object",
@@ -408,7 +414,8 @@
       },
       "type": "object",
       "required": [
-        "file"
+        "file",
+        "operations"
       ]
     }
   }

@@ -36,9 +36,12 @@ jobs:
       - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
+      - id: opa
+        name: read OPA version
+        run: echo "version=$(go list -m -f '{{.Version}}' github.com/open-policy-agent/opa)" >> $GITHUB_OUTPUT
       - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
         with:
-          version: v0.70.0
+          version: ${{ steps.opa.outputs.version }}
           static: ${{ matrix.os.static }}
       - run: npm install --prefix build
       - name: Restore rq cache
@@ -74,9 +77,12 @@ jobs:
       - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: go.mod
+      - id: opa
+        name: read OPA version
+        run: echo "version=$(go list -m -f '{{.Version}}' github.com/open-policy-agent/opa)" >> $GITHUB_OUTPUT
       - uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 # v2.2.0
         with:
-          version: v0.70.0
+          version: ${{ steps.opa.outputs.version }}
       - run: |
           go run main.go test --coverage bundle \
           | opa eval -f raw -I -d build/simplecov/simplecov.rego data.build.simplecov.from_opa \

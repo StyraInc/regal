@@ -323,6 +323,7 @@ gci if {
 		"-s standard",
 		"-s default",
 		"-s prefix(github.com/open-policy-agent/opa)",
+		"-s prefix(github.com/styrainc/roast)",
 		"-s prefix(github.com/styrainc/regal)",
 		"-s blank",
 		"-s dot",

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/anderseknert/roast/pkg/transform"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -15,6 +13,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
+
+	"github.com/styrainc/roast/pkg/transform"
 
 	_ "embed"
 )

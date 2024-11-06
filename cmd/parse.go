@@ -6,12 +6,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/spf13/cobra"
 
 	"github.com/open-policy-agent/opa/v1/util"
 
 	rp "github.com/styrainc/regal/internal/parse"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 func init() {

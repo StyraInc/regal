@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	rio "github.com/styrainc/regal/internal/io"
+
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 // NullToEmpty returns empty slice if provided slice is nil.
@@ -142,7 +144,7 @@ func DeleteEmptyDirs(dir string) error {
 func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dirs := make([]string, 0)
 
-	preserveDirs := NewSet[string]()
+	preserveDirs := rutil.NewSet[string]()
 
 	for _, p := range preserve {
 		for {

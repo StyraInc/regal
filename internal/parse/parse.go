@@ -6,11 +6,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	rio "github.com/styrainc/regal/internal/io"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 // ParserOptions provides parser options with annotation processing. JSONOptions are not included,

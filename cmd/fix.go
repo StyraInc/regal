@@ -24,6 +24,8 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 // fixCommandParams is similar to the lint params, but with some fields such as profiling removed.
@@ -365,7 +367,7 @@ func fix(args []string, params *fixCommandParams) error {
 			return fmt.Errorf("failed to get changed files: %w", err)
 		}
 
-		changedFiles := util.NewSet(cf...)
+		changedFiles := rutil.NewSet(cf...)
 
 		var conflictingFiles []string
 

@@ -18,7 +18,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/internal/util/concurrent"
+
+	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 func TestTemplateContentsForFile(t *testing.T) {

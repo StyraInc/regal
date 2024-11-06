@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
+
+	"github.com/styrainc/roast/pkg/encoding"
 
 	_ "embed"
 )

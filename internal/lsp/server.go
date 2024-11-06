@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
@@ -45,7 +44,6 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/internal/util/concurrent"
 	"github.com/styrainc/regal/internal/web"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
@@ -55,6 +53,9 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/rules"
 	"github.com/styrainc/regal/pkg/version"
+
+	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 const (

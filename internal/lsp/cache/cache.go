@@ -8,9 +8,10 @@ import (
 	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/internal/util/concurrent"
 	"github.com/styrainc/regal/pkg/report"
+
+	"github.com/styrainc/roast/pkg/util"
+	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and

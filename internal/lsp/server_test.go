@@ -13,13 +13,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 const mainRegoFileName = "/main.rego"

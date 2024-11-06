@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -18,6 +17,9 @@ import (
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
+
+	"github.com/styrainc/roast/pkg/encoding"
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 const (
@@ -895,7 +897,7 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 		}
 	}
 
-	dirMap := util.NewSet[string]()
+	dirMap := rutil.NewSet[string]()
 
 	for _, dir := range absDirPaths {
 		brds, err := FindBundleRootDirectories(dir)

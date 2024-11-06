@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -16,6 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/parse"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 // RegalParseModuleMeta metadata for regal.parse_module.

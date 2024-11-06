@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/compile"
@@ -14,6 +12,8 @@ import (
 
 	compile2 "github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/parse"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 type CompileResult struct {

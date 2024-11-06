@@ -14,8 +14,6 @@ import (
 	"sync"
 	"testing/fstest"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-	"github.com/anderseknert/roast/pkg/transform"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -30,12 +28,15 @@ import (
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 	"github.com/styrainc/regal/pkg/rules"
+
+	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/transform"
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 // Linter stores data to use for linting.
@@ -449,8 +450,8 @@ func (l Linter) validate() error {
 		return fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	validCategories := util.NewSet[string]()
-	validRules := util.NewSet[string]()
+	validCategories := rutil.NewSet[string]()
+	validRules := rutil.NewSet[string]()
 
 	// Add all built-in rules
 	for _, b := range l.ruleBundles {
@@ -480,8 +481,8 @@ func (l Linter) validate() error {
 		validRules.Add(parts[4])
 	}
 
-	configuredCategories := util.NewSet(outil.Keys(conf.Rules)...)
-	configuredRules := util.NewSet[string]()
+	configuredCategories := rutil.NewSet(outil.Keys(conf.Rules)...)
+	configuredRules := rutil.NewSet[string]()
 
 	for _, cat := range conf.Rules {
 		configuredRules.Add(outil.Keys(cat)...)
@@ -787,25 +788,7 @@ func (l Linter) lintWithRegoRules(
 		go func(name string) {
 			defer wg.Done()
 
-			enhancedAST, err := parse.PrepareAST(name, input.FileContent[name], input.Modules[name])
-			if err != nil {
-				errCh <- fmt.Errorf("failed preparing AST: %w", err)
-
-				return
-			}
-
-			regalInput, ok := enhancedAST["regal"].(map[string]any)
-			if ok {
-				operations := []string{"lint"}
-
-				if operationCollect {
-					operations = append(operations, "collect")
-				}
-
-				regalInput["operations"] = operations
-			}
-
-			inputValue, err := transform.ToOPAInputValue(enhancedAST)
+			inputValue, err := transform.ToAST(name, input.FileContent[name], input.Modules[name], operationCollect)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to transform input value: %w", err)
 

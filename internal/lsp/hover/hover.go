@@ -14,7 +14,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	types2 "github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/util/concurrent"
+
+	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 var builtinCache = concurrent.MapOf(make(map[*ast.Builtin]string)) //nolint:gochecknoglobals

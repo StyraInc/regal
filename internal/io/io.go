@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -18,6 +17,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/loader/filter"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 const PathSeparator = string(os.PathSeparator)

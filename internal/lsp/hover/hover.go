@@ -60,12 +60,23 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 	}
 	builtinCacheLock.Unlock()
 
-	title := fmt.Sprintf(
-		"[%s](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s)",
-		builtin.Name,
+	link := fmt.Sprintf(
+		"https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s",
 		rego.BuiltinCategory(builtin),
 		strings.ReplaceAll(builtin.Name, ".", ""),
 	)
+
+	// Enterprise OPA supports custom links via categories from 1.29.1
+	// https://github.com/StyraInc/enterprise-opa/blob/v1.29.1/capabilities/v1.29.1.json#L5110
+	for _, category := range builtin.Categories {
+		if strings.HasPrefix(category, "url=") {
+			link = category[4:]
+
+			break
+		}
+	}
+
+	title := fmt.Sprintf("[%s](%s)", builtin.Name, link)
 
 	sb := &strings.Builder{}
 

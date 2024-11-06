@@ -43,7 +43,7 @@ jobs:
         with:
           version: ${{ steps.opa.outputs.version }}
           static: ${{ matrix.os.static }}
-      - run: npm install
+      - run: npm ci
         working-directory: build
       - name: Restore rq cache
         id: cache-rq

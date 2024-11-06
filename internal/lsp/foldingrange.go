@@ -22,6 +22,7 @@ func (s stack) Pop() (stack, scanner.Position) {
 	return s[:l-1], s[l-1]
 }
 
+// nolint:gosec
 func TokenFoldingRanges(policy string) []types.FoldingRange {
 	scn, err := scanner.New(strings.NewReader(policy))
 	if err != nil {
@@ -98,6 +99,7 @@ func TokenFoldingRanges(policy string) []types.FoldingRange {
 	return foldingRanges
 }
 
+// nolint:gosec
 func findFoldingRanges(text string, module *ast.Module) []types.FoldingRange {
 	uintZero := uint(0)
 

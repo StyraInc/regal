@@ -1855,6 +1855,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 		return nil, nil
 	}
 
+	// nolint:gosec
 	loc := types.Location{
 		URI: uri.FromPath(l.clientIdentifier, definition.Result.File),
 		Range: types.Range{

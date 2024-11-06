@@ -38,6 +38,7 @@ type KeywordUseLocation struct {
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
+	// nolint:gosec
 	return types.Position{
 		Line:      uint(loc.Row - 1),
 		Character: uint(loc.Col - 1),

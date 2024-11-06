@@ -143,6 +143,7 @@ func UpdateBuiltinPositions(cache *cache.Cache, uri string, builtins map[string]
 
 	builtinsOnLine := map[uint][]types2.BuiltinPosition{}
 
+	// nolint:gosec
 	for _, call := range rego.AllBuiltinCalls(module, builtins) {
 		line := uint(call.Location.Row)
 

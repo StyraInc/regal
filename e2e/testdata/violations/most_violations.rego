@@ -68,7 +68,7 @@ top_level_iteration := input[_]
 
 unassigned_return_value if indexof("foo", "o")
 
-zero_arity_function() := true
+zero_arity_function := true
 
 inconsistent_args(a, b) if {
 	a == b
@@ -93,9 +93,9 @@ impossible_not if {
 	not partial
 }
 
-argument_always_wildcard(_) if true
+argument_always_wildcard(_) = true
 
-argument_always_wildcard(_) if true
+argument_always_wildcard(_) = true
 
 # title: annotation without metadata
 some_rule := true
@@ -105,6 +105,12 @@ var_shadows_builtin if http := true
 unused_output_variable if {
 	some x
 	input[x]
+}
+
+default rule_assigns_default := false
+
+rule_assigns_default := false if {
+	input.yes
 }
 
 ### Idiomatic ###
@@ -164,7 +170,7 @@ line_length := "should be no longer than 120 characters but this line is really 
 
 #no-whitespace-comment
 
- opa_fmt := "fail"
+opa_fmt := "fail"
 
 preferSnakeCase := "fail"
 
@@ -178,7 +184,9 @@ use_assignment = "oparator"
 
 chained_rule_body if {
 	input.x
-} {
+}
+
+chained_rule_body if {
 	input.y
 }
 
@@ -243,6 +251,7 @@ pointless_reassignment := yoda_condition
 
 # this will also trigger the test-outside-test-package rule
 test_identically_named_tests := true
+
 test_identically_named_tests := false
 
 todo_test_bad if {
@@ -253,7 +262,7 @@ print_or_trace_call if {
 	print("forbidden!")
 }
 
-abc if true
+abc = true
 
 # metasyntactic variable
 foo := "bar"
@@ -271,6 +280,7 @@ y if {
 
 # double negation
 not_fine := true
+
 fine if not not_fine
 
 # rule name repeats package name

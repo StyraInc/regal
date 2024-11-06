@@ -100,7 +100,7 @@ func FindInput(file string, workspacePath string) (string, io.Reader) {
 	relative := strings.TrimPrefix(file, workspacePath)
 	components := strings.Split(filepath.Dir(relative), string(filepath.Separator))
 
-	for i := range len(components) {
+	for i := range components {
 		inputPath := filepath.Join(workspacePath, filepath.Join(components[:len(components)-i]...), "input.json")
 
 		f, err := os.Open(inputPath)

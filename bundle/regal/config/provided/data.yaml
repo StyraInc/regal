@@ -32,6 +32,8 @@ rules:
       level: error
     redundant-existence-check:
       level: error
+    rule-assigns-default:
+      level: error
     rule-named-if:
       level: error
     rule-shadows-builtin:

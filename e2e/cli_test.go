@@ -456,6 +456,10 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 		t.Errorf("expected 2 violations, got %d", rep.Summary.NumViolations)
 	}
 
+	if rep.Summary.NumViolations == 0 {
+		t.Fatal("expected violations, got none")
+	}
+
 	if rep.Violations[0].Title != "no-defined-entrypoint" {
 		t.Errorf("expected violation 'no-defined-entrypoint', got %q", rep.Violations[0].Title)
 	}

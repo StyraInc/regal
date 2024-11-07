@@ -24,7 +24,6 @@ linters:
     - ireturn
     - funlen
     - nolintlint
-    - depguard
     - gomoddirectives # need replacements for wasip1
     - execinquery # deprecated
     - exportloopref # deprecated
@@ -57,6 +56,13 @@ linters-settings:
       - prefix(github.com/styrainc/regal)
       - blank
       - dot
+
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "gopkg.in/yaml.v2"
+            desc: use yaml.v3 only
 
 issues:
   exclude-dirs:

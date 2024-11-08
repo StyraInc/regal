@@ -57,8 +57,7 @@ import rego.v1
 	defer timeout.Stop()
 
 	// no unresolved-imports at this stage
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if slices.Contains(violations, "unresolved-import") {
@@ -70,10 +69,6 @@ import rego.v1
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for expected foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -99,8 +94,7 @@ import rego.v1
 	// unresolved-imports is now expected
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if !slices.Contains(violations, "unresolved-import") {
@@ -112,10 +106,6 @@ import rego.v1
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for expected foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -144,8 +134,7 @@ import data.qux # new name for bar.rego package
 	// unresolved-imports is again not expected
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if slices.Contains(violations, "unresolved-import") {
@@ -157,10 +146,6 @@ import data.qux # new name for bar.rego package
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for expected foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 }
@@ -206,9 +191,7 @@ import data.quz
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	for {
-		success := false
-
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			aggs := ls.cache.GetFileAggregates()
@@ -221,10 +204,6 @@ import data.quz
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file aggregates to be set")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -292,9 +271,7 @@ import data.wow # new
 
 	timeout.Reset(determineTimeout())
 
-	for {
-		success := false
-
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			imports = determineImports(ls.cache.GetFileAggregates())
@@ -308,10 +285,6 @@ import data.wow # new
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file aggregates to be set")
-		}
-
-		if success {
-			break
 		}
 	}
 }
@@ -358,8 +331,7 @@ import rego.v1
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
-	for {
-		var success bool
+	for success := true; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if !slices.Contains(violations, "unresolved-import") {
@@ -377,10 +349,6 @@ import rego.v1
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -407,8 +375,7 @@ import rego.v1
 	// wait for foo.rego to have the correct violations
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if slices.Contains(violations, "unresolved-import") {
@@ -426,10 +393,6 @@ import rego.v1
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -454,8 +417,7 @@ import rego.v1
 	// check the violation is back
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["foo.rego"]:
 			if !slices.Contains(violations, "unresolved-import") {
@@ -473,10 +435,6 @@ import rego.v1
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for foo.rego diagnostics")
-		}
-
-		if success {
-			break
 		}
 	}
 }

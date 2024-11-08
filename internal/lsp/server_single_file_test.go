@@ -84,17 +84,12 @@ rules:
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{"opa-fmt", "use-assignment-operator"})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -119,17 +114,12 @@ allow := true
 	// validate that the client received a new diagnostics notification for the file
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{"opa-fmt"})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -151,8 +141,7 @@ rules:
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			if requestData.URI != mainRegoURI {
@@ -175,10 +164,6 @@ rules:
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for main.rego diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -204,8 +189,7 @@ capabilities:
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			if requestData.URI != mainRegoURI {
@@ -228,10 +212,6 @@ capabilities:
 			success = testRequestDataCodes(t, requestData, mainRegoURI, []string{})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for main.rego diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -262,8 +242,7 @@ allow := neo4j.q
 	// validate that the client received a new diagnostics notification for the file
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			if requestData.URI != mainRegoURI {
@@ -287,10 +266,6 @@ allow := neo4j.q
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
 		}
-
-		if success {
-			break
-		}
 	}
 
 	// 7. With our new config applied, and the file updated, we can ask the
@@ -302,9 +277,7 @@ allow := neo4j.q
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	for {
-		foundNeo4j := false
-
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			// Create a new context with timeout for each request, this is
@@ -346,7 +319,7 @@ allow := neo4j.q
 				}
 
 				if label == "neo4j.query" {
-					foundNeo4j = true
+					success = true
 
 					break
 				}
@@ -355,10 +328,6 @@ allow := neo4j.q
 			t.Logf("waiting for neo4j.query in completion results for neo4j.q, got %v", itemsList)
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file completion to correct")
-		}
-
-		if foundNeo4j {
-			break
 		}
 	}
 }

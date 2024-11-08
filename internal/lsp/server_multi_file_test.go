@@ -64,15 +64,40 @@ ignore:
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
+	ls, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
 	if err != nil {
 		t.Fatalf("failed to create and init language server: %s", err)
 	}
 
-	// validate that the client received a diagnostics notification for authz.rego
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
+	// wait for the aggregate data to be set, required for correct lint in next
+	// step
+	for {
+		var success bool
+		select {
+		default:
+			uri := "file://" + filepath.Join(tempDir, "admins.rego")
+
+			aggs := ls.cache.GetFileAggregates(uri)
+			if len(aggs) > 0 {
+				success = true
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		case <-timeout.C:
+			t.Fatalf("timed out waiting admin aggregates to be set")
+		}
+
+		if success {
+			break
+		}
+	}
+
+	timeout.Reset(determineTimeout())
+
+	// validate that the client received a diagnostics notification for authz.rego
 	for {
 		var success bool
 		select {

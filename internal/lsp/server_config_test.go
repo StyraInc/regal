@@ -87,17 +87,12 @@ allow := true
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			success = testRequestDataCodes(t, requestData, mainRegoFileURI, []string{"opa-fmt"})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -120,17 +115,12 @@ allow := true
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case requestData := <-receivedMessages:
 			success = testRequestDataCodes(t, requestData, mainRegoFileURI, []string{})
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for file diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 }
@@ -164,8 +154,7 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 	timeout := time.NewTimer(3 * time.Second)
 	ticker := time.NewTicker(500 * time.Millisecond)
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			enabledRules := ls.getEnabledNonAggregateRules()
@@ -180,10 +169,6 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for enabled rules to be correct")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -221,8 +206,7 @@ rules:
 
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			enabledRules := ls.getEnabledNonAggregateRules()
@@ -243,10 +227,6 @@ rules:
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for enabled rules to be correct")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -270,8 +250,7 @@ rules:
 
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case <-ticker.C:
 			enabledRules := ls.getEnabledNonAggregateRules()
@@ -298,10 +277,6 @@ rules:
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for enabled rules to be correct")
-		}
-
-		if success {
-			break
 		}
 	}
 }

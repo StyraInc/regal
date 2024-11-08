@@ -319,8 +319,7 @@ func TestNewFileTemplating(t *testing.T) {
   "label": "Template new Rego file"
 }`, newFileURI, expectedNewFileURI, tempDir)
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case msg := <-receivedMessages:
 			t.Log("received message:", string(msg))
@@ -344,17 +343,11 @@ func TestNewFileTemplating(t *testing.T) {
 				}
 			}
 
-			if allLinesMatch {
-				success = true
-			}
+			success = allLinesMatch
 		case <-timeout.C:
 			t.Log("never received expected message", expectedMessage)
 
 			t.Fatalf("timed out waiting for expected message to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 }

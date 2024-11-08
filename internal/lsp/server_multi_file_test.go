@@ -74,8 +74,7 @@ ignore:
 
 	// wait for the aggregate data to be set, required for correct lint in next
 	// step
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		default:
 			uri := "file://" + filepath.Join(tempDir, "admins.rego")
@@ -83,23 +82,20 @@ ignore:
 			aggs := ls.cache.GetFileAggregates(uri)
 			if len(aggs) > 0 {
 				success = true
+
+				break // don't sleep
 			}
 
 			time.Sleep(500 * time.Millisecond)
 		case <-timeout.C:
 			t.Fatalf("timed out waiting admin aggregates to be set")
 		}
-
-		if success {
-			break
-		}
 	}
 
 	timeout.Reset(determineTimeout())
 
 	// validate that the client received a diagnostics notification for authz.rego
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["authz.rego"]:
 			if !slices.Contains(violations, "prefer-package-imports") {
@@ -112,17 +108,12 @@ ignore:
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
 		}
-
-		if success {
-			break
-		}
 	}
 
 	// validate that the client received a diagnostics notification for admins.rego
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["admins.rego"]:
 			if !slices.Contains(violations, "use-assignment-operator") {
@@ -134,10 +125,6 @@ ignore:
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for admins.rego diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 
@@ -171,8 +158,7 @@ allow if input.user in admins.users
 	// authz.rego should now have no violations
 	timeout.Reset(determineTimeout())
 
-	for {
-		var success bool
+	for success := false; !success; {
 		select {
 		case violations := <-messages["authz.rego"]:
 			if len(violations) > 0 {
@@ -184,10 +170,6 @@ allow if input.user in admins.users
 			success = true
 		case <-timeout.C:
 			t.Fatalf("timed out waiting for authz.rego diagnostics to be sent")
-		}
-
-		if success {
-			break
 		}
 	}
 }

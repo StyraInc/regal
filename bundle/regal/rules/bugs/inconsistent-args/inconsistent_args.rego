@@ -24,6 +24,9 @@ report contains violation if {
 
 	some name, args_list in function_args_by_name
 
+	# leave that to the compiler
+	not _arity_mismatch(args_list)
+
 	# "Partition" the args by their position
 	by_position := [s |
 		some i, _ in args_list[0]
@@ -37,6 +40,12 @@ report contains violation if {
 	args := _find_function_by_name(name).head.args
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_location_between(args[0], regal.last(args)))
+}
+
+_arity_mismatch(args_list) if {
+	len := count(args_list[0])
+	some arr in args_list
+	count(arr) != len
 }
 
 _inconsistent_args(position) if {

@@ -60,6 +60,7 @@ type Linter struct {
 	disableAll           bool
 	enableAll            bool
 	profiling            bool
+	instrumentation      bool
 }
 
 //nolint:gochecknoglobals
@@ -195,6 +196,13 @@ func (l Linter) WithPrintHook(printHook print.Hook) Linter {
 // WithProfiling enables profiling metrics.
 func (l Linter) WithProfiling(enabled bool) Linter {
 	l.profiling = enabled
+
+	return l
+}
+
+// WithInstrumentation enables instrumentation metrics.
+func (l Linter) WithInstrumentation(enabled bool) Linter {
+	l.instrumentation = enabled
 
 	return l
 }
@@ -719,6 +727,10 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 		)
 	}
 
+	if l.instrumentation {
+		regoArgs = append(regoArgs, rego.Instrument(true))
+	}
+
 	if l.dataBundle != nil {
 		regoArgs = append(regoArgs, rego.ParsedBundle("internal", l.dataBundle))
 	}
@@ -862,6 +874,10 @@ func (l Linter) lintWithRegoRules(
 			if l.profiling {
 				prof = profiler.New()
 				evalArgs = append(evalArgs, rego.EvalQueryTracer(prof))
+			}
+
+			if l.instrumentation {
+				evalArgs = append(evalArgs, rego.EvalInstrument(true))
 			}
 
 			resultSet, err := pq.Eval(ctx, evalArgs...)

@@ -49,6 +49,7 @@ type lintCommandParams struct {
 	enablePrint     bool
 	metrics         bool
 	profile         bool
+	instrument      bool
 	disableAll      bool
 	enableAll       bool
 }
@@ -167,6 +168,8 @@ func init() {
 		"enable metrics reporting (currently supported only for JSON output format)")
 	lintCommand.Flags().BoolVar(&params.profile, "profile", false,
 		"enable profiling metrics to be added to reporting (currently supported only for JSON output format)")
+	lintCommand.Flags().BoolVar(&params.instrument, "instrument", false,
+		"enable instrumentation metrics to be added to reporting (currently supported only for JSON output format)")
 
 	lintCommand.Flags().VarP(&params.disable, "disable", "d",
 		"disable specific rule(s). This flag can be repeated.")
@@ -283,6 +286,10 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	if params.profile {
 		regal = regal.WithProfiling(true)
+	}
+
+	if params.instrument {
+		regal = regal.WithInstrumentation(true)
 	}
 
 	var userConfig config.Config

@@ -28,9 +28,9 @@ func wrapProfiling(f func([]string) error) func(*cobra.Command, []string) error 
 		case "clock":
 			opts = append(opts, profile.ClockProfile)
 		case "mem_heap":
-			opts = append(opts, profile.MemProfileHeap)
+			opts = append(opts, profile.MemProfileHeap, profile.MemProfileRate(1024))
 		case "mem_allocs":
-			opts = append(opts, profile.MemProfileAllocs)
+			opts = append(opts, profile.MemProfileAllocs, profile.MemProfileRate(1024))
 		case "trace":
 			opts = append(opts, profile.TraceProfile)
 		case "goroutine":

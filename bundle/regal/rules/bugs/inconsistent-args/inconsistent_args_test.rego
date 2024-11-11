@@ -83,6 +83,19 @@ test_success_using_pattern_matching if {
 	r == set()
 }
 
+# this is a compiler error, so let's not flag it here
+# see https://github.com/StyraInc/regal/issues/1250
+test_success_incorrect_arity if {
+	module := ast.with_rego_v1(`
+	foo(a, b) if a == b
+	foo(a, b, c) if a > b > c
+	foo(b, a) if a == b
+	`)
+	r := rule.report with input as module
+
+	r == set()
+}
+
 expected := {
 	"category": "bugs",
 	"description": "Inconsistently named function arguments",

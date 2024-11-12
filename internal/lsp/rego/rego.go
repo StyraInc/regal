@@ -118,6 +118,7 @@ func initialize() {
 			rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 			rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 			rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
+			rego.StoreReadAST(true),
 		}, args...)
 	}
 

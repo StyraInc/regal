@@ -11,7 +11,6 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage"
-	"github.com/open-policy-agent/opa/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -139,13 +138,14 @@ func prepareQuery(ctx context.Context, store storage.Store, query string) (*rego
 
 func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
 	return []func(*rego.Rego){
+		rego.StoreReadAST(true),
 		rego.Store(store),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-		// TODO: remove later
-		rego.EnablePrintStatements(true),
-		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+		// Uncomment for development
+		// rego.EnablePrintStatements(true),
+		// rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
 	}
 }

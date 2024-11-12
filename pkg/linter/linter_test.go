@@ -760,3 +760,17 @@ import data.unresolved`,
 		t.Fatalf("unexpected files: %v", got)
 	}
 }
+
+func BenchmarkRegalLintingItself(b *testing.B) {
+	linter := NewLinter().WithInputPaths([]string{"../../bundle"}).WithEnableAll(true)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, err := linter.Lint(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

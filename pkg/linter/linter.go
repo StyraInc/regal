@@ -709,6 +709,7 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	}
 
 	regoArgs = append(regoArgs,
+		rego.StoreReadAST(true),
 		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),

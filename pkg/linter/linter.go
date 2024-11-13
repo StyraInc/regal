@@ -914,7 +914,20 @@ func (l Linter) lintWithRegoRules(
 			regoReport.Notices = append(regoReport.Notices, result.Notices...)
 
 			for k := range result.Aggregates {
-				regoReport.Aggregates[k] = append(regoReport.Aggregates[k], result.Aggregates[k]...)
+				// Custom aggregate rules that have been invoked but not returned any data
+				// will return an empty map to signal that they have been called, and that
+				// the aggregate report for this rule should be invoked even when no data
+				// was aggregated. This because the absence of data is exactly what some rules
+				// will want to report on.
+				for _, agg := range result.Aggregates[k] {
+					if len(agg) == 0 {
+						if _, ok := regoReport.Aggregates[k]; !ok {
+							regoReport.Aggregates[k] = make([]report.Aggregate, 0)
+						}
+					} else {
+						regoReport.Aggregates[k] = append(regoReport.Aggregates[k], agg)
+					}
+				}
 			}
 
 			for k := range result.IgnoreDirectives {

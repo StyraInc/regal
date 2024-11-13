@@ -429,6 +429,30 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
 		}
 	})
+
+	t.Run("custom policy where nothing aggregate is a violation", func(t *testing.T) {
+		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
+
+		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+			basedir+filepath.FromSlash("/custom/regal/rules/testcase/empty_aggregate/"),
+			basedir+filepath.FromSlash("/two_policies"))
+
+		expectExitCode(t, err, 3, &stdout, &stderr)
+
+		if exp, act := "", stderr.String(); exp != act {
+			t.Errorf("expected stderr %q, got %q", exp, act)
+		}
+
+		var rep report.Report
+
+		if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
+			t.Fatalf("expected JSON response, got %v", stdout.String())
+		}
+
+		if rep.Summary.NumViolations != 1 {
+			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
+		}
+	})
 }
 
 func TestLintAggregateIgnoreDirective(t *testing.T) {

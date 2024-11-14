@@ -145,10 +145,22 @@ aggregate[category_title] contains entry if {
 	config.for_rule(category, title).level != "ignore"
 	not config.excluded_file(category, title, input.regal.file.name)
 
-	some entry in data.custom.regal.rules[category][title].aggregate
+	entries := _mark_if_empty(data.custom.regal.rules[category][title].aggregate)
 
 	category_title := concat("/", [category, title])
+
+	some entry in entries
 }
+
+# a custom aggregate rule may not come back with entries, but we still need
+# to register the fact that it was called so that we know to call the
+# aggregate_report for the same rule later
+#
+# for these cases we just return an empty map, and let the aggregator on the Go
+# side handle this case
+_mark_if_empty(entries) := {{}} if {
+	count(entries) == 0
+} else := entries
 
 # METADATA
 # description: Check bundled rules using aggregated data
@@ -187,7 +199,7 @@ aggregate_report contains violation if {
 	not config.excluded_file(category, title, input.regal.file.name)
 
 	input_for_rule := object.remove(
-		object.union(input, {"aggregate": input.aggregates_internal[key]}),
+		object.union(input, {"aggregate": _null_to_empty(input.aggregates_internal[key])}),
 		["aggregates_internal"],
 	)
 
@@ -211,3 +223,7 @@ _ignored(violation, directives) if {
 	ignored_rules := directives[util.to_location_object(violation.location).row + 1]
 	violation.title in ignored_rules
 }
+
+_null_to_empty(x) := [] if {
+	x == null
+} else := x

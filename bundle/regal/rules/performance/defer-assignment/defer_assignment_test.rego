@@ -145,6 +145,17 @@ test_success_can_not_defer_assignment_next_expression_has_with if {
 	r == set()
 }
 
+test_success_can_not_defer_assignment_next_expression_with_in_arg if {
+	module := ast.with_rego_v1(`
+	rule if {
+		u := "u"
+		input == "U" with input as upper(u)
+	}
+	`)
+	r := rule.report with input as module
+	r == set()
+}
+
 test_success_can_not_defer_assignment_next_expression_print_call if {
 	module := ast.with_rego_v1(`
 	allow if {

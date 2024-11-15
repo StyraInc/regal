@@ -55,8 +55,10 @@ _var_used_in_expression(var, expr) if {
 _var_used_in_expression(var, expr) if {
 	some w in expr["with"]
 
-	w.value.type == "var"
-	w.value.value == var.value
+	walk(w, [_, value])
+
+	value.type == "var"
+	value.value == var.value
 }
 
 _var_used_in_expression(var, expr) if {

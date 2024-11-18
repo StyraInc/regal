@@ -193,7 +193,7 @@ rules:
 	}
 
 	// this event is sent to allow the server to detect the new config
-	if err := connClient.Call(ctx, "workspace/didChangeWatchedFiles", types.WorkspaceDidChangeWatchedFilesParams{
+	if err := connClient.Notify(ctx, "workspace/didChangeWatchedFiles", types.WorkspaceDidChangeWatchedFilesParams{
 		Changes: []types.FileEvent{
 			{
 				URI:  fileURIScheme + filepath.Join(tempDir, ".regal/config.yaml"),

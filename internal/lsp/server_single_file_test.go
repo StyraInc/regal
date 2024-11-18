@@ -95,7 +95,7 @@ rules:
 
 	// Client sends textDocument/didChange notification with new contents for main.rego
 	// no response to the call is expected
-	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -220,7 +220,7 @@ capabilities:
 	// the start of an EOPA-specific call, so if the capabilities were
 	// loaded correctly, we should see a completion later after we ask for
 	// it.
-	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},

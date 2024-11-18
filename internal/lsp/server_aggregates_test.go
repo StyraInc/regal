@@ -74,7 +74,7 @@ import rego.v1
 
 	barURI := fileURIScheme + filepath.Join(tempDir, "bar.rego")
 
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: barURI,
 		},
@@ -111,7 +111,7 @@ import rego.v1
 
 	fooURI := fileURIScheme + filepath.Join(tempDir, "foo.rego")
 
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fooURI,
 		},
@@ -249,7 +249,7 @@ import data.quz
 	}
 
 	// 2. check the aggregates for a file are updated after an update
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURIScheme + filepath.Join(tempDir, "bar.rego"),
 		},
@@ -355,7 +355,7 @@ import rego.v1
 	// update the contents of the bar.rego file to address the unresolved-import
 	barURI := fileURIScheme + filepath.Join(tempDir, "bar.rego")
 
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: barURI,
 		},
@@ -397,7 +397,7 @@ import rego.v1
 	}
 
 	// update the contents of the bar.rego to bring back the violation
-	err = connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: barURI,
 		},

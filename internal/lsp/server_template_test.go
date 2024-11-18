@@ -262,7 +262,7 @@ func TestNewFileTemplating(t *testing.T) {
 	}
 
 	// Client sends workspace/didCreateFiles notification
-	if err := connClient.Call(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
+	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
 		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
 			{URI: newFileURI},
 		},

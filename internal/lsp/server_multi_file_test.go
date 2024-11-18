@@ -130,7 +130,7 @@ ignore:
 
 	// 3. Client sends textDocument/didChange notification with new contents
 	// for authz.rego no response to the call is expected
-	if err := connClient.Call(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURIScheme + filepath.Join(tempDir, "authz.rego"),
 		},

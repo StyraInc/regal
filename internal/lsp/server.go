@@ -2,7 +2,6 @@
 package lsp
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -820,33 +819,28 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 				// if there are none, then it's a package evaluation
 				ruleHeadLocations := allRuleHeadLocations[path]
 
-				var input io.Reader
+				var inputMap map[string]any
 
 				// When the first comment in the file is `regal eval: use-as-input`, the AST of that module is
-				// used as the input rather than the contents of input.json. This is a development feature for
+				// used as the input rather than the contents of input.json/yaml. This is a development feature for
 				// working on rules (built-in or custom), allowing querying the AST of the module directly.
 				if len(currentModule.Comments) > 0 && regalEvalUseAsInputComment.Match(currentModule.Comments[0].Text) {
-					inputMap, err := rparse.PrepareAST(file, currentContents, currentModule)
+					inputMap, err = rparse.PrepareAST(file, currentContents, currentModule)
 					if err != nil {
 						l.logf(log.LevelMessage, "failed to prepare module: %s", err)
 
 						break
 					}
+				} else {
+					// Normal mode — try to find the input.json/yaml file in the workspace and use as input
+					_, inputMap = rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
 
-					bs, err := encoding.JSON().Marshal(inputMap)
-					if err != nil {
-						l.logf(log.LevelMessage, "failed to marshal module: %s", err)
-
+					if inputMap == nil {
 						break
 					}
-
-					input = bytes.NewReader(bs)
-				} else {
-					// Normal mode — try to find the input.json file in the workspace and use as input
-					_, input = rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
 				}
 
-				result, err := l.EvalWorkspacePath(ctx, path, input)
+				result, err := l.EvalWorkspacePath(ctx, path, inputMap)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 

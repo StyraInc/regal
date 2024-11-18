@@ -2,10 +2,9 @@ package lsp
 
 import (
 	"context"
-	"io"
+	"maps"
 	"os"
 	"slices"
-	"strings"
 	"testing"
 
 	rio "github.com/styrainc/regal/internal/io"
@@ -49,7 +48,9 @@ func TestEvalWorkspacePath(t *testing.T) {
 	ls.cache.SetModule("file://policy1.rego", module1)
 	ls.cache.SetModule("file://policy2.rego", module2)
 
-	input := strings.NewReader(`{"exists": true}`)
+	input := map[string]any{
+		"exists": true,
+	}
 
 	res, err := ls.EvalWorkspacePath(context.TODO(), "data.policy1.allow", input)
 	if err != nil {
@@ -71,7 +72,7 @@ func TestEvalWorkspacePathInternalData(t *testing.T) {
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
-	res, err := ls.EvalWorkspacePath(context.TODO(), "object.keys(data.internal)", strings.NewReader("{}"))
+	res, err := ls.EvalWorkspacePath(context.TODO(), "object.keys(data.internal)", map[string]any{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,35 +105,50 @@ func TestEvalWorkspacePathInternalData(t *testing.T) {
 func TestFindInput(t *testing.T) {
 	t.Parallel()
 
-	tmpDir := t.TempDir()
-
-	workspacePath := tmpDir + "/workspace"
-	file := tmpDir + "/workspace/foo/bar/baz.rego"
-
-	if err := os.MkdirAll(workspacePath+"/foo/bar", 0o755); err != nil {
-		t.Fatal(err)
+	cases := []struct {
+		fileType    string
+		fileContent string
+	}{
+		{"json", `{"x": true}`},
+		{"yaml", "x: true"},
 	}
 
-	if readInputString(t, file, workspacePath) != "" {
-		t.Fatalf("did not expect to find input.json")
-	}
+	for _, tc := range cases {
+		t.Run(tc.fileType, func(t *testing.T) {
+			t.Parallel()
 
-	content := `{"x": 1}`
+			tmpDir := t.TempDir()
 
-	createWithContent(t, tmpDir+"/workspace/foo/bar/input.json", content)
+			workspacePath := tmpDir + "/workspace"
+			file := tmpDir + "/workspace/foo/bar/baz.rego"
 
-	if res := readInputString(t, file, workspacePath); res != content {
-		t.Errorf("expected input at %s, got %s", content, res)
-	}
+			if err := os.MkdirAll(workspacePath+"/foo/bar", 0o755); err != nil {
+				t.Fatal(err)
+			}
 
-	if err := os.Remove(tmpDir + "/workspace/foo/bar/input.json"); err != nil {
-		t.Fatal(err)
-	}
+			path, content := rio.FindInput(file, workspacePath)
+			if path != "" || content != nil {
+				t.Fatalf("did not expect to find input.%s", tc.fileType)
+			}
 
-	createWithContent(t, tmpDir+"/workspace/input.json", content)
+			createWithContent(t, tmpDir+"/workspace/foo/bar/input."+tc.fileType, tc.fileContent)
 
-	if res := readInputString(t, file, workspacePath); res != content {
-		t.Errorf("expected input at %s, got %s", content, res)
+			path, content = rio.FindInput(file, workspacePath)
+			if path != workspacePath+"/foo/bar/input."+tc.fileType || !maps.Equal(content, map[string]any{"x": true}) {
+				t.Errorf(`expected input {"x": true} at, got %s`, content)
+			}
+
+			if err := os.Remove(tmpDir + "/workspace/foo/bar/input." + tc.fileType); err != nil {
+				t.Fatal(err)
+			}
+
+			createWithContent(t, tmpDir+"/workspace/input."+tc.fileType, tc.fileContent)
+
+			path, content = rio.FindInput(file, workspacePath)
+			if path != workspacePath+"/input."+tc.fileType || !maps.Equal(content, map[string]any{"x": true}) {
+				t.Errorf(`expected input {"x": true} at, got %s`, content)
+			}
+		})
 	}
 }
 
@@ -149,25 +165,4 @@ func createWithContent(t *testing.T, path string, content string) {
 	if _, err = f.WriteString(content); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func readInputString(t *testing.T, file, workspacePath string) string {
-	t.Helper()
-
-	_, input := rio.FindInput(file, workspacePath)
-
-	if input == nil {
-		return ""
-	}
-
-	bs, err := io.ReadAll(input)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if bs == nil {
-		return ""
-	}
-
-	return string(bs)
 }

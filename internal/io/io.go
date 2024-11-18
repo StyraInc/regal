@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
+	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/loader/filter"
@@ -94,22 +95,61 @@ func ExcludeTestFilter() filter.LoaderFilter {
 	}
 }
 
-// FindInput finds input.json file in workspace closest to the file, and returns
-// both the location and the reader.
-func FindInput(file string, workspacePath string) (string, io.Reader) {
+// FindInput finds input.json or input.yaml file in workspace closest to the file, and returns
+// both the location and the contents of the file (as map), or an empty string and nil if not found.
+// Note that:
+// - This function doesn't do error handling. If the file can't be read, nothing is returned.
+// - While the input data theoritcally could be anything JSON/YAML value, we only support an object.
+func FindInput(file string, workspacePath string) (string, map[string]any) {
 	relative := strings.TrimPrefix(file, workspacePath)
 	components := strings.Split(filepath.Dir(relative), string(filepath.Separator))
 
-	for i := range components {
-		inputPath := filepath.Join(workspacePath, filepath.Join(components[:len(components)-i]...), "input.json")
+	var (
+		inputPath string
+		content   []byte
+	)
 
-		f, err := os.Open(inputPath)
+	for i := range components {
+		current := components[:len(components)-i]
+
+		inputPathJSON := filepath.Join(workspacePath, filepath.Join(current...), "input.json")
+
+		f, err := os.Open(inputPathJSON)
 		if err == nil {
-			return inputPath, f
+			inputPath = inputPathJSON
+			content, _ = io.ReadAll(f)
+
+			break
+		}
+
+		inputPathYAML := filepath.Join(workspacePath, filepath.Join(current...), "input.yaml")
+
+		f, err = os.Open(inputPathYAML)
+		if err == nil {
+			inputPath = inputPathYAML
+			content, _ = io.ReadAll(f)
+
+			break
 		}
 	}
 
-	return "", nil
+	if inputPath == "" || content == nil {
+		return "", nil
+	}
+
+	var input map[string]any
+
+	if strings.HasSuffix(inputPath, ".json") {
+		if err := encoding.JSON().Unmarshal(content, &input); err != nil {
+			return "", nil
+		}
+	} else if strings.HasSuffix(inputPath, ".yaml") {
+		if err := yaml.Unmarshal(content, &input); err != nil {
+			return "", nil
+		}
+	}
+
+	return inputPath, input
 }
 
 func IsSkipWalkDirectory(info files.DirEntry) bool {

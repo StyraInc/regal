@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
-
-	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -24,7 +21,7 @@ import (
 func (l *LanguageServer) Eval(
 	ctx context.Context,
 	query string,
-	input io.Reader,
+	input map[string]any,
 	printHook print.Hook,
 	dataBundles map[string]bundle.Bundle,
 ) (rego.ResultSet, error) {
@@ -88,20 +85,7 @@ func (l *LanguageServer) Eval(
 	}
 
 	if input != nil {
-		inputMap := make(map[string]any)
-
-		in, err := io.ReadAll(input)
-		if err != nil {
-			return nil, fmt.Errorf("failed reading input: %w", err)
-		}
-
-		json := encoding.JSON()
-
-		if err = json.Unmarshal(in, &inputMap); err != nil {
-			return nil, fmt.Errorf("failed unmarshalling input: %w", err)
-		}
-
-		return pq.Eval(ctx, rego.EvalInput(inputMap)) //nolint:wrapcheck
+		return pq.Eval(ctx, rego.EvalInput(input)) //nolint:wrapcheck
 	}
 
 	return pq.Eval(ctx) //nolint:wrapcheck
@@ -116,7 +100,7 @@ type EvalPathResult struct {
 func (l *LanguageServer) EvalWorkspacePath(
 	ctx context.Context,
 	query string,
-	input io.Reader,
+	input map[string]any,
 ) (EvalPathResult, error) {
 	resultQuery := "result := " + query
 

@@ -173,10 +173,11 @@ the way it did, or where rule evaluation failed.
   src={require('./assets/lsp/evalcodelensprint.png').default}
   alt="Screenshot of evaluation with print call performed via code lens"/>
 
-Policy evaluation often depends on **input**. This can be provided via an `input.json` file which Regal will search
-for first in the same directory as the policy file evaluated. If not found there, Regal will proceed to search each
-parent directory up until the workspace root directory. It is recommended to add `input.json` to your `.gitignore`
-file so that you can work freely with evaluation in any directory without having your input accidentally committed.
+Policy evaluation often depends on **input**. This can be provided via an `input.json` or `input.yaml` file which
+Regal will search for first in the same directory as the policy file evaluated. If not found there, Regal will proceed
+to search each parent directory up until the workspace root directory. It is recommended to add `input.json/yaml` to
+your `.gitignore` file so that you can work freely with evaluation in any directory without having your input
+accidentally committed.
 
 #### Editor support
 

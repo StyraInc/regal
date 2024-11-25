@@ -3,8 +3,6 @@
     "OPA_CHECK_CAPABILITIES": "${workspacePath}/build/capabilities.json",
     "OPA_EVAL_CAPABILITIES": "${workspacePath}/build/capabilities.json"
   },
-  "opa.roots": [
-    "${workspaceFolder}/bundle"
-  ],
+  "opa.roots": ["${workspaceFolder}/bundle"],
   "opa.strictMode": true
 }

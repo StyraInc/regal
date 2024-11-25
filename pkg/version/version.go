@@ -51,7 +51,7 @@ func (vi Info) String() string {
 
 func New() Info {
 	return Info{
-		Version:   unknownString(Version),
+		Version:   unknownVersionString(Version),
 		GoVersion: goVersion,
 		Platform:  platform,
 		Commit:    unknownString(Commit),
@@ -63,6 +63,14 @@ func New() Info {
 func unknownString(s string) string {
 	if s == "" {
 		return "unknown"
+	}
+
+	return s
+}
+
+func unknownVersionString(s string) string {
+	if s == "" {
+		return "v.29.3"
 	}
 
 	return s

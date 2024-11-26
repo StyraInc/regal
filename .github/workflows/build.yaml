@@ -99,7 +99,7 @@ jobs:
           go run main.go test --coverage bundle \
           | opa eval -f raw -I -d build/simplecov/simplecov.rego data.build.simplecov.from_opa \
           > coverage.json
-      - uses: codecov/codecov-action@985343d70564a82044c1b7fcb84c2fa05405c1a2 # v5.0.4
+      - uses: codecov/codecov-action@015f24e6818733317a2da2edd6290ab26238649a # v5.0.7
         with:
           fail_ci_if_error: false
           files: ./coverage.json

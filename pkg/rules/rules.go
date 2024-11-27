@@ -132,6 +132,17 @@ func InputFromText(fileName, text string) (Input, error) {
 	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
 }
 
+// InputFromTextWithOptions creates a new Input from raw Rego text while
+// respecting the provided options.
+func InputFromTextWithOptions(fileName, text string, opts ast.ParserOptions) (Input, error) {
+	mod, err := ast.ParseModuleWithOpts(fileName, text, opts)
+	if err != nil {
+		return Input{}, fmt.Errorf("failed to parse module: %w", err)
+	}
+
+	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
+}
+
 func AllGoRules(conf config.Config) []Rule {
 	return []Rule{
 		NewOpaFmtRule(conf),

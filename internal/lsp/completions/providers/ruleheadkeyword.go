@@ -1,4 +1,3 @@
-//nolint:dupl
 package providers
 
 import (
@@ -74,14 +73,12 @@ func (*RuleHeadKeyword) Run(
 		case len(words) == 2 && strings.HasPrefix(keyWdAssign, lastWord):
 			keywords[keyWdAssign] = true
 		// suggest contains after the name of the rule in the rule head
-		//nolint:gocritic
 		case len(words) == 2 && strings.HasPrefix(keyWdContains, lastWord):
 			keywords[keyWdContains] = true
 		// suggest if at the end of the rule head
 		case len(words) == 4 && words[1] == keyWdContains:
 			keywords[keyWdIf] = true
 		// suggest if after the rule name
-		//nolint:gocritic
 		case len(words) == 2 && strings.HasPrefix(keyWdIf, lastWord):
 			keywords[keyWdIf] = true
 		}

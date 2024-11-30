@@ -9,11 +9,10 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
-//nolint:gochecknoglobals
-var patternRuleBody = regexp.MustCompile(`^\s+`)
-
-//nolint:gochecknoglobals
-var patternWhiteSpace = regexp.MustCompile(`\s+`)
+var (
+	patternRuleBody   = regexp.MustCompile(`^\s+`)
+	patternWhiteSpace = regexp.MustCompile(`\s+`)
+)
 
 // completionLineHelper returns the lines of a file and the current line for a given index. This
 // function is used by multiple completion providers.

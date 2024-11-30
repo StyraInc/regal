@@ -24,7 +24,7 @@ func documentSymbols(
 
 	lines := strings.Split(contents, "\n")
 
-	// nolint:gosec
+	//nolint:gosec
 	pkgRange := types.Range{
 		Start: types.Position{Line: 0, Character: 0},
 		End:   types.Position{Line: uint(len(lines) - 1), Character: uint(len(lines[len(lines)-1]))},
@@ -129,7 +129,7 @@ func documentSymbols(
 	return docSymbols
 }
 
-// nolint:gosec
+//nolint:gosec
 func locationToRange(location *ast.Location) types.Range {
 	lines := bytes.Split(location.Text, []byte("\n"))
 

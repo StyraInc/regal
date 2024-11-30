@@ -14,8 +14,6 @@ import (
 // files in the workspace, the diagnostics worker also processes aggregate violations, there are also changes to when
 // workspace diagnostics are run, this test validates that the correct diagnostics are sent to the client in this
 // scenario.
-//
-// nolint:maintidx
 func TestLanguageServerMultipleFiles(t *testing.T) {
 	t.Parallel()
 

@@ -647,7 +647,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 var regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
 
-func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:maintidx
+func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:maintidx
 	// note, in this function conn.Call is used as the workspace/applyEdit message is a request, not a notification
 	// as per the spec. In order to be 'routed' to the correct handler on the client it must have an ID
 	// receive responses too.
@@ -809,7 +809,9 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					break
 				}
 
-				allRuleHeadLocations, err := rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
+				var allRuleHeadLocations rego.RuleHeads
+
+				allRuleHeadLocations, err = rego.AllRuleHeadLocations(ctx, filepath.Base(file), currentContents, currentModule)
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to get rule head locations: %s", err)
 
@@ -840,7 +842,9 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 					}
 				}
 
-				result, err := l.EvalWorkspacePath(ctx, path, inputMap)
+				var result EvalPathResult
+
+				result, err = l.EvalWorkspacePath(ctx, path, inputMap)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 
@@ -899,8 +903,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { // nolint:mai
 
 						jsonVal, err = json.MarshalIndent(value, "", "  ")
 						if err == nil {
-							// staticcheck thinks err here is never used, but I think that's false?
-							_, err = f.Write(jsonVal) //nolint:staticcheck
+							_, err = f.Write(jsonVal)
 						}
 
 						f.Close()
@@ -1849,7 +1852,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 		return nil, nil
 	}
 
-	// nolint:gosec
+	//nolint:gosec
 	loc := types.Location{
 		URI: uri.FromPath(l.clientIdentifier, definition.Result.File),
 		Range: types.Range{

@@ -38,7 +38,7 @@ type KeywordUseLocation struct {
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
-	// nolint:gosec
+	//nolint:gosec
 	return types.Position{
 		Line:      uint(loc.Row - 1),
 		Character: uint(loc.Col - 1),
@@ -47,8 +47,8 @@ func PositionFromLocation(loc *ast.Location) types.Position {
 
 func LocationFromPosition(pos types.Position) *ast.Location {
 	return &ast.Location{
-		Row: int(pos.Line + 1),      // nolint: gosec
-		Col: int(pos.Character + 1), // nolint: gosec
+		Row: int(pos.Line + 1),      //nolint: gosec
+		Col: int(pos.Character + 1), //nolint: gosec
 	}
 }
 
@@ -200,7 +200,7 @@ func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy
 
 	result, err := toValidResult(pq.Eval(ctx, rego.EvalInput(input)))
 	if err != nil {
-		return toValue, err //nolint:wrapcheck
+		return toValue, err
 	}
 
 	if err := rio.JSONRoundTrip(result.Expressions[0].Value, &toValue); err != nil {

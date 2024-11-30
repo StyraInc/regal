@@ -117,7 +117,7 @@ func updateParse(
 			link = "https://docs.styra.com/opa/errors/" + hints[0]
 		}
 
-		// nolint:gosec
+		//nolint:gosec
 		diags = append(diags, types.Diagnostic{
 			Severity: 1, // parse errors are the only error Diagnostic the server sends
 			Range: types.Range{
@@ -323,7 +323,7 @@ type astError struct {
 	Message  string        `json:"message"`
 }
 
-// nolint:gosec
+//nolint:gosec
 func getRangeForViolation(item report.Violation) types.Range {
 	start := types.Position{
 		Line:      uint(max(item.Location.Row-1, 0)),

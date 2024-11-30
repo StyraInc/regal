@@ -37,7 +37,8 @@ type operation struct {
 
 // operations returns the list of operations to convert a into b, consolidating
 // operations for multiple lines and not including equal lines.
-// nolint:gosec
+//
+//nolint:gosec
 func operations(a, b []string) []*operation {
 	if len(a) == 0 && len(b) == 0 {
 		return nil

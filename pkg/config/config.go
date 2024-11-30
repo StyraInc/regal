@@ -658,7 +658,7 @@ func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}
 
-	return rule.mapToConfig(result) //nolint:errcheck
+	return rule.mapToConfig(result)
 }
 
 // Note that this function will mutate the result map. This isn't a problem right now

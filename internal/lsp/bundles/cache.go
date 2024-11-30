@@ -214,7 +214,7 @@ func calculateMD5(filePath string) ([]byte, error) {
 	}
 	defer file.Close()
 
-	// nolint:gosec
+	//nolint:gosec
 	hash := md5.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return nil, fmt.Errorf("failed to calculate MD5 hash for file %q: %w", filePath, err)

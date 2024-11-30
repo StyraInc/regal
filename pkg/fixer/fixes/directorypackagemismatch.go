@@ -57,7 +57,7 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 func getPackagePathDirectory(fc *FixCandidate, config *config.Config) (string, error) {
 	module, err := ast.ParseModule(fc.Filename, string(fc.Contents))
 	if err != nil {
-		return "", err // nolint:wrapcheck
+		return "", err //nolint:wrapcheck
 	}
 
 	parts := make([]string, len(module.Package.Path)-1)

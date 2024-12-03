@@ -13,7 +13,7 @@ report contains violation if {
 
 	some fn in ast.functions
 
-	named_args := {arg.value | some arg in fn.head.args; arg.type == "var"}
+	args_vars := _args_vars(fn)
 
 	head_vars := {v.value | some v in ast.find_vars(fn.head.value)}
 	body_vars := {v.value | some v in ast.find_vars(fn.body)}
@@ -21,7 +21,7 @@ report contains violation if {
 	own_vars := (body_vars | head_vars) | else_vars
 
 	# note: parens added by opa fmt 🤦
-	allowed_refs := (named_args | own_vars) | fn_namespaces
+	allowed_refs := (args_vars | own_vars) | fn_namespaces
 
 	walk(fn, [path, value])
 
@@ -32,6 +32,15 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }
+
+_args_vars(fn) := {name |
+	some arg in fn.head.args
+	some name in _named_vars(arg)
+}
+
+_named_vars(arg) := {arg.value} if arg.type == "var"
+
+_named_vars(arg) := {var.value | some var in ast.find_term_vars(arg)} if arg.type in {"array", "object", "set"}
 
 # METADATA
 # scope: document

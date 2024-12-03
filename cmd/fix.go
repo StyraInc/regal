@@ -345,29 +345,26 @@ func fix(args []string, params *fixCommandParams) error {
 		return errors.New("fixing failed due to conflicts")
 	}
 
-	gitRepo, err := git.FindGitRepo(args...)
-	if err != nil {
-		return fmt.Errorf("failed to establish git repo: %w", err)
-	}
-
-	if gitRepo == "" && !params.dryRun && !params.force {
-		return errors.New("no git repo found to support undo, use --force to override")
-	}
-
-	// if the fixer is being run in a git repo, we must not fix files that have
-	// been changed.
 	if !params.dryRun && !params.force {
+		gitRepo, err := git.FindGitRepo(args...)
+		if err != nil {
+			return fmt.Errorf("failed to establish git repo (use --force to override): %w", err)
+		}
+
+		if gitRepo == "" {
+			return errors.New("no git repo found to support undo (use --force to override)")
+		}
+
+		// if the fixer is being run in a git repo, we must not fix files that have changes
 		changedFiles := make(map[string]struct{})
 
-		if gitRepo != "" {
-			cf, err := git.GetChangedFiles(gitRepo)
-			if err != nil {
-				return fmt.Errorf("failed to get changed files: %w", err)
-			}
+		cf, err := git.GetChangedFiles(gitRepo)
+		if err != nil {
+			return fmt.Errorf("failed to get changed files: %w", err)
+		}
 
-			for _, f := range cf {
-				changedFiles[f] = struct{}{}
-			}
+		for _, f := range cf {
+			changedFiles[f] = struct{}{}
 		}
 
 		var conflictingFiles []string
@@ -382,7 +379,7 @@ func fix(args []string, params *fixCommandParams) error {
 			return fmt.Errorf(
 				`the following files have been changed since the fixer was run:
 - %s
-please run fix from a clean state to support the use of git checkout for undo`,
+please run fix from a clean state to support the use of git to undo, or use --force to ignore`,
 				strings.Join(conflictingFiles, "\n- "),
 			)
 		}

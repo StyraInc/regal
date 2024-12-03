@@ -452,7 +452,7 @@ func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 	fileLength := mergedConfig.Rules["style"]["file-length"].Extra["max-file-length"]
 
 	// Ensure the extra attributes are still there.
-	if fileLength.(int) != 1 { // nolint: forcetypeassert
+	if fileLength.(int) != 1 { //nolint: forcetypeassert
 		t.Errorf("expected max-file-length to be 1, got %d %T", fileLength, fileLength)
 	}
 }

@@ -211,7 +211,6 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 	}
 }
 
-// nolint:paralleltest
 func TestGitHubReporterPublish(t *testing.T) {
 	// Can't use t.Parallel() here because t.Setenv() forbids that
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
@@ -234,7 +233,6 @@ func TestGitHubReporterPublish(t *testing.T) {
 	}
 }
 
-// nolint:paralleltest
 func TestGitHubReporterPublishNoViolations(t *testing.T) {
 	// Can't use t.Parallel() here because t.Setenv() forbids that
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
@@ -307,7 +305,6 @@ func TestSarifReporterPublishNoViolations(t *testing.T) {
 	}
 }
 
-// nolint:lll // the expected output is unfortunately longer than the allowed max line length
 func TestJUnitReporterPublish(t *testing.T) {
 	t.Parallel()
 

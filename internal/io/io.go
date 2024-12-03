@@ -161,7 +161,7 @@ func IsSkipWalkDirectory(info files.DirEntry) bool {
 // are passed to the callback, and where directories that should commonly  be ignored
 // (.git, node_modules, etc.) are skipped.
 func WalkFiles(root string, f func(path string) error) error {
-	return filepath.WalkDir(root, func(path string, info os.DirEntry, _ error) error { // nolint:wrapcheck
+	return filepath.WalkDir(root, func(path string, info os.DirEntry, _ error) error { //nolint:wrapcheck
 		if IsSkipWalkDirectory(info) {
 			return filepath.SkipDir
 		}

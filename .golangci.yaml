@@ -1,9 +1,6 @@
 linters:
   enable-all: true
   disable:
-    # does not work with generics (yet)
-    - rowserrcheck
-    - wastedassign
     # annoying
     - gocyclo
     - tagliatelle
@@ -23,7 +20,6 @@ linters:
     - cyclop
     - ireturn
     - funlen
-    - nolintlint
     - gomoddirectives # need replacements for wasip1
     - execinquery # deprecated
     - exportloopref # deprecated

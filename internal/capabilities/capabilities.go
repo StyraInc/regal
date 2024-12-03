@@ -121,7 +121,8 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	}
 
 	engine := elems[1]
-	version := ""
+
+	var version string
 
 	if len(elems) == 3 {
 		version = elems[2]

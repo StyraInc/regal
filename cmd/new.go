@@ -1,4 +1,4 @@
-// nolint:wrapcheck
+//nolint:wrapcheck
 package cmd
 
 import (
@@ -20,9 +20,6 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
-// The revive check will warn about using underscore in struct names, but it's seemingly not aware of keywords.
-//
-//nolint:revive
 type newRuleCommandParams struct {
 	type_    string // 'type' is a keyword
 	category string

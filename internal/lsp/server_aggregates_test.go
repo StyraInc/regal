@@ -14,7 +14,6 @@ import (
 	"github.com/styrainc/regal/pkg/report"
 )
 
-//nolint:maintidx
 func TestLanguageServerLintsUsingAggregateState(t *testing.T) {
 	t.Parallel()
 
@@ -289,7 +288,6 @@ import data.wow # new
 	}
 }
 
-// nolint:maintidx
 func TestLanguageServerAggregateViolationFixedAndReintroducedInUnviolatingFileChange(t *testing.T) {
 	t.Parallel()
 

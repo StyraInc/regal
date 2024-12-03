@@ -699,23 +699,19 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 }
 
 func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
-	var regoArgs []func(*rego.Rego)
-
-	roots := []string{"eval"}
-
 	dataBundle := bundle.Bundle{
 		Data:     l.paramsToRulesConfig(),
-		Manifest: bundle.Manifest{Roots: &roots},
+		Manifest: bundle.Manifest{Roots: &[]string{"eval"}},
 	}
 
-	regoArgs = append(regoArgs,
+	regoArgs := []func(*rego.Rego){
 		rego.StoreReadAST(true),
 		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),
 		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
 		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-	)
+	}
 
 	if l.debugMode && l.printHook == nil {
 		l.printHook = topdown.NewPrintHook(os.Stderr)

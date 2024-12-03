@@ -196,7 +196,7 @@ _with_text(loc_obj) := loc if {
 # METADATA
 # description: |
 #   returns a "normalized" location object from the location value found in the AST.
-#   new code should most often use one of the ranged_ location functions instea, as
+#   new code should most often use one of the ranged_ location functions instead, as
 #   that will also include an `"end"` location attribute
 # scope: document
 location(x) := _with_text(util.to_location_object(x.location))

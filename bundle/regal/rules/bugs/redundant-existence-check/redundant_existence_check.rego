@@ -30,6 +30,27 @@ report contains violation if {
 }
 
 # METADATA
+# description: |
+#  check for redundant existence checks of function args in function bodies
+#  note: this only scans "top level" expressions in the function body, and not
+#  e.g. those nested inside of comprehensions, every bodies, etc.. while this
+#  would certainly be possible, the cost does not justify the benefit, as it's
+#  quite unlikely that existence checks are found there
+report contains violation if {
+	some func in ast.functions
+	some expr in func.body
+
+	expr.terms.type == "var"
+
+	some arg in func.head.args
+
+	arg.type == "var"
+	arg.value == expr.terms.value
+
+	violation := result.fail(rego.metadata.chain(), result.location(expr.terms))
+}
+
+# METADATA
 # description: check for redundant existence checks in rule head assignment
 report contains violation if {
 	some rule_index, rule in input.rules

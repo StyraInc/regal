@@ -7,7 +7,7 @@ import data.regal.config
 
 import data.regal.rules.style["pointless-reassignment"] as rule
 
-test_pointless_reassignment_in_rule_head if {
+test_fail_pointless_reassignment_in_rule_head if {
 	module := ast.with_rego_v1(`
 	foo := "foo"
 
@@ -37,7 +37,7 @@ test_pointless_reassignment_in_rule_head if {
 	}}
 }
 
-test_pointless_reassignment_in_rule_body if {
+test_fail_pointless_reassignment_in_rule_body if {
 	module := ast.with_rego_v1(`
 	rule if {
 		foo := "foo"
@@ -69,7 +69,7 @@ test_pointless_reassignment_in_rule_body if {
 	}}
 }
 
-test_pointless_reassignment_in_rule_body_using_with if {
+test_success_pointless_reassignment_in_rule_body_using_with if {
 	module := ast.with_rego_v1(`
 	foo := input
 
@@ -77,6 +77,19 @@ test_pointless_reassignment_in_rule_body_using_with if {
 		bar := foo with input as "wow"
 
 		bar == true
+	}
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_not_pointless_reassignment_to_array if {
+	module := ast.with_rego_v1(`
+	parts := split(input.arr, ".")
+
+	rule := [b, a] if {
+		[a, b] := parts
 	}
 	`)
 

@@ -8,7 +8,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
+	some i, rule in input.rules
 
 	# skip if vars in the ref head
 	count([part |
@@ -19,12 +19,23 @@ report contains violation if {
 
 	rule.head.value.type == "ref"
 
-	last := regal.last(rule.head.value.value)
+	some part in array.slice(rule.head.value.value, 1, 128)
 
-	last.type == "var"
-	_illegal_value_ref(last.value, rule, ast.identifiers)
+	part.type == "var"
+
+	_illegal_value_ref(part.value, rule, ast.identifiers)
+
+	# this is expensive, but the preconditions should ensure that
+	# very few rules evaluate this far
+	not _var_in_body(rule, part)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+}
+
+_var_in_body(rule, var) if {
+	walk(rule.body, [_, value])
+	value.type == "var"
+	value.value == var.value
 }
 
 _path(loc) := concat(".", {l.value | some l in loc})

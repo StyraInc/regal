@@ -160,6 +160,13 @@ test_success_function_references_external_function_in_expr if {
 	r == set()
 }
 
+# verify fix for https://github.com/StyraInc/regal/issues/1283
+test_success_variable_from_nested_arg_term if {
+	r := rule.report with input as ast.policy(`f([x]) := to_number(x)`)
+		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r == set()
+}
+
 expected := {
 	"category": "style",
 	"description": "External reference in function",

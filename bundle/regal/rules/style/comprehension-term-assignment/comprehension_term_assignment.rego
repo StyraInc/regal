@@ -6,7 +6,6 @@ import rego.v1
 
 import data.regal.ast
 import data.regal.result
-import data.regal.util
 
 # METADATA
 # description: |
@@ -79,8 +78,4 @@ _dynamic_ref(value) if {
 
 _call_or_non_static(ref) if ref.value[0].type == "call"
 
-_call_or_non_static(ref) if not _static_ref(ref)
-
-_static_ref(ref) if every part in util.rest(ref.value) {
-	part.type == "string"
-}
+_call_or_non_static(ref) if not ast.static_ref(ref)

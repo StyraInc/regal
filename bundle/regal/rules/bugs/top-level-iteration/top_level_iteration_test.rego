@@ -105,3 +105,10 @@ test_success_top_level_import if {
 
 	r == set()
 }
+
+# verify fix for https://github.com/StyraInc/regal/issues/1277
+test_success_vars_in_head_also_in_body if {
+	r := rule.report with input as ast.with_rego_v1(`x := input.x[a][b] if [a, b] := [1, 2]`)
+
+	r == set()
+}

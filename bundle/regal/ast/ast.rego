@@ -266,9 +266,12 @@ _trim_from_var(ref_str, vars) := ref_str if {
 
 # METADATA
 # description: true if ref contains only static parts
-static_ref(ref) if every t in array.slice(ref.value, 1, count(ref.value)) {
-	t.type != "var"
-}
+static_ref(ref) if not _non_static_ref(ref)
+
+# optimized inverse of static_ref benefitting from early exit
+# 128 is used only as a reasonable (well...) upper limit for a ref, but the
+# slice will be capped at the length of the ref anyway (avoids count)
+_non_static_ref(ref) if array.slice(ref.value, 1, 128)[_].type in {"var", "ref"}
 
 # METADATA
 # description: provides a set of names of all built-in functions called in the input policy

@@ -111,13 +111,6 @@ _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, va
 	function_ret_in_args(fn_name, value)
 }
 
-_find_vars(value, last) := {"assign": _find_assign_vars(value)} if {
-	last == "terms"
-	value[0].type == "ref"
-	value[0].value[0].type == "var"
-	value[0].value[0].value == "assign"
-}
-
 # `=` isn't necessarily assignment, and only considering the variable on the
 # left-hand side is equally dubious, but we'll treat `x = 1` as `x := 1` for
 # the purpose of this function until we have a more robust way of dealing with
@@ -126,10 +119,8 @@ _find_vars(value, last) := {"assign": _find_assign_vars(value)} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
-	value[0].value[0].value == "eq"
+	value[0].value[0].value in {"assign", "eq"}
 }
-
-_find_vars(value, _) := {"ref": find_ref_vars(value)} if value.type == "ref"
 
 _find_vars(value, last) := {"somein": _find_some_in_decl_vars(value)} if {
 	last == "symbols"
@@ -167,11 +158,25 @@ _rule_index(rule) := sprintf("%d", [i]) if {
 #   traverses all nodes under provided node (using `walk`), and returns an array with
 #   all variables declared via assignment (:=), `some`, `every` and in comprehensions
 #   DEPRECATED: uses ast.found.vars instead
-find_vars(node) := [var |
-	walk(node, [path, value])
+find_vars(node) := array.concat(
+	[var |
+		walk(node, [path, value])
 
-	var := _find_vars(value, regal.last(path))[_][_]
-]
+		last := regal.last(path)
+		last in {"terms", "symbols", "args"}
+
+		var := _find_vars(value, last)[_][_]
+	],
+	[var |
+		walk(node, [_, value])
+
+		value.type == "ref"
+
+		some x, var in value.value
+		x > 0
+		var.type == "var"
+	],
+)
 
 # hack to work around the different input models of linting vs. the lsp package.. we
 # should probably consider something more robust
@@ -198,12 +203,31 @@ found.vars[rule_index][context] contains var if {
 
 	walk(rule, [path, value])
 
-	some context, vars in _find_vars(value, regal.last(path))
+	last := regal.last(path)
+	last in {"terms", "symbols", "args"}
+
+	some context, vars in _find_vars(value, last)
 	some var in vars
 }
 
+found.vars[rule_index].ref contains var if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
+
+	value.type == "ref"
+
+	some x, var in value.value
+	x > 0
+	var.type == "var"
+}
+
 # METADATA
-# description: all refs foundd in module
+# description: all refs found in module
+# scope: document
 found.refs[rule_index] contains value if {
 	some i, rule in _rules
 
@@ -212,11 +236,22 @@ found.refs[rule_index] contains value if {
 
 	walk(rule, [_, value])
 
-	is_ref(value)
+	value.type == "ref"
+}
+
+found.refs[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
+
+	walk(rule, [_, value])
+
+	value[0].type == "ref"
 }
 
 # METADATA
-# description: all symbols foundd in module
+# description: all symbols found in module
 found.symbols[rule_index] contains value.symbols if {
 	some i, rule in _rules
 

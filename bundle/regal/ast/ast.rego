@@ -347,8 +347,11 @@ all_function_names := object.keys(all_functions)
 
 # METADATA
 # description: set containing all negated expressions in input AST
-negated_expressions[rule] contains value if {
-	some rule in input.rules
+negated_expressions[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := sprintf("%d", [i])
 
 	walk(rule, [_, value])
 

@@ -26,8 +26,8 @@ _multivalue_rules contains path if {
 }
 
 _negated_refs contains negated_ref if {
-	some rule, value
-	ast.negated_expressions[rule][value]
+	some rule_index, value
+	ast.negated_expressions[rule_index][value]
 
 	# if terms is an array, it's a function call, and most likely not "impossible"
 	is_object(value.terms)
@@ -39,6 +39,8 @@ _negated_refs contains negated_ref if {
 	every path in util.rest(ref) {
 		path.type == "string"
 	}
+
+	rule := input.rules[to_number(rule_index)]
 
 	# ignore negated local vars
 	not ref[0].value in ast.function_arg_names(rule)

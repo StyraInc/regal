@@ -47,7 +47,7 @@ jobs:
         working-directory: build
       - name: Restore rq cache
         id: cache-rq
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/go/bin/rq
           key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}
@@ -55,7 +55,7 @@ jobs:
         if: steps.cache-rq.outputs.cache-hit != 'true'
       - name: Cache rq binary
         if: steps.cache-rq.outputs.cache-hit != 'true'
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ~/go/bin/rq
           key: ${{ runner.os }}-${{ runner.arch }}-go-rq-${{ env.RQ_VERSION }}

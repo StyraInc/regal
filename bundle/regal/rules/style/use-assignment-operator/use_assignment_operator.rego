@@ -2,8 +2,6 @@
 # description: Prefer := over = for assignment
 package regal.rules.style["use-assignment-operator"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

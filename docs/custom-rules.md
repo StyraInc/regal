@@ -348,6 +348,8 @@ Works just like `rego.parse_module`, but provides an AST including location info
 by Regal, like the text representation of each line in the original policy. This is useful for authoring tests to assert
 linter rules work as expected. This is the built-in function equivalent of the `regal parse` command.
 
+If the `filename` provided ends with `_v0.rego`, the policy will be parsed as a Rego v0 module.
+
 ### `regal.last(array)`
 
 This built-in function is a much more performant way to express `array[count(array) - 1]`. This performance difference

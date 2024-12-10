@@ -2,8 +2,6 @@
 # description: Assignment can be moved to comprehension term
 package regal.rules.style["comprehension-term-assignment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

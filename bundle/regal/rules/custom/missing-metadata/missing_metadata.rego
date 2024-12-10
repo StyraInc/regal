@@ -2,8 +2,6 @@
 # description: Package or rule missing metadata
 package regal.rules.custom["missing-metadata"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

@@ -4,8 +4,6 @@
 #   with OPA's AST, more recently in the form of RoAST
 package regal.ast
 
-import rego.v1
-
 import data.regal.config
 import data.regal.util
 
@@ -171,11 +169,11 @@ is_output_var(rule, var) if {
 } else if {
 	not var.value in (rule_names | imported_identifiers) # regal ignore:external-reference
 
-	num_above := sum([1 |
+	num_above := count([1 |
 		some above in find_vars_in_local_scope(rule, var.location)
 		above.value == var.value
 	])
-	num_some := sum([1 |
+	num_some := count([1 |
 		some name in find_some_decl_names_in_scope(rule, var.location)
 		name == var.value
 	])

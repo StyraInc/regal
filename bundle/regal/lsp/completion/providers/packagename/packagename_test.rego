@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.packagename_test
 
-import rego.v1
-
 import data.regal.lsp.completion.providers.packagename as provider
 
 test_package_name_completion_on_typing if {

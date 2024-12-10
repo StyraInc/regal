@@ -2,8 +2,6 @@
 # description: Dubious use of print and sprintf
 package regal.rules.testing["dubious-print-sprintf"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

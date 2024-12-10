@@ -14,8 +14,8 @@ import (
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	_ "embed"
 )

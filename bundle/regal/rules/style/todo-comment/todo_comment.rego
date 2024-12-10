@@ -2,8 +2,6 @@
 # description: Avoid TODO comments
 package regal.rules.style["todo-comment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

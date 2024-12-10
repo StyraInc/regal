@@ -1,14 +1,12 @@
 package regal.rules.idiomatic["custom-in-construct_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.idiomatic["custom-in-construct"] as rule
 
 test_fail_custom_in if {
-	r := rule.report with input as ast.policy(`has(item, coll) {
+	r := rule.report with input as ast.policy(`has(item, coll) if {
     		item == coll[_]
     }`)
 
@@ -24,7 +22,7 @@ test_fail_custom_in if {
 				"col": 16,
 				"row": 3,
 			},
-			"text": "has(item, coll) {",
+			"text": "has(item, coll) if {",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -35,7 +33,7 @@ test_fail_custom_in if {
 }
 
 test_fail_custom_in_reversed if {
-	r := rule.report with input as ast.policy(`has(item, coll) { coll[_] == item }`)
+	r := rule.report with input as ast.policy(`has(item, coll) if { coll[_] == item }`)
 
 	r == {{
 		"category": "idiomatic",
@@ -49,7 +47,7 @@ test_fail_custom_in_reversed if {
 				"col": 16,
 				"row": 3,
 			},
-			"text": "has(item, coll) { coll[_] == item }",
+			"text": "has(item, coll) if { coll[_] == item }",
 		},
 		"related_resources": [{
 			"description": "documentation",

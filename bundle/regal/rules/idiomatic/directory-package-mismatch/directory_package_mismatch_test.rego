@@ -1,7 +1,5 @@
 package regal.rules.idiomatic["directory-package-mismatch_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.idiomatic["directory-package-mismatch"] as rule

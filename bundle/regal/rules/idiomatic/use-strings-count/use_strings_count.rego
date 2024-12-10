@@ -2,8 +2,6 @@
 # description: Use `strings.count` where possible
 package regal.rules.idiomatic["use-strings-count"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.result

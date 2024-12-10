@@ -1,7 +1,5 @@
 package regal.rules.style["default-over-else_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
@@ -9,9 +7,9 @@ import data.regal.rules.style["default-over-else"] as rule
 
 test_fail_conditionless_else_simple_rule if {
 	module := ast.policy(`
-	x := 1 {
+	x := 1 if {
 		input.x
-	} else := 2 {
+	} else := 2 if {
 		input.y
 	} else := 3
 	`)
@@ -31,7 +29,7 @@ test_fail_conditionless_else_simple_rule if {
 
 test_fail_conditionless_else_object_assignment if {
 	module := ast.policy(`
-	x := {"foo": "bar"} {
+	x := {"foo": "bar"} if {
 		input.x
 	} else := {"bar": "foo"}
 	`)
@@ -53,7 +51,7 @@ test_success_conditionless_else_not_constant if {
 	module := ast.policy(`
 	y := input.y
 
-	x := {"foo": "bar"} {
+	x := {"foo": "bar"} if {
 		input.x
 	} else := {"bar": y}
 	`)
@@ -64,7 +62,7 @@ test_success_conditionless_else_not_constant if {
 
 test_success_conditionless_else_input_ref if {
 	module := ast.policy(`
-	x := {"foo": "bar"} {
+	x := {"foo": "bar"} if {
 		input.x
 	} else := input.foo
 	`)
@@ -75,7 +73,7 @@ test_success_conditionless_else_input_ref if {
 
 test_success_conditionless_else_custom_function if {
 	module := ast.policy(`
-	x(y) := y {
+	x(y) := y if {
 		input.foo
 	} else := 1
 	`)
@@ -86,7 +84,7 @@ test_success_conditionless_else_custom_function if {
 
 test_fail_conditionless_else_custom_function_prefer_default_functions if {
 	module := ast.policy(`
-	x(y) := y {
+	x(y) := y if {
 		input.foo
 	} else := 1
 	`)
@@ -109,7 +107,7 @@ test_fail_conditionless_else_custom_function_prefer_default_functions if {
 
 test_success_conditionless_else_custom_function_not_constant if {
 	module := ast.policy(`
-	x(y) := y + 1 {
+	x(y) := y + 1 if {
 		input.foo
 	} else := y
 	`)

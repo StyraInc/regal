@@ -1,7 +1,5 @@
 package regal.rules.custom["one-liner-rule_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
@@ -143,10 +141,8 @@ test_success_no_one_liner_comment_in_rule_body_line_below if {
 	r == set()
 }
 
-# This will have to be gated with capability version
-# later as this will be forced from 1.0
-test_success_does_not_use_if if {
-	module := ast.policy(`
+test_success_does_not_use_if_v0 if {
+	module := ast.with_rego_v0(`
 	allow {
 		1 == 1
 	}

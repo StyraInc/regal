@@ -10,8 +10,8 @@ import (
 
 	godap "github.com/google/go-dap"
 
-	"github.com/open-policy-agent/opa/debug"
-	"github.com/open-policy-agent/opa/logging"
+	"github.com/open-policy-agent/opa/v1/debug"
+	"github.com/open-policy-agent/opa/v1/logging"
 )
 
 type MessageHandler func(ctx context.Context, request godap.Message) (bool, godap.ResponseMessage, error)

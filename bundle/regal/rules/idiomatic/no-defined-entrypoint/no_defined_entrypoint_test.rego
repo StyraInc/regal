@@ -1,7 +1,5 @@
 package regal.rules.idiomatic["no-defined-entrypoint_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.idiomatic["no-defined-entrypoint"] as rule

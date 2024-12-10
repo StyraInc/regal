@@ -1,6 +1,7 @@
 package config
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -8,8 +9,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/util/test"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/util/test"
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/testutil"
@@ -423,4 +424,93 @@ capabilities:
 		err.Error() != "capabilities: from.version must be a valid OPA version (with a 'v' prefix)" {
 		t.Errorf("expected error, got %v", err)
 	}
+}
+
+func TestUnmarshalProjectRootsAsStringOrObject(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`project:
+  roots:
+    - foo/bar
+    - baz
+    - path: bar/baz
+    - path: v1
+      rego-version: 1
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	version1 := 1
+
+	expRoots := []Root{
+		{Path: "foo/bar"},
+		{Path: "baz"},
+		{Path: "bar/baz"},
+		{Path: "v1", RegoVersion: &version1},
+	}
+
+	roots := *conf.Project.Roots
+
+	if len(roots) != len(expRoots) {
+		t.Errorf("expected %d roots, got %d", len(expRoots), len(roots))
+	}
+
+	for i, expRoot := range expRoots {
+		if roots[i].Path != expRoot.Path {
+			t.Errorf("expected root path %v, got %v", expRoot.Path, roots[i].Path)
+		}
+
+		if expRoot.RegoVersion != nil {
+			if roots[i].RegoVersion == nil {
+				t.Errorf("expected root %v to have a rego version", expRoot.Path)
+			} else if *roots[i].RegoVersion != *expRoot.RegoVersion {
+				t.Errorf(
+					"expected root %v rego version %v, got %v",
+					expRoot.Path, *expRoot.RegoVersion, *roots[i].RegoVersion,
+				)
+			}
+		}
+	}
+}
+
+func TestAllRegoVersions(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`project:
+  rego-version: 0
+  roots:
+    - path: foo
+      rego-version: 1
+`)
+
+	var conf Config
+
+	if err := yaml.Unmarshal(bs, &conf); err != nil {
+		t.Fatal(err)
+	}
+
+	fs := map[string]string{
+		"bar/baz/.manifest": `{"rego_version": 1}`,
+	}
+
+	test.WithTempFS(fs, func(root string) {
+		versions, err := AllRegoVersions(root, &conf)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := map[string]ast.RegoVersion{
+			"":        ast.RegoV0,
+			"foo":     ast.RegoV1,
+			"bar/baz": ast.RegoV1,
+		}
+
+		if !maps.Equal(versions, expected) {
+			t.Errorf("expected %v, got %v", expected, versions)
+		}
+	})
 }

@@ -6,8 +6,6 @@
 #   ignore
 package regal.config
 
-import rego.v1
-
 # METADATA
 # description: the path prefix value set on the current linter instance
 # scope: document

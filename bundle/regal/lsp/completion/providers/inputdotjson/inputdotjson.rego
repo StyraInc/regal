@@ -12,8 +12,6 @@
 #   `input.request.method, and so on
 package regal.lsp.completion.providers.inputdotjson
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

@@ -1,0 +1,5 @@
+project:
+  rego-version: 1
+  roots:
+    - path: v0
+      rego-version: 0

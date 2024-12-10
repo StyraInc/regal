@@ -2,8 +2,6 @@
 # description: Mismatch in `sprintf` arguments count
 package regal.rules.bugs["sprintf-arguments-mismatch"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

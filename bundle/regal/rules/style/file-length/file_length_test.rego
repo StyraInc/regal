@@ -1,7 +1,5 @@
 package regal.rules.style["file-length_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.style["file-length"] as rule

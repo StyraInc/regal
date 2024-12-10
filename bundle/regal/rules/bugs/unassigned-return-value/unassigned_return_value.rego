@@ -2,8 +2,6 @@
 # description: Non-boolean return value unassigned
 package regal.rules.bugs["unassigned-return-value"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

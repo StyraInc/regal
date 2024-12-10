@@ -2,8 +2,6 @@
 # description: Rule body could be made a one-liner
 package regal.rules.custom["one-liner-rule"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config

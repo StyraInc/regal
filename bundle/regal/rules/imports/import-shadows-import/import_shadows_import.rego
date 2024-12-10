@@ -2,8 +2,6 @@
 # description: Import shadows another import
 package regal.rules.imports["import-shadows-import"]
 
-import rego.v1
-
 import data.regal.result
 
 # regular import

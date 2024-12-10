@@ -1,14 +1,12 @@
 package regal.rules.style["yoda-condition_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.style["yoda-condition"] as rule
 
 test_fail_yoda_conditions if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		"foo" == input.bar
 
 		nested := [foo |
@@ -25,7 +23,7 @@ test_fail_yoda_conditions if {
 }
 
 test_fail_yoda_conditions_not_equals if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		"foo" != input.bar
 
 		nested := [foo |
@@ -41,7 +39,7 @@ test_fail_yoda_conditions_not_equals if {
 }
 
 test_success_no_yoda_condition if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		input.bar == "foo"
 	}`)
 	r := rule.report with input as module
@@ -49,7 +47,7 @@ test_success_no_yoda_condition if {
 }
 
 test_success_constants_on_both_sides if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		"foo" == "foo"
 	}`)
 	r := rule.report with input as module
@@ -57,7 +55,7 @@ test_success_constants_on_both_sides if {
 }
 
 test_success_exclude_ref_with_vars if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		"foo" == input.bar[_]
 	}`)
 	r := rule.report with input as module

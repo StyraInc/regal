@@ -18,13 +18,13 @@ import (
 	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/metrics"
-	"github.com/open-policy-agent/opa/profiler"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown"
-	"github.com/open-policy-agent/opa/topdown/print"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/metrics"
+	"github.com/open-policy-agent/opa/v1/profiler"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/topdown"
+	"github.com/open-policy-agent/opa/v1/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -290,7 +290,19 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.stopTimer(regalmetrics.RegalFilterIgnoredFiles)
 	l.startTimer(regalmetrics.RegalInputParse)
 
-	inputFromPaths, err := rules.InputFromPaths(filtered)
+	var versionsMap map[string]ast.RegoVersion
+
+	// TODO: How should we deal with this in the language server?
+	// AllRegoVersions will call WalkDir on the root to find manifests, but that's obviously not
+	// going to work for a file:// path..
+	if l.pathPrefix != "" && !strings.HasPrefix(l.pathPrefix, "file://") {
+		versionsMap, err = config.AllRegoVersions(l.pathPrefix, conf)
+		if err != nil && l.debugMode {
+			log.Printf("failed to get configured Rego versions: %v", err)
+		}
+	}
+
+	inputFromPaths, err := rules.InputFromPaths(filtered, versionsMap)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -451,6 +463,7 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 
 	queryStr := `[rule |
         data.regal.rules[cat][rule]
+		count([true | data.regal.rules[cat][rule].notices]) == 0
         data.regal.config.for_rule(cat, rule).level != "ignore"
     ]`
 

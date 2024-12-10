@@ -2,8 +2,6 @@
 # description: the boolean provider suggests `true`/`false` values where appropriate
 package regal.lsp.completion.providers.booleans
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

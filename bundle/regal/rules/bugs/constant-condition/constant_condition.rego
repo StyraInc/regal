@@ -2,8 +2,6 @@
 # description: Constant condition
 package regal.rules.bugs["constant-condition"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

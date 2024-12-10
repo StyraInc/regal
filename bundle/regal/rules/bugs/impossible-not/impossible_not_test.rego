@@ -1,7 +1,5 @@
 package regal.rules.bugs["impossible-not_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.bugs["impossible-not"] as rule

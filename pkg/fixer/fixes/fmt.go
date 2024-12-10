@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"path/filepath"
 
-	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
+
+	"github.com/styrainc/regal/internal/parse"
 )
 
 type Fmt struct {
@@ -37,7 +39,23 @@ func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 		return nil, errors.New("filename is required when formatting")
 	}
 
-	formatted, err := format.SourceWithOpts(filepath.Base(fc.Filename), fc.Contents, f.OPAFmtOpts)
+	popts := parse.ParserOptions()
+	if fc.RegoVersion != ast.RegoUndefined {
+		popts.RegoVersion = fc.RegoVersion
+	}
+
+	module, err := parse.ModuleWithOpts(fc.Filename, string(fc.Contents), popts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse module: %w", err)
+	}
+
+	f.OPAFmtOpts.RegoVersion = module.RegoVersion()
+
+	if f.OPAFmtOpts.RegoVersion == ast.RegoV0 {
+		f.OPAFmtOpts.RegoVersion = ast.RegoV0CompatV1
+	}
+
+	formatted, err := format.AstWithOpts(module, f.OPAFmtOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to format: %w", err)
 	}

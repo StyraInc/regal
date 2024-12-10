@@ -8,8 +8,6 @@
 #     ref: https://code.visualstudio.com/docs/editor/userdefinedsnippets
 package regal.lsp.completion.providers.snippet
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

@@ -2,8 +2,6 @@
 # description: provides completion suggestions for the `package` keyword where applicable
 package regal.lsp.completion.providers["package"]
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

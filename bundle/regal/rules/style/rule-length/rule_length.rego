@@ -2,8 +2,6 @@
 # description: Max rule length exceeded
 package regal.rules.style["rule-length"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 import data.regal.util

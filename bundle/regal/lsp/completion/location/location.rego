@@ -2,8 +2,6 @@
 # description: various rules and functions related to location and position
 package regal.lsp.completion.location
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.util
 

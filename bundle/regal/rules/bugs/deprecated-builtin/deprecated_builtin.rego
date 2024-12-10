@@ -2,8 +2,6 @@
 # description: Avoid using deprecated built-in functions
 package regal.rules.bugs["deprecated-builtin"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

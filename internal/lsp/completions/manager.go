@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"

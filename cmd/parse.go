@@ -10,7 +10,7 @@ import (
 	"github.com/anderseknert/roast/pkg/util"
 	"github.com/spf13/cobra"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	rp "github.com/styrainc/regal/internal/parse"
 )

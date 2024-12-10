@@ -2,8 +2,6 @@
 # description: Test outside of test package
 package regal.rules.testing["test-outside-test-package"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

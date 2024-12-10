@@ -2,8 +2,6 @@
 # description: Prefer importing packages over rules
 package regal.rules.imports["prefer-package-imports"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

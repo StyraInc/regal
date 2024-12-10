@@ -20,7 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/tester"
+	"github.com/open-policy-agent/opa/v1/tester"
 
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"

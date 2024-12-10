@@ -1,13 +1,11 @@
 package regal.rules.testing["print-or-trace-call_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.testing["print-or-trace-call"] as rule
 
 test_fail_call_to_print_and_trace if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		print("foo")
 
 		x := [i | i = 0; trace("bar")]

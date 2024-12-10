@@ -2,8 +2,6 @@
 # description: Forbidden function call
 package regal.rules.custom["forbidden-function-call"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

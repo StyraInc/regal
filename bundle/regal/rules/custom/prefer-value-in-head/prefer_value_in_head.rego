@@ -2,8 +2,6 @@
 # description: Prefer value in rule head
 package regal.rules.custom["prefer-value-in-head"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

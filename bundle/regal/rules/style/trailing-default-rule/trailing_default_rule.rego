@@ -2,8 +2,6 @@
 # description: Default rule should be declared first
 package regal.rules.style["trailing-default-rule"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

@@ -2,8 +2,6 @@
 # description: Yoda condition
 package regal.rules.style["yoda-condition"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

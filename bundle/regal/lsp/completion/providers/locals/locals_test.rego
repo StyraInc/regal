@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.locals_test
 
-import rego.v1
-
 import data.regal.util
 
 import data.regal.lsp.completion.providers.locals as provider

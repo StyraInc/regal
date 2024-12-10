@@ -4,8 +4,6 @@
 #   with OPA's AST, more recently in the form of RoAST
 package regal.ast
 
-import rego.v1
-
 import data.regal.config
 import data.regal.util
 

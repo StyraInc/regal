@@ -2,8 +2,6 @@
 # description: Assignment can be deferred
 package regal.rules.performance["defer-assignment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

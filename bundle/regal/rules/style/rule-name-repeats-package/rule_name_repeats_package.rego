@@ -5,8 +5,6 @@
 #     ref: https://docs.styra.com/regal/rules/style/rule-name-repeats-package
 package regal.rules.style["rule-name-repeats-package"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

@@ -2,8 +2,6 @@
 # description: Reference ignores import
 package regal.rules.imports["ignored-import"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

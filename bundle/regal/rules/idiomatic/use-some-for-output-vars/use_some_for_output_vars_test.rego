@@ -1,13 +1,11 @@
 package regal.rules.idiomatic["use-some-for-output-vars_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.idiomatic["use-some-for-output-vars"] as rule
 
 test_fail_output_var_not_declared if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		"admin" == input.user.roles[i]
 	}`)
 	r == {{
@@ -34,7 +32,7 @@ test_fail_output_var_not_declared if {
 
 # regal ignore:rule-length
 test_fail_multiple_output_vars_not_declared if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		foo := input.foo[i].bar[j]
 	}`)
 	r == {
@@ -82,7 +80,7 @@ test_fail_multiple_output_vars_not_declared if {
 }
 
 test_fail_only_one_declared if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		some i
 		foo := input.foo[i].bar[j]
 	}`)
@@ -110,7 +108,7 @@ test_fail_only_one_declared if {
 }
 
 test_success_uses_some if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		some i
 		"admin" == input.user.roles[i]
 	}`)
@@ -156,7 +154,7 @@ test_success_not_an_output_var if {
 	r := rule.report with input as ast.policy(`
 		i := 0
 
-		allow {
+		allow if {
 			# i now an *input* var
 			"admin" == input.user.roles[i]
 		}`)

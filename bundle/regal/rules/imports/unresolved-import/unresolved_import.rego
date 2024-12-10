@@ -2,8 +2,6 @@
 # description: Unresolved import
 package regal.rules.imports["unresolved-import"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

@@ -2,8 +2,6 @@
 # description: Custom function may be replaced by `in` keyword
 package regal.rules.idiomatic["custom-in-construct"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

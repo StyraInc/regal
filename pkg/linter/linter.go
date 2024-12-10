@@ -18,13 +18,13 @@ import (
 	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/metrics"
-	"github.com/open-policy-agent/opa/profiler"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown"
-	"github.com/open-policy-agent/opa/topdown/print"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/metrics"
+	"github.com/open-policy-agent/opa/v1/profiler"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/topdown"
+	"github.com/open-policy-agent/opa/v1/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -290,7 +290,19 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.stopTimer(regalmetrics.RegalFilterIgnoredFiles)
 	l.startTimer(regalmetrics.RegalInputParse)
 
-	inputFromPaths, err := rules.InputFromPaths(filtered)
+	var versionsMap map[string]ast.RegoVersion
+
+	// TODO: How should we deal with this in the language server?
+	// AllRegoVersions will call WalkDir on the root to find manifests, but that's obviously not
+	// going to work for a file:// path..
+	if l.pathPrefix != "" && !strings.HasPrefix(l.pathPrefix, "file://") {
+		versionsMap, err = config.AllRegoVersions(l.pathPrefix, conf)
+		if err != nil && l.debugMode {
+			log.Printf("failed to get configured Rego versions: %v", err)
+		}
+	}
+
+	inputFromPaths, err := rules.InputFromPaths(filtered, versionsMap)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
@@ -316,6 +328,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			input.FileNames = append(input.FileNames, filename)
 			input.Modules[filename] = l.inputModules.Modules[filename]
 			input.FileContent[filename] = l.inputModules.FileContent[filename]
+			input.RegoVersions[filename] = l.inputModules.RegoVersions[filename]
 		}
 
 		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
@@ -599,9 +612,10 @@ func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
 
 	n := len(input.FileNames)
 	newInput := rules.Input{
-		FileNames:   make([]string, 0, n),
-		FileContent: make(map[string]string, n),
-		Modules:     make(map[string]*ast.Module, n),
+		FileNames:    make([]string, 0, n),
+		FileContent:  make(map[string]string, n),
+		Modules:      make(map[string]*ast.Module, n),
+		RegoVersions: make(map[string]ast.RegoVersion, n),
 	}
 
 outer:
@@ -624,6 +638,7 @@ outer:
 		newInput.FileNames = append(newInput.FileNames, f)
 		newInput.FileContent[f] = input.FileContent[f]
 		newInput.Modules[f] = input.Modules[f]
+		newInput.RegoVersions[f] = input.RegoVersions[f]
 	}
 
 	return newInput, nil

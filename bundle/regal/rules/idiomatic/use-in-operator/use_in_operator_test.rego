@@ -1,13 +1,11 @@
 package regal.rules.idiomatic["use-in-operator_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.idiomatic["use-in-operator"] as rule
 
 test_fail_use_in_operator_string_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	"admin" == input.user.roles[_]
 	}`)
 
@@ -23,7 +21,7 @@ test_fail_use_in_operator_string_lhs if {
 }
 
 test_fail_use_in_operator_number_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	1 == input.lucky_numbers[_]
 	}`)
 
@@ -39,7 +37,7 @@ test_fail_use_in_operator_number_lhs if {
 }
 
 test_fail_use_in_operator_array_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	[1] == input.arrays[_]
 	}`)
 
@@ -55,7 +53,7 @@ test_fail_use_in_operator_array_lhs if {
 }
 
 test_fail_use_in_operator_boolean_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	true == input.booleans[_]
 	}`)
 
@@ -71,7 +69,7 @@ test_fail_use_in_operator_boolean_lhs if {
 }
 
 test_fail_use_in_operator_object_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	{"x": "y"} == input.objects[_]
 	}`)
 
@@ -87,7 +85,7 @@ test_fail_use_in_operator_object_lhs if {
 }
 
 test_fail_use_in_operator_null_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	null == input.objects[_]
 	}`)
 
@@ -103,7 +101,7 @@ test_fail_use_in_operator_null_lhs if {
 }
 
 test_fail_use_in_operator_set_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	{"foo"} == input.objects[_]
 	}`)
 
@@ -119,7 +117,7 @@ test_fail_use_in_operator_set_lhs if {
 }
 
 test_fail_use_in_operator_var_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	admin == input.user.roles[_]
 	}`)
 	r == expected_with_location({
@@ -134,7 +132,7 @@ test_fail_use_in_operator_var_lhs if {
 }
 
 test_fail_use_in_operator_string_rhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	input.user.roles[_] == "admin"
 	}`)
 
@@ -150,7 +148,7 @@ test_fail_use_in_operator_string_rhs if {
 }
 
 test_fail_use_in_operator_var_rhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		input.user.roles[_] == admin
 	}`)
 
@@ -166,7 +164,7 @@ test_fail_use_in_operator_var_rhs if {
 }
 
 test_fail_use_in_operator_ref_lhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		data.roles.admin == input.user.roles[_]
 	}`)
 
@@ -182,7 +180,7 @@ test_fail_use_in_operator_ref_lhs if {
 }
 
 test_fail_use_in_operator_ref_rhs if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		input.user.roles[_] == data.roles.admin
 	}`)
 
@@ -198,7 +196,7 @@ test_fail_use_in_operator_ref_rhs if {
 }
 
 test_fail_use_in_operator_scalar_eq_operator if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		input.user.roles[_] == data.roles.admin
 	}`)
 
@@ -214,7 +212,7 @@ test_fail_use_in_operator_scalar_eq_operator if {
 }
 
 test_fail_use_in_operator_ref_eq_operator if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		input.user.roles[_] = "foo"
 	}`)
 
@@ -230,13 +228,13 @@ test_fail_use_in_operator_ref_eq_operator if {
 }
 
 test_success_loop_refs_both_sides if {
-	r := rule.report with input as ast.policy(`allow { required_roles[_] == input.user.roles[_] }`)
+	r := rule.report with input as ast.policy(`allow if { required_roles[_] == input.user.roles[_] }`)
 
 	r == set()
 }
 
 test_success_uses_in_operator if {
-	r := rule.report with input as ast.with_rego_v1(`allow if { "admin" in input.user.roles }`)
+	r := rule.report with input as ast.policy(`allow if { "admin" in input.user.roles }`)
 
 	r == set()
 }

@@ -2,8 +2,6 @@
 # description: Variable name shadows built-in
 package regal.rules.bugs["var-shadows-builtin"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

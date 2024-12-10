@@ -6,8 +6,6 @@
 #     ref: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
 package regal.lsp.completion.kind
 
-import rego.v1
-
 # METADATA
 # description: text
 text := 1

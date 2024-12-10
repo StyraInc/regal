@@ -14,10 +14,10 @@ import (
 	godap "github.com/google/go-dap"
 	"github.com/spf13/cobra"
 
-	"github.com/open-policy-agent/opa/ast/location"
-	"github.com/open-policy-agent/opa/debug"
-	"github.com/open-policy-agent/opa/logging"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast/location"
+	"github.com/open-policy-agent/opa/v1/debug"
+	"github.com/open-policy-agent/opa/v1/logging"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	"github.com/styrainc/regal/internal/dap"
 	"github.com/styrainc/regal/pkg/builtins"

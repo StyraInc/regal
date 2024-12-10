@@ -2,8 +2,6 @@
 # description: Prefer pattern matching in function arguments
 package regal.rules.idiomatic["equals-pattern-matching"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

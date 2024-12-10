@@ -2,8 +2,6 @@
 # description: provides completion suggestions for rules in the workspace
 package regal.lsp.completion.providers.rulerefs
 
-import rego.v1
-
 import data.regal.ast
 
 import data.regal.lsp.completion.kind

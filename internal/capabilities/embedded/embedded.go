@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 )
 
 //go:embed */*.json

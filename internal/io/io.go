@@ -12,8 +12,8 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/loader/filter"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/loader/filter"
 )
 
 const PathSeparator = string(os.PathSeparator)

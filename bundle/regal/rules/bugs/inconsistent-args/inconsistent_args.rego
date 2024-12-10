@@ -2,8 +2,6 @@
 # description: Inconsistently named function arguments
 package regal.rules.bugs["inconsistent-args"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

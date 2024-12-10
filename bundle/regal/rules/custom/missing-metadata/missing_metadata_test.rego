@@ -1,7 +1,5 @@
 package regal.rules.custom["missing-metadata_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.custom["missing-metadata"] as rule

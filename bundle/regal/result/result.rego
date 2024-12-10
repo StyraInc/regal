@@ -6,8 +6,6 @@
 #   work across upgrades — i.e. if the result format changes
 package regal.result
 
-import rego.v1
-
 import data.regal.config
 import data.regal.util
 

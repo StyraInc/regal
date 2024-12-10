@@ -1,7 +1,5 @@
 package regal.rules.imports["use-rego-v1_test"]
 
-import rego.v1
-
 import data.regal.capabilities
 import data.regal.config
 import data.regal.rules.imports["use-rego-v1"] as rule

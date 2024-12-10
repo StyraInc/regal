@@ -3,7 +3,7 @@ package rego
 import (
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 )
 
 // BuiltinsForCapabilities returns a list of builtins from the provided capabilities.

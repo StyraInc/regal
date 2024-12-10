@@ -7,7 +7,8 @@ import (
 
 	"github.com/anderseknert/roast/pkg/util"
 
-	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
 
 	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/pkg/config"
@@ -46,8 +47,13 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 		default:
 			module := input.Modules[filename]
 			unformatted := util.StringToByteSlice(input.FileContent[filename])
+			opts := format.Opts{RegoVersion: ast.RegoUndefined}
 
-			formatted, err := format.Ast(module)
+			if version, ok := input.RegoVersions[filename]; ok {
+				opts.RegoVersion = version
+			}
+
+			formatted, err := format.AstWithOpts(module, opts)
 			if err != nil {
 				return nil, fmt.Errorf("failed to format module %s: %w", filename, err)
 			}

@@ -2,8 +2,6 @@
 # description: Use in to check for membership
 package regal.rules.idiomatic["use-in-operator"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

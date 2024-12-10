@@ -9,7 +9,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/v1/bundle"
 
 	rio "github.com/styrainc/regal/internal/io"
 )

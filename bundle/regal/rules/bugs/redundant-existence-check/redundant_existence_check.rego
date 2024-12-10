@@ -2,8 +2,6 @@
 # description: Redundant existence check
 package regal.rules.bugs["redundant-existence-check"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

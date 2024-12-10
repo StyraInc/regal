@@ -1,7 +1,5 @@
 package regal.rules.custom["forbidden-function-call_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 

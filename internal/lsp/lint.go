@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/refs"
@@ -38,12 +38,21 @@ func updateParse(
 
 	lines := strings.Split(content, "\n")
 
-	module, err := rparse.Module(fileURI, content)
+	var (
+		err     error
+		module  *ast.Module
+		version ast.RegoVersion
+	)
+
+	// module, err := rparse.Module(fileURI, content)
+
+	// TODO: IF not set in config, or from .manifest
+	module, version, err = rparse.ModuleUnknownVersionWithOpts(fileURI, content, rparse.ParserOptions())
 	if err == nil {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(fileURI, []types.Diagnostic{})
-
 		cache.SetModule(fileURI, module)
+		cache.SetRegoVersion(fileURI, version)
 
 		if err := PutFileMod(ctx, store, fileURI, module); err != nil {
 			return false, fmt.Errorf("failed to update rego store with parsed module: %w", err)
@@ -164,7 +173,16 @@ func updateFileDiagnostics(
 		return fmt.Errorf("failed to get file contents for uri %q", fileURI)
 	}
 
-	input := rules.NewInput(map[string]string{fileURI: contents}, map[string]*ast.Module{fileURI: module})
+	version, ok := cache.GetRegoVersion(fileURI)
+	if !ok {
+		version = ast.RegoUndefined
+	}
+
+	input := rules.NewInputWithVersions(
+		map[string]string{fileURI: contents},
+		map[string]*ast.Module{fileURI: module},
+		map[string]ast.RegoVersion{fileURI: version},
+	)
 
 	regalInstance := linter.NewLinter().
 		// needed to get the aggregateData for this file
@@ -223,6 +241,7 @@ func updateAllDiagnostics(
 
 	modules := cache.GetAllModules()
 	files := cache.GetAllFiles()
+	versions := cache.GetAllRegoVersions()
 
 	regalInstance := linter.NewLinter().
 		WithPathPrefix(workspaceRootURI).
@@ -237,7 +256,7 @@ func updateAllDiagnostics(
 		regalInstance = regalInstance.
 			WithAggregates(cache.GetFileAggregates())
 	} else {
-		input := rules.NewInput(files, modules)
+		input := rules.NewInputWithVersions(files, modules, versions)
 		regalInstance = regalInstance.WithInputModules(&input)
 	}
 

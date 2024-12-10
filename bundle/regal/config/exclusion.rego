@@ -1,7 +1,5 @@
 package regal.config
 
-import rego.v1
-
 # METADATA
 # description: |
 #   determines if file should be excluded, either because it's globally

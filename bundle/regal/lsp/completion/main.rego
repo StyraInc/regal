@@ -5,8 +5,6 @@
 #   under regal.lsp.completion.providers
 package regal.lsp.completion
 
-import rego.v1
-
 # METADATA
 # description: main entry point for completion suggestions
 # entrypoint: true

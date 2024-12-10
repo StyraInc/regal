@@ -1,7 +1,5 @@
 package regal.rules.idiomatic["non-raw-regex-pattern_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
@@ -31,7 +29,7 @@ test_fail_non_raw_rule_head if {
 }
 
 test_fail_non_raw_rule_body if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 		regex.is_valid("[0-9]+")
 	}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}

@@ -2,8 +2,6 @@
 # description: Avoid importing input
 package regal.rules.imports["avoid-importing-input"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {

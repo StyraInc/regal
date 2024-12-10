@@ -2,8 +2,6 @@
 # description: Pointless reassignment of variable
 package regal.rules.style["pointless-reassignment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

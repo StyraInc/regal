@@ -2,8 +2,6 @@
 # description: Rule named "if"
 package regal.rules.bugs["rule-named-if"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

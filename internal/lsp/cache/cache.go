@@ -8,7 +8,7 @@ import (
 
 	"github.com/anderseknert/roast/pkg/util"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/report"
@@ -28,6 +28,9 @@ type Cache struct {
 
 	// modules is a map of file URI to parsed AST modules from the latest file contents value
 	modules map[string]*ast.Module
+
+	// regoVersions is a map of file URI to the guesstimated Rego version for that file
+	regoVersions map[string]ast.RegoVersion
 
 	// aggregateData stores the aggregate data from evaluations for each file.
 	// This is used to cache the results of expensive evaluations and can be used
@@ -67,6 +70,8 @@ type Cache struct {
 	keywordLocationsMu sync.Mutex
 
 	fileRefMu sync.Mutex
+
+	regoVersionsMu sync.Mutex
 }
 
 func NewCache() *Cache {
@@ -75,6 +80,8 @@ func NewCache() *Cache {
 		ignoredFileContents: make(map[string]string),
 
 		modules: make(map[string]*ast.Module),
+
+		regoVersions: make(map[string]ast.RegoVersion),
 
 		aggregateData: make(map[string][]report.Aggregate),
 
@@ -162,6 +169,29 @@ func (c *Cache) SetModule(fileURI string, module *ast.Module) {
 	defer c.moduleMu.Unlock()
 
 	c.modules[fileURI] = module
+}
+
+func (c *Cache) GetAllRegoVersions() map[string]ast.RegoVersion {
+	c.regoVersionsMu.Lock()
+	defer c.regoVersionsMu.Unlock()
+
+	return maps.Clone(c.regoVersions)
+}
+
+func (c *Cache) GetRegoVersion(fileURI string) (ast.RegoVersion, bool) {
+	c.regoVersionsMu.Lock()
+	defer c.regoVersionsMu.Unlock()
+
+	val, ok := c.regoVersions[fileURI]
+
+	return val, ok
+}
+
+func (c *Cache) SetRegoVersion(fileURI string, version ast.RegoVersion) {
+	c.regoVersionsMu.Lock()
+	defer c.regoVersionsMu.Unlock()
+
+	c.regoVersions[fileURI] = version
 }
 
 // SetFileAggregates will only set aggregate data for the provided URI. Even if

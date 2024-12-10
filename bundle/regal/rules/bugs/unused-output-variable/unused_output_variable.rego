@@ -2,8 +2,6 @@
 # description: Unused output variable
 package regal.rules.bugs["unused-output-variable"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

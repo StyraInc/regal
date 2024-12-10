@@ -1,14 +1,12 @@
 package regal.rules.custom["prefer-value-in-head_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.custom["prefer-value-in-head"] as rule
 
 test_fail_value_could_be_in_head_assign if {
-	module := ast.policy(`value := x {
+	module := ast.policy(`value := x if {
 		input.x
 		x := 10
 	}`)
@@ -26,7 +24,7 @@ test_fail_value_could_be_in_head_assign if {
 }
 
 test_fail_value_could_be_in_head_assign_composite if {
-	module := ast.policy(`value := x {
+	module := ast.policy(`value := x if {
 		input.x
 		x := {"foo": 10}
 	}`)
@@ -44,13 +42,13 @@ test_fail_value_could_be_in_head_assign_composite if {
 }
 
 test_fail_value_is_in_head_assign if {
-	r := rule.report with input as ast.policy(`value := 10 { input.x }`) with config.for_rule as {"level": "error"}
+	r := rule.report with input as ast.policy(`value := 10 if { input.x }`) with config.for_rule as {"level": "error"}
 
 	r == set()
 }
 
 test_fail_value_could_be_in_head_eq if {
-	module := ast.policy(`value := x {
+	module := ast.policy(`value := x if {
 		input.x
 		x = 10
 	}`)
@@ -69,13 +67,13 @@ test_fail_value_could_be_in_head_eq if {
 }
 
 test_success_value_is_in_head_eq if {
-	r := rule.report with input as ast.policy(`value = x { input.x }`) with config.for_rule as {"level": "error"}
+	r := rule.report with input as ast.policy(`value = x if { input.x }`) with config.for_rule as {"level": "error"}
 
 	r == set()
 }
 
 test_fail_value_could_be_in_head_but_not_a_scalar if {
-	module := ast.policy(`value := x {
+	module := ast.policy(`value := x if {
 		input.x
 		x := [i | i := input[_]]
 	}`)
@@ -85,7 +83,7 @@ test_fail_value_could_be_in_head_but_not_a_scalar if {
 }
 
 test_fail_value_could_be_in_head_and_is_a_scalar if {
-	module := ast.policy(`value := x {
+	module := ast.policy(`value := x if {
 		input.x
 		x := 5
 	}`)
@@ -121,7 +119,7 @@ test_fail_value_could_be_in_head_multivalue_rule if {
 }
 
 test_fail_value_could_be_in_head_object_rule if {
-	module := ast.policy(`foo["bar"] := x {
+	module := ast.policy(`foo["bar"] := x if {
 		input.foo
 		x := "bar"
 	}`)

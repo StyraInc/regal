@@ -1,7 +1,5 @@
 package regal.config_test
 
-import rego.v1
-
 import data.regal.config
 
 rules_config := {"rules": {"test": {"test-case": {

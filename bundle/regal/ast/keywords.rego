@@ -1,7 +1,5 @@
 package regal.ast
 
-import rego.v1
-
 import data.regal.util
 
 # METADATA

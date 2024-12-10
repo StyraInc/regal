@@ -2,8 +2,6 @@
 # description: Naming convention violation
 package regal.rules.custom["naming-convention"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

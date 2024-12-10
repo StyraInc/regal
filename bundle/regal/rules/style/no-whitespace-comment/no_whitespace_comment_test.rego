@@ -1,7 +1,5 @@
 package regal.rules.style["no-whitespace-comment_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["no-whitespace-comment"] as rule

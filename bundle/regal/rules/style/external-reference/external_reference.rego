@@ -2,8 +2,6 @@
 # description: External reference in function
 package regal.rules.style["external-reference"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

@@ -1,7 +1,5 @@
 package regal.rules.bugs["if-empty-object_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 

@@ -2,8 +2,6 @@
 # description: Outside reference to internal rule or function
 package regal.rules.bugs["leaked-internal-reference"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

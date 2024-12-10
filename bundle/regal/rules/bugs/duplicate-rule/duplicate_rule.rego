@@ -2,8 +2,6 @@
 # description: Duplicate rule
 package regal.rules.bugs["duplicate-rule"]
 
-import rego.v1
-
 import data.regal.result
 import data.regal.util
 

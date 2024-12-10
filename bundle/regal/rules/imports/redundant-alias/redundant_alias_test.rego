@@ -1,7 +1,5 @@
 package regal.rules.imports["redundant-alias_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.imports["redundant-alias"] as rule

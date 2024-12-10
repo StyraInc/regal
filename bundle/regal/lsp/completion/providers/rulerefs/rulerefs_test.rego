@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.rulerefs_test
 
-import rego.v1
-
 import data.regal.ast
 
 import data.regal.lsp.completion.providers.rulerefs as provider

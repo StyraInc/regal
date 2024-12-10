@@ -1,7 +1,5 @@
 package regal.rules.style["avoid-get-and-list-prefix_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["avoid-get-and-list-prefix"] as rule

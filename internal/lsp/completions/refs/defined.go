@@ -9,7 +9,7 @@ import (
 	"github.com/anderseknert/roast/pkg/util"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	rast "github.com/styrainc/regal/internal/ast"
 	"github.com/styrainc/regal/internal/lsp/types"

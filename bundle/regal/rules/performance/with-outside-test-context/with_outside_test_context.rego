@@ -2,8 +2,6 @@
 # description: '`with` used outside test context'
 package regal.rules.performance["with-outside-test-context"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

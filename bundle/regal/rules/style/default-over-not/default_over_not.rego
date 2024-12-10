@@ -2,8 +2,6 @@
 # description: Prefer default assignment over negated condition
 package regal.rules.style["default-over-not"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

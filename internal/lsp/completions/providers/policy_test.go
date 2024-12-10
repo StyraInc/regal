@@ -7,8 +7,8 @@ import (
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"

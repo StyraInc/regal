@@ -1,7 +1,5 @@
 package regal.rules.testing["todo-test_test"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.rules.testing["todo-test"] as rule
 
@@ -9,9 +7,9 @@ test_fail_todo_test if {
 	ast := regal.parse_module("foo_test.rego", `
 	package foo_test
 
-	todo_test_foo { false }
+	todo_test_foo if { false }
 
-	test_bar { true }
+	test_bar if { true }
 	`)
 	r := rule.report with input as ast
 
@@ -31,7 +29,7 @@ test_fail_todo_test if {
 				"col": 15,
 				"row": 4,
 			},
-			"text": "\ttodo_test_foo { false }",
+			"text": "\ttodo_test_foo if { false }",
 		},
 		"level": "error",
 	}}

@@ -2,8 +2,6 @@
 # description: Directory structure should mirror package
 package regal.rules.idiomatic["directory-package-mismatch"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

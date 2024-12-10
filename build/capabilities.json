@@ -9,6 +9,7 @@
       "decl": {
         "args": [
           {
+            "description": "the number to take the absolute value of",
             "name": "x",
             "type": "number"
           }
@@ -58,6 +59,7 @@
       "decl": {
         "args": [
           {
+            "description": "the first set",
             "name": "x",
             "of": {
               "type": "any"
@@ -65,6 +67,7 @@
             "type": "set"
           },
           {
+            "description": "the second set",
             "name": "y",
             "of": {
               "type": "any"
@@ -118,6 +121,7 @@
       "decl": {
         "args": [
           {
+            "description": "the first array",
             "dynamic": {
               "type": "any"
             },
@@ -125,6 +129,7 @@
             "type": "array"
           },
           {
+            "description": "the second array",
             "dynamic": {
               "type": "any"
             },
@@ -230,6 +235,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to decode",
             "name": "x",
             "type": "string"
           }
@@ -251,6 +257,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to encode",
             "name": "x",
             "type": "string"
           }
@@ -272,6 +279,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to check",
             "name": "x",
             "type": "string"
           }
@@ -293,6 +301,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to decode",
             "name": "x",
             "type": "string"
           }
@@ -314,6 +323,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to encode",
             "name": "x",
             "type": "string"
           }
@@ -335,6 +345,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to encode",
             "name": "x",
             "type": "string"
           }
@@ -353,15 +364,18 @@
       "decl": {
         "args": [
           {
+            "description": "the first integer",
             "name": "x",
             "type": "number"
           },
           {
+            "description": "the second integer",
             "name": "y",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the bitwise AND of `x` and `y`",
           "name": "z",
           "type": "number"
         },
@@ -374,15 +388,18 @@
       "decl": {
         "args": [
           {
+            "description": "the integer to shift",
             "name": "x",
             "type": "number"
           },
           {
+            "description": "the number of bits to shift",
             "name": "s",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the result of shifting `x` `s` bits to the left",
           "name": "z",
           "type": "number"
         },
@@ -395,11 +412,13 @@
       "decl": {
         "args": [
           {
+            "description": "the integer to negate",
             "name": "x",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the bitwise negation of `x`",
           "name": "z",
           "type": "number"
         },
@@ -412,15 +431,18 @@
       "decl": {
         "args": [
           {
+            "description": "the first integer",
             "name": "x",
             "type": "number"
           },
           {
+            "description": "the second integer",
             "name": "y",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the bitwise OR of `x` and `y`",
           "name": "z",
           "type": "number"
         },
@@ -433,15 +455,18 @@
       "decl": {
         "args": [
           {
+            "description": "the integer to shift",
             "name": "x",
             "type": "number"
           },
           {
+            "description": "the number of bits to shift",
             "name": "s",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the result of shifting `x` `s` bits to the right",
           "name": "z",
           "type": "number"
         },
@@ -454,15 +479,18 @@
       "decl": {
         "args": [
           {
+            "description": "the first integer",
             "name": "x",
             "type": "number"
           },
           {
+            "description": "the second integer",
             "name": "y",
             "type": "number"
           }
         ],
         "result": {
+          "description": "the bitwise XOR of `x` and `y`",
           "name": "z",
           "type": "number"
         },
@@ -598,6 +626,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to use as a delimiter",
             "name": "delimiter",
             "type": "string"
           },
@@ -622,6 +651,7 @@
           }
         ],
         "result": {
+          "description": "the joined string",
           "name": "output",
           "type": "string"
         },
@@ -831,6 +861,7 @@
       "decl": {
         "args": [
           {
+            "description": "input string",
             "name": "x",
             "type": "string"
           }
@@ -879,6 +910,7 @@
       "decl": {
         "args": [
           {
+            "description": "input string",
             "name": "x",
             "type": "string"
           }
@@ -897,6 +929,7 @@
       "decl": {
         "args": [
           {
+            "description": "input string",
             "name": "x",
             "type": "string"
           }
@@ -1267,6 +1300,7 @@
       "decl": {
         "args": [
           {
+            "description": "glob pattern",
             "name": "pattern",
             "type": "string"
           },
@@ -1287,6 +1321,7 @@
             "type": "any"
           },
           {
+            "description": "string to match against `pattern`",
             "name": "match",
             "type": "string"
           }
@@ -1305,6 +1340,7 @@
       "decl": {
         "args": [
           {
+            "description": "glob pattern",
             "name": "pattern",
             "type": "string"
           }
@@ -1452,6 +1488,7 @@
       "decl": {
         "args": [
           {
+            "description": "the GraphQL query",
             "name": "query",
             "of": [
               {
@@ -1472,6 +1509,7 @@
             "type": "any"
           },
           {
+            "description": "the GraphQL schema",
             "name": "schema",
             "of": [
               {
@@ -1506,6 +1544,7 @@
       "decl": {
         "args": [
           {
+            "description": "the GraphQL query",
             "name": "query",
             "of": [
               {
@@ -1526,6 +1565,7 @@
             "type": "any"
           },
           {
+            "description": "the GraphQL schema",
             "name": "schema",
             "of": [
               {
@@ -1584,6 +1624,7 @@
       "decl": {
         "args": [
           {
+            "description": "the GraphQL query",
             "name": "query",
             "of": [
               {
@@ -1604,6 +1645,7 @@
             "type": "any"
           },
           {
+            "description": "the GraphQL schema",
             "name": "schema",
             "of": [
               {
@@ -1665,6 +1707,7 @@
       "decl": {
         "args": [
           {
+            "description": "GraphQL query string",
             "name": "query",
             "type": "string"
           }
@@ -1691,6 +1734,7 @@
       "decl": {
         "args": [
           {
+            "description": "GraphQL schema string",
             "name": "schema",
             "type": "string"
           }
@@ -1717,6 +1761,7 @@
       "decl": {
         "args": [
           {
+            "description": "the schema to verify",
             "name": "schema",
             "of": [
               {
@@ -1826,6 +1871,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to encode",
             "name": "x",
             "type": "string"
           }
@@ -1844,6 +1890,7 @@
       "decl": {
         "args": [
           {
+            "description": "the HTTP request object",
             "dynamic": {
               "key": {
                 "type": "string"
@@ -1857,6 +1904,7 @@
           }
         ],
         "result": {
+          "description": "the HTTP response object",
           "dynamic": {
             "key": {
               "type": "any"
@@ -2551,6 +2599,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2572,6 +2621,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2593,6 +2643,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2614,6 +2665,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2635,6 +2687,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2656,6 +2709,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2677,6 +2731,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -2698,6 +2753,7 @@
       "decl": {
         "args": [
           {
+            "description": "object to filter",
             "dynamic": {
               "key": {
                 "type": "any"
@@ -2963,10 +3019,12 @@
       "decl": {
         "args": [
           {
+            "description": "the object to patch",
             "name": "object",
             "type": "any"
           },
           {
+            "description": "the JSON patches to apply",
             "dynamic": {
               "dynamic": {
                 "key": {
@@ -3013,6 +3071,7 @@
       "decl": {
         "args": [
           {
+            "description": "object to remove paths from",
             "dynamic": {
               "key": {
                 "type": "any"
@@ -3231,6 +3290,7 @@
       "decl": {
         "args": [
           {
+            "description": "the set or array to be searched",
             "name": "collection",
             "of": [
               {
@@ -3266,6 +3326,7 @@
       "decl": {
         "args": [
           {
+            "description": "the set or array to be searched",
             "name": "collection",
             "of": [
               {
@@ -3409,15 +3470,18 @@
       "decl": {
         "args": [
           {
+            "description": "CIDR to check against",
             "name": "cidr",
             "type": "string"
           },
           {
+            "description": "CIDR or IP to check",
             "name": "cidr_or_ip",
             "type": "string"
           }
         ],
         "result": {
+          "description": "`true` if `cidr_or_ip` is contained within `cidr`",
           "name": "result",
           "type": "boolean"
         },
@@ -3430,6 +3494,7 @@
       "decl": {
         "args": [
           {
+            "description": "CIDRs to check against",
             "name": "cidrs",
             "of": [
               {
@@ -3495,6 +3560,7 @@
             "type": "any"
           },
           {
+            "description": "CIDRs or IPs to check",
             "name": "cidrs_or_ips",
             "of": [
               {
@@ -3585,6 +3651,7 @@
       "decl": {
         "args": [
           {
+            "description": "CIDR to expand",
             "name": "cidr",
             "type": "string"
           }
@@ -3606,15 +3673,18 @@
       "decl": {
         "args": [
           {
+            "description": "first CIDR",
             "name": "cidr1",
             "type": "string"
           },
           {
+            "description": "second CIDR",
             "name": "cidr2",
             "type": "string"
           }
         ],
         "result": {
+          "description": "`true` if `cidr1` intersects with `cidr2`",
           "name": "result",
           "type": "boolean"
         },
@@ -3627,11 +3697,13 @@
       "decl": {
         "args": [
           {
+            "description": "CIDR to validate",
             "name": "cidr",
             "type": "string"
           }
         ],
         "result": {
+          "description": "`true` if `cidr` is a valid CIDR",
           "name": "result",
           "type": "boolean"
         },
@@ -3725,10 +3797,12 @@
       "decl": {
         "args": [
           {
+            "description": "the start of the range",
             "name": "a",
             "type": "number"
           },
           {
+            "description": "the end of the range (inclusive)",
             "name": "b",
             "type": "number"
           }
@@ -3750,14 +3824,17 @@
       "decl": {
         "args": [
           {
+            "description": "the start of the range",
             "name": "a",
             "type": "number"
           },
           {
+            "description": "the end of the range (inclusive)",
             "name": "b",
             "type": "number"
           },
           {
+            "description": "the step between numbers in the range",
             "name": "step",
             "type": "number"
           }
@@ -3792,6 +3869,7 @@
             "type": "object"
           },
           {
+            "description": "keys to keep in `object`",
             "name": "keys",
             "of": [
               {
@@ -4033,6 +4111,7 @@
       "decl": {
         "args": [
           {
+            "description": "left-hand object",
             "dynamic": {
               "key": {
                 "type": "any"
@@ -4045,6 +4124,7 @@
             "type": "object"
           },
           {
+            "description": "right-hand object",
             "dynamic": {
               "key": {
                 "type": "any"
@@ -4071,6 +4151,7 @@
       "decl": {
         "args": [
           {
+            "description": "list of objects to merge",
             "dynamic": {
               "dynamic": {
                 "key": {
@@ -4194,6 +4275,7 @@
       "decl": {
         "args": [
           {
+            "description": "the set or array of numbers to multiply",
             "name": "collection",
             "of": [
               {
@@ -4229,6 +4311,7 @@
       "decl": {
         "args": [
           {
+            "description": "HTTP request object",
             "dynamic": {
               "key": {
                 "type": "string"
@@ -4241,6 +4324,7 @@
             "type": "object"
           },
           {
+            "description": "AWS configuration object",
             "dynamic": {
               "key": {
                 "type": "string"
@@ -4253,11 +4337,13 @@
             "type": "object"
           },
           {
+            "description": "nanoseconds since the epoch",
             "name": "time_ns",
             "type": "number"
           }
         ],
         "result": {
+          "description": "HTTP request object with `Authorization` header",
           "dynamic": {
             "key": {
               "type": "any"
@@ -4281,10 +4367,12 @@
       "decl": {
         "args": [
           {
+            "description": "seed string for the random number",
             "name": "str",
             "type": "string"
           },
           {
+            "description": "upper bound of the random number (exclusive)",
             "name": "n",
             "type": "number"
           }
@@ -4337,6 +4425,7 @@
           }
         ],
         "result": {
+          "description": "array of all matches",
           "dynamic": {
             "dynamic": {
               "type": "string"
@@ -4387,15 +4476,18 @@
       "decl": {
         "args": [
           {
+            "description": "first glob-style regular expression",
             "name": "glob1",
             "type": "string"
           },
           {
+            "description": "second glob-style regular expression",
             "name": "glob2",
             "type": "string"
           }
         ],
         "result": {
+          "description": "true if the intersection of `glob1` and `glob2` matches a non-empty set of non-empty strings",
           "name": "result",
           "type": "boolean"
         },
@@ -4414,6 +4506,7 @@
           }
         ],
         "result": {
+          "description": "true if `pattern` is a valid regular expression",
           "name": "result",
           "type": "boolean"
         },
@@ -4437,6 +4530,7 @@
           }
         ],
         "result": {
+          "description": "true if `value` matches `pattern`",
           "name": "result",
           "type": "boolean"
         },
@@ -4465,6 +4559,7 @@
           }
         ],
         "result": {
+          "description": "string with replaced substrings",
           "name": "output",
           "type": "string"
         },
@@ -4525,6 +4620,7 @@
           }
         ],
         "result": {
+          "description": "true if `value` matches the `template`",
           "name": "result",
           "type": "boolean"
         },
@@ -4575,6 +4671,7 @@
           }
         ],
         "result": {
+          "description": "AST object for the Rego module",
           "dynamic": {
             "key": {
               "type": "string"
@@ -4675,10 +4772,12 @@
       "decl": {
         "args": [
           {
+            "description": "first version string",
             "name": "a",
             "type": "string"
           },
           {
+            "description": "second version string",
             "name": "b",
             "type": "string"
           }
@@ -4697,6 +4796,7 @@
       "decl": {
         "args": [
           {
+            "description": "input to validate",
             "name": "vsn",
             "type": "any"
           }
@@ -5070,6 +5170,7 @@
           }
         ],
         "result": {
+          "description": "string with replaced substrings",
           "name": "output",
           "type": "string"
         },
@@ -5085,11 +5186,13 @@
       "decl": {
         "args": [
           {
+            "description": "string to reverse",
             "name": "x",
             "type": "string"
           }
         ],
         "result": {
+          "description": "reversed string",
           "name": "y",
           "type": "string"
         },
@@ -5105,6 +5208,7 @@
       "decl": {
         "args": [
           {
+            "description": "string to extract substring from",
             "name": "value",
             "type": "string"
           },
@@ -5136,6 +5240,7 @@
       "decl": {
         "args": [
           {
+            "description": "the set or array of numbers to sum",
             "name": "collection",
             "of": [
               {
@@ -5173,14 +5278,17 @@
             "type": "number"
           },
           {
+            "description": "number of years to add",
             "name": "years",
             "type": "number"
           },
           {
+            "description": "number of months to add",
             "name": "months",
             "type": "number"
           },
           {
+            "description": "number of days to add",
             "name": "days",
             "type": "number"
           }
@@ -5291,6 +5399,7 @@
       "decl": {
         "args": [
           {
+            "description": "nanoseconds since the epoch; or a two-element array of the nanoseconds, and a timezone string",
             "name": "ns1",
             "of": [
               {
@@ -5311,6 +5420,7 @@
             "type": "any"
           },
           {
+            "description": "nanoseconds since the epoch; or a two-element array of the nanoseconds, and a timezone string",
             "name": "ns2",
             "of": [
               {
@@ -5470,6 +5580,7 @@
       "decl": {
         "args": [
           {
+            "description": "input string to parse in RFC3339 format",
             "name": "value",
             "type": "string"
           }
@@ -5526,6 +5637,7 @@
       "decl": {
         "args": [
           {
+            "description": "value to convert",
             "name": "x",
             "of": [
               {
@@ -5545,6 +5657,7 @@
           }
         ],
         "result": {
+          "description": "the numeric representation of `x`",
           "name": "num",
           "type": "number"
         },
@@ -5739,6 +5852,7 @@
       "decl": {
         "args": [
           {
+            "description": "input value",
             "name": "x",
             "type": "any"
           }
@@ -5784,7 +5898,7 @@
     },
     {
       "name": "units.parse",
-      "description": "Converts strings like \"10G\", \"5K\", \"4M\", \"1500m\" and the like into a number.\nThis number can be a non-integer, such as 1.5, 0.22, etc. Supports standard metric decimal and\nbinary SI units (e.g., K, Ki, M, Mi, G, Gi etc.) m, K, M, G, T, P, and E are treated as decimal\nunits and Ki, Mi, Gi, Ti, Pi, and Ei are treated as binary units.\n\nNote that 'm' and 'M' are case-sensitive, to allow distinguishing between \"milli\" and \"mega\" units respectively. Other units are case-insensitive.",
+      "description": "Converts strings like \"10G\", \"5K\", \"4M\", \"1500m\", and the like into a number.\nThis number can be a non-integer, such as 1.5, 0.22, etc. Scientific notation is supported,\nallowing values such as \"1e-3K\" (1) or \"2.5e6M\" (2.5 million M).\n\nSupports standard metric decimal and binary SI units (e.g., K, Ki, M, Mi, G, Gi, etc.) where\nm, K, M, G, T, P, and E are treated as decimal units and Ki, Mi, Gi, Ti, Pi, and Ei are treated as\nbinary units.\n\nNote that 'm' and 'M' are case-sensitive to allow distinguishing between \"milli\" and \"mega\" units\nrespectively. Other units are case-insensitive.",
       "decl": {
         "args": [
           {
@@ -5803,7 +5917,7 @@
     },
     {
       "name": "units.parse_bytes",
-      "description": "Converts strings like \"10GB\", \"5K\", \"4mb\" into an integer number of bytes.\nSupports standard byte units (e.g., KB, KiB, etc.) KB, MB, GB, and TB are treated as decimal\nunits and KiB, MiB, GiB, and TiB are treated as binary units. The bytes symbol (b/B) in the\nunit is optional and omitting it wil give the same result (e.g. Mi and MiB).",
+      "description": "Converts strings like \"10GB\", \"5K\", \"4mb\", or \"1e6KB\" into an integer number of bytes.\n\nSupports standard byte units (e.g., KB, KiB, etc.) where KB, MB, GB, and TB are treated as decimal\nunits, and KiB, MiB, GiB, and TiB are treated as binary units. Scientific notation is supported,\nenabling values like \"1.5e3MB\" (1500MB) or \"2e6GiB\" (2 million GiB).\n\nThe bytes symbol (b/B) in the unit is optional; omitting it will yield the same result (e.g., \"Mi\"\nand \"MiB\" are equivalent).",
       "decl": {
         "args": [
           {
@@ -5851,6 +5965,7 @@
       "decl": {
         "args": [
           {
+            "description": "the URL-encoded string",
             "name": "x",
             "type": "string"
           }
@@ -5905,6 +6020,7 @@
       "decl": {
         "args": [
           {
+            "description": "the string to encode",
             "name": "x",
             "type": "string"
           }
@@ -5926,6 +6042,7 @@
       "decl": {
         "args": [
           {
+            "description": "the object to encode",
             "dynamic": {
               "key": {
                 "type": "string"
@@ -5969,6 +6086,7 @@
       "decl": {
         "args": [
           {
+            "description": "UUID string to parse",
             "name": "uuid",
             "type": "string"
           }
@@ -5995,6 +6113,7 @@
       "decl": {
         "args": [
           {
+            "description": "seed string",
             "name": "k",
             "type": "string"
           }
@@ -6017,6 +6136,7 @@
       "decl": {
         "args": [
           {
+            "description": "value to walk",
             "name": "x",
             "type": "any"
           }
@@ -6158,15 +6278,7 @@
       }
     }
   ],
-  "future_keywords": [
-    "contains",
-    "every",
-    "if",
-    "in"
-  ],
   "features": [
-    "rule_head_ref_string_prefixes",
-    "rule_head_refs",
-    "rego_v1_import"
+    "rego_v1"
   ]
 }

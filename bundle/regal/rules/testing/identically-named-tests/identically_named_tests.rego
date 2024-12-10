@@ -2,8 +2,6 @@
 # description: Multiple tests with same name
 package regal.rules.testing["identically-named-tests"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

@@ -2,8 +2,6 @@
 # description: Max file length exceeded
 package regal.rules.style["file-length"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 

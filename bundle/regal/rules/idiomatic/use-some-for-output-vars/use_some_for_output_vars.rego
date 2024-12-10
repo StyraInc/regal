@@ -2,8 +2,6 @@
 # description: Use `some` to declare output variables
 package regal.rules.idiomatic["use-some-for-output-vars"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

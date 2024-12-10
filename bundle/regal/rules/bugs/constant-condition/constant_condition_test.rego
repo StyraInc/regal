@@ -1,14 +1,12 @@
 package regal.rules.bugs["constant-condition_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.bugs["constant-condition"] as rule
 
 test_fail_simple_constant_condition if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	1
 	}`)
 	r == {{
@@ -30,16 +28,16 @@ test_success_rule_without_body if {
 }
 
 test_fail_rule_with_body_looking_generated if {
-	r := rule.report with input as ast.policy(`allow { true }`)
+	r := rule.report with input as ast.policy(`allow if { true }`)
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
 		"location": {
 			"file": "policy.rego",
-			"col": 9,
+			"col": 12,
 			"row": 3,
-			"end": {"row": 3, "col": 13},
-			"text": "allow { true }",
+			"end": {"row": 3, "col": 16},
+			"text": "allow if { true }",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -51,7 +49,7 @@ test_fail_rule_with_body_looking_generated if {
 }
 
 test_fail_operator_constant_condition if {
-	r := rule.report with input as ast.policy(`allow {
+	r := rule.report with input as ast.policy(`allow if {
 	1 == 1
 	}`)
 	r == {{
@@ -68,7 +66,7 @@ test_fail_operator_constant_condition if {
 }
 
 test_success_non_constant_condition if {
-	r := rule.report with input as ast.policy(`allow { 1 == input.one }`)
+	r := rule.report with input as ast.policy(`allow if { 1 == input.one }`)
 	r == set()
 }
 

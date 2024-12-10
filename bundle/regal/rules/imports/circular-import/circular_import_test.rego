@@ -1,7 +1,5 @@
 package regal.rules.imports["circular-import_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.imports["circular-import"] as rule

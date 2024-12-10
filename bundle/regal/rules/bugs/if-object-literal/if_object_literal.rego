@@ -2,8 +2,6 @@
 # description: Object literal following `if`
 package regal.rules.bugs["if-object-literal"]
 
-import rego.v1
-
 import data.regal.capabilities
 import data.regal.result
 

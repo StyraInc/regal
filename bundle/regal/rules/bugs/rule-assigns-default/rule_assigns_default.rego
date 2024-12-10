@@ -3,8 +3,6 @@
 # description: Rule assigned its default value
 package regal.rules.bugs["rule-assigns-default"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

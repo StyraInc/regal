@@ -20,9 +20,9 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
@@ -2085,6 +2085,13 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		oldContent, _ = l.cache.GetFileContents(params.TextDocument.URI)
 	}
 
+	// TODO: ONLY do this if version isn't enforced by config or .manifest
+	version, ok := l.cache.GetRegoVersion(params.TextDocument.URI)
+	if !ok {
+		version = ast.RegoUndefined
+	}
+	// var regoVersion ast.RegoVersion
+
 	// if the file is empty, then the formatters will fail, so we template
 	// instead
 	if oldContent == "" {
@@ -2093,6 +2100,8 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
 			return []types.TextEdit{}, nil
 		}
+
+		// TODO: We'll want to use version here too, to determine if "import rego.v1" should be used
 
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
 		if err != nil {
@@ -2126,7 +2135,10 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	case "opa-fmt", "opa-fmt-rego-v1":
 		opts := format.Opts{}
 		if formatter == "opa-fmt-rego-v1" {
+			// TODO: Update this to be ast.RegoV1 ???
 			opts.RegoVersion = ast.RegoV0CompatV1
+		} else {
+			opts.RegoVersion = version
 		}
 
 		f := &fixes.Fmt{OPAFmtOpts: opts}

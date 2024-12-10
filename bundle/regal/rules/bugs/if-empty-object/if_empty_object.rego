@@ -2,8 +2,6 @@
 # description: Empty object following `if`
 package regal.rules.bugs["if-empty-object"]
 
-import rego.v1
-
 import data.regal.capabilities
 import data.regal.result
 

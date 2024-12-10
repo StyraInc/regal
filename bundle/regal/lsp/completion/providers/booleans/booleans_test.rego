@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.booleans_test
 
-import rego.v1
-
 import data.regal.lsp.completion.providers.booleans as provider
 import data.regal.lsp.completion.providers.test_utils as utils
 

@@ -1,7 +1,5 @@
 package regal.rules.testing["test-outside-test-package_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.testing["test-outside-test-package"] as rule

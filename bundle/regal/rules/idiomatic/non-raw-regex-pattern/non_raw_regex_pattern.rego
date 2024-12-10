@@ -2,8 +2,6 @@
 # description: Use raw strings for regex patterns
 package regal.rules.idiomatic["non-raw-regex-pattern"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

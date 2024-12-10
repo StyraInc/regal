@@ -1,7 +1,5 @@
 package regal.ast
 
-import rego.v1
-
 import data.regal.util
 
 _find_nested_vars(obj) := [value |

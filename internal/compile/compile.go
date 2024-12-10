@@ -1,8 +1,8 @@
 package compile
 
 import (
-	"github.com/open-policy-agent/opa/ast"
-	opaUtil "github.com/open-policy-agent/opa/util"
+	"github.com/open-policy-agent/opa/v1/ast"
+	opaUtil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/embeds"
 	"github.com/styrainc/regal/internal/util"

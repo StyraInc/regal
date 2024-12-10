@@ -4,8 +4,6 @@
 #   `rego.v1` following an `import` declaration
 package regal.lsp.completion.providers.regov1
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

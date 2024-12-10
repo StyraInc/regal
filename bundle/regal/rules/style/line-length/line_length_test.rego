@@ -1,7 +1,5 @@
 package regal.rules.style["line-length_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["line-length"] as rule
@@ -94,7 +92,7 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 }
 
 test_success_line_not_too_long if {
-	r := rule.report with input as ast.policy(`allow { "foo" == "bar" }`)
+	r := rule.report with input as ast.policy(`allow if { "foo" == "bar" }`)
 		with config.for_rule as {"level": "error", "max-line-length": 80}
 	r == set()
 }

@@ -2,8 +2,6 @@
 # description: TODO test encountered
 package regal.rules.testing["todo-test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

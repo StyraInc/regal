@@ -2,8 +2,6 @@
 # description: Detached metadata annotation
 package regal.rules.style["detached-metadata"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

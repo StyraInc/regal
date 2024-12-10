@@ -1,13 +1,11 @@
 package regal.rules.idiomatic["custom-has-key-construct_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.idiomatic["custom-has-key-construct"] as rule
 
 test_fail_custom_has_key if {
-	r := rule.report with input as ast.policy(`has_key(name, coll) {
+	r := rule.report with input as ast.policy(`has_key(name, coll) if {
 		_ = coll[name]
 	}`)
 
@@ -23,7 +21,7 @@ test_fail_custom_has_key if {
 				"col": 20,
 				"row": 3,
 			},
-			"text": "has_key(name, coll) {",
+			"text": "has_key(name, coll) if {",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -34,7 +32,7 @@ test_fail_custom_has_key if {
 }
 
 test_fail_custom_has_key_reversed if {
-	r := rule.report with input as ast.policy(`has_key(name, coll) {
+	r := rule.report with input as ast.policy(`has_key(name, coll) if {
 		coll[name] = _
 	}`)
 
@@ -50,7 +48,7 @@ test_fail_custom_has_key_reversed if {
 				"col": 20,
 				"row": 3,
 			},
-			"text": "has_key(name, coll) {",
+			"text": "has_key(name, coll) if {",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -62,11 +60,11 @@ test_fail_custom_has_key_reversed if {
 
 test_fail_custom_has_key_multiple_wildcards if {
 	r := rule.report with input as ast.policy(`
-	other_rule["foo"] {
+	other_rule contains "foo" if {
 		wildcard := input[_]
 	}
 
-	has_key(name, coll) {
+	has_key(name, coll) if {
 		coll[name] = _
 	}`)
 
@@ -82,7 +80,7 @@ test_fail_custom_has_key_multiple_wildcards if {
 				"col": 21,
 				"row": 8,
 			},
-			"text": "\thas_key(name, coll) {",
+			"text": "\thas_key(name, coll) if {",
 		},
 		"related_resources": [{
 			"description": "documentation",

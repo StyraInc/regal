@@ -2,8 +2,6 @@
 # description: Unconditional assignment in rule body
 package regal.rules.style["unconditional-assignment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

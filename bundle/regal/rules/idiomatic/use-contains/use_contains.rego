@@ -2,8 +2,6 @@
 # description: Use the `contains` keyword
 package regal.rules.idiomatic["use-contains"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.result
@@ -14,6 +12,12 @@ import data.regal.util
 # custom:
 #   severity: warning
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_contains
+
+# METADATA
+# description: Rule made obsolete by OPA 1.0
+# custom:
+#   severity: none
+notices contains result.notice(rego.metadata.chain()) if capabilities.is_opa_v1
 
 report contains violation if {
 	# if rego.v1 is imported, OPA will ensure this anyway

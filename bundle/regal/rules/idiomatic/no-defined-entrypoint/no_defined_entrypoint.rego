@@ -2,8 +2,6 @@
 # description: Missing entrypoint annotation
 package regal.rules.idiomatic["no-defined-entrypoint"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

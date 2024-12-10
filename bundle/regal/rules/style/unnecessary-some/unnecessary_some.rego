@@ -2,8 +2,6 @@
 # description: Unnecessary use of `some`
 package regal.rules.style["unnecessary-some"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

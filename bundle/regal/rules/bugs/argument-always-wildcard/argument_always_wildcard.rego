@@ -2,8 +2,6 @@
 # description: Argument is always a wildcard
 package regal.rules.bugs["argument-always-wildcard"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

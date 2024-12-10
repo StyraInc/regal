@@ -1,7 +1,5 @@
 package regal.rules.style["rule-length_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.style["rule-length"] as rule
@@ -11,7 +9,7 @@ import data.regal.rules.style["rule-length"] as rule
 test_fail_rule_longer_than_configured_max_length if {
 	module := regal.parse_module("policy.rego", `package p
 
-	my_long_rule {
+	my_long_rule if {
 		# this rule is longer than the configured max length
 		# which in this case is only 3 lines
 		#
@@ -36,7 +34,7 @@ test_fail_rule_longer_than_configured_max_length if {
 				"col": 14,
 				"row": 3,
 			},
-			"text": "\tmy_long_rule {",
+			"text": "\tmy_long_rule if {",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -49,7 +47,7 @@ test_fail_rule_longer_than_configured_max_length if {
 test_success_rule_not_longer_than_configured_max_length if {
 	module := regal.parse_module("policy.rego", `package p
 
-	my_short_rule {
+	my_short_rule if {
 		# this rule is not longer than the configured max length
 		# which in this case is 30 lines
 		#
@@ -68,7 +66,7 @@ test_success_rule_not_longer_than_configured_max_length if {
 test_success_rule_longer_than_configured_max_length_but_comments if {
 	module := regal.parse_module("policy.rego", `package p
 
-	my_short_rule {
+	my_short_rule if {
 		# this rule is not longer than the configured max length
 		# which in this case is 30 lines
 		#

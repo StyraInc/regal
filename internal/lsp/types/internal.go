@@ -1,6 +1,6 @@
 package types
 
-import "github.com/open-policy-agent/opa/ast"
+import "github.com/open-policy-agent/opa/v1/ast"
 
 // Ref is a generic construct for an object found in a Rego module.
 // Ref is designed to be used in completions and provides information

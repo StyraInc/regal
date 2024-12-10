@@ -1,7 +1,5 @@
 package regal.rules.bugs["var-shadows-builtin_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config

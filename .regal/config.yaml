@@ -17,3 +17,6 @@ rules:
     line-length:
       level: error
       non-breakable-word-threshold: 100
+
+project:
+  rego-version: 1

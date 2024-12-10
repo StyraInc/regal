@@ -2,8 +2,6 @@
 # description: Redundant import of data
 package regal.rules.imports["redundant-data-import"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {

@@ -2,8 +2,6 @@
 # description: Use explicit future keyword imports
 package regal.rules.imports["implicit-future-keywords"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 

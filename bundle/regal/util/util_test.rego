@@ -1,7 +1,5 @@
 package regal.util_test
 
-import rego.v1
-
 import data.regal.util
 
 test_find_duplicates if {

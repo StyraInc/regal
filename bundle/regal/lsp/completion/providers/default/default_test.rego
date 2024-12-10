@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.default_test
 
-import rego.v1
-
 import data.regal.lsp.completion.providers["default"] as provider
 import data.regal.lsp.completion.providers.test_utils as util
 

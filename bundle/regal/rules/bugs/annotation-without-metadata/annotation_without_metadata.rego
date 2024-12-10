@@ -2,8 +2,6 @@
 # description: Annotation without metadata
 package regal.rules.bugs["annotation-without-metadata"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

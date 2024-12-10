@@ -1,13 +1,11 @@
 package regal.rules.style["unconditional-assignment_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["unconditional-assignment"] as rule
 
 test_fail_unconditional_assignment_in_body if {
-	r := rule.report with input as ast.policy(`x := y {
+	r := rule.report with input as ast.policy(`x := y if {
 		y := 1
 	}`)
 
@@ -34,7 +32,7 @@ test_fail_unconditional_assignment_in_body if {
 }
 
 test_fail_unconditional_eq_in_body if {
-	r := rule.report with input as ast.policy(`x = y {
+	r := rule.report with input as ast.policy(`x = y if {
 		y = 1
 	}`)
 
@@ -61,19 +59,19 @@ test_fail_unconditional_eq_in_body if {
 }
 
 test_success_conditional_assignment_in_body if {
-	r := rule.report with input as ast.policy(`x := y { input.foo == "bar"; y := 1 }`)
+	r := rule.report with input as ast.policy(`x := y if { input.foo == "bar"; y := 1 }`)
 
 	r == set()
 }
 
 test_success_unconditional_assignment_but_with_in_body if {
-	r := rule.report with input as ast.policy(`x := y { y := 5 with input as 1 }`)
+	r := rule.report with input as ast.policy(`x := y if { y := 5 with input as 1 }`)
 
 	r == set()
 }
 
 test_success_unconditional_assignment_but_else if {
-	r := rule.report with input as ast.policy(`msg := x {
+	r := rule.report with input as ast.policy(`msg := x if {
     	x := input.foo
     } else := input.bar`)
 

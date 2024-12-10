@@ -16,9 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
-
 	"github.com/styrainc/regal/internal/git"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
@@ -204,6 +201,8 @@ func fix(args []string, params *fixCommandParams) error {
 	} else {
 		regalDir, err = config.FindRegalDirectory(configSearchPath)
 		if err == nil {
+			defer regalDir.Close()
+
 			customRulesPath := filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
 			if _, err = os.Stat(customRulesPath); err == nil {
 				customRulesDir = customRulesPath
@@ -230,6 +229,10 @@ func fix(args []string, params *fixCommandParams) error {
 
 	if params.ignoreFiles.isSet {
 		l = l.WithIgnore(params.ignoreFiles.v)
+	}
+
+	if regalDir != nil {
+		l = l.WithPathPrefix(filepath.Dir(regalDir.Name()))
 	}
 
 	var userConfig config.Config
@@ -270,14 +273,6 @@ func fix(args []string, params *fixCommandParams) error {
 	f := fixer.NewFixer()
 	f.RegisterRoots(roots...)
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
-	f.RegisterMandatoryFixes(
-		&fixes.Fmt{
-			NameOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
-			},
-		},
-	)
 
 	if !slices.Contains([]string{"error", "rename"}, params.conflictMode) {
 		return fmt.Errorf("invalid conflict mode: %s, expected 'error' or 'rename'", params.conflictMode)

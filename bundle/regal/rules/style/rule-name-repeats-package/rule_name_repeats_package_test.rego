@@ -1,7 +1,5 @@
 package regal.rules.style["rule-name-repeats-package_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.style["rule-name-repeats-package"] as rule

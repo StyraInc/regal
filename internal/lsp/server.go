@@ -20,9 +20,9 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
@@ -2083,8 +2083,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		oldContent, _ = l.cache.GetFileContents(params.TextDocument.URI)
 	}
 
-	// if the file is empty, then the formatters will fail, so we template
-	// instead
+	// if the file is empty, then the formatters will fail, so we template instead
 	if oldContent == "" {
 		// disable the templating feature for files in the workspace root.
 		if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
@@ -2092,13 +2091,14 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return []types.TextEdit{}, nil
 		}
 
+		// TODO: We'll want to use version here too, to determine if "import rego.v1" should be used
+
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
 		}
 
 		l.cache.ClearFileDiagnostics()
-
 		l.cache.SetFileContents(params.TextDocument.URI, newContent)
 
 		updateEvent := lintFileJob{
@@ -2125,6 +2125,10 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		opts := format.Opts{}
 		if formatter == "opa-fmt-rego-v1" {
 			opts.RegoVersion = ast.RegoV0CompatV1
+		} else {
+			if module, ok := l.cache.GetModule(params.TextDocument.URI); ok {
+				opts.RegoVersion = module.RegoVersion()
+			}
 		}
 
 		f := &fixes.Fmt{OPAFmtOpts: opts}

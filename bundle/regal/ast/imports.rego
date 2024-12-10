@@ -1,7 +1,5 @@
 package regal.ast
 
-import rego.v1
-
 default imports := []
 
 # METADATA

@@ -2,8 +2,6 @@
 # description: various helpers to be used for testing completions providers
 package regal.lsp.completion.providers.test_utils
 
-import rego.v1
-
 # METADATA
 # description: returns a map of all parsed modules in the workspace
 parsed_modules(workspace) := {file_uri: parsed_module |

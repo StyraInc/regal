@@ -2,8 +2,6 @@
 # description: Avoid functions without args
 package regal.rules.bugs["zero-arity-function"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

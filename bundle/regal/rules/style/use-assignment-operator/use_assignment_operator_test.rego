@@ -1,7 +1,5 @@
 package regal.rules.style["use-assignment-operator_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["use-assignment-operator"] as rule
@@ -31,7 +29,8 @@ test_fail_unification_in_regular_assignment if {
 }
 
 test_fail_not_implicit_boolean_assignment_with_body if {
-	r := rule.report with input as ast.policy(`allow = true { true }`)
+	r := rule.report with input as ast.policy(`allow = true if { true }`)
+
 	r == {{
 		"category": "style",
 		"description": "Prefer := over = for assignment",
@@ -48,7 +47,7 @@ test_fail_not_implicit_boolean_assignment_with_body if {
 				"col": 8,
 				"row": 3,
 			},
-			"text": "allow = true { true }",
+			"text": "allow = true if { true }",
 		},
 		"level": "error",
 	}}
@@ -79,7 +78,7 @@ test_fail_not_implicit_boolean_assignment if {
 }
 
 test_success_implicit_boolean_assignment if {
-	r := rule.report with input as ast.policy(`allow { true }`)
+	r := rule.report with input as ast.policy(`allow if { true }`)
 	r == set()
 }
 
@@ -195,17 +194,17 @@ test_fail_unification_in_function_assignment if {
 }
 
 test_success_implicit_boolean_assignment_function if {
-	r := rule.report with input as ast.policy(`f(x) { 1 == 1 }`)
+	r := rule.report with input as ast.policy(`f(x) if { 1 == 1 }`)
 	r == set()
 }
 
 test_success_assignment_operator_function if {
-	r := rule.report with input as ast.policy(`f(x) := true { 1 == 1 }`)
+	r := rule.report with input as ast.policy(`f(x) := true if { 1 == 1 }`)
 	r == set()
 }
 
 test_success_partial_rule if {
-	r := rule.report with input as ast.policy(`partial["works"] { 1 == 1 }`)
+	r := rule.report with input as ast.policy(`partial["works"] if { 1 == 1 }`)
 	r == set()
 }
 

@@ -1,7 +1,5 @@
 package regal.lsp.completion.kind_test
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 
 test_kind_for_coverage if {

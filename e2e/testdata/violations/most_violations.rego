@@ -29,7 +29,7 @@ import data.http
 
 # prefer-package-imports
 # aggregate rule, so will only fail if more than one file is linted
-import data.rule_named_if.allow
+import data.circular_import.x
 
 rule := "here"
 
@@ -68,7 +68,7 @@ top_level_iteration := input[_]
 
 unassigned_return_value if indexof("foo", "o")
 
-zero_arity_function := true
+zero_arity_function() := true
 
 inconsistent_args(a, b) if {
 	a == b
@@ -93,9 +93,9 @@ impossible_not if {
 	not partial
 }
 
-argument_always_wildcard(_) = true
+argument_always_wildcard(_) if true
 
-argument_always_wildcard(_) = true
+argument_always_wildcard(_) if true
 
 # title: annotation without metadata
 some_rule := true
@@ -184,9 +184,7 @@ use_assignment = "oparator"
 
 chained_rule_body if {
 	input.x
-}
-
-chained_rule_body if {
+} {
 	input.y
 }
 

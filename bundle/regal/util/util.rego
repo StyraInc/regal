@@ -2,8 +2,6 @@
 # description: various utility functions for linter policies
 package regal.util
 
-import rego.v1
-
 # METADATA
 # description: returns true if string is snake_case formatted
 is_snake_case(str) if str == lower(str)

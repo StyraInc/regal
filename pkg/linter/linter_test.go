@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/topdown"
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
@@ -762,15 +762,50 @@ import data.unresolved`,
 }
 
 func BenchmarkRegalLintingItself(b *testing.B) {
-	linter := NewLinter().WithInputPaths([]string{"../../bundle"}).WithEnableAll(true)
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithEnableAll(true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
+	var err error
+
+	var rep report.Report
+
 	for i := 0; i < b.N; i++ {
-		_, err := linter.Lint(context.Background())
+		rep, err = linter.Lint(context.Background())
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
+	}
+}
+
+// BenchmarkRegalNoEnabledRules-10    	       4	 283181990 ns/op	504195068 B/op	 9537285 allocs/op
+func BenchmarkRegalNoEnabledRules(b *testing.B) {
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithDisableAll(true)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	var err error
+
+	var rep report.Report
+
+	for i := 0; i < b.N; i++ {
+		rep, err = linter.Lint(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
 	}
 }

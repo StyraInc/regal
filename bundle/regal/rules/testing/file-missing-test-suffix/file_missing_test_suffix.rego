@@ -2,8 +2,6 @@
 # description: Files containing tests should have a _test.rego suffix
 package regal.rules.testing["file-missing-test-suffix"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

@@ -2,8 +2,6 @@
 # description: Ambiguous metadata scope
 package regal.rules.idiomatic["ambiguous-scope"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

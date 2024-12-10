@@ -1,8 +1,8 @@
 package fixes
 
 import (
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/pkg/config"
@@ -12,6 +12,7 @@ import (
 // When a new fix is added, it should be added to this list.
 func NewDefaultFixes() []Fix {
 	return []Fix{
+		&Fmt{},
 		&Fmt{
 			NameOverride: "use-rego-v1",
 			OPAFmtOpts: format.Opts{
@@ -60,8 +61,9 @@ type RuntimeOptions struct {
 
 // FixCandidate is the input to a Fix method and represents a file in need of fixing.
 type FixCandidate struct {
-	Filename string
-	Contents []byte
+	Filename    string
+	Contents    []byte
+	RegoVersion ast.RegoVersion
 }
 
 // Rename represents a file that has been moved (renamed).

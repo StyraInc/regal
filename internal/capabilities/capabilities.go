@@ -16,7 +16,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/capabilities/embedded"
 )

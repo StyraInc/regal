@@ -1,14 +1,12 @@
 package regal.rules.idiomatic["use-contains_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.idiomatic["use-contains"] as rule
 
 test_fail_should_use_contains if {
-	module := ast.policy(`
+	module := ast.with_rego_v0(`
 	import future.keywords
 
 	rule[item] {
@@ -22,7 +20,7 @@ test_fail_should_use_contains if {
 		"level": "error",
 		"location": {
 			"col": 2,
-			"file": "policy.rego",
+			"file": "policy_v0.rego",
 			"row": 6,
 			"end": {
 				"row": 6,

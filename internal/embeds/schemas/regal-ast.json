@@ -377,6 +377,11 @@
               "items": {
                 "type": "string"
               }
+            },
+            "rego_version": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
             }
           },
           "type": "object"

@@ -7,8 +7,6 @@ package regal.capabilities
 
 import data.regal.config
 
-import rego.v1
-
 default provided := {}
 
 # METADATA
@@ -35,6 +33,8 @@ has_if if "if" in config.capabilities.future_keywords
 
 has_if if has_rego_v1_feature
 
+has_if if is_opa_v1
+
 # METADATA
 # description: true if the `contains` keyword is available
 # scope: document
@@ -42,6 +42,12 @@ has_contains if "contains" in config.capabilities.future_keywords
 
 has_contains if has_rego_v1_feature
 
+has_contains if is_opa_v1
+
 # METADATA
 # description: true if `rego.v1` is available
 has_rego_v1_feature if "rego_v1_import" in config.capabilities.features
+
+# METADATA
+# description: true if `OPA 1.0+` policy is targeted
+is_opa_v1 if "rego_v1" in config.capabilities.features

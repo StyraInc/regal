@@ -1,7 +1,5 @@
 package regal.rules.style["prefer-some-in-iteration_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config

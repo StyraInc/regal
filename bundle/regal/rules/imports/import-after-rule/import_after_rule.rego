@@ -2,8 +2,6 @@
 # description: Import declared after rule
 package regal.rules.imports["import-after-rule"]
 
-import rego.v1
-
 import data.regal.result
 import data.regal.util
 

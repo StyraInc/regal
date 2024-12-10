@@ -2,8 +2,6 @@
 # description: Redundant alias
 package regal.rules.imports["redundant-alias"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {

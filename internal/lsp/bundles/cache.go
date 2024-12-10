@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/open-policy-agent/opa/bundle"
+	"github.com/open-policy-agent/opa/v1/bundle"
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"

@@ -1,44 +1,42 @@
 package regal.rules.style["external-reference_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
 import data.regal.rules.style["external-reference"] as rule
 
 test_fail_function_references_input if {
-	r := rule.report with input as ast.policy(`f(_) { input.foo }`)
+	r := rule.report with input as ast.policy(`f(_) if { input.foo }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == expected_with_location({
-		"col": 8,
+		"col": 11,
 		"file": "policy.rego",
 		"row": 3,
 		"end": {
-			"col": 13,
+			"col": 16,
 			"row": 3,
 		},
-		"text": `f(_) { input.foo }`,
+		"text": `f(_) if { input.foo }`,
 	})
 }
 
 test_fail_function_references_data if {
-	r := rule.report with input as ast.policy(`f(_) { data.foo }`)
+	r := rule.report with input as ast.policy(`f(_) if { data.foo }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == expected_with_location({
-		"col": 8,
+		"col": 11,
 		"file": "policy.rego",
 		"row": 3,
 		"end": {
-			"col": 12,
+			"col": 15,
 			"row": 3,
 		},
-		"text": `f(_) { data.foo }`,
+		"text": `f(_) if { data.foo }`,
 	})
 }
 
 test_fail_function_references_data_in_expr if {
-	r := rule.report with input as ast.policy(`f(x) {
+	r := rule.report with input as ast.policy(`f(x) if {
 		x == data.foo
 	}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
@@ -58,7 +56,7 @@ test_fail_function_references_rule if {
 	r := rule.report with input as ast.policy(`
 foo := "bar"
 
-f(x, y) {
+f(x, y) if {
 	x == 5
 	y == foo
 }
@@ -107,55 +105,55 @@ test_fail_external_reference_in_head_terms if {
 }
 
 test_success_function_references_no_input_or_data if {
-	r := rule.report with input as ast.policy(`f(x) { x == true }`)
+	r := rule.report with input as ast.policy(`f(x) if { x == true }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_no_input_or_data_reverse if {
-	r := rule.report with input as ast.policy(`f(x) { true == x }`)
+	r := rule.report with input as ast.policy(`f(x) if { true == x }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_only_own_vars if {
-	r := rule.report with input as ast.policy(`f(x) { y := x; y == 10 }`)
+	r := rule.report with input as ast.policy(`f(x) if { y := x; y == 10 }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_only_own_vars_nested if {
-	r := rule.report with input as ast.policy(`f(x, z) { y := x; y == [1, 2, z]}`)
+	r := rule.report with input as ast.policy(`f(x, z) if { y := x; y == [1, 2, z]}`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_only_own_vars_and_wildcard if {
-	r := rule.report with input as ast.policy(`f(x, y) { _ = x + y }`)
+	r := rule.report with input as ast.policy(`f(x, y) if { _ = x + y }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_return_var if {
-	r := rule.report with input as ast.policy(`f(x) := y { y = true }`)
+	r := rule.report with input as ast.policy(`f(x) := y if { y = true }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_return_vars if {
-	r := rule.report with input as ast.policy(`f(x) := [x, y] { x = false; y = true }`)
+	r := rule.report with input as ast.policy(`f(x) := [x, y] if { x = false; y = true }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_external_function if {
-	r := rule.report with input as ast.policy(`f(x) { data.foo.bar(x) }`)
+	r := rule.report with input as ast.policy(`f(x) if { data.foo.bar(x) }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 test_success_function_references_external_function_in_expr if {
-	r := rule.report with input as ast.policy(`f(x) := y { y := data.foo.bar(x) }`)
+	r := rule.report with input as ast.policy(`f(x) := y if { y := data.foo.bar(x) }`)
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }

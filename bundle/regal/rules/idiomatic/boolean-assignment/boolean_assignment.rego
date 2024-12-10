@@ -2,8 +2,6 @@
 # description: Prefer `if` over boolean assignment
 package regal.rules.idiomatic["boolean-assignment"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 

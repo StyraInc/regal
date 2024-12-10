@@ -6,7 +6,7 @@ import (
 
 	rutil "github.com/anderseknert/roast/pkg/util"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
@@ -123,21 +123,25 @@ func (p *InMemoryFileProvider) DeletedFiles() []string {
 	return util.Keys(p.deletedFiles)
 }
 
+// TODO: We need a way to specify the Rego version for the files here and avoid
+// relying on the parser to infer those.
 func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
+	strContents := make(map[string]string)
 	modules := make(map[string]*ast.Module)
 
 	for filename, content := range p.files {
 		var err error
 
-		modules[filename], err = parse.Module(filename, rutil.ByteSliceToString(content))
+		strContents[filename] = rutil.ByteSliceToString(content)
+
+		modules[filename], err = parse.ModuleWithOpts(
+			filename,
+			strContents[filename],
+			parse.ParserOptions(),
+		)
 		if err != nil {
 			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
 		}
-	}
-
-	strContents := make(map[string]string)
-	for filename, content := range p.files {
-		strContents[filename] = rutil.ByteSliceToString(content)
 	}
 
 	return rules.NewInput(strContents, modules), nil

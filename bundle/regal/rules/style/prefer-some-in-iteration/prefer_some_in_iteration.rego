@@ -2,8 +2,6 @@
 # description: Prefer `some .. in` for iteration
 package regal.rules.style["prefer-some-in-iteration"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

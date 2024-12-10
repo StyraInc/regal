@@ -8,12 +8,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/loader/filter"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/loader/filter"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/types"
 )
 
 const PathSeparator = string(os.PathSeparator)
@@ -27,6 +31,7 @@ func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 
 	//nolint:wrapcheck
 	return bundle.NewCustomReader(embedLoader.WithFilter(ExcludeTestFilter())).
+		WithCapabilities(Capabilities()).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
@@ -37,6 +42,7 @@ func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 func LoadRegalBundlePath(path string) (bundle.Bundle, error) {
 	//nolint:wrapcheck
 	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(ExcludeTestFilter())).
+		WithCapabilities(Capabilities()).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
@@ -173,4 +179,50 @@ func FindManifestLocations(root string) ([]string, error) {
 	}
 
 	return foundBundleRoots, nil
+}
+
+// NOTE: These are mirrored here merely to provide correct capabilities for the
+// parser. Can't import other packages from here as almost all of them depend on
+// this package. We should probably move these definitions to somewhere where all
+// packages can import them from.
+
+var regalParseModuleMeta = &rego.Function{
+	Name: "regal.parse_module",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("filename", types.S).Description("file name to attach to AST nodes' locations"),
+			types.Named("rego", types.S).Description("Rego module"),
+		),
+		types.Named("output", types.NewObject(nil, types.NewDynamicProperty(types.S, types.A))),
+	),
+}
+
+var regalLastMeta = &rego.Function{
+	Name: "regal.last",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("array", types.NewArray(nil, types.A)).
+				Description("performance optimized last index retrieval"),
+		),
+		types.Named("element", types.A),
+	),
+}
+
+var OPACapabilities = ast.CapabilitiesForThisVersion()
+
+var Capabilities = sync.OnceValue(capabilities)
+
+func capabilities() *ast.Capabilities {
+	cpy := *OPACapabilities
+	cpy.Builtins = append(cpy.Builtins[:],
+		&ast.Builtin{
+			Name: regalParseModuleMeta.Name,
+			Decl: regalParseModuleMeta.Decl,
+		},
+		&ast.Builtin{
+			Name: regalLastMeta.Name,
+			Decl: regalLastMeta.Decl,
+		})
+
+	return &cpy
 }

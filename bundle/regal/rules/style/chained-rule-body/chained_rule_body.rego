@@ -2,8 +2,6 @@
 # description: Avoid chaining rule bodies
 package regal.rules.style["chained-rule-body"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

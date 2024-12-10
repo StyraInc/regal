@@ -3,8 +3,8 @@ package fixes
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
 )
 
 func TestFmt(t *testing.T) {
@@ -34,20 +34,29 @@ func TestFmt(t *testing.T) {
 			fmt:             &Fmt{},
 			fixExpected:     true,
 		},
-		"rego v1": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\nallow := true")},
+		"rego v1 (rego version 0)": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow := true"),
+				RegoVersion: ast.RegoV0,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
 			contentAfterFix: []byte(`package testutil
 
 import rego.v1
 
 allow := true
 `),
+		},
+		"rego v1 (rego version > 1)": {
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
 				},
 			},
-			fixExpected: true,
+			fixExpected: false,
 		},
 	}
 

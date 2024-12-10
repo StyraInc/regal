@@ -7,8 +7,6 @@
 # - input: schema.regal.ast
 package regal.rules.imports["circular-import"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

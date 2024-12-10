@@ -2,8 +2,6 @@
 # description: Line too long
 package regal.rules.style["line-length"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 

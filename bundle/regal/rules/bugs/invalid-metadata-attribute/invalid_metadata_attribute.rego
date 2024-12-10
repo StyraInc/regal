@@ -2,8 +2,6 @@
 # description: Invalid attribute in metadata annotation
 package regal.rules.bugs["invalid-metadata-attribute"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

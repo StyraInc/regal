@@ -2,8 +2,6 @@
 # description: Max rule length exceeded
 package regal.rules.style["rule-length"]
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 import data.regal.util
@@ -39,7 +37,7 @@ _line_count(cfg, rule, lines) := n if {
 
 	# This does not take into account comments that are
 	# on the same line as regular code
-	body_comments := sum([1 |
+	body_comments := count([1 |
 		some comment in input.comments
 
 		loc := util.to_location_object(comment.location)

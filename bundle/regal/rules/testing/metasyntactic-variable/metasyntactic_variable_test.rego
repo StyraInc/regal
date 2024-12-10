@@ -1,7 +1,5 @@
 package regal.rules.testing["metasyntactic-variable_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
@@ -24,7 +22,7 @@ test_fail_rule_named_foo if {
 }
 
 test_fail_metasyntactic_vars if {
-	module := ast.policy(`allow {
+	module := ast.policy(`allow if {
 		fooBar := true
 		input[baz]
 	}`)

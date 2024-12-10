@@ -4,8 +4,6 @@
 #   name based on the directory structure whre the file is located
 package regal.lsp.completion.providers.packagename
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

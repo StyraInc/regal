@@ -2,8 +2,6 @@
 # description: Iteration in top-level assignment
 package regal.rules.bugs["top-level-iteration"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

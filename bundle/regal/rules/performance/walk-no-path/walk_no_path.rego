@@ -2,8 +2,6 @@
 # description: Call to `walk` can be optimized
 package regal.rules.performance["walk-no-path"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

@@ -9,7 +9,7 @@ Filters the object. For example: `json.filter({"a": {"b": "x", "c": "y"}}, ["a/b
 
 #### Arguments
 
-- `object` object[any: any]
+- `object` object[any: any] — object to filter
 - `paths` any<array[any<string, array[any]>], set[any<string, array[any]>]> — JSON string paths
 
 

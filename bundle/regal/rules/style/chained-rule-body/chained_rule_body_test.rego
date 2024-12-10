@@ -1,14 +1,12 @@
 package regal.rules.style["chained-rule-body_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.style["chained-rule-body"] as rule
 
 test_fail_chained_incremental_definition if {
-	module := ast.policy(`rule {
+	module := ast.policy(`rule if {
 		input.x
 	} {
 		input.y
@@ -38,11 +36,11 @@ test_fail_chained_incremental_definition if {
 
 test_success_not_chained_incremental_definition if {
 	module := ast.policy(`
-	rule {
+	rule if {
 		input.x
 	}
 
-	rule {
+	rule if {
 		input.y
 	}`)
 

@@ -7,11 +7,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/anderseknert/roast/pkg/encoding"
+	"github.com/anderseknert/roast/pkg/transform"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 
 	rbundle "github.com/styrainc/regal/bundle"
-	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
@@ -198,12 +200,17 @@ func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy
 		return toValue, fmt.Errorf("failed to prepare input: %w", err)
 	}
 
-	result, err := toValidResult(pq.Eval(ctx, rego.EvalInput(input)))
+	inputValue, err := transform.ToOPAInputValue(input)
+	if err != nil {
+		return toValue, fmt.Errorf("failed converting input to value: %w", err)
+	}
+
+	result, err := toValidResult(pq.Eval(ctx, rego.EvalParsedInput(inputValue)))
 	if err != nil {
 		return toValue, err
 	}
 
-	if err := rio.JSONRoundTrip(result.Expressions[0].Value, &toValue); err != nil {
+	if err := encoding.JSONRoundTrip(result.Expressions[0].Value, &toValue); err != nil {
 		return toValue, fmt.Errorf("failed unmarshaling code lenses: %w", err)
 	}
 
@@ -270,7 +277,12 @@ func SetInputContext(input map[string]any, context map[string]any) map[string]an
 }
 
 func QueryRegalBundle(ctx context.Context, input map[string]any, pq rego.PreparedEvalQuery) (map[string]any, error) {
-	result, err := pq.Eval(ctx, rego.EvalInput(input))
+	inputValue, err := transform.ToOPAInputValue(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed converting input map to value: %w", err)
+	}
+
+	result, err := pq.Eval(ctx, rego.EvalParsedInput(inputValue))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating query: %w", err)
 	}

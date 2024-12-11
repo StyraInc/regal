@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/anderseknert/roast/pkg/encoding"
+	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
@@ -1120,7 +1121,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	diskContent, err := os.ReadFile(uri.ToPath(l.clientIdentifier, fileURI))
 	if err == nil {
 		// then we found the file on disk
-		if string(diskContent) != "" {
+		if len(diskContent) > 0 {
 			return "", errors.New("file on disk already has contents, templating not allowed")
 		}
 	}
@@ -1155,7 +1156,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		return "", fmt.Errorf("failed to find longest prefix root for templating of new file: %s", path)
 	}
 
-	parts := slices.Compact(strings.Split(strings.TrimPrefix(dir, longestPrefixRoot), string(os.PathSeparator)))
+	parts := slices.Compact(strings.Split(strings.TrimPrefix(dir, longestPrefixRoot), rio.PathSeparator))
 
 	var pkg string
 
@@ -1218,7 +1219,7 @@ func (l *LanguageServer) fixEditParams(
 	fixResults, err := fix.Fix(
 		&fixes.FixCandidate{
 			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, pr.Target)),
-			Contents: []byte(oldContent),
+			Contents: rutil.StringToByteSlice(oldContent),
 		},
 		rto,
 	)
@@ -1236,7 +1237,7 @@ func (l *LanguageServer) fixEditParams(
 			DocumentChanges: []types.TextDocumentEdit{
 				{
 					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: pr.Target},
-					Edits:        ComputeEdits(oldContent, string(fixResults[0].Contents)),
+					Edits:        ComputeEdits(oldContent, rutil.ByteSliceToString(fixResults[0].Contents)),
 				},
 			},
 		},
@@ -1266,7 +1267,7 @@ func (l *LanguageServer) fixRenameParams(
 	results, err := fix.Fix(
 		&fixes.FixCandidate{
 			Filename: file,
-			Contents: []byte(contents),
+			Contents: rutil.StringToByteSlice(contents),
 		},
 		&fixes.RuntimeOptions{
 			Config:  l.getLoadedConfig(),
@@ -1836,7 +1837,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(
 		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
 		Pos:      positionToOffset(contents, params.Position),
 		Modules:  modules,
-		Buffer:   []byte(contents),
+		Buffer:   rutil.StringToByteSlice(contents),
 	}
 
 	definition, err := orc.FindDefinition(query)
@@ -2132,7 +2133,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
 
 		fixResults, err := f.Fix(
-			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: []byte(oldContent)},
+			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: rutil.StringToByteSlice(oldContent)},
 			&fixes.RuntimeOptions{
 				BaseDir: l.workspacePath(),
 			},
@@ -2152,7 +2153,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	case "regal-fix":
 		// set up an in-memory file provider to pass to the fixer for this one file
 		memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
-			params.TextDocument.URI: []byte(oldContent),
+			params.TextDocument.URI: rutil.StringToByteSlice(oldContent),
 		})
 
 		input, err := memfp.ToInput()
@@ -2204,7 +2205,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("unrecognized formatter %q", formatter)
 	}
 
-	return ComputeEdits(oldContent, string(newContent)), nil
+	return ComputeEdits(oldContent, rutil.ByteSliceToString(newContent)), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(
@@ -2363,7 +2364,7 @@ func (l *LanguageServer) handleInitialize(
 
 	// params.RootURI is not expected to have a trailing slash, but if one is
 	// present it will be removed for consistency.
-	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, string(os.PathSeparator))
+	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, rio.PathSeparator)
 
 	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
 
@@ -2521,7 +2522,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 				return nil
 			}
 
-			if string(diskContents) == "" && contents == "" {
+			if len(diskContents) == 0 && contents == "" {
 				// then there is nothing to be gained from loading from disk
 				return nil
 			}

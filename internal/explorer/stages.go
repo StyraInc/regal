@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/anderseknert/roast/pkg/encoding"
+	"github.com/anderseknert/roast/pkg/util"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
@@ -133,7 +134,7 @@ func Plan(ctx context.Context, path, rego string, usePrint bool) (string, error)
 			{
 				URL:    "/url",
 				Path:   path,
-				Raw:    []byte(rego),
+				Raw:    util.StringToByteSlice(rego),
 				Parsed: mod,
 			},
 		},

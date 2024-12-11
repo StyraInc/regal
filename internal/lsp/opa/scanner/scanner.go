@@ -12,6 +12,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/anderseknert/roast/pkg/util"
+
 	"github.com/styrainc/regal/internal/lsp/opa/tokens"
 )
 
@@ -267,7 +269,7 @@ func (s *Scanner) scanIdentifier() string {
 	for isLetter(s.curr) || isDigit(s.curr) {
 		s.next()
 	}
-	return string(s.bs[start : s.offset-1])
+	return util.ByteSliceToString(s.bs[start : s.offset-1])
 }
 
 func (s *Scanner) scanNumber() string {
@@ -317,7 +319,7 @@ func (s *Scanner) scanNumber() string {
 		}
 	}
 
-	return string(s.bs[start : s.offset-1])
+	return util.ByteSliceToString(s.bs[start : s.offset-1])
 }
 
 func (s *Scanner) scanString() string {
@@ -351,7 +353,7 @@ func (s *Scanner) scanString() string {
 		}
 	}
 
-	return string(s.bs[start : s.offset-1])
+	return util.ByteSliceToString(s.bs[start : s.offset-1])
 }
 
 func (s *Scanner) scanRawString() string {
@@ -366,7 +368,7 @@ func (s *Scanner) scanRawString() string {
 			break
 		}
 	}
-	return string(s.bs[start : s.offset-1])
+	return util.ByteSliceToString(s.bs[start : s.offset-1])
 }
 
 func (s *Scanner) scanComment() string {
@@ -379,7 +381,7 @@ func (s *Scanner) scanComment() string {
 	if s.offset > 1 && s.bs[s.offset-2] == '\r' {
 		end = end - 1
 	}
-	return string(s.bs[start:end])
+	return util.ByteSliceToString(s.bs[start:end])
 }
 
 func (s *Scanner) next() {

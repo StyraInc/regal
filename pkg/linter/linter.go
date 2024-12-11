@@ -12,6 +12,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/anderseknert/roast/pkg/encoding"
+	"github.com/anderseknert/roast/pkg/transform"
+	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
@@ -794,7 +797,7 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 			return fmt.Errorf("failed to read custom rule file: %w", err)
 		}
 
-		files[path] = string(bs)
+		files[path] = rutil.ByteSliceToString(bs)
 
 		return nil
 	})
@@ -859,8 +862,15 @@ func (l Linter) lintWithRegoRules(
 				regalInput["operations"] = operations
 			}
 
+			inputValue, err := transform.ToOPAInputValue(enhancedAST)
+			if err != nil {
+				errCh <- fmt.Errorf("failed to transform input value: %w", err)
+
+				return
+			}
+
 			evalArgs := []rego.EvalOption{
-				rego.EvalInput(enhancedAST),
+				rego.EvalParsedInput(inputValue),
 			}
 
 			if l.metrics != nil {
@@ -980,7 +990,12 @@ func (l Linter) lintWithRegoAggregateRules(
 		},
 	}
 
-	evalArgs := []rego.EvalOption{rego.EvalInput(input)}
+	inputValue, err := transform.ToOPAInputValue(input)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to transform input value: %w", err)
+	}
+
+	evalArgs := []rego.EvalOption{rego.EvalParsedInput(inputValue)}
 
 	if l.metrics != nil {
 		evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
@@ -1013,14 +1028,14 @@ func resultSetToReport(resultSet rego.ResultSet, aggregate bool) (report.Report,
 	if aggregate {
 		if binding, ok := resultSet[0].Bindings["lint"].(map[string]any); ok {
 			if aggregateBinding, ok := binding["aggregate"]; ok {
-				if err := rio.JSONRoundTrip(aggregateBinding, &r); err != nil {
+				if err := encoding.JSONRoundTrip(aggregateBinding, &r); err != nil {
 					return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
 				}
 			}
 		}
 	} else {
 		if binding, ok := resultSet[0].Bindings["lint"]; ok {
-			if err := rio.JSONRoundTrip(binding, &r); err != nil {
+			if err := encoding.JSONRoundTrip(binding, &r); err != nil {
 				return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
 			}
 		}
@@ -1053,7 +1068,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 		}
 
 		log.Println("merged provided and user config:")
-		log.Println(string(bs))
+		log.Println(rutil.ByteSliceToString(bs))
 	}
 
 	l.combinedCfg = &mergedConf

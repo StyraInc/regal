@@ -1,10 +1,12 @@
 package refs
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/util"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -227,11 +229,11 @@ func documentAnnotatedRef(selectedAnnotation *ast.Annotations) string {
 	if len(selectedAnnotation.Custom) > 0 {
 		sb.WriteString("**Custom**:\n\n```yaml\n")
 
-		yamlBs, err := yaml.Marshal(selectedAnnotation.Custom)
+		bs, err := yaml.Marshal(selectedAnnotation.Custom)
 		if err != nil {
 			sb.WriteString("Error generating custom section")
 		} else {
-			sb.WriteString(strings.TrimSpace(string(yamlBs)))
+			sb.WriteString(util.ByteSliceToString(bytes.TrimSpace(bs)))
 		}
 
 		sb.WriteString("\n```\n")

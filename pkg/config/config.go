@@ -284,7 +284,7 @@ func FindConfig(path string) (*os.File, error) {
 func FromMap(confMap map[string]any) (Config, error) {
 	var conf Config
 
-	if err := rio.JSONRoundTrip(confMap, &conf); err != nil {
+	if err := encoding.JSONRoundTrip(confMap, &conf); err != nil {
 		return conf, fmt.Errorf("failed to convert config map to config struct: %w", err)
 	}
 
@@ -294,7 +294,7 @@ func FromMap(confMap map[string]any) (Config, error) {
 func (config Config) MarshalYAML() (any, error) {
 	var unstructuredConfig map[string]any
 
-	if err := rio.JSONRoundTrip(config, &unstructuredConfig); err != nil {
+	if err := encoding.JSONRoundTrip(config, &unstructuredConfig); err != nil {
 		return nil, fmt.Errorf("failed to created unstructured config: %w", err)
 	}
 
@@ -595,7 +595,7 @@ func fromOPACapabilities(capabilities ast.Capabilities) *Capabilities {
 func ToMap(config Config) map[string]any {
 	confMap := make(map[string]any)
 
-	rio.MustJSONRoundTrip(config, &confMap)
+	encoding.MustJSONRoundTrip(config, &confMap)
 
 	// Not sure why `omitempty` doesn't do the trick here, but having `ignore: {}` in the config for each
 	// rule is annoying noice when printed from Rego.
@@ -678,7 +678,7 @@ func (rule *Rule) mapToConfig(result any) error {
 	if ignore, ok := ruleMap[keyIgnore]; ok {
 		var dst Ignore
 
-		if err := rio.JSONRoundTrip(ignore, &dst); err != nil {
+		if err := encoding.JSONRoundTrip(ignore, &dst); err != nil {
 			return fmt.Errorf("unmarshalling rule ignore failed: %w", err)
 		}
 

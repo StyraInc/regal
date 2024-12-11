@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/anderseknert/roast/pkg/encoding"
+	"github.com/anderseknert/roast/pkg/util"
 	"github.com/spf13/cobra"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -51,7 +52,7 @@ func parse(args []string) error {
 		return err
 	}
 
-	content := string(bs)
+	content := util.ByteSliceToString(bs)
 
 	module, err := ast.ParseModuleWithOpts(filename, content, rp.ParserOptions())
 	if err != nil {
@@ -63,12 +64,12 @@ func parse(args []string) error {
 		return err
 	}
 
-	bs, err = encoding.JSON().MarshalIndent(enhancedAST, "", "  ")
+	output, err := encoding.JSON().MarshalIndent(enhancedAST, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	_, err = os.Stdout.Write(bs)
+	_, err = os.Stdout.Write(output)
 
 	return err
 }

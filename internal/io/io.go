@@ -57,28 +57,9 @@ func MustLoadRegalBundleFS(fs files.FS) bundle.Bundle {
 func ToMap(a any) map[string]any {
 	r := make(map[string]any)
 
-	MustJSONRoundTrip(a, &r)
+	encoding.MustJSONRoundTrip(a, &r)
 
 	return r
-}
-
-// JSONRoundTrip convert any value to JSON and back again.
-func JSONRoundTrip(from any, to any) error {
-	json := encoding.JSON()
-
-	bs, err := json.Marshal(from)
-	if err != nil {
-		return fmt.Errorf("failed JSON marshalling %w", err)
-	}
-
-	return json.Unmarshal(bs, to) //nolint:wrapcheck
-}
-
-// MustJSONRoundTrip convert any value to JSON and back again, exit on failure.
-func MustJSONRoundTrip(from any, to any) {
-	if err := JSONRoundTrip(from, to); err != nil {
-		log.Fatal(err)
-	}
 }
 
 // CloseFileIgnore closes file ignoring errors, mainly for deferred cleanup.
@@ -102,7 +83,7 @@ func ExcludeTestFilter() filter.LoaderFilter {
 // - While the input data theoritcally could be anything JSON/YAML value, we only support an object.
 func FindInput(file string, workspacePath string) (string, map[string]any) {
 	relative := strings.TrimPrefix(file, workspacePath)
-	components := strings.Split(filepath.Dir(relative), string(filepath.Separator))
+	components := strings.Split(filepath.Dir(relative), PathSeparator)
 
 	var (
 		inputPath string

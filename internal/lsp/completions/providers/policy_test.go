@@ -5,16 +5,15 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/anderseknert/roast/pkg/encoding"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/storage/inmem"
 
-	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
-
-	_ "github.com/anderseknert/roast/pkg/encoding"
 )
 
 func TestPolicyProvider_Example1(t *testing.T) {
@@ -35,7 +34,7 @@ allow if {
 
 	moduleMap := make(map[string]any)
 
-	rio.MustJSONRoundTrip(module, &moduleMap)
+	encoding.MustJSONRoundTrip(module, &moduleMap)
 
 	c.SetFileContents(testCaseFileURI, policy)
 

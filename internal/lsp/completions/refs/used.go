@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/anderseknert/roast/pkg/transform"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
@@ -69,7 +71,12 @@ func initialize() {
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
 	pqInitOnce.Do(initialize)
 
-	rs, err := pq.Eval(ctx, rego.EvalInput(module))
+	inputValue, err := transform.ToOPAInputValue(module)
+	if err != nil {
+		return nil, fmt.Errorf("failed converting input to value: %w", err)
+	}
+
+	rs, err := pq.Eval(ctx, rego.EvalParsedInput(inputValue))
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate rego query: %w", err)
 	}

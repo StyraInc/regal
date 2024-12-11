@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	rutil "github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/parse"
@@ -127,7 +129,7 @@ func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
 	for filename, content := range p.files {
 		var err error
 
-		modules[filename], err = parse.Module(filename, string(content))
+		modules[filename], err = parse.Module(filename, rutil.ByteSliceToString(content))
 		if err != nil {
 			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
 		}
@@ -135,7 +137,7 @@ func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
 
 	strContents := make(map[string]string)
 	for filename, content := range p.files {
-		strContents[filename] = string(content)
+		strContents[filename] = rutil.ByteSliceToString(content)
 	}
 
 	return rules.NewInput(strContents, modules), nil

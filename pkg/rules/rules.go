@@ -8,6 +8,8 @@ import (
 	"sort"
 	"sync"
 
+	rutil "github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/loader"
 
@@ -90,7 +92,7 @@ func InputFromPaths(paths []string) (Input, error) {
 				return
 			}
 
-			fileContent[result.Name] = string(result.Raw)
+			fileContent[result.Name] = rutil.ByteSliceToString(result.Raw)
 			modules[result.Name] = result.Parsed
 		}(path)
 	}

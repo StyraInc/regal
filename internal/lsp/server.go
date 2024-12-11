@@ -836,11 +836,9 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					}
 				} else {
 					// Normal mode — try to find the input.json/yaml file in the workspace and use as input
+					// NOTE that we don't break on missing input, as some rules don't depend on that, and should
+					// still be evaluable. We may consider returning some notice to the user though.
 					_, inputMap = rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
-
-					if inputMap == nil {
-						break
-					}
 				}
 
 				var result EvalPathResult

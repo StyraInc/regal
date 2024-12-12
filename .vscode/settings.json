@@ -6,5 +6,6 @@
   "opa.roots": [
     "${workspaceFolder}/bundle"
   ],
-  "opa.strictMode": true
+  "opa.strictMode": true,
+  "go.lintTool": "golangci-lint"
 }

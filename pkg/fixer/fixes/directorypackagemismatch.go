@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/pkg/config"
@@ -55,7 +57,7 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 }
 
 func getPackagePathDirectory(fc *FixCandidate, config *config.Config) (string, error) {
-	module, err := ast.ParseModule(fc.Filename, string(fc.Contents))
+	module, err := ast.ParseModule(fc.Filename, util.ByteSliceToString(fc.Contents))
 	if err != nil {
 		return "", err //nolint:wrapcheck
 	}

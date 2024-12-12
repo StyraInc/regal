@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/anderseknert/roast/pkg/encoding"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/storage/inmem"
-
-	rio "github.com/styrainc/regal/internal/io"
 )
 
 func NewRegalStore() storage.Store {
@@ -60,7 +60,7 @@ func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *a
 
 		var modMap map[string]any
 
-		if err := rio.JSONRoundTrip(mod, &modMap); err != nil {
+		if err := encoding.JSONRoundTrip(mod, &modMap); err != nil {
 			return fmt.Errorf("failed to marshal module to JSON: %w", err)
 		}
 

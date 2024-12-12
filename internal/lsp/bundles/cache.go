@@ -34,8 +34,8 @@ type CacheOptions struct {
 func NewCache(opts *CacheOptions) *Cache {
 	workspacePath := opts.WorkspacePath
 
-	if !strings.HasSuffix(workspacePath, string(filepath.Separator)) {
-		workspacePath += string(filepath.Separator)
+	if !strings.HasSuffix(workspacePath, rio.PathSeparator) {
+		workspacePath += rio.PathSeparator
 	}
 
 	c := &Cache{

@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/format"
 
 	"github.com/styrainc/regal/internal/docs"
@@ -43,7 +45,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 			return nil, fmt.Errorf("timeout when running %s rule: %w", title, ctx.Err())
 		default:
 			module := input.Modules[filename]
-			unformatted := []byte(input.FileContent[filename])
+			unformatted := util.StringToByteSlice(input.FileContent[filename])
 
 			formatted, err := format.Ast(module)
 			if err != nil {
@@ -55,7 +57,7 @@ func (f *OpaFmtRule) Run(ctx context.Context, input Input) (*report.Report, erro
 				txt := module.Package.String()
 
 				if lines := bytes.SplitN(unformatted, []byte("\n"), row+1); len(lines) > row {
-					txt = string(lines[row-1])
+					txt = util.ByteSliceToString(lines[row-1])
 				}
 
 				violation := report.Violation{

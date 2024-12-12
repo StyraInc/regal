@@ -7,6 +7,8 @@ package oracle
 import (
 	"errors"
 
+	"github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/compile"
@@ -157,7 +159,7 @@ func compileUpto(stage string, modules map[string]*ast.Module, bs []byte, filena
 
 	if len(bs) > 0 {
 		var err error
-		module, err = ast.ParseModule(filename, string(bs))
+		module, err = ast.ParseModule(filename, util.ByteSliceToString(bs))
 		if err != nil {
 			return nil, nil, err
 		}

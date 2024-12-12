@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/util"
 	godap "github.com/google/go-dap"
 	"github.com/spf13/cobra"
 
@@ -354,7 +355,7 @@ func pos(loc *location.Location) (source *godap.Source, line, col, endLine, endC
 		}
 	}
 
-	lines := strings.Split(string(loc.Text), "\n")
+	lines := strings.Split(util.ByteSliceToString(loc.Text), "\n")
 	line = loc.Row
 	col = loc.Col
 

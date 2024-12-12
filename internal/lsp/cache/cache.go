@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/anderseknert/roast/pkg/util"
+
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -388,7 +390,7 @@ func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string
 		return false, "", fmt.Errorf("failed to read file: %w", err)
 	}
 
-	currentContent := string(content)
+	currentContent := util.ByteSliceToString(content)
 
 	cachedContent, ok := cache.GetFileContents(fileURI)
 	if ok && cachedContent == currentContent {

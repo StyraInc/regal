@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 // Keys returns slice of keys from map.
@@ -170,7 +172,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 			break
 		}
 
-		parts := strings.Split(dir, string(filepath.Separator))
+		parts := strings.Split(dir, rio.PathSeparator)
 		if len(parts) == 1 {
 			break
 		}

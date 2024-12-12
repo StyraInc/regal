@@ -1,6 +1,7 @@
 package fixes
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -41,7 +42,7 @@ func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 		return nil, fmt.Errorf("failed to format: %w", err)
 	}
 
-	if string(formatted) == string(fc.Contents) {
+	if bytes.Equal(formatted, fc.Contents) {
 		return nil, nil
 	}
 

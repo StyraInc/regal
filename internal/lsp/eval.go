@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anderseknert/roast/pkg/transform"
+
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/bundle"
 	"github.com/open-policy-agent/opa/rego"
@@ -79,13 +81,21 @@ func (l *LanguageServer) Eval(
 		l.getLoadedConfig(),
 	)
 
+	// TODO: Let's try to avoid preparing on each eval, but only when the
+	// contents of the workspace modules change, and before the user requests
+	// an eval.
 	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed preparing query %s: %w", query, err)
 	}
 
 	if input != nil {
-		return pq.Eval(ctx, rego.EvalInput(input)) //nolint:wrapcheck
+		inputValue, err := transform.ToOPAInputValue(input)
+		if err != nil {
+			return nil, fmt.Errorf("failed converting input to value: %w", err)
+		}
+
+		return pq.Eval(ctx, rego.EvalParsedInput(inputValue)) //nolint:wrapcheck
 	}
 
 	return pq.Eval(ctx) //nolint:wrapcheck

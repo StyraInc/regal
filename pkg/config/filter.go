@@ -21,8 +21,8 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, pathPrefix
 	}
 
 	// if set, pathPrefix is normalized to end with a platform appropriate separator
-	if pathPrefix != "" && !strings.HasSuffix(pathPrefix, string(filepath.Separator)) {
-		pathPrefix += string(filepath.Separator)
+	if pathPrefix != "" && !strings.HasSuffix(pathPrefix, rio.PathSeparator) {
+		pathPrefix += rio.PathSeparator
 	}
 
 	if checkFileExists {

@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -65,7 +66,7 @@ func (p *Policy) Run(
 	}
 	inputContext["client_identifier"] = opts.ClientIdentifier
 	inputContext["workspace_root"] = uri.ToPath(opts.ClientIdentifier, opts.RootURI)
-	inputContext["path_separator"] = string(os.PathSeparator)
+	inputContext["path_separator"] = rio.PathSeparator
 
 	workspacePath := uri.ToPath(opts.ClientIdentifier, opts.RootURI)
 
@@ -97,7 +98,7 @@ func (p *Policy) Run(
 
 	completions := make([]types.CompletionItem, 8)
 
-	if err = rio.JSONRoundTrip(result["completions"], &completions); err != nil {
+	if err := encoding.JSONRoundTrip(result["completions"], &completions); err != nil {
 		return nil, fmt.Errorf("failed converting completions: %w", err)
 	}
 

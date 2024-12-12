@@ -2,9 +2,10 @@ package parse
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/ast"
 
@@ -39,7 +40,7 @@ func Module(filename, policy string) (*ast.Module, error) {
 func PrepareAST(name string, content string, module *ast.Module) (map[string]any, error) {
 	var preparedAST map[string]any
 
-	if err := rio.JSONRoundTrip(module, &preparedAST); err != nil {
+	if err := encoding.JSONRoundTrip(module, &preparedAST); err != nil {
 		return nil, fmt.Errorf("JSON rountrip failed for module: %w", err)
 	}
 
@@ -52,7 +53,7 @@ func PrepareAST(name string, content string, module *ast.Module) (map[string]any
 			"abs":   abs,
 		},
 		"environment": map[string]any{
-			"path_separator": string(os.PathSeparator),
+			"path_separator": rio.PathSeparator,
 		},
 	}
 

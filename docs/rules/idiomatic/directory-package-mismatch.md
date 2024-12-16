@@ -85,7 +85,17 @@ While directory structure doesn't matter to OPA when parsing _policies_, directo
 to the bundle root. Having policies structured in the same manner provides a uniform experience, and makes it
 easier to understand where both policies and data come from.
 
-### Editor Support
+### `regal fix` & Editor Support
+
+Regal's [`fix` command](https://docs.styra.com/regal/fixing) can automatically
+rename files in a project to ensure compliance with this rule. This is
+particularly useful when refactoring a project with many files.
+
+:::info
+Note that files will be renamed relative to their nearest root, see the
+[documentation on roots](https://docs.styra.com/regal#project-roots) when using
+this rule with policy roots different from the project root.
+:::
 
 Editors integrating Regal's [language server](https://docs.styra.com/regal/language-server) will automatically display
 suggestions for idiomatic package paths based on the directory structure in which a policy resides. The image below

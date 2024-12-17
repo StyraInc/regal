@@ -18,7 +18,7 @@ func TestLookupFromURL(t *testing.T) {
 
 	caps, err := Lookup(
 		context.Background(),
-		"https://raw.githubusercontent.com/open-policy-agent/opa/main/capabilities/v0.55.0.json",
+		"https://raw.githubusercontent.com/open-policy-agent/opa/refs/heads/main/v1/capabilities/v0.55.0.json",
 	)
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)

@@ -775,6 +775,8 @@ See the [Editor Support](/docs/editor-support.md) page for information about Reg
   by Charlie Egan ([@charlieegan3](https://github.com/charlieegan3))
 - [Linting Rego with... Rego!](https://www.styra.com/blog/linting-rego-with-rego/) by Anders Eknert ([@anderseknert](https://github.com/anderseknert))
 - [Regal: Rego(OPA)用リンタの導入手順](https://zenn.dev/erueru_tech/articles/6cfb886d92858a) by Jun Fujita ([@erueru-tech](https://github.com/erueru-tech))
+- [Regal を使って Rego を Lint する](https://tech.dentsusoken.com/entry/2024/12/05/Regal_%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6_Rego_%E3%82%92_Lint_%E3%81%99%E3%82%8B)
+  by Shibata Takao ([@shibata.takao](https://shodo.ink/@shibata.takao/))
 
 ## Status
 

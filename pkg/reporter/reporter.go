@@ -511,6 +511,11 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 		}
 
 		for _, violation := range violationsPerFile[file] {
+			text := ""
+			if violation.Location.Text != nil {
+				text = strings.TrimSpace(*violation.Location.Text)
+			}
+
 			testsuite.AddTestcase(junit.Testcase{
 				Name:      fmt.Sprintf("%s/%s: %s", violation.Category, violation.Title, violation.Description),
 				Classname: violation.Location.String(),
@@ -522,7 +527,7 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 						violation.Description,
 						violation.Category,
 						violation.Location.String(),
-						strings.TrimSpace(*violation.Location.Text),
+						text,
 						getDocumentationURL(violation)),
 				},
 			})

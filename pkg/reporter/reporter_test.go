@@ -331,6 +331,17 @@ func TestJUnitReporterPublishNoViolations(t *testing.T) {
 	}
 }
 
+func TestJUnitReporterPublishViolationWithoutText(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	if err := NewJUnitReporter(&buf).Publish(context.Background(), report.Report{
+		Violations: []report.Violation{{Title: "no-text"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func MustReadFile(t *testing.T, path string) string {
 	t.Helper()
 

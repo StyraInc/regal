@@ -1,21 +1,21 @@
 version: 2
 updates:
-- package-ecosystem: "github-actions"
-  directory: "/"
-  schedule:
-    interval: "weekly"
-  groups:
-    dependencies:
-      patterns:
-      - "*"
-- package-ecosystem: "gomod"
-  directory: "/"
-  schedule:
-    interval: "monthly"
-  ignore:
-  # update OPA manually to bump version in README too
-  - dependency-name: "github.com/open-policy-agent/opa"
-  groups:
-    dependencies:
-      patterns:
-      - "*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    ignore:
+      # update OPA manually to bump version in README too
+      - dependency-name: "github.com/open-policy-agent/opa"
+    groups:
+      dependencies:
+        patterns:
+          - "*"

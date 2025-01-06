@@ -53,7 +53,7 @@ var patterns = map[string]*regexp.Regexp{
 	`rego-parse-error/unexpected-right-curly-token`:                        regexp.MustCompile(`^rego_parse_error: unexpected } token`),
 	`rego-parse-error/unexpected-name-keyword`:                             regexp.MustCompile(`^rego_parse_error: unexpected .* keyword:`),
 	`rego-parse-error/unexpected-string-token`:                             regexp.MustCompile(`^rego_parse_error: unexpected string token:`),
-	`rego-type-error/multiple-default-rules-name-found`:                    regexp.MustCompile(`^rego_type_error: multiple default rules .* found$`),
+	`rego-type-error/multiple-default-rules-name-found`:                    regexp.MustCompile(`^rego_type_error: multiple default rules .* found`),
 }
 
 func unwrapToFP(e error) error {

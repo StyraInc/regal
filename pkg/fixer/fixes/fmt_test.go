@@ -34,6 +34,68 @@ func TestFmt(t *testing.T) {
 			fmt:             &Fmt{},
 			fixExpected:     true,
 		},
+		"rego version unknown, ambigous syntax": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow := true"),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+allow := true
+`),
+		},
+		"rego version unknown, v0 syntax": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow[msg] { msg := 1}"),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+import rego.v1
+
+allow contains msg if msg := 1
+`),
+		},
+		"rego version unknown, v0v1 compat syntax": {
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package testutil
+import rego.v1
+allow contains msg if msg :=1
+				`),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+import rego.v1
+
+allow contains msg if msg := 1
+`),
+		},
+		"rego version unknown, v1 syntax": {
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package testutil
+
+allow contains msg if msg :=1
+				`),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+allow contains msg if msg := 1
+`),
+		},
 		"rego v1 (rego version 0)": {
 			fc: &FixCandidate{
 				Filename:    "test.rego",
@@ -54,6 +116,15 @@ allow := true
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
+				},
+			},
+			fixExpected: false,
+		},
+		"rego v1, version known": {
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
+			fmt: &Fmt{
+				OPAFmtOpts: format.Opts{
+					RegoVersion: ast.RegoV1,
 				},
 			},
 			fixExpected: false,

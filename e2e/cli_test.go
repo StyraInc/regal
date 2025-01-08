@@ -159,7 +159,13 @@ func TestLintProposeToRunFix(t *testing.T) {
 
 	act := strings.Split(stdout.String(), "\n")
 	act = act[len(act)-5:]
-	exp := []string{"1 file linted. 5 violations found.", "", "Hint: 2/5 violations can be automatically fixed (directory-package-mismatch, use-rego-v1)", "      Run regal fix --help for more details.", ""}
+	exp := []string{
+		"1 file linted. 2 violations found.",
+		"",
+		"Hint: 2/2 violations can be automatically fixed (directory-package-mismatch, opa-fmt)",
+		"      Run regal fix --help for more details.",
+		"",
+	}
 	if diff := cmp.Diff(act, exp); diff != "" {
 		t.Errorf("unexpected stdout trailer: (-want, +got):\n%s", diff)
 	}
@@ -278,8 +284,9 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/v0-with-import-rego-v1.yaml"),
+	err := regal(&stdout, &stderr)(
+		"lint", "--format", "json",
+		"--config-file", cwd+filepath.FromSlash("/testdata/configs/v0-with-import-rego-v1.yaml"),
 		cwd+filepath.FromSlash("/testdata/v0/"))
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
@@ -437,7 +444,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("two policies — no violations expected", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies"))
 
@@ -465,7 +472,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("three policies - violation expected", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
+			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+			"--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/three_policies"))
 
@@ -489,7 +498,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("custom policy where nothing aggregate is a violation", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
+			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+			"--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/empty_aggregate/"),
 			basedir+filepath.FromSlash("/two_policies"))
 
@@ -517,8 +528,13 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json",
-		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+		"--format",
+		"json",
+		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"),
+	)
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
@@ -818,7 +834,13 @@ func TestLintPprof(t *testing.T) {
 		_ = os.Remove(pprofFile)
 	})
 
-	err := regal(&stdout, &stderr)("lint", "--pprof", "clock", cwd+filepath.FromSlash("/testdata/violations"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		// this overrides the ignore directives for e2e loaded from the config file
+		"--ignore-files=none",
+		"--pprof", "clock",
+		cwd+filepath.FromSlash("/testdata/violations"),
+	)
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 

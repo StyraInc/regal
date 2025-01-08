@@ -2162,14 +2162,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		f := fixer.NewFixer()
 		f.RegisterFixes(fixes.NewDefaultFormatterFixes()...)
-		f.RegisterMandatoryFixes(
-			&fixes.Fmt{
-				NameOverride: "use-rego-v1",
-				OPAFmtOpts: format.Opts{
-					RegoVersion: ast.RegoV0CompatV1,
-				},
-			},
-		)
+		f.RegisterMandatoryFixes([]fixes.Fix{&fixes.Fmt{}}...)
 
 		if roots, err := config.GetPotentialRoots(
 			l.workspacePath(),

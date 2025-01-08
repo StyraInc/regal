@@ -2,7 +2,6 @@ package fixes
 
 import (
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/format"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/pkg/config"
@@ -14,10 +13,9 @@ func NewDefaultFixes() []Fix {
 	return []Fix{
 		&Fmt{},
 		&Fmt{
+			// this effectively maps the fix for violations from the
+			// use-rego-v1 rule to just format the file.
 			NameOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
-			},
 		},
 		&UseAssignmentOperator{},
 		&NoWhitespaceComment{},
@@ -29,12 +27,7 @@ func NewDefaultFixes() []Fix {
 // Notably, this does not include fixers that move files around.
 func NewDefaultFormatterFixes() []Fix {
 	return []Fix{
-		&Fmt{
-			NameOverride: "use-rego-v1",
-			OPAFmtOpts: format.Opts{
-				RegoVersion: ast.RegoV0CompatV1,
-			},
-		},
+		&Fmt{},
 		&UseAssignmentOperator{},
 		&NoWhitespaceComment{},
 	}

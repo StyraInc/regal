@@ -9,6 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
 
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
@@ -20,10 +21,9 @@ func TestFixer(t *testing.T) {
 	policies := map[string][]byte{
 		"test/main.rego": []byte(`package test
 
-allow {
+allow if {
 true #no space
 }
-
 deny = true
 `),
 	}
@@ -48,13 +48,11 @@ deny = true
 	}
 
 	expectedFileFixedViolations := map[string][]string{
-		// use-assignment-operator is not expected since use-rego-v1 also addresses this in this example
-		"test/main.rego": {"no-whitespace-comment", "use-rego-v1"},
+		// use-assigment-operator is correct in formatting so does not appear.
+		"test/main.rego": {"no-whitespace-comment", "opa-fmt"},
 	}
 	expectedFileContents := map[string][]byte{
 		"test/main.rego": []byte(`package test
-
-import rego.v1
 
 allow := true
 
@@ -65,7 +63,7 @@ deny := true
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
-		t.Fatalf("expected %d fixed files, got %d", exp, got)
+		t.Fatalf("expected a total of %d fixes, got %d", exp, got)
 	}
 
 	fpFiles, err := memfp.List()
@@ -95,19 +93,21 @@ deny := true
 		// check that the fixed violations are correct
 		fxs := fixReport.FixesForFile(file)
 
+		var fixes []string
+		for _, fx := range fxs {
+			fixes = append(fixes, fx.Title)
+		}
+
 		expectedFixes, ok := expectedFileFixedViolations[file]
 		if !ok {
-			t.Fatalf("unexpected file waas fixed %s", file)
+			t.Fatalf("unexpected file was fixed %s", file)
 		}
 
-		if len(fxs) != len(expectedFixes) {
-			t.Fatalf("unexpected number of fixes for %s:\ngot: %v\nexpected: %v", file, fxs, expectedFixes)
-		}
+		slices.Sort(expectedFixes)
+		slices.Sort(fixes)
 
-		for _, fx := range fxs {
-			if !slices.Contains(expectedFixes, fx.Title) {
-				t.Fatalf("expected fixes to contain %s:\ngot: %v", fx.Title, expectedFixes)
-			}
+		if !slices.Equal(expectedFixes, fixes) {
+			t.Fatalf("unexpected fixes for %s:\ngot: %v\nexpected: %v", file, fixes, expectedFixes)
 		}
 	}
 }
@@ -135,7 +135,12 @@ deny = true
 
 	l := linter.NewLinter().
 		WithEnableAll(true).
-		WithInputModules(&input)
+		WithInputModules(&input).
+		WithUserConfig(config.Config{
+			Capabilities: &config.Capabilities{
+				Features: []string{"rego_v1_import"},
+			},
+		})
 
 	f := NewFixer()
 	// No fixes are registered here, we are only testing the functionality of
@@ -173,7 +178,7 @@ deny := true
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(1); got != exp {
-		t.Fatalf("expected %d fixed files, got %d", exp, got)
+		t.Fatalf("expected %d fixes, got %d", exp, got)
 	}
 
 	fpFiles, err := memfp.List()
@@ -200,22 +205,24 @@ deny := true
 				string(expectedContent))
 		}
 
-		// check that the fixed violations are correct
 		fxs := fixReport.FixesForFile(file)
+
+		// check that the fixed violations are correct
+		var fixes []string
+		for _, fx := range fxs {
+			fixes = append(fixes, fx.Title)
+		}
 
 		expectedFixes, ok := expectedFileFixedViolations[file]
 		if !ok {
-			t.Fatalf("unexpected file waas fixed %s", file)
+			t.Fatalf("unexpected file was fixed %s", file)
 		}
 
-		if len(fxs) != len(expectedFixes) {
-			t.Fatalf("unexpected number of fixes for %s:\ngot: %v\nexpected: %v", file, fxs, expectedFixes)
-		}
+		slices.Sort(expectedFixes)
+		slices.Sort(fixes)
 
-		for _, fx := range fxs {
-			if !slices.Contains(expectedFixes, fx.Title) {
-				t.Fatalf("expected fixes to contain %s:\ngot: %v", fx.Title, expectedFixes)
-			}
+		if !slices.Equal(expectedFixes, fixes) {
+			t.Fatalf("unexpected fixes for %s:\ngot: %v\nexpected: %v", file, fixes, expectedFixes)
 		}
 	}
 }

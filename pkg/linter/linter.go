@@ -463,7 +463,7 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 
 	queryStr := `[rule |
         data.regal.rules[cat][rule]
-		count([true | data.regal.rules[cat][rule].notices]) == 0
+		object.get(data.regal.rules[cat][rule], "notices", set()) == set()
         data.regal.config.for_rule(cat, rule).level != "ignore"
     ]`
 

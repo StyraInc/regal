@@ -288,8 +288,6 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 		t.Errorf("expected stderr %q, got %q", exp, act)
 	}
 
-	//fmt.Println(stdout.String())
-
 	var rep report.Report
 	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
 		t.Fatalf("expected JSON response, got %v", stdout.String())

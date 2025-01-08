@@ -186,6 +186,7 @@ func FindManifestLocations(root string) ([]string, error) {
 // this package. We should probably move these definitions to somewhere where all
 // packages can import them from.
 
+//nolint:gochecknoglobals
 var regalParseModuleMeta = &rego.Function{
 	Name: "regal.parse_module",
 	Decl: types.NewFunction(
@@ -197,6 +198,7 @@ var regalParseModuleMeta = &rego.Function{
 	),
 }
 
+//nolint:gochecknoglobals
 var regalLastMeta = &rego.Function{
 	Name: "regal.last",
 	Decl: types.NewFunction(
@@ -208,13 +210,15 @@ var regalLastMeta = &rego.Function{
 	),
 }
 
+//nolint:gochecknoglobals
 var OPACapabilities = ast.CapabilitiesForThisVersion()
 
+//nolint:gochecknoglobals
 var Capabilities = sync.OnceValue(capabilities)
 
 func capabilities() *ast.Capabilities {
 	cpy := *OPACapabilities
-	cpy.Builtins = append(cpy.Builtins[:],
+	cpy.Builtins = append(cpy.Builtins,
 		&ast.Builtin{
 			Name: regalParseModuleMeta.Name,
 			Decl: regalParseModuleMeta.Decl,

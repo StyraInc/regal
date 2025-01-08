@@ -3,13 +3,11 @@ package fixer
 import (
 	"bytes"
 	"context"
-	"os"
 	"slices"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
-	"github.com/open-policy-agent/opa/v1/topdown"
 
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
@@ -23,7 +21,10 @@ func TestFixer(t *testing.T) {
 	policies := map[string][]byte{
 		"test/main.rego": []byte(`package test
 
-allow = true #no space
+allow if {
+true #no space
+}
+deny = true
 `),
 	}
 
@@ -36,22 +37,10 @@ allow = true #no space
 
 	l := linter.NewLinter().
 		WithEnableAll(true).
-		WithInputModules(&input).
-		WithPrintHook(topdown.NewPrintHook(os.Stderr)).
-		WithUserConfig(config.Config{
-			Capabilities: &config.Capabilities{
-				Features: []string{"rego_v1_import"},
-			},
-		})
+		WithInputModules(&input)
 
 	f := NewFixer()
-	f.RegisterFixes(
-		[]fixes.Fix{
-			&fixes.UseAssignmentOperator{},
-			&fixes.NoWhitespaceComment{},
-			&fixes.DirectoryPackageMismatch{},
-		}...,
-	)
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
 
 	fixReport, err := f.Fix(context.Background(), &l, memfp)
 	if err != nil {
@@ -59,12 +48,17 @@ allow = true #no space
 	}
 
 	expectedFileFixedViolations := map[string][]string{
-		"test/main.rego": {"no-whitespace-comment", "use-assignment-operator"},
+		// use-assigment-operator is correct in formatting so does not appear.
+		"test/main.rego": {"no-whitespace-comment", "opa-fmt"},
 	}
 	expectedFileContents := map[string][]byte{
 		"test/main.rego": []byte(`package test
 
-allow := true # no space
+allow := true
+
+# no space
+
+deny := true
 `),
 	}
 

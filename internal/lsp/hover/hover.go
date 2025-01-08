@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/types"
@@ -15,11 +14,10 @@ import (
 	"github.com/styrainc/regal/internal/lsp/examples"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	types2 "github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/util/concurrent"
 )
 
-var builtinCache = make(map[*ast.Builtin]string) //nolint:gochecknoglobals
-
-var builtinCacheLock = &sync.Mutex{} //nolint:gochecknoglobals
+var builtinCache = concurrent.MapOf(make(map[*ast.Builtin]string)) //nolint:gochecknoglobals
 
 func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 	sb.WriteString("```rego\n")
@@ -52,13 +50,9 @@ func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 }
 
 func CreateHoverContent(builtin *ast.Builtin) string {
-	builtinCacheLock.Lock()
-	if content, ok := builtinCache[builtin]; ok {
-		builtinCacheLock.Unlock()
-
+	if content, ok := builtinCache.Get(builtin); ok {
 		return content
 	}
-	builtinCacheLock.Unlock()
 
 	link := fmt.Sprintf(
 		"https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s",
@@ -139,9 +133,7 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 
 	result := sb.String()
 
-	builtinCacheLock.Lock()
-	builtinCache[builtin] = result
-	builtinCacheLock.Unlock()
+	builtinCache.Set(builtin, result)
 
 	return result
 }

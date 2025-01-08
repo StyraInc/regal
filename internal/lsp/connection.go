@@ -25,10 +25,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sync"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
+
+	"github.com/styrainc/regal/internal/util/concurrent"
 )
 
 type ConnectionOptions struct {
@@ -98,38 +99,14 @@ func logMessages(cfg ConnectionLoggingConfig) jsonrpc2.ConnOpt {
 	return func(c *jsonrpc2.Conn) {
 		// Remember reqs we have received so that we can helpfully show the
 		// request method in OnSend for responses.
-		var (
-			mu         sync.Mutex
-			reqMethods = map[jsonrpc2.ID]string{}
-		)
-
-		setMethod := func(id jsonrpc2.ID, method string) {
-			mu.Lock()
-			defer mu.Unlock()
-
-			reqMethods[id] = method
-		}
-
-		getMethod := func(id jsonrpc2.ID) string {
-			mu.Lock()
-			defer mu.Unlock()
-
-			return reqMethods[id]
-		}
-
-		deleteMethod := func(id jsonrpc2.ID) {
-			mu.Lock()
-			defer mu.Unlock()
-
-			delete(reqMethods, id)
-		}
+		reqMethods := concurrent.MapOf(make(map[jsonrpc2.ID]string))
 
 		if cfg.LogInbound {
-			jsonrpc2.OnRecv(buildRecvHandler(setMethod, logger, cfg))(c)
+			jsonrpc2.OnRecv(buildRecvHandler(reqMethods.Set, logger, cfg))(c)
 		}
 
 		if cfg.LogOutbound {
-			jsonrpc2.OnSend(buildSendHandler(getMethod, deleteMethod, logger, cfg))(c)
+			jsonrpc2.OnSend(buildSendHandler(reqMethods.GetUnchecked, reqMethods.Delete, logger, cfg))(c)
 		}
 	}
 }

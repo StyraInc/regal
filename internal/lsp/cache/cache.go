@@ -2,15 +2,14 @@ package cache
 
 import (
 	"fmt"
-	"maps"
 	"os"
-	"sync"
 
 	"github.com/anderseknert/roast/pkg/util"
 
 	"github.com/open-policy-agent/opa/ast"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/util/concurrent"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -18,183 +17,119 @@ import (
 // diagnostics for each file (including diagnostics gathered from linting files alongside other files).
 type Cache struct {
 	// fileContents is a map of file URI to raw file contents received from the client
-	fileContents map[string]string
+	fileContents *concurrent.Map[string, string]
 
 	// ignoredFileContents is a similar map of file URI to raw file contents
 	// but it's not queried for project level operations like goto definition,
 	// linting etc.
 	// ignoredFileContents is also cleared on the delete operation.
-	ignoredFileContents map[string]string
+	ignoredFileContents *concurrent.Map[string, string]
 
 	// modules is a map of file URI to parsed AST modules from the latest file contents value
-	modules map[string]*ast.Module
+	modules *concurrent.Map[string, *ast.Module]
 
 	// aggregateData stores the aggregate data from evaluations for each file.
 	// This is used to cache the results of expensive evaluations and can be used
 	// to update aggregate diagostics incrementally.
-	aggregateData   map[string][]report.Aggregate
-	aggregateDataMu sync.Mutex
+	aggregateData *concurrent.Map[string, []report.Aggregate]
 
 	// diagnosticsFile is a map of file URI to diagnostics for that file
-	diagnosticsFile map[string][]types.Diagnostic
+	diagnosticsFile *concurrent.Map[string, []types.Diagnostic]
 
 	// diagnosticsParseErrors is a map of file URI to parse errors for that file
-	diagnosticsParseErrors map[string][]types.Diagnostic
+	diagnosticsParseErrors *concurrent.Map[string, []types.Diagnostic]
 
 	// builtinPositionsFile is a map of file URI to builtin positions for that file
-	builtinPositionsFile map[string]map[uint][]types.BuiltinPosition
+	builtinPositionsFile *concurrent.Map[string, map[uint][]types.BuiltinPosition]
 
 	// keywordLocationsFile is a map of file URI to Rego keyword locations for that file
 	// to be used for hover hints.
-	keywordLocationsFile map[string]map[uint][]types.KeywordLocation
+	keywordLocationsFile *concurrent.Map[string, map[uint][]types.KeywordLocation]
 
 	// fileRefs is a map of file URI to refs that are defined in that file. These are
 	// intended to be used for completions in other files.
 	// fileRefs is expected to be updated when a file is successfully parsed.
-	fileRefs       map[string]map[string]types.Ref
-	fileContentsMu sync.Mutex
-
-	ignoredFileContentsMu sync.Mutex
-
-	moduleMu sync.Mutex
-
-	diagnosticsFileMu sync.Mutex
-
-	diagnosticsParseMu sync.Mutex
-
-	builtinPositionsMu sync.Mutex
-
-	keywordLocationsMu sync.Mutex
-
-	fileRefMu sync.Mutex
+	fileRefs *concurrent.Map[string, map[string]types.Ref]
 }
 
 func NewCache() *Cache {
 	return &Cache{
-		fileContents:        make(map[string]string),
-		ignoredFileContents: make(map[string]string),
-
-		modules: make(map[string]*ast.Module),
-
-		aggregateData: make(map[string][]report.Aggregate),
-
-		diagnosticsFile:        make(map[string][]types.Diagnostic),
-		diagnosticsParseErrors: make(map[string][]types.Diagnostic),
-
-		builtinPositionsFile: make(map[string]map[uint][]types.BuiltinPosition),
-		keywordLocationsFile: make(map[string]map[uint][]types.KeywordLocation),
-
-		fileRefs: make(map[string]map[string]types.Ref),
+		fileContents:           concurrent.MapOf(make(map[string]string)),
+		ignoredFileContents:    concurrent.MapOf(make(map[string]string)),
+		modules:                concurrent.MapOf(make(map[string]*ast.Module)),
+		aggregateData:          concurrent.MapOf(make(map[string][]report.Aggregate)),
+		diagnosticsFile:        concurrent.MapOf(make(map[string][]types.Diagnostic)),
+		diagnosticsParseErrors: concurrent.MapOf(make(map[string][]types.Diagnostic)),
+		builtinPositionsFile:   concurrent.MapOf(make(map[string]map[uint][]types.BuiltinPosition)),
+		keywordLocationsFile:   concurrent.MapOf(make(map[string]map[uint][]types.KeywordLocation)),
+		fileRefs:               concurrent.MapOf(make(map[string]map[string]types.Ref)),
 	}
 }
 
 func (c *Cache) GetAllFiles() map[string]string {
-	c.fileContentsMu.Lock()
-	defer c.fileContentsMu.Unlock()
-
-	return maps.Clone(c.fileContents)
+	return c.fileContents.Clone()
 }
 
 func (c *Cache) GetFileContents(fileURI string) (string, bool) {
-	c.fileContentsMu.Lock()
-	defer c.fileContentsMu.Unlock()
-
-	val, ok := c.fileContents[fileURI]
-
-	return val, ok
+	return c.fileContents.Get(fileURI)
 }
 
 func (c *Cache) SetFileContents(fileURI string, content string) {
-	c.fileContentsMu.Lock()
-	defer c.fileContentsMu.Unlock()
-
-	c.fileContents[fileURI] = content
+	c.fileContents.Set(fileURI, content)
 }
 
 func (c *Cache) GetIgnoredFileContents(fileURI string) (string, bool) {
-	c.ignoredFileContentsMu.Lock()
-	defer c.ignoredFileContentsMu.Unlock()
-
-	val, ok := c.ignoredFileContents[fileURI]
-
-	return val, ok
+	return c.ignoredFileContents.Get(fileURI)
 }
 
 func (c *Cache) SetIgnoredFileContents(fileURI string, content string) {
-	c.ignoredFileContentsMu.Lock()
-	defer c.ignoredFileContentsMu.Unlock()
-
-	c.ignoredFileContents[fileURI] = content
+	c.ignoredFileContents.Set(fileURI, content)
 }
 
 func (c *Cache) GetAllIgnoredFiles() map[string]string {
-	c.ignoredFileContentsMu.Lock()
-	defer c.ignoredFileContentsMu.Unlock()
-
-	return maps.Clone(c.ignoredFileContents)
+	return c.ignoredFileContents.Clone()
 }
 
 func (c *Cache) ClearIgnoredFileContents(fileURI string) {
-	c.ignoredFileContentsMu.Lock()
-	defer c.ignoredFileContentsMu.Unlock()
-
-	delete(c.ignoredFileContents, fileURI)
+	c.ignoredFileContents.Delete(fileURI)
 }
 
 func (c *Cache) GetAllModules() map[string]*ast.Module {
-	c.moduleMu.Lock()
-	defer c.moduleMu.Unlock()
-
-	return maps.Clone(c.modules)
+	return c.modules.Clone()
 }
 
 func (c *Cache) GetModule(fileURI string) (*ast.Module, bool) {
-	c.moduleMu.Lock()
-	defer c.moduleMu.Unlock()
-
-	val, ok := c.modules[fileURI]
-
-	return val, ok
+	return c.modules.Get(fileURI)
 }
 
 func (c *Cache) SetModule(fileURI string, module *ast.Module) {
-	c.moduleMu.Lock()
-	defer c.moduleMu.Unlock()
-
-	c.modules[fileURI] = module
+	c.modules.Set(fileURI, module)
 }
 
 // SetFileAggregates will only set aggregate data for the provided URI. Even if
 // data for other files is provided, only the specified URI is updated.
 func (c *Cache) SetFileAggregates(fileURI string, data map[string][]report.Aggregate) {
-	c.aggregateDataMu.Lock()
-	defer c.aggregateDataMu.Unlock()
-
-	flattenedAggregates := make([]report.Aggregate, 0)
+	flattenedAggregates := make([]report.Aggregate, 0, len(data))
 
 	for _, aggregates := range data {
 		for _, aggregate := range aggregates {
-			if aggregate.SourceFile() != fileURI {
-				continue
+			if aggregate.SourceFile() == fileURI {
+				flattenedAggregates = append(flattenedAggregates, aggregate)
 			}
-
-			flattenedAggregates = append(flattenedAggregates, aggregate)
 		}
 	}
 
-	c.aggregateData[fileURI] = flattenedAggregates
+	c.aggregateData.Set(fileURI, flattenedAggregates)
 }
 
 func (c *Cache) SetAggregates(data map[string][]report.Aggregate) {
-	c.aggregateDataMu.Lock()
-	defer c.aggregateDataMu.Unlock()
-
-	// clear the state
-	c.aggregateData = make(map[string][]report.Aggregate)
+	c.aggregateData.Clear()
 
 	for _, aggregates := range data {
 		for _, aggregate := range aggregates {
-			c.aggregateData[aggregate.SourceFile()] = append(c.aggregateData[aggregate.SourceFile()], aggregate)
+			c.aggregateData.UpdateValue(aggregate.SourceFile(), func(val []report.Aggregate) []report.Aggregate {
+				return append(val, aggregate)
+			})
 		}
 	}
 }
@@ -202,9 +137,6 @@ func (c *Cache) SetAggregates(data map[string][]report.Aggregate) {
 // GetFileAggregates is used to get aggregate data for a given list of files.
 // This is only used in tests to validate the cache state.
 func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggregate {
-	c.aggregateDataMu.Lock()
-	defer c.aggregateDataMu.Unlock()
-
 	includedFiles := make(map[string]struct{}, len(fileURIs))
 	for _, fileURI := range fileURIs {
 		includedFiles[fileURI] = struct{}{}
@@ -214,7 +146,7 @@ func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggreg
 
 	allAggregates := make(map[string][]report.Aggregate)
 
-	for sourceFile, aggregates := range c.aggregateData {
+	for sourceFile, aggregates := range c.aggregateData.Clone() {
 		if _, included := includedFiles[sourceFile]; !included && !getAll {
 			continue
 		}
@@ -228,160 +160,92 @@ func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggreg
 }
 
 func (c *Cache) GetFileDiagnostics(uri string) ([]types.Diagnostic, bool) {
-	c.diagnosticsFileMu.Lock()
-	defer c.diagnosticsFileMu.Unlock()
-
-	val, ok := c.diagnosticsFile[uri]
-
-	return val, ok
+	return c.diagnosticsFile.Get(uri)
 }
 
 func (c *Cache) SetFileDiagnostics(fileURI string, diags []types.Diagnostic) {
-	c.diagnosticsFileMu.Lock()
-	defer c.diagnosticsFileMu.Unlock()
-
-	c.diagnosticsFile[fileURI] = diags
+	c.diagnosticsFile.Set(fileURI, diags)
 }
 
 // SetFileDiagnosticsForRules will perform a partial update of the diagnostics
 // for a file given a list of evaluated rules.
 func (c *Cache) SetFileDiagnosticsForRules(fileURI string, rules []string, diags []types.Diagnostic) {
-	c.diagnosticsFileMu.Lock()
-	defer c.diagnosticsFileMu.Unlock()
-
-	ruleKeys := make(map[string]struct{}, len(rules))
-	for _, rule := range rules {
-		ruleKeys[rule] = struct{}{}
-	}
-
-	preservedDiagnostics := make([]types.Diagnostic, 0)
-
-	for _, diag := range c.diagnosticsFile[fileURI] {
-		if _, ok := ruleKeys[diag.Code]; !ok {
-			preservedDiagnostics = append(preservedDiagnostics, diag)
+	c.diagnosticsFile.UpdateValue(fileURI, func(current []types.Diagnostic) []types.Diagnostic {
+		ruleKeys := make(map[string]struct{}, len(rules))
+		for _, rule := range rules {
+			ruleKeys[rule] = struct{}{}
 		}
-	}
 
-	c.diagnosticsFile[fileURI] = append(preservedDiagnostics, diags...)
+		preservedDiagnostics := make([]types.Diagnostic, 0, len(current))
+
+		for i := range current {
+			if _, ok := ruleKeys[current[i].Code]; !ok {
+				preservedDiagnostics = append(preservedDiagnostics, current[i])
+			}
+		}
+
+		return append(preservedDiagnostics, diags...)
+	})
 }
 
 func (c *Cache) ClearFileDiagnostics() {
-	c.diagnosticsFileMu.Lock()
-	defer c.diagnosticsFileMu.Unlock()
-
-	c.diagnosticsFile = make(map[string][]types.Diagnostic)
+	c.diagnosticsFile.Clear()
 }
 
 func (c *Cache) GetParseErrors(uri string) ([]types.Diagnostic, bool) {
-	c.diagnosticsParseMu.Lock()
-	defer c.diagnosticsParseMu.Unlock()
-
-	val, ok := c.diagnosticsParseErrors[uri]
-
-	return val, ok
+	return c.diagnosticsParseErrors.Get(uri)
 }
 
 func (c *Cache) SetParseErrors(fileURI string, diags []types.Diagnostic) {
-	c.diagnosticsParseMu.Lock()
-	defer c.diagnosticsParseMu.Unlock()
-
-	c.diagnosticsParseErrors[fileURI] = diags
+	c.diagnosticsParseErrors.Set(fileURI, diags)
 }
 
 func (c *Cache) GetBuiltinPositions(fileURI string) (map[uint][]types.BuiltinPosition, bool) {
-	c.builtinPositionsMu.Lock()
-	defer c.builtinPositionsMu.Unlock()
-
-	val, ok := c.builtinPositionsFile[fileURI]
-
-	return val, ok
+	return c.builtinPositionsFile.Get(fileURI)
 }
 
 func (c *Cache) SetBuiltinPositions(fileURI string, positions map[uint][]types.BuiltinPosition) {
-	c.builtinPositionsMu.Lock()
-	defer c.builtinPositionsMu.Unlock()
-
-	c.builtinPositionsFile[fileURI] = positions
+	c.builtinPositionsFile.Set(fileURI, positions)
 }
 
 func (c *Cache) GetAllBuiltInPositions() map[string]map[uint][]types.BuiltinPosition {
-	c.builtinPositionsMu.Lock()
-	defer c.builtinPositionsMu.Unlock()
-
-	return maps.Clone(c.builtinPositionsFile)
+	return c.builtinPositionsFile.Clone()
 }
 
 func (c *Cache) SetKeywordLocations(fileURI string, keywords map[uint][]types.KeywordLocation) {
-	c.keywordLocationsMu.Lock()
-	defer c.keywordLocationsMu.Unlock()
-
-	c.keywordLocationsFile[fileURI] = keywords
+	c.keywordLocationsFile.Set(fileURI, keywords)
 }
 
 func (c *Cache) GetKeywordLocations(fileURI string) (map[uint][]types.KeywordLocation, bool) {
-	c.keywordLocationsMu.Lock()
-	defer c.keywordLocationsMu.Unlock()
-
-	val, ok := c.keywordLocationsFile[fileURI]
-
-	return val, ok
+	return c.keywordLocationsFile.Get(fileURI)
 }
 
 func (c *Cache) SetFileRefs(fileURI string, items map[string]types.Ref) {
-	c.fileRefMu.Lock()
-	defer c.fileRefMu.Unlock()
-
-	c.fileRefs[fileURI] = items
+	c.fileRefs.Set(fileURI, items)
 }
 
 func (c *Cache) GetFileRefs(fileURI string) map[string]types.Ref {
-	c.fileRefMu.Lock()
-	defer c.fileRefMu.Unlock()
+	refs, _ := c.fileRefs.Get(fileURI)
 
-	return c.fileRefs[fileURI]
+	return refs
 }
 
 func (c *Cache) GetAllFileRefs() map[string]map[string]types.Ref {
-	c.fileRefMu.Lock()
-	defer c.fileRefMu.Unlock()
-
-	return maps.Clone(c.fileRefs)
+	return c.fileRefs.Clone()
 }
 
 // Delete removes all cached data for a given URI. Ignored file contents are
 // also removed if found for a matching URI.
 func (c *Cache) Delete(fileURI string) {
-	c.fileContentsMu.Lock()
-	delete(c.fileContents, fileURI)
-	c.fileContentsMu.Unlock()
-
-	c.moduleMu.Lock()
-	delete(c.modules, fileURI)
-	c.moduleMu.Unlock()
-
-	c.aggregateDataMu.Lock()
-	delete(c.aggregateData, fileURI)
-	c.aggregateDataMu.Unlock()
-
-	c.diagnosticsFileMu.Lock()
-	delete(c.diagnosticsFile, fileURI)
-	c.diagnosticsFileMu.Unlock()
-
-	c.diagnosticsParseMu.Lock()
-	delete(c.diagnosticsParseErrors, fileURI)
-	c.diagnosticsParseMu.Unlock()
-
-	c.builtinPositionsMu.Lock()
-	delete(c.builtinPositionsFile, fileURI)
-	c.builtinPositionsMu.Unlock()
-
-	c.fileRefMu.Lock()
-	delete(c.fileRefs, fileURI)
-	c.fileRefMu.Unlock()
-
-	c.ignoredFileContentsMu.Lock()
-	delete(c.ignoredFileContents, fileURI)
-	c.ignoredFileContentsMu.Unlock()
+	c.fileContents.Delete(fileURI)
+	c.ignoredFileContents.Delete(fileURI)
+	c.modules.Delete(fileURI)
+	c.aggregateData.Delete(fileURI)
+	c.diagnosticsFile.Delete(fileURI)
+	c.diagnosticsParseErrors.Delete(fileURI)
+	c.builtinPositionsFile.Delete(fileURI)
+	c.keywordLocationsFile.Delete(fileURI)
+	c.fileRefs.Delete(fileURI)
 }
 
 func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string, error) {

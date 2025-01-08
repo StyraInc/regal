@@ -44,6 +44,7 @@ import (
 	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/update"
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/internal/util/concurrent"
 	"github.com/styrainc/regal/internal/web"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer"
@@ -99,7 +100,7 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
 		completionsManager:       completions.NewDefaultManager(ctx, c, store),
 		webServer:                web.NewServer(c),
-		loadedBuiltins:           make(map[string]map[string]*ast.Builtin),
+		loadedBuiltins:           concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
 		workspaceDiagnosticsPoll: opts.WorkspaceDiagnosticsPoll,
 	}
 
@@ -117,7 +118,7 @@ type LanguageServer struct {
 	loadedConfig                         *config.Config
 	loadedConfigEnabledNonAggregateRules []string
 	loadedConfigEnabledAggregateRules    []string
-	loadedBuiltins                       map[string]map[string]*ast.Builtin
+	loadedBuiltins                       *concurrent.Map[string, map[string]*ast.Builtin]
 
 	clientInitializationOptions types.InitializationOptions
 
@@ -136,8 +137,6 @@ type LanguageServer struct {
 
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
-
-	loadedBuiltinsLock sync.RWMutex
 
 	// this is also used to lock the updates to the cache of enabled rules
 	loadedConfigLock sync.Mutex
@@ -574,9 +573,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 
 			bis := rego.BuiltinsForCapabilities(caps)
 
-			l.loadedBuiltinsLock.Lock()
-			l.loadedBuiltins[capsURL] = bis
-			l.loadedBuiltinsLock.Unlock()
+			l.loadedBuiltins.Set(capsURL, bis)
 
 			// the config may now ignore files that existed in the cache before,
 			// in which case we need to remove them to stop their contents being
@@ -2697,15 +2694,12 @@ func (l *LanguageServer) workspacePath() string {
 // in the server based on the currently loaded capabilities. If there is no
 // config, then the default for the Regal OPA version is used.
 func (l *LanguageServer) builtinsForCurrentCapabilities() map[string]*ast.Builtin {
-	l.loadedBuiltinsLock.RLock()
-	defer l.loadedBuiltinsLock.RUnlock()
-
 	cfg := l.getLoadedConfig()
 	if cfg == nil {
 		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
 	}
 
-	bis, ok := l.loadedBuiltins[cfg.CapabilitiesURL]
+	bis, ok := l.loadedBuiltins.Get(cfg.CapabilitiesURL)
 	if !ok {
 		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
 	}

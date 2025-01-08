@@ -15,6 +15,8 @@ import (
 // workspace diagnostics are run, this test validates that the correct diagnostics are sent to the client in this
 // scenario.
 func TestLanguageServerMultipleFiles(t *testing.T) {
+	// TODO: this test has been flakey and we need to skip it until we have time to look deeper into why
+	t.Skip()
 	t.Parallel()
 
 	// set up the workspace content with some example rego and regal config

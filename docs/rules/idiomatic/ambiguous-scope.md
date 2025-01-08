@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # METADATA
 # description: allow is true if the user is admin, or the requested resource is public
 allow if user_is_admin
@@ -20,8 +18,6 @@ allow if public_resource
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # METADATA
 # description: allow is true if the user is admin, or the requested resource is public
@@ -35,8 +31,6 @@ allow if public_resource
 ```rego
 package policy
 
-import rego.v1
-
 # METADATA
 # description: allow is true if the user is admin
 allow if user_is_admin
@@ -49,8 +43,6 @@ allow if public_resource
 **Or (scope `rule` explicit)**
 ```rego
 package policy
-
-import rego.v1
 
 # METADATA
 # description: allow is true if the user is admin

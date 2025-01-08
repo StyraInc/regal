@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     resp := http.send({"method": "GET", "url": "http://example.com"})
 
@@ -27,8 +25,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     input.user.name in allowed_users

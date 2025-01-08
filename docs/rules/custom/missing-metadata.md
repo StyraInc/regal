@@ -8,8 +8,6 @@
 ```rego
 package acmecorp.authz
 
-import rego.v1
-
 authorized_users contains user if {
     # logic to determine authorized users
 }
@@ -20,8 +18,6 @@ authorized_users contains user if {
 # METADATA
 # description: The `acmecorp.authz` module provides authorization logic for the AcmeCorp application.
 package acmecorp.authz
-
-import rego.v1
 
 # METADATA
 # description: Provides a set of all authorized users given the conditions in `input`.

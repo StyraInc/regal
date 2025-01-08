@@ -24,6 +24,17 @@
         "--dry-run",
         "bundle"
       ]
+    },
+    {
+      "name": "regal test bundle",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "args": [
+        "test",
+        "bundle"
+      ]
     }
   ]
 }

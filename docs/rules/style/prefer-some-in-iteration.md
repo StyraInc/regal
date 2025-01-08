@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 engineering_roles := {"engineer", "dba", "developer"}
 
 engineers contains employee if {
@@ -21,8 +19,6 @@ engineers contains employee if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 engineering_roles := {"engineer", "dba", "developer"}
 
@@ -80,8 +76,6 @@ Deeply nested iteration is often easier to read using the more compact form.
 ```rego
 package policy
 
-import rego.v1
-
 # These rules are equivalent, but the more compact form is arguably easier to read
 
 any_user_is_admin if {
@@ -108,8 +102,6 @@ one of the variables (including wildcards: `_`) is an output variable bound in i
 
 ```rego
 package policy
-
-import rego.v1
 
 example_users contains user if {
     domain := "example.com"

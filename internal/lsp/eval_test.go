@@ -24,8 +24,6 @@ func TestEvalWorkspacePath(t *testing.T) {
 
 	policy1 := `package policy1
 
-	import rego.v1
-
 	import data.policy2
 
 	default allow := false
@@ -34,8 +32,6 @@ func TestEvalWorkspacePath(t *testing.T) {
 	`
 
 	policy2 := `package policy2
-
-	import rego.v1
 
 	allow if input.exists
 	`

@@ -2,8 +2,6 @@
 # description: Add description of rule here!
 package regal.rules.{{.Category}}{{.Name}}
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

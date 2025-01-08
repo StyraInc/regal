@@ -8,8 +8,6 @@ import data.regal.rules.custom["one-liner-rule"] as rule
 test_fail_could_be_one_liner if {
 	module := ast.policy(`
 
-	import rego.v1
-
 	allow if {
 		input.yes
 	}
@@ -18,10 +16,10 @@ test_fail_could_be_one_liner if {
 
 	r == expected_with_location({
 		"col": 2,
-		"row": 7,
+		"row": 5,
 		"end": {
 			"col": 7,
-			"row": 7,
+			"row": 5,
 		},
 		"text": "\tallow if {",
 	})
@@ -29,8 +27,6 @@ test_fail_could_be_one_liner if {
 
 test_fail_could_be_one_liner_all_keywords if {
 	module := ast.policy(`
-
-	import rego.v1
 
 	allow if {
 		input.yes
@@ -41,10 +37,10 @@ test_fail_could_be_one_liner_all_keywords if {
 	r == expected_with_location({
 		"col": 2,
 		"file": "policy.rego",
-		"row": 7,
+		"row": 5,
 		"end": {
 			"col": 7,
-			"row": 7,
+			"row": 5,
 		},
 		"text": "\tallow if {",
 	})
@@ -52,8 +48,6 @@ test_fail_could_be_one_liner_all_keywords if {
 
 test_fail_could_be_one_liner_allman_style if {
 	module := ast.policy(`
-
-	import rego.v1
 
 	allow if
 	{
@@ -64,24 +58,13 @@ test_fail_could_be_one_liner_allman_style if {
 	r := rule.report with input as module with config.for_rule as {"level": "error"}
 	r == expected_with_location({
 		"col": 2,
-		"row": 7,
+		"row": 5,
 		"end": {
 			"col": 7,
-			"row": 7,
+			"row": 5,
 		},
 		"text": "\tallow if",
 	})
-}
-
-test_success_if_not_imported if {
-	module := ast.policy(`
-	allow := true if {
-		1 == 1
-	}
-	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
-
-	r == set()
 }
 
 test_success_too_long_for_a_one_liner if {

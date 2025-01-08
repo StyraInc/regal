@@ -11,8 +11,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 #Deny by default
 default allow := false
 
@@ -24,8 +22,6 @@ allow if "admin" in input.user.roles
 
 ```rego
 package policy
-
-import rego.v1
 
 # Deny by default
 default allow := false

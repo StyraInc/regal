@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 employee if {
     input.user.email
     endswith(input.user.email, "@acmecorp.com")
@@ -24,8 +22,6 @@ is_admin(user) if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 employee if {
     endswith(input.user.email, "@acmecorp.com")

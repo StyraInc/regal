@@ -14,8 +14,6 @@ func TestUsedInModule(t *testing.T) {
 	mod := rparse.MustParseModule(`
 package example
 
-import rego.v1
-
 import data.foo as wow
 import data.bar
 

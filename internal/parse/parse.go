@@ -40,6 +40,10 @@ func ModuleWithOpts(path, policy string, opts ast.ParserOptions) (*ast.Module, e
 		err    error
 	)
 
+	if opts.RegoVersion == ast.RegoUndefined && strings.HasSuffix(path, "_v0.rego") {
+		opts.RegoVersion = ast.RegoV0
+	}
+
 	if opts.RegoVersion != ast.RegoUndefined {
 		module, err = ast.ParseModuleWithOpts(path, policy, opts)
 		if err != nil {

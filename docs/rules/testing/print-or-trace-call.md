@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 reasons contains sprintf("%q is a dog!", [user.name]) if {
     some user in input.users
     user.species == "canine"

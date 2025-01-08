@@ -21,8 +21,6 @@ func TestPolicyProvider_Example1(t *testing.T) {
 
 	policy := `package p
 
-import rego.v1
-
 allow if {
 	user := data.users[0]
 	# try completion on next line
@@ -53,7 +51,7 @@ allow if {
 			URI: testCaseFileURI,
 		},
 		Position: types.Position{
-			Line:      7,
+			Line:      5,
 			Character: 11,
 		},
 	}
@@ -84,13 +82,9 @@ func TestPolicyProvider_Example2(t *testing.T) {
 
 	file1 := ast.MustParseModule(`package example
 
-import rego.v1
-
 foo := true
 `)
 	file2 := ast.MustParseModule(`package example2
-
-import rego.v1
 
 import data.example
 `)
@@ -111,8 +105,6 @@ import data.example
 	locals := NewPolicy(context.Background(), store)
 	fileEdited := `package example2
 
-import rego.v1
-
 import data.example
 
 allow if {
@@ -128,7 +120,7 @@ allow if {
 			URI: "file:///file2.rego",
 		},
 		Position: types.Position{
-			Line:      7,
+			Line:      5,
 			Character: 11,
 		},
 	}

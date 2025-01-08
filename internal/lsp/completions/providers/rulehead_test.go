@@ -22,8 +22,6 @@ func TestRuleHead(t *testing.T) {
 	regoFiles := map[string]string{
 		"file:///foo/foo.rego": `package foo
 
-import rego.v1
-
 default allow := false
 
 allow if count(deny) == 0

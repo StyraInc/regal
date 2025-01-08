@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     "admin" in input.user.roles
 }
@@ -24,8 +22,6 @@ test_allow_if_admin {
 ```rego
 # Tests in separate package with _test suffix
 package policy_test
-
-import rego.v1
 
 import data.policy
 

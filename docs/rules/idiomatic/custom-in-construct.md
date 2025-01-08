@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if has_value(input.user.roles, "admin")
 
 # This custom function was commonly seen before the introduction
@@ -22,8 +20,6 @@ has_value(arr, item) if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if "admin" in input.user.roles
 ```

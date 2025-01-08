@@ -60,8 +60,6 @@ func TestGetInlayHintsAstTerms(t *testing.T) {
 
 	policy := `package p
 
-	import rego.v1
-
 	allow if {
 		is_string("yes")
 	}`

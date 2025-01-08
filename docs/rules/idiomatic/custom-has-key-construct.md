@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 mfa if has_key(input.claims, "mfa")
 
 has_key(map, key) if {
@@ -20,8 +18,6 @@ has_key(map, key) if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 mfa if "mfa" in object.keys(input.claims)
 ```

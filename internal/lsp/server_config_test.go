@@ -32,7 +32,7 @@ func TestLanguageServerParentDirConfig(t *testing.T) {
 
 	mainRegoContents := `package main
 
-import rego.v1
+import data.test
 allow := true
 `
 

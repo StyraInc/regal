@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 full_name := name if {
     name := concat(", ", [input.first_name, input.last_name])
 }
@@ -26,8 +24,6 @@ names contains name if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 full_name := concat(", ", [input.first_name, input.last_name])
 

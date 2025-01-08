@@ -8,8 +8,6 @@ test_find_vars if {
 	policy := `
 	package p
 
-	import rego.v1
-
 	global := "foo"
 
 	allow if {
@@ -57,8 +55,6 @@ test_find_vars_comprehension_lhs if {
 	policy := `
 	package p
 
-	import rego.v1
-
 	allow if {
 		a := [b | input[b]]
 		c := {d | input[d]}
@@ -82,8 +78,6 @@ test_find_vars_function_ret_return_args if {
 	policy := `
 	package p
 
-	import rego.v1
-
 	allow if {
 		walk(input, [path, value])
 	}
@@ -101,8 +95,6 @@ test_find_vars_function_ret_return_args if {
 # https://github.com/StyraInc/regal/issues/168
 test_function_decls_multiple_same_name if {
 	policy := `package p
-
-	import rego.v1
 
 	f(x) := x if true
 	f(y) := y if false
@@ -151,8 +143,6 @@ test_find_vars_in_local_scope if {
 	policy := `
 	package p
 
-	import rego.v1
-
 	global := "foo"
 
 	allow if {
@@ -189,8 +179,6 @@ test_find_vars_in_local_scope_complex_comprehension_term if {
 	policy := `
 	package p
 
-	import rego.v1
-
 	allow if {
 		a := [{"b": b} | c := input[b]]
 	}`
@@ -210,8 +198,6 @@ test_find_vars_in_local_scope_complex_comprehension_term if {
 test_find_names_in_scope if {
 	policy := `
 	package p
-
-	import rego.v1
 
 	bar := "baz"
 
@@ -242,8 +228,6 @@ test_find_names_in_scope if {
 test_find_some_decl_names_in_scope if {
 	policy := `package p
 
-	import rego.v1
-
 	allow if {
 		foo := 1
 		some x
@@ -254,8 +238,8 @@ test_find_some_decl_names_in_scope if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	{"x"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) with input as module
-	{"x", "y", "z"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 10}) with input as module
+	{"x"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 6}) with input as module
+	{"x", "y", "z"} == ast.find_some_decl_names_in_scope(module.rules[0], {"col": 1, "row": 8}) with input as module
 }
 
 var_names(vars) := {var.value | some var in vars}
@@ -332,8 +316,6 @@ test_ref_static_to_string if {
 test_rule_head_locations if {
 	policy := `package policy
 
-import rego.v1
-
 default allow := false
 
 allow if true
@@ -351,10 +333,10 @@ ref_rule[foo] := true if {
 	result := ast.rule_head_locations with input as regal.parse_module("p.rego", policy)
 
 	result == {
-		"data.policy.allow": {{"col": 9, "row": 5}, {"col": 1, "row": 7}},
-		"data.policy.reasons": {{"col": 1, "row": 9}, {"col": 1, "row": 10}},
-		"data.policy.my_func": {{"col": 9, "row": 12}, {"col": 1, "row": 13}},
-		"data.policy.ref_rule": {{"col": 1, "row": 15}},
+		"data.policy.allow": {{"col": 9, "row": 3}, {"col": 1, "row": 5}},
+		"data.policy.reasons": {{"col": 1, "row": 7}, {"col": 1, "row": 8}},
+		"data.policy.my_func": {{"col": 9, "row": 10}, {"col": 1, "row": 11}},
+		"data.policy.ref_rule": {{"col": 1, "row": 13}},
 	}
 }
 

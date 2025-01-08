@@ -10,8 +10,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 report contains violation if {
     # ... some conditions
 }
@@ -19,8 +17,6 @@ report contains violation if {
 
 ```rego
 package policy_test
-
-import rego.v1
 
 import data.policy
 
@@ -34,8 +30,6 @@ test_report_is_empty {
 ```rego
 package policy
 
-import rego.v1
-
 report contains violation if {
     # ... some conditions
 }
@@ -43,8 +37,6 @@ report contains violation if {
 
 ```rego
 package policy_test
-
-import rego.v1
 
 import data.policy
 

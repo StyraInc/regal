@@ -8,16 +8,12 @@
 ```rego
 package policy
 
-import rego.v1
-
 more_than_one_member := count(input.members) > 1
 ```
 
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 more_than_one_member if count(input.members) > 1
 ```
@@ -32,8 +28,6 @@ input:
 
 ```rego
 package policy
-
-import rego.v1
 
 default more_than_one_member := false
 

@@ -22,6 +22,14 @@ development, whether you're an experienced Rego developer or just starting out.
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
+## **New!** Regal and OPA 1.0
+
+OPA 1.0 was [just released](https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828),
+and starting from version v0.30.0, Regal supports working with both OPA 1.0 policies and Rego from earlier versions
+of OPA. While everything should work without additional configuration, we recommend checking out our documentation on
+using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero) for the best possible experience managing
+projects of any given Rego version, or even a mix of them.
+
 ## Goals
 
 - Deliver an outstanding policy development experience by providing the best possible tools for that purpose
@@ -104,8 +112,6 @@ First, author some Rego!
 **policy/authz.rego**
 ```rego
 package authz
-
-import rego.v1
 
 default allow = false
 
@@ -292,7 +298,9 @@ The following rules are currently available:
 
 <!-- RULES_TABLE_END -->
 
-By default, all rules except for those in the `custom` category are currently **enabled**.
+Rules in all category except for those in `custom` are **enabled** by default. Some rules however — like `use-contains`
+and `use-if` — are conditionally enabled only when a version of OPA/Rego before 1.0 is targeted. See the configuration
+options below if you want to use Regal to lint "legacy" policies.
 
 **Aggregate Rules**
 
@@ -509,8 +517,6 @@ alternatively on the same line to the right of the expression:
 
 ```rego
 package policy
-
-import rego.v1
 
 # regal ignore:prefer-snake-case
 camelCase := "yes"
@@ -824,6 +830,7 @@ in the near future:
 
 ### Linter
 
+- [x] Full support for both OPA 1.0 policies and older versions of Rego
 - [ ] Allow remediation of more `style` category rules using the `regal fix` command
 - [ ] Add [unused-rule](https://github.com/StyraInc/regal/issues/358) linter
 - [x] Add [unused-output-variable](https://github.com/StyraInc/regal/issues/60) linter

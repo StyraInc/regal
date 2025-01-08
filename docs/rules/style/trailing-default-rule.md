@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     # some conditions
 }
@@ -20,8 +18,6 @@ default allow := false
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 default allow := false
 

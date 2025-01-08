@@ -133,8 +133,6 @@ An example policy to implement this requirement might look something like this:
 # - input: schema.regal.ast
 package custom.regal.rules.naming["acme-corp-package"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {
@@ -267,8 +265,6 @@ from files, and one that actually lints and reports violations using that data.
 # schemas:
 # - input: schema.regal.ast
 package custom.regal.rules.organizational["at-least-one-allow"]
-
-import rego.v1
 
 import data.regal.ast
 import data.regal.result

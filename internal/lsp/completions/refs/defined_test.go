@@ -106,8 +106,6 @@ func TestRefsForModule_Rules(t *testing.T) {
 
 	mod := rparse.MustParseModule(`package example
 
-import rego.v1
-
 # METADATA
 # title: An allow rule
 # description: A rule for things that should be allowed

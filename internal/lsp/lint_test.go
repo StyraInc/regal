@@ -83,7 +83,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		},
 	}
 
-	contents := "package p\n\nimport rego.v1\n\ncamelCase := 1\n"
+	contents := "package p\n\ncamelCase := 1\n"
 	module := parse.MustParseModule(contents)
 	workspaceRootURI := "file:///workspace"
 	fileURI := "file:///workspace/ignore/p.rego"

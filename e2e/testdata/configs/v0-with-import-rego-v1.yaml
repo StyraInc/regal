@@ -1,3 +1,5 @@
+project:
+  rego-version: 0
 capabilities:
   from:
     engine: opa

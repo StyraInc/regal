@@ -834,10 +834,16 @@ func TestFix(t *testing.T) {
 	td := t.TempDir()
 
 	initialState := map[string]string{
-		".regal/config.yaml": "", // needed to find the root in the right place
+		".regal/config.yaml": `
+project:
+  rego-version: 1
+  roots:
+    - path: v0
+      rego-version: 0
+    - path: v1
+      rego-version: 0
+`,
 		"foo/main.rego": `package wow
-
-import rego.v1
 
 #comment
 
@@ -847,13 +853,11 @@ allow if {
 `,
 		"foo/main_test.rego": `package wow_test
 
-test_allow {
+test_allow if {
 	true
 }
 `,
 		"foo/foo.rego": `package foo
-
-import rego.v1
 
 # present and correct
 
@@ -862,13 +866,21 @@ allow if {
 }
 `,
 		"bar/main.rego": `package wow["foo-bar"].baz
-
-import rego.v1
 `,
 		"bar/main_test.rego": `package wow["foo-bar"].baz_test
-test_allow {
+test_allow if {
 	true
 }
+`,
+		"v0/main.rego": `package v0
+
+#comment
+allow { true }
+`,
+		"v1/main.rego": `package v1
+
+#comment
+allow if { true }
 `,
 		"unrelated.txt": `foobar`,
 	}
@@ -878,29 +890,46 @@ test_allow {
 	}
 
 	// --force is required to make the changes when there is no git repo
-	err := regal(&stdout, &stderr)("fix", "--force", filepath.Join(td, "foo"), filepath.Join(td, "bar"))
+	err := regal(&stdout, &stderr)(
+		"fix",
+		"--force",
+		filepath.Join(td, "foo"),
+		filepath.Join(td, "bar"),
+		filepath.Join(td, "v0"),
+		filepath.Join(td, "v1"),
+	)
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`8 fixes applied:
-In project root: %s
+	exp := fmt.Sprintf(`12 fixes applied:
+In project root: %[1]s
 bar/main.rego -> wow/foo-bar/baz/main.rego:
 - directory-package-mismatch
 
 bar/main_test.rego -> wow/foo-bar/baz/main_test.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 
 foo/main.rego -> wow/main.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 - no-whitespace-comment
 
 foo/main_test.rego -> wow/main_test.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 
+
+In project root: %[1]s/v0
+main.rego:
+- opa-fmt
+- no-whitespace-comment
+
+In project root: %[1]s/v1
+main.rego:
+- opa-fmt
+- no-whitespace-comment
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -914,8 +943,6 @@ foo/main_test.rego -> wow/main_test.rego:
 	expectedState := map[string]string{
 		"foo/foo.rego": `package foo
 
-import rego.v1
-
 # present and correct
 
 allow if {
@@ -923,18 +950,12 @@ allow if {
 }
 `,
 		"wow/foo-bar/baz/main.rego": `package wow["foo-bar"].baz
-
-import rego.v1
 `,
 		"wow/foo-bar/baz/main_test.rego": `package wow["foo-bar"].baz_test
-
-import rego.v1
 
 test_allow := true
 `,
 		"wow/main.rego": `package wow
-
-import rego.v1
 
 # comment
 
@@ -942,9 +963,19 @@ allow := true
 `,
 		"wow/main_test.rego": `package wow_test
 
+test_allow := true
+`,
+		"v0/main.rego": `package v0
+
 import rego.v1
 
-test_allow := true
+# comment
+allow := true
+`,
+		"v1/main.rego": `package v1
+
+# comment
+allow := true
 `,
 		"unrelated.txt": `foobar`,
 	}

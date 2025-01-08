@@ -230,6 +230,5 @@ deny := true
 		if !slices.Equal(expectedFixes, fixes) {
 			t.Fatalf("unexpected fixes for %s:\ngot: %v\nexpected: %v", file, fixes, expectedFixes)
 		}
-
 	}
 }

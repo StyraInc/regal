@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/internal/lsp"
 	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/styrainc/regal/pkg/version"
 )
 
 func init() {
@@ -24,6 +26,23 @@ func init() {
 		RunE: wrapProfiling(func([]string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
+
+			exe, err := os.Executable()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "error getting executable:", err)
+			} else {
+				absPath, err := filepath.Abs(exe)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "error getting executable path:", err)
+				} else {
+					v := version.Version
+					if v == "" {
+						v = "Unknown"
+					}
+
+					fmt.Fprintf(os.Stderr, "Regal Language Server (path: %s, version: %s)", absPath, v)
+				}
+			}
 
 			opts := &lsp.LanguageServerOptions{
 				LogWriter: os.Stderr,

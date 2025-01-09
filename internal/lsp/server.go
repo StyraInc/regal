@@ -1117,7 +1117,7 @@ func (l *LanguageServer) determineVersionForFile(fileURI string) ast.RegoVersion
 	var versionedDirs []string
 
 	// if we have no information, then we can return the default
-	if l.loadedConfigAllRegoVersions == nil || l.loadedConfigAllRegoVersions.Len() == 0 {
+	if l.loadedConfigAllRegoVersions.Len() == 0 {
 		return ast.RegoV1
 	}
 

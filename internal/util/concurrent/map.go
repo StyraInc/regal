@@ -86,6 +86,10 @@ func (cm *Map[K, V]) Values() []V {
 }
 
 func (cm *Map[K, V]) Len() int {
+	if cm == nil {
+		return 0
+	}
+
 	cm.murw.RLock()
 
 	l := len(cm.m)

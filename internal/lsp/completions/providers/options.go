@@ -12,4 +12,5 @@ type Options struct {
 	Builtins         map[string]*ast.Builtin
 	RootURI          string
 	ClientIdentifier clients.Identifier
+	RegoVersion      ast.RegoVersion
 }

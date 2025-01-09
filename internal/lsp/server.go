@@ -1764,6 +1764,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
+		RegoVersion:      l.determineVersionForFile(params.TextDocument.URI),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2137,8 +2138,6 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return []types.TextEdit{}, nil
 		}
 
-		// TODO: We'll want to use version here too, to determine if "import rego.v1" should be used
-
 		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
@@ -2168,13 +2167,12 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
-		opts := format.Opts{}
+		opts := format.Opts{
+			RegoVersion: l.determineVersionForFile(params.TextDocument.URI),
+		}
+
 		if formatter == "opa-fmt-rego-v1" {
 			opts.RegoVersion = ast.RegoV0CompatV1
-		} else {
-			if module, ok := l.cache.GetModule(params.TextDocument.URI); ok {
-				opts.RegoVersion = module.RegoVersion()
-			}
 		}
 
 		f := &fixes.Fmt{OPAFmtOpts: opts}

@@ -11,6 +11,7 @@ import data.regal.lsp.completion.location
 # description: completion suggestion for rego.v1
 items contains item if {
 	not strings.any_prefix_match(input.regal.file.lines, "import rego.v1")
+	not input.regal.context.rego_version == 3 # the rego.v1 import is not used in v1 rego
 
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]

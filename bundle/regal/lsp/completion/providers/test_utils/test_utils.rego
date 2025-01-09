@@ -28,3 +28,16 @@ input_with_location(policy, location) := {"regal": {
 	},
 	"context": {"location": location},
 }}
+
+# METADATA
+# description: same as input_with_location but with option to set rego_version too
+input_with_location_and_version(policy, location, rego_version) := {"regal": {
+	"file": {
+		"name": "p.rego",
+		"lines": split(policy, "\n"),
+	},
+	"context": {
+		"location": location,
+		"rego_version": rego_version,
+	},
+}}

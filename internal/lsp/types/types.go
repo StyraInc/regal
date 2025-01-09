@@ -1,6 +1,8 @@
 package types
 
 import (
+	"github.com/open-policy-agent/opa/v1/ast"
+
 	"github.com/styrainc/regal/internal/lsp/types/completion"
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
@@ -129,6 +131,7 @@ type CompletionParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Context      CompletionContext      `json:"context"`
 	Position     Position               `json:"position"`
+	RegoVersion  ast.RegoVersion        `json:"regoVersion"`
 }
 
 type CompletionContext struct {

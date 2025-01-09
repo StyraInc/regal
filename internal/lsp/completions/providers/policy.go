@@ -67,6 +67,7 @@ func (p *Policy) Run(
 	inputContext["client_identifier"] = opts.ClientIdentifier
 	inputContext["workspace_root"] = uri.ToPath(opts.ClientIdentifier, opts.RootURI)
 	inputContext["path_separator"] = rio.PathSeparator
+	inputContext["rego_version"] = opts.RegoVersion
 
 	workspacePath := uri.ToPath(opts.ClientIdentifier, opts.RootURI)
 

@@ -12,22 +12,26 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/open-policy-agent/opa/v1/ast"
+
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/util/concurrent"
 )
 
 func TestTemplateContentsForFile(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		FileKey           string
-		CacheFileContents string
-		DiskContents      map[string]string
-		RequireConfig     bool
-		ExpectedContents  string
-		ExpectedError     string
+		FileKey               string
+		CacheFileContents     string
+		DiskContents          map[string]string
+		RequireConfig         bool
+		ServerAllRegoVersions *concurrent.Map[string, ast.RegoVersion]
+		ExpectedContents      string
+		ExpectedError         string
 	}{
 		"existing contents in file": {
 			FileKey:           "foo/bar.rego",
@@ -49,7 +53,7 @@ func TestTemplateContentsForFile(t *testing.T) {
 				"foo/bar.rego":       "",
 				".regal/config.yaml": "",
 			},
-			ExpectedContents: "package foo\n\nimport rego.v1\n",
+			ExpectedContents: "package foo\n\n",
 		},
 		"empty test file is templated based on root": {
 			FileKey:           "foo/bar_test.rego",
@@ -59,7 +63,7 @@ func TestTemplateContentsForFile(t *testing.T) {
 				".regal/config.yaml": "",
 			},
 			RequireConfig:    true,
-			ExpectedContents: "package foo_test\n\nimport rego.v1\n",
+			ExpectedContents: "package foo_test\n\n",
 		},
 		"empty deeply nested file is templated based on root": {
 			FileKey:           "foo/bar/baz/bax.rego",
@@ -68,7 +72,31 @@ func TestTemplateContentsForFile(t *testing.T) {
 				"foo/bar/baz/bax.rego": "",
 				".regal/config.yaml":   "",
 			},
+			ExpectedContents: "package foo.bar.baz\n\n",
+		},
+		"v0 templating using rego version setting": {
+			FileKey:           "foo/bar/baz/bax.rego",
+			CacheFileContents: "",
+			ServerAllRegoVersions: concurrent.MapOf(map[string]ast.RegoVersion{
+				"foo": ast.RegoV0,
+			}),
+			DiskContents: map[string]string{
+				"foo/bar/baz/bax.rego": "",
+				".regal/config.yaml":   "", // we manually set the versions, config not loaded in these tests
+			},
 			ExpectedContents: "package foo.bar.baz\n\nimport rego.v1\n",
+		},
+		"v1 templating using rego version setting": {
+			FileKey:           "foo/bar/baz/bax.rego",
+			CacheFileContents: "",
+			ServerAllRegoVersions: concurrent.MapOf(map[string]ast.RegoVersion{
+				"foo": ast.RegoV1,
+			}),
+			DiskContents: map[string]string{
+				"foo/bar/baz/bax.rego": "",
+				".regal/config.yaml":   "", // we manually set the versions, config not loaded in these tests
+			},
+			ExpectedContents: "package foo.bar.baz\n\n",
 		},
 	}
 
@@ -99,6 +127,8 @@ func TestTemplateContentsForFile(t *testing.T) {
 			)
 
 			ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
+
+			ls.loadedConfigAllRegoVersions = tc.ServerAllRegoVersions
 
 			fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, tc.FileKey))
 
@@ -188,7 +218,6 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 
 	exp := `package foo
 
-import rego.v1
 `
 	if exp != newContents {
 		t.Errorf("unexpected content: %s, want %s", newContents, exp)
@@ -279,7 +308,7 @@ func TestNewFileTemplating(t *testing.T) {
       {
         "edits": [
           {
-            "newText": "package foo.bar_test\n\nimport rego.v1\n",
+            "newText": "package foo.bar_test\n\n",
             "range": {
               "end": {
                 "character": 0,

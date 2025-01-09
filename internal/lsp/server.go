@@ -88,20 +88,21 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 
 	var ls *LanguageServer
 	ls = &LanguageServer{
-		cache:                    c,
-		regoStore:                store,
-		logWriter:                opts.LogWriter,
-		logLevel:                 opts.LogLevel,
-		lintFileJobs:             make(chan lintFileJob, 10),
-		lintWorkspaceJobs:        make(chan lintWorkspaceJob, 10),
-		builtinsPositionJobs:     make(chan lintFileJob, 10),
-		commandRequest:           make(chan types.ExecuteCommandParams, 10),
-		templateFileJobs:         make(chan lintFileJob, 10),
-		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
-		completionsManager:       completions.NewDefaultManager(ctx, c, store),
-		webServer:                web.NewServer(c),
-		loadedBuiltins:           concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
-		workspaceDiagnosticsPoll: opts.WorkspaceDiagnosticsPoll,
+		cache:                       c,
+		regoStore:                   store,
+		logWriter:                   opts.LogWriter,
+		logLevel:                    opts.LogLevel,
+		lintFileJobs:                make(chan lintFileJob, 10),
+		lintWorkspaceJobs:           make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:        make(chan lintFileJob, 10),
+		commandRequest:              make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:            make(chan lintFileJob, 10),
+		configWatcher:               lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
+		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		webServer:                   web.NewServer(c),
+		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
+		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
+		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
 	}
 
 	return ls
@@ -114,10 +115,13 @@ type LanguageServer struct {
 	regoStore storage.Store
 	conn      *jsonrpc2.Conn
 
-	configWatcher                        *lsconfig.Watcher
-	loadedConfig                         *config.Config
+	configWatcher *lsconfig.Watcher
+	loadedConfig  *config.Config
+	// this is also used to lock the updates to the cache of enabled rules
+	loadedConfigLock                     sync.Mutex
 	loadedConfigEnabledNonAggregateRules []string
 	loadedConfigEnabledAggregateRules    []string
+	loadedConfigAllRegoVersions          *concurrent.Map[string, ast.RegoVersion]
 	loadedBuiltins                       *concurrent.Map[string, map[string]*ast.Builtin]
 
 	clientInitializationOptions types.InitializationOptions
@@ -137,9 +141,6 @@ type LanguageServer struct {
 
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
-
-	// this is also used to lock the updates to the cache of enabled rules
-	loadedConfigLock sync.Mutex
 
 	workspaceDiagnosticsPoll time.Duration
 }
@@ -551,6 +552,22 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			l.loadedConfig = &mergedConfig
 			l.loadedConfigLock.Unlock()
 
+			// Rego versions may have changed, so reload them.
+			allRegoVersions, err := config.AllRegoVersions(
+				uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
+				l.getLoadedConfig(),
+			)
+			if err != nil {
+				l.logf(log.LevelMessage, "failed to reload rego versions: %s", err)
+			}
+
+			l.loadedConfigAllRegoVersions.Clear()
+
+			for k, v := range allRegoVersions {
+				l.loadedConfigAllRegoVersions.Set(k, v)
+			}
+
+			// Enabled rules might have changed with the new config, so reload.
 			err = l.loadEnabledRulesFromConfig(ctx, mergedConfig)
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to cache enabled rules: %s", err)
@@ -1096,6 +1113,32 @@ func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }
 
+func (l *LanguageServer) determineVersionForFile(fileURI string) ast.RegoVersion {
+	var versionedDirs []string
+
+	// if we have no information, then we can return the default
+	if l.loadedConfigAllRegoVersions == nil || l.loadedConfigAllRegoVersions.Len() == 0 {
+		return ast.RegoV1
+	}
+
+	versionedDirs = util.Keys(l.loadedConfigAllRegoVersions.Clone())
+	slices.Sort(versionedDirs)
+	slices.Reverse(versionedDirs)
+
+	path := strings.TrimPrefix(fileURI, l.workspaceRootURI+"/")
+
+	for _, versionedDir := range versionedDirs {
+		if strings.HasPrefix(path, versionedDir) {
+			val, ok := l.loadedConfigAllRegoVersions.Get(versionedDir)
+			if ok {
+				return val
+			}
+		}
+	}
+
+	return ast.RegoV1
+}
+
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	// this function should not be called with files in the root, but if it is,
 	// then it is an error to prevent unwanted behavior.
@@ -1185,7 +1228,13 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
+	version := l.determineVersionForFile(fileURI)
+
+	if version == ast.RegoV0 {
+		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
+	}
+
+	return fmt.Sprintf("package %s\n\n", pkg), nil
 }
 
 func (l *LanguageServer) fixEditParams(

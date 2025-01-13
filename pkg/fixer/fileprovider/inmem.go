@@ -13,15 +13,6 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 )
 
-type RenameConflictError struct {
-	From string
-	To   string
-}
-
-func (e RenameConflictError) Error() string {
-	return fmt.Sprintf("rename conflict: %q cannot be renamed as the target location %q already exists", e.From, e.To)
-}
-
 type InMemoryFileProvider struct {
 	files         map[string][]byte
 	modifiedFiles map[string]struct{}

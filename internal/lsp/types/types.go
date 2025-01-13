@@ -241,6 +241,14 @@ type ApplyWorkspaceRenameEditParams struct {
 	Edit  WorkspaceRenameEdit `json:"edit"`
 }
 
+type ApplyWorkspaceAnyEditParams struct {
+	Label string           `json:"label"`
+	Edit  WorkspaceAnyEdit `json:"edit"`
+}
+type WorkspaceAnyEdit struct {
+	DocumentChanges []any `json:"documentChanges"`
+}
+
 type RenameFileOptions struct {
 	Overwrite      bool `json:"overwrite"`
 	IgnoreIfExists bool `json:"ignoreIfExists"`
@@ -269,6 +277,10 @@ type DeleteFile struct {
 // Perhaps we should use generics and a union type here instead.
 type WorkspaceRenameEdit struct {
 	DocumentChanges []RenameFile `json:"documentChanges"`
+}
+
+type WorkspaceDeleteEdit struct {
+	DocumentChanges []DeleteFile `json:"documentChanges"`
 }
 
 type WorkspaceEdit struct {

@@ -13,6 +13,7 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 func TestFixer(t *testing.T) {
@@ -178,6 +179,112 @@ deny := true
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(1); got != exp {
+		t.Fatalf("expected %d fixes, got %d", exp, got)
+	}
+
+	fpFiles, err := memfp.List()
+	if err != nil {
+		t.Fatalf("failed to list files: %v", err)
+	}
+
+	for _, file := range fpFiles {
+		// check that the content is correct
+		expectedContent, ok := expectedFileContents[file]
+		if !ok {
+			t.Fatalf("unexpected file %s", file)
+		}
+
+		content, err := memfp.Get(file)
+		if err != nil {
+			t.Fatalf("failed to get file %s: %v", file, err)
+		}
+
+		if !bytes.Equal(content, expectedContent) {
+			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
+				file,
+				string(content),
+				string(expectedContent))
+		}
+
+		fxs := fixReport.FixesForFile(file)
+
+		// check that the fixed violations are correct
+		var fixes []string
+		for _, fx := range fxs {
+			fixes = append(fixes, fx.Title)
+		}
+
+		expectedFixes, ok := expectedFileFixedViolations[file]
+		if !ok {
+			t.Fatalf("unexpected file was fixed %s", file)
+		}
+
+		slices.Sort(expectedFixes)
+		slices.Sort(fixes)
+
+		if !slices.Equal(expectedFixes, fixes) {
+			t.Fatalf("unexpected fixes for %s:\ngot: %v\nexpected: %v", file, fixes, expectedFixes)
+		}
+	}
+}
+
+func TestFixViolations(t *testing.T) {
+	t.Parallel()
+
+	// targeted specific fix for a given violation
+	violations := []report.Violation{
+		{
+			Title:    "directory-package-mismatch",
+			Location: report.Location{File: "root/main.rego"},
+		},
+	}
+
+	policies := map[string][]byte{
+		"root/main.rego": []byte(`package foo.bar
+
+allow := true
+`),
+		// file in correct place
+		"root/foo/bar/main.rego": []byte(`package foo.bar
+
+allow := true
+`),
+	}
+
+	memfp := fileprovider.NewInMemoryFileProvider(policies)
+
+	f := NewFixer()
+	f.SetOnConflictOperation(OnConflictRename)
+	f.RegisterFixes(fixes.NewDefaultFixes()...)
+
+	fixReport, err := f.FixViolations(violations, memfp, &config.Config{})
+	if err != nil {
+		t.Fatalf("failed to fix: %v", err)
+	}
+
+	expectedFileFixedViolations := map[string][]string{
+		"root/main.rego":           {"directory-package-mismatch"},
+		"root/foo/bar/main_1.rego": {"directory-package-mismatch"},
+		"root/foo/bar/main.rego":   {}, // no fixes
+	}
+	expectedFileContents := map[string][]byte{
+		// old file yet to be deleted
+		"root/main.rego": []byte(`package foo.bar
+
+allow := true
+`),
+		"root/foo/bar/main_1.rego": []byte(`package foo.bar
+
+allow := true
+`),
+		// file in correct place
+		"root/foo/bar/main.rego": []byte(`package foo.bar
+
+allow := true
+`),
+	}
+
+	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
 		t.Fatalf("expected %d fixes, got %d", exp, got)
 	}
 

@@ -11,9 +11,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 type OnConflictOperation string
@@ -124,6 +126,79 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 	// Apply fixes that require linter violation triggers
 	if err := f.applyLinterFixes(ctx, l, fp, fixReport); err != nil {
 		return nil, err
+	}
+
+	return fixReport, nil
+}
+
+func (f *Fixer) FixViolations(
+	violations []report.Violation,
+	fp fileprovider.FileProvider,
+	config *config.Config,
+) (*Report, error) {
+	fixReport := NewReport()
+
+	startingFiles, err := fp.List()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	for _, violation := range violations {
+		file := violation.Location.File
+
+		fixInstance, ok := f.GetFixForName(violation.Title)
+		if !ok {
+			return nil, fmt.Errorf("no fix for violation %s", violation.Title)
+		}
+
+		fc, err := fp.Get(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file %s: %w", file, err)
+		}
+
+		fixCandidate := fixes.FixCandidate{
+			Filename: file,
+			Contents: fc,
+		}
+
+		abs, err := filepath.Abs(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path for %s: %w", file, err)
+		}
+
+		fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
+			BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
+			Config:  config,
+			Locations: []ast.Location{
+				{
+					Row: violation.Location.Row,
+					Col: violation.Location.Column,
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+		}
+
+		if len(fixResults) == 0 {
+			continue
+		}
+
+		fixResult := fixResults[0]
+
+		if fixResult.Rename != nil {
+			err = f.handleRename(fp, fixReport, startingFiles, fixResult)
+			if err != nil {
+				return nil, fmt.Errorf("failed to handle rename: %w", err)
+			}
+		}
+
+		// Write the fixed content to the file
+		if err := fp.Put(file, fixResult.Contents); err != nil {
+			return nil, fmt.Errorf("failed to write fixed content to file %s: %w", file, err)
+		}
+
+		fixReport.AddFileFix(file, fixResult)
 	}
 
 	return fixReport, nil

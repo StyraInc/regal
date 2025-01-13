@@ -1,6 +1,10 @@
 package fileprovider
 
-import "github.com/styrainc/regal/pkg/rules"
+import (
+	"fmt"
+
+	"github.com/styrainc/regal/pkg/rules"
+)
 
 type FileProvider interface {
 	List() ([]string, error)
@@ -11,4 +15,13 @@ type FileProvider interface {
 	Rename(string, string) error
 
 	ToInput() (rules.Input, error)
+}
+
+type RenameConflictError struct {
+	From string
+	To   string
+}
+
+func (e RenameConflictError) Error() string {
+	return fmt.Sprintf("rename conflict: %q cannot be renamed as the target location %q already exists", e.From, e.To)
 }

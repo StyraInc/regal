@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     # traverse potentially nested permissions structure looking
     # for an admin role, but notice how the path is never referenced
@@ -24,8 +22,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     # replacing `path` with a wildcard variable tells the evaluator that it won't
@@ -60,8 +56,6 @@ This rule can only optimize `walk` calls where the path/value array is provided 
 
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     # this can't be optimized, as the `walk` function can't

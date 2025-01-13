@@ -40,6 +40,10 @@ func ModuleWithOpts(path, policy string, opts ast.ParserOptions) (*ast.Module, e
 		err    error
 	)
 
+	if opts.RegoVersion == ast.RegoUndefined && strings.HasSuffix(path, "_v0.rego") {
+		opts.RegoVersion = ast.RegoV0
+	}
+
 	if opts.RegoVersion != ast.RegoUndefined {
 		module, err = ast.ParseModuleWithOpts(path, policy, opts)
 		if err != nil {
@@ -92,7 +96,7 @@ func ModuleUnknownVersionWithOpts(
 		}
 	}
 
-	// TODO: We probably need to reurn the errors from each parse attempt ?
+	// TODO: We probably need to return the errors from each parse attempt ?
 	// as otherwise there could be very skewed error messages..
 
 	return nil, err //nolint:wrapcheck

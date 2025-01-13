@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 pin_as_number := val if {
     is_number(input.pin_code)
     val := to_number(input.pin_code)
@@ -24,8 +22,6 @@ deny contains message if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 pin_as_number := to_number(input.pin_code) if is_number(input.pin_code)
 

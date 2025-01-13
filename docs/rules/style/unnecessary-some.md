@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 is_developer if some "developer" in input.user.roles
 ```
 
@@ -17,8 +15,6 @@ is_developer if some "developer" in input.user.roles
 
 ```rego
 package policy
-
-import rego.v1
 
 is_developer if "developer" in input.user.roles
 ```
@@ -35,8 +31,6 @@ should match for the loop assignment to succeed. This is not commonly needed, bu
 
 ```rego
 package policy
-
-import rego.v1
 
 developers contains name if {
     # name will only be bound when the value is "developer"

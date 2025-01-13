@@ -1,7 +1,5 @@
 package custom.regal.rules.{{.Category}}{{.NameTest}}
 
-import rego.v1
-
 import data.custom.regal.rules.{{.Category}}{{.Name}} as rule
 
 # Example test, replace with your own

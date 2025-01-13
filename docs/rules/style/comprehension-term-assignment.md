@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 names := [name |
     some user in input.users
     name := user.name # redundant assignment
@@ -19,8 +17,6 @@ names := [name |
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 names := [user.name |
     some user in input.users

@@ -10,8 +10,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 default allow = false
 
 first_name(name) = split(name, " ")[0]
@@ -25,8 +23,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 default allow := false
 

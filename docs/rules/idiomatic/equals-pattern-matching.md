@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 readable_number(x) := "one" if x == 1
 readable_number(x) := "two" if x == 2
 ```
@@ -31,8 +29,6 @@ moving the equality check to match on the function call itself. This means that 
 ```rego
 package policy
 
-import rego.v1
-
 normalize_role(role) := "admin" if {
     role == "administrator"
 }
@@ -48,8 +44,6 @@ the equality "pattern":
 ```rego
 package policy
 
-import rego.v1
-
 normalize_role("administrator") := "admin"
 
 normalize_role("root") := "admin"
@@ -59,8 +53,6 @@ Rules that evaluate to `true` may even have the assignment removed altogether, i
 
 ```rego
 package policy
-
-import rego.v1
 
 is_admin(role) if role == "admin"
 

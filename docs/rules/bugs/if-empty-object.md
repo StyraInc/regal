@@ -12,8 +12,6 @@ the sake of posterity.**
 ```rego
 package policy
 
-import rego.v1
-
 allow if {}
 ```
 

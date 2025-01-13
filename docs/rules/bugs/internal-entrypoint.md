@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # METADATA
 # entrypoint: true
 _authorized if {
@@ -20,8 +18,6 @@ _authorized if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # METADATA
 # entrypoint: true

@@ -8,8 +8,6 @@
 ```rego
 package policy_test
 
-import rego.v1
-
 import data.policy
 
 # Make sure this passes

@@ -205,6 +205,8 @@ func TestLintV1Violations(t *testing.T) {
 		"file-length":              {},
 		"rule-named-if":            {},
 		"use-rego-v1":              {},
+		"deprecated-builtin":       {},
+		"import-shadows-import":    {},
 	}
 
 	cfg := readProvidedConfig(t)

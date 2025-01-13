@@ -5,8 +5,6 @@
 #   ref: https://www.acmecorp.example.org/docs/regal/package
 package custom.regal.rules.utils["printer"]
 
-import rego.v1
-
 report contains "never happens" if {
 	print(input.regal.file.name)
 

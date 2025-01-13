@@ -8,16 +8,12 @@
 ```rego
 package policy
 
-import rego.v1
-
 num_as := count(indexof_n("foobarbaz", "a"))
 ```
 
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 num_as := strings.count("foobarbaz", "a")
 ```

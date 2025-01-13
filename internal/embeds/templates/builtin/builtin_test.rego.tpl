@@ -1,7 +1,5 @@
 package regal.rules.{{.Category}}{{.NameTest}}
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 

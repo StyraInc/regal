@@ -26,8 +26,6 @@ func TestLintWithDefaultBundle(t *testing.T) {
 
 	input := test.InputPolicy("p/p.rego", `package p
 
-import rego.v1
-
 # TODO: fix this
 camelCase if {
 	input.one == 1
@@ -47,7 +45,7 @@ camelCase if {
 		t.Errorf("expected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
 	}
 
-	if result.Violations[0].Location.Row != 5 {
+	if result.Violations[0].Location.Row != 3 {
 		t.Errorf("expected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
 	}
 
@@ -63,7 +61,7 @@ camelCase if {
 		t.Errorf("expected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
 	}
 
-	if result.Violations[1].Location.Row != 6 {
+	if result.Violations[1].Location.Row != 4 {
 		t.Errorf("expected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
 	}
 

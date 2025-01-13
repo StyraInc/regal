@@ -3,9 +3,22 @@
 package regal.rules.bugs["deprecated-builtin"]
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 import data.regal.result
 import data.regal.util
+
+# METADATA
+# description: |
+#   Since OPA 1.0, deprecated-builtin enabled only when provided a v0 policy,
+#   BUT please note that this may change in the future if new built-in functions
+#   are deprecated.
+# custom:
+#   severity: none
+notices contains result.notice(rego.metadata.chain()) if {
+	capabilities.is_opa_v1
+	input.regal.file.rego_version != "v0"
+}
 
 report contains violation if {
 	deprecated_builtins := {

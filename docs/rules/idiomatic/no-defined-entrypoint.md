@@ -10,8 +10,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 default allow := false
 
 # Nothing wrong with this rule, but an
@@ -33,8 +31,6 @@ public_resource_read if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 default allow := false
 

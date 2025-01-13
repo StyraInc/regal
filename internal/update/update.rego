@@ -2,8 +2,6 @@
 # description: utility module to help determine if an update of Regal should be recommended
 package update
 
-import rego.v1
-
 default needs_update := false
 
 # METADATA

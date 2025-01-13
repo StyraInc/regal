@@ -7,8 +7,6 @@
 #     ref: file:///./../../.github/workflows/update-example-index.yaml
 package build.workflows
 
-import rego.v1
-
 # METADATA
 # entrypoint: true
 symbols := {"keywords": _keywords, "builtins": _builtins}

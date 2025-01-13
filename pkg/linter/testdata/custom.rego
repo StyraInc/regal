@@ -5,8 +5,6 @@
 #   ref: https://www.acmecorp.example.org/docs/regal/package
 package custom.regal.rules.naming["acme-corp-package"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {

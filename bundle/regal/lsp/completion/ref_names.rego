@@ -1,7 +1,5 @@
 package regal.lsp.completion
 
-import rego.v1
-
 import data.regal.ast
 
 # METADATA

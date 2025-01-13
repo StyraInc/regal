@@ -1,7 +1,5 @@
 package regal.rules.custom["naming-convention_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
@@ -105,7 +103,7 @@ test_success_function_name_matches_pattern if {
 
 test_fail_var_name_does_not_match_pattern if {
 	policy := ast.policy(`
-	allow {
+	allow if {
 		fooBar := true
 		fooBar == true
 	}
@@ -133,7 +131,7 @@ test_fail_var_name_does_not_match_pattern if {
 
 test_success_var_name_matches_pattern if {
 	policy := ast.policy(`
-	allow {
+	allow if {
 		some foo_bar
 		input[foo_bar]
 		foo_bar == "works"
@@ -154,7 +152,7 @@ test_fail_multiple_conventions if {
 
 	foo := true
 
-	bar {
+	bar if {
 		fooBar := true
 		fooBar == true
 	}

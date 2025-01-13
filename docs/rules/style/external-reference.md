@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # Depends on both `input` and `data`
 is_preferred_login_method(method) if {
     preferred_login_methods := {login_method |
@@ -23,8 +21,6 @@ is_preferred_login_method(method) if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # Depends only on function arguments
 is_preferred_login_method(method, user, all_login_methods) if {
@@ -52,8 +48,6 @@ other way to import them into the function body.
 
 ```rego
 package policy
-
-import rego.v1
 
 first_name(full_name) := capitalized {
     first_name := split(full_name, " ")[0]

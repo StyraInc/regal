@@ -3,7 +3,7 @@ package lsp
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/lsp/rego"
 )
@@ -34,8 +34,8 @@ func TestGetInlayHintsAstCall(t *testing.T) {
 			inlayHints[0].Position.Line, inlayHints[0].Position.Character)
 	}
 
-	if inlayHints[0].Tooltip.Value != "Type: `object[any: any]`" {
-		t.Errorf("Expected tooltip to be 'Type: `object[any: any]`, got %s", inlayHints[0].Tooltip.Value)
+	if inlayHints[0].Tooltip.Value != "object to filter\n\nType: `object[any: any]`" {
+		t.Errorf("Expected tooltip to be 'object to filter\n\nType: `object[any: any]`, got %s", inlayHints[0].Tooltip.Value)
 	}
 
 	if inlayHints[1].Label != "paths:" {
@@ -60,8 +60,6 @@ func TestGetInlayHintsAstTerms(t *testing.T) {
 
 	policy := `package p
 
-	import rego.v1
-
 	allow if {
 		is_string("yes")
 	}`
@@ -85,7 +83,7 @@ func TestGetInlayHintsAstTerms(t *testing.T) {
 			inlayHints[0].Position.Line, inlayHints[0].Position.Character)
 	}
 
-	if inlayHints[0].Tooltip.Value != "Type: `any`" {
-		t.Errorf("Expected tooltip to be 'Type: `any`, got %s", inlayHints[0].Tooltip.Value)
+	if inlayHints[0].Tooltip.Value != "input value\n\nType: `any`" {
+		t.Errorf("Expected tooltip to be 'input value\n\nType: `any`, got %s", inlayHints[0].Tooltip.Value)
 	}
 }

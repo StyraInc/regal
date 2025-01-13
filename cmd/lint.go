@@ -17,9 +17,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/metrics"
-	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/metrics"
+	"github.com/open-policy-agent/opa/v1/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -290,6 +290,10 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	if params.instrument {
 		regal = regal.WithInstrumentation(true)
+	}
+
+	if regalDir != nil {
+		regal = regal.WithPathPrefix(filepath.Dir(regalDir.Name()))
 	}
 
 	var userConfig config.Config

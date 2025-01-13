@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/topdown"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/topdown"
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
@@ -25,8 +25,6 @@ func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()
 
 	input := test.InputPolicy("p/p.rego", `package p
-
-import rego.v1
 
 # TODO: fix this
 camelCase if {
@@ -47,7 +45,7 @@ camelCase if {
 		t.Errorf("expected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
 	}
 
-	if result.Violations[0].Location.Row != 5 {
+	if result.Violations[0].Location.Row != 3 {
 		t.Errorf("expected first violation to be on line 3, got %d", result.Violations[0].Location.Row)
 	}
 
@@ -63,7 +61,7 @@ camelCase if {
 		t.Errorf("expected second violation to be 'prefer-snake-case', got %s", result.Violations[1].Title)
 	}
 
-	if result.Violations[1].Location.Row != 6 {
+	if result.Violations[1].Location.Row != 4 {
 		t.Errorf("expected second violation to be on line 4, got %d", result.Violations[1].Location.Row)
 	}
 
@@ -762,15 +760,50 @@ import data.unresolved`,
 }
 
 func BenchmarkRegalLintingItself(b *testing.B) {
-	linter := NewLinter().WithInputPaths([]string{"../../bundle"}).WithEnableAll(true)
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithEnableAll(true)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
-		_, err := linter.Lint(context.Background())
+	var err error
+
+	var rep report.Report
+
+	for range b.N {
+		rep, err = linter.Lint(context.Background())
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
+	}
+}
+
+// BenchmarkRegalNoEnabledRules-10    	       4	 283181990 ns/op	504195068 B/op	 9537285 allocs/op.
+func BenchmarkRegalNoEnabledRules(b *testing.B) {
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithDisableAll(true)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	var err error
+
+	var rep report.Report
+
+	for range b.N {
+		rep, err = linter.Lint(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
 	}
 }

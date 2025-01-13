@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 username := input.user.name
 
 username := "anonymous" if not input.user.name

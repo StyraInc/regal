@@ -2,8 +2,6 @@
 # description: Function argument used for return value
 package regal.rules.style["function-arg-return"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

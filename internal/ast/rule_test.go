@@ -3,7 +3,7 @@ package ast
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/parse"
@@ -42,7 +42,7 @@ func TestGetRuleDetail(t *testing.T) {
 		t.Run(tc.input, func(t *testing.T) {
 			t.Parallel()
 
-			mod := parse.MustParseModule("package example\nimport rego.v1\n" + tc.input)
+			mod := parse.MustParseModule("package example\n" + tc.input)
 
 			if len(mod.Rules) != 1 {
 				t.Fatalf("Expected 1 rule, got %d", len(mod.Rules))

@@ -8,8 +8,6 @@
 ```rego
 package authz
 
-import rego.v1
-
  # METADATA
  # description: allow any requests by admin users
 
@@ -21,8 +19,6 @@ allow if {
 **Prefer**
 ```rego
 package authz
-
-import rego.v1
 
 # METADATA
 # description: allow any requests by admin users

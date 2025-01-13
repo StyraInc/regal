@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # variable `http` shadows `http.send` built-in function
 allow if {
     http := startswith(input.url, "http://")
@@ -20,8 +18,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # variable `is_http` doesn't shadow any built-in function
 allow if {

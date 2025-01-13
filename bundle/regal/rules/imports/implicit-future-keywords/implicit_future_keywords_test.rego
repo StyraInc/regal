@@ -1,7 +1,5 @@
 package regal.rules.imports["implicit-future-keywords_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.imports["implicit-future-keywords"] as rule

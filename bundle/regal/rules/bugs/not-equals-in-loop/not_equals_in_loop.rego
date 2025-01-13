@@ -2,8 +2,6 @@
 # description: Use of != in loop
 package regal.rules.bugs["not-equals-in-loop"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

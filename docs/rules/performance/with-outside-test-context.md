@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     some user in data.users
 
@@ -29,8 +27,6 @@ allowed_user := input.user if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     some user in data.users

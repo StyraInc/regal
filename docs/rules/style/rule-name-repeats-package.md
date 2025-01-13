@@ -8,8 +8,6 @@
 ```rego
 package policy.authz
 
-import rego.v1
-
 authz_allow if {
     user.is_admin
 }
@@ -18,8 +16,6 @@ authz_allow if {
 **Prefer**
 ```rego
 package policy.authz
-
-import rego.v1
 
 allow if {
     user.is_admin

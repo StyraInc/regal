@@ -8,8 +8,6 @@
 ```rego
 package negative
 
-import rego.v1
-
 fine if not not_fine
 
 with_friends if not without_friends
@@ -22,8 +20,6 @@ without_friends if count(input.friends) == 0
 **Prefer**
 ```rego
 package negative
-
-import rego.v1
 
 fine if input.fine == true
 

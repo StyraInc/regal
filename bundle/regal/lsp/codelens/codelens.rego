@@ -5,8 +5,6 @@
 #   - input: schema.regal.ast
 package regal.lsp.codelens
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

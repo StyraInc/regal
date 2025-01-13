@@ -1,7 +1,5 @@
 package regal.rules.idiomatic["equals-pattern-matching_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
@@ -50,7 +48,7 @@ test_fail_simple_head_comparison_could_be_matched_in_arg_multiple_args if {
 }
 
 test_fail_simple_body_comparison_could_be_matched_in_arg if {
-	r := rule.report with input as ast.policy(`f(x) := "one" {
+	r := rule.report with input as ast.policy(`f(x) := "one" if {
 		x == 1
 	}`)
 
@@ -61,12 +59,12 @@ test_fail_simple_body_comparison_could_be_matched_in_arg if {
 			"col": 3,
 			"row": 5,
 		},
-		"text": "f(x) := \"one\" {",
+		"text": "f(x) := \"one\" if {",
 	})
 }
 
 test_fail_simple_body_comparison_could_be_matched_in_arg_eq_order if {
-	r := rule.report with input as ast.policy(`f(x) := "one" {
+	r := rule.report with input as ast.policy(`f(x) := "one" if {
 		1 == x
 	}`)
 
@@ -77,7 +75,7 @@ test_fail_simple_body_comparison_could_be_matched_in_arg_eq_order if {
 			"col": 3,
 			"row": 5,
 		},
-		"text": "f(x) := \"one\" {",
+		"text": "f(x) := \"one\" if {",
 	})
 }
 
@@ -103,7 +101,7 @@ test_success_actually_pattern_matching if {
 }
 
 test_success_skipped_on_else if {
-	module := ast.policy(`f(x) {
+	module := ast.policy(`f(x) if {
 		x == 1
 	} else := false`)
 	r := rule.report with input as module

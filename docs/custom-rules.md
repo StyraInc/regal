@@ -133,8 +133,6 @@ An example policy to implement this requirement might look something like this:
 # - input: schema.regal.ast
 package custom.regal.rules.naming["acme-corp-package"]
 
-import rego.v1
-
 import data.regal.result
 
 report contains violation if {
@@ -268,8 +266,6 @@ from files, and one that actually lints and reports violations using that data.
 # - input: schema.regal.ast
 package custom.regal.rules.organizational["at-least-one-allow"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 
@@ -347,6 +343,8 @@ Regal provides a few custom built-in functions tailor-made for linter policies.
 Works just like `rego.parse_module`, but provides an AST including location information, and custom additions added
 by Regal, like the text representation of each line in the original policy. This is useful for authoring tests to assert
 linter rules work as expected. This is the built-in function equivalent of the `regal parse` command.
+
+If the `filename` provided ends with `_v0.rego`, the policy will be parsed as a Rego v0 module.
 
 ### `regal.last(array)`
 

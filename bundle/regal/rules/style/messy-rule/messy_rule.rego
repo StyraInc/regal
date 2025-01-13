@@ -2,8 +2,6 @@
 # description: Messy incremental rule
 package regal.rules.style["messy-rule"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

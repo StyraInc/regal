@@ -1,7 +1,5 @@
 package regal.lsp.completion.providers.inputdotjson_test
 
-import rego.v1
-
 import data.regal.lsp.completion.providers.inputdotjson as provider
 
 # regal ignore:rule-length

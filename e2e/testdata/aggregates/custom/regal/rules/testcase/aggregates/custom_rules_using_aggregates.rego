@@ -2,8 +2,6 @@
 # description: Collect data in aggregates and validate it
 package custom.regal.rules.testcase["aggregates"]
 
-import rego.v1
-
 import data.regal.result
 
 aggregate contains result.aggregate(rego.metadata.chain(), {})

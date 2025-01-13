@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 default allow := false
 
 # this rule assigns the same value as the default
@@ -22,8 +20,6 @@ allow := false if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 default allow := false
 

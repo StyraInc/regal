@@ -3,7 +3,7 @@ package ast
 import (
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 )
 
 // RefToString converts an ast.Ref to a readable string, e.g. data.foo[bar].

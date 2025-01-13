@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -105,8 +105,6 @@ func TestRefsForModule_Rules(t *testing.T) {
 	t.Parallel()
 
 	mod := rparse.MustParseModule(`package example
-
-import rego.v1
 
 # METADATA
 # title: An allow rule

@@ -1,7 +1,7 @@
 package providers
 
 import (
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 )
@@ -12,4 +12,5 @@ type Options struct {
 	Builtins         map[string]*ast.Builtin
 	RootURI          string
 	ClientIdentifier clients.Identifier
+	RegoVersion      ast.RegoVersion
 }

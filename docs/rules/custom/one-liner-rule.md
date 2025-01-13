@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     is_admin
 }
@@ -22,8 +20,6 @@ is_admin if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if is_admin
 

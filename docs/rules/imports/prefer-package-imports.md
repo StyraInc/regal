@@ -10,8 +10,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # Rule imported directly
 import data.users.first_names
 
@@ -24,8 +22,6 @@ has_waldo if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # Package imported rather than rule
 import data.users

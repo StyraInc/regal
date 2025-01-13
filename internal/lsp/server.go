@@ -20,9 +20,9 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
@@ -88,20 +88,21 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 
 	var ls *LanguageServer
 	ls = &LanguageServer{
-		cache:                    c,
-		regoStore:                store,
-		logWriter:                opts.LogWriter,
-		logLevel:                 opts.LogLevel,
-		lintFileJobs:             make(chan lintFileJob, 10),
-		lintWorkspaceJobs:        make(chan lintWorkspaceJob, 10),
-		builtinsPositionJobs:     make(chan lintFileJob, 10),
-		commandRequest:           make(chan types.ExecuteCommandParams, 10),
-		templateFileJobs:         make(chan lintFileJob, 10),
-		configWatcher:            lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
-		completionsManager:       completions.NewDefaultManager(ctx, c, store),
-		webServer:                web.NewServer(c),
-		loadedBuiltins:           concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
-		workspaceDiagnosticsPoll: opts.WorkspaceDiagnosticsPoll,
+		cache:                       c,
+		regoStore:                   store,
+		logWriter:                   opts.LogWriter,
+		logLevel:                    opts.LogLevel,
+		lintFileJobs:                make(chan lintFileJob, 10),
+		lintWorkspaceJobs:           make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:        make(chan lintFileJob, 10),
+		commandRequest:              make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:            make(chan lintFileJob, 10),
+		configWatcher:               lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
+		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		webServer:                   web.NewServer(c),
+		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
+		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
+		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
 	}
 
 	return ls
@@ -114,10 +115,13 @@ type LanguageServer struct {
 	regoStore storage.Store
 	conn      *jsonrpc2.Conn
 
-	configWatcher                        *lsconfig.Watcher
-	loadedConfig                         *config.Config
+	configWatcher *lsconfig.Watcher
+	loadedConfig  *config.Config
+	// this is also used to lock the updates to the cache of enabled rules
+	loadedConfigLock                     sync.Mutex
 	loadedConfigEnabledNonAggregateRules []string
 	loadedConfigEnabledAggregateRules    []string
+	loadedConfigAllRegoVersions          *concurrent.Map[string, ast.RegoVersion]
 	loadedBuiltins                       *concurrent.Map[string, map[string]*ast.Builtin]
 
 	clientInitializationOptions types.InitializationOptions
@@ -137,9 +141,6 @@ type LanguageServer struct {
 
 	workspaceRootURI string
 	clientIdentifier clients.Identifier
-
-	// this is also used to lock the updates to the cache of enabled rules
-	loadedConfigLock sync.Mutex
 
 	workspaceDiagnosticsPoll time.Duration
 }
@@ -551,6 +552,22 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			l.loadedConfig = &mergedConfig
 			l.loadedConfigLock.Unlock()
 
+			// Rego versions may have changed, so reload them.
+			allRegoVersions, err := config.AllRegoVersions(
+				uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
+				l.getLoadedConfig(),
+			)
+			if err != nil {
+				l.logf(log.LevelMessage, "failed to reload rego versions: %s", err)
+			}
+
+			l.loadedConfigAllRegoVersions.Clear()
+
+			for k, v := range allRegoVersions {
+				l.loadedConfigAllRegoVersions.Set(k, v)
+			}
+
+			// Enabled rules might have changed with the new config, so reload.
 			err = l.loadEnabledRulesFromConfig(ctx, mergedConfig)
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to cache enabled rules: %s", err)
@@ -1096,6 +1113,32 @@ func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }
 
+func (l *LanguageServer) determineVersionForFile(fileURI string) ast.RegoVersion {
+	var versionedDirs []string
+
+	// if we have no information, then we can return the default
+	if l.loadedConfigAllRegoVersions.Len() == 0 {
+		return ast.RegoV1
+	}
+
+	versionedDirs = util.Keys(l.loadedConfigAllRegoVersions.Clone())
+	slices.Sort(versionedDirs)
+	slices.Reverse(versionedDirs)
+
+	path := strings.TrimPrefix(fileURI, l.workspaceRootURI+"/")
+
+	for _, versionedDir := range versionedDirs {
+		if strings.HasPrefix(path, versionedDir) {
+			val, ok := l.loadedConfigAllRegoVersions.Get(versionedDir)
+			if ok {
+				return val
+			}
+		}
+	}
+
+	return ast.RegoV1
+}
+
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	// this function should not be called with files in the root, but if it is,
 	// then it is an error to prevent unwanted behavior.
@@ -1185,7 +1228,13 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
+	version := l.determineVersionForFile(fileURI)
+
+	if version == ast.RegoV0 {
+		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
+	}
+
+	return fmt.Sprintf("package %s\n\n", pkg), nil
 }
 
 func (l *LanguageServer) fixEditParams(
@@ -1715,6 +1764,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
+		RegoVersion:      l.determineVersionForFile(params.TextDocument.URI),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2080,8 +2130,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		oldContent, _ = l.cache.GetFileContents(params.TextDocument.URI)
 	}
 
-	// if the file is empty, then the formatters will fail, so we template
-	// instead
+	// if the file is empty, then the formatters will fail, so we template instead
 	if oldContent == "" {
 		// disable the templating feature for files in the workspace root.
 		if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
@@ -2095,7 +2144,6 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		}
 
 		l.cache.ClearFileDiagnostics()
-
 		l.cache.SetFileContents(params.TextDocument.URI, newContent)
 
 		updateEvent := lintFileJob{
@@ -2119,7 +2167,10 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
-		opts := format.Opts{}
+		opts := format.Opts{
+			RegoVersion: l.determineVersionForFile(params.TextDocument.URI),
+		}
+
 		if formatter == "opa-fmt-rego-v1" {
 			opts.RegoVersion = ast.RegoV0CompatV1
 		}
@@ -2158,14 +2209,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		f := fixer.NewFixer()
 		f.RegisterFixes(fixes.NewDefaultFormatterFixes()...)
-		f.RegisterMandatoryFixes(
-			&fixes.Fmt{
-				NameOverride: "use-rego-v1",
-				OPAFmtOpts: format.Opts{
-					RegoVersion: ast.RegoV0CompatV1,
-				},
-			},
-		)
+		f.RegisterMandatoryFixes([]fixes.Fix{&fixes.Fmt{}}...)
 
 		if roots, err := config.GetPotentialRoots(
 			l.workspacePath(),

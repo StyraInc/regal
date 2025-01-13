@@ -1,13 +1,20 @@
 package regal.ast
 
-import rego.v1
-
 # METADATA
 # description: parses provided policy with all future keywords imported. Primarily for testing.
 with_rego_v1(policy) := regal.parse_module("policy.rego", concat("", [
 	`package policy
 
 import rego.v1
+
+`,
+	policy,
+]))
+
+# METADATA
+# description: parses provided policy with v0 syntax and no imports. Primarily for testing.
+with_rego_v0(policy) := regal.parse_module("policy_v0.rego", concat("", [
+	`package policy
 
 `,
 	policy,

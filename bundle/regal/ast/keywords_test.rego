@@ -1,7 +1,5 @@
 package regal.ast_test
 
-import rego.v1
-
 import data.regal.ast
 
 test_keywords_package if {
@@ -24,7 +22,7 @@ test_keywords_package if {
 test_keywords_import if {
 	policy := `package policy
 
-import rego.v1`
+import data.foo`
 
 	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
 
@@ -43,9 +41,35 @@ import rego.v1`
 test_keywords_if if {
 	policy := `package policy
 
-import rego.v1
-
 allow if {
+	# if things
+	true
+}
+`
+
+	kwds := ast.keywords with input as object.union(
+		regal.parse_module("p.rego", policy),
+		{"regal": {"file": {"lines": split(policy, "\n")}}},
+	)
+
+	count(kwds) == 2 # lines with keywords
+
+	_keyword_on_row(
+		kwds,
+		3,
+		{
+			"name": "if",
+			"location": {"row": 3, "col": 7},
+		},
+	)
+}
+
+test_keywords_if_on_another_line if {
+	policy := `package policy
+
+allow contains {
+	"foo": true,
+} if {
 	# if things
 	true
 }
@@ -63,37 +87,7 @@ allow if {
 		5,
 		{
 			"name": "if",
-			"location": {"row": 5, "col": 7},
-		},
-	)
-}
-
-test_keywords_if_on_another_line if {
-	policy := `package policy
-
-import rego.v1
-
-allow contains {
-	"foo": true,
-} if {
-	# if things
-	true
-}
-`
-
-	kwds := ast.keywords with input as object.union(
-		regal.parse_module("p.rego", policy),
-		{"regal": {"file": {"lines": split(policy, "\n")}}},
-	)
-
-	count(kwds) == 4 # lines with keywords
-
-	_keyword_on_row(
-		kwds,
-		7,
-		{
-			"name": "if",
-			"location": {"row": 7, "col": 3},
+			"location": {"row": 5, "col": 3},
 		},
 	)
 }

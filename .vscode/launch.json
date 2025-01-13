@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "regal lint bundle",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "args": [
+        "lint",
+        "--enable-print",
+        "bundle"
+      ]
+    },
+    {
+      "name": "regal fix --dry-run bundle",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "args": [
+        "fix",
+        "--dry-run",
+        "bundle"
+      ]
+    },
+    {
+      "name": "regal test bundle",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "args": [
+        "test",
+        "bundle"
+      ]
+    }
+  ]
+}

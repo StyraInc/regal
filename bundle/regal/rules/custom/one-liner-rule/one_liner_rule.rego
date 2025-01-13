@@ -2,9 +2,6 @@
 # description: Rule body could be made a one-liner
 package regal.rules.custom["one-liner-rule"]
 
-import rego.v1
-
-import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
 import data.regal.result
@@ -17,9 +14,6 @@ import data.regal.util
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_if
 
 report contains violation if {
-	# No need to traverse rules here if we're not importing `if`
-	ast.imports_keyword(input.imports, "if")
-
 	# Note: this covers both rules and functions, which is what we want here
 	some rule in input.rules
 

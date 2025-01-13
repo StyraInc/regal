@@ -2,8 +2,6 @@
 # description: provides completion suggestions for local symbols in scope
 package regal.lsp.completion.providers.locals
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

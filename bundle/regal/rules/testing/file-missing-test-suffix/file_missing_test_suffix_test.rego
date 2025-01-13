@@ -1,7 +1,5 @@
 package regal.rules.testing["file-missing-test-suffix_test"]
 
-import rego.v1
-
 import data.regal.config
 
 import data.regal.rules.testing["file-missing-test-suffix"] as rule
@@ -9,7 +7,7 @@ import data.regal.rules.testing["file-missing-test-suffix"] as rule
 test_fail_test_in_file_without_test_suffix if {
 	ast := regal.parse_module("policy.rego", `package foo_test
 
-	test_foo { false }
+	test_foo if { false }
 	`)
 
 	r := rule.report with input as ast
@@ -29,7 +27,7 @@ test_fail_test_in_file_without_test_suffix if {
 test_success_test_in_file_with_test_suffix if {
 	ast := regal.parse_module("policy_test.rego", `package policy_test
 
-	test_foo { false }
+	test_foo if { false }
 	`)
 
 	r := rule.report with input as ast
@@ -39,7 +37,7 @@ test_success_test_in_file_with_test_suffix if {
 test_success_test_in_file_named_test if {
 	ast := regal.parse_module("test.rego", `package test
 
-	test_foo { false }
+	test_foo if { false }
 	`)
 
 	r := rule.report with input as ast

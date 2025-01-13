@@ -4,6 +4,15 @@
 
 **Category**: Idiomatic
 
+## Notice: Rule made obsolete by OPA 1.0
+
+Since Regal v0.30.0, this rule is only enabled for projects explicitly configured to target versions of OPA before 1.0.
+Consult the documentation on Regal's [configuration](https://docs.styra.com/regal#configuration) for information on how
+to best work with older versions of OPA and Rego.
+
+Since OPA v1.0, this rule is no longer needed simply because the Rego v1 syntax is made mandatory, and the use of `if`
+is now enforced before all rule bodies.
+
 **Avoid**
 ```rego
 package policy

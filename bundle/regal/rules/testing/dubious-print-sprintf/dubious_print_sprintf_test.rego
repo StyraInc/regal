@@ -1,7 +1,5 @@
 package regal.rules.testing["dubious-print-sprintf_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
@@ -9,7 +7,7 @@ import data.regal.config
 import data.regal.rules.testing["dubious-print-sprintf"] as rule
 
 test_fail_print_sprintf if {
-	module := ast.policy(`y {
+	module := ast.policy(`y if {
 		print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 	}`)
 
@@ -38,7 +36,7 @@ test_fail_print_sprintf if {
 }
 
 test_fail_bodies_print_sprintf if {
-	module := ast.policy(`y {
+	module := ast.policy(`y if {
 		comprehension := [x |
 			x := input[_]
 			print(sprintf("x is: %s", [x]))

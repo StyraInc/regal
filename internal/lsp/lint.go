@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/storage"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/storage"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/completions/refs"
@@ -38,11 +38,16 @@ func updateParse(
 
 	lines := strings.Split(content, "\n")
 
-	module, err := rparse.Module(fileURI, content)
+	var (
+		err    error
+		module *ast.Module
+	)
+
+	// TODO: IF not set in config, or from .manifest
+	module, err = rparse.ModuleUnknownVersionWithOpts(fileURI, content, rparse.ParserOptions())
 	if err == nil {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(fileURI, []types.Diagnostic{})
-
 		cache.SetModule(fileURI, module)
 
 		if err := PutFileMod(ctx, store, fileURI, module); err != nil {
@@ -164,7 +169,10 @@ func updateFileDiagnostics(
 		return fmt.Errorf("failed to get file contents for uri %q", fileURI)
 	}
 
-	input := rules.NewInput(map[string]string{fileURI: contents}, map[string]*ast.Module{fileURI: module})
+	input := rules.NewInput(
+		map[string]string{fileURI: contents},
+		map[string]*ast.Module{fileURI: module},
+	)
 
 	regalInstance := linter.NewLinter().
 		// needed to get the aggregateData for this file

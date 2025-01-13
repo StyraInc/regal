@@ -1,14 +1,10 @@
 package regal.lsp.completion.providers.booleans_test
 
-import rego.v1
-
 import data.regal.lsp.completion.providers.booleans as provider
 import data.regal.lsp.completion.providers.test_utils as utils
 
 test_suggested_in_head if {
 	workspace := {"file:///p.rego": `package policy
-
-import rego.v1
 
 allow := f`}
 
@@ -18,7 +14,7 @@ allow := f`}
 			"lines": split(workspace["file:///p.rego"], "\n"),
 		},
 		"context": {"location": {
-			"row": 5,
+			"row": 3,
 			"col": 10,
 		}},
 	}}
@@ -35,8 +31,6 @@ allow := f`}
 test_suggested_in_body if {
 	workspace := {"file:///p.rego": `package policy
 
-import rego.v1
-
 allow if {
   foo := t
 }`}
@@ -47,7 +41,7 @@ allow if {
 			"lines": split(workspace["file:///p.rego"], "\n"),
 		},
 		"context": {"location": {
-			"row": 6,
+			"row": 4,
 			"col": 10,
 		}},
 	}}
@@ -64,8 +58,6 @@ allow if {
 test_suggested_after_equals if {
 	workspace := {"file:///p.rego": `package policy
 
-import rego.v1
-
 allow if {
   foo == t
 }`}
@@ -76,7 +68,7 @@ allow if {
 			"lines": split(workspace["file:///p.rego"], "\n"),
 		},
 		"context": {"location": {
-			"row": 6,
+			"row": 4,
 			"col": 10,
 		}},
 	}}
@@ -93,8 +85,6 @@ allow if {
 test_not_suggested_at_start if {
 	workspace := {"file:///p.rego": `package policy
 
-import rego.v1
-
 allow if {
   t
 }`}
@@ -105,7 +95,7 @@ allow if {
 			"lines": split(workspace["file:///p.rego"], "\n"),
 		},
 		"context": {"location": {
-			"row": 6,
+			"row": 4,
 			"col": 3,
 		}},
 	}}

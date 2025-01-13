@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if {
     "GET" == input.request.method
     "users" == input.request.path[0]
@@ -19,8 +17,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     input.request.method == "GET"

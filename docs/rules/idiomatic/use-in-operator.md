@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # "Old" way of checking for membership - iteration + comparison
 allow if {
     "admin" == input.user.roles[_]
@@ -19,8 +17,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if {
     "admin" in input.user.roles

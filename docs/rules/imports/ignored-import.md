@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 import data.authz.roles
 
 allow if {
@@ -22,8 +20,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 import data.authz.roles
 

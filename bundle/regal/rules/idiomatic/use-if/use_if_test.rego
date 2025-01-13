@@ -1,14 +1,12 @@
 package regal.rules.idiomatic["use-if_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.idiomatic["use-if"] as rule
 
 test_fail_should_use_if if {
-	module := ast.policy(`rule := [true |
+	module := ast.with_rego_v0(`rule := [true |
 		input[_]
 	] {
 		input.attribute
@@ -21,7 +19,7 @@ test_fail_should_use_if if {
 		"level": "error",
 		"location": {
 			"col": 1,
-			"file": "policy.rego",
+			"file": "policy_v0.rego",
 			"row": 3,
 			"end": {
 				"col": 3,

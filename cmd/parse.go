@@ -10,8 +10,6 @@ import (
 	"github.com/anderseknert/roast/pkg/util"
 	"github.com/spf13/cobra"
 
-	"github.com/open-policy-agent/opa/ast"
-
 	rp "github.com/styrainc/regal/internal/parse"
 )
 
@@ -54,7 +52,7 @@ func parse(args []string) error {
 
 	content := util.ByteSliceToString(bs)
 
-	module, err := ast.ParseModuleWithOpts(filename, content, rp.ParserOptions())
+	module, err := rp.ModuleUnknownVersionWithOpts(filename, content, rp.ParserOptions())
 	if err != nil {
 		return err
 	}

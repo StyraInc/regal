@@ -2,8 +2,6 @@
 # description: various helpers to be used for testing completions providers
 package regal.lsp.completion.providers.test_utils
 
-import rego.v1
-
 # METADATA
 # description: returns a map of all parsed modules in the workspace
 parsed_modules(workspace) := {file_uri: parsed_module |
@@ -29,4 +27,17 @@ input_with_location(policy, location) := {"regal": {
 		"lines": split(policy, "\n"),
 	},
 	"context": {"location": location},
+}}
+
+# METADATA
+# description: same as input_with_location but with option to set rego_version too
+input_with_location_and_version(policy, location, rego_version) := {"regal": {
+	"file": {
+		"name": "p.rego",
+		"lines": split(policy, "\n"),
+	},
+	"context": {
+		"location": location,
+		"rego_version": rego_version,
+	},
 }}

@@ -3,14 +3,15 @@ package builtins
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/tester"
-	"github.com/open-policy-agent/opa/topdown/builtins"
-	"github.com/open-policy-agent/opa/types"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/tester"
+	"github.com/open-policy-agent/opa/v1/topdown/builtins"
+	"github.com/open-policy-agent/opa/v1/types"
 
 	"github.com/styrainc/regal/internal/parse"
 )
@@ -41,22 +42,33 @@ var RegalLastMeta = &rego.Function{
 
 // RegalParseModule regal.parse_module, like rego.parse_module but with location data included in AST.
 func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Term) (*ast.Term, error) {
-	filenameStr, err := builtins.StringOperand(filename.Value, 1)
+	filenameValue, err := builtins.StringOperand(filename.Value, 1)
 	if err != nil {
 		return nil, err
 	}
 
-	policyStr, err := builtins.StringOperand(policy.Value, 2)
+	policyValue, err := builtins.StringOperand(policy.Value, 2)
 	if err != nil {
 		return nil, err
 	}
 
-	module, err := ast.ParseModuleWithOpts(string(filenameStr), string(policyStr), parse.ParserOptions())
+	filenameStr := string(filenameValue)
+	policyStr := string(policyValue)
+
+	opts := parse.ParserOptions()
+
+	// Allow testing Rego v0 modules. We could provide a separate builtin for this,
+	// but the need for this will likely diminish over time, so let's start simple.
+	if strings.HasSuffix(filenameStr, "_v0.rego") {
+		opts.RegoVersion = ast.RegoV0
+	}
+
+	module, err := ast.ParseModuleWithOpts(filenameStr, policyStr, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	enhancedAST, err := parse.PrepareAST(string(filenameStr), string(policyStr), module)
+	enhancedAST, err := parse.PrepareAST(filenameStr, policyStr, module)
 	if err != nil {
 		return nil, err
 	}

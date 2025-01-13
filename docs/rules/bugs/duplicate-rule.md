@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 allow if user.is_admin
 
 allow if user.is_developer
@@ -21,8 +19,6 @@ allow if user.is_admin
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 allow if user.is_admin
 

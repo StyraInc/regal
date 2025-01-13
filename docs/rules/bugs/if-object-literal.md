@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # {} interpreted as object, not a rule body
 allow if {}
 

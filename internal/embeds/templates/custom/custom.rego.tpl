@@ -4,8 +4,6 @@
 # - input: schema.regal.ast
 package custom.regal.rules.{{.Category}}{{.Name}}
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

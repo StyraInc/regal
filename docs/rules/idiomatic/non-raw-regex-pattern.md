@@ -33,8 +33,6 @@ try to "resolve" patterns assigned to variables. The following example would as 
 ```rego
 package policy
 
-import rego.v1
-
 # Pattern assigned to variable
 pattern := "[\\d]+"
 

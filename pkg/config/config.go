@@ -12,7 +12,8 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/bundle"
 
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
@@ -38,8 +39,18 @@ type Config struct {
 	Ignore          Ignore              `json:"ignore,omitempty"           yaml:"ignore,omitempty"`
 }
 
+type Root struct {
+	Path string
+	// Note that contrary to ast.RegoVersion, we'll only accept 0 or 1 here currently.
+	// This aligns with the Rego versioning scheme used in .manifest files, which is
+	// the alternative way to provide this for a specific directory.
+	RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
+}
+
 type Project struct {
-	Roots []string `json:"roots" yaml:"roots"`
+	Roots *[]Root `json:"roots,omitempty" yaml:"roots,omitempty"`
+	// Set the Rego version for the whole project or workspace. Individual roots may override this.
+	RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
 }
 
 type Category map[string]Rule
@@ -250,8 +261,10 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 			return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
 		}
 
-		if conf.Project != nil {
-			foundBundleRoots = append(foundBundleRoots, util.Map(util.FilepathJoiner(parent), conf.Project.Roots)...)
+		if conf.Project != nil && conf.Project.Roots != nil {
+			for _, root := range *conf.Project.Roots {
+				foundBundleRoots = append(foundBundleRoots, filepath.Join(parent, root.Path))
+			}
 		}
 	}
 
@@ -289,6 +302,72 @@ func FromMap(confMap map[string]any) (Config, error) {
 	}
 
 	return conf, nil
+}
+
+// AllRegoVersions returns a map of all Rego versions found in the provided config and .manifest files,
+// keyed by the path of the directory for which the version applies. Config file has higher precedence
+// than .manifest files.
+func AllRegoVersions(root string, conf *Config) (map[string]ast.RegoVersion, error) {
+	versionsMap := make(map[string]ast.RegoVersion)
+
+	manifestLocations, err := rio.FindManifestLocations(root)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find manifest locations: %w", err)
+	}
+
+	for _, dir := range manifestLocations {
+		manifestPath := filepath.Join(root, dir, ".manifest")
+
+		f, err := os.ReadFile(manifestPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read manifest file: %w", err)
+		}
+
+		var manifest bundle.Manifest
+
+		err = encoding.JSON().Unmarshal(f, &manifest)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal manifest file: %w", err)
+		}
+
+		if manifest.RegoVersion != nil {
+			versionsMap[dir] = regoVersionFromConfigValue(manifest.RegoVersion)
+		}
+	}
+
+	if conf.Project != nil {
+		if conf.Project.RegoVersion != nil {
+			// empty string is used to denote the project root
+			// and all other paths are relative to that
+			versionsMap[""] = regoVersionFromConfigValue(conf.Project.RegoVersion)
+		}
+
+		if conf.Project.Roots != nil {
+			for _, root := range *conf.Project.Roots {
+				if root.RegoVersion != nil {
+					versionsMap[root.Path] = regoVersionFromConfigValue(root.RegoVersion)
+				}
+			}
+		}
+	}
+
+	return versionsMap, nil
+}
+
+// Translate integer value 0 or 1 as found in config or .manifest to ast.RegoVersion.
+func regoVersionFromConfigValue(version *int) ast.RegoVersion {
+	if version == nil {
+		return ast.RegoUndefined
+	}
+
+	switch *version {
+	case 0:
+		return ast.RegoV0
+	case 1:
+		return ast.RegoV1
+	default:
+		return ast.RegoUndefined
+	}
 }
 
 func (config Config) MarshalYAML() (any, error) {
@@ -359,6 +438,28 @@ type marshallingIntermediary struct {
 			CheckVersion bool `yaml:"check_version"`
 		} `yaml:"remote"`
 	} `yaml:"features"`
+}
+
+func (p *Project) UnmarshalYAML(value *yaml.Node) error {
+	var result map[string]any
+
+	if err := value.Decode(&result); err != nil {
+		return fmt.Errorf("unmarshalling project failed %w", err)
+	}
+
+	if result["roots"] != nil {
+		// A project root can either be provided as a string or an object. If it's a string, we'll
+		// convert it to an object with the path as the only value.
+		if roots, ok := result["roots"].([]any); ok {
+			for key, val := range roots {
+				if root, ok := val.(string); ok {
+					roots[key] = Root{Path: root}
+				}
+			}
+		}
+	}
+
+	return encoding.JSONRoundTrip(result, p) //nolint:wrapcheck
 }
 
 func (config *Config) UnmarshalYAML(value *yaml.Node) error {
@@ -451,7 +552,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("failed to load capabilities: %w", err)
 	}
 
-	config.Capabilities = fromOPACapabilities(*opaCaps)
+	config.Capabilities = fromOPACapabilities(opaCaps)
 
 	// This is used in the LSP to load the OPA capabilities, since the
 	// capabilities version in the user-facing config does not contain all
@@ -556,7 +657,7 @@ func extractDefaults(c *Config, result *marshallingIntermediary) error {
 
 // CapabilitiesForThisVersion returns the capabilities for the current OPA version Regal depends on.
 func CapabilitiesForThisVersion() *Capabilities {
-	return fromOPACapabilities(*ast.CapabilitiesForThisVersion())
+	return fromOPACapabilities(rio.OPACapabilities)
 }
 
 func fromOPABuiltin(builtin ast.Builtin) *Builtin {
@@ -577,7 +678,7 @@ func fromOPABuiltin(builtin ast.Builtin) *Builtin {
 	return rb
 }
 
-func fromOPACapabilities(capabilities ast.Capabilities) *Capabilities {
+func fromOPACapabilities(capabilities *ast.Capabilities) *Capabilities {
 	var result Capabilities
 
 	result.Builtins = make(map[string]*Builtin)

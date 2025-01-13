@@ -2,8 +2,6 @@
 # description: Import shadows built-in namespace
 package regal.rules.imports["import-shadows-builtin"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

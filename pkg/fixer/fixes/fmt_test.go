@@ -3,8 +3,8 @@ package fixes
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/format"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
 )
 
 func TestFmt(t *testing.T) {
@@ -34,20 +34,100 @@ func TestFmt(t *testing.T) {
 			fmt:             &Fmt{},
 			fixExpected:     true,
 		},
-		"rego v1": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\nallow := true")},
+		"rego version unknown, ambigous syntax": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow := true"),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+allow := true
+`),
+		},
+		"rego version unknown, v0 syntax": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow[msg] { msg := 1}"),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+import rego.v1
+
+allow contains msg if msg := 1
+`),
+		},
+		"rego version unknown, v0v1 compat syntax": {
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package testutil
+import rego.v1
+allow contains msg if msg :=1
+				`),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+import rego.v1
+
+allow contains msg if msg := 1
+`),
+		},
+		"rego version unknown, v1 syntax": {
+			fc: &FixCandidate{
+				Filename: "test.rego",
+				Contents: []byte(`package testutil
+
+allow contains msg if msg :=1
+				`),
+				RegoVersion: ast.RegoUndefined,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
+			contentAfterFix: []byte(`package testutil
+
+allow contains msg if msg := 1
+`),
+		},
+		"rego v1 (rego version 0)": {
+			fc: &FixCandidate{
+				Filename:    "test.rego",
+				Contents:    []byte("package testutil\nallow := true"),
+				RegoVersion: ast.RegoV0,
+			},
+			fmt:         &Fmt{},
+			fixExpected: true,
 			contentAfterFix: []byte(`package testutil
 
 import rego.v1
 
 allow := true
 `),
+		},
+		"rego v1 (rego version > 1)": {
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
 				},
 			},
-			fixExpected: true,
+			fixExpected: false,
+		},
+		"rego v1, version known": {
+			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
+			fmt: &Fmt{
+				OPAFmtOpts: format.Opts{
+					RegoVersion: ast.RegoV1,
+				},
+			},
+			fixExpected: false,
 		},
 	}
 

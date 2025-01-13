@@ -12,8 +12,6 @@ func TestCodeLenses(t *testing.T) {
 
 	contents := `package p
 
-	import rego.v1
-
 	allow if "foo" in input.bar`
 
 	module := parse.MustParseModule(contents)
@@ -34,8 +32,6 @@ func TestAllRuleHeadLocations(t *testing.T) {
 	t.Parallel()
 
 	contents := `package p
-
-	import rego.v1
 
 	default allow := false
 
@@ -70,7 +66,7 @@ func TestAllKeywords(t *testing.T) {
 
 	contents := `package p
 
-	import rego.v1
+	import data.foo
 
 	my_set contains "x" if true
 	`

@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # there's only one definition of the last_name function in
 # this package, and the second argument is never used
 last_name(name, _) := lname if {
@@ -21,8 +19,6 @@ last_name(name, _) := lname if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 last_name(name) := lname if {
     parts := split(name, " ")
@@ -38,8 +34,6 @@ are used in that definition of the function. This is particularly useful for inc
 
 ```rego
 package policy
-
-import rego.v1
 
 default authorized(_, _) := false
 
@@ -59,8 +53,6 @@ cleaner definition. More likely, the argument was meant to be _used_, if only in
 
 ```rego
 package policy
-
-import rego.v1
 
 default authorized(_, _) := false
 

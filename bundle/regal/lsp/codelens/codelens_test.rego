@@ -1,7 +1,5 @@
 package regal.lsp.codelens_test
 
-import rego.v1
-
 import data.regal.lsp.codelens
 
 # regal ignore:rule-length

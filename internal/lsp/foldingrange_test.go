@@ -9,8 +9,6 @@ func TestTokenFoldingRanges(t *testing.T) {
 
 	policy := `package p
 
-	import rego.v1
-
 rule if {
 	arr := [
 		1,
@@ -32,32 +30,32 @@ rule if {
 
 	arr := foldingRanges[0]
 
-	if arr.StartLine != 5 || *arr.StartCharacter != 9 {
-		t.Errorf("Expected start line 5 and start character 9, got %d and %d", arr.StartLine, *arr.StartCharacter)
+	if arr.StartLine != 3 || *arr.StartCharacter != 9 {
+		t.Errorf("Expected start line 3 and start character 9, got %d and %d", arr.StartLine, *arr.StartCharacter)
 	}
 
-	if arr.EndLine != 8 {
-		t.Errorf("Expected end line 8, got %d", arr.EndLine)
+	if arr.EndLine != 6 {
+		t.Errorf("Expected end line 6, got %d", arr.EndLine)
 	}
 
 	parens := foldingRanges[1]
 
-	if parens.StartLine != 10 || *parens.StartCharacter != 9 {
-		t.Errorf("Expected start line 10 and start character 9, got %d and %d", parens.StartLine, *parens.StartCharacter)
+	if parens.StartLine != 8 || *parens.StartCharacter != 9 {
+		t.Errorf("Expected start line 8 and start character 9, got %d and %d", parens.StartLine, *parens.StartCharacter)
 	}
 
-	if parens.EndLine != 13 {
-		t.Errorf("Expected end line 13, got %d", parens.EndLine)
+	if parens.EndLine != 11 {
+		t.Errorf("Expected end line 11, got %d", parens.EndLine)
 	}
 
 	rule := foldingRanges[2]
 
-	if rule.StartLine != 4 || *rule.StartCharacter != 9 {
-		t.Errorf("Expected start line 4 and start character 9, got %d and %d", rule.StartLine, *rule.StartCharacter)
+	if rule.StartLine != 2 || *rule.StartCharacter != 9 {
+		t.Errorf("Expected start line 2 and start character 9, got %d and %d", rule.StartLine, *rule.StartCharacter)
 	}
 
-	if rule.EndLine != 14 {
-		t.Errorf("Expected end line 7, got %d", rule.EndLine)
+	if rule.EndLine != 12 {
+		t.Errorf("Expected end line 12, got %d", rule.EndLine)
 	}
 }
 

@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 permissions := ["read", "write"] if {
     input.user == "admin"
 } else := ["read"]
@@ -18,8 +16,6 @@ permissions := ["read", "write"] if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 default permissions := ["read"]
 

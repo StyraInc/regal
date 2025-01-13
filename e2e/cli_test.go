@@ -20,7 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-policy-agent/opa/tester"
+	"github.com/open-policy-agent/opa/v1/tester"
 
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
@@ -146,30 +146,43 @@ func TestLintProposeToRunFix(t *testing.T) {
 	cwd := testutil.Must(os.Getwd())(t)
 
 	// using a test rego file that only yields a few violations
-	err := regal(&stdout, &stderr)("lint", cwd+filepath.FromSlash("/testdata/violations/rule_named_if.rego"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+		cwd+filepath.FromSlash("/testdata/v0/rule_named_if.rego"))
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
 	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
+		t.Fatalf("expected stderr %q, got %q", exp, act)
 	}
 
 	act := strings.Split(stdout.String(), "\n")
 	act = act[len(act)-5:]
-	exp := []string{"1 file linted. 5 violations found.", "", "Hint: 2/5 violations can be automatically fixed (directory-package-mismatch, use-rego-v1)", "      Run regal fix --help for more details.", ""}
+	exp := []string{
+		"1 file linted. 2 violations found.",
+		"",
+		"Hint: 2/2 violations can be automatically fixed (directory-package-mismatch, opa-fmt)",
+		"      Run regal fix --help for more details.",
+		"",
+	}
 	if diff := cmp.Diff(act, exp); diff != "" {
 		t.Errorf("unexpected stdout trailer: (-want, +got):\n%s", diff)
 	}
 }
 
-func TestLintAllViolations(t *testing.T) {
+func TestLintV1Violations(t *testing.T) {
 	t.Parallel()
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	cwd := testutil.Must(os.Getwd())(t)
-	cfg := readProvidedConfig(t)
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json", cwd+filepath.FromSlash("/testdata/violations"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--format", "json",
+		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+		cwd+filepath.FromSlash("/testdata/violations"),
+	)
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
@@ -190,7 +203,13 @@ func TestLintAllViolations(t *testing.T) {
 		"use-contains":             {},
 		"internal-entrypoint":      {},
 		"file-length":              {},
+		"rule-named-if":            {},
+		"use-rego-v1":              {},
+		"deprecated-builtin":       {},
+		"import-shadows-import":    {},
 	}
+
+	cfg := readProvidedConfig(t)
 
 	for _, category := range cfg.Rules {
 		for ruleName, rule := range category {
@@ -216,7 +235,7 @@ func TestLintAllViolations(t *testing.T) {
 	}
 }
 
-func TestLintNotRegoV1Violations(t *testing.T) {
+func TestLintV0NoRegoV1ImportViolations(t *testing.T) {
 	t.Parallel()
 
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
@@ -224,8 +243,8 @@ func TestLintNotRegoV1Violations(t *testing.T) {
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/not_rego_v1.yaml"),
-		cwd+filepath.FromSlash("/testdata/not_rego_v1"))
+		cwd+filepath.FromSlash("/testdata/configs/v0.yaml"),
+		cwd+filepath.FromSlash("/testdata/v0/"))
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
@@ -242,6 +261,52 @@ func TestLintNotRegoV1Violations(t *testing.T) {
 		"implicit-future-keywords": {},
 		"use-if":                   {},
 		"use-contains":             {},
+	}
+
+	// Note that some violations occur more than one time.
+	violationNames := make(map[string]struct{})
+
+	for _, violation := range rep.Violations {
+		violationNames[violation.Title] = struct{}{}
+	}
+
+	if len(expected) != len(violationNames) {
+		for ruleName := range expected {
+			if _, ok := violationNames[ruleName]; !ok {
+				t.Errorf("expected violation for rule %q", ruleName)
+			}
+		}
+	}
+}
+
+func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
+	t.Parallel()
+
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
+
+	cwd := testutil.Must(os.Getwd())(t)
+
+	err := regal(&stdout, &stderr)(
+		"lint", "--format", "json",
+		"--config-file", cwd+filepath.FromSlash("/testdata/configs/v0-with-import-rego-v1.yaml"),
+		cwd+filepath.FromSlash("/testdata/v0/"))
+
+	expectExitCode(t, err, 3, &stdout, &stderr)
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	expected := map[string]struct{}{
+		"use-if":        {},
+		"use-contains":  {},
+		"use-rego-v1":   {},
+		"rule-named-if": {},
 	}
 
 	// Note that some violations occur more than one time.
@@ -381,7 +446,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("two policies — no violations expected", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/two_policies"))
 
@@ -409,7 +474,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("three policies - violation expected", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
+			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+			"--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
 			basedir+filepath.FromSlash("/three_policies"))
 
@@ -433,7 +500,9 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 	t.Run("custom policy where nothing aggregate is a violation", func(t *testing.T) {
 		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
+		err := regal(&stdout, &stderr)("lint", "--format", "json",
+			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+			"--rules",
 			basedir+filepath.FromSlash("/custom/regal/rules/testcase/empty_aggregate/"),
 			basedir+filepath.FromSlash("/two_policies"))
 
@@ -461,8 +530,13 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
-	err := regal(&stdout, &stderr)("lint", "--format", "json",
-		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
+		"--format",
+		"json",
+		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"),
+	)
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
@@ -762,7 +836,13 @@ func TestLintPprof(t *testing.T) {
 		_ = os.Remove(pprofFile)
 	})
 
-	err := regal(&stdout, &stderr)("lint", "--pprof", "clock", cwd+filepath.FromSlash("/testdata/violations"))
+	err := regal(&stdout, &stderr)(
+		"lint",
+		// this overrides the ignore directives for e2e loaded from the config file
+		"--ignore-files=none",
+		"--pprof", "clock",
+		cwd+filepath.FromSlash("/testdata/violations"),
+	)
 
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
@@ -778,10 +858,16 @@ func TestFix(t *testing.T) {
 	td := t.TempDir()
 
 	initialState := map[string]string{
-		".regal/config.yaml": "", // needed to find the root in the right place
+		".regal/config.yaml": `
+project:
+  rego-version: 1
+  roots:
+    - path: v0
+      rego-version: 0
+    - path: v1
+      rego-version: 0
+`,
 		"foo/main.rego": `package wow
-
-import rego.v1
 
 #comment
 
@@ -791,13 +877,11 @@ allow if {
 `,
 		"foo/main_test.rego": `package wow_test
 
-test_allow {
+test_allow if {
 	true
 }
 `,
 		"foo/foo.rego": `package foo
-
-import rego.v1
 
 # present and correct
 
@@ -806,13 +890,21 @@ allow if {
 }
 `,
 		"bar/main.rego": `package wow["foo-bar"].baz
-
-import rego.v1
 `,
 		"bar/main_test.rego": `package wow["foo-bar"].baz_test
-test_allow {
+test_allow if {
 	true
 }
+`,
+		"v0/main.rego": `package v0
+
+#comment
+allow { true }
+`,
+		"v1/main.rego": `package v1
+
+#comment
+allow if { true }
 `,
 		"unrelated.txt": `foobar`,
 	}
@@ -822,29 +914,46 @@ test_allow {
 	}
 
 	// --force is required to make the changes when there is no git repo
-	err := regal(&stdout, &stderr)("fix", "--force", filepath.Join(td, "foo"), filepath.Join(td, "bar"))
+	err := regal(&stdout, &stderr)(
+		"fix",
+		"--force",
+		filepath.Join(td, "foo"),
+		filepath.Join(td, "bar"),
+		filepath.Join(td, "v0"),
+		filepath.Join(td, "v1"),
+	)
 
 	// 0 exit status is expected as all violations should have been fixed
 	expectExitCode(t, err, 0, &stdout, &stderr)
 
-	exp := fmt.Sprintf(`8 fixes applied:
-In project root: %s
+	exp := fmt.Sprintf(`12 fixes applied:
+In project root: %[1]s
 bar/main.rego -> wow/foo-bar/baz/main.rego:
 - directory-package-mismatch
 
 bar/main_test.rego -> wow/foo-bar/baz/main_test.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 
 foo/main.rego -> wow/main.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 - no-whitespace-comment
 
 foo/main_test.rego -> wow/main_test.rego:
 - directory-package-mismatch
-- use-rego-v1
+- opa-fmt
 
+
+In project root: %[1]s/v0
+main.rego:
+- opa-fmt
+- no-whitespace-comment
+
+In project root: %[1]s/v1
+main.rego:
+- opa-fmt
+- no-whitespace-comment
 `, td)
 
 	if act := stdout.String(); exp != act {
@@ -858,8 +967,6 @@ foo/main_test.rego -> wow/main_test.rego:
 	expectedState := map[string]string{
 		"foo/foo.rego": `package foo
 
-import rego.v1
-
 # present and correct
 
 allow if {
@@ -867,18 +974,12 @@ allow if {
 }
 `,
 		"wow/foo-bar/baz/main.rego": `package wow["foo-bar"].baz
-
-import rego.v1
 `,
 		"wow/foo-bar/baz/main_test.rego": `package wow["foo-bar"].baz_test
-
-import rego.v1
 
 test_allow := true
 `,
 		"wow/main.rego": `package wow
-
-import rego.v1
 
 # comment
 
@@ -886,9 +987,19 @@ allow := true
 `,
 		"wow/main_test.rego": `package wow_test
 
+test_allow := true
+`,
+		"v0/main.rego": `package v0
+
 import rego.v1
 
-test_allow := true
+# comment
+allow := true
+`,
+		"v1/main.rego": `package v1
+
+# comment
+allow := true
 `,
 		"unrelated.txt": `foobar`,
 	}
@@ -1100,6 +1211,7 @@ func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 
 	err := regal(&stdout, &stderr)(
 		"lint",
+		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
 		"--disable=directory-package-mismatch",
 		filepath.Join(cwd, "testdata", "bugs", "issue_1082.rego"),
 	)

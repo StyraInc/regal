@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 # description: allow allows
 allow if {
     # ... some conditions
@@ -19,8 +17,6 @@ allow if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 # METADATA
 # description: allow allows

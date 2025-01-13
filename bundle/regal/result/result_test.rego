@@ -1,7 +1,5 @@
 package regal.result_test
 
-import rego.v1
-
 import data.regal.config
 import data.regal.result
 

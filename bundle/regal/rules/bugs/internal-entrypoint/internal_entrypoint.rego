@@ -2,8 +2,6 @@
 # description: Entrypoint can't be marked internal
 package regal.rules.bugs["internal-entrypoint"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 

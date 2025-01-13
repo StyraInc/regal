@@ -2,8 +2,6 @@
 # description: Prefer snake_case for names
 package regal.rules.style["prefer-snake-case"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

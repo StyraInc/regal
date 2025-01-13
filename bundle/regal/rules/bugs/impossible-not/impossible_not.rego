@@ -2,8 +2,6 @@
 # description: Impossible `not` condition
 package regal.rules.bugs["impossible-not"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.result
 import data.regal.util

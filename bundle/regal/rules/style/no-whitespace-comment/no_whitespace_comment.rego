@@ -2,8 +2,6 @@
 # description: Comment should start with whitespace
 package regal.rules.style["no-whitespace-comment"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.result

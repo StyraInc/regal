@@ -1,7 +1,5 @@
 package regal.rules.style["prefer-snake-case_test"]
 
-import rego.v1
-
 import data.regal.ast
 import data.regal.config
 import data.regal.rules.style["prefer-snake-case"] as rule
@@ -42,18 +40,18 @@ test_success_snake_cased_package_name if {
 }
 
 test_fail_camel_cased_some_declaration if {
-	r := rule.report with input as ast.policy(`p {some fooBar; input[_]}`)
+	r := rule.report with input as ast.policy(`p if {some fooBar; input[_]}`)
 	r == expected_with_locations([{
-		"col": 9,
+		"col": 12,
 		"file": "policy.rego",
 		"row": 3,
-		"text": `p {some fooBar; input[_]}`,
-		"end": {"col": 15, "row": 3},
+		"text": `p if {some fooBar; input[_]}`,
+		"end": {"col": 18, "row": 3},
 	}])
 }
 
 test_success_snake_cased_some_declaration if {
-	r := rule.report with input as ast.policy(`p {some foo_bar; input[foo_bar]}`)
+	r := rule.report with input as ast.policy(`p if {some foo_bar; input[foo_bar]}`)
 	r == set()
 }
 
@@ -71,7 +69,7 @@ test_fail_camel_cased_multiple_some_declaration if {
 }
 
 test_success_snake_cased_multiple_some_declaration if {
-	r := rule.report with input as ast.policy(`p {some x, foo_bar; x = 5; input[foo_bar]}`)
+	r := rule.report with input as ast.policy(`p if {some x, foo_bar; x = 5; input[foo_bar]}`)
 	r == set()
 }
 
@@ -92,29 +90,31 @@ test_success_not_camel_cased_function_argument if {
 }
 
 test_fail_camel_cased_var_assignment if {
-	r := rule.report with input as ast.policy(`allow { camelCase := 5 }`)
+	r := rule.report with input as ast.policy(`allow if { camelCase := 5 }`)
+
 	r == expected_with_locations([{
-		"col": 9,
+		"col": 12,
 		"file": "policy.rego",
 		"row": 3,
-		"text": `allow { camelCase := 5 }`,
-		"end": {"col": 18, "row": 3},
+		"text": `allow if { camelCase := 5 }`,
+		"end": {"col": 21, "row": 3},
 	}])
 }
 
 test_fail_camel_cased_multiple_var_assignment if {
-	r := rule.report with input as ast.policy(`allow { snake_case := "foo"; camelCase := 5 }`)
+	r := rule.report with input as ast.policy(`allow if { snake_case := "foo"; camelCase := 5 }`)
+
 	r == expected_with_locations([{
-		"col": 30,
+		"col": 33,
 		"file": "policy.rego",
 		"row": 3,
-		"text": `allow { snake_case := "foo"; camelCase := 5 }`,
-		"end": {"col": 39, "row": 3},
+		"text": `allow if { snake_case := "foo"; camelCase := 5 }`,
+		"end": {"col": 42, "row": 3},
 	}])
 }
 
 test_success_snake_cased_var_assignment if {
-	r := rule.report with input as ast.policy(`allow { snake_case := 5 }`)
+	r := rule.report with input as ast.policy(`allow if { snake_case := 5 }`)
 	r == set()
 }
 

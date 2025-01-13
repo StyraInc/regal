@@ -3,8 +3,6 @@
 #   provides completions for common rule names, like 'allow' or 'deny'
 package regal.lsp.completion.providers.commonrule
 
-import rego.v1
-
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location
 

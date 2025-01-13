@@ -16,8 +16,6 @@ graph LR
 # authz.rego
 package authz
 
-import rego.v1
-
 import data.shared
 
 admins := {
@@ -62,8 +60,6 @@ graph LR
 ```rego
 # authz.rego
 package authz
-
-import rego.v1
 
 import data.shared
 

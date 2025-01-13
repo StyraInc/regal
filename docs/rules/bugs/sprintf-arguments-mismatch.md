@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 max_issues := 1
 
 report contains warning if {
@@ -23,8 +21,6 @@ report contains warning if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 max_issues := 1
 

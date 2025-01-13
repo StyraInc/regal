@@ -6,8 +6,6 @@
 #     ref: https://github.com/StyraInc/regal/issues/1259
 package custom.regal.rules.testcase.empty_aggregates
 
-import rego.v1
-
 import data.regal.result
 
 aggregate contains result.aggregate(rego.metadata.chain(), {}) if {

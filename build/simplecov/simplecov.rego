@@ -4,8 +4,6 @@
 #  simplecov JSON, to be used for Codecov reports, et. al.
 package build.simplecov
 
-import rego.v1
-
 # METADATA
 # entrypoint: true
 from_opa := {"coverage": _coverage}

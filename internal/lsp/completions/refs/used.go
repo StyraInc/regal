@@ -7,9 +7,9 @@ import (
 
 	"github.com/anderseknert/roast/pkg/transform"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/bundle"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -19,21 +19,11 @@ import (
 	_ "embed"
 )
 
-// pq is a prepared query that finds ref names used in a module.
-// pq is prepared at init time to make this functionality more
-// efficient. In local testing, this reduced time by ~95%.
-//
-//nolint:gochecknoglobals
-var pq *rego.PreparedEvalQuery
-
-//nolint:gochecknoglobals
-var pqInitOnce sync.Once
-
 // initialize prepares the rego query for finding ref names used in a module.
 // This is run and the resulting prepared query stored for performance reasons.
 // This function is only used by language server code paths and so init() is not
 // used.
-func initialize() {
+func prepareQuery() (*rego.PreparedEvalQuery, error) {
 	dataBundle := bundle.Bundle{
 		Manifest: bundle.Manifest{
 			Roots:    &[]string{"internal"},
@@ -58,22 +48,28 @@ func initialize() {
 
 	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
 	if err != nil {
-		panic(err)
+		return nil, err //nolint:wrapcheck
 	}
 
-	pq = &preparedQuery
+	return &preparedQuery, nil
 }
+
+//nolint:gochecknoglobals
+var pqOnce = sync.OnceValues(prepareQuery)
 
 // UsedInModule returns a list of ref names suitable for completion that are
 // used in the module's code.
 // See the rego above for more details on what's included and excluded.
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
-	pqInitOnce.Do(initialize)
-
 	inputValue, err := transform.ToOPAInputValue(module)
 	if err != nil {
 		return nil, fmt.Errorf("failed converting input to value: %w", err)
+	}
+
+	pq, err := pqOnce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare rego query: %w", err)
 	}
 
 	rs, err := pq.Eval(ctx, rego.EvalParsedInput(inputValue))

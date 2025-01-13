@@ -8,8 +8,6 @@
 ```rego
 package policy
 
-import rego.v1
-
 find_vars(rule, node) if node in rule
 
 # Order of arguments changed, or at least it looks like it
@@ -22,8 +20,6 @@ find_vars(node, rule) if {
 **Prefer**
 ```rego
 package policy
-
-import rego.v1
 
 find_vars(rule, node) if node in rule
 
@@ -45,8 +41,6 @@ Using wildcards (`_`) in place of unused arguments is always allowed, and in fac
 
 ```rego
 package policy
-
-import rego.v1
 
 find_vars(rule, node) if node in rule
 

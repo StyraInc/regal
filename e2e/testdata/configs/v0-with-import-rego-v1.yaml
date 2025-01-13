@@ -1,0 +1,6 @@
+project:
+  rego-version: 0
+capabilities:
+  from:
+    engine: opa
+    version: v0.59.0

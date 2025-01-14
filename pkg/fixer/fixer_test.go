@@ -19,7 +19,7 @@ func TestFixer(t *testing.T) {
 	t.Parallel()
 
 	policies := map[string]string{
-		"test/main.rego": `package test
+		"/root/main/main.rego": `package test
 
 allow if {
 true #no space
@@ -31,7 +31,7 @@ deny = true
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
 	input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
-		if fileName == "test/main.rego" {
+		if fileName == "/root/main/main.rego" {
 			return ast.RegoV1
 		}
 
@@ -49,6 +49,7 @@ deny = true
 
 	f := NewFixer()
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f.RegisterRoots("/root")
 
 	fixReport, err := f.Fix(context.Background(), &l, memfp)
 	if err != nil {
@@ -57,10 +58,10 @@ deny = true
 
 	expectedFileFixedViolations := map[string][]string{
 		// use-assigment-operator is correct in formatting so does not appear.
-		"test/main.rego": {"no-whitespace-comment", "opa-fmt"},
+		"/root/test/main.rego": {"directory-package-mismatch", "no-whitespace-comment", "opa-fmt"},
 	}
 	expectedFileContents := map[string]string{
-		"test/main.rego": `package test
+		"/root/test/main.rego": `package test
 
 allow := true
 
@@ -70,7 +71,7 @@ deny := true
 `,
 	}
 
-	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
+	if got, exp := fixReport.TotalFixes(), uint(3); got != exp {
 		t.Fatalf("expected a total of %d fixes, got %d", exp, got)
 	}
 
@@ -82,8 +83,10 @@ deny := true
 	for _, file := range fpFiles {
 		// check that the content is correct
 		expectedContent, ok := expectedFileContents[file]
-		if !ok {
-			t.Fatalf("unexpected file %s", file)
+		_, moved := fixReport.movedFiles[file]
+
+		if !ok && !moved {
+			t.Fatalf("unexpected file found in resulting file provider %s", file)
 		}
 
 		content, err := memfp.Get(file)

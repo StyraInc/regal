@@ -1,7 +1,6 @@
 package fixes
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
@@ -24,7 +23,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: "package main",
 			expected: &FixResult{
-				Contents: []byte("package main"),
+				Contents: "package main",
 				Rename: &Rename{
 					FromPath: "/root/main.rego",
 					ToPath:   "/root/main/main.rego",
@@ -36,7 +35,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: "package bar",
 			expected: &FixResult{
-				Contents: []byte("package bar"),
+				Contents: "package bar",
 				Rename: &Rename{
 					FromPath: "/root/foo/bar.rego",
 					ToPath:   "/root/bar/bar.rego",
@@ -48,7 +47,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: "package bar.bar",
 			expected: &FixResult{
-				Contents: []byte("package bar.bar"),
+				Contents: "package bar.bar",
 				Rename: &Rename{
 					FromPath: "/root/foo/bar.rego",
 					ToPath:   "/root/bar/bar/bar.rego",
@@ -60,7 +59,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: `package foo["bar-baz"].qux`,
 			expected: &FixResult{
-				Contents: []byte(`package foo["bar-baz"].qux`),
+				Contents: `package foo["bar-baz"].qux`,
 				Rename: &Rename{
 					FromPath: "/root/foo.rego",
 					ToPath:   "/root/foo/bar-baz/qux/foo.rego",
@@ -78,7 +77,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: `package foo_test`,
 			expected: &FixResult{
-				Contents: []byte(`package foo_test`),
+				Contents: `package foo_test`,
 				Rename: &Rename{
 					FromPath: "/root/foo_test.rego",
 					ToPath:   "/root/foo/foo_test.rego",
@@ -90,7 +89,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 			baseDir:  "/root",
 			contents: `package foo_test`,
 			expected: &FixResult{
-				Contents: []byte(`package foo_test`),
+				Contents: `package foo_test`,
 				Rename: &Rename{
 					FromPath: "/root/foo_test.rego",
 					ToPath:   "/root/foo_test/foo_test.rego",
@@ -108,7 +107,7 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 
 			fr, err := dpm.Fix(&FixCandidate{
 				Filename: tc.name,
-				Contents: []byte(tc.contents),
+				Contents: tc.contents,
 			}, &RuntimeOptions{
 				BaseDir: tc.baseDir,
 				Config:  configWithExcludeTestSuffix(!tc.includeTestSuffix),
@@ -145,8 +144,8 @@ func TestFixDirectoryPackageMismatch(t *testing.T) {
 
 			fixResult := fr[0]
 
-			if !bytes.Equal(fixResult.Contents, tc.expected.Contents) {
-				t.Fatalf("expected %s, got %s", string(tc.expected.Contents), string(fr[0].Contents))
+			if fixResult.Contents != tc.expected.Contents {
+				t.Fatalf("expected %s, got %s", tc.expected.Contents, fr[0].Contents)
 			}
 
 			if fixResult.Rename == nil && tc.expected.Rename != nil {

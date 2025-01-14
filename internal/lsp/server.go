@@ -1216,7 +1216,7 @@ func (l *LanguageServer) fixEditParams(
 	fixResults, err := fix.Fix(
 		&fixes.FixCandidate{
 			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, pr.Target)),
-			Contents: rutil.StringToByteSlice(oldContent),
+			Contents: oldContent,
 		},
 		rto,
 	)
@@ -1234,7 +1234,7 @@ func (l *LanguageServer) fixEditParams(
 			DocumentChanges: []types.TextDocumentEdit{
 				{
 					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: pr.Target},
-					Edits:        ComputeEdits(oldContent, rutil.ByteSliceToString(fixResults[0].Contents)),
+					Edits:        ComputeEdits(oldContent, fixResults[0].Contents),
 				},
 			},
 		},
@@ -1275,10 +1275,6 @@ func (l *LanguageServer) fixRenameParams(
 	fixReport, err := f.FixViolations(violations, cfp, l.getLoadedConfig())
 	if err != nil {
 		return result, fmt.Errorf("failed to fix violations: %w", err)
-	}
-
-	if fixReport.HasConflicts() {
-		return result, errors.New("fix report has conflicts")
 	}
 
 	ff := fixReport.FixedFiles()
@@ -2188,7 +2184,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		formatter = *l.clientInitializationOptions.Formatter
 	}
 
-	var newContent []byte
+	var newContent string
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
@@ -2204,7 +2200,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
 
 		fixResults, err := f.Fix(
-			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: rutil.StringToByteSlice(oldContent)},
+			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: oldContent},
 			&fixes.RuntimeOptions{
 				BaseDir: l.workspacePath(),
 			},
@@ -2223,8 +2219,8 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		newContent = fixResults[0].Contents
 	case "regal-fix":
 		// set up an in-memory file provider to pass to the fixer for this one file
-		memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
-			params.TextDocument.URI: rutil.StringToByteSlice(oldContent),
+		memfp := fileprovider.NewInMemoryFileProvider(map[string]string{
+			params.TextDocument.URI: oldContent,
 		})
 
 		input, err := memfp.ToInput()
@@ -2269,7 +2265,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("unrecognized formatter %q", formatter)
 	}
 
-	return ComputeEdits(oldContent, rutil.ByteSliceToString(newContent)), nil
+	return ComputeEdits(oldContent, newContent), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(

@@ -10,7 +10,7 @@ func TestNoWhitespaceComment(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		contentAfterFix []byte
+		contentAfterFix string
 		fc              *FixCandidate
 		fixExpected     bool
 		runtimeOptions  *RuntimeOptions
@@ -18,15 +18,15 @@ func TestNoWhitespaceComment(t *testing.T) {
 		"no change needed": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test\n
+				Contents: `package test\n
 
 # this is a comment
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test\n
+			contentAfterFix: `package test\n
 
 # this is a comment
-`),
+`,
 			fixExpected: false,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{},
@@ -35,15 +35,15 @@ func TestNoWhitespaceComment(t *testing.T) {
 		"single change": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test\n
+				Contents: `package test\n
 
 #this is a comment
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test\n
+			contentAfterFix: `package test\n
 
 # this is a comment
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -57,19 +57,19 @@ func TestNoWhitespaceComment(t *testing.T) {
 		"many changes": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test\n
+				Contents: `package test\n
 
 #this is a comment
 #this is a comment
 #this is a comment
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test\n
+			contentAfterFix: `package test\n
 
 # this is a comment
 # this is a comment
 # this is a comment
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -91,19 +91,19 @@ func TestNoWhitespaceComment(t *testing.T) {
 		"many changes, different columns": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test\n
+				Contents: `package test\n
 
 #this is a comment
  #this is a comment
   #this is a comment
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test\n
+			contentAfterFix: `package test\n
 
 # this is a comment
  # this is a comment
   # this is a comment
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -145,10 +145,8 @@ func TestNoWhitespaceComment(t *testing.T) {
 
 			fixedContent := fixResults[0].Contents
 
-			if tc.fixExpected && string(fixedContent) != string(tc.contentAfterFix) {
-				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",
-					string(fixedContent),
-					string(tc.contentAfterFix))
+			if tc.fixExpected && fixedContent != tc.contentAfterFix {
+				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---", fixedContent, tc.contentAfterFix)
 			}
 		})
 	}

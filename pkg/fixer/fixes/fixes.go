@@ -55,7 +55,7 @@ type RuntimeOptions struct {
 // FixCandidate is the input to a Fix method and represents a file in need of fixing.
 type FixCandidate struct {
 	Filename    string
-	Contents    []byte
+	Contents    string
 	RegoVersion ast.RegoVersion
 }
 
@@ -81,5 +81,5 @@ type FixResult struct {
 	// Contents is the new contents of the file. May be nil or identical to the original contents,
 	// as not all fixes involve content changes. It is the responsibility of the caller to handle
 	// this.
-	Contents []byte
+	Contents string
 }

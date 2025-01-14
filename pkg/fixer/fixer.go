@@ -1,7 +1,6 @@
 package fixer
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -243,7 +242,7 @@ func (f *Fixer) applyMandatoryFixes(fp fileprovider.FileProvider, fixReport *Rep
 				}
 
 				for _, fixResult := range fixResults {
-					if !bytes.Equal(fc, fixResult.Contents) {
+					if fc != fixResult.Contents {
 						if err := fp.Put(file, fixResult.Contents); err != nil {
 							return fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
 						}

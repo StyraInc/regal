@@ -1,7 +1,6 @@
 package fixer
 
 import (
-	"bytes"
 	"context"
 	"slices"
 	"testing"
@@ -19,14 +18,14 @@ import (
 func TestFixer(t *testing.T) {
 	t.Parallel()
 
-	policies := map[string][]byte{
-		"test/main.rego": []byte(`package test
+	policies := map[string]string{
+		"test/main.rego": `package test
 
 allow if {
 true #no space
 }
 deny = true
-`),
+`,
 	}
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
@@ -52,15 +51,15 @@ deny = true
 		// use-assigment-operator is correct in formatting so does not appear.
 		"test/main.rego": {"no-whitespace-comment", "opa-fmt"},
 	}
-	expectedFileContents := map[string][]byte{
-		"test/main.rego": []byte(`package test
+	expectedFileContents := map[string]string{
+		"test/main.rego": `package test
 
 allow := true
 
 # no space
 
 deny := true
-`),
+`,
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
@@ -84,11 +83,13 @@ deny := true
 			t.Fatalf("failed to get file %s: %v", file, err)
 		}
 
-		if !bytes.Equal(content, expectedContent) {
-			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
+		if content != expectedContent {
+			t.Fatalf(
+				"unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
 				file,
-				string(content),
-				string(expectedContent))
+				content,
+				expectedContent,
+			)
 		}
 
 		// check that the fixed violations are correct
@@ -116,15 +117,15 @@ deny := true
 func TestFixerWithRegisterMandatoryFixes(t *testing.T) {
 	t.Parallel()
 
-	policies := map[string][]byte{
-		"main.rego": []byte(`package test
+	policies := map[string]string{
+		"main.rego": `package test
 
 allow {
 true #no space
 }
 
 deny = true
-`),
+`,
 	}
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
@@ -163,10 +164,10 @@ deny = true
 	expectedFileFixedViolations := map[string][]string{
 		"main.rego": {"use-rego-v1"},
 	}
-	expectedFileContents := map[string][]byte{
+	expectedFileContents := map[string]string{
 		// note that since only the rego-v1-format fix is run, the
 		// no-whitespace-comment fix is not applied
-		"main.rego": []byte(`package test
+		"main.rego": `package test
 
 import rego.v1
 
@@ -175,7 +176,7 @@ allow := true
 #no space
 
 deny := true
-`),
+`,
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(1); got != exp {
@@ -199,11 +200,13 @@ deny := true
 			t.Fatalf("failed to get file %s: %v", file, err)
 		}
 
-		if !bytes.Equal(content, expectedContent) {
-			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
+		if content != expectedContent {
+			t.Fatalf(
+				"unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
 				file,
-				string(content),
-				string(expectedContent))
+				content,
+				expectedContent,
+			)
 		}
 
 		fxs := fixReport.FixesForFile(file)
@@ -239,16 +242,16 @@ func TestFixViolations(t *testing.T) {
 		},
 	}
 
-	policies := map[string][]byte{
-		"root/main.rego": []byte(`package foo.bar
+	policies := map[string]string{
+		"root/main.rego": `package foo.bar
 
 allow := true
-`),
+`,
 		// file in correct place
-		"root/foo/bar/main.rego": []byte(`package foo.bar
+		"root/foo/bar/main.rego": `package foo.bar
 
 allow := true
-`),
+`,
 	}
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
@@ -267,21 +270,21 @@ allow := true
 		"root/foo/bar/main_1.rego": {"directory-package-mismatch"},
 		"root/foo/bar/main.rego":   {}, // no fixes
 	}
-	expectedFileContents := map[string][]byte{
+	expectedFileContents := map[string]string{
 		// old file yet to be deleted
-		"root/main.rego": []byte(`package foo.bar
+		"root/main.rego": `package foo.bar
 
 allow := true
-`),
-		"root/foo/bar/main_1.rego": []byte(`package foo.bar
+`,
+		"root/foo/bar/main_1.rego": `package foo.bar
 
 allow := true
-`),
+`,
 		// file in correct place
-		"root/foo/bar/main.rego": []byte(`package foo.bar
+		"root/foo/bar/main.rego": `package foo.bar
 
 allow := true
-`),
+`,
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
@@ -305,11 +308,11 @@ allow := true
 			t.Fatalf("failed to get file %s: %v", file, err)
 		}
 
-		if !bytes.Equal(content, expectedContent) {
+		if content != expectedContent {
 			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
 				file,
-				string(content),
-				string(expectedContent))
+				content,
+				expectedContent)
 		}
 
 		fxs := fixReport.FixesForFile(file)

@@ -1,9 +1,8 @@
 package fixes
 
 import (
-	"bytes"
 	"errors"
-	"slices"
+	"strings"
 )
 
 type UseAssignmentOperator struct{}
@@ -13,7 +12,7 @@ func (*UseAssignmentOperator) Name() string {
 }
 
 func (u *UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
-	lines := bytes.Split(fc.Contents, []byte("\n"))
+	lines := strings.Split(fc.Contents, "\n")
 
 	if opts == nil {
 		return nil, errors.New("missing runtime options")
@@ -33,11 +32,11 @@ func (u *UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]F
 		}
 
 		// unexpected character at location column, skipping
-		if line[loc.Col-1] != byte('=') {
+		if line[loc.Col-1] != '=' {
 			continue
 		}
 
-		lines[loc.Row-1] = slices.Concat(line[0:loc.Col-1], []byte(":"), line[loc.Col-1:])
+		lines[loc.Row-1] = line[0:loc.Col-1] + ":" + line[loc.Col-1:]
 		fixed = true
 	}
 
@@ -48,6 +47,6 @@ func (u *UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]F
 	return []FixResult{{
 		Title:    u.Name(),
 		Root:     opts.BaseDir,
-		Contents: bytes.Join(lines, []byte("\n")),
+		Contents: strings.Join(lines, "\n"),
 	}}, nil
 }

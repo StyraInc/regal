@@ -1,9 +1,8 @@
 package fixes
 
 import (
-	"bytes"
 	"errors"
-	"slices"
+	"strings"
 )
 
 type NoWhitespaceComment struct{}
@@ -13,7 +12,7 @@ func (*NoWhitespaceComment) Name() string {
 }
 
 func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
-	lines := bytes.Split(fc.Contents, []byte("\n"))
+	lines := strings.Split(fc.Contents, "\n")
 
 	if opts == nil {
 		return nil, errors.New("missing runtime options")
@@ -38,7 +37,7 @@ func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]Fix
 			continue
 		}
 
-		lines[loc.Row-1] = slices.Concat(line[0:loc.Col], []byte(" "), line[loc.Col:])
+		lines[loc.Row-1] = line[0:loc.Col] + " " + line[loc.Col:]
 		fixed = true
 	}
 
@@ -49,6 +48,6 @@ func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]Fix
 	return []FixResult{{
 		Title:    n.Name(),
 		Root:     opts.BaseDir,
-		Contents: bytes.Join(lines, []byte("\n")),
+		Contents: strings.Join(lines, "\n"),
 	}}, nil
 }

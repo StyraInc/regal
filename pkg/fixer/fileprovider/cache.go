@@ -41,17 +41,17 @@ func (c *CacheFileProvider) List() ([]string, error) {
 	return paths, nil
 }
 
-func (c *CacheFileProvider) Get(file string) ([]byte, error) {
+func (c *CacheFileProvider) Get(file string) (string, error) {
 	contents, ok := c.Cache.GetFileContents(uri.FromPath(c.ClientIdentifier, file))
 	if !ok {
-		return nil, fmt.Errorf("failed to get file %s", file)
+		return "", fmt.Errorf("failed to get file %s", file)
 	}
 
-	return []byte(contents), nil
+	return contents, nil
 }
 
-func (c *CacheFileProvider) Put(file string, content []byte) error {
-	c.Cache.SetFileContents(file, string(content))
+func (c *CacheFileProvider) Put(file string, content string) error {
+	c.Cache.SetFileContents(file, content)
 
 	return nil
 }

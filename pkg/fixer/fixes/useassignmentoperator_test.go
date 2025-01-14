@@ -10,44 +10,44 @@ func TestUseAssignmentOperator(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		contentAfterFix []byte
+		contentAfterFix string
 		fc              *FixCandidate
 		fixExpected     bool
 		runtimeOptions  *RuntimeOptions
 	}{
 		"no change": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: `package test
 
 allow := true
-`)},
-			contentAfterFix: []byte(`package test
+`},
+			contentAfterFix: `package test
 
 allow := true
-`),
+`,
 			fixExpected:    false,
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"no change because no location": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: `package test
 
 allow = true
-`)},
-			contentAfterFix: []byte(`package test
+`},
+			contentAfterFix: `package test
 
 allow = true
-`),
+`,
 			fixExpected:    false,
 			runtimeOptions: &RuntimeOptions{},
 		},
 		"single change": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte(`package test
+			fc: &FixCandidate{Filename: "test.rego", Contents: `package test
 
 allow = true
-`)},
-			contentAfterFix: []byte(`package test
+`},
+			contentAfterFix: `package test
 
 allow := true
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -61,15 +61,15 @@ allow := true
 		"bad change": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test
+				Contents: `package test
 
 allow = true
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test
+			contentAfterFix: `package test
 
 allow = true
-`),
+`,
 			fixExpected: false,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -83,19 +83,19 @@ allow = true
 		"many changes": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test
+				Contents: `package test
 
 allow = true if { u = 1 }
 
 allow = true if { u = 2 }
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test
+			contentAfterFix: `package test
 
 allow := true if { u = 1 }
 
 allow := true if { u = 2 }
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -113,19 +113,19 @@ allow := true if { u = 2 }
 		"different columns": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package test
+				Contents: `package test
 
 allow = true
  wow = true
   wowallow = true
-`),
+`,
 			},
-			contentAfterFix: []byte(`package test
+			contentAfterFix: `package test
 
 allow := true
  wow := true
   wowallow := true
-`),
+`,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
 				Locations: []ast.Location{
@@ -167,10 +167,12 @@ allow := true
 
 			fixedContent := fixResults[0].Contents
 
-			if tc.fixExpected && string(fixedContent) != string(tc.contentAfterFix) {
-				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",
-					string(fixedContent),
-					string(tc.contentAfterFix))
+			if tc.fixExpected && fixedContent != tc.contentAfterFix {
+				t.Fatalf(
+					"unexpected content, got:\n%s---\nexpected:\n%s---",
+					fixedContent,
+					tc.contentAfterFix,
+				)
 			}
 		})
 	}

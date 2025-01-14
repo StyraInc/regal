@@ -12,107 +12,107 @@ func TestFmt(t *testing.T) {
 
 	testCases := map[string]struct {
 		fmt             *Fmt
-		contentAfterFix []byte
 		fc              *FixCandidate
+		contentAfterFix string
 		fixExpected     bool
 	}{
 		"no change": {
-			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n")},
-			contentAfterFix: []byte("package testutil\n"),
+			fc:              &FixCandidate{Filename: "test.rego", Contents: "package testutil\n"},
+			contentAfterFix: "package testutil\n",
 			fixExpected:     false,
 			fmt:             &Fmt{},
 		},
 		"add a new line": {
-			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil")},
-			contentAfterFix: []byte("package testutil\n"),
+			fc:              &FixCandidate{Filename: "test.rego", Contents: "package testutil"},
+			contentAfterFix: "package testutil\n",
 			fmt:             &Fmt{},
 			fixExpected:     true,
 		},
 		"add a new line before rule": {
-			fc:              &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\nallow := true")},
-			contentAfterFix: []byte("package testutil\n\nallow := true\n"),
+			fc:              &FixCandidate{Filename: "test.rego", Contents: "package testutil\nallow := true"},
+			contentAfterFix: "package testutil\n\nallow := true\n",
 			fmt:             &Fmt{},
 			fixExpected:     true,
 		},
 		"rego version unknown, ambigous syntax": {
 			fc: &FixCandidate{
 				Filename:    "test.rego",
-				Contents:    []byte("package testutil\nallow := true"),
+				Contents:    "package testutil\nallow := true",
 				RegoVersion: ast.RegoUndefined,
 			},
 			fmt:         &Fmt{},
 			fixExpected: true,
-			contentAfterFix: []byte(`package testutil
+			contentAfterFix: `package testutil
 
 allow := true
-`),
+`,
 		},
 		"rego version unknown, v0 syntax": {
 			fc: &FixCandidate{
 				Filename:    "test.rego",
-				Contents:    []byte("package testutil\nallow[msg] { msg := 1}"),
+				Contents:    "package testutil\nallow[msg] { msg := 1}",
 				RegoVersion: ast.RegoUndefined,
 			},
 			fmt:         &Fmt{},
 			fixExpected: true,
-			contentAfterFix: []byte(`package testutil
+			contentAfterFix: `package testutil
 
 import rego.v1
 
 allow contains msg if msg := 1
-`),
+`,
 		},
 		"rego version unknown, v0v1 compat syntax": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package testutil
+				Contents: `package testutil
 import rego.v1
 allow contains msg if msg :=1
-				`),
+				`,
 				RegoVersion: ast.RegoUndefined,
 			},
 			fmt:         &Fmt{},
 			fixExpected: true,
-			contentAfterFix: []byte(`package testutil
+			contentAfterFix: `package testutil
 
 import rego.v1
 
 allow contains msg if msg := 1
-`),
+`,
 		},
 		"rego version unknown, v1 syntax": {
 			fc: &FixCandidate{
 				Filename: "test.rego",
-				Contents: []byte(`package testutil
+				Contents: `package testutil
 
 allow contains msg if msg :=1
-				`),
+				`,
 				RegoVersion: ast.RegoUndefined,
 			},
 			fmt:         &Fmt{},
 			fixExpected: true,
-			contentAfterFix: []byte(`package testutil
+			contentAfterFix: `package testutil
 
 allow contains msg if msg := 1
-`),
+`,
 		},
 		"rego v1 (rego version 0)": {
 			fc: &FixCandidate{
 				Filename:    "test.rego",
-				Contents:    []byte("package testutil\nallow := true"),
+				Contents:    "package testutil\nallow := true",
 				RegoVersion: ast.RegoV0,
 			},
 			fmt:         &Fmt{},
 			fixExpected: true,
-			contentAfterFix: []byte(`package testutil
+			contentAfterFix: `package testutil
 
 import rego.v1
 
 allow := true
-`),
+`,
 		},
 		"rego v1 (rego version > 1)": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
+			fc: &FixCandidate{Filename: "test.rego", Contents: "package testutil\n\nallow := true\n"},
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV0CompatV1,
@@ -121,7 +121,7 @@ allow := true
 			fixExpected: false,
 		},
 		"rego v1, version known": {
-			fc: &FixCandidate{Filename: "test.rego", Contents: []byte("package testutil\n\nallow := true\n")},
+			fc: &FixCandidate{Filename: "test.rego", Contents: "package testutil\n\nallow := true\n"},
 			fmt: &Fmt{
 				OPAFmtOpts: format.Opts{
 					RegoVersion: ast.RegoV1,
@@ -152,10 +152,12 @@ allow := true
 
 			fixedContent := fixResults[0].Contents
 
-			if string(fixedContent) != string(tc.contentAfterFix) {
-				t.Fatalf("unexpected content, got:\n%s---\nexpected:\n%s---",
-					string(fixedContent),
-					string(tc.contentAfterFix))
+			if fixedContent != tc.contentAfterFix {
+				t.Fatalf(
+					"unexpected content, got:\n%s---\nexpected:\n%s---",
+					fixedContent,
+					tc.contentAfterFix,
+				)
 			}
 		})
 	}

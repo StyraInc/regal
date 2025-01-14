@@ -17,7 +17,7 @@ func TestCacheFileProvider(t *testing.T) {
 
 	cfp := NewCacheFileProvider(c, clients.IdentifierGeneric)
 
-	err := cfp.Put("file:///tmp/foo.rego", []byte("package wow"))
+	err := cfp.Put("file:///tmp/foo.rego", "package wow")
 	if err != nil {
 		t.Fatalf("failed to put file: %s", err)
 	}
@@ -27,7 +27,7 @@ func TestCacheFileProvider(t *testing.T) {
 		t.Fatalf("failed to get file: %s", err)
 	}
 
-	if string(contents) != "package wow" {
+	if contents != "package wow" {
 		t.Fatalf("expected %s, got %s", "package wow", contents)
 	}
 
@@ -58,7 +58,7 @@ func TestCacheFileProvider(t *testing.T) {
 		t.Fatalf("failed to get file: %s", err)
 	}
 
-	if string(contents) != "package wow" {
+	if contents != "package wow" {
 		t.Fatalf("expected %s, got %s", "package wow", contents)
 	}
 }

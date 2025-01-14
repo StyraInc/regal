@@ -9,8 +9,8 @@ import (
 type FileProvider interface {
 	List() ([]string, error)
 
-	Get(string) ([]byte, error)
-	Put(string, []byte) error
+	Get(string) (string, error)
+	Put(string, string) error
 	Delete(string) error
 	Rename(string, string) error
 

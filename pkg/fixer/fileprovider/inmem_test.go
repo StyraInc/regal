@@ -35,8 +35,8 @@ func TestFromFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if fc, err := fp.Get(tempDir + "/foo/bar/baz"); err != nil || string(fc) != "bar" {
-		t.Fatalf("expected %s, got %s", "bar", string(fc))
+	if fc, err := fp.Get(tempDir + "/foo/bar/baz"); err != nil || fc != "bar" {
+		t.Fatalf("expected %s, got %s", "bar", fc)
 	}
 }
 
@@ -46,9 +46,9 @@ func TestRenameConflict(t *testing.T) {
 	fileA := "/foo/bar/baz"
 	fileB := "/bar/foo"
 
-	files := map[string][]byte{
-		fileA: []byte("bar"),
-		fileB: []byte("baz"),
+	files := map[string]string{
+		fileA: "bar",
+		fileB: "baz",
 	}
 
 	fp := NewInMemoryFileProvider(files)

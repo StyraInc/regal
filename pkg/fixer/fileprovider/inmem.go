@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	rutil "github.com/anderseknert/roast/pkg/util"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/parse"
@@ -14,12 +12,12 @@ import (
 )
 
 type InMemoryFileProvider struct {
-	files         map[string][]byte
+	files         map[string]string
 	modifiedFiles map[string]struct{}
 	deletedFiles  map[string]struct{}
 }
 
-func NewInMemoryFileProvider(files map[string][]byte) *InMemoryFileProvider {
+func NewInMemoryFileProvider(files map[string]string) *InMemoryFileProvider {
 	return &InMemoryFileProvider{
 		files:         files,
 		modifiedFiles: make(map[string]struct{}),
@@ -28,7 +26,7 @@ func NewInMemoryFileProvider(files map[string][]byte) *InMemoryFileProvider {
 }
 
 func NewInMemoryFileProviderFromFS(paths ...string) (*InMemoryFileProvider, error) {
-	files := make(map[string][]byte)
+	files := make(map[string]string)
 
 	for _, path := range paths {
 		fc, err := os.ReadFile(path)
@@ -36,7 +34,7 @@ func NewInMemoryFileProviderFromFS(paths ...string) (*InMemoryFileProvider, erro
 			return nil, fmt.Errorf("failed to read file %s: %w", path, err)
 		}
 
-		files[path] = fc
+		files[path] = string(fc)
 	}
 
 	return &InMemoryFileProvider{
@@ -55,16 +53,16 @@ func (p *InMemoryFileProvider) List() ([]string, error) {
 	return files, nil
 }
 
-func (p *InMemoryFileProvider) Get(file string) ([]byte, error) {
+func (p *InMemoryFileProvider) Get(file string) (string, error) {
 	content, ok := p.files[file]
 	if !ok {
-		return nil, fmt.Errorf("file %s not found", file)
+		return "", fmt.Errorf("file %s not found", file)
 	}
 
 	return content, nil
 }
 
-func (p *InMemoryFileProvider) Put(file string, content []byte) error {
+func (p *InMemoryFileProvider) Put(file string, content string) error {
 	p.files[file] = content
 
 	p.modifiedFiles[file] = struct{}{}
@@ -117,17 +115,14 @@ func (p *InMemoryFileProvider) DeletedFiles() []string {
 // TODO: We need a way to specify the Rego version for the files here and avoid
 // relying on the parser to infer those.
 func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
-	strContents := make(map[string]string)
 	modules := make(map[string]*ast.Module)
 
 	for filename, content := range p.files {
 		var err error
 
-		strContents[filename] = rutil.ByteSliceToString(content)
-
 		modules[filename], err = parse.ModuleWithOpts(
 			filename,
-			strContents[filename],
+			content,
 			parse.ParserOptions(),
 		)
 		if err != nil {
@@ -135,5 +130,5 @@ func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
 		}
 	}
 
-	return rules.NewInput(strContents, modules), nil
+	return rules.NewInput(p.files, modules), nil
 }

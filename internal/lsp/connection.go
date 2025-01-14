@@ -22,6 +22,7 @@
 package lsp
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -181,13 +182,9 @@ func buildSendHandler(
 			}
 
 		case resp != nil:
-			method := getMethod(resp.ID)
+			method := cmp.Or(getMethod(resp.ID), "(no previous request)")
 
 			deleteMethod(resp.ID)
-
-			if method == "" {
-				method = "(no previous request)"
-			}
 
 			if !cfg.ShouldLog(method) {
 				return

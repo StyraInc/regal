@@ -90,9 +90,7 @@ func (c *CacheFileProvider) Rename(from, to string) error {
 	return nil
 }
 
-// TODO: We need a way to specify the Rego version for the files here and avoid
-// relying on the parser to infer those.
-func (c *CacheFileProvider) ToInput() (rules.Input, error) {
+func (c *CacheFileProvider) ToInput(versionLookup func(string) ast.RegoVersion) (rules.Input, error) {
 	strContents := make(map[string]string)
 	modules := make(map[string]*ast.Module)
 
@@ -101,11 +99,10 @@ func (c *CacheFileProvider) ToInput() (rules.Input, error) {
 
 		strContents[filename] = content
 
-		modules[filename], err = parse.ModuleWithOpts(
-			filename,
-			strContents[filename],
-			parse.ParserOptions(),
-		)
+		po := parse.ParserOptions()
+		po.RegoVersion = versionLookup(filename)
+
+		modules[filename], err = parse.ModuleWithOpts(filename, strContents[filename], po)
 		if err != nil {
 			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
 		}

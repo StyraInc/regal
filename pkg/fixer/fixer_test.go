@@ -30,7 +30,15 @@ deny = true
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
-	input, err := memfp.ToInput()
+	input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
+		if fileName == "test/main.rego" {
+			return ast.RegoV1
+		}
+
+		t.Fatalf("unexpected file when looking up version %s", fileName)
+
+		return ast.RegoUndefined
+	})
 	if err != nil {
 		t.Fatalf("failed to create input: %v", err)
 	}
@@ -130,7 +138,15 @@ deny = true
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
-	input, err := memfp.ToInput()
+	input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
+		if fileName == "main.rego" {
+			return ast.RegoV0
+		}
+
+		t.Fatalf("unexpected file when looking up version %s", fileName)
+
+		return ast.RegoUndefined
+	})
 	if err != nil {
 		t.Fatalf("failed to create input: %v", err)
 	}

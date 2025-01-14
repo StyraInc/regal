@@ -2223,7 +2223,9 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			params.TextDocument.URI: oldContent,
 		})
 
-		input, err := memfp.ToInput()
+		input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
+			return l.determineVersionForFile(uri.FromPath(l.clientIdentifier, fileName))
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create fixer input: %w", err)
 		}

@@ -112,19 +112,16 @@ func (p *InMemoryFileProvider) DeletedFiles() []string {
 	return util.Keys(p.deletedFiles)
 }
 
-// TODO: We need a way to specify the Rego version for the files here and avoid
-// relying on the parser to infer those.
-func (p *InMemoryFileProvider) ToInput() (rules.Input, error) {
+func (p *InMemoryFileProvider) ToInput(versionLookup func(string) ast.RegoVersion) (rules.Input, error) {
 	modules := make(map[string]*ast.Module)
 
 	for filename, content := range p.files {
 		var err error
 
-		modules[filename], err = parse.ModuleWithOpts(
-			filename,
-			content,
-			parse.ParserOptions(),
-		)
+		po := parse.ParserOptions()
+		po.RegoVersion = versionLookup(filename)
+
+		modules[filename], err = parse.ModuleWithOpts(filename, content, po)
 		if err != nil {
 			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
 		}

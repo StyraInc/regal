@@ -40,11 +40,16 @@ type Fixer struct {
 	registeredMandatoryFixes map[string]any
 	onConflictOperation      OnConflictOperation
 	registeredRoots          []string
+	getRegoVersion           func(string) ast.RegoVersion
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
 func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) {
 	f.onConflictOperation = operation
+}
+
+func (f *Fixer) SetRegoVersionLookup(fn func(string) ast.RegoVersion) {
+	f.getRegoVersion = fn
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
@@ -291,7 +296,13 @@ func (f *Fixer) applyLinterFixes(
 	for {
 		fixMadeInIteration := false
 
-		in, err := fp.ToInput()
+		in, err := fp.ToInput(func(fileName string) ast.RegoVersion {
+			if f.getRegoVersion == nil {
+				return ast.RegoV1
+			}
+
+			return f.getRegoVersion(fileName)
+		})
 		if err != nil {
 			return fmt.Errorf("failed to generate linter input: %w", err)
 		}

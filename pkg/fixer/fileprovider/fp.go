@@ -3,6 +3,8 @@ package fileprovider
 import (
 	"fmt"
 
+	"github.com/open-policy-agent/opa/v1/ast"
+
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -14,7 +16,7 @@ type FileProvider interface {
 	Delete(string) error
 	Rename(string, string) error
 
-	ToInput() (rules.Input, error)
+	ToInput(versionLookup func(string) ast.RegoVersion) (rules.Input, error)
 }
 
 type RenameConflictError struct {

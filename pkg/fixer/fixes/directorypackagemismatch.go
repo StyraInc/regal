@@ -1,6 +1,7 @@
 package fixes
 
 import (
+	"cmp"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -32,12 +33,7 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 		return nil, err
 	}
 
-	rootPath := opts.BaseDir
-	if rootPath == "" {
-		rootPath = filepath.Dir(fc.Filename)
-	}
-
-	rootPath = filepath.Clean(rootPath)
+	rootPath := filepath.Clean(cmp.Or(opts.BaseDir, filepath.Dir(fc.Filename)))
 
 	newPath := filepath.Join(rootPath, pkgPath, filepath.Base(fc.Filename))
 

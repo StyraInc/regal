@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -35,12 +36,12 @@ func init() {
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "error getting executable path:", err)
 				} else {
-					v := version.Version
-					if v == "" {
-						v = "Unknown"
-					}
-
-					fmt.Fprintf(os.Stderr, "Regal Language Server (path: %s, version: %s)", absPath, v)
+					fmt.Fprintf(
+						os.Stderr,
+						"Regal Language Server (path: %s, version: %s)",
+						absPath,
+						cmp.Or(version.Version, "Unknown"),
+					)
 				}
 			}
 

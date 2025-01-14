@@ -2,6 +2,7 @@
 package lsp
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -1220,9 +1221,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	}
 
 	// if we are in the root, then we can use main as a default
-	if pkg == "" {
-		pkg = "main"
-	}
+	pkg = cmp.Or(pkg, "main")
 
 	if strings.HasSuffix(fileURI, "_test.rego") {
 		pkg += "_test"

@@ -6,7 +6,7 @@ toolchain go1.23.3
 
 require (
 	dario.cat/mergo v1.0.1
-	github.com/anderseknert/roast v0.5.0
+	github.com/anderseknert/roast v0.6.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.8.0

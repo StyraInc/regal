@@ -142,18 +142,14 @@ func walkToFirstOccurrence(node ast.Node, needle ast.Var) (match *ast.Term) {
 }
 
 func compileUpto(stage string, modules map[string]*ast.Module, bs []byte, filename string) (*ast.Compiler, *ast.Module, error) {
-	compiler := compile.NewCompilerWithRegalBuiltins()
-
-	if stage != "" {
-		compiler = compiler.WithStageAfter(stage, ast.CompilerStageDefinition{
-			Name: "halt",
-			Stage: func(c *ast.Compiler) *ast.Error {
-				return &ast.Error{
-					Code: "halt",
-				}
-			},
-		})
-	}
+	compiler := compile.NewCompilerWithRegalBuiltins().WithStageAfter(stage, ast.CompilerStageDefinition{
+		Name: "halt",
+		Stage: func(c *ast.Compiler) *ast.Error {
+			return &ast.Error{
+				Code: "halt",
+			}
+		},
+	})
 
 	var module *ast.Module
 

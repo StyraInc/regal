@@ -713,7 +713,7 @@ func ToMap(config Config) map[string]any {
 	return confMap
 }
 
-func (rule Rule) MarshalJSON() ([]byte, error) {
+func (rule *Rule) MarshalJSON() ([]byte, error) {
 	result, err := rule.MarshalYAML()
 	if err != nil {
 		return nil, fmt.Errorf("marshalling rule failed %w", err)
@@ -736,7 +736,7 @@ func (rule *Rule) UnmarshalJSON(data []byte) error {
 	return rule.mapToConfig(result)
 }
 
-func (rule Rule) MarshalYAML() (interface{}, error) {
+func (rule *Rule) MarshalYAML() (interface{}, error) {
 	result := make(map[string]any)
 	result[keyLevel] = rule.Level
 

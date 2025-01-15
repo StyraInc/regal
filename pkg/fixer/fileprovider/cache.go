@@ -8,7 +8,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -90,23 +89,11 @@ func (c *CacheFileProvider) Rename(from, to string) error {
 	return nil
 }
 
-func (c *CacheFileProvider) ToInput(versionLookup func(string) ast.RegoVersion) (rules.Input, error) {
-	strContents := make(map[string]string)
-	modules := make(map[string]*ast.Module)
-
-	for filename, content := range c.Cache.GetAllFiles() {
-		var err error
-
-		strContents[filename] = content
-
-		po := parse.ParserOptions()
-		po.RegoVersion = versionLookup(filename)
-
-		modules[filename], err = parse.ModuleWithOpts(filename, strContents[filename], po)
-		if err != nil {
-			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
-		}
+func (c *CacheFileProvider) ToInput(versionsMap map[string]ast.RegoVersion) (rules.Input, error) {
+	input, err := rules.InputFromMap(c.Cache.GetAllFiles(), versionsMap)
+	if err != nil {
+		return rules.Input{}, fmt.Errorf("failed to create input: %w", err)
 	}
 
-	return rules.NewInput(strContents, modules), nil
+	return input, nil
 }

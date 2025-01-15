@@ -53,6 +53,7 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/rules"
 	"github.com/styrainc/regal/pkg/version"
 )
 
@@ -1068,32 +1069,6 @@ func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }
 
-func (l *LanguageServer) determineVersionForFile(fileURI string) ast.RegoVersion {
-	var versionedDirs []string
-
-	// if we have no information, then we can return the default
-	if l.loadedConfigAllRegoVersions.Len() == 0 {
-		return ast.RegoV1
-	}
-
-	versionedDirs = util.Keys(l.loadedConfigAllRegoVersions.Clone())
-	slices.Sort(versionedDirs)
-	slices.Reverse(versionedDirs)
-
-	path := strings.TrimPrefix(fileURI, l.workspaceRootURI+"/")
-
-	for _, versionedDir := range versionedDirs {
-		if strings.HasPrefix(path, versionedDir) {
-			val, ok := l.loadedConfigAllRegoVersions.Get(versionedDir)
-			if ok {
-				return val
-			}
-		}
-	}
-
-	return ast.RegoV1
-}
-
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	// this function should not be called with files in the root, but if it is,
 	// then it is an error to prevent unwanted behavior.
@@ -1181,7 +1156,14 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	version := l.determineVersionForFile(fileURI)
+	version := ast.RegoUndefined
+	if l.loadedConfigAllRegoVersions != nil {
+		version = rules.RegoVersionFromVersionsMap(
+			l.loadedConfigAllRegoVersions.Clone(),
+			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
+			ast.RegoUndefined,
+		)
+	}
 
 	if version == ast.RegoV0 {
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
@@ -1785,7 +1767,11 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
-		RegoVersion:      l.determineVersionForFile(params.TextDocument.URI),
+		RegoVersion: rules.RegoVersionFromVersionsMap(
+			l.loadedConfigAllRegoVersions.Clone(),
+			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
+			ast.RegoUndefined,
+		),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2189,7 +2175,11 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
 		opts := format.Opts{
-			RegoVersion: l.determineVersionForFile(params.TextDocument.URI),
+			RegoVersion: rules.RegoVersionFromVersionsMap(
+				l.loadedConfigAllRegoVersions.Clone(),
+				strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
+				ast.RegoUndefined,
+			),
 		}
 
 		if formatter == "opa-fmt-rego-v1" {
@@ -2223,9 +2213,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			params.TextDocument.URI: oldContent,
 		})
 
-		input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
-			return l.determineVersionForFile(uri.FromPath(l.clientIdentifier, fileName))
-		})
+		input, err := memfp.ToInput(l.loadedConfigAllRegoVersions.Clone())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create fixer input: %w", err)
 		}

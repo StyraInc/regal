@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -71,7 +72,7 @@ func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Inp
 // function. When the versionsMap is not nil/empty, files in a directory matching a key in the map will be parsed with
 // the corresponding Rego version. If not provided, the file may be parsed multiple times in order to determine the
 // version (best-effort and may include false positives).
-func InputFromPaths(paths []string, versionsMap map[string]ast.RegoVersion) (Input, error) {
+func InputFromPaths(paths []string, prefix string, versionsMap map[string]ast.RegoVersion) (Input, error) {
 	if len(paths) == 1 && paths[0] == "-" {
 		return inputFromStdin()
 	}
@@ -96,30 +97,17 @@ func InputFromPaths(paths []string, versionsMap map[string]ast.RegoVersion) (Inp
 
 	errors := make([]error, 0, len(paths))
 
-	parserOptions := parse.ParserOptions()
-
 	for _, path := range paths {
 		go func(path string) {
 			defer wg.Done()
 
-			parserOptions.RegoVersion = ast.RegoUndefined
+			parserOptions := parse.ParserOptions()
 
-			// Check if the path matches any directory where a specific Rego version is set,
-			// and if so use that instead of having to parse the file (potentially multiple times)
-			// in order to determine the Rego version.
-			// If a project-wide version has been set, it'll be found under the path "", which will
-			// always be the last entry in versionedDirs, and only match if no specific directory
-			// matches.
-			if len(versionsMap) > 0 {
-				dir := filepath.Dir(path)
-				for _, versionedDir := range versionedDirs {
-					if strings.HasPrefix(dir, versionedDir) {
-						parserOptions.RegoVersion = versionsMap[versionedDir]
-
-						break
-					}
-				}
-			}
+			parserOptions.RegoVersion = RegoVersionFromVersionsMap(
+				versionsMap,
+				strings.TrimPrefix(path, prefix),
+				ast.RegoUndefined,
+			)
 
 			result, err := regoWithOpts(path, parserOptions)
 
@@ -144,6 +132,64 @@ func InputFromPaths(paths []string, versionsMap map[string]ast.RegoVersion) (Inp
 	}
 
 	return NewInput(fileContent, modules), nil
+}
+
+// InputFromMap creates a new Input from a map of file paths to their contents.
+// This function uses a vesrionsMap to determine the parser version for each
+// file before parsing the module.
+func InputFromMap(files map[string]string, versionsMap map[string]ast.RegoVersion) (Input, error) {
+	fileContent := make(map[string]string, len(files))
+	modules := make(map[string]*ast.Module, len(files))
+	parserOptions := parse.ParserOptions()
+
+	for path, content := range files {
+		fileContent[path] = content
+
+		parserOptions.RegoVersion = RegoVersionFromVersionsMap(versionsMap, path, ast.RegoUndefined)
+
+		mod, err := parse.ModuleWithOpts(path, content, parserOptions)
+		if err != nil {
+			return Input{}, fmt.Errorf("failed to parse module %s: %w", path, err)
+		}
+
+		modules[path] = mod
+	}
+
+	return NewInput(fileContent, modules), nil
+}
+
+// RegoVersionFromVersionsMap takes a mapping of file path prefixes, typically
+// representing the roots of the project, and the expected Rego version for
+// each. Using this, it finds the longest matching prefix for the given filename
+// and returns the defaultVersion if to matching prefix is found.
+func RegoVersionFromVersionsMap(
+	versionsMap map[string]ast.RegoVersion,
+	filename string,
+	defaultVersion ast.RegoVersion,
+) ast.RegoVersion {
+	if len(versionsMap) == 0 {
+		return defaultVersion
+	}
+
+	selectedVersion := defaultVersion
+
+	var longestMatch int
+
+	dir := filepath.Dir(filename)
+
+	for versionedDir := range versionsMap {
+		matchingVersionedDir := path.Join("/", versionedDir, "/")
+
+		if strings.HasPrefix(dir+"/", matchingVersionedDir) {
+			// >= as the versioned dir might be "" for the project root
+			if len(versionedDir) >= longestMatch {
+				longestMatch = len(versionedDir)
+				selectedVersion = versionsMap[versionedDir]
+			}
+		}
+	}
+
+	return selectedVersion
 }
 
 func regoWithOpts(path string, opts ast.ParserOptions) (*regoFile, error) {

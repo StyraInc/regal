@@ -270,9 +270,15 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("could not find potential roots: %w", err)
 	}
 
+	versionsMap, err := config.AllRegoVersions(regalDir.Name(), &userConfig)
+	if err != nil {
+		return fmt.Errorf("failed to get all Rego versions: %w", err)
+	}
+
 	f := fixer.NewFixer()
 	f.RegisterRoots(roots...)
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f.SetRegoVersionsMap(versionsMap)
 
 	if !slices.Contains([]string{"error", "rename"}, params.conflictMode) {
 		return fmt.Errorf("invalid conflict mode: %s, expected 'error' or 'rename'", params.conflictMode)

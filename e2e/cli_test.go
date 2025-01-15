@@ -294,7 +294,7 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 	expectExitCode(t, err, 3, &stdout, &stderr)
 
 	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
+		t.Errorf("expected stderr:\n%s\ngot\n%s", exp, act)
 	}
 
 	var rep report.Report
@@ -865,7 +865,7 @@ project:
     - path: v0
       rego-version: 0
     - path: v1
-      rego-version: 0
+      rego-version: 1
 `,
 		"foo/main.rego": `package wow
 

@@ -30,14 +30,8 @@ deny = true
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
-	input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
-		if fileName == "/root/main/main.rego" {
-			return ast.RegoV1
-		}
-
-		t.Fatalf("unexpected file when looking up version %s", fileName)
-
-		return ast.RegoUndefined
+	input, err := memfp.ToInput(map[string]ast.RegoVersion{
+		"/root/main": ast.RegoV1,
 	})
 	if err != nil {
 		t.Fatalf("failed to create input: %v", err)
@@ -50,6 +44,9 @@ deny = true
 	f := NewFixer()
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
 	f.RegisterRoots("/root")
+	f.SetRegoVersionsMap(map[string]ast.RegoVersion{
+		"/root/main": ast.RegoV1,
+	})
 
 	fixReport, err := f.Fix(context.Background(), &l, memfp)
 	if err != nil {
@@ -129,7 +126,7 @@ func TestFixerWithRegisterMandatoryFixes(t *testing.T) {
 	t.Parallel()
 
 	policies := map[string]string{
-		"main.rego": `package test
+		"/root/main/main.rego": `package test
 
 allow {
 true #no space
@@ -141,14 +138,8 @@ deny = true
 
 	memfp := fileprovider.NewInMemoryFileProvider(policies)
 
-	input, err := memfp.ToInput(func(fileName string) ast.RegoVersion {
-		if fileName == "main.rego" {
-			return ast.RegoV0
-		}
-
-		t.Fatalf("unexpected file when looking up version %s", fileName)
-
-		return ast.RegoUndefined
+	input, err := memfp.ToInput(map[string]ast.RegoVersion{
+		"/root/main": ast.RegoV0,
 	})
 	if err != nil {
 		t.Fatalf("failed to create input: %v", err)
@@ -181,12 +172,12 @@ deny = true
 	}
 
 	expectedFileFixedViolations := map[string][]string{
-		"main.rego": {"use-rego-v1"},
+		"/root/main/main.rego": {"use-rego-v1"},
 	}
 	expectedFileContents := map[string]string{
 		// note that since only the rego-v1-format fix is run, the
 		// no-whitespace-comment fix is not applied
-		"main.rego": `package test
+		"/root/main/main.rego": `package test
 
 import rego.v1
 

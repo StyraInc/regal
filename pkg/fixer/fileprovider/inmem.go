@@ -6,7 +6,6 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -112,20 +111,11 @@ func (p *InMemoryFileProvider) DeletedFiles() []string {
 	return util.Keys(p.deletedFiles)
 }
 
-func (p *InMemoryFileProvider) ToInput(versionLookup func(string) ast.RegoVersion) (rules.Input, error) {
-	modules := make(map[string]*ast.Module)
-
-	for filename, content := range p.files {
-		var err error
-
-		po := parse.ParserOptions()
-		po.RegoVersion = versionLookup(filename)
-
-		modules[filename], err = parse.ModuleWithOpts(filename, content, po)
-		if err != nil {
-			return rules.Input{}, fmt.Errorf("failed to parse module %s: %w", filename, err)
-		}
+func (p *InMemoryFileProvider) ToInput(versionsMap map[string]ast.RegoVersion) (rules.Input, error) {
+	input, err := rules.InputFromMap(p.files, versionsMap)
+	if err != nil {
+		return rules.Input{}, fmt.Errorf("failed to create input: %w", err)
 	}
 
-	return rules.NewInput(p.files, modules), nil
+	return input, nil
 }

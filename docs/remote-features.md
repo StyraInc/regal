@@ -23,5 +23,5 @@ GitHub API rate limits when using Regal.
 
 This functionality can be disabled in two ways:
 
-* Using `.regal/config.yaml`: set `features.remote.check-version` to `false`.
+* Using `.regal/config.yaml` / `.regal.yaml`: set `features.remote.check-version` to `false`.
 * Using an environment variable: set `REGAL_DISABLE_CHECK_VERSION` to `true`.

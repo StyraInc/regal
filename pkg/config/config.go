@@ -118,20 +118,66 @@ type Builtin struct {
 }
 
 const (
-	regalDirName   = ".regal"
-	configFileName = "config.yaml"
+	regalDirName             = ".regal"
+	configFileName           = "config.yaml"
+	standaloneConfigFileName = ".regal.yaml"
 )
 
-// FindRegalDirectory searches for a .regal directory first in the directory of path, and if not found,
-// in the parent directory, and if not found, in the parent's parent directory, and so on.
-func FindRegalDirectory(path string) (*os.File, error) {
+// FindConfig attempts to find either the .regal directory or .regal.yaml
+// config file, and returns the appropriate file or an error.
+func FindConfig(path string) (*os.File, error) {
+	regalDir, regalDirError := FindRegalDirectory(path)
+	regalConfigFile, regalConfigFileError := FindRegalConfigFile(path)
+
+	var regalDirParent, regalConfigFileParent string
+	if regalDirError == nil && regalConfigFileError == nil {
+		regalDirParent = filepath.Dir(regalDir.Name())
+		regalConfigFileParent = filepath.Dir(regalConfigFile.Name())
+
+		if regalDirParent == regalConfigFileParent {
+			return nil, errors.New("conflicting config files: both .regal directory and .regal.yaml found")
+		}
+	}
+
+	if regalDirError != nil && regalConfigFileError != nil {
+		return nil, errors.New("could not find Regal config")
+	}
+
+	// if the config file parent is not "", then it was found, and if it's
+	// longer then it's more specific to the search path in question, and so we
+	// return that here in such cases.
+	if len(regalConfigFileParent) > len(regalDirParent) {
+		return regalConfigFile, nil
+	}
+
+	// if there is a .regal directory, when a config file is expected to be
+	// found inside.
+	if regalDirError == nil {
+		expectedConfigFilePath := filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName)
+
+		_, err := os.Stat(expectedConfigFilePath)
+		if err != nil && os.IsNotExist(err) {
+			return nil, errors.New("config file was not found in .regal directory")
+		} else if err != nil {
+			return nil, fmt.Errorf("failed to stat .regal config file: %w", err)
+		}
+
+		return os.Open(expectedConfigFilePath) //nolint:wrapcheck
+	}
+
+	// regalConfigFileError is nil at this point, so we can return the file
+	return regalConfigFile, nil
+}
+
+// findUpwards searches for a file or directory matching the given name,
+// starting from the provided path and moving upwards.
+func findUpwards(path, name string, expectDir bool) (*os.File, error) {
 	finfo, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat path %v: %w", path, err)
 	}
 
 	dir := path
-
 	if !finfo.IsDir() {
 		dir = filepath.Dir(path)
 	}
@@ -142,39 +188,47 @@ func FindRegalDirectory(path string) (*os.File, error) {
 	for {
 		var searchPath string
 		if volume == "" {
-			searchPath = filepath.Join(rio.PathSeparator, dir, regalDirName)
+			searchPath = filepath.Join(rio.PathSeparator, dir, name)
 		} else {
-			searchPath = filepath.Join(dir, regalDirName)
+			searchPath = filepath.Join(dir, name)
 		}
 
-		regalDir, err := os.Open(searchPath)
+		file, err := os.Open(searchPath)
 		if err == nil {
-			rdInfo, err := regalDir.Stat()
-			if err == nil && rdInfo.IsDir() {
-				return regalDir, nil
+			fileInfo, err := file.Stat()
+			if err == nil && fileInfo.IsDir() == expectDir {
+				return file, nil
 			}
 		}
 
-		if searchPath == volume+rio.PathSeparator+regalDirName {
+		if searchPath == volume+rio.PathSeparator+name {
 			// Stop traversing at the root path
 			return nil, fmt.Errorf("can't traverse past root directory %w", err)
 		}
 
 		// Move up one level in the directory tree
 		parts := strings.Split(dir, rio.PathSeparator)
-
 		if len(parts) < 2 {
 			return nil, errors.New("stopping as dir is root directory")
 		}
 
 		parts = parts[:len(parts)-1]
-
 		if parts[0] == volume {
 			parts[0] = volume + rio.PathSeparator
 		}
 
 		dir = filepath.Join(parts...)
 	}
+}
+
+// FindRegalDirectory searches for a .regal directory upwards from the provided path.
+func FindRegalDirectory(path string) (*os.File, error) {
+	return findUpwards(path, regalDirName, true)
+}
+
+// FindRegalConfigFile searches for a .regal.yaml config file upwards from the provided path.
+func FindRegalConfigFile(path string) (*os.File, error) {
+	return findUpwards(path, standaloneConfigFileName, false)
 }
 
 // FindBundleRootDirectories finds all bundle root directories from the provided path,
@@ -283,15 +337,6 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 	foundBundleRoots = append(foundBundleRoots, util.Map(util.FilepathJoiner(parent), manifestRoots)...)
 
 	return foundBundleRoots, nil
-}
-
-func FindConfig(path string) (*os.File, error) {
-	regalDir, err := FindRegalDirectory(path)
-	if err != nil {
-		return nil, fmt.Errorf("could not find .regal directory: %w", err)
-	}
-
-	return os.Open(filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName)) //nolint:wrapcheck
 }
 
 func FromMap(confMap map[string]any) (Config, error) {

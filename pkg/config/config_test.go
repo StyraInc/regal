@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -54,32 +55,93 @@ func TestFindRegalDirectory(t *testing.T) {
 func TestFindConfig(t *testing.T) {
 	t.Parallel()
 
-	fs := map[string]string{
-		"/foo/bar/baz/p.rego":         "",
-		"/foo/bar/.regal/config.yaml": "",
+	testCases := map[string]struct {
+		FS           map[string]string
+		Error        string
+		ExpectedName string
+	}{
+		"no config file": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego": "",
+				"/foo/bar/bax.json":   "",
+			},
+			Error: "could not find Regal config",
+		},
+		".regal/config.yaml": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":         "",
+				"/foo/bar/.regal/config.yaml": "",
+			},
+			ExpectedName: "/foo/bar/.regal/config.yaml",
+		},
+		".regal/ dir missing config file": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":   "",
+				"/foo/bar/.regal/.keep": "", // .keep file to ensure the dir is present
+			},
+			Error: "config file was not found in .regal directory",
+		},
+		".regal.yaml": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":  "",
+				"/foo/bar/.regal.yaml": "",
+			},
+			ExpectedName: "/foo/bar/.regal.yaml",
+		},
+		".regal.yaml and .regal/config.yaml": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":         "",
+				"/foo/bar/.regal.yaml":        "",
+				"/foo/bar/.regal/config.yaml": "",
+			},
+			Error: "conflicting config files: both .regal directory and .regal.yaml found",
+		},
+		".regal.yaml with .regal/config.yaml at higher directory": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":  "",
+				"/foo/bar/.regal.yaml": "",
+				"/.regal/config.yaml":  "",
+			},
+			ExpectedName: "/foo/bar/.regal.yaml",
+		},
+		".regal/config.yaml with .regal.yaml at higher directory": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":         "",
+				"/foo/bar/.regal/config.yaml": "",
+				"/.regal.yaml":                "",
+			},
+			ExpectedName: "/foo/bar/.regal/config.yaml",
+		},
 	}
 
-	test.WithTempFS(fs, func(root string) {
-		path := filepath.Join(root, "/foo/bar/baz")
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 
-		if _, err := FindConfig(path); err != nil {
-			t.Error(err)
-		}
-	})
+			test.WithTempFS(testData.FS, func(root string) {
+				path := filepath.Join(root, "/foo/bar/baz")
 
-	fs = map[string]string{
-		"/foo/bar/baz/p.rego": "",
-		"/foo/bar/bax.json":   "",
+				configFile, err := FindConfig(path)
+				if testData.Error != "" {
+					if err == nil {
+						t.Fatalf("expected error %s, got nil", testData.Error)
+					}
+
+					if !strings.Contains(err.Error(), testData.Error) {
+						t.Fatalf("expected error %q, got %q", testData.Error, err.Error())
+					}
+				} else if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+
+				if testData.ExpectedName != "" {
+					if got, exp := strings.TrimPrefix(configFile.Name(), root), testData.ExpectedName; got != exp {
+						t.Fatalf("expected config file %q, got %q", exp, got)
+					}
+				}
+			})
+		})
 	}
-
-	test.WithTempFS(fs, func(root string) {
-		path := filepath.Join(root, "/foo/bar/baz")
-
-		_, err := FindConfig(path)
-		if err == nil {
-			t.Errorf("expected no config file to be found")
-		}
-	})
 }
 
 func TestFindBundleRootDirectories(t *testing.T) {

@@ -71,7 +71,7 @@ been disabled due to missing capabilities, kindly reminding you of them, but wit
 In the example below we're using the capabilities setting to target OPA v0.55.0 (where `import rego.v1` is not
 available):
 
-**.regal/config.yaml**
+**.regal/config.yaml** or **.regal.yaml**
 ```yaml
 capabilities:
   from:

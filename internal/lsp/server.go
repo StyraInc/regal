@@ -52,6 +52,8 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/rules"
 	"github.com/styrainc/regal/pkg/version"
 )
 
@@ -709,8 +711,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					params,
 				)
 			case "regal.fix.directory-package-mismatch":
-				var renameParams types.ApplyWorkspaceRenameEditParams
-
 				fileURL, ok := params.Arguments[0].(string)
 				if !ok {
 					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
@@ -718,7 +718,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					break
 				}
 
-				renameParams, err = l.fixRenameParams(
+				params, err := l.fixRenameParams(
 					"Rename file to match package path",
 					&fixes.DirectoryPackageMismatch{},
 					fileURL,
@@ -729,17 +729,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					break
 				}
 
-				if err := l.conn.Call(ctx, methodWorkspaceApplyEdit, renameParams, nil); err != nil {
+				if err := l.conn.Call(ctx, methodWorkspaceApplyEdit, params, nil); err != nil {
 					l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
-				}
-
-				// clean up any empty edits dirs left over
-				if len(renameParams.Edit.DocumentChanges) > 0 {
-					dir := filepath.Dir(uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI))
-
-					if err := util.DeleteEmptyDirs(dir); err != nil {
-						l.logf(log.LevelMessage, "failed to delete empty directories: %s", err)
-					}
 				}
 
 				// handle this ourselves as it's a rename and not a content edit
@@ -1037,63 +1028,27 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 				Edits:        ComputeEdits("", newContents),
 			})
 
-			// determine if a rename is needed based on the new file contents
+			// set the cache contents so that the fix can access this content
+			// when renaming the file if required.
+			l.cache.SetFileContents(job.URI, newContents)
+
+			// determine if a rename is needed based on the new file contents.
+			// renameParams will be empty if there are no renames needed
 			renameParams, err := l.fixRenameParams(
-				"Rename file to match package path",
+				"Template new Rego file",
 				&fixes.DirectoryPackageMismatch{},
 				job.URI,
 			)
 			if err != nil {
-				l.logf(log.LevelMessage, "failed to fix directory package mismatch: %s", err)
+				l.logf(log.LevelMessage, "failed to get rename params: %s", err)
 
 				continue
 			}
 
-			// move the file and clean up any empty directories ifd required
-			fileURI := job.URI
-
-			if len(renameParams.Edit.DocumentChanges) > 0 {
-				edits = append(edits, renameParams.Edit.DocumentChanges[0])
-			}
-
-			// check if there are any dirs to clean
-			if len(renameParams.Edit.DocumentChanges) > 0 {
-				dirs, err := util.DirCleanUpPaths(
-					uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].OldURI),
-					[]string{
-						// stop at the root
-						l.workspacePath(),
-						// also preserve any dirs needed for the new file
-						uri.ToPath(l.clientIdentifier, renameParams.Edit.DocumentChanges[0].NewURI),
-					},
-				)
-				if err != nil {
-					l.logf(log.LevelMessage, "failed to delete empty directories: %s", err)
-
-					continue
-				}
-
-				for _, dir := range dirs {
-					edits = append(
-						edits,
-						types.DeleteFile{
-							Kind: "delete",
-							URI:  uri.FromPath(l.clientIdentifier, dir),
-							Options: &types.DeleteFileOptions{
-								Recursive:         true,
-								IgnoreIfNotExists: true,
-							},
-						},
-					)
-				}
-
-				l.cache.Delete(renameParams.Edit.DocumentChanges[0].OldURI)
-			}
-
-			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, map[string]any{
-				"label": "Template new Rego file",
-				"edit": map[string]any{
-					"documentChanges": edits,
+			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, types.ApplyWorkspaceAnyEditParams{
+				Label: renameParams.Label,
+				Edit: types.WorkspaceAnyEdit{
+					DocumentChanges: append(edits, renameParams.Edit.DocumentChanges...),
 				},
 			}, nil); err != nil {
 				l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
@@ -1102,7 +1057,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			// finally, trigger a diagnostics run for the new file
 			updateEvent := lintFileJob{
 				Reason: "internal/templateNewFile",
-				URI:    fileURI,
+				URI:    job.URI,
 			}
 
 			l.lintFileJobs <- updateEvent
@@ -1112,32 +1067,6 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 
 func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
-}
-
-func (l *LanguageServer) determineVersionForFile(fileURI string) ast.RegoVersion {
-	var versionedDirs []string
-
-	// if we have no information, then we can return the default
-	if l.loadedConfigAllRegoVersions.Len() == 0 {
-		return ast.RegoV1
-	}
-
-	versionedDirs = util.Keys(l.loadedConfigAllRegoVersions.Clone())
-	slices.Sort(versionedDirs)
-	slices.Reverse(versionedDirs)
-
-	path := strings.TrimPrefix(fileURI, l.workspaceRootURI+"/")
-
-	for _, versionedDir := range versionedDirs {
-		if strings.HasPrefix(path, versionedDir) {
-			val, ok := l.loadedConfigAllRegoVersions.Get(versionedDir)
-			if ok {
-				return val
-			}
-		}
-	}
-
-	return ast.RegoV1
 }
 
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
@@ -1227,7 +1156,14 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	version := l.determineVersionForFile(fileURI)
+	version := ast.RegoUndefined
+	if l.loadedConfigAllRegoVersions != nil {
+		version = rules.RegoVersionFromVersionsMap(
+			l.loadedConfigAllRegoVersions.Clone(),
+			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
+			ast.RegoUndefined,
+		)
+	}
 
 	if version == ast.RegoV0 {
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
@@ -1262,7 +1198,7 @@ func (l *LanguageServer) fixEditParams(
 	fixResults, err := fix.Fix(
 		&fixes.FixCandidate{
 			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, pr.Target)),
-			Contents: rutil.StringToByteSlice(oldContent),
+			Contents: oldContent,
 		},
 		rto,
 	)
@@ -1280,7 +1216,7 @@ func (l *LanguageServer) fixEditParams(
 			DocumentChanges: []types.TextDocumentEdit{
 				{
 					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: pr.Target},
-					Edits:        ComputeEdits(oldContent, rutil.ByteSliceToString(fixResults[0].Contents)),
+					Edits:        ComputeEdits(oldContent, fixResults[0].Contents),
 				},
 			},
 		},
@@ -1293,60 +1229,118 @@ func (l *LanguageServer) fixRenameParams(
 	label string,
 	fix fixes.Fix,
 	fileURL string,
-) (types.ApplyWorkspaceRenameEditParams, error) {
-	contents, ok := l.cache.GetFileContents(fileURL)
-	if !ok {
-		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to file contents %q", fileURL)
-	}
+) (types.ApplyWorkspaceAnyEditParams, error) {
+	var result types.ApplyWorkspaceAnyEditParams
 
 	roots, err := config.GetPotentialRoots(l.workspacePath())
 	if err != nil {
-		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed to get potential roots: %w", err)
+		return types.ApplyWorkspaceAnyEditParams{}, fmt.Errorf("failed to get potential roots: %w", err)
 	}
 
-	file := uri.ToPath(l.clientIdentifier, fileURL)
-	baseDir := util.FindClosestMatchingRoot(file, roots)
+	f := fixer.NewFixer()
+	f.RegisterRoots(roots...)
+	f.RegisterFixes(fix)
+	// the default for the LSP is to rename on conflict
+	f.SetOnConflictOperation(fixer.OnConflictRename)
 
-	results, err := fix.Fix(
-		&fixes.FixCandidate{
-			Filename: file,
-			Contents: rutil.StringToByteSlice(contents),
-		},
-		&fixes.RuntimeOptions{
-			Config:  l.getLoadedConfig(),
-			BaseDir: baseDir,
-		},
-	)
-	if err != nil {
-		return types.ApplyWorkspaceRenameEditParams{}, fmt.Errorf("failed attempted fix: %w", err)
-	}
-
-	if len(results) == 0 {
-		return types.ApplyWorkspaceRenameEditParams{
-			Label: label,
-			Edit:  types.WorkspaceRenameEdit{},
-		}, nil
-	}
-
-	result := results[0]
-
-	renameEdit := types.WorkspaceRenameEdit{
-		DocumentChanges: []types.RenameFile{
-			{
-				Kind:   "rename",
-				OldURI: uri.FromPath(l.clientIdentifier, result.Rename.FromPath),
-				NewURI: uri.FromPath(l.clientIdentifier, result.Rename.ToPath),
-				Options: &types.RenameFileOptions{
-					Overwrite:      false,
-					IgnoreIfExists: false,
-				},
+	violations := []report.Violation{
+		{
+			Title: fix.Name(),
+			Location: report.Location{
+				File: uri.ToPath(l.clientIdentifier, fileURL),
 			},
 		},
 	}
 
-	return types.ApplyWorkspaceRenameEditParams{
+	cfp := fileprovider.NewCacheFileProvider(l.cache, l.clientIdentifier)
+
+	fixReport, err := f.FixViolations(violations, cfp, l.getLoadedConfig())
+	if err != nil {
+		return result, fmt.Errorf("failed to fix violations: %w", err)
+	}
+
+	ff := fixReport.FixedFiles()
+
+	if len(ff) == 0 {
+		return types.ApplyWorkspaceAnyEditParams{
+			Label: label,
+			Edit:  types.WorkspaceAnyEdit{},
+		}, nil
+	}
+
+	// find the new file and the old location
+	var fixedFile, oldFile string
+
+	var found bool
+
+	for _, f := range ff {
+		var ok bool
+
+		oldFile, ok = fixReport.OldPathForFile(f)
+		if ok {
+			fixedFile = f
+			found = true
+
+			break
+		}
+	}
+
+	if !found {
+		return types.ApplyWorkspaceAnyEditParams{
+			Label: label,
+			Edit:  types.WorkspaceAnyEdit{},
+		}, errors.New("failed to find fixed file's old location")
+	}
+
+	changes := make([]any, 0)
+
+	oldURI := uri.FromPath(l.clientIdentifier, oldFile)
+	newURI := uri.FromPath(l.clientIdentifier, fixedFile)
+	changes = append(changes, types.RenameFile{
+		Kind:   "rename",
+		OldURI: oldURI,
+		NewURI: newURI,
+		Options: &types.RenameFileOptions{
+			Overwrite:      false,
+			IgnoreIfExists: false,
+		},
+	})
+
+	// are there old dirs?
+	dirs, err := util.DirCleanUpPaths(
+		uri.ToPath(l.clientIdentifier, oldURI),
+		[]string{
+			// stop at the root
+			l.workspacePath(),
+			// also preserve any dirs needed for the new file
+			uri.ToPath(l.clientIdentifier, newURI),
+		},
+	)
+	if err != nil {
+		return types.ApplyWorkspaceAnyEditParams{}, fmt.Errorf("failed to determine empty directories post rename: %w", err)
+	}
+
+	for _, dir := range dirs {
+		changes = append(
+			changes,
+			types.DeleteFile{
+				Kind: "delete",
+				URI:  uri.FromPath(l.clientIdentifier, dir),
+				Options: &types.DeleteFileOptions{
+					Recursive:         true,
+					IgnoreIfNotExists: true,
+				},
+			},
+		)
+	}
+
+	l.cache.Delete(oldURI)
+
+	return types.ApplyWorkspaceAnyEditParams{
 		Label: label,
-		Edit:  renameEdit,
+		Edit: types.WorkspaceAnyEdit{
+			DocumentChanges: changes,
+		},
 	}, nil
 }
 
@@ -1685,6 +1679,16 @@ func (l *LanguageServer) handleTextDocumentInlayHint(
 		return partialInlayHints(parseErrors, contents, params.TextDocument.URI, bis), nil
 	}
 
+	// file is blank, nothing to do
+	if contents, ok := l.cache.GetFileContents(params.TextDocument.URI); ok && contents == "" {
+		return []types.InlayHint{}, nil
+	}
+
+	// file could not be parsed, nothing to do
+	if errors, ok := l.cache.GetParseErrors(params.TextDocument.URI); ok && len(errors) > 0 {
+		return []types.InlayHint{}, nil
+	}
+
 	module, ok := l.cache.GetModule(params.TextDocument.URI)
 	if !ok {
 		l.logf(log.LevelMessage, "failed to get inlay hint: no parsed module for uri %q", params.TextDocument.URI)
@@ -1763,7 +1767,11 @@ func (l *LanguageServer) handleTextDocumentCompletion(
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
-		RegoVersion:      l.determineVersionForFile(params.TextDocument.URI),
+		RegoVersion: rules.RegoVersionFromVersionsMap(
+			l.loadedConfigAllRegoVersions.Clone(),
+			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
+			ast.RegoUndefined,
+		),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2162,12 +2170,16 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		formatter = *l.clientInitializationOptions.Formatter
 	}
 
-	var newContent []byte
+	var newContent string
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
 		opts := format.Opts{
-			RegoVersion: l.determineVersionForFile(params.TextDocument.URI),
+			RegoVersion: rules.RegoVersionFromVersionsMap(
+				l.loadedConfigAllRegoVersions.Clone(),
+				strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
+				ast.RegoUndefined,
+			),
 		}
 
 		if formatter == "opa-fmt-rego-v1" {
@@ -2178,7 +2190,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		p := uri.ToPath(l.clientIdentifier, params.TextDocument.URI)
 
 		fixResults, err := f.Fix(
-			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: rutil.StringToByteSlice(oldContent)},
+			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: oldContent},
 			&fixes.RuntimeOptions{
 				BaseDir: l.workspacePath(),
 			},
@@ -2197,11 +2209,11 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		newContent = fixResults[0].Contents
 	case "regal-fix":
 		// set up an in-memory file provider to pass to the fixer for this one file
-		memfp := fileprovider.NewInMemoryFileProvider(map[string][]byte{
-			params.TextDocument.URI: rutil.StringToByteSlice(oldContent),
+		memfp := fileprovider.NewInMemoryFileProvider(map[string]string{
+			params.TextDocument.URI: oldContent,
 		})
 
-		input, err := memfp.ToInput()
+		input, err := memfp.ToInput(l.loadedConfigAllRegoVersions.Clone())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create fixer input: %w", err)
 		}
@@ -2243,7 +2255,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		return nil, fmt.Errorf("unrecognized formatter %q", formatter)
 	}
 
-	return ComputeEdits(oldContent, rutil.ByteSliceToString(newContent)), nil
+	return ComputeEdits(oldContent, newContent), nil
 }
 
 func (l *LanguageServer) handleWorkspaceDidCreateFiles(

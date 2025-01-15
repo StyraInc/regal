@@ -106,6 +106,53 @@ func (c *Cache) SetModule(fileURI string, module *ast.Module) {
 	c.modules.Set(fileURI, module)
 }
 
+func (c *Cache) Rename(oldKey, newKey string) {
+	if content, ok := c.fileContents.Get(oldKey); ok {
+		c.fileContents.Set(newKey, content)
+		c.fileContents.Delete(oldKey)
+	}
+
+	if content, ok := c.ignoredFileContents.Get(oldKey); ok {
+		c.ignoredFileContents.Set(newKey, content)
+		c.ignoredFileContents.Delete(oldKey)
+	}
+
+	if module, ok := c.modules.Get(oldKey); ok {
+		c.modules.Set(newKey, module)
+		c.modules.Delete(oldKey)
+	}
+
+	if aggregates, ok := c.aggregateData.Get(oldKey); ok {
+		c.aggregateData.Set(newKey, aggregates)
+		c.aggregateData.Delete(oldKey)
+	}
+
+	if diagnostics, ok := c.diagnosticsFile.Get(oldKey); ok {
+		c.diagnosticsFile.Set(newKey, diagnostics)
+		c.diagnosticsFile.Delete(oldKey)
+	}
+
+	if parseErrors, ok := c.diagnosticsParseErrors.Get(oldKey); ok {
+		c.diagnosticsParseErrors.Set(newKey, parseErrors)
+		c.diagnosticsParseErrors.Delete(oldKey)
+	}
+
+	if builtinPositions, ok := c.builtinPositionsFile.Get(oldKey); ok {
+		c.builtinPositionsFile.Set(newKey, builtinPositions)
+		c.builtinPositionsFile.Delete(oldKey)
+	}
+
+	if keywordLocations, ok := c.keywordLocationsFile.Get(oldKey); ok {
+		c.keywordLocationsFile.Set(newKey, keywordLocations)
+		c.keywordLocationsFile.Delete(oldKey)
+	}
+
+	if refs, ok := c.fileRefs.Get(oldKey); ok {
+		c.fileRefs.Set(newKey, refs)
+		c.fileRefs.Delete(oldKey)
+	}
+}
+
 // SetFileAggregates will only set aggregate data for the provided URI. Even if
 // data for other files is provided, only the specified URI is updated.
 func (c *Cache) SetFileAggregates(fileURI string, data map[string][]report.Aggregate) {

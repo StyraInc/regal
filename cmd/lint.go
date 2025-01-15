@@ -118,9 +118,10 @@ func init() {
 			warningsFound := 0
 
 			for _, violation := range rep.Violations {
-				if violation.Level == "error" {
+				switch violation.Level {
+				case "error":
 					errorsFound++
-				} else if violation.Level == "warning" {
+				case "warning":
 					warningsFound++
 				}
 			}
@@ -407,7 +408,8 @@ func getWriterForOutputFile(filename string) (io.Writer, error) {
 
 func formatError(format string, err error) error {
 	// currently, JSON and SARIF will get the same generic JSON error format
-	if format == formatJSON || format == formatSarif {
+	switch format {
+	case formatJSON, formatSarif:
 		bs, err := json.MarshalIndent(map[string]interface{}{
 			"errors": []string{err.Error()},
 		}, "", "  ")
@@ -416,7 +418,7 @@ func formatError(format string, err error) error {
 		}
 
 		return fmt.Errorf("%s", string(bs))
-	} else if format == formatJunit {
+	case formatJunit:
 		testSuites := junit.Testsuites{
 			Name: "regal",
 		}

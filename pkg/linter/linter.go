@@ -292,9 +292,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	var versionsMap map[string]ast.RegoVersion
 
-	// TODO: How should we deal with this in the language server?
-	// AllRegoVersions will call WalkDir on the root to find manifests, but that's obviously not
-	// going to work for a file:// path..
 	if l.pathPrefix != "" && !strings.HasPrefix(l.pathPrefix, "file://") {
 		versionsMap, err = config.AllRegoVersions(l.pathPrefix, conf)
 		if err != nil && l.debugMode {
@@ -302,7 +299,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		}
 	}
 
-	inputFromPaths, err := rules.InputFromPaths(filtered, versionsMap)
+	inputFromPaths, err := rules.InputFromPaths(filtered, l.pathPrefix, versionsMap)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}

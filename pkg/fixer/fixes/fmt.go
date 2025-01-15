@@ -1,7 +1,6 @@
 package fixes
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -44,7 +43,7 @@ func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 		popts.RegoVersion = fc.RegoVersion
 	}
 
-	module, err := parse.ModuleWithOpts(fc.Filename, string(fc.Contents), popts)
+	module, err := parse.ModuleWithOpts(fc.Filename, fc.Contents, popts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse module: %w", err)
 	}
@@ -60,13 +59,15 @@ func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
 		return nil, fmt.Errorf("failed to format: %w", err)
 	}
 
-	if bytes.Equal(formatted, fc.Contents) {
+	formattedStr := string(formatted)
+
+	if fc.Contents == formattedStr {
 		return nil, nil
 	}
 
 	return []FixResult{{
 		Title:    f.Name(),
 		Root:     opts.BaseDir,
-		Contents: formatted,
+		Contents: formattedStr,
 	}}, nil
 }

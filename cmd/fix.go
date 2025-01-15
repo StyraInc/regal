@@ -270,9 +270,15 @@ func fix(args []string, params *fixCommandParams) error {
 		return fmt.Errorf("could not find potential roots: %w", err)
 	}
 
+	versionsMap, err := config.AllRegoVersions(regalDir.Name(), &userConfig)
+	if err != nil {
+		return fmt.Errorf("failed to get all Rego versions: %w", err)
+	}
+
 	f := fixer.NewFixer()
 	f.RegisterRoots(roots...)
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f.SetRegoVersionsMap(versionsMap)
 
 	if !slices.Contains([]string{"error", "rename"}, params.conflictMode) {
 		return fmt.Errorf("invalid conflict mode: %s, expected 'error' or 'rename'", params.conflictMode)
@@ -393,7 +399,7 @@ please run fix from a clean state to support the use of git to undo, or use --fo
 				return fmt.Errorf("failed to get file %s: %w", file, err)
 			}
 
-			fmt.Fprintln(outputWriter, string(fc))
+			fmt.Fprintln(outputWriter, fc)
 			fmt.Fprintln(outputWriter, "----------")
 		}
 
@@ -438,7 +444,7 @@ please run fix from a clean state to support the use of git to undo, or use --fo
 				return fmt.Errorf("failed to create directory for file %s: %w", file, err)
 			}
 
-			if err = os.WriteFile(file, fc, fileMode); err != nil {
+			if err = os.WriteFile(file, []byte(fc), fileMode); err != nil {
 				return fmt.Errorf("failed to write file %s: %w", file, err)
 			}
 		}

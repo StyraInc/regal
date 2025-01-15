@@ -1,7 +1,6 @@
 package fixer
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,9 +10,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 type OnConflictOperation string
@@ -39,11 +40,18 @@ type Fixer struct {
 	registeredMandatoryFixes map[string]any
 	onConflictOperation      OnConflictOperation
 	registeredRoots          []string
+	versionsMap              map[string]ast.RegoVersion
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
 func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) {
 	f.onConflictOperation = operation
+}
+
+// SetRegoVersionsMap sets the mapping of path prefixes to versions for the
+// fixer to use when creating input for fixer runs.
+func (f *Fixer) SetRegoVersionsMap(versionsMap map[string]ast.RegoVersion) {
+	f.versionsMap = versionsMap
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
@@ -129,6 +137,79 @@ func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileP
 	return fixReport, nil
 }
 
+func (f *Fixer) FixViolations(
+	violations []report.Violation,
+	fp fileprovider.FileProvider,
+	config *config.Config,
+) (*Report, error) {
+	fixReport := NewReport()
+
+	startingFiles, err := fp.List()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	for _, violation := range violations {
+		file := violation.Location.File
+
+		fixInstance, ok := f.GetFixForName(violation.Title)
+		if !ok {
+			return nil, fmt.Errorf("no fix for violation %s", violation.Title)
+		}
+
+		fc, err := fp.Get(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file %s: %w", file, err)
+		}
+
+		fixCandidate := fixes.FixCandidate{
+			Filename: file,
+			Contents: fc,
+		}
+
+		abs, err := filepath.Abs(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path for %s: %w", file, err)
+		}
+
+		fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
+			BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
+			Config:  config,
+			Locations: []ast.Location{
+				{
+					Row: violation.Location.Row,
+					Col: violation.Location.Column,
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to fix %s: %w", file, err)
+		}
+
+		if len(fixResults) == 0 {
+			continue
+		}
+
+		fixResult := fixResults[0]
+
+		if fixResult.Rename != nil {
+			err = f.handleRename(fp, fixReport, startingFiles, fixResult)
+			if err != nil {
+				return nil, fmt.Errorf("failed to handle rename: %w", err)
+			}
+		}
+
+		// Write the fixed content to the file
+		if err := fp.Put(file, fixResult.Contents); err != nil {
+			return nil, fmt.Errorf("failed to write fixed content to file %s: %w", file, err)
+		}
+
+		fixReport.AddFileFix(file, fixResult)
+	}
+
+	return fixReport, nil
+}
+
 // applyMandatoryFixes handles the application of mandatory fixes to all files.
 func (f *Fixer) applyMandatoryFixes(fp fileprovider.FileProvider, fixReport *Report) error {
 	if len(f.registeredMandatoryFixes) == 0 {
@@ -168,7 +249,7 @@ func (f *Fixer) applyMandatoryFixes(fp fileprovider.FileProvider, fixReport *Rep
 				}
 
 				for _, fixResult := range fixResults {
-					if !bytes.Equal(fc, fixResult.Contents) {
+					if fc != fixResult.Contents {
 						if err := fp.Put(file, fixResult.Contents); err != nil {
 							return fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
 						}
@@ -214,10 +295,14 @@ func (f *Fixer) applyLinterFixes(
 		return fmt.Errorf("failed to list files: %w", err)
 	}
 
+	if f.versionsMap == nil {
+		return errors.New("rego versions map not set")
+	}
+
 	for {
 		fixMadeInIteration := false
 
-		in, err := fp.ToInput()
+		in, err := fp.ToInput(f.versionsMap)
 		if err != nil {
 			return fmt.Errorf("failed to generate linter input: %w", err)
 		}

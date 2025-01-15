@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
+
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -157,5 +159,30 @@ func TestPartialDiagnosticsUpdate(t *testing.T) {
 
 	if !reflect.DeepEqual(foundDiags, []types.Diagnostic{diag1, diag3}) {
 		t.Fatalf("unexpected diagnostics: %v", foundDiags)
+	}
+}
+
+func TestCacheRename(t *testing.T) {
+	t.Parallel()
+
+	c := NewCache()
+
+	c.SetFileContents("file:///tmp/foo.rego", "package foo")
+	c.SetModule("file:///tmp/foo.rego", &ast.Module{})
+
+	c.Rename("file:///tmp/foo.rego", "file:///tmp/bar.rego")
+
+	_, ok := c.GetFileContents("file:///tmp/foo.rego")
+	if ok {
+		t.Fatalf("expected foo.rego to be removed")
+	}
+
+	contents, ok := c.GetFileContents("file:///tmp/bar.rego")
+	if !ok {
+		t.Fatalf("expected bar.rego to be present")
+	}
+
+	if contents != "package foo" {
+		t.Fatalf("unexpected contents: %s", contents)
 	}
 }

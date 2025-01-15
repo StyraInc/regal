@@ -783,7 +783,6 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
-// BenchmarkRegalNoEnabledRules-10    	       4	 283181990 ns/op	504195068 B/op	 9537285 allocs/op.
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).

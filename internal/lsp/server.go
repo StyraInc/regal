@@ -2526,7 +2526,10 @@ func (l *LanguageServer) handleInitialize(
 
 		configFile, err := config.FindConfig(workspaceRootPath)
 		if err == nil {
+			l.logf(log.LevelMessage, "using config file: %s", configFile.Name())
 			l.configWatcher.Watch(configFile.Name())
+		} else {
+			l.logf(log.LevelMessage, "no config file found in workspace: %s", err)
 		}
 
 		if _, err = l.loadWorkspaceContents(ctx, false); err != nil {

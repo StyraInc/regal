@@ -38,7 +38,7 @@ func init() {
 				} else {
 					fmt.Fprintf(
 						os.Stderr,
-						"Regal Language Server (path: %s, version: %s)",
+						"Regal Language Server (path: %s, version: %s)\n",
 						absPath,
 						cmp.Or(version.Version, "Unknown"),
 					)

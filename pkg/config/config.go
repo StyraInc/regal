@@ -129,13 +129,25 @@ func FindConfig(path string) (*os.File, error) {
 	regalDir, regalDirError := FindRegalDirectory(path)
 	regalConfigFile, regalConfigFileError := FindRegalConfigFile(path)
 
-	// if both are found, then we must error as this is a misconfiguration
+	var regalDirParent, regalConfigFileParent string
 	if regalDirError == nil && regalConfigFileError == nil {
-		return nil, errors.New("conflicting config files: both .regal directory and .regal.yaml found")
+		regalDirParent = filepath.Dir(regalDir.Name())
+		regalConfigFileParent = filepath.Dir(regalConfigFile.Name())
+
+		if regalDirParent == regalConfigFileParent {
+			return nil, errors.New("conflicting config files: both .regal directory and .regal.yaml found")
+		}
 	}
 
 	if regalDirError != nil && regalConfigFileError != nil {
 		return nil, errors.New("could not find Regal config")
+	}
+
+	// if the config file parent is not "", then it was found, and if it's
+	// longer then it's more specific to the search path in question, and so we
+	// return that here in such cases.
+	if len(regalConfigFileParent) > len(regalDirParent) {
+		return regalConfigFile, nil
 	}
 
 	// if there is a .regal directory, when a config file is expected to be
@@ -153,6 +165,7 @@ func FindConfig(path string) (*os.File, error) {
 		return os.Open(expectedConfigFilePath) //nolint:wrapcheck
 	}
 
+	// regalConfigFileError is nil at this point, so we can return the file
 	return regalConfigFile, nil
 }
 

@@ -56,8 +56,9 @@ func TestFindConfig(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
-		FS    map[string]string
-		Error string
+		FS           map[string]string
+		Error        string
+		ExpectedName string
 	}{
 		"no config file": {
 			FS: map[string]string{
@@ -71,6 +72,7 @@ func TestFindConfig(t *testing.T) {
 				"/foo/bar/baz/p.rego":         "",
 				"/foo/bar/.regal/config.yaml": "",
 			},
+			ExpectedName: "/foo/bar/.regal/config.yaml",
 		},
 		".regal/ dir missing config file": {
 			FS: map[string]string{
@@ -84,14 +86,31 @@ func TestFindConfig(t *testing.T) {
 				"/foo/bar/baz/p.rego":  "",
 				"/foo/bar/.regal.yaml": "",
 			},
+			ExpectedName: "/foo/bar/.regal.yaml",
 		},
-		".regal.yaml and .regal/config": {
+		".regal.yaml and .regal/config.yaml": {
 			FS: map[string]string{
 				"/foo/bar/baz/p.rego":         "",
 				"/foo/bar/.regal.yaml":        "",
 				"/foo/bar/.regal/config.yaml": "",
 			},
 			Error: "conflicting config files: both .regal directory and .regal.yaml found",
+		},
+		".regal.yaml with .regal/config.yaml at higher directory": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":  "",
+				"/foo/bar/.regal.yaml": "",
+				"/.regal/config.yaml":  "",
+			},
+			ExpectedName: "/foo/bar/.regal.yaml",
+		},
+		".regal/config.yaml with .regal.yaml at higher directory": {
+			FS: map[string]string{
+				"/foo/bar/baz/p.rego":         "",
+				"/foo/bar/.regal/config.yaml": "",
+				"/.regal.yaml":                "",
+			},
+			ExpectedName: "/foo/bar/.regal/config.yaml",
 		},
 	}
 
@@ -102,7 +121,7 @@ func TestFindConfig(t *testing.T) {
 			test.WithTempFS(testData.FS, func(root string) {
 				path := filepath.Join(root, "/foo/bar/baz")
 
-				_, err := FindConfig(path)
+				configFile, err := FindConfig(path)
 				if testData.Error != "" {
 					if err == nil {
 						t.Fatalf("expected error %s, got nil", testData.Error)
@@ -113,6 +132,12 @@ func TestFindConfig(t *testing.T) {
 					}
 				} else if err != nil {
 					t.Fatalf("expected no error, got %s", err)
+				}
+
+				if testData.ExpectedName != "" {
+					if got, exp := strings.TrimPrefix(configFile.Name(), root), testData.ExpectedName; got != exp {
+						t.Fatalf("expected config file %q, got %q", exp, got)
+					}
 				}
 			})
 		})

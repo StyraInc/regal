@@ -342,7 +342,7 @@ levels are available:
 Additionally, some rules may have configuration options of their own. See the documentation page for a rule to learn
 more about it.
 
-**.regal/config.yaml**
+**.regal/config.yaml** / **.regal.yaml**
 ```yaml
 rules:
   style:
@@ -400,7 +400,7 @@ project:
       rego-version: 0
 ```
 
-Regal will automatically search for a configuration file (`.regal/config.yaml`) in the current directory, and if not
+Regal will automatically search for a configuration file (`.regal/config.yaml` / `.regal.yaml`) in the current directory, and if not
 found, traverse the parent directories either until either one is found, or the top of the directory hierarchy is
 reached. If no configuration file is found, Regal will use the default configuration.
 

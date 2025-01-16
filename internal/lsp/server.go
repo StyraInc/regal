@@ -1736,7 +1736,7 @@ func (l *LanguageServer) handleTextDocumentCodeLens(
 
 	for _, lens := range lenses {
 		if lens.Command.Command != "regal.debug" {
-			lenses = append(lenses, lens)
+			filteredLenses = append(filteredLenses, lens)
 		}
 	}
 

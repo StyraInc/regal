@@ -355,6 +355,10 @@ func FromMap(confMap map[string]any) (Config, error) {
 func AllRegoVersions(root string, conf *Config) (map[string]ast.RegoVersion, error) {
 	versionsMap := make(map[string]ast.RegoVersion)
 
+	if conf == nil {
+		return versionsMap, nil
+	}
+
 	manifestLocations, err := rio.FindManifestLocations(root)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find manifest locations: %w", err)

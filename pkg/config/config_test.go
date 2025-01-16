@@ -542,37 +542,61 @@ func TestUnmarshalProjectRootsAsStringOrObject(t *testing.T) {
 func TestAllRegoVersions(t *testing.T) {
 	t.Parallel()
 
-	bs := []byte(`project:
+	testCases := map[string]struct {
+		Config   string
+		FS       map[string]string
+		Expected map[string]ast.RegoVersion
+	}{
+		"values from config": {
+			Config: `project:
   rego-version: 0
   roots:
     - path: foo
       rego-version: 1
-`)
-
-	var conf Config
-
-	if err := yaml.Unmarshal(bs, &conf); err != nil {
-		t.Fatal(err)
+`,
+			FS: map[string]string{
+				"bar/baz/.manifest": `{"rego_version": 1}`,
+			},
+			Expected: map[string]ast.RegoVersion{
+				"":        ast.RegoV0,
+				"bar/baz": ast.RegoV1,
+				"foo":     ast.RegoV1,
+			},
+		},
+		"no config": {
+			Config: "",
+			FS: map[string]string{
+				"bar/baz/.manifest": `{"rego_version": 1}`,
+			},
+			Expected: map[string]ast.RegoVersion{},
+		},
 	}
 
-	fs := map[string]string{
-		"bar/baz/.manifest": `{"rego_version": 1}`,
+	for testName, testData := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
+			var conf *Config
+
+			if testData.Config != "" {
+				var loadedConf Config
+				if err := yaml.Unmarshal([]byte(testData.Config), &loadedConf); err != nil {
+					t.Fatal(err)
+				}
+
+				conf = &loadedConf
+			}
+
+			test.WithTempFS(testData.FS, func(root string) {
+				versions, err := AllRegoVersions(root, conf)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !maps.Equal(versions, testData.Expected) {
+					t.Errorf("expected %v, got %v", testData.Expected, versions)
+				}
+			})
+		})
 	}
-
-	test.WithTempFS(fs, func(root string) {
-		versions, err := AllRegoVersions(root, &conf)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		expected := map[string]ast.RegoVersion{
-			"":        ast.RegoV0,
-			"foo":     ast.RegoV1,
-			"bar/baz": ast.RegoV1,
-		}
-
-		if !maps.Equal(versions, expected) {
-			t.Errorf("expected %v, got %v", expected, versions)
-		}
-	})
 }

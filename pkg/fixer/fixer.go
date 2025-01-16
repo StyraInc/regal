@@ -295,14 +295,15 @@ func (f *Fixer) applyLinterFixes(
 		return fmt.Errorf("failed to list files: %w", err)
 	}
 
-	if f.versionsMap == nil {
-		return errors.New("rego versions map not set")
+	var versionsMap map[string]ast.RegoVersion
+	if f.versionsMap != nil {
+		versionsMap = f.versionsMap
 	}
 
 	for {
 		fixMadeInIteration := false
 
-		in, err := fp.ToInput(f.versionsMap)
+		in, err := fp.ToInput(versionsMap)
 		if err != nil {
 			return fmt.Errorf("failed to generate linter input: %w", err)
 		}

@@ -2355,6 +2355,10 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 			l.logf(log.LevelMessage, "failed to send diagnostic: %s", err)
 		}
 
+		if l.ignoreURI(renameOp.NewURI) {
+			continue
+		}
+
 		l.cache.SetFileContents(renameOp.NewURI, content)
 
 		job := lintFileJob{
@@ -2556,11 +2560,6 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 	changedOrNewURIs := make([]string, 0)
 
 	if err := rio.WalkFiles(workspaceRootPath, func(path string) error {
-		// TODO(charlieegan3): make this configurable for things like .rq etc?
-		if !strings.HasSuffix(path, ".rego") {
-			return nil
-		}
-
 		fileURI := uri.FromPath(l.clientIdentifier, path)
 
 		if l.ignoreURI(fileURI) {
@@ -2726,6 +2725,11 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 }
 
 func (l *LanguageServer) ignoreURI(fileURI string) bool {
+	// TODO(charlieegan3): make this configurable for things like .rq etc?
+	if !strings.HasSuffix(fileURI, ".rego") {
+		return true
+	}
+
 	cfg := l.getLoadedConfig()
 	if cfg == nil {
 		return false

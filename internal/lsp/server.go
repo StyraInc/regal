@@ -2469,6 +2469,18 @@ func (l *LanguageServer) handleInitialize(
 						Filters: []types.FileOperationFilter{regoFilter},
 					},
 				},
+				WorkspaceFolders: types.WorkspaceFoldersServerCapabilities{
+					// NOTE(anders): The language server protocol doesn't go into detail about what this is meant to
+					// entail, and there's nothing else in the request/response payloads that carry workspace folder
+					// information. The best source I've found on the this topic is this example repo from VS Code,
+					// where they have the client start one instance of the server per workspace folder:
+					// https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-multi-server-sample
+					// That seems like a reasonable approach to take, and means we won't have to deal with workspace
+					// folders throughout the rest of the codebase. But the quesstion then is — what is the point of
+					// this capability, and what does it mean to say we support it? Clearly we don't in the server as
+					// *there is no way* to support it here.
+					Supported: true,
+				},
 			},
 			InlayHintProvider: types.InlayHintOptions{
 				ResolveProvider: false,

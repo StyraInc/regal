@@ -40,7 +40,7 @@ type InitializeParams struct {
 	RootPath              string                 `json:"rootPath"`
 	RootURI               string                 `json:"rootUri"`
 	Trace                 string                 `json:"trace"`
-	WorkspaceFolders      []WorkspaceFolder      `json:"workspaceFolders"`
+	WorkspaceFolders      *[]WorkspaceFolder     `json:"workspaceFolders"`
 	Capabilities          ClientCapabilities     `json:"capabilities"`
 	ProcessID             int                    `json:"processId"`
 }
@@ -175,8 +175,13 @@ type CompletionItemLabelDetails struct {
 	Detail      string `json:"detail"`
 }
 
+type WorkspaceFoldersServerCapabilities struct {
+	Supported bool `json:"supported"`
+}
+
 type WorkspaceOptions struct {
-	FileOperations FileOperationsServerCapabilities `json:"fileOperations"`
+	FileOperations   FileOperationsServerCapabilities   `json:"fileOperations"`
+	WorkspaceFolders WorkspaceFoldersServerCapabilities `json:"workspaceFolders"`
 }
 
 type CodeActionOptions struct {

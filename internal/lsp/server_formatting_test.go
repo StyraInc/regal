@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"path/filepath"
 	"testing"
 
@@ -26,7 +25,7 @@ func TestFormatting(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, map[string]string{}, clientHandler)
+	ls, _, err := createAndInitServer(ctx, newTestLogger(t), tempDir, map[string]string{}, clientHandler)
 	if err != nil {
 		t.Fatalf("failed to create and init language server: %s", err)
 	}
@@ -39,19 +38,12 @@ func TestFormatting(t *testing.T) {
 `
 	ls.cache.SetFileContents(mainRegoURI, content)
 
-	bs, err := json.Marshal(&types.DocumentFormattingParams{
+	params := types.DocumentFormattingParams{
 		TextDocument: types.TextDocumentIdentifier{URI: mainRegoURI},
 		Options:      types.FormattingOptions{},
-	})
-	if err != nil {
-		t.Fatalf("failed to marshal document formatting params: %v", err)
 	}
 
-	var msg json.RawMessage = bs
-
-	req := &jsonrpc2.Request{Params: &msg}
-
-	res, err := ls.handleTextDocumentFormatting(ctx, connClient, req)
+	res, err := ls.handleTextDocumentFormatting(ctx, params)
 	if err != nil {
 		t.Fatalf("failed to format document: %s", err)
 	}

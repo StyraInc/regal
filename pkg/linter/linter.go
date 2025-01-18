@@ -16,7 +16,6 @@ import (
 
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/anderseknert/roast/pkg/transform"
-	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -369,13 +368,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
 	}
 
-	goReport, err := l.lintWithGoRules(ctx, input)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to lint using Go rules: %w", err)
-	}
-
-	finalReport.Violations = append(finalReport.Violations, goReport.Violations...)
-
 	regoArgs, err := l.prepareRegoArgs(lintQuery)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
@@ -412,10 +404,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 			allAggregates[k] = append(allAggregates[k], aggregates...)
 		}
 	} else if len(input.FileNames) > 1 {
-		for k, aggregates := range goReport.Aggregates {
-			allAggregates[k] = append(allAggregates[k], aggregates...)
-		}
-
 		for k, aggregates := range regoReport.Aggregates {
 			allAggregates[k] = append(allAggregates[k], aggregates...)
 		}
@@ -439,10 +427,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	if l.exportAggregates {
 		finalReport.Aggregates = make(map[string][]report.Aggregate)
-		for k, aggregates := range goReport.Aggregates {
-			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
-		}
-
 		for k, aggregates := range regoReport.Aggregates {
 			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
 		}
@@ -480,13 +464,7 @@ func (l Linter) validate() error {
 	validCategories := util.NewSet[string]()
 	validRules := util.NewSet[string]()
 
-	// add all the go rules
-	for _, rule := range rules.AllGoRules(*conf) {
-		validCategories.Add(rule.Category())
-		validRules.Add(rule.Name())
-	}
-
-	// add all the rego rules
+	// Add all built-in rules
 	for _, b := range l.ruleBundles {
 		for _, module := range b.Modules {
 			parts := util.UnquotedPath(module.Parsed.Package.Path)
@@ -501,7 +479,7 @@ func (l Linter) validate() error {
 		}
 	}
 
-	// add all the custom rules
+	// Add any custom rules
 	for _, module := range l.customRuleModules {
 		parts := util.UnquotedPath(module.Package.Path)
 		// 1      2     3     4   5
@@ -555,17 +533,6 @@ func (l Linter) validate() error {
 // to produce a single list of the rules that are to be run on this linter
 // instance.
 func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
-	enabledRules := make([]string, 0)
-
-	goRules, err := l.enabledGoRules()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get enabled Go rules: %w", err)
-	}
-
-	for _, rule := range goRules {
-		enabledRules = append(enabledRules, rule.Name())
-	}
-
 	conf, err := l.GetConfig()
 	if err != nil {
 		return []string{}, fmt.Errorf("failed to merge config: %w", err)
@@ -610,6 +577,8 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected list, got %T", rs[0].Expressions[0].Value)
 	}
+
+	enabledRules := make([]string, 0)
 
 	for _, item := range list {
 		rule, ok := item.(string)
@@ -688,134 +657,6 @@ func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, e
 	return enabledRules, nil
 }
 
-func (l Linter) lintWithGoRules(ctx context.Context, input rules.Input) (report.Report, error) {
-	l.startTimer(regalmetrics.RegalLintGo)
-	defer l.stopTimer(regalmetrics.RegalLintGo)
-
-	goRules, err := l.enabledGoRules()
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to get configured Go rules: %w", err)
-	}
-
-	goReport := report.Report{}
-
-	for _, rule := range goRules {
-		inp, err := inputForRule(input, rule)
-		if err != nil {
-			return report.Report{}, fmt.Errorf("error encountered while filtering input files: %w", err)
-		}
-
-		result, err := rule.Run(ctx, inp)
-		if err != nil {
-			return report.Report{}, fmt.Errorf("error encountered in Go rule evaluation: %w", err)
-		}
-
-		goReport.Violations = append(goReport.Violations, result.Violations...)
-	}
-
-	return goReport, err
-}
-
-func inputForRule(input rules.Input, rule rules.Rule) (rules.Input, error) {
-	ignore := rule.Config().Ignore
-
-	var ignoreFiles []string
-
-	if ignore != nil {
-		ignoreFiles = ignore.Files
-	}
-
-	return filterInputFiles(input, ignoreFiles)
-}
-
-func filterInputFiles(input rules.Input, ignore []string) (rules.Input, error) {
-	if len(ignore) == 0 {
-		return input, nil
-	}
-
-	n := len(input.FileNames)
-	newInput := rules.Input{
-		FileNames:   make([]string, 0, n),
-		FileContent: make(map[string]string, n),
-		Modules:     make(map[string]*ast.Module, n),
-	}
-
-outer:
-	for _, f := range input.FileNames {
-		for _, pattern := range ignore {
-			if pattern == "" {
-				continue
-			}
-
-			excluded, err := excludeFile(pattern, f)
-			if err != nil {
-				return rules.Input{}, fmt.Errorf("failed to check for exclusion using pattern %s: %w", pattern, err)
-			}
-
-			if excluded {
-				continue outer
-			}
-		}
-
-		newInput.FileNames = append(newInput.FileNames, f)
-		newInput.FileContent[f] = input.FileContent[f]
-		newInput.Modules[f] = input.Modules[f]
-	}
-
-	return newInput, nil
-}
-
-// excludeFile imitates the pattern matching of .gitignore files
-// See `exclusion.rego` for details on the implementation.
-func excludeFile(pattern string, filename string) (bool, error) {
-	n := len(pattern)
-
-	// Internal slashes means path is relative to root, otherwise it can
-	// appear anywhere in the directory (--> **/)
-	if !strings.Contains(pattern[:n-1], "/") {
-		pattern = "**/" + pattern
-	}
-
-	// Leading slash?
-	pattern = strings.TrimPrefix(pattern, "/")
-
-	// Leading double-star?
-	var ps []string
-	if strings.HasPrefix(pattern, "**/") {
-		ps = []string{pattern, strings.TrimPrefix(pattern, "**/")}
-	} else {
-		ps = []string{pattern}
-	}
-
-	var ps1 []string
-
-	// trailing slash?
-	for _, p := range ps {
-		switch {
-		case strings.HasSuffix(p, "/"):
-			ps1 = append(ps1, p+"**")
-		case !strings.HasSuffix(p, "/") && !strings.HasSuffix(p, "**"):
-			ps1 = append(ps1, p, p+"/**")
-		default:
-			ps1 = append(ps1, p)
-		}
-	}
-
-	// Loop through patterns and return true on first match
-	for _, p := range ps1 {
-		g, err := glob.Compile(p, '/')
-		if err != nil {
-			return false, fmt.Errorf("failed to compile pattern %s: %w", p, err)
-		}
-
-		if g.Match(filename) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func (l Linter) paramsToRulesConfig() map[string]any {
 	params := map[string]any{
 		"disable_all":      l.disableAll,
@@ -840,14 +681,12 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 		Manifest: bundle.Manifest{Roots: &[]string{"eval"}},
 	}
 
-	regoArgs := []func(*rego.Rego){
+	regoArgs := append([]func(*rego.Rego){
 		rego.StoreReadAST(true),
 		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal_eval_params", &dataBundle),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-	}
+	}, builtins.RegalBuiltinRegoFuncs...)
 
 	if l.debugMode && l.printHook == nil {
 		l.printHook = topdown.NewPrintHook(os.Stderr)
@@ -1207,70 +1046,6 @@ func (l Linter) GetConfig() (*config.Config, error) {
 	l.combinedCfg = &mergedConf
 
 	return l.combinedCfg, nil
-}
-
-func (l Linter) enabledGoRules() ([]rules.Rule, error) {
-	var enabledGoRules []rules.Rule
-
-	// enabling/disabling all rules takes precedence and entirely disregards configuration
-	// files, but still respects the enable/disable category or rule flags
-
-	if l.disableAll {
-		for _, rule := range rules.AllGoRules(config.Config{}) {
-			if slices.Contains(l.enableCategory, rule.Category()) || slices.Contains(l.enable, rule.Name()) {
-				enabledGoRules = append(enabledGoRules, rule)
-			}
-		}
-
-		return enabledGoRules, nil
-	}
-
-	if l.enableAll {
-		for _, rule := range rules.AllGoRules(config.Config{}) {
-			if !slices.Contains(l.disableCategory, rule.Category()) && !slices.Contains(l.disable, rule.Name()) {
-				enabledGoRules = append(enabledGoRules, rule)
-			}
-		}
-
-		return enabledGoRules, nil
-	}
-
-	conf, err := l.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create merged config: %w", err)
-	}
-
-	for _, rule := range rules.AllGoRules(*conf) {
-		// disabling specific rule has the highest precedence
-		if slices.Contains(l.disable, rule.Name()) {
-			continue
-		}
-
-		// likewise for enabling specific rule
-		if slices.Contains(l.enable, rule.Name()) {
-			enabledGoRules = append(enabledGoRules, rule)
-
-			continue
-		}
-
-		// next highest precedence is disabling / enabling a category
-		if slices.Contains(l.disableCategory, rule.Category()) {
-			continue
-		}
-
-		if slices.Contains(l.enableCategory, rule.Category()) {
-			enabledGoRules = append(enabledGoRules, rule)
-
-			continue
-		}
-
-		// if none of the above applies, check the config for the rule
-		if rule.Config().Level != "ignore" {
-			enabledGoRules = append(enabledGoRules, rule)
-		}
-	}
-
-	return enabledGoRules, nil
 }
 
 func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {

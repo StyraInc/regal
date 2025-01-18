@@ -16,8 +16,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast/location"
 	"github.com/open-policy-agent/opa/v1/debug"
 	"github.com/open-policy-agent/opa/v1/logging"
-	"github.com/open-policy-agent/opa/v1/rego"
-	"github.com/open-policy-agent/opa/v1/util"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/dap"
 	"github.com/styrainc/regal/pkg/builtins"
@@ -259,10 +258,13 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 			return dap.NewLaunchResponse(), fmt.Errorf("invalid launch eval properties: %w", err)
 		}
 
+		funcs := make([]debug.LaunchOption, 0, len(builtins.RegalBuiltinRegoFuncs))
+		for _, f := range builtins.RegalBuiltinRegoFuncs {
+			funcs = append(funcs, debug.RegoOption(f))
+		}
+
 		// FIXME: Should we protect this with a mutex?
-		s.session, err = s.debugger.LaunchEval(ctx, evalProps,
-			debug.RegoOption(rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule)),
-			debug.RegoOption(rego.Function1(builtins.RegalLastMeta, builtins.RegalLast)))
+		s.session, err = s.debugger.LaunchEval(ctx, evalProps, funcs...)
 	case "test":
 		err = errors.New("test not supported")
 	case "":
@@ -355,7 +357,7 @@ func pos(loc *location.Location) (source *godap.Source, line, col, endLine, endC
 		}
 	}
 
-	lines := strings.Split(util.ByteSliceToString(loc.Text), "\n")
+	lines := strings.Split(outil.ByteSliceToString(loc.Text), "\n")
 	line = loc.Row
 	col = loc.Col
 

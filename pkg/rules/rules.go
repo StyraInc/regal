@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -15,8 +14,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
 )
 
 // Input represents the input for a linter evaluation.
@@ -27,22 +24,6 @@ type Input struct {
 	Modules map[string]*ast.Module
 	// FileNames is used to maintain consistent order between runs.
 	FileNames []string
-}
-
-// Rule represents a linter rule.
-type Rule interface {
-	// Run runs the rule on the provided input.
-	Run(context.Context, Input) (*report.Report, error)
-	// Name returns the name of the rule.
-	Name() string
-	// Category returns the category of the rule.
-	Category() string
-	// Description returns the description of the rule.
-	Description() string
-	// Documentation returns the documentation URL for the rule.
-	Documentation() string
-	// Config returns the provided configuration for the rule
-	Config() config.Rule
 }
 
 type regoFile struct {
@@ -244,10 +225,4 @@ func InputFromTextWithOptions(fileName, text string, opts ast.ParserOptions) (In
 	}
 
 	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
-}
-
-func AllGoRules(conf config.Config) []Rule {
-	return []Rule{
-		NewOpaFmtRule(conf),
-	}
 }

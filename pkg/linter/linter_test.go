@@ -130,7 +130,7 @@ or := 1
 		{
 			name:          "baseline",
 			filename:      "p/p.rego",
-			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
+			expViolations: []string{"top-level-iteration", "rule-shadows-builtin", "opa-fmt"},
 		},
 		{
 			name: "ignore rule",
@@ -201,8 +201,8 @@ or := 1
 				Rules: map[string]config.Category{},
 			},
 			filename:      "p/p.rego",
-			expViolations: []string{"opa-fmt", "top-level-iteration", "rule-shadows-builtin"},
-			expLevels:     []string{"error", "warning", "warning"},
+			expViolations: []string{"top-level-iteration", "rule-shadows-builtin", "opa-fmt"},
+			expLevels:     []string{"warning", "warning", "error"},
 		},
 		{
 			name: "rule level ignore files",
@@ -253,7 +253,7 @@ or := 1
 			},
 			filename: "file:///wow/foo/p.rego",
 			expViolations: []string{
-				"opa-fmt", "top-level-iteration", "rule-shadows-builtin", "directory-package-mismatch",
+				"top-level-iteration", "rule-shadows-builtin", "directory-package-mismatch", "opa-fmt",
 			},
 			rootDir: "file:///wow",
 		},
@@ -269,21 +269,15 @@ or := 1
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			linter := NewLinter()
-
-			linter = linter.WithPathPrefix(tc.rootDir)
+			input := test.InputPolicy(tc.filename, policy)
+			linter := NewLinter().
+				WithPathPrefix(tc.rootDir).
+				WithIgnore(tc.ignoreFilesFlag).
+				WithInputModules(&input)
 
 			if tc.userConfig != nil {
 				linter = linter.WithUserConfig(*tc.userConfig)
 			}
-
-			if tc.ignoreFilesFlag != nil {
-				linter = linter.WithIgnore(tc.ignoreFilesFlag)
-			}
-
-			input := test.InputPolicy(tc.filename, policy)
-
-			linter = linter.WithInputModules(&input)
 
 			result := testutil.Must(linter.Lint(context.Background()))(t)
 
@@ -309,54 +303,6 @@ or := 1
 				}
 			}
 		})
-	}
-}
-
-func TestLintWithGoRule(t *testing.T) {
-	t.Parallel()
-
-	input := test.InputPolicy("p/p.rego", `package p
-		import rego.v1
-
- 		x := true
-	`)
-
-	linter := NewLinter().
-		WithEnableAll(true).
-		WithInputModules(&input)
-
-	result := testutil.Must(linter.Lint(context.Background()))(t)
-
-	if len(result.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
-	}
-
-	if result.Violations[0].Title != "opa-fmt" {
-		t.Errorf("expected first violation to be 'opa-fmt', got %s", result.Violations[0].Title)
-	}
-}
-
-func TestLintWithUserConfigGoRuleIgnore(t *testing.T) {
-	t.Parallel()
-
-	userConfig := config.Config{Rules: map[string]config.Category{
-		"style": {"opa-fmt": config.Rule{Level: "ignore"}},
-	}}
-
-	input := test.InputPolicy("p/p.rego", `package p
-		import rego.v1
-
-	 	x := true
-	`)
-
-	linter := NewLinter().
-		WithUserConfig(userConfig).
-		WithInputModules(&input)
-
-	result := testutil.Must(linter.Lint(context.Background()))(t)
-
-	if len(result.Violations) != 0 {
-		t.Fatalf("expected no violation, got %d", len(result.Violations))
 	}
 }
 

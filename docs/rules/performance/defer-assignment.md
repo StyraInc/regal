@@ -46,7 +46,7 @@ assignments, code tends to be more readable when assignments are placed close to
 
 This rule uses a fairly simplistic heuristic to determine if an assignment can be deferred:
 
-- The next expressions is not an assignment
+- The next expression is not an assignment
 - The next expression does not depend on the assignment
 - The next expression does not initialize iteration
 

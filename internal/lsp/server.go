@@ -71,6 +71,7 @@ const (
 
 var (
 	noCodeActions     = make([]types.CodeAction, 0)
+	noCodeLenses      = make([]types.CodeLens, 0)
 	noDocumentSymbols = make([]types.DocumentSymbol, 0)
 	noCompletionItems = make([]types.CompletionItem, 0)
 	noFoldingRanges   = make([]types.FoldingRange, 0)
@@ -1654,7 +1655,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
 	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
 	if ok && len(parseErrors) > 0 {
-		return []types.CodeLens{}, nil
+		return noCodeLenses, nil
 	}
 
 	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)

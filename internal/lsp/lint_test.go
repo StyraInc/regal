@@ -74,6 +74,24 @@ allow if { 1 == 1 }
 			}},
 			regoVersion: ast.RegoV0,
 		},
+		"unknown rego version, rego v1 code": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow if { 1 == 1 }
+`,
+			expectModule:  true,
+			expectSuccess: true,
+			regoVersion:   ast.RegoUndefined,
+		},
+		"unknown rego version, rego v0 code": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow[msg] { 1 == 1; msg := "hello" }
+`,
+			expectModule:  true,
+			expectSuccess: true,
+			regoVersion:   ast.RegoUndefined,
+		},
 	}
 
 	for testName, testData := range tests {

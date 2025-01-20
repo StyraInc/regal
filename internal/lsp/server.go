@@ -2476,7 +2476,7 @@ func (l *LanguageServer) handleInitialize(
 					// where they have the client start one instance of the server per workspace folder:
 					// https://github.com/microsoft/vscode-extension-samples/tree/main/lsp-multi-server-sample
 					// That seems like a reasonable approach to take, and means we won't have to deal with workspace
-					// folders throughout the rest of the codebase. But the quesstion then is — what is the point of
+					// folders throughout the rest of the codebase. But the question then is — what is the point of
 					// this capability, and what does it mean to say we support it? Clearly we don't in the server as
 					// *there is no way* to support it here.
 					Supported: true,

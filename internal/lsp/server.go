@@ -1659,6 +1659,11 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 }
 
 func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
+	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
+	if ok && len(parseErrors) > 0 {
+		return []types.CodeLens{}, nil
+	}
+
 	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)
 	if !ok {
 		return nil, nil // return a null response, as per the spec

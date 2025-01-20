@@ -106,6 +106,20 @@ func (c *Cache) SetModule(fileURI string, module *ast.Module) {
 	c.modules.Set(fileURI, module)
 }
 
+func (c *Cache) GetContentAndModule(fileURI string) (string, *ast.Module, bool) {
+	content, ok := c.GetFileContents(fileURI)
+	if !ok {
+		return "", nil, false
+	}
+
+	module, ok := c.GetModule(fileURI)
+	if !ok {
+		return "", nil, false
+	}
+
+	return content, module, true
+}
+
 func (c *Cache) Rename(oldKey, newKey string) {
 	if content, ok := c.fileContents.Get(oldKey); ok {
 		c.fileContents.Set(newKey, content)

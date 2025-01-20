@@ -37,13 +37,10 @@ func updateParse(
 	}
 
 	lines := strings.Split(content, "\n")
+	options := rparse.ParserOptions()
+	options.RegoVersion = version
 
-	var (
-		err    error
-		module *ast.Module
-	)
-
-	module, err = rparse.ModuleWithOpts(fileURI, content, ast.ParserOptions{RegoVersion: version})
+	module, err := rparse.ModuleWithOpts(fileURI, content, options)
 	if err == nil {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(fileURI, []types.Diagnostic{})

@@ -38,7 +38,7 @@ none := false
 				"col": 1,
 				"row": 9,
 				"end": {
-					"col": 14,
+					"col": 5,
 					"row": 9,
 				},
 				"text": "none := false",
@@ -143,7 +143,7 @@ baz := true
 			"file": "p.rego",
 			"row": 5,
 			"end": {
-				"col": 12,
+				"col": 4,
 				"row": 5,
 			},
 			"text": "baz := true",

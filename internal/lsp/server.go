@@ -1161,14 +1161,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	version := ast.RegoUndefined
-	if l.loadedConfigAllRegoVersions != nil {
-		version = rules.RegoVersionFromVersionsMap(
-			l.loadedConfigAllRegoVersions.Clone(),
-			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
-			ast.RegoUndefined,
-		)
-	}
+	version := l.regoVersionForURI(fileURI)
 
 	if version == ast.RegoV0 {
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
@@ -1705,11 +1698,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(ctx context.Context, param
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
-		RegoVersion: rules.RegoVersionFromVersionsMap(
-			l.loadedConfigAllRegoVersions.Clone(),
-			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
-			ast.RegoUndefined,
-		),
+		RegoVersion:      l.regoVersionForURI(params.TextDocument.URI),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2009,11 +1998,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
 		opts := format.Opts{
-			RegoVersion: rules.RegoVersionFromVersionsMap(
-				l.loadedConfigAllRegoVersions.Clone(),
-				strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
-				ast.RegoUndefined,
-			),
+			RegoVersion: l.regoVersionForURI(params.TextDocument.URI),
 		}
 
 		if formatter == "opa-fmt-rego-v1" {

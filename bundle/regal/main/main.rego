@@ -43,12 +43,12 @@ lint.aggregate.violations := aggregate_report if {
 }
 
 _rules_to_run[category] contains title if {
+	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
+
 	some category, title
 	config.merged_config.rules[category][title]
 
 	config.for_rule(category, title).level != "ignore"
-
-	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
 
 	not config.excluded_file(
 		category,
@@ -105,20 +105,15 @@ report contains violation if {
 
 # Check custom rules
 report contains violation if {
+	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
+
 	some category, title
 
 	violation := data.custom.regal.rules[category][title].report[_]
 
 	config.for_rule(category, title).level != "ignore"
 
-	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
-
-	not config.excluded_file(
-		category,
-		title,
-		file_name_relative_to_root,
-	)
-
+	not config.excluded_file(category, title, file_name_relative_to_root)
 	not _ignored(violation, ast.ignore_directives)
 }
 

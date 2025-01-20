@@ -5,12 +5,142 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
+
+func TestUpdateParse(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		fileURI string
+		content string
+
+		expectSuccess bool
+		// ParseErrors are formatted as another type/source of diagnostic
+		expectedParseErrors []types.Diagnostic
+		expectModule        bool
+		regoVersion         ast.RegoVersion
+	}{
+		"valid file": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow if { 1 == 1 }
+`,
+			expectModule:  true,
+			expectSuccess: true,
+			regoVersion:   ast.RegoV1,
+		},
+		"parse error": {
+			fileURI: "file:///broken.rego",
+			content: `package test
+
+p = true { 1 == }
+`,
+			regoVersion: ast.RegoV1,
+			expectedParseErrors: []types.Diagnostic{{
+				Code:  "rego-parse-error",
+				Range: types.Range{Start: types.Position{Line: 2, Character: 13}, End: types.Position{Line: 2, Character: 13}},
+			}},
+			expectModule:  false,
+			expectSuccess: false,
+		},
+		"empty file": {
+			fileURI:     "file:///empty.rego",
+			content:     "",
+			regoVersion: ast.RegoV1,
+			expectedParseErrors: []types.Diagnostic{{
+				Code:  "rego-parse-error",
+				Range: types.Range{Start: types.Position{Line: 0, Character: 0}, End: types.Position{Line: 0, Character: 0}},
+			}},
+			expectModule:  false,
+			expectSuccess: false,
+		},
+		"parse error due to version": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow if { 1 == 1 }
+`,
+			expectModule:  false,
+			expectSuccess: false,
+			expectedParseErrors: []types.Diagnostic{{
+				Code:  "rego-parse-error",
+				Range: types.Range{Start: types.Position{Line: 1, Character: 0}, End: types.Position{Line: 1, Character: 0}},
+			}},
+			regoVersion: ast.RegoV0,
+		},
+		"unknown rego version, rego v1 code": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow if { 1 == 1 }
+`,
+			expectModule:  true,
+			expectSuccess: true,
+			regoVersion:   ast.RegoUndefined,
+		},
+		"unknown rego version, rego v0 code": {
+			fileURI: "file:///valid.rego",
+			content: `package test
+allow[msg] { 1 == 1; msg := "hello" }
+`,
+			expectModule:  true,
+			expectSuccess: true,
+			regoVersion:   ast.RegoUndefined,
+		},
+	}
+
+	for testName, testData := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+
+			c := cache.NewCache()
+			c.SetFileContents(testData.fileURI, testData.content)
+
+			s := NewRegalStore()
+
+			success, err := updateParse(ctx, c, s, testData.fileURI, ast.BuiltinMap, testData.regoVersion)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if success != testData.expectSuccess {
+				t.Fatalf("expected success to be %v, got %v", testData.expectSuccess, success)
+			}
+
+			_, ok := c.GetModule(testData.fileURI)
+			if testData.expectModule && !ok {
+				t.Fatalf("expected module to be set, but it was not")
+			}
+
+			diags, _ := c.GetParseErrors(testData.fileURI)
+
+			if len(testData.expectedParseErrors) != len(diags) {
+				t.Fatalf("expected %v parse errors, got %v", len(testData.expectedParseErrors), len(diags))
+			}
+
+			for i, diag := range testData.expectedParseErrors {
+				if diag.Code != diags[i].Code {
+					t.Errorf("expected diagnostic code to be %v, got %v", diag.Code, diags[i].Code)
+				}
+
+				if diag.Range.Start.Line != diags[i].Range.Start.Line {
+					t.Errorf("expected diagnostic start line to be %v, got %v", diag.Range.Start.Line, diags[i].Range.Start.Line)
+				}
+
+				if diag.Range.End.Line != diags[i].Range.End.Line {
+					t.Errorf("expected diagnostic end line to be %v, got %v", diag.Range.End.Line, diags[i].Range.End.Line)
+				}
+			}
+		})
+	}
+}
 
 func TestConvertReportToDiagnostics(t *testing.T) {
 	t.Parallel()

@@ -71,6 +71,7 @@ const (
 
 var (
 	noCodeActions     = make([]types.CodeAction, 0)
+	noCodeLenses      = make([]types.CodeLens, 0)
 	noDocumentSymbols = make([]types.DocumentSymbol, 0)
 	noCompletionItems = make([]types.CompletionItem, 0)
 	noFoldingRanges   = make([]types.FoldingRange, 0)
@@ -281,7 +282,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 
 				// updateParse will not return an error when the parsing failed,
 				// but only when it was impossible
-				if _, err := updateParse(ctx, l.cache, l.regoStore, job.URI, bis); err != nil {
+				if _, err := updateParse(ctx, l.cache, l.regoStore, job.URI, bis, l.regoVersionForURI(job.URI)); err != nil {
 					l.logf(log.LevelMessage, "failed to update module for %s: %s", job.URI, err)
 
 					continue
@@ -450,7 +451,7 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 
 			bis := l.builtinsForCurrentCapabilities()
 
-			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis)
+			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI))
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to update parse: %s", err)
 
@@ -643,7 +644,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
-					if _, err = updateParse(ctx, l.cache, l.regoStore, k, bis); err != nil {
+					if _, err = updateParse(ctx, l.cache, l.regoStore, k, bis, l.regoVersionForURI(k)); err != nil {
 						l.logf(log.LevelMessage, "failed to update parse for previously ignored file %q: %s", k, err)
 					}
 				}
@@ -1161,14 +1162,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	version := ast.RegoUndefined
-	if l.loadedConfigAllRegoVersions != nil {
-		version = rules.RegoVersionFromVersionsMap(
-			l.loadedConfigAllRegoVersions.Clone(),
-			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
-			ast.RegoUndefined,
-		)
-	}
+	version := l.regoVersionForURI(fileURI)
 
 	if version == ast.RegoV0 {
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
@@ -1367,7 +1361,7 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 
 	bis := l.builtinsForCurrentCapabilities()
 
-	if success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis); err != nil {
+	if success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI)); err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	} else if !success {
 		return nil
@@ -1659,6 +1653,11 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 }
 
 func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
+	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
+	if ok && len(parseErrors) > 0 {
+		return noCodeLenses, nil
+	}
+
 	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)
 	if !ok {
 		return nil, nil // return a null response, as per the spec
@@ -1700,11 +1699,7 @@ func (l *LanguageServer) handleTextDocumentCompletion(ctx context.Context, param
 		ClientIdentifier: l.clientIdentifier,
 		RootURI:          l.workspaceRootURI,
 		Builtins:         l.builtinsForCurrentCapabilities(),
-		RegoVersion: rules.RegoVersionFromVersionsMap(
-			l.loadedConfigAllRegoVersions.Clone(),
-			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
-			ast.RegoUndefined,
-		),
+		RegoVersion:      l.regoVersionForURI(params.TextDocument.URI),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find completions: %w", err)
@@ -2004,11 +1999,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
 		opts := format.Opts{
-			RegoVersion: rules.RegoVersionFromVersionsMap(
-				l.loadedConfigAllRegoVersions.Clone(),
-				strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI),
-				ast.RegoUndefined,
-			),
+			RegoVersion: l.regoVersionForURI(params.TextDocument.URI),
 		}
 
 		if formatter == "opa-fmt-rego-v1" {
@@ -2403,7 +2394,7 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 
 		bis := l.builtinsForCurrentCapabilities()
 
-		if _, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis); err != nil {
+		if _, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI)); err != nil {
 			return fmt.Errorf("failed to update parse: %w", err)
 		}
 
@@ -2536,6 +2527,19 @@ func (l *LanguageServer) ignoreURI(fileURI string) bool {
 
 func (l *LanguageServer) workspacePath() string {
 	return uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+}
+
+func (l *LanguageServer) regoVersionForURI(fileURI string) ast.RegoVersion {
+	version := ast.RegoUndefined
+	if l.loadedConfigAllRegoVersions != nil {
+		version = rules.RegoVersionFromVersionsMap(
+			l.loadedConfigAllRegoVersions.Clone(),
+			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
+			ast.RegoUndefined,
+		)
+	}
+
+	return version
 }
 
 // builtinsForCurrentCapabilities returns the map of builtins for use

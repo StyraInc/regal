@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -30,6 +29,7 @@ func updateParse(
 	store storage.Store,
 	fileURI string,
 	builtins map[string]*ast.Builtin,
+	version ast.RegoVersion,
 ) (bool, error) {
 	content, ok := cache.GetFileContents(fileURI)
 	if !ok {
@@ -43,8 +43,7 @@ func updateParse(
 		module *ast.Module
 	)
 
-	// TODO: IF not set in config, or from .manifest
-	module, err = rparse.ModuleUnknownVersionWithOpts(fileURI, content, rparse.ParserOptions())
+	module, err = rparse.ModuleWithOpts(fileURI, content, ast.ParserOptions{RegoVersion: version})
 	if err == nil {
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(fileURI, []types.Diagnostic{})
@@ -76,29 +75,30 @@ func updateParse(
 		return true, nil
 	}
 
-	unwrappedError := errors.Unwrap(err)
+	var astErrors []ast.Error
 
-	// if the module is empty, then the unwrapped error is a single parse ast.Error
-	// otherwise it's a slice of ast.Error.
-	// When a user has an empty file, we still want to show this single error.
-	var astErrors []astError
-
-	var parseError *ast.Error
-
-	if errors.As(unwrappedError, &parseError) {
-		astErrors = append(astErrors, astError{
-			Code:     parseError.Code,
-			Message:  parseError.Message,
-			Location: parseError.Location,
-		})
-	} else {
-		jsonErrors, err := json.Marshal(unwrappedError)
-		if err != nil {
-			return false, fmt.Errorf("failed to marshal parse errors: %w", err)
+	// Check if err is of type ast.Errors
+	var astErrs ast.Errors
+	if errors.As(err, &astErrs) {
+		for _, e := range astErrs {
+			astErrors = append(astErrors, ast.Error{
+				Code:     e.Code,
+				Message:  e.Message,
+				Location: e.Location,
+			})
 		}
-
-		if err := json.Unmarshal(jsonErrors, &astErrors); err != nil {
-			return false, fmt.Errorf("failed to unmarshal parse errors: %w", err)
+	} else {
+		// Check if err is a single ast.Error
+		var singleAstErr *ast.Error
+		if errors.As(err, &singleAstErr) {
+			astErrors = append(astErrors, ast.Error{
+				Code:     singleAstErr.Code,
+				Message:  singleAstErr.Message,
+				Location: singleAstErr.Location,
+			})
+		} else {
+			// Unknown error type
+			return false, fmt.Errorf("unknown error type: %T", err)
 		}
 	}
 
@@ -146,6 +146,10 @@ func updateParse(
 	}
 
 	cache.SetParseErrors(fileURI, diags)
+
+	if len(diags) == 0 {
+		return false, errors.New("failed to parse module, but no errors were set as diagnostics")
+	}
 
 	return false, nil
 }
@@ -322,13 +326,6 @@ func convertReportToDiagnostics(
 	}
 
 	return fileDiags
-}
-
-// astError is copied from OPA but drop details as I (charlieegan3) had issues unmarshalling the field.
-type astError struct {
-	Location *ast.Location `json:"location,omitempty"`
-	Code     string        `json:"code"`
-	Message  string        `json:"message"`
 }
 
 //nolint:gosec

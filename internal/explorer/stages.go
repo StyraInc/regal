@@ -13,6 +13,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ir"
 
 	compile2 "github.com/styrainc/regal/internal/compile"
+	"github.com/styrainc/regal/internal/parse"
 )
 
 type CompileResult struct {
@@ -73,7 +74,10 @@ func CompilerStages(path, rego string, useStrict, useAnno, usePrint bool) []Comp
 		Stage: "ParseModule",
 	})
 
-	mod, err := ast.ParseModuleWithOpts(path, rego, ast.ParserOptions{ProcessAnnotation: useAnno})
+	opts := parse.ParserOptions()
+	opts.ProcessAnnotation = useAnno
+
+	mod, err := ast.ParseModuleWithOpts(path, rego, opts)
 	if err != nil {
 		result[0].Error = err.Error()
 
@@ -124,7 +128,7 @@ func getOne(mods map[string]*ast.Module) *ast.Module {
 }
 
 func Plan(ctx context.Context, path, rego string, usePrint bool) (string, error) {
-	mod, err := ast.ParseModuleWithOpts(path, rego, ast.ParserOptions{ProcessAnnotation: true})
+	mod, err := ast.ParseModuleWithOpts(path, rego, parse.ParserOptions())
 	if err != nil {
 		return "", err //nolint:wrapcheck
 	}

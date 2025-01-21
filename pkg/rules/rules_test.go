@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+
+	"github.com/styrainc/regal/internal/parse"
 )
 
 func TestInputFromTextWithOptions(t *testing.T) {
@@ -29,9 +31,10 @@ p { true }`,
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := InputFromTextWithOptions("p.rego", tc.Module, ast.ParserOptions{
-				RegoVersion: tc.RegoVersion,
-			})
+			opts := parse.ParserOptions()
+			opts.RegoVersion = tc.RegoVersion
+
+			_, err := InputFromTextWithOptions("p.rego", tc.Module, opts)
 			if err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}

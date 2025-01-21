@@ -149,6 +149,61 @@ import data.qux # new name for bar.rego package
 	}
 }
 
+// Test to ensure that annotations are parsed correctly.
+func TestRulesWithMetadataNotReportedForMissingMeta(t *testing.T) {
+	t.Parallel()
+
+	files := map[string]string{
+		"foo.rego": `# METADATA
+# title: foo
+package foo
+`,
+		"bar.rego": `# METADATA
+# title: foo
+package bar
+`,
+		".regal/config.yaml": `rules:
+  custom:
+    missing-metadata:
+      level: error
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
+`,
+	}
+
+	messages := createMessageChannels(files)
+	logger := newTestLogger(t)
+	clientHandler := createClientHandler(t, logger, messages)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tempDir := t.TempDir()
+
+	_, _, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
+	if err != nil {
+		t.Fatalf("failed to create and init language server: %s", err)
+	}
+
+	timeout := time.NewTimer(determineTimeout())
+	defer timeout.Stop()
+
+	// no missing-metadata
+	for success := false; !success; {
+		select {
+		case violations := <-messages["foo.rego"]:
+			if len(violations) > 0 {
+				t.Errorf("unexpected violations for foo.rego: %v", violations)
+			}
+
+			success = true
+		case <-timeout.C:
+			t.Fatalf("timed out waiting for expected foo.rego diagnostics")
+		}
+	}
+}
+
 func TestLanguageServerUpdatesAggregateState(t *testing.T) {
 	t.Parallel()
 

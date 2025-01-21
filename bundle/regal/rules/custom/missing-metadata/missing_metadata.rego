@@ -30,16 +30,23 @@ _rule_annotations[rule_path] contains annotated if {
 	annotated := count(object.get(rule, "annotations", [])) > 0
 }
 
-_rule_locations[rule_path] := util.to_location_object(location) if {
+_rule_locations[rule_path] := location if {
 	some rule_path, annotated in _rule_annotations
 
 	# we only care about locations of non-annotated rules
 	not true in annotated
 
-	location := [h.location |
-		h := ast.public_rules_and_functions[_].head
-		concat(".", [ast.package_name, ast.ref_static_to_string(h.ref)]) == rule_path
+	first_rule_index := [i |
+		some i
+
+		# false positive: https://github.com/StyraInc/regal/issues/1353
+		# regal ignore:unused-output-variable
+		ref := ast.public_rules_and_functions[i].head.ref
+		concat(".", [ast.package_name, ast.ref_static_to_string(ref)]) == rule_path
 	][0]
+
+	ref := ast.public_rules_and_functions[first_rule_index].head.ref
+	location := object.remove(result.ranged_from_ref(ref).location, ["file"])
 }
 
 # METADATA

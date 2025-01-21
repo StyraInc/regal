@@ -64,17 +64,6 @@ func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 	}
 }
 
-// RegisterMandatoryFixes sets fixes which will be run before other registered
-// fixes, against all files which are not ignored, regardless of linter
-// violations.
-func (f *Fixer) RegisterMandatoryFixes(fixes ...fixes.Fix) {
-	for _, fix := range fixes {
-		f.registeredMandatoryFixes[fix.Name()] = fix
-
-		delete(f.registeredFixes, fix.Name())
-	}
-}
-
 // RegisterRoots sets the roots of the files that will be fixed.
 // Certain fixes may require the nearest root of the file to be known,
 // as fix operations could involve things like moving files, which

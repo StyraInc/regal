@@ -2040,7 +2040,6 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		f := fixer.NewFixer()
 		f.RegisterFixes(fixes.NewDefaultFormatterFixes()...)
-		f.RegisterMandatoryFixes([]fixes.Fix{&fixes.Fmt{}}...)
 
 		if roots, err := config.GetPotentialRoots(
 			l.workspacePath(),

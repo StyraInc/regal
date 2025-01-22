@@ -299,7 +299,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	var userConfig config.Config
 
-	userConfigFile, err := readUserConfig(params, regalDir)
+	userConfigFile, err := readUserConfig(params, configSearchPath)
 
 	switch {
 	case err == nil:

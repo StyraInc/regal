@@ -15,21 +15,18 @@ type configFileParams interface {
 	getConfigFile() string
 }
 
-func readUserConfig(params configFileParams, regalDir *os.File) (userConfig *os.File, err error) {
+func readUserConfig(params configFileParams, searchPath string) (userConfig *os.File, err error) {
 	if cfgFile := params.getConfigFile(); cfgFile != "" {
 		userConfig, err = os.Open(cfgFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open config file %w", err)
 		}
 	} else {
-		searchPath, _ := os.Getwd()
-		if regalDir != nil {
-			searchPath = regalDir.Name()
+		if searchPath == "" {
+			searchPath, _ = os.Getwd()
 		}
 
-		if searchPath != "" {
-			userConfig, err = config.FindConfig(searchPath)
-		}
+		userConfig, err = config.FindConfig(searchPath)
 	}
 
 	return userConfig, err //nolint:wrapcheck

@@ -175,7 +175,42 @@ project:
 		expected := util.Map(util.FilepathJoiner(root), []string{"", ".regal/rules", "baz", "bundle", "foo/bar"})
 
 		if !slices.Equal(expected, locations) {
-			t.Errorf("expected %v, got %v", expected, locations)
+			t.Errorf("expected\n%s\ngot\n%s", strings.Join(expected, "\n"), strings.Join(locations, "\n"))
+		}
+	})
+}
+
+func TestFindBundleRootDirectoriesWithStandaloneConfig(t *testing.T) {
+	t.Parallel()
+
+	cfg := `
+project:
+  roots:
+  - foo/bar
+  - baz
+`
+
+	fs := map[string]string{
+		"/.regal.yaml":             cfg, // root from config
+		"/bundle/.manifest":        "",  // bundle from .manifest
+		"/foo/bar/baz/policy.rego": "",  // foo/bar from config
+		"/baz":                     "",  // baz from config
+	}
+
+	test.WithTempFS(fs, func(root string) {
+		locations, err := FindBundleRootDirectories(root)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if len(locations) != 4 {
+			t.Errorf("expected 5 locations, got %d", len(locations))
+		}
+
+		expected := util.Map(util.FilepathJoiner(root), []string{"", "baz", "bundle", "foo/bar"})
+
+		if !slices.Equal(expected, locations) {
+			t.Errorf("expected\n%s\ngot\n%s", strings.Join(expected, "\n"), strings.Join(locations, "\n"))
 		}
 	})
 }

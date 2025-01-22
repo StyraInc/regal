@@ -1201,6 +1201,81 @@ import rego.v1
 	}
 }
 
+func TestFixSingleFileNested(t *testing.T) {
+	t.Parallel()
+
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
+	td := t.TempDir()
+
+	initialState := map[string]string{
+		".regal/config.yaml": `
+project:
+  rego-version: 1
+`,
+		"foo/.regal.yaml": `
+project:
+  rego-version: 1
+rules:
+  style:
+    opa-fmt:
+      level: ignore
+`,
+		"foo/foo.rego": `package wow`,
+	}
+
+	for file, content := range initialState {
+		mustWriteToFile(t, filepath.Join(td, file), content)
+	}
+
+	// --force is required to make the changes when there is no git repo
+	err := regal(&stdout, &stderr)(
+		"fix",
+		"--force",
+		filepath.Join(td, "foo/foo.rego"),
+	)
+
+	// 0 exit status is expected as all violations should have been fixed
+	expectExitCode(t, err, 0, &stdout, &stderr)
+
+	exp := fmt.Sprintf(`1 fix applied:
+In project root: %[1]s
+foo.rego -> wow/foo.rego:
+- directory-package-mismatch
+`, filepath.Join(td, "foo"))
+
+	if act := stdout.String(); exp != act {
+		t.Fatalf("expected stdout:\n%s\ngot:\n%s", exp, act)
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Fatalf("expected stderr %q, got %q", exp, act)
+	}
+
+	expectedState := map[string]string{
+		".regal/config.yaml": `
+project:
+  rego-version: 1
+`,
+		"foo/.regal.yaml": `
+project:
+  rego-version: 1
+rules:
+  style:
+    opa-fmt:
+      level: ignore
+`,
+		"foo/wow/foo.rego": `package wow`,
+	}
+
+	for file, expectedContent := range expectedState {
+		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
+
+		if act := string(bs); expectedContent != act {
+			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
+		}
+	}
+}
+
 // verify fix for https://github.com/StyraInc/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	t.Parallel()

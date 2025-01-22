@@ -237,7 +237,7 @@ func fix(args []string, params *fixCommandParams) error {
 
 	var userConfig config.Config
 
-	userConfigFile, err := readUserConfig(params, regalDir)
+	userConfigFile, err := readUserConfig(params, configSearchPath)
 
 	switch {
 	case err == nil:

@@ -246,9 +246,20 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 	// This will traverse the tree **upwards** searching for a .regal directory
 	regalDir, err := FindRegalDirectory(path)
 	if err == nil {
-		roots, err := rootsFromRegalDirectory(regalDir)
+		roots, err := rootsFromRegalConfigDirOrFile(regalDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get roots from .regal directory: %w", err)
+		}
+
+		foundBundleRoots = append(foundBundleRoots, roots...)
+	}
+
+	// This will traverse the tree **upwards** searching for a .regal.yaml file
+	regalConfigFile, err := FindRegalConfigFile(path)
+	if err == nil {
+		roots, err := rootsFromRegalConfigDirOrFile(regalConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get roots from .regal.yaml: %w", err)
 		}
 
 		foundBundleRoots = append(foundBundleRoots, roots...)
@@ -272,7 +283,7 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 
 			defer rd.Close()
 
-			roots, err := rootsFromRegalDirectory(rd)
+			roots, err := rootsFromRegalConfigDirOrFile(rd)
 			if err != nil {
 				return fmt.Errorf("failed to get roots from .regal directory: %w", err)
 			}
@@ -295,23 +306,38 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 	return slices.Compact(foundBundleRoots), nil
 }
 
-func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
-	foundBundleRoots := make([]string, 0)
+func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
+	defer file.Close()
 
-	defer regalDir.Close()
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat file: %w", err)
+	}
 
-	parent, _ := filepath.Split(regalDir.Name())
+	if (fileInfo.IsDir() && filepath.Base(file.Name()) != ".regal") ||
+		(!fileInfo.IsDir() && filepath.Base(file.Name()) != ".regal.yaml") {
+		return nil, fmt.Errorf(
+			"expected a directory named '.regal' or a file named '.regal.yaml', got '%s'",
+			filepath.Base(file.Name()),
+		)
+	}
 
-	parent = filepath.Clean(parent)
+	parent := filepath.Dir(file.Name())
 
-	// add the parent directory of .regal
-	foundBundleRoots = append(foundBundleRoots, parent)
+	foundBundleRoots := []string{parent}
 
-	file, err := os.ReadFile(filepath.Join(regalDir.Name(), "config.yaml"))
+	var configFilePath string
+
+	if fileInfo.IsDir() {
+		configFilePath = filepath.Join(file.Name(), "config.yaml")
+	} else {
+		configFilePath = file.Name()
+	}
+
+	fileContent, err := os.ReadFile(configFilePath)
 	if err == nil {
 		var conf Config
-
-		if err = yaml.Unmarshal(file, &conf); err != nil {
+		if err = yaml.Unmarshal(fileContent, &conf); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
 		}
 
@@ -322,14 +348,18 @@ func rootsFromRegalDirectory(regalDir *os.File) ([]string, error) {
 		}
 	}
 
-	customRulesDir := filepath.Join(regalDir.Name(), "rules")
+	// Include the "rules" directory when loading from a .regal dir
+	if fileInfo.IsDir() {
+		customDir := filepath.Join(file.Name(), "rules")
 
-	info, err := os.Stat(customRulesDir)
-	if err == nil && info.IsDir() {
-		foundBundleRoots = append(foundBundleRoots, customRulesDir)
+		info, err := os.Stat(customDir)
+		if err == nil && info.IsDir() {
+			foundBundleRoots = append(foundBundleRoots, customDir)
+		}
 	}
 
-	manifestRoots, err := rio.FindManifestLocations(filepath.Dir(regalDir.Name()))
+	// Include a search for manifest files
+	manifestRoots, err := rio.FindManifestLocations(parent)
 	if err != nil {
 		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
 	}

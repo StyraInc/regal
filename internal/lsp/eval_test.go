@@ -4,12 +4,14 @@ import (
 	"context"
 	"maps"
 	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestEvalWorkspacePath(t *testing.T) {
@@ -115,12 +117,10 @@ func TestFindInput(t *testing.T) {
 
 			tmpDir := t.TempDir()
 
-			workspacePath := tmpDir + "/workspace"
-			file := tmpDir + "/workspace/foo/bar/baz.rego"
+			workspacePath := filepath.Join(tmpDir, "workspace")
+			file := filepath.Join(tmpDir, "workspace", "foo", "bar", "baz.rego")
 
-			if err := os.MkdirAll(workspacePath+"/foo/bar", 0o755); err != nil {
-				t.Fatal(err)
-			}
+			testutil.MustMkdirAll(t, workspacePath, "foo", "bar")
 
 			path, content := rio.FindInput(file, workspacePath)
 			if path != "" || content != nil {
@@ -134,9 +134,7 @@ func TestFindInput(t *testing.T) {
 				t.Errorf(`expected input {"x": true} at, got %s`, content)
 			}
 
-			if err := os.Remove(tmpDir + "/workspace/foo/bar/input." + tc.fileType); err != nil {
-				t.Fatal(err)
-			}
+			testutil.MustRemove(t, tmpDir+"/workspace/foo/bar/input."+tc.fileType)
 
 			createWithContent(t, tmpDir+"/workspace/input."+tc.fileType, tc.fileContent)
 
@@ -151,14 +149,10 @@ func TestFindInput(t *testing.T) {
 func createWithContent(t *testing.T, path string, content string) {
 	t.Helper()
 
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	f := testutil.Must(os.Create(path))(t)
 	defer f.Close()
 
-	if _, err = f.WriteString(content); err != nil {
+	if _, err := f.WriteString(content); err != nil {
 		t.Fatal(err)
 	}
 }

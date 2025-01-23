@@ -1,11 +1,12 @@
 package util
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestFindClosestMatchingRoot(t *testing.T) {
@@ -112,22 +113,8 @@ func TestDirCleanUpPaths(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			tempDir := t.TempDir()
-
-			for k, v := range test.State {
-				if err := os.MkdirAll(filepath.Dir(filepath.Join(tempDir, k)), 0o755); err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-
-				if err := os.WriteFile(filepath.Join(tempDir, k), []byte(v), 0o600); err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-			}
-
-			expected := make([]string, len(test.Expected))
-			for i, v := range test.Expected {
-				expected[i] = filepath.Join(tempDir, v)
-			}
+			tempDir := testutil.TempDirectoryOf(t, test.State)
+			expected := Map(FilepathJoiner(tempDir), test.Expected)
 
 			additionalPreserveTargets := []string{tempDir}
 			for i, v := range test.AdditionalPreserveTargets {

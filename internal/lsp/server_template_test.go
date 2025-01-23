@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,6 +17,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/internal/util/concurrent"
 )
 
@@ -104,21 +104,7 @@ func TestTemplateContentsForFile(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			td := t.TempDir()
-
-			// init the state on disk
-			for f, c := range tc.DiskContents {
-				dir := filepath.Dir(f)
-
-				if err := os.MkdirAll(filepath.Join(td, dir), 0o755); err != nil {
-					t.Fatalf("failed to create directory %s: %s", dir, err)
-				}
-
-				if err := os.WriteFile(filepath.Join(td, f), []byte(c), 0o600); err != nil {
-					t.Fatalf("failed to write file %s: %s", f, err)
-				}
-			}
-
+			td := testutil.TempDirectoryOf(t, tc.DiskContents)
 			logger := newTestLogger(t)
 
 			ls := NewLanguageServer(
@@ -154,18 +140,10 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 	t.Parallel()
 
 	td := t.TempDir()
-
-	err := os.MkdirAll(filepath.Join(td, ".regal"), 0o755)
-	if err != nil {
-		t.Fatalf("failed to create directory %s: %s", filepath.Join(td, ".regal"), err)
-	}
-
-	err = os.WriteFile(filepath.Join(td, ".regal/config.yaml"), []byte{}, 0o600)
-	if err != nil {
-		t.Fatalf("failed to create file %s: %s", filepath.Join(td, ".regal"), err)
-	}
-
 	logger := newTestLogger(t)
+
+	testutil.MustMkdirAll(t, td, ".regal")
+	testutil.MustWriteFile(t, filepath.Join(td, ".regal", "config.yaml"), []byte{})
 
 	ls := NewLanguageServer(
 		context.Background(),
@@ -178,12 +156,9 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 
 	ls.cache.SetFileContents(fileURI, "")
 
-	_, err = ls.templateContentsForFile(fileURI)
-	if err == nil {
+	if _, err := ls.templateContentsForFile(fileURI); err == nil {
 		t.Fatalf("expected error")
-	}
-
-	if !strings.Contains(err.Error(), "this function does not template files in the workspace root") {
+	} else if !strings.Contains(err.Error(), "this function does not template files in the workspace root") {
 		t.Fatalf("expected error about root templating, got %s", err.Error())
 	}
 }
@@ -192,7 +167,6 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 	t.Parallel()
 
 	td := t.TempDir()
-
 	logger := newTestLogger(t)
 
 	ls := NewLanguageServer(
@@ -202,12 +176,9 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 
 	ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
-	err := os.MkdirAll(filepath.Join(td, "foo"), 0o755)
-	if err != nil {
-		t.Fatalf("failed to create directory %s: %s", filepath.Join(td, "foo"), err)
-	}
+	testutil.MustMkdirAll(t, td, "foo")
 
-	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo/bar.rego"))
+	fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, "foo", "bar.rego"))
 
 	ls.cache.SetFileContents(fileURI, "")
 
@@ -216,9 +187,8 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	exp := `package foo
+	exp := "package foo\n\n"
 
-`
 	if exp != newContents {
 		t.Errorf("unexpected content: %s, want %s", newContents, exp)
 	}
@@ -226,9 +196,6 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 
 func TestNewFileTemplating(t *testing.T) {
 	t.Parallel()
-
-	// set up the workspace content with some example rego and regal config
-	tempDir := t.TempDir()
 
 	files := map[string]string{
 		".regal/config.yaml": `rules:
@@ -238,6 +205,8 @@ func TestNewFileTemplating(t *testing.T) {
       exclude-test-suffix: false
 `,
 	}
+
+	tempDir := testutil.TempDirectoryOf(t, files)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
@@ -255,10 +224,7 @@ func TestNewFileTemplating(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
 	go ls.StartTemplateWorker(ctx)
 
@@ -278,17 +244,14 @@ func TestNewFileTemplating(t *testing.T) {
 	}
 
 	// Touch the new file on disk
-	newFilePath := filepath.Join(tempDir, "foo/bar/policy_test.rego")
+	newFilePath := filepath.Join(tempDir, "foo", "bar", "policy_test.rego")
 	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
-	expectedNewFileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(tempDir, "foo/bar_test/policy_test.rego"))
+	expectedNewFileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(
+		tempDir, "foo", "bar_test", "policy_test.rego",
+	))
 
-	if err := os.MkdirAll(filepath.Dir(newFilePath), 0o755); err != nil {
-		t.Fatalf("failed to create directory %s: %s", filepath.Dir(newFilePath), err)
-	}
-
-	if err := os.WriteFile(newFilePath, []byte(""), 0o600); err != nil {
-		t.Fatalf("failed to write file %s: %s", newFilePath, err)
-	}
+	testutil.MustMkdirAll(t, filepath.Dir(newFilePath))
+	testutil.MustWriteFile(t, newFilePath, []byte(""))
 
 	// Client sends workspace/didCreateFiles notification
 	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{

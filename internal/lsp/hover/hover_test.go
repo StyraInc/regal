@@ -1,11 +1,12 @@
 package hover
 
 import (
-	"os"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/types"
+
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestCreateHoverContent(t *testing.T) {
@@ -45,11 +46,7 @@ func TestCreateHoverContent(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		file, err := os.ReadFile(c.testdata)
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		file := testutil.MustReadFile(t, c.testdata)
 		hoverContent := CreateHoverContent(c.builtin)
 
 		if string(file) != hoverContent {

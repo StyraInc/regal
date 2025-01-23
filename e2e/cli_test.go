@@ -31,15 +31,10 @@ func readProvidedConfig(t *testing.T) config.Config {
 	t.Helper()
 
 	cwd := testutil.Must(os.Getwd())(t)
-
-	configPath := filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml")
-	bs, err := os.ReadFile(configPath)
-	if err != nil {
-		t.Fatalf("failed to read config from %q: %v", configPath, err)
-	}
+	bs := testutil.MustReadFile(t, filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml"))
 
 	var cfg config.Config
-	if err = yaml.Unmarshal(bs, &cfg); err != nil {
+	if err := yaml.Unmarshal(bs, &cfg); err != nil {
 		t.Fatalf("failed to unmarshal config: %v", err)
 	}
 
@@ -855,7 +850,6 @@ func TestFix(t *testing.T) {
 	t.Parallel()
 
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	td := t.TempDir()
 
 	initialState := map[string]string{
 		".regal/config.yaml": `
@@ -909,9 +903,7 @@ allow if { true }
 		"unrelated.txt": `foobar`,
 	}
 
-	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), content)
-	}
+	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
 	err := regal(&stdout, &stderr)(
@@ -1026,7 +1018,6 @@ func TestFixWithConflicts(t *testing.T) {
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
-	td := t.TempDir()
 
 	initialState := map[string]string{
 		".regal/config.yaml": "", // needed to find the root in the right place
@@ -1055,9 +1046,7 @@ import rego.v1
 `,
 	}
 
-	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), content)
-	}
+	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
 	err := regal(&stdout, &stderr)("fix", "--force", td)
@@ -1083,7 +1072,7 @@ Cannot move multiple files to: bar/bar.rego
 	}
 
 	for file, expectedContent := range initialState {
-		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
+		bs := testutil.MustReadFile(t, filepath.Join(td, file))
 
 		if act := string(bs); expectedContent != act {
 			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
@@ -1096,7 +1085,6 @@ func TestFixWithConflictRenaming(t *testing.T) {
 
 	stdout := bytes.Buffer{}
 	stderr := bytes.Buffer{}
-	td := t.TempDir()
 
 	initialState := map[string]string{
 		".regal/config.yaml": "", // needed to find the root in the right place
@@ -1127,9 +1115,7 @@ import rego.v1
 `,
 	}
 
-	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), content)
-	}
+	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
 	// --conflict=rename will rename inbound files when there is a conflict
@@ -1205,7 +1191,6 @@ func TestFixSingleFileNested(t *testing.T) {
 	t.Parallel()
 
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	td := t.TempDir()
 
 	initialState := map[string]string{
 		".regal/config.yaml": `
@@ -1223,15 +1208,13 @@ rules:
 		"foo/foo.rego": `package wow`,
 	}
 
-	for file, content := range initialState {
-		mustWriteToFile(t, filepath.Join(td, file), content)
-	}
+	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
 	err := regal(&stdout, &stderr)(
 		"fix",
 		"--force",
-		filepath.Join(td, "foo/foo.rego"),
+		filepath.Join(td, "foo", "foo.rego"),
 	)
 
 	// 0 exit status is expected as all violations should have been fixed
@@ -1367,17 +1350,5 @@ func expectExitCode(t *testing.T, err error, exp int, stdout *bytes.Buffer, stde
 	if act := ExitStatus(err); exp != act {
 		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s",
 			exp, act, stdout.String(), stderr.String())
-	}
-}
-
-func mustWriteToFile(t *testing.T, path string, content string) {
-	t.Helper()
-
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("failed to create directory %s: %v", filepath.Dir(path), err)
-	}
-
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("failed to write to %s: %v", path, err)
 	}
 }

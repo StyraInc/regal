@@ -3,14 +3,13 @@ package lsp
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
@@ -20,9 +19,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	tmpDir := t.TempDir()
 
-	if err := os.MkdirAll(filepath.Join(tmpDir, "workspace/foo/bar"), 0o755); err != nil {
-		t.Fatalf("failed to create directory: %s", err)
-	}
+	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
 	ctx := context.Background()
 
@@ -86,15 +83,11 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+	logger := newTestLogger(t)
 	tmpDir := t.TempDir()
 
-	if err := os.MkdirAll(filepath.Join(tmpDir, "workspace/foo/bar"), 0o755); err != nil {
-		t.Fatalf("failed to create directory: %s", err)
-	}
-
-	ctx := context.Background()
-
-	logger := newTestLogger(t)
+	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
 	ls := NewLanguageServer(
 		ctx,

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -87,29 +86,16 @@ func (tl *testLogger) Write(p []byte) (n int, err error) {
 }
 
 func createAndInitServer(
+	t *testing.T,
 	ctx context.Context,
 	logger io.Writer,
 	tempDir string,
-	files map[string]string,
 	clientHandler func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error),
 ) (
 	*LanguageServer,
 	*jsonrpc2.Conn,
-	error,
 ) {
-	var err error
-
-	for f, fc := range files {
-		err = os.MkdirAll(filepath.Dir(filepath.Join(tempDir, f)), 0o755)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create directory: %w", err)
-		}
-
-		err = os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to write file: %w", err)
-		}
-	}
+	t.Helper()
 
 	// This is set due to eventing being so slow in go test -race that we
 	// get flakes. TODO, work out how to avoid needing this in lsp tests.
@@ -159,19 +145,17 @@ func createAndInitServer(
 
 	var response types.InitializeResult
 
-	err = connClient.Call(ctx, "initialize", request, &response)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize %w", err)
+	if err := connClient.Call(ctx, "initialize", request, &response); err != nil {
+		t.Fatalf("failed to initialize: %s", err)
 	}
 
 	// 2. Client sends initialized notification
 	// no response to the call is expected
-	err = connClient.Call(ctx, "initialized", struct{}{}, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to complete initialized %w", err)
+	if err := connClient.Call(ctx, "initialized", struct{}{}, nil); err != nil {
+		t.Fatalf("failed to complete initialized: %v", err)
 	}
 
-	return ls, connClient, nil
+	return ls, connClient
 }
 
 func createClientHandler(

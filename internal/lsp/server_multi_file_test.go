@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 // TestLanguageServerMultipleFiles tests that changes to multiple files are handled correctly. When there are multiple
@@ -18,9 +19,6 @@ func TestLanguageServerMultipleFiles(t *testing.T) {
 	// TODO: this test has been flakey and we need to skip it until we have time to look deeper into why
 	t.Skip()
 	t.Parallel()
-
-	// set up the workspace content with some example rego and regal config
-	tempDir := t.TempDir()
 
 	files := map[string]string{
 		"authz.rego": `package authz
@@ -54,20 +52,18 @@ ignore:
 `,
 	}
 
+	// set up the workspace content with some example rego and regal config
+	tempDir := testutil.TempDirectoryOf(t, files)
+
 	logger := newTestLogger(t)
-
 	messages := createMessageChannels(files)
-
 	clientHandler := createClientHandler(t, logger, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ls, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	ls, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
 
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()

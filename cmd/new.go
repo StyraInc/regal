@@ -308,7 +308,6 @@ func scaffoldBuiltinRule(params newRuleCommandParams) error {
 
 func createBuiltinDocs(params newRuleCommandParams) error {
 	docsDir := filepath.Join(params.output, "docs", "rules", params.category)
-
 	docTmpl := template.New("builtin.md.tpl")
 
 	docTmpl = docTmpl.Funcs(template.FuncMap{

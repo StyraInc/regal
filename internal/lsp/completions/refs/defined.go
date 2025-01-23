@@ -22,7 +22,7 @@ func DefinedInModule(module *ast.Module, builtins map[string]*ast.Builtin) map[s
 
 	// first, create a reference for the package using the metadata
 	// if present
-	packagePrettyName := strings.TrimPrefix(rast.RefToString(module.Package.Path), "data.")
+	packagePrettyName := strings.TrimPrefix(module.Package.Path.String(), "data.")
 	packageDescription := defaultDescription(packagePrettyName)
 
 	packageAnnotation, ok := findAnnotationForPackage(module)
@@ -43,7 +43,7 @@ func DefinedInModule(module *ast.Module, builtins map[string]*ast.Builtin) map[s
 	ruleGroups := make(map[string][]*ast.Rule, len(module.Rules))
 
 	for _, rule := range module.Rules {
-		name := rast.RefToString(rule.Head.Ref())
+		name := rule.Head.Ref().String()
 
 		if strings.HasPrefix(name, "test_") {
 			continue

@@ -698,10 +698,7 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 		"enable_all":       l.enableAll,
 		"enable_category":  util.NullToEmpty(l.enableCategory),
 		"enable":           util.NullToEmpty(l.enable),
-	}
-
-	if l.ignoreFiles != nil {
-		params["ignore_files"] = l.ignoreFiles
+		"ignore_files":     util.NullToEmpty(l.ignoreFiles),
 	}
 
 	return map[string]any{

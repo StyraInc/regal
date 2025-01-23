@@ -41,7 +41,7 @@ func documentSymbols(
 	ruleGroups := make(map[string][]*ast.Rule, len(module.Rules))
 
 	for _, rule := range module.Rules {
-		name := rast.RefToString(rule.Head.Ref())
+		name := rule.Head.Ref().String()
 		ruleGroups[name] = append(ruleGroups[name], rule)
 	}
 
@@ -58,7 +58,7 @@ func documentSymbols(
 
 			ruleRange := locationToRange(rule.Location)
 			ruleSymbol := types.DocumentSymbol{
-				Name:           rast.RefToString(rule.Head.Ref()),
+				Name:           rule.Head.Ref().String(),
 				Kind:           kind,
 				Range:          ruleRange,
 				SelectionRange: ruleRange,
@@ -84,7 +84,7 @@ func documentSymbols(
 			}
 
 			groupSymbol := types.DocumentSymbol{
-				Name:           rast.RefToString(rules[0].Head.Ref()),
+				Name:           rules[0].Head.Ref().String(),
 				Kind:           kind,
 				Range:          groupRange,
 				SelectionRange: groupRange,

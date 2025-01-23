@@ -176,21 +176,9 @@ package bar
 
 	createAndInitServer(t, ctx, logger, tempDir, clientHandler)
 
-	timeout := time.NewTimer(determineTimeout())
-	defer timeout.Stop()
-
-	// no missing-metadata
-	for success := false; !success; {
-		select {
-		case violations := <-messages["foo.rego"]:
-			if len(violations) > 0 {
-				t.Errorf("unexpected violations for foo.rego: %v", violations)
-			}
-
-			success = true
-		case <-timeout.C:
-			t.Fatalf("timed out waiting for expected foo.rego diagnostics")
-		}
+	violations := <-messages["foo.rego"]
+	if len(violations) > 0 {
+		t.Errorf("unexpected violations for foo.rego: %v", violations)
 	}
 }
 

@@ -30,7 +30,7 @@ func TestFindRegalDirectory(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		path := filepath.Join(root, "/foo/bar/baz")
+		path := filepath.Join(root, "foo", "bar", "baz")
 
 		if _, err := FindRegalDirectory(path); err != nil {
 			t.Error(err)
@@ -43,7 +43,7 @@ func TestFindRegalDirectory(t *testing.T) {
 	}
 
 	test.WithTempFS(fs, func(root string) {
-		path := filepath.Join(root, "/foo/bar/baz")
+		path := filepath.Join(root, "foo", "bar", "baz")
 
 		_, err := FindRegalDirectory(path)
 		if err == nil {
@@ -119,7 +119,7 @@ func TestFindConfig(t *testing.T) {
 			t.Parallel()
 
 			test.WithTempFS(testData.FS, func(root string) {
-				path := filepath.Join(root, "/foo/bar/baz")
+				path := filepath.Join(root, "foo", "bar", "baz")
 
 				configFile, err := FindConfig(path)
 				if testData.Error != "" {

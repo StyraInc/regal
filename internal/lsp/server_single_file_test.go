@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
@@ -22,14 +22,6 @@ import (
 //nolint:maintidx
 func TestLanguageServerSingleFile(t *testing.T) {
 	t.Parallel()
-
-	// set up the workspace content with some example rego and regal config
-	tempDir := t.TempDir()
-	mainRegoURI := fileURIScheme + tempDir + mainRegoFileName
-
-	if err := os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755); err != nil {
-		t.Fatalf("failed to create .regal directory: %s", err)
-	}
 
 	mainRegoContents := `package main
 
@@ -46,11 +38,9 @@ rules:
       level: ignore`,
 	}
 
-	for f, fc := range files {
-		if err := os.WriteFile(filepath.Join(tempDir, f), []byte(fc), 0o600); err != nil {
-			t.Fatalf("failed to write file %s: %s", f, err)
-		}
-	}
+	// set up the workspace content with some example rego and regal config
+	tempDir := testutil.TempDirectoryOf(t, files)
+	mainRegoURI := fileURIScheme + tempDir + mainRegoFileName
 
 	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
@@ -75,10 +65,7 @@ rules:
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	_, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
 	// validate that the client received a diagnostics notification for the file
 	timeout := time.NewTimer(determineTimeout())
@@ -134,9 +121,7 @@ rules:
       level: ignore
 `
 
-	if err := os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600); err != nil {
-		t.Fatalf("failed to write new config file: %s", err)
-	}
+	testutil.MustWriteFile(t, filepath.Join(tempDir, ".regal", "config.yaml"), []byte(newConfigContents))
 
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())
@@ -182,9 +167,7 @@ capabilities:
     version: v1.23.0
 `
 
-	if err := os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(newConfigContents), 0o600); err != nil {
-		t.Fatalf("failed to write new config file: %s", err)
-	}
+	testutil.MustWriteFile(t, filepath.Join(tempDir, ".regal", "config.yaml"), []byte(newConfigContents))
 
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())

@@ -1,41 +1,25 @@
 package fileprovider
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestFromFS(t *testing.T) {
 	t.Parallel()
 
-	tempDir := t.TempDir()
+	tempDir := testutil.TempDirectoryOf(t, map[string]string{
+		"foo/bar/baz": "bar",
+		"bar/foo":     "baz",
+	})
+	fp := testutil.Must(NewInMemoryFileProviderFromFS([]string{
+		filepath.Join(tempDir, "foo", "bar", "baz"),
+		filepath.Join(tempDir, "bar", "foo"),
+	}...))(t)
 
-	files := map[string]string{
-		tempDir + "/foo/bar/baz": "bar",
-		tempDir + "/bar/foo":     "baz",
-	}
-
-	for file, content := range files {
-		/// make the dir
-		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-			t.Fatal(err)
-		}
-
-		// write the file
-		if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	fp, err := NewInMemoryFileProviderFromFS(util.Keys(files)...)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if fc, err := fp.Get(tempDir + "/foo/bar/baz"); err != nil || fc != "bar" {
+	if fc, err := fp.Get(filepath.Join(tempDir, "foo", "bar", "baz")); err != nil || fc != "bar" {
 		t.Fatalf("expected %s, got %s", "bar", fc)
 	}
 }
@@ -43,17 +27,12 @@ func TestFromFS(t *testing.T) {
 func TestRenameConflict(t *testing.T) {
 	t.Parallel()
 
-	fileA := "/foo/bar/baz"
-	fileB := "/bar/foo"
+	fp := NewInMemoryFileProvider(map[string]string{
+		"/foo/bar/baz": "bar",
+		"/bar/foo":     "baz",
+	})
 
-	files := map[string]string{
-		fileA: "bar",
-		fileB: "baz",
-	}
-
-	fp := NewInMemoryFileProvider(files)
-
-	err := fp.Rename(fileA, fileB)
+	err := fp.Rename("/foo/bar/baz", "/bar/foo")
 	if err == nil {
 		t.Fatal("expected error")
 	}

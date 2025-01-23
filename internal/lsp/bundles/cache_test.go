@@ -6,35 +6,17 @@ import (
 	"reflect"
 	"slices"
 	"testing"
+
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestRefresh(t *testing.T) {
 	t.Parallel()
 
-	workspacePath := t.TempDir()
-
-	// create the initial filesystem state
-	files := map[string]string{
+	workspacePath := testutil.TempDirectoryOf(t, map[string]string{
 		"foo/.manifest": `{"roots":["foo"]}`,
 		"foo/data.json": `{"foo": "bar"}`,
-	}
-
-	writeFiles := func(files map[string]string) {
-		for file, contents := range files {
-			filePath := filepath.Join(workspacePath, file)
-
-			dir := filepath.Dir(filePath)
-			if err := os.MkdirAll(dir, 0o755); err != nil {
-				t.Fatalf("failed to create directory %s: %v", dir, err)
-			}
-
-			if err := os.WriteFile(filePath, []byte(contents), 0o600); err != nil {
-				t.Fatalf("failed to write file %s: %v", filePath, err)
-			}
-		}
-	}
-
-	writeFiles(files)
+	})
 
 	c := NewCache(&CacheOptions{WorkspacePath: workspacePath})
 
@@ -80,11 +62,7 @@ func TestRefresh(t *testing.T) {
 	}
 
 	// add a new unrelated file
-	writeFiles(
-		map[string]string{
-			"foo/foo.rego": `package wow`,
-		},
-	)
+	testutil.MustWriteFile(t, filepath.Join(workspacePath, "foo", "foo.rego"), []byte(`package wow`))
 
 	// perform the third load of the bundles, after adding a new unrelated file
 	refreshedBundles, err = c.Refresh()
@@ -97,11 +75,7 @@ func TestRefresh(t *testing.T) {
 	}
 
 	// update the data in the bundle
-	writeFiles(
-		map[string]string{
-			"foo/data.json": `{"foo": "baz"}`,
-		},
-	)
+	testutil.MustWriteFile(t, filepath.Join(workspacePath, "foo", "data.json"), []byte(`{"foo": "baz"}`))
 
 	refreshedBundles, err = c.Refresh()
 	if err != nil {
@@ -122,12 +96,9 @@ func TestRefresh(t *testing.T) {
 	}
 
 	// create a new bundle
-	writeFiles(
-		map[string]string{
-			"bar/.manifest": `{"roots":["bar"]}`,
-			"bar/data.json": `{"bar": true}`,
-		},
-	)
+	testutil.MustMkdirAll(t, workspacePath, "bar")
+	testutil.MustWriteFile(t, filepath.Join(workspacePath, "bar", ".manifest"), []byte(`{"roots":["bar"]}`))
+	testutil.MustWriteFile(t, filepath.Join(workspacePath, "bar", "data.json"), []byte(`{"bar": true}`))
 
 	refreshedBundles, err = c.Refresh()
 	if err != nil {

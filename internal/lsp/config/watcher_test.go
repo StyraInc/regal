@@ -3,26 +3,22 @@ package config
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestWatcher(t *testing.T) {
 	t.Parallel()
 
-	tempDir := t.TempDir()
-
-	configFilePath := tempDir + "/config.yaml"
-
-	configFileContents := `---
+	tempDir := testutil.TempDirectoryOf(t, map[string]string{
+		"config.yaml": `---
 foo: bar
-`
-
-	if err := os.WriteFile(configFilePath, []byte(configFileContents), 0o600); err != nil {
-		t.Fatal(err)
-	}
+`,
+	})
 
 	watcher := NewWatcher(&WatcherOpts{LogFunc: func(l log.Level, s string, a ...any) {
 		t.Logf(l.String()+": "+s, a...)
@@ -37,6 +33,8 @@ foo: bar
 		}
 	}()
 
+	configFilePath := filepath.Join(tempDir, "config.yaml")
+
 	watcher.Watch(configFilePath)
 
 	select {
@@ -48,10 +46,7 @@ foo: bar
 	newConfigFileContents := `---
 foo: baz
 `
-
-	if err := os.WriteFile(configFilePath, []byte(newConfigFileContents), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	testutil.MustWriteFile(t, configFilePath, []byte(newConfigFileContents))
 
 	select {
 	case <-watcher.Reload:

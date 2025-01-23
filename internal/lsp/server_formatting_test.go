@@ -25,12 +25,8 @@ func TestFormatting(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	ls, _, err := createAndInitServer(ctx, newTestLogger(t), tempDir, map[string]string{}, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
-
-	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main/main.rego")
+	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main", "main.rego")
 
 	// Simple as possible — opa fmt should just remove a newline
 	content := `package main

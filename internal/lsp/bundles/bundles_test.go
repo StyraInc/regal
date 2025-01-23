@@ -1,10 +1,11 @@
 package bundles
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestLoadDataBundle(t *testing.T) {
@@ -67,21 +68,7 @@ func TestLoadDataBundle(t *testing.T) {
 		t.Run(testCase, func(t *testing.T) {
 			t.Parallel()
 
-			workspacePath := t.TempDir()
-
-			// create the workspace state
-			for file, contents := range testData.files {
-				filePath := filepath.Join(workspacePath, file)
-
-				dir := filepath.Dir(filePath)
-				if err := os.MkdirAll(dir, 0o755); err != nil {
-					t.Fatalf("failed to create directory %s: %v", dir, err)
-				}
-
-				if err := os.WriteFile(filePath, []byte(contents), 0o600); err != nil {
-					t.Fatalf("failed to write file %s: %v", filePath, err)
-				}
-			}
+			workspacePath := testutil.TempDirectoryOf(t, testData.files)
 
 			b, err := LoadDataBundle(filepath.Join(workspacePath, testData.path))
 			if err != nil {

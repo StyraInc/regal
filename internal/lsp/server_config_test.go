@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 // TestLanguageServerParentDirConfig tests that regal config is loaded as it is for the
@@ -21,20 +21,13 @@ import (
 func TestLanguageServerParentDirConfig(t *testing.T) {
 	t.Parallel()
 
-	var err error
-
-	// this is the top level directory for the test
-	tempDir := t.TempDir()
-	// childDir will be the directory that the client is using as its workspace
-
-	childDirName := "child"
-	childDir := filepath.Join(tempDir, childDirName)
-
 	mainRegoContents := `package main
 
 import data.test
 allow := true
 `
+
+	childDirName := "child"
 
 	files := map[string]string{
 		childDirName + mainRegoFileName: mainRegoContents,
@@ -47,6 +40,10 @@ allow := true
       level: error
 `,
 	}
+
+	// childDir will be the directory that the client is using as its workspace
+	tempDir := testutil.TempDirectoryOf(t, files)
+	childDir := filepath.Join(tempDir, childDirName)
 
 	// mainRegoFileURI is used throughout the test to refer to the main.rego file
 	// and so it is defined here for convenience
@@ -75,10 +72,7 @@ allow := true
 		return struct{}{}, nil
 	}
 
-	ls, _, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
 	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.clientIdentifier, tempDir); exp != got {
 		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
@@ -107,10 +101,7 @@ allow := true
       level: ignore
 `
 
-	path := filepath.Join(tempDir, ".regal/config.yaml")
-	if err := os.WriteFile(path, []byte(newConfigContents), 0o600); err != nil {
-		t.Fatalf("failed to write new config file: %s", err)
-	}
+	testutil.MustWriteFile(t, filepath.Join(tempDir, ".regal", "config.yaml"), []byte(newConfigContents))
 
 	// validate that the client received a new, empty diagnostics notification for the file
 	timeout.Reset(determineTimeout())
@@ -128,8 +119,6 @@ allow := true
 func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 	t.Parallel()
 
-	var err error
-
 	tempDir := t.TempDir()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -142,10 +131,7 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, map[string]string{}, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
 	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.clientIdentifier, tempDir); exp != got {
 		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
@@ -172,10 +158,7 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 		}
 	}
 
-	err = os.MkdirAll(filepath.Join(tempDir, ".regal"), 0o755)
-	if err != nil {
-		t.Fatalf("failed to create regal config dir: %s", err)
-	}
+	testutil.MustMkdirAll(t, tempDir, ".regal")
 
 	configContents := `
 rules:
@@ -187,16 +170,13 @@ rules:
       level: ignore
 `
 
-	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(configContents), 0o600)
-	if err != nil {
-		t.Fatalf("failed to write regal config file: %s", err)
-	}
+	testutil.MustWriteFile(t, filepath.Join(tempDir, ".regal", "config.yaml"), []byte(configContents))
 
 	// this event is sent to allow the server to detect the new config
 	if err := connClient.Notify(ctx, "workspace/didChangeWatchedFiles", types.WorkspaceDidChangeWatchedFilesParams{
 		Changes: []types.FileEvent{
 			{
-				URI:  fileURIScheme + filepath.Join(tempDir, ".regal/config.yaml"),
+				URI:  fileURIScheme + filepath.Join(tempDir, ".regal", "config.yaml"),
 				Type: 1, // created
 			},
 		},
@@ -243,11 +223,7 @@ rules:
       level: error
 `
 
-	err = os.WriteFile(filepath.Join(tempDir, ".regal/config.yaml"), []byte(configContents2), 0o600)
-	if err != nil {
-		t.Fatalf("failed to write regal config file: %s", err)
-	}
-
+	testutil.MustWriteFile(t, filepath.Join(tempDir, ".regal", "config.yaml"), []byte(configContents2))
 	timeout.Reset(determineTimeout())
 
 	for success := false; !success; {

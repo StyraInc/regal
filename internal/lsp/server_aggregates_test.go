@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/report"
 )
 
@@ -36,21 +37,15 @@ import rego.v1
 		".regal/config.yaml": ``,
 	}
 
-	messages := createMessageChannels(files)
-
 	logger := newTestLogger(t)
-
+	tempDir := testutil.TempDirectoryOf(t, files)
+	messages := createMessageChannels(files)
 	clientHandler := createClientHandler(t, logger, messages)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tempDir := t.TempDir()
-
-	_, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	_, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
 
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
@@ -73,7 +68,7 @@ import rego.v1
 
 	barURI := fileURIScheme + filepath.Join(tempDir, "bar.rego")
 
-	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: barURI,
 		},
@@ -85,8 +80,7 @@ import rego.v1
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -110,7 +104,7 @@ import rego.v1
 
 	fooURI := fileURIScheme + filepath.Join(tempDir, "foo.rego")
 
-	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fooURI,
 		},
@@ -125,8 +119,7 @@ import data.qux # new name for bar.rego package
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -179,12 +172,9 @@ package bar
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tempDir := t.TempDir()
+	tempDir := testutil.TempDirectoryOf(t, files)
 
-	_, _, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	createAndInitServer(t, ctx, logger, tempDir, clientHandler)
 
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
@@ -232,12 +222,8 @@ import data.quz
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tempDir := t.TempDir()
-
-	ls, connClient, err := createAndInitServer(ctx, newTestLogger(t), tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	tempDir := testutil.TempDirectoryOf(t, files)
+	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
 	// 1. check the Aggregates are set at start up
 	timeout := time.NewTimer(determineTimeout())
@@ -303,7 +289,7 @@ import data.quz
 	}
 
 	// 2. check the aggregates for a file are updated after an update
-	err = connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURIScheme + filepath.Join(tempDir, "bar.rego"),
 		},
@@ -318,8 +304,7 @@ import data.wow # new
 `,
 			},
 		},
-	}, nil)
-	if err != nil {
+	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
 
@@ -348,7 +333,6 @@ func TestLanguageServerAggregateViolationFixedAndReintroducedInUnviolatingFileCh
 
 	var err error
 
-	tempDir := t.TempDir()
 	files := map[string]string{
 		"foo.rego": `package foo
 
@@ -365,20 +349,16 @@ import rego.v1
 		".regal/config.yaml": ``,
 	}
 
-	messages := createMessageChannels(files)
-
 	logger := newTestLogger(t)
-
+	tempDir := testutil.TempDirectoryOf(t, files)
+	messages := createMessageChannels(files)
 	clientHandler := createClientHandler(t, logger, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, connClient, err := createAndInitServer(ctx, logger, tempDir, files, clientHandler)
-	if err != nil {
-		t.Fatalf("failed to create and init language server: %s", err)
-	}
+	_, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
 
 	// wait for foo.rego to have the correct violations
 	timeout := time.NewTimer(determineTimeout())

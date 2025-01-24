@@ -40,8 +40,88 @@ allow if input.user.is_root
 ## Rationale
 
 Calling deprecated built-in functions should always be avoided, and replacing them is usually trivial.
-Refer to the OPA docs on [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode)
-for more details on which built-in functions counts as deprecated.
+
+## Replacing Deprecated Built-in Functions
+
+### `any`
+
+Use the `in` keyword (OPA v0.34.0+) to replace the `any` function:
+
+**Instead of**
+```rego
+a := any([input.foo, input.bar])
+```
+
+**Do this**
+```rego
+import future.keywords.in # or `import rego.v1` (OPA v0.59.0+)
+
+a := true in [input.foo, input.bar]
+```
+
+Using `in` additionally has the benefit that it can be used to check for any type of value, and not just boolean
+`true`!
+
+### `all`
+
+Use the `every` keyword (OPA v0.34.0+) to replace the `all` function:
+
+**Instead of**
+```rego
+a {
+    all([input.foo, input.bar])
+}
+```
+
+**Do this**
+```rego
+import future.keywords.every # or `import rego.v1` (OPA v0.59.0+)
+
+a {
+    every x in [input.foo, input.bar] {
+        x == true
+    }
+}
+```
+
+Just like `in` may be used for much more than `any`, `every` can be used to evaluate complex expressions!
+
+### `set_diff`
+
+Use the minus (`-`) operator instead, of `set_diff`:
+
+**Instead of**
+```rego
+a := set_diff(s1, s2)
+```
+
+**Do this**
+```rego
+a := s1 - s2
+```
+
+### `re_match` and `net.cidr_overlap`
+
+These built-in function were renamed `regex.match` and `net.cidr_intersects` respectively, so simply use the new names
+instead.
+
+### `cast_array`, `cast_set`, `cast_string`, `cast_boolean`, `cast_null`, `cast_object`
+
+Use the `is_X` equivalent built-in function in their place:
+
+**Instead of**
+```rego
+a {
+    cast_string(input.name)
+}
+```
+
+**Do this**
+```rego
+a {
+    is_string(input.name)
+}
+```
 
 ## Configuration Options
 

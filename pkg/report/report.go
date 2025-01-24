@@ -144,9 +144,7 @@ func (r *Report) AddProfileEntries(prof map[string]ProfileEntry) {
 func (r *Report) AggregateProfileToSortedProfile(numResults int) {
 	r.Profile = make([]ProfileEntry, 0, len(r.AggregateProfile))
 
-	for loc, rs := range r.AggregateProfile {
-		rs.Location = loc
-
+	for loc := range r.AggregateProfile {
 		r.Profile = append(r.Profile, r.AggregateProfile[loc])
 	}
 

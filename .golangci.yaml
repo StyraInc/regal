@@ -26,7 +26,6 @@ linters-settings:
     case:
       rules:
         json: snake
-
   revive:
     rules:
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-parameter
@@ -41,7 +40,6 @@ linters-settings:
         disabled: false
         arguments:
           - allowRegex: "^_"
-
   gci:
     sections:
       - standard
@@ -50,13 +48,19 @@ linters-settings:
       - prefix(github.com/styrainc/regal)
       - blank
       - dot
-
   depguard:
     rules:
       main:
         deny:
           - pkg: "gopkg.in/yaml.v2"
             desc: use yaml.v3 only
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      # this is nice, but it doesn't seem possible to disable
+      # this for tests? definitely don't want this in tests
+      - fieldalignment
 
 issues:
   exclude-dirs:

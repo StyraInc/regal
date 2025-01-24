@@ -20,7 +20,7 @@ func NewRegalStore() storage.Store {
 			// we'll need to conform to the most basic "JSON" format understood by the store
 			"defined_refs": map[string]any{},
 		},
-	}, inmem.OptRoundTripOnWrite(false))
+	}, inmem.OptRoundTripOnWrite(false), inmem.OptReturnASTValuesOnRead(true))
 }
 
 func transact(ctx context.Context, store storage.Store, writeMode bool, op func(txn storage.Transaction) error) error {

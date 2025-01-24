@@ -133,7 +133,6 @@ func prepareQuery(ctx context.Context, store storage.Store, query string) (*rego
 
 func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
 	return []func(*rego.Rego){
-		rego.StoreReadAST(true),
 		rego.Store(store),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal", &rbundle.LoadedBundle),

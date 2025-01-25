@@ -297,11 +297,22 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	for _, violation := range r.Violations {
 		table.Append([]string{violation.Location.String(), violation.Description})
 	}
+	// plurals
+	pluralScanned := ""
+	if r.Summary.FilesScanned > 1 || r.Summary.FilesScanned == 0 {
+		pluralScanned = "s"
+	}
+	pluralViolations := ""
+	if r.Summary.NumViolations > 1 || r.Summary.NumViolations == 0 {
+		pluralViolations = "s"
+	}
 
+	summary := fmt.Sprintf("%d file%s linted , %d violation%s found. \n",
+		r.Summary.FilesScanned, pluralScanned,
+		r.Summary.NumViolations, pluralViolations)
+	// rendering the table
 	table.Render()
-
-	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), " "))
-
+	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), ""), summary)
 	return err
 }
 

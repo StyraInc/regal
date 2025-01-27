@@ -2467,7 +2467,8 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 ) (any, error) {
 	// this handles the case of a new config file being created when one did
 	// not exist before
-	if len(params.Changes) > 0 && strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") {
+	if len(params.Changes) > 0 && (strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") ||
+		strings.HasSuffix(params.Changes[0].URI, ".regal.yaml")) {
 		configFile, err := config.FindConfig(l.workspacePath())
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())

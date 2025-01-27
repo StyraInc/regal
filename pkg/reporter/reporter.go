@@ -302,6 +302,7 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	if r.Summary.FilesScanned > 1 || r.Summary.FilesScanned == 0 {
 		pluralScanned = "s"
 	}
+
 	pluralViolations := ""
 	if r.Summary.NumViolations > 1 || r.Summary.NumViolations == 0 {
 		pluralViolations = "s"
@@ -312,7 +313,9 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 		r.Summary.NumViolations, pluralViolations)
 	// rendering the table
 	table.Render()
+
 	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), ""), summary)
+
 	return err
 }
 

@@ -307,7 +307,7 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 		pluralViolations = "s"
 	}
 
-	summary := fmt.Sprintf("%d file%s linted , %d violation%s found. \n",
+	summary := fmt.Sprintf("%d file%s linted , %d violation%s found.",
 		r.Summary.FilesScanned, pluralScanned,
 		r.Summary.NumViolations, pluralViolations)
 	// rendering the table

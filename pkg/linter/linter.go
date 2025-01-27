@@ -14,7 +14,6 @@ import (
 
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/anderseknert/roast/pkg/transform"
-	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/topdown"
 	"github.com/open-policy-agent/opa/v1/topdown/print"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	rio "github.com/styrainc/regal/internal/io"
@@ -804,7 +804,7 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 			return fmt.Errorf("failed to read custom rule file: %w", err)
 		}
 
-		files[path] = rutil.ByteSliceToString(bs)
+		files[path] = outil.ByteSliceToString(bs)
 
 		return nil
 	})
@@ -1075,7 +1075,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 		}
 
 		log.Println("merged provided and user config:")
-		log.Println(rutil.ByteSliceToString(bs))
+		log.Println(outil.ByteSliceToString(bs))
 	}
 
 	l.combinedCfg = &mergedConf

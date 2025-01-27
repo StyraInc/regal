@@ -12,9 +12,8 @@ import (
 	"strings"
 	"sync"
 
-	rutil "github.com/anderseknert/roast/pkg/util"
-
 	"github.com/open-policy-agent/opa/v1/ast"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/util"
@@ -120,7 +119,7 @@ func InputFromPaths(paths []string, prefix string, versionsMap map[string]ast.Re
 				return
 			}
 
-			fileContent[result.name] = rutil.ByteSliceToString(result.raw)
+			fileContent[result.name] = outil.ByteSliceToString(result.raw)
 			modules[result.name] = result.parsed
 		}(path)
 	}
@@ -205,7 +204,7 @@ func regoWithOpts(path string, opts ast.ParserOptions) (*regoFile, error) {
 		raw:  bs,
 	}
 
-	policy := rutil.ByteSliceToString(bs)
+	policy := outil.ByteSliceToString(bs)
 
 	mod, err := parse.ModuleWithOpts(path, policy, opts)
 	if err != nil {
@@ -225,7 +224,7 @@ func inputFromStdin() (Input, error) {
 		return Input{}, fmt.Errorf("failed to read from reader: %w", err)
 	}
 
-	policy := rutil.ByteSliceToString(bs)
+	policy := outil.ByteSliceToString(bs)
 
 	module, err := parse.ModuleUnknownVersionWithOpts("stdin", policy, parse.ParserOptions())
 	if err != nil {

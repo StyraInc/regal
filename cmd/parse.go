@@ -7,8 +7,9 @@ import (
 	"os"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	"github.com/anderseknert/roast/pkg/util"
 	"github.com/spf13/cobra"
+
+	"github.com/open-policy-agent/opa/v1/util"
 
 	rp "github.com/styrainc/regal/internal/parse"
 )

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anderseknert/roast/pkg/util"
-
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util/concurrent"

@@ -17,13 +17,13 @@ import (
 	"time"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
 	"github.com/open-policy-agent/opa/v1/storage"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
@@ -1791,7 +1791,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(params types.DefinitionPar
 		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
 		Pos:      positionToOffset(contents, params.Position),
 		Modules:  modules,
-		Buffer:   rutil.StringToByteSlice(contents),
+		Buffer:   outil.StringToByteSlice(contents),
 	}
 
 	definition, err := orc.FindDefinition(query)

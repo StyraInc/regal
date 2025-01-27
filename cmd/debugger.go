@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/util"
 	godap "github.com/google/go-dap"
 	"github.com/spf13/cobra"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/debug"
 	"github.com/open-policy-agent/opa/v1/logging"
 	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/dap"
 	"github.com/styrainc/regal/pkg/builtins"

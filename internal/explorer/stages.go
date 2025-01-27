@@ -5,12 +5,12 @@ import (
 	"context"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	"github.com/anderseknert/roast/pkg/util"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/compile"
 	"github.com/open-policy-agent/opa/v1/ir"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	compile2 "github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/parse"

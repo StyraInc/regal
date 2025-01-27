@@ -11,11 +11,12 @@ import (
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/fatih/color"
 	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
+
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/novelty"
@@ -330,7 +331,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 		return fmt.Errorf("json marshalling of report failed: %w", err)
 	}
 
-	_, err = fmt.Fprintln(tr.out, rutil.ByteSliceToString(bs))
+	_, err = fmt.Fprintln(tr.out, outil.ByteSliceToString(bs))
 
 	return err
 }

@@ -165,8 +165,9 @@ func TestCompactReporterPublish(t *testing.T) {
 | a.rego:1:1   | Rego must not break the law! |
 | b.rego:22:18 | Questionable decision found  |
 +--------------+------------------------------+
-
+ 3 files linted , 2 violations found.
 `
+
 	if buf.String() != expect {
 		t.Errorf("expected %s, got %s", expect, buf.String())
 	}

@@ -3,13 +3,20 @@ package lsp
 import (
 	"context"
 	"encoding/json"
-	"slices"
+	"fmt"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage"
 
 	"github.com/styrainc/regal/internal/parse"
 )
+
+type illegalResolver struct{}
+
+func (illegalResolver) Resolve(ref ast.Ref) (interface{}, error) {
+	return nil, fmt.Errorf("illegal value: %v", ref)
+}
 
 func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	t.Parallel()
@@ -28,7 +35,17 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 		t.Fatalf("store.Read failed: %v", err)
 	}
 
-	pretty, err := json.MarshalIndent(parsed, "", "  ")
+	parsedVal, ok := parsed.(ast.Value)
+	if !ok {
+		t.Fatalf("expected ast.Value, got %T", parsed)
+	}
+
+	parsedMap, err := ast.ValueToInterface(parsedVal, illegalResolver{})
+	if err != nil {
+		t.Fatalf("ast.ValueToInterface failed: %v", err)
+	}
+
+	pretty, err := json.MarshalIndent(parsedMap, "", "  ")
 	if err != nil {
 		t.Fatalf("json.MarshalIndent failed: %v", err)
 	}
@@ -95,12 +112,14 @@ func TestPutFileRefs(t *testing.T) {
 		t.Fatalf("store.Read failed: %v", err)
 	}
 
-	arr, ok := value.([]string)
+	arr, ok := value.(*ast.Array)
 	if !ok {
-		t.Fatalf("expected []string, got %T", value)
+		t.Fatalf("expected *ast.Array, got %T", value)
 	}
 
-	if !slices.Equal(arr, []string{"foo", "bar"}) {
-		t.Fatalf("expected [foo bar], got %v", arr)
+	expected := ast.NewArray(ast.StringTerm("foo"), ast.StringTerm("bar"))
+
+	if !expected.Equal(arr) {
+		t.Errorf("expected %v, got %v", expected, arr)
 	}
 }

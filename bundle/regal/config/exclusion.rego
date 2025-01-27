@@ -13,9 +13,9 @@ excluded_file(category, title, file) if {
 	_exclude(pattern, file)
 }
 
-_global_ignore_patterns := data.eval.params.ignore_files
-
-_global_ignore_patterns := merged_config.ignore.files if not data.eval.params.ignore_files
+_global_ignore_patterns := data.eval.params.ignore_files if {
+	count(data.eval.params.ignore_files) > 0
+} else := merged_config.ignore.files
 
 # exclude imitates .gitignore pattern matching as best it can
 # ref: https://git-scm.com/docs/gitignore#_pattern_format

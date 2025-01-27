@@ -760,7 +760,7 @@ func fromOPABuiltin(builtin ast.Builtin) *Builtin {
 func fromOPACapabilities(capabilities *ast.Capabilities) *Capabilities {
 	var result Capabilities
 
-	result.Builtins = make(map[string]*Builtin)
+	result.Builtins = make(map[string]*Builtin, len(capabilities.Builtins))
 
 	for _, builtin := range capabilities.Builtins {
 		result.Builtins[builtin.Name] = fromOPABuiltin(*builtin)

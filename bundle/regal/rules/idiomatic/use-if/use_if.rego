@@ -34,5 +34,5 @@ report contains violation if {
 
 	not startswith(text, "if")
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(rule.head.ref))
 }

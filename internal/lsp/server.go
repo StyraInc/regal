@@ -2203,10 +2203,42 @@ func (l *LanguageServer) handleWorkspaceDiagnostic() (any, error) {
 }
 
 func (l *LanguageServer) handleInitialize(ctx context.Context, params types.InitializeParams) (any, error) {
+	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
+
 	// params.RootURI is not expected to have a trailing slash, but if one is
 	// present it will be removed for consistency.
-	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, rio.PathSeparator)
-	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
+	rootURI := strings.TrimSuffix(params.RootURI, rio.PathSeparator)
+
+	if rootURI == "" {
+		return nil, errors.New("rootURI was not set by the client but is required")
+	}
+
+	workspaceRootPath := uri.ToPath(l.clientIdentifier, rootURI)
+
+	configRoots, err := lsconfig.FindConfigRoots(workspaceRootPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find config roots: %w", err)
+	}
+
+	l.workspaceRootURI = rootURI
+
+	switch {
+	case len(configRoots) > 1:
+		l.logf(
+			log.LevelMessage,
+			"warning: multiple config roots found in workspace:\n%s\nusing %q as root",
+			strings.Join(configRoots, "\n"),
+			configRoots[0],
+		)
+
+		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
+	case len(configRoots) == 1:
+		l.logf(log.LevelMessage, "using workspace directory %q as root", configRoots[0])
+
+		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
+	default:
+		l.logf(log.LevelMessage, "using supplied root: %q, config may be inherited from parent directory", workspaceRootPath)
+	}
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
 		l.logf(
@@ -2435,7 +2467,8 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 ) (any, error) {
 	// this handles the case of a new config file being created when one did
 	// not exist before
-	if len(params.Changes) > 0 && strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") {
+	if len(params.Changes) > 0 && (strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") ||
+		strings.HasSuffix(params.Changes[0].URI, ".regal.yaml")) {
 		configFile, err := config.FindConfig(l.workspacePath())
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())

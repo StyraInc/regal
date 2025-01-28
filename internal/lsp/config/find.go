@@ -10,7 +10,7 @@ import (
 // FindConfigRoots will search for all config roots in the given path. A config
 // root is a directory that contains a .regal.yaml file or a .regal/config.yaml
 // file. This is intended to be used to by the language server when determining
-// the most suitable workspace root for the server to operate on.
+// the most suitable config root for the server to operate on.
 func FindConfigRoots(path string) ([]string, error) {
 	var foundRoots []string
 

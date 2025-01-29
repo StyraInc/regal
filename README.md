@@ -403,8 +403,8 @@ project:
 Regal will automatically search for a configuration file (`.regal/config.yaml`
 or `.regal.yaml`) in the current directory, and if not found, traverse the
 parent directories either until either one is found, or the top of the directory
-hierarchy is reached. If no configuration file is found, Regal will use the
-default configuration.
+hierarchy is reached. If no configuration file is found, and no file is found at
+`~/.config/regal/config.yaml` either, Regal will use the default configuration.
 
 A custom configuration may be also be provided using the `--config-file`/`-c`
 option for `regal lint`, which when provided will be used to override the

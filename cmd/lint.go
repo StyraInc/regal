@@ -362,7 +362,7 @@ func updateCheckAndWarn(params *lintCommandParams, regalRules *bundle.Bundle, us
 			CurrentVersion: version.Version,
 			CurrentTime:    time.Now().UTC(),
 			Debug:          params.debug,
-			StateDir:       config.GlobalDir(),
+			StateDir:       config.GlobalConfigDir(true),
 		}, os.Stderr)
 	}
 }

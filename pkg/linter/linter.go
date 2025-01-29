@@ -8,9 +8,11 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"testing/fstest"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/anderseknert/roast/pkg/transform"
@@ -39,7 +41,6 @@ import (
 
 // Linter stores data to use for linting.
 type Linter struct {
-	customRuleFS         fs.FS
 	printHook            print.Hook
 	metrics              metrics.Metrics
 	inputModules         *rules.Input
@@ -47,15 +48,15 @@ type Linter struct {
 	combinedCfg          *config.Config
 	dataBundle           *bundle.Bundle
 	pathPrefix           string
-	customRuleFSRootPath string
+	customRuleError      error
 	inputPaths           []string
 	ruleBundles          []*bundle.Bundle
-	customRulesPaths     []string
 	disable              []string
 	disableCategory      []string
 	enable               []string
 	enableCategory       []string
 	ignoreFiles          []string
+	customRuleModules    []*ast.Module
 	overriddenAggregates map[string][]report.Aggregate
 	useCollectQuery      bool
 	debugMode            bool
@@ -64,6 +65,7 @@ type Linter struct {
 	enableAll            bool
 	profiling            bool
 	instrumentation      bool
+	hasCustomRules       bool
 }
 
 //nolint:gochecknoglobals
@@ -106,7 +108,29 @@ func (l Linter) WithAddedBundle(b *bundle.Bundle) Linter {
 
 // WithCustomRules adds custom rules for evaluation, from the Rego (and data) files provided at paths.
 func (l Linter) WithCustomRules(paths []string) Linter {
-	l.customRulesPaths = paths
+	for _, path := range paths {
+		stat, err := os.Stat(path)
+		if err != nil {
+			l.customRuleError = fmt.Errorf("failed to stat custom rule file %s: %w", path, err)
+
+			return l
+		}
+
+		if stat.IsDir() {
+			l = l.WithCustomRulesFromFS(os.DirFS(path), path)
+		} else {
+			contents, err := os.ReadFile(path)
+			if err != nil {
+				l.customRuleError = fmt.Errorf("failed to read custom rule file %s: %w", path, err)
+
+				return l
+			}
+
+			l = l.WithCustomRulesFromFS(fstest.MapFS{
+				path: &fstest.MapFile{Data: contents},
+			}, filepath.Dir(path))
+		}
+	}
 
 	return l
 }
@@ -114,8 +138,22 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 // WithCustomRulesFromFS adds custom rules for evaluation from a filesystem implementing the fs.FS interface.
 // A root path within the filesystem must also be specified. Note, _test.rego files will be ignored.
 func (l Linter) WithCustomRulesFromFS(f fs.FS, rootPath string) Linter {
-	l.customRuleFS = f
-	l.customRuleFSRootPath = rootPath
+	if f == nil {
+		return l
+	}
+
+	l.hasCustomRules = true
+
+	modules, err := loadModulesFromCustomRuleFS(f, rootPath)
+	if err != nil {
+		l.customRuleError = err
+
+		return l
+	}
+
+	for _, m := range modules {
+		l.customRuleModules = append(l.customRuleModules, m)
+	}
 
 	return l
 }
@@ -251,8 +289,9 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	finalReport := report.Report{}
 
-	if len(l.inputPaths) == 0 && l.inputModules == nil && len(l.overriddenAggregates) == 0 {
-		return report.Report{}, errors.New("nothing provided to lint")
+	err := l.validate()
+	if err != nil {
+		return report.Report{}, fmt.Errorf("validation failed: %w", err)
 	}
 
 	conf, err := l.GetConfig()
@@ -422,6 +461,93 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	return finalReport, nil
+}
+
+func (l Linter) validate() error {
+	if len(l.inputPaths) == 0 && l.inputModules == nil && len(l.overriddenAggregates) == 0 {
+		return errors.New("nothing provided to lint")
+	}
+
+	if l.customRuleError != nil {
+		return fmt.Errorf("failed to load custom rules: %w", l.customRuleError)
+	}
+
+	conf, err := l.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	validCategories := util.NewSet[string]()
+	validRules := util.NewSet[string]()
+
+	// add all the go rules
+	for _, rule := range rules.AllGoRules(*conf) {
+		validCategories.Add(rule.Category())
+		validRules.Add(rule.Name())
+	}
+
+	// add all the rego rules
+	for _, b := range l.ruleBundles {
+		for _, module := range b.Modules {
+			parts := util.UnquotedPath(module.Parsed.Package.Path)
+			// 1     2     3   4
+			// regal.rules.cat.rule
+			if len(parts) != 4 {
+				continue
+			}
+
+			validCategories.Add(parts[2])
+			validRules.Add(parts[3])
+		}
+	}
+
+	// add all the custom rules
+	for _, module := range l.customRuleModules {
+		parts := util.UnquotedPath(module.Package.Path)
+		// 1      2     3     4   5
+		// custom.regal.rules.cat.rule
+		if len(parts) != 5 {
+			continue
+		}
+
+		validCategories.Add(parts[3])
+		validRules.Add(parts[4])
+	}
+
+	configuredCategories := util.NewSet(outil.Keys(conf.Rules)...)
+	configuredRules := util.NewSet[string]()
+
+	for _, cat := range conf.Rules {
+		configuredRules.Add(outil.Keys(cat)...)
+	}
+
+	configuredRules.Add(l.enable...)
+	configuredRules.Add(l.disable...)
+	configuredCategories.Add(l.enableCategory...)
+	configuredCategories.Add(l.disableCategory...)
+
+	var invalidCategories []string
+
+	if diff := configuredCategories.Diff(validCategories); diff.Size() > 0 {
+		invalidCategories = diff.Items()
+	}
+
+	var invalidRules []string
+
+	if diff := configuredRules.Diff(validRules); diff.Size() > 0 {
+		invalidRules = diff.Items()
+	}
+
+	switch {
+	case len(invalidCategories) > 0 && len(invalidRules) > 0:
+		return fmt.Errorf("unknown categories: %v, unknown rules: %v", invalidCategories, invalidRules)
+	case len(invalidCategories) > 0:
+		return fmt.Errorf("unknown categories: %v", invalidCategories)
+	case len(invalidRules) > 0:
+		return fmt.Errorf("unknown rules: %v", invalidRules)
+	}
+
+	return nil
 }
 
 // DetermineEnabledRules returns the list of rules that are enabled based on
@@ -742,18 +868,13 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 		regoArgs = append(regoArgs, rego.ParsedBundle("internal", l.dataBundle))
 	}
 
-	if l.customRulesPaths != nil {
-		regoArgs = append(regoArgs, rego.Load(l.customRulesPaths, rio.ExcludeTestFilter()))
-	}
-
-	if l.customRuleFS != nil && l.customRuleFSRootPath != "" {
-		files, err := loadModulesFromCustomRuleFS(l.customRuleFS, l.customRuleFSRootPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load custom rules from FS: %w", err)
+	if l.hasCustomRules {
+		if l.customRuleError != nil {
+			return nil, fmt.Errorf("failed to load custom rules: %w", l.customRuleError)
 		}
 
-		for path, content := range files {
-			regoArgs = append(regoArgs, rego.Module(path, content))
+		for _, m := range l.customRuleModules {
+			regoArgs = append(regoArgs, rego.ParsedModule(m))
 		}
 	}
 
@@ -771,8 +892,8 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	return regoArgs, nil
 }
 
-func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[string]string, error) {
-	files := make(map[string]string)
+func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[string]*ast.Module, error) {
+	modules := make(map[string]*ast.Module)
 	filter := rio.ExcludeTestFilter()
 
 	err := fs.WalkDir(customRuleFS, rootPath, func(path string, d fs.DirEntry, err error) error {
@@ -804,7 +925,12 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 			return fmt.Errorf("failed to read custom rule file: %w", err)
 		}
 
-		files[path] = outil.ByteSliceToString(bs)
+		m, err := ast.ParseModule(path, outil.ByteSliceToString(bs))
+		if err != nil {
+			return fmt.Errorf("failed to parse custom rule file %q: %w", path, err)
+		}
+
+		modules[path] = m
 
 		return nil
 	})
@@ -812,7 +938,7 @@ func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[strin
 		return nil, fmt.Errorf("failed to walk custom rule FS: %w", err)
 	}
 
-	return files, nil
+	return modules, nil
 }
 
 func (l Linter) lintWithRegoRules(

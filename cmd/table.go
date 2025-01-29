@@ -16,10 +16,10 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/loader"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/docs"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/rules"
 )
@@ -154,10 +154,7 @@ func createTable(args []string) (io.Reader, error) {
 	}
 
 	// And sort the categories themselves
-	categories := util.Keys(tableMap)
-
-	sort.Strings(categories)
-
+	categories := util.KeysSorted(tableMap)
 	tableData := make([][]string, 0, len(flattened))
 
 	for _, category := range categories {

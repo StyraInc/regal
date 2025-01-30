@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/util"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/internal/util/concurrent"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -197,17 +198,12 @@ func (c *Cache) SetAggregates(data map[string][]report.Aggregate) {
 // GetFileAggregates is used to get aggregate data for a given list of files.
 // This is only used in tests to validate the cache state.
 func (c *Cache) GetFileAggregates(fileURIs ...string) map[string][]report.Aggregate {
-	includedFiles := make(map[string]struct{}, len(fileURIs))
-	for _, fileURI := range fileURIs {
-		includedFiles[fileURI] = struct{}{}
-	}
-
+	includedFiles := util.NewSet(fileURIs...)
 	getAll := len(fileURIs) == 0
-
 	allAggregates := make(map[string][]report.Aggregate)
 
 	for sourceFile, aggregates := range c.aggregateData.Clone() {
-		if _, included := includedFiles[sourceFile]; !included && !getAll {
+		if !includedFiles.Contains(sourceFile) && !getAll {
 			continue
 		}
 
@@ -231,15 +227,11 @@ func (c *Cache) SetFileDiagnostics(fileURI string, diags []types.Diagnostic) {
 // for a file given a list of evaluated rules.
 func (c *Cache) SetFileDiagnosticsForRules(fileURI string, rules []string, diags []types.Diagnostic) {
 	c.diagnosticsFile.UpdateValue(fileURI, func(current []types.Diagnostic) []types.Diagnostic {
-		ruleKeys := make(map[string]struct{}, len(rules))
-		for _, rule := range rules {
-			ruleKeys[rule] = struct{}{}
-		}
-
+		ruleKeys := util.NewSet(rules...)
 		preservedDiagnostics := make([]types.Diagnostic, 0, len(current))
 
 		for i := range current {
-			if _, ok := ruleKeys[current[i].Code]; !ok {
+			if !ruleKeys.Contains(current[i].Code) {
 				preservedDiagnostics = append(preservedDiagnostics, current[i])
 			}
 		}
@@ -314,7 +306,7 @@ func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string
 		return false, "", fmt.Errorf("failed to read file: %w", err)
 	}
 
-	currentContent := util.ByteSliceToString(content)
+	currentContent := outil.ByteSliceToString(content)
 
 	cachedContent, ok := cache.GetFileContents(fileURI)
 	if ok && cachedContent == currentContent {

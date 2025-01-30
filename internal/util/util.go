@@ -142,11 +142,11 @@ func DeleteEmptyDirs(dir string) error {
 func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dirs := make([]string, 0)
 
-	preserveDirs := make(map[string]struct{})
+	preserveDirs := NewSet[string]()
 
 	for _, p := range preserve {
 		for {
-			preserveDirs[p] = struct{}{}
+			preserveDirs.Add(p)
 
 			p = filepath.Dir(p)
 
@@ -154,7 +154,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 				break
 			}
 
-			if _, ok := preserveDirs[p]; ok {
+			if preserveDirs.Contains(p) {
 				break
 			}
 		}
@@ -164,8 +164,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 
 	for {
 		// check if we reached the preserved dir
-		_, ok := preserveDirs[dir]
-		if ok {
+		if preserveDirs.Contains(dir) {
 			break
 		}
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
-	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
@@ -877,8 +876,6 @@ func (rule *Rule) mapToConfig(result any) error {
 func GetPotentialRoots(paths ...string) ([]string, error) {
 	var err error
 
-	dirMap := make(map[string]struct{})
-
 	absDirPaths := make([]string, len(paths))
 
 	for i, path := range paths {
@@ -898,22 +895,22 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 		}
 	}
 
+	dirMap := util.NewSet[string]()
+
 	for _, dir := range absDirPaths {
 		brds, err := FindBundleRootDirectories(dir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
 		}
 
-		for _, brd := range brds {
-			dirMap[brd] = struct{}{}
-		}
+		dirMap.Add(brds...)
 	}
 
-	if len(dirMap) == 0 {
+	if dirMap.Size() == 0 {
 		return absDirPaths, nil
 	}
 
-	return outil.Keys(dirMap), nil
+	return dirMap.Items(), nil
 }
 
 func isDir(path string) bool {

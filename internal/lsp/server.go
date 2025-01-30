@@ -660,7 +660,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 						CurrentVersion: version.Version,
 						CurrentTime:    time.Now().UTC(),
 						Debug:          false,
-						StateDir:       config.GlobalDir(),
+						StateDir:       config.GlobalConfigDir(true),
 					}, os.Stderr)
 				}
 			}()
@@ -2359,11 +2359,19 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		})
 
 		configFile, err := config.FindConfig(workspaceRootPath)
-		if err == nil {
+
+		globalConfigDir := config.GlobalConfigDir(false)
+
+		switch {
+		case err == nil:
 			l.logf(log.LevelMessage, "using config file: %s", configFile.Name())
 			l.configWatcher.Watch(configFile.Name())
-		} else {
-			l.logf(log.LevelMessage, "no config file found in workspace: %s", err)
+		case globalConfigDir != "":
+			globalConfigFile := filepath.Join(globalConfigDir, "config.yaml")
+			l.logf(log.LevelMessage, "using global config file: %s", globalConfigFile)
+			l.configWatcher.Watch(globalConfigFile)
+		default:
+			l.logf(log.LevelMessage, "no config file found for workspace: %s", err)
 		}
 
 		if _, err = l.loadWorkspaceContents(ctx, false); err != nil {

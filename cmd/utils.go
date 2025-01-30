@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/styrainc/regal/pkg/config"
@@ -27,6 +28,20 @@ func readUserConfig(params configFileParams, searchPath string) (userConfig *os.
 		}
 
 		userConfig, err = config.FindConfig(searchPath)
+	}
+
+	// if there is no config found, attempt to load the user's global config if
+	// it exists
+	if err != nil {
+		globalConfigDir := config.GlobalConfigDir(false)
+		if globalConfigDir != "" {
+			globalConfigFile := filepath.Join(globalConfigDir, "config.yaml")
+
+			userConfig, err = os.Open(globalConfigFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to open global config file %w", err)
+			}
+		}
 	}
 
 	return userConfig, err //nolint:wrapcheck

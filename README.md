@@ -403,12 +403,25 @@ project:
 Regal will automatically search for a configuration file (`.regal/config.yaml`
 or `.regal.yaml`) in the current directory, and if not found, traverse the
 parent directories either until either one is found, or the top of the directory
-hierarchy is reached. If no configuration file is found, Regal will use the
-default configuration.
+hierarchy is reached. If no configuration file is found, and no file is found at
+`~/.config/regal/config.yaml` either, Regal will use the default configuration.
 
 A custom configuration may be also be provided using the `--config-file`/`-c`
 option for `regal lint`, which when provided will be used to override the
 default configuration.
+
+### User-level Configuration
+
+Generally, users will want to commit their Regal configuration file to the repo
+containing their Rego source code. This allows configurations to be shared
+among team members and makes the configuration options available to Regal when
+running as a [CI linter](https://docs.styra.com/regal/cicd) too.
+
+Sometimes however it can be handy to have some user defaults when a project
+configuration file is not found, hasn't been created yet or is not applicable.
+
+In such cases Regal will check for a configuration file at
+`~/.config/regal/config.yaml` instead.
 
 ## Ignoring Rules
 

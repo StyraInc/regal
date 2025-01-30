@@ -410,6 +410,19 @@ A custom configuration may be also be provided using the `--config-file`/`-c`
 option for `regal lint`, which when provided will be used to override the
 default configuration.
 
+### User-level Configuration
+
+Generally, users will want to commit their Regal configuration file to the repo
+containing their Rego source code. This allows configurations to be shared
+among team members and makes the configuration options available to Regal when
+running as a [CI linter](https://docs.styra.com/regal/cicd) too.
+
+Sometimes however it can be handy to have some user defaults when a project
+configuration file is not found, hasn't been created yet or is not applicable.
+
+In such cases Regal will check for a configuration file at
+`~/.config/regal/config.yaml` instead.
+
 ## Ignoring Rules
 
 If one of Regal's rules doesn't align with your team's preferences, don't worry! Regal is not meant to be the law,

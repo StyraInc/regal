@@ -164,11 +164,8 @@ func (f *Fixer) FixViolations(
 		fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
 			BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
 			Config:  config,
-			Locations: []ast.Location{
-				{
-					Row: violation.Location.Row,
-					Col: violation.Location.Column,
-				},
+			Locations: []report.Location{
+				violation.Location,
 			},
 		})
 		if err != nil {
@@ -341,11 +338,8 @@ func (f *Fixer) applyLinterFixes(
 			fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
 				BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
 				Config:  config,
-				Locations: []ast.Location{
-					{
-						Row: violation.Location.Row,
-						Col: violation.Location.Column,
-					},
+				Locations: []report.Location{
+					violation.Location,
 				},
 			})
 			if err != nil {

@@ -4,6 +4,7 @@ package lsp
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +31,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/commands"
 	"github.com/styrainc/regal/internal/lsp/completions"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
@@ -67,6 +66,7 @@ const (
 	ruleNameUseAssignmentOperator    = "use-assignment-operator"
 	ruleNameNoWhitespaceComment      = "no-whitespace-comment"
 	ruleNameDirectoryPackageMismatch = "directory-package-mismatch"
+	ruleNameNonRawRegexPattern       = "non-raw-regex-pattern"
 )
 
 var (
@@ -692,6 +692,28 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 
 			var err error
 
+			if len(params.Arguments) != 1 {
+				l.logf(log.LevelMessage, "expected one argument, got %d", len(params.Arguments))
+
+				continue
+			}
+
+			jsonData, ok := params.Arguments[0].(string)
+			if !ok {
+				l.logf(log.LevelMessage, "expected argument to be a json.RawMessage, got %T", params.Arguments[0])
+
+				continue
+			}
+
+			var args commandArgs
+
+			err = json.Unmarshal([]byte(jsonData), &args)
+			if err != nil {
+				l.logf(log.LevelMessage, "failed to unmarshal command arguments: %s", err)
+
+				continue
+			}
+
 			var fixed bool
 
 			switch params.Command {
@@ -699,29 +721,31 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 				fixed, editParams, err = l.fixEditParams(
 					"Format using opa fmt",
 					&fixes.Fmt{OPAFmtOpts: format.Opts{}},
-					commands.ParseOptions{TargetArgIndex: 0},
-					params,
+					args,
 				)
 			case "regal.fix.use-rego-v1":
 				fixed, editParams, err = l.fixEditParams(
 					"Format for Rego v1 using opa-fmt",
 					&fixes.Fmt{OPAFmtOpts: format.Opts{RegoVersion: ast.RegoV0CompatV1}},
-					commands.ParseOptions{TargetArgIndex: 0},
-					params,
+					args,
 				)
 			case "regal.fix.use-assignment-operator":
 				fixed, editParams, err = l.fixEditParams(
 					"Replace = with := in assignment",
 					&fixes.UseAssignmentOperator{},
-					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
-					params,
+					args,
 				)
 			case "regal.fix.no-whitespace-comment":
 				fixed, editParams, err = l.fixEditParams(
 					"Format comment to have leading whitespace",
 					&fixes.NoWhitespaceComment{},
-					commands.ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
-					params,
+					args,
+				)
+			case "regal.fix.non-raw-regex-pattern":
+				fixed, editParams, err = l.fixEditParams(
+					"Replace \" with ` in regex pattern",
+					&fixes.NonRawRegexPattern{},
+					args,
 				)
 			case "regal.fix.directory-package-mismatch":
 				fileURL, ok := params.Arguments[0].(string)
@@ -1174,29 +1198,32 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 func (l *LanguageServer) fixEditParams(
 	label string,
 	fix fixes.Fix,
-	commandParseOpts commands.ParseOptions,
-	params types.ExecuteCommandParams,
+	args commandArgs,
 ) (bool, *types.ApplyWorkspaceEditParams, error) {
-	pr, err := commands.Parse(params, commandParseOpts)
-	if err != nil {
-		return false, nil, fmt.Errorf("failed to parse command params: %w", err)
-	}
-
-	oldContent, ok := l.cache.GetFileContents(pr.Target)
+	oldContent, ok := l.cache.GetFileContents(args.Target)
 	if !ok {
-		return false, nil, fmt.Errorf("could not get file contents for uri %q", pr.Target)
+		return false, nil, fmt.Errorf("could not get file contents for uri %q", args.Target)
 	}
 
 	rto := &fixes.RuntimeOptions{
 		BaseDir: uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
 	}
-	if pr.Location != nil {
-		rto.Locations = []ast.Location{*pr.Location}
+	if args.Diagnostic != nil {
+		rto.Locations = []report.Location{
+			{
+				Row:    int(args.Diagnostic.Range.Start.Line + 1),
+				Column: int(args.Diagnostic.Range.Start.Character + 1),
+				End: &report.Position{
+					Row:    int(args.Diagnostic.Range.End.Line + 1),
+					Column: int(args.Diagnostic.Range.End.Character + 1),
+				},
+			},
+		}
 	}
 
 	fixResults, err := fix.Fix(
 		&fixes.FixCandidate{
-			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, pr.Target)),
+			Filename: filepath.Base(uri.ToPath(l.clientIdentifier, args.Target)),
 			Contents: oldContent,
 		},
 		rto,
@@ -1214,7 +1241,7 @@ func (l *LanguageServer) fixEditParams(
 		Edit: types.WorkspaceEdit{
 			DocumentChanges: []types.TextDocumentEdit{
 				{
-					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: pr.Target},
+					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: args.Target},
 					Edits:        ComputeEdits(oldContent, fixResults[0].Contents),
 				},
 			},
@@ -1537,7 +1564,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: truePtr,
-				Command:     FmtCommand([]string{params.TextDocument.URI}),
+				Command:     FmtCommand(params.TextDocument.URI),
 			})
 		case ruleNameUseRegoV1:
 			actions = append(actions, types.CodeAction{
@@ -1545,7 +1572,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: truePtr,
-				Command:     FmtV1Command([]string{params.TextDocument.URI}),
+				Command:     FmtV1Command(params.TextDocument.URI),
 			})
 		case ruleNameUseAssignmentOperator:
 			actions = append(actions, types.CodeAction{
@@ -1553,11 +1580,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: truePtr,
-				Command: UseAssignmentOperatorCommand([]string{
-					params.TextDocument.URI,
-					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
-					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
-				}),
+				Command:     UseAssignmentOperatorCommand(params.TextDocument.URI, diag),
 			})
 		case ruleNameNoWhitespaceComment:
 			actions = append(actions, types.CodeAction{
@@ -1565,11 +1588,7 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: truePtr,
-				Command: NoWhiteSpaceCommentCommand([]string{
-					params.TextDocument.URI,
-					strconv.FormatUint(uint64(diag.Range.Start.Line+1), 10),
-					strconv.FormatUint(uint64(diag.Range.Start.Character+1), 10),
-				}),
+				Command:     NoWhiteSpaceCommentCommand(params.TextDocument.URI, diag),
 			})
 		case ruleNameDirectoryPackageMismatch:
 			actions = append(actions, types.CodeAction{
@@ -1577,9 +1596,15 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 				Kind:        "quickfix",
 				Diagnostics: []types.Diagnostic{diag},
 				IsPreferred: truePtr,
-				Command: DirectoryStructureMismatchCommand([]string{
-					params.TextDocument.URI,
-				}),
+				Command:     DirectoryStructureMismatchCommand(params.TextDocument.URI, diag),
+			})
+		case ruleNameNonRawRegexPattern:
+			actions = append(actions, types.CodeAction{
+				Title:       "Replace \" with ` in regex pattern",
+				Kind:        "quickfix",
+				Diagnostics: []types.Diagnostic{diag},
+				IsPreferred: truePtr,
+				Command:     NonRawRegexPatternCommand(params.TextDocument.URI, diag),
 			})
 		}
 
@@ -2319,6 +2344,7 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 					"regal.fix.use-assignment-operator",
 					"regal.fix.no-whitespace-comment",
 					"regal.fix.directory-package-mismatch",
+					"regal.fix.non-raw-regex-pattern",
 				},
 			},
 			DocumentFormattingProvider: true,

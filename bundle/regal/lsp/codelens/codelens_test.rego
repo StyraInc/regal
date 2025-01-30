@@ -18,7 +18,11 @@ test_code_lenses_for_module if {
 	lenses == [
 		{
 			"command": {
-				"arguments": ["policy.rego", "data.foo", 2],
+				"arguments": [json.marshal({
+					"target": "policy.rego",
+					"path": "data.foo",
+					"row": 2,
+				})],
 				"command": "regal.eval",
 				"title": "Evaluate",
 			},
@@ -26,7 +30,11 @@ test_code_lenses_for_module if {
 		},
 		{
 			"command": {
-				"arguments": ["policy.rego", "data.foo.rule1", 6],
+				"arguments": [json.marshal({
+					"target": "policy.rego",
+					"path": "data.foo.rule1",
+					"row": 6,
+				})],
 				"command": "regal.eval",
 				"title": "Evaluate",
 			},
@@ -34,14 +42,22 @@ test_code_lenses_for_module if {
 		},
 		{
 			"command": {
-				"arguments": ["policy.rego", "data.foo.rule2", 8],
+				"arguments": [json.marshal({
+					"target": "policy.rego",
+					"path": "data.foo.rule2",
+					"row": 8,
+				})],
 				"command": "regal.eval", "title": "Evaluate",
 			},
 			"range": {"end": {"character": 24, "line": 7}, "start": {"character": 1, "line": 7}},
 		},
 		{
 			"command": {
-				"arguments": ["policy.rego", "data.foo", 2],
+				"arguments": [json.marshal({
+					"target": "policy.rego",
+					"path": "data.foo",
+					"row": 2,
+				})],
 				"command": "regal.debug",
 				"title": "Debug",
 			},
@@ -49,7 +65,11 @@ test_code_lenses_for_module if {
 		},
 		{
 			"command": {
-				"arguments": ["policy.rego", "data.foo.rule2", 8],
+				"arguments": [json.marshal({
+					"target": "policy.rego",
+					"path": "data.foo.rule2",
+					"row": 8,
+				})],
 				"command": "regal.debug",
 				"title": "Debug",
 			},

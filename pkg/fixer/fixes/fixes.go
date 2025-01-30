@@ -5,6 +5,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 // NewDefaultFixes returns a list of default fixes that are applied by the fix command.
@@ -20,6 +21,7 @@ func NewDefaultFixes() []Fix {
 		&UseAssignmentOperator{},
 		&NoWhitespaceComment{},
 		&DirectoryPackageMismatch{},
+		&NonRawRegexPattern{},
 	}
 }
 
@@ -30,6 +32,7 @@ func NewDefaultFormatterFixes() []Fix {
 		&Fmt{},
 		&UseAssignmentOperator{},
 		&NoWhitespaceComment{},
+		&NonRawRegexPattern{},
 	}
 }
 
@@ -48,7 +51,7 @@ type RuntimeOptions struct {
 	// BaseDir is the base directory for the files being fixed. This is often the same as the
 	// workspace root directory, but not necessarily.
 	BaseDir   string
-	Locations []ast.Location
+	Locations []report.Location
 	Client    clients.Identifier
 }
 

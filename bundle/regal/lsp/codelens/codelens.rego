@@ -25,11 +25,11 @@ _eval_lenses contains {
 	"command": {
 		"title": "Evaluate",
 		"command": "regal.eval",
-		"arguments": [
-			input.regal.file.name,
-			ast.ref_to_string(input["package"].path),
-			util.to_location_object(input["package"].location).row,
-		],
+		"arguments": [json.marshal({
+			"target": input.regal.file.name,
+			"path": ast.ref_to_string(input["package"].path),
+			"row": util.to_location_object(input["package"].location).row,
+		})],
 	},
 }
 
@@ -42,11 +42,11 @@ _debug_lenses contains {
 	"command": {
 		"title": "Debug",
 		"command": "regal.debug",
-		"arguments": [
-			input.regal.file.name,
-			ast.ref_to_string(input["package"].path),
-			util.to_location_object(input["package"].location).row,
-		],
+		"arguments": [json.marshal({
+			"target": input.regal.file.name,
+			"path": ast.ref_to_string(input["package"].path),
+			"row": util.to_location_object(input["package"].location).row,
+		})],
 	},
 }
 
@@ -62,11 +62,11 @@ _rule_lens(rule, command, title) := {
 	"command": {
 		"title": title,
 		"command": command,
-		"arguments": [
-			input.regal.file.name, # regal ignore:external-reference
-			sprintf("%s.%s", [ast.ref_to_string(input["package"].path), ast.ref_static_to_string(rule.head.ref)]),
-			util.to_location_object(rule.head.location).row,
-		],
+		"arguments": [json.marshal({
+			"target": input.regal.file.name,
+			"path": sprintf("%s.%s", [ast.ref_to_string(input["package"].path), ast.ref_static_to_string(rule.head.ref)]),
+			"row": util.to_location_object(rule.head.location).row,
+		})],
 	},
 }
 

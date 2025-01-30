@@ -35,6 +35,15 @@ func TestParse(t *testing.T) {
 			ExpectedTarget:   "target",
 			ExpectedLocation: &ast.Location{Row: 1, Col: 2},
 		},
+		"extract from JSON": {
+			ExecuteCommandParams: types.ExecuteCommandParams{
+				Command:   "example",
+				Arguments: []interface{}{"target", "1", 2}, // different types for testing, but should be strings
+			},
+			ParseOptions:     ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
+			ExpectedTarget:   "target",
+			ExpectedLocation: &ast.Location{Row: 1, Col: 2},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -63,8 +72,8 @@ func TestParse(t *testing.T) {
 					t.Fatalf("expected row %d, got %d", tc.ExpectedLocation.Row, result.Location.Row)
 				}
 
-				if result.Location.Col != tc.ExpectedLocation.Col {
-					t.Fatalf("expected col %d, got %d", tc.ExpectedLocation.Col, result.Location.Col)
+				if result.Location.Column != tc.ExpectedLocation.Col {
+					t.Fatalf("expected col %d, got %d", tc.ExpectedLocation.Col, result.Location.Column)
 				}
 			}
 		})

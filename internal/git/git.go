@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/opa/v1/util"
 )
 
 // FindGitRepo checks if the given directories belong to the same Git repository.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
@@ -908,12 +909,11 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 		}
 	}
 
-	foundRoots := util.Keys(dirMap)
-	if len(foundRoots) == 0 {
+	if len(dirMap) == 0 {
 		return absDirPaths, nil
 	}
 
-	return foundRoots, nil
+	return outil.Keys(dirMap), nil
 }
 
 func isDir(path string) bool {

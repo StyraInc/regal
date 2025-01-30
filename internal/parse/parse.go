@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -103,13 +104,9 @@ func ModuleUnknownVersionWithOpts(
 }
 
 func hasRegoV1Import(imports []*ast.Import) bool {
-	for _, imp := range imports {
-		if path, ok := imp.Path.Value.(ast.Ref); ok && path.Equal(ast.RegoV1CompatibleRef) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(imports, func(imp *ast.Import) bool {
+		return ast.RegoV1CompatibleRef.Equal(imp.Path.Value)
+	})
 }
 
 // MustParseModule works like ast.MustParseModule but with the Regal parser options applied.

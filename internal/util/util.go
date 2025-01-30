@@ -9,19 +9,6 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 )
 
-// Keys returns slice of keys from map.
-func Keys[K comparable, V any](m map[K]V) []K {
-	ks := make([]K, len(m))
-	i := 0
-
-	for k := range m {
-		ks[i] = k
-		i++
-	}
-
-	return ks
-}
-
 // NullToEmpty returns empty slice if provided slice is nil.
 func NullToEmpty[T any](a []T) []T {
 	if a == nil {

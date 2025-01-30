@@ -2521,7 +2521,7 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	}
 
 	allModules := l.cache.GetAllModules()
-	paths := util.Keys(allModules)
+	paths := outil.Keys(allModules)
 
 	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.workspaceRootURI)
 	if err != nil {

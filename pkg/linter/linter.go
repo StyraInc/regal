@@ -117,7 +117,7 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 		}
 
 		if stat.IsDir() {
-			l = l.WithCustomRulesFromFS(os.DirFS(path), path)
+			l = l.WithCustomRulesFromFS(os.DirFS(path), ".")
 		} else {
 			contents, err := os.ReadFile(path)
 			if err != nil {
@@ -127,8 +127,8 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 			}
 
 			l = l.WithCustomRulesFromFS(fstest.MapFS{
-				path: &fstest.MapFile{Data: contents},
-			}, filepath.Dir(path))
+				filepath.Base(path): &fstest.MapFile{Data: contents},
+			}, ".")
 		}
 	}
 

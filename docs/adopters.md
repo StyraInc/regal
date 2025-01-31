@@ -17,6 +17,7 @@ Public open source projects integrating Regal for linting in their CI/CD pipelin
 - [Konstraint](https://github.com/plexsystems/konstraint)
 - [Kubescape](https://github.com/kubescape/regolibrary)
 - [Legitify](https://github.com/Legit-Labs/legitify)
+- [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service/)
 - [Minder](https://github.com/stacklok/minder)
 - [Modernisation Platform](https://github.com/ministryofjustice/modernisation-platform)
 - [OPA Library](https://github.com/open-policy-agent/library)
@@ -25,6 +26,7 @@ Public open source projects integrating Regal for linting in their CI/CD pipelin
 - [ScubaGoggles](https://github.com/cisagov/ScubaGoggles)
 - [Spacelift Policy Library](https://github.com/spacelift-io/spacelift-policies-example-library)
 - [Trino Operator](https://github.com/stackabletech/trino-operator)
+- [Trivy](https://github.com/aquasecurity/trivy-checks)
 - [Phylum](https://github.com/phylum-dev/policy)
 <!-- cspell:enable -->
 

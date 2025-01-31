@@ -2,7 +2,6 @@
 package builtins
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
@@ -86,8 +85,6 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 	return term, nil
 }
 
-var errAiob = errors.New("array index out of bounds")
-
 // RegalLast regal.last returns the last element of an array.
 func RegalLast(_ rego.BuiltinContext, arr *ast.Term) (*ast.Term, error) {
 	arrOp, err := builtins.ArrayOperand(arr.Value, 1)
@@ -95,11 +92,13 @@ func RegalLast(_ rego.BuiltinContext, arr *ast.Term) (*ast.Term, error) {
 		return nil, err
 	}
 
-	if arrOp.Len() == 0 {
-		return nil, errAiob
+	if arrOp.Len() > 0 {
+		return arrOp.Elem(arrOp.Len() - 1), nil
 	}
 
-	return arrOp.Elem(arrOp.Len() - 1), nil
+	// index out of bounds, but returning an error allocates
+	// and we have no use for this information anyway.
+	return nil, nil //nolint:nilnil
 }
 
 // TestContextBuiltins returns the list of builtins as expected by the test runner.

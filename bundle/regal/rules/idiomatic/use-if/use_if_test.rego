@@ -22,8 +22,8 @@ test_fail_should_use_if if {
 			"file": "policy_v0.rego",
 			"row": 3,
 			"end": {
-				"col": 3,
-				"row": 7,
+				"col": 5,
+				"row": 3,
 			},
 			"text": "rule := [true |",
 		},

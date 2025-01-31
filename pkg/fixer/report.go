@@ -3,7 +3,8 @@ package fixer
 import (
 	"slices"
 
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/opa/v1/util"
+
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 )
 

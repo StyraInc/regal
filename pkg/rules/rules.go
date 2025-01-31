@@ -8,16 +8,13 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 
-	rutil "github.com/anderseknert/roast/pkg/util"
-
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -57,8 +54,7 @@ type regoFile struct {
 // NewInput creates a new Input from a set of modules.
 func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Input {
 	// Maintain order across runs
-	filenames := util.Keys(modules)
-	sort.Strings(filenames)
+	filenames := util.KeysSorted(modules)
 
 	return Input{
 		FileContent: fileContent,
@@ -120,7 +116,7 @@ func InputFromPaths(paths []string, prefix string, versionsMap map[string]ast.Re
 				return
 			}
 
-			fileContent[result.name] = rutil.ByteSliceToString(result.raw)
+			fileContent[result.name] = util.ByteSliceToString(result.raw)
 			modules[result.name] = result.parsed
 		}(path)
 	}
@@ -200,21 +196,12 @@ func regoWithOpts(path string, opts ast.ParserOptions) (*regoFile, error) {
 		return nil, err //nolint:wrapcheck
 	}
 
-	regoFile := regoFile{
-		name: path,
-		raw:  bs,
-	}
-
-	policy := rutil.ByteSliceToString(bs)
-
-	mod, err := parse.ModuleWithOpts(path, policy, opts)
+	mod, err := parse.ModuleWithOpts(path, util.ByteSliceToString(bs), opts)
 	if err != nil {
 		return nil, err //nolint:wrapcheck
 	}
 
-	regoFile.parsed = mod
-
-	return &regoFile, nil
+	return &regoFile{name: path, raw: bs, parsed: mod}, nil
 }
 
 func inputFromStdin() (Input, error) {
@@ -225,7 +212,7 @@ func inputFromStdin() (Input, error) {
 		return Input{}, fmt.Errorf("failed to read from reader: %w", err)
 	}
 
-	policy := rutil.ByteSliceToString(bs)
+	policy := util.ByteSliceToString(bs)
 
 	module, err := parse.ModuleUnknownVersionWithOpts("stdin", policy, parse.ParserOptions())
 	if err != nil {

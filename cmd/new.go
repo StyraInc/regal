@@ -9,12 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/embeds"
 	"github.com/styrainc/regal/pkg/config"
@@ -174,21 +175,11 @@ func addToDataYAML(params newRuleCommandParams) error {
 	existingConfig.Rules[params.category][params.name] = config.Rule{Level: "error"}
 
 	// Sort the map keys alphabetically (categories)
-	sortedCategories := make([]string, 0, len(existingConfig.Rules))
-	for cat := range existingConfig.Rules {
-		sortedCategories = append(sortedCategories, cat)
-	}
-
-	sort.Strings(sortedCategories)
+	sortedCategories := util.KeysSorted(existingConfig.Rules)
 
 	// Sort rule names within each category alphabetically
 	for _, cat := range sortedCategories {
-		sortedRuleNames := make([]string, 0, len(existingConfig.Rules[cat]))
-		for ruleName := range existingConfig.Rules[cat] {
-			sortedRuleNames = append(sortedRuleNames, ruleName)
-		}
-
-		sort.Strings(sortedRuleNames)
+		sortedRuleNames := util.KeysSorted(existingConfig.Rules[cat])
 
 		sortedCategory := make(config.Category)
 		for _, ruleName := range sortedRuleNames {

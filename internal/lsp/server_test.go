@@ -8,7 +8,6 @@ import (
 	"net"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -17,9 +16,10 @@ import (
 	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/open-policy-agent/opa/v1/util"
+
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/util"
 )
 
 const mainRegoFileName = "/main.rego"
@@ -224,8 +224,8 @@ func testRequestDataCodes(t *testing.T, requestData types.FileDiagnostics, fileU
 	}
 
 	// Sort both slices
-	sort.Strings(requestCodes)
-	sort.Strings(codes)
+	slices.Sort(requestCodes)
+	slices.Sort(codes)
 
 	if !slices.Equal(requestCodes, codes) {
 		t.Logf("waiting for items: %v, got: %v", codes, requestCodes)

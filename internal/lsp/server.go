@@ -17,13 +17,13 @@ import (
 	"time"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
 	"github.com/open-policy-agent/opa/v1/storage"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
@@ -660,7 +660,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 						CurrentVersion: version.Version,
 						CurrentTime:    time.Now().UTC(),
 						Debug:          false,
-						StateDir:       config.GlobalDir(),
+						StateDir:       config.GlobalConfigDir(true),
 					}, os.Stderr)
 				}
 			}()
@@ -1791,7 +1791,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(params types.DefinitionPar
 		Filename: uri.ToPath(l.clientIdentifier, params.TextDocument.URI),
 		Pos:      positionToOffset(contents, params.Position),
 		Modules:  modules,
-		Buffer:   rutil.StringToByteSlice(contents),
+		Buffer:   outil.StringToByteSlice(contents),
 	}
 
 	definition, err := orc.FindDefinition(query)
@@ -2203,10 +2203,42 @@ func (l *LanguageServer) handleWorkspaceDiagnostic() (any, error) {
 }
 
 func (l *LanguageServer) handleInitialize(ctx context.Context, params types.InitializeParams) (any, error) {
+	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
+
 	// params.RootURI is not expected to have a trailing slash, but if one is
 	// present it will be removed for consistency.
-	l.workspaceRootURI = strings.TrimSuffix(params.RootURI, rio.PathSeparator)
-	l.clientIdentifier = clients.DetermineClientIdentifier(params.ClientInfo.Name)
+	rootURI := strings.TrimSuffix(params.RootURI, rio.PathSeparator)
+
+	if rootURI == "" {
+		return nil, errors.New("rootURI was not set by the client but is required")
+	}
+
+	workspaceRootPath := uri.ToPath(l.clientIdentifier, rootURI)
+
+	configRoots, err := lsconfig.FindConfigRoots(workspaceRootPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find config roots: %w", err)
+	}
+
+	l.workspaceRootURI = rootURI
+
+	switch {
+	case len(configRoots) > 1:
+		l.logf(
+			log.LevelMessage,
+			"warning: multiple config roots found in workspace:\n%s\nusing %q as root",
+			strings.Join(configRoots, "\n"),
+			configRoots[0],
+		)
+
+		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
+	case len(configRoots) == 1:
+		l.logf(log.LevelMessage, "using workspace directory %q as root", configRoots[0])
+
+		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
+	default:
+		l.logf(log.LevelMessage, "using supplied root: %q, config may be inherited from parent directory", workspaceRootPath)
+	}
 
 	if l.clientIdentifier == clients.IdentifierGeneric {
 		l.logf(
@@ -2327,11 +2359,19 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		})
 
 		configFile, err := config.FindConfig(workspaceRootPath)
-		if err == nil {
+
+		globalConfigDir := config.GlobalConfigDir(false)
+
+		switch {
+		case err == nil:
 			l.logf(log.LevelMessage, "using config file: %s", configFile.Name())
 			l.configWatcher.Watch(configFile.Name())
-		} else {
-			l.logf(log.LevelMessage, "no config file found in workspace: %s", err)
+		case globalConfigDir != "":
+			globalConfigFile := filepath.Join(globalConfigDir, "config.yaml")
+			l.logf(log.LevelMessage, "using global config file: %s", globalConfigFile)
+			l.configWatcher.Watch(globalConfigFile)
+		default:
+			l.logf(log.LevelMessage, "no config file found for workspace: %s", err)
 		}
 
 		if _, err = l.loadWorkspaceContents(ctx, false); err != nil {
@@ -2435,7 +2475,8 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 ) (any, error) {
 	// this handles the case of a new config file being created when one did
 	// not exist before
-	if len(params.Changes) > 0 && strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") {
+	if len(params.Changes) > 0 && (strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") ||
+		strings.HasSuffix(params.Changes[0].URI, ".regal.yaml")) {
 		configFile, err := config.FindConfig(l.workspacePath())
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())
@@ -2488,7 +2529,7 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	}
 
 	allModules := l.cache.GetAllModules()
-	paths := util.Keys(allModules)
+	paths := outil.Keys(allModules)
 
 	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.workspaceRootURI)
 	if err != nil {

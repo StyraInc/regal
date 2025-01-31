@@ -5,10 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/anderseknert/roast/pkg/util"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/format"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/pkg/config"

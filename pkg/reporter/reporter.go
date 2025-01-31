@@ -7,19 +7,18 @@ import (
 	"io"
 	"os"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
-	rutil "github.com/anderseknert/roast/pkg/util"
 	"github.com/fatih/color"
 	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
+	"github.com/open-policy-agent/opa/v1/util"
+
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/novelty"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
@@ -313,6 +312,7 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	// rendering the table
 	table.Render()
 	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), ""), summary)
+
 	return err
 }
 
@@ -327,7 +327,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 		return fmt.Errorf("json marshalling of report failed: %w", err)
 	}
 
-	_, err = fmt.Fprintln(tr.out, rutil.ByteSliceToString(bs))
+	_, err = fmt.Fprintln(tr.out, util.ByteSliceToString(bs))
 
 	return err
 }
@@ -514,7 +514,7 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 		violationsPerFile[violation.Location.File] = append(violationsPerFile[violation.Location.File], violation)
 	}
 
-	sort.Strings(files)
+	slices.Sort(files)
 
 	for _, file := range files {
 		testsuite := junit.Testsuite{

@@ -6,6 +6,7 @@ import (
 	"embed"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -376,6 +377,26 @@ func TestLintWithCustomRule(t *testing.T) {
 
 	if result.Violations[0].Title != "acme-corp-package" {
 		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
+	}
+}
+
+func TestLintWithErrorInEnable(t *testing.T) {
+	t.Parallel()
+
+	input := test.InputPolicy("p/p.rego", "package p")
+
+	linter := NewLinter().
+		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
+		WithEnabledRules("foo").
+		WithInputModules(&input)
+
+	_, err := linter.Lint(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if exp, got := "unknown rules: [foo]", err.Error(); !strings.Contains(got, exp) {
+		t.Fatalf("expected error to contain %q, got %q", exp, got)
 	}
 }
 

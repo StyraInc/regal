@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
 

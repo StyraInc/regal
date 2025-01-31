@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/cover"
+	"github.com/open-policy-agent/opa/v1/loader"
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 	"github.com/open-policy-agent/opa/v1/tester"
@@ -32,9 +34,7 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
-const (
-	benchmarkGoBenchOutput = "gobench"
-)
+const benchmarkGoBenchOutput = "gobench"
 
 type testCommandParams struct {
 	outputFormat *util.EnumFlag
@@ -52,6 +52,10 @@ type testCommandParams struct {
 	varValues    bool
 }
 
+type loaderFilter struct {
+	Ignore []string
+}
+
 func newTestCommandParams() *testCommandParams {
 	return &testCommandParams{
 		outputFormat: util.NewEnumFlag(formatPretty, []string{
@@ -60,6 +64,12 @@ func newTestCommandParams() *testCommandParams {
 			benchmarkGoBenchOutput,
 		}),
 	}
+}
+
+func (f loaderFilter) Apply(abspath string, info os.FileInfo, depth int) bool {
+	return slices.ContainsFunc(f.Ignore, func(s string) bool {
+		return loader.GlobExcludeName(s, 1)(abspath, info, depth)
+	})
 }
 
 var testParams = newTestCommandParams() //nolint: gochecknoglobals

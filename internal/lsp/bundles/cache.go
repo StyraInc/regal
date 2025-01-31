@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/bundle"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/util"
 )
 
 // Cache is a struct that maintains a number of bundles in memory and

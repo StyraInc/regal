@@ -16,6 +16,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/loader"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/docs"
@@ -69,15 +70,6 @@ func init() {
 	RootCommand.AddCommand(tableCommand)
 }
 
-func unquotedPath(path ast.Ref) []string {
-	ret := make([]string, 0, len(path)-1)
-	for _, ref := range path[1:] {
-		ret = append(ret, strings.Trim(ref.String(), `"`))
-	}
-
-	return ret
-}
-
 func createTable(args []string) (io.Reader, error) {
 	result, err := loader.NewFileLoader().Filtered(args, func(_abspath string, _ fs.FileInfo, _depth int) bool {
 		return false
@@ -108,7 +100,7 @@ func createTable(args []string) (io.Reader, error) {
 	for _, entry := range flattened {
 		annotations := entry.Annotations
 
-		path := unquotedPath(entry.Path)
+		path := util.UnquotedPath(entry.Path)
 
 		if len(path) != 4 {
 			continue
@@ -154,10 +146,7 @@ func createTable(args []string) (io.Reader, error) {
 	}
 
 	// And sort the categories themselves
-	categories := util.Keys(tableMap)
-
-	sort.Strings(categories)
-
+	categories := outil.KeysSorted(tableMap)
 	tableData := make([][]string, 0, len(flattened))
 
 	for _, category := range categories {

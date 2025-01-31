@@ -1,7 +1,7 @@
 package config
 
 import (
-	"sort"
+	"slices"
 	"testing"
 )
 
@@ -98,8 +98,8 @@ func TestFilterIgnoredPaths(t *testing.T) {
 				t.Fatalf("expected %d paths, got %d", len(tc.expected), len(filtered))
 			}
 
-			sort.Strings(filtered)
-			sort.Strings(tc.expected)
+			slices.Sort(filtered)
+			slices.Sort(tc.expected)
 
 			for i, path := range filtered {
 				if path != tc.expected[i] {

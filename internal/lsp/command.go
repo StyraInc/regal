@@ -1,7 +1,7 @@
 package lsp
 
 import (
-	"encoding/json"
+	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util"
@@ -22,7 +22,7 @@ type commandArgs struct {
 }
 
 func FmtCommand(target string) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target: target,
 	}))
 
@@ -35,7 +35,7 @@ func FmtCommand(target string) types.Command {
 }
 
 func FmtV1Command(target string) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target: target,
 	}))
 
@@ -48,7 +48,7 @@ func FmtV1Command(target string) types.Command {
 }
 
 func UseAssignmentOperatorCommand(target string, diag types.Diagnostic) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target:     target,
 		Diagnostic: &diag,
 	}))
@@ -62,7 +62,7 @@ func UseAssignmentOperatorCommand(target string, diag types.Diagnostic) types.Co
 }
 
 func NoWhiteSpaceCommentCommand(target string, diag types.Diagnostic) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target:     target,
 		Diagnostic: &diag,
 	}))
@@ -76,7 +76,7 @@ func NoWhiteSpaceCommentCommand(target string, diag types.Diagnostic) types.Comm
 }
 
 func DirectoryStructureMismatchCommand(target string, diag types.Diagnostic) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target:     target,
 		Diagnostic: &diag,
 	}))
@@ -90,7 +90,7 @@ func DirectoryStructureMismatchCommand(target string, diag types.Diagnostic) typ
 }
 
 func NonRawRegexPatternCommand(target string, diag types.Diagnostic) types.Command {
-	bs := util.Must(json.Marshal(commandArgs{
+	bs := util.Must(encoding.JSON().Marshal(commandArgs{
 		Target:     target,
 		Diagnostic: &diag,
 	}))

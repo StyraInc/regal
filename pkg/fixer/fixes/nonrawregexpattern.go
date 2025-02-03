@@ -47,7 +47,11 @@ func (u *NonRawRegexPattern) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixR
 			fileChanged = true
 		}
 
-		lines[loc.Row-1] = string(line)
+		// Replace "\\" with "\" between startIdx and endIdx
+		segment := strings.ReplaceAll(string(line[startIdx:endIdx]), `\\`, `\`)
+		replacement := []rune(segment)
+
+		lines[loc.Row-1] = string(append(line[:startIdx], append(replacement, line[endIdx:]...)...))
 	}
 
 	if !fileChanged {

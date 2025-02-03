@@ -27,16 +27,16 @@ func (u *UseAssignmentOperator) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]F
 
 		line := lines[loc.Row-1]
 
-		if loc.Col-1 < 0 || loc.Col-1 >= len(line) {
+		if loc.Column-1 < 0 || loc.Column-1 >= len(line) {
 			continue
 		}
 
 		// unexpected character at location column, skipping
-		if line[loc.Col-1] != '=' {
+		if line[loc.Column-1] != '=' {
 			continue
 		}
 
-		lines[loc.Row-1] = line[0:loc.Col-1] + ":" + line[loc.Col-1:]
+		lines[loc.Row-1] = line[0:loc.Column-1] + ":" + line[loc.Column-1:]
 		fixed = true
 	}
 

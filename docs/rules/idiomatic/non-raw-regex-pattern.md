@@ -4,6 +4,8 @@
 
 **Category**: Idiomatic
 
+**Automatically fixable**: [Yes](/regal/fixing)
+
 **Avoid**
 ```rego
 all_digits if {

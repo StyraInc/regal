@@ -1,8 +1,10 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"math"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -227,4 +229,38 @@ func SafeUintToInt(u uint) int {
 	}
 
 	return int(u)
+}
+
+// FreePort returns a free port to listen on, if none of the preferred ports
+// are available then a random free port is returned.
+func FreePort(preferred ...int) (port int, err error) {
+	listen := func(p int) (int, error) {
+		l, err := net.ListenTCP("tcp", &net.TCPAddr{Port: p})
+		if err != nil {
+			return 0, fmt.Errorf("failed to listen on port %d: %w", p, err)
+		}
+		defer l.Close()
+
+		addr, ok := l.Addr().(*net.TCPAddr)
+		if !ok {
+			return 0, errors.New("failed to get port from listener")
+		}
+
+		return addr.Port, nil
+	}
+
+	for _, p := range preferred {
+		if p != 0 {
+			if port, err = listen(p); err == nil {
+				return port, nil
+			}
+		}
+	}
+
+	// If no preferred port is available, find a random free port using :0
+	if port, err = listen(0); err == nil {
+		return port, nil
+	}
+
+	return 0, fmt.Errorf("failed to find free port: %w", err)
 }

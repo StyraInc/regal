@@ -117,7 +117,7 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		templateFileJobs:            make(chan lintFileJob, 10),
 		configWatcher:               lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
 		completionsManager:          completions.NewDefaultManager(ctx, c, store),
-		webServer:                   web.NewServer(c),
+		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
 		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
 		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),

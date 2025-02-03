@@ -33,7 +33,7 @@ _eval_lenses contains {
 	},
 }
 
-_eval_lenses contains _rule_lens(rule, "regal.eval", "Evaluate") if {
+_eval_lenses contains _rule_lens(input.regal.file.name, rule, "regal.eval", "Evaluate") if {
 	some rule in ast.rules
 }
 
@@ -50,20 +50,20 @@ _debug_lenses contains {
 	},
 }
 
-_debug_lenses contains _rule_lens(rule, "regal.debug", "Debug") if {
+_debug_lenses contains _rule_lens(input.regal.file.name, rule, "regal.debug", "Debug") if {
 	some rule in ast.rules
 
 	# no need to add a debug lens for a rule like `pi := 3.14`
 	not _unconditional_constant(rule)
 }
 
-_rule_lens(rule, command, title) := {
+_rule_lens(filename, rule, command, title) := {
 	"range": location.to_range(result.location(rule).location),
 	"command": {
 		"title": title,
 		"command": command,
 		"arguments": [json.marshal({
-			"target": input.regal.file.name,
+			"target": filename,
 			"path": sprintf("%s.%s", [ast.ref_to_string(input["package"].path), ast.ref_static_to_string(rule.head.ref)]),
 			"row": util.to_location_object(rule.head.location).row,
 		})],

@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -216,4 +217,14 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	}
 
 	return dirs, nil
+}
+
+// SafeUintToInt will convert a uint to an int, clamping the result to
+// math.MaxInt.
+func SafeUintToInt(u uint) int {
+	if u > math.MaxInt {
+		return math.MaxInt // Clamp to prevent overflow
+	}
+
+	return int(u)
 }

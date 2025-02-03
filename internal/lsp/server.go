@@ -1211,11 +1211,11 @@ func (l *LanguageServer) fixEditParams(
 	if args.Diagnostic != nil {
 		rto.Locations = []report.Location{
 			{
-				Row:    int(args.Diagnostic.Range.Start.Line + 1),
-				Column: int(args.Diagnostic.Range.Start.Character + 1),
+				Row:    util.SafeUintToInt(args.Diagnostic.Range.Start.Line + 1),
+				Column: util.SafeUintToInt(args.Diagnostic.Range.Start.Character + 1),
 				End: &report.Position{
-					Row:    int(args.Diagnostic.Range.End.Line + 1),
-					Column: int(args.Diagnostic.Range.End.Character + 1),
+					Row:    util.SafeUintToInt(args.Diagnostic.Range.End.Line + 1),
+					Column: util.SafeUintToInt(args.Diagnostic.Range.End.Character + 1),
 				},
 			},
 		}

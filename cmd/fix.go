@@ -360,21 +360,17 @@ func fix(args []string, params *fixCommandParams) error {
 		}
 
 		// if the fixer is being run in a git repo, we must not fix files that have changes
-		changedFiles := make(map[string]struct{})
-
 		cf, err := git.GetChangedFiles(gitRepo)
 		if err != nil {
 			return fmt.Errorf("failed to get changed files: %w", err)
 		}
 
-		for _, f := range cf {
-			changedFiles[f] = struct{}{}
-		}
+		changedFiles := util.NewSet(cf...)
 
 		var conflictingFiles []string
 
 		for _, file := range fileProvider.ModifiedFiles() {
-			if _, ok := changedFiles[file]; ok {
+			if changedFiles.Contains(file) {
 				conflictingFiles = append(conflictingFiles, file)
 			}
 		}

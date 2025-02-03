@@ -24,12 +24,13 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 	"github.com/open-policy-agent/opa/v1/tester"
 	"github.com/open-policy-agent/opa/v1/topdown"
-	"github.com/open-policy-agent/opa/v1/util"
+	outil "github.com/open-policy-agent/opa/v1/util"
 	"github.com/open-policy-agent/opa/v1/version"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/compile"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 )
@@ -37,7 +38,7 @@ import (
 const benchmarkGoBenchOutput = "gobench"
 
 type testCommandParams struct {
-	outputFormat *util.EnumFlag
+	outputFormat *outil.EnumFlag
 	runRegex     string
 	ignore       []string
 	threshold    float64
@@ -58,7 +59,7 @@ type loaderFilter struct {
 
 func newTestCommandParams() *testCommandParams {
 	return &testCommandParams{
-		outputFormat: util.NewEnumFlag(formatPretty, []string{
+		outputFormat: outil.NewEnumFlag(formatPretty, []string{
 			formatPretty,
 			formatJSON,
 			benchmarkGoBenchOutput,
@@ -228,21 +229,20 @@ func opaTest(args []string) int {
 func moduleLoader(regalRules *bundle.Bundle) ast.ModuleLoader {
 	// We use the package declarations to know which modules we still need, and return
 	// those from the embedded regal bundle.
-	extra := make(map[string]struct{}, len(regalRules.Modules))
-
+	extra := util.NewSet[string]()
 	for _, mod := range regalRules.Modules {
-		extra[mod.Parsed.Package.Path.String()] = struct{}{}
+		extra.Add(mod.Parsed.Package.Path.String())
 	}
 
 	return func(present map[string]*ast.Module) (map[string]*ast.Module, error) {
 		for _, mod := range present {
-			delete(extra, mod.Package.Path.String())
+			extra.Remove(mod.Package.Path.String())
 		}
 
 		extraMods := map[string]*ast.Module{}
 
 		for id, mod := range regalRules.ParsedModules("bundle") {
-			if _, ok := extra[mod.Package.Path.String()]; ok {
+			if extra.Contains(mod.Package.Path.String()) {
 				extraMods[id] = mod
 			}
 		}

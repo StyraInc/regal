@@ -95,7 +95,7 @@ func createTable(args []string) (io.Reader, error) {
 
 	tableMap := map[string][][]string{}
 
-	traversedTitles := map[string]struct{}{}
+	traversedTitles := util.NewSet[string]()
 
 	for _, entry := range flattened {
 		annotations := entry.Annotations
@@ -117,11 +117,11 @@ func createTable(args []string) (io.Reader, error) {
 		category := path[2]
 		title := path[3]
 
-		if _, ok := traversedTitles[title]; ok {
+		if traversedTitles.Contains(title) {
 			continue
 		}
 
-		traversedTitles[title] = struct{}{}
+		traversedTitles.Add(title)
 
 		tableMap[category] = append(tableMap[category], []string{
 			category,

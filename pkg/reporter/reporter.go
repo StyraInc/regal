@@ -136,7 +136,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 		}
 
 		footer += fmt.Sprintf(" %d violation%s ", r.Summary.NumViolations, pluralViolations)
-		if numsError > 1 {
+		if numsWarning > 0 {
 
 			pluralWarnings := ""
 			if numsWarning == 0 {

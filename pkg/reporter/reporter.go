@@ -108,15 +108,11 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	numsWarning := 0
 	numsError := 0
 
-	for i, violation := range r.Violations {
+	for _, violation := range r.Violations {
 		if violation.Level == "warning" {
 			numsWarning++
-		}
-		if violation.Level == "error" {
+		} else if violation.Level == "error" {
 			numsError++
-		}
-		if i+1 > numsWarning {
-
 		}
 	}
 	pluralScanned := ""
@@ -142,7 +138,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 			if numsWarning == 0 {
 				pluralWarnings = "s"
 			}
-			if numsWarning > 0 {
+			if numsWarning > 1 {
 				pluralWarnings = "s"
 			}
 
@@ -150,7 +146,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 			if numsError == 0 {
 				pluralError = "s"
 			}
-			if numsError > 0 {
+			if numsError > 1 {
 				pluralError = "s"
 			}
 

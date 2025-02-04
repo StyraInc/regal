@@ -3,7 +3,7 @@ package fixes
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 func TestUseAssignmentOperator(t *testing.T) {
@@ -50,10 +50,10 @@ allow := true
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 7,
+						Row:    3,
+						Column: 7,
 					},
 				},
 			},
@@ -72,10 +72,10 @@ allow = true
 `,
 			fixExpected: false,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 1,
-						Col: 1,
+						Row:    1,
+						Column: 1,
 					},
 				},
 			},
@@ -98,14 +98,14 @@ allow := true if { u = 2 }
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 7,
+						Row:    3,
+						Column: 7,
 					},
 					{
-						Row: 5,
-						Col: 7,
+						Row:    5,
+						Column: 7,
 					},
 				},
 			},
@@ -128,18 +128,18 @@ allow := true
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 7,
+						Row:    3,
+						Column: 7,
 					},
 					{
-						Row: 4,
-						Col: 6,
+						Row:    4,
+						Column: 6,
 					},
 					{
-						Row: 5,
-						Col: 12,
+						Row:    5,
+						Column: 12,
 					},
 				},
 			},

@@ -23,6 +23,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/tester"
 
 	"github.com/styrainc/regal/internal/testutil"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -190,40 +191,38 @@ func TestLintV1Violations(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	ruleNames := make(map[string]struct{})
-
-	excludedRules := map[string]struct{}{
-		"implicit-future-keywords": {},
-		"use-if":                   {},
-		"use-contains":             {},
-		"internal-entrypoint":      {},
-		"file-length":              {},
-		"rule-named-if":            {},
-		"use-rego-v1":              {},
-		"deprecated-builtin":       {},
-		"import-shadows-import":    {},
-	}
+	ruleNames := util.NewSet[string]()
+	excludedRules := util.NewSet(
+		"implicit-future-keywords",
+		"use-if",
+		"use-contains",
+		"internal-entrypoint",
+		"file-length",
+		"rule-named-if",
+		"use-rego-v1",
+		"deprecated-builtin",
+		"import-shadows-import",
+	)
 
 	cfg := readProvidedConfig(t)
 
 	for _, category := range cfg.Rules {
 		for ruleName, rule := range category {
-			if _, isExcluded := excludedRules[ruleName]; !isExcluded && rule.Level != "ignore" {
-				ruleNames[ruleName] = struct{}{}
+			if !excludedRules.Contains(ruleName) && rule.Level != "ignore" {
+				ruleNames.Add(ruleName)
 			}
 		}
 	}
 
 	// Note that some violations occur more than one time.
-	violationNames := make(map[string]struct{})
-
+	violationNames := util.NewSet[string]()
 	for _, violation := range rep.Violations {
-		violationNames[violation.Title] = struct{}{}
+		violationNames.Add(violation.Title)
 	}
 
-	if len(ruleNames) != len(violationNames) {
-		for ruleName := range ruleNames {
-			if _, ok := violationNames[ruleName]; !ok {
+	if ruleNames.Size() != violationNames.Size() {
+		for _, ruleName := range ruleNames.Items() {
+			if !violationNames.Contains(ruleName) {
 				t.Errorf("expected violation for rule %q", ruleName)
 			}
 		}
@@ -252,25 +251,16 @@ func TestLintV0NoRegoV1ImportViolations(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	expected := map[string]struct{}{
-		"implicit-future-keywords": {},
-		"use-if":                   {},
-		"use-contains":             {},
-	}
-
 	// Note that some violations occur more than one time.
-	violationNames := make(map[string]struct{})
+	violationNames := util.NewSet[string]()
+	expected := util.NewSet("implicit-future-keywords", "use-if", "use-contains")
 
 	for _, violation := range rep.Violations {
-		violationNames[violation.Title] = struct{}{}
+		violationNames.Add(violation.Title)
 	}
 
-	if len(expected) != len(violationNames) {
-		for ruleName := range expected {
-			if _, ok := violationNames[ruleName]; !ok {
-				t.Errorf("expected violation for rule %q", ruleName)
-			}
-		}
+	if diff := expected.Diff(violationNames); diff.Size() > 0 {
+		t.Errorf("expected violations for rules %v, got %v", expected.Items(), violationNames.Items())
 	}
 }
 
@@ -297,26 +287,16 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	expected := map[string]struct{}{
-		"use-if":        {},
-		"use-contains":  {},
-		"use-rego-v1":   {},
-		"rule-named-if": {},
-	}
-
 	// Note that some violations occur more than one time.
-	violationNames := make(map[string]struct{})
+	violationNames := util.NewSet[string]()
+	expected := util.NewSet("use-if", "use-contains", "use-rego-v1", "rule-named-if")
 
 	for _, violation := range rep.Violations {
-		violationNames[violation.Title] = struct{}{}
+		violationNames.Add(violation.Title)
 	}
 
-	if len(expected) != len(violationNames) {
-		for ruleName := range expected {
-			if _, ok := violationNames[ruleName]; !ok {
-				t.Errorf("expected violation for rule %q", ruleName)
-			}
-		}
+	if diff := expected.Diff(violationNames); diff.Size() > 0 {
+		t.Errorf("expected violations for rules %v, got %v", expected.Items(), violationNames.Items())
 	}
 }
 
@@ -368,13 +348,13 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	violationNames := make(map[string]struct{})
+	violationNames := util.NewSet[string]()
 
 	for _, violation := range rep.Violations {
-		violationNames[violation.Title] = struct{}{}
+		violationNames.Add(violation.Title)
 	}
 
-	if _, ok := violationNames["prefer-snake-case"]; ok {
+	if violationNames.Contains("prefer-snake-case") {
 		t.Errorf("did not expect violation for rule %q as it is ignored", "prefer-snake-case")
 	}
 }

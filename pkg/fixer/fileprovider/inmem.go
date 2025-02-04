@@ -5,22 +5,22 @@ import (
 	"os"
 
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
 type InMemoryFileProvider struct {
 	files         map[string]string
-	modifiedFiles map[string]struct{}
-	deletedFiles  map[string]struct{}
+	modifiedFiles *util.Set[string]
+	deletedFiles  *util.Set[string]
 }
 
 func NewInMemoryFileProvider(files map[string]string) *InMemoryFileProvider {
 	return &InMemoryFileProvider{
 		files:         files,
-		modifiedFiles: make(map[string]struct{}),
-		deletedFiles:  make(map[string]struct{}),
+		modifiedFiles: util.NewSet[string](),
+		deletedFiles:  util.NewSet[string](),
 	}
 }
 
@@ -38,8 +38,8 @@ func NewInMemoryFileProviderFromFS(paths ...string) (*InMemoryFileProvider, erro
 
 	return &InMemoryFileProvider{
 		files:         files,
-		modifiedFiles: make(map[string]struct{}),
-		deletedFiles:  make(map[string]struct{}),
+		modifiedFiles: util.NewSet[string](),
+		deletedFiles:  util.NewSet[string](),
 	}, nil
 }
 
@@ -64,7 +64,7 @@ func (p *InMemoryFileProvider) Get(file string) (string, error) {
 func (p *InMemoryFileProvider) Put(file string, content string) error {
 	p.files[file] = content
 
-	p.modifiedFiles[file] = struct{}{}
+	p.modifiedFiles.Add(file)
 
 	return nil
 }
@@ -95,20 +95,19 @@ func (p *InMemoryFileProvider) Rename(from, to string) error {
 }
 
 func (p *InMemoryFileProvider) Delete(file string) error {
-	p.deletedFiles[file] = struct{}{}
-
+	p.deletedFiles.Add(file)
+	p.modifiedFiles.Remove(file)
 	delete(p.files, file)
-	delete(p.modifiedFiles, file)
 
 	return nil
 }
 
 func (p *InMemoryFileProvider) ModifiedFiles() []string {
-	return util.Keys(p.modifiedFiles)
+	return p.modifiedFiles.Items()
 }
 
 func (p *InMemoryFileProvider) DeletedFiles() []string {
-	return util.Keys(p.deletedFiles)
+	return p.deletedFiles.Items()
 }
 
 func (p *InMemoryFileProvider) ToInput(versionsMap map[string]ast.RegoVersion) (rules.Input, error) {

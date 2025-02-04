@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/open-policy-agent/opa/v1/ast"
-
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 type ParseOptions struct {
@@ -17,7 +16,7 @@ type ParseOptions struct {
 }
 
 type ParseResult struct {
-	Location *ast.Location
+	Location *report.Location
 	Target   string
 }
 
@@ -42,7 +41,7 @@ func Parse(params types.ExecuteCommandParams, opts ParseOptions) (*ParseResult, 
 		}, nil
 	}
 
-	var loc *ast.Location
+	var loc *report.Location
 
 	if opts.RowArgIndex < len(params.Arguments) && opts.ColArgIndex < len(params.Arguments) {
 		var row, col int
@@ -75,9 +74,9 @@ func Parse(params types.ExecuteCommandParams, opts ParseOptions) (*ParseResult, 
 			return nil, fmt.Errorf("unexpected type for col: %T", params.Arguments[opts.ColArgIndex])
 		}
 
-		loc = &ast.Location{
-			Row: row,
-			Col: col,
+		loc = &report.Location{
+			Row:    row,
+			Column: col,
 		}
 	}
 

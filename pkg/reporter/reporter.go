@@ -15,10 +15,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/owenrumney/go-sarif/v2/sarif"
 
-	"github.com/open-policy-agent/opa/v1/util"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/novelty"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
@@ -197,21 +198,16 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	f := fixer.NewFixer()
 	f.RegisterFixes(fixes.NewDefaultFixes()...)
 
-	fixableViolations := make(map[string]struct{})
-	fixableViolationsCount := 0
+	fixableViolations := util.NewSet[string]()
 
 	for _, violation := range r.Violations {
 		if fix, ok := f.GetFixForName(violation.Title); ok {
-			if _, ok := fixableViolations[fix.Name()]; !ok {
-				fixableViolations[fix.Name()] = struct{}{}
-			}
-
-			fixableViolationsCount++
+			fixableViolations.Add(fix.Name())
 		}
 	}
 
-	if fixableViolationsCount > 0 {
-		violationKeys := util.Keys(fixableViolations)
+	if fixableViolations.Size() > 0 {
+		violationKeys := fixableViolations.Items()
 		slices.Sort(violationKeys)
 
 		_, err = fmt.Fprintf(
@@ -220,7 +216,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 Hint: %d/%d violations can be automatically fixed (%s)
       Run regal fix --help for more details.
 `,
-			fixableViolationsCount,
+			fixableViolations.Size(),
 			r.Summary.NumViolations,
 			strings.Join(violationKeys, ", "),
 		)
@@ -359,7 +355,7 @@ func (tr JSONReporter) Publish(_ context.Context, r report.Report) error {
 		return fmt.Errorf("json marshalling of report failed: %w", err)
 	}
 
-	_, err = fmt.Fprintln(tr.out, util.ByteSliceToString(bs))
+	_, err = fmt.Fprintln(tr.out, outil.ByteSliceToString(bs))
 
 	return err
 }

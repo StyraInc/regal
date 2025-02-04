@@ -3,7 +3,7 @@ package fixes
 import (
 	"testing"
 
-	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/styrainc/regal/pkg/report"
 )
 
 func TestNoWhitespaceComment(t *testing.T) {
@@ -27,10 +27,8 @@ func TestNoWhitespaceComment(t *testing.T) {
 
 # this is a comment
 `,
-			fixExpected: false,
-			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{},
-			},
+			fixExpected:    false,
+			runtimeOptions: &RuntimeOptions{},
 		},
 		"single change": {
 			fc: &FixCandidate{
@@ -46,10 +44,10 @@ func TestNoWhitespaceComment(t *testing.T) {
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 1,
+						Row:    3,
+						Column: 1,
 					},
 				},
 			},
@@ -72,18 +70,18 @@ func TestNoWhitespaceComment(t *testing.T) {
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 1,
+						Row:    3,
+						Column: 1,
 					},
 					{
-						Row: 4,
-						Col: 1,
+						Row:    4,
+						Column: 1,
 					},
 					{
-						Row: 5,
-						Col: 1,
+						Row:    5,
+						Column: 1,
 					},
 				},
 			},
@@ -106,18 +104,18 @@ func TestNoWhitespaceComment(t *testing.T) {
 `,
 			fixExpected: true,
 			runtimeOptions: &RuntimeOptions{
-				Locations: []ast.Location{
+				Locations: []report.Location{
 					{
-						Row: 3,
-						Col: 1,
+						Row:    3,
+						Column: 1,
 					},
 					{
-						Row: 4,
-						Col: 2,
+						Row:    4,
+						Column: 2,
 					},
 					{
-						Row: 5,
-						Col: 3,
+						Row:    5,
+						Column: 3,
 					},
 				},
 			},

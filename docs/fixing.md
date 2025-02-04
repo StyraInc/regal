@@ -17,10 +17,11 @@ committing the fixes.
 Currently, the following rules are automatically fixable:
 
 - [opa-fmt](/regal/rules/style/opa-fmt)
-- [use-rego-v1](/regal/rules/imports/use-rego-v1)
+- [non-raw-regex-pattern](/regal/rules/idiomatic/non-raw-regex-pattern)
 - [use-assignment-operator](/regal/rules/style/use-assignment-operator)
 - [no-whitespace-comment](/regal/rules/style/no-whitespace-comment)
 - [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)
+- [use-rego-v1](/regal/rules/imports/use-rego-v1) (v0 Rego only)
 
 So, how do you go on about automatically fixing reported violations?
 
@@ -79,15 +80,15 @@ Example of code action in VS Code, where available fixes can be listed either by
 right, or by clicking "Quick Fix..." in the tooltip window:
 
 <img
-  src={require('./assets/lsp/code_action_show.png').default}
-  alt="Screenshot of code action displayed in VS Code"/>
+src={require('./assets/lsp/code_action_show.png').default}
+alt="Screenshot of code action displayed in VS Code"/>
 
 Example of suggested Code Action for the
 [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator) rule. Click to fix!
 
 <img
-  src={require('./assets/lsp/code_action_fix.png').default}
-  alt="Screenshot of code action fix suggestion displayed in VS Code"/>
+src={require('./assets/lsp/code_action_fix.png').default}
+alt="Screenshot of code action fix suggestion displayed in VS Code"/>
 
 ### Limitations
 

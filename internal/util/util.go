@@ -1,7 +1,10 @@
 package util
 
 import (
+	"errors"
 	"fmt"
+	"math"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -139,11 +142,11 @@ func DeleteEmptyDirs(dir string) error {
 func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dirs := make([]string, 0)
 
-	preserveDirs := make(map[string]struct{})
+	preserveDirs := NewSet[string]()
 
 	for _, p := range preserve {
 		for {
-			preserveDirs[p] = struct{}{}
+			preserveDirs.Add(p)
 
 			p = filepath.Dir(p)
 
@@ -151,7 +154,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 				break
 			}
 
-			if _, ok := preserveDirs[p]; ok {
+			if preserveDirs.Contains(p) {
 				break
 			}
 		}
@@ -161,8 +164,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 
 	for {
 		// check if we reached the preserved dir
-		_, ok := preserveDirs[dir]
-		if ok {
+		if preserveDirs.Contains(dir) {
 			break
 		}
 
@@ -216,4 +218,48 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	}
 
 	return dirs, nil
+}
+
+// SafeUintToInt will convert a uint to an int, clamping the result to
+// math.MaxInt.
+func SafeUintToInt(u uint) int {
+	if u > math.MaxInt {
+		return math.MaxInt // Clamp to prevent overflow
+	}
+
+	return int(u)
+}
+
+// FreePort returns a free port to listen on, if none of the preferred ports
+// are available then a random free port is returned.
+func FreePort(preferred ...int) (port int, err error) {
+	listen := func(p int) (int, error) {
+		l, err := net.ListenTCP("tcp", &net.TCPAddr{Port: p})
+		if err != nil {
+			return 0, fmt.Errorf("failed to listen on port %d: %w", p, err)
+		}
+		defer l.Close()
+
+		addr, ok := l.Addr().(*net.TCPAddr)
+		if !ok {
+			return 0, errors.New("failed to get port from listener")
+		}
+
+		return addr.Port, nil
+	}
+
+	for _, p := range preferred {
+		if p != 0 {
+			if port, err = listen(p); err == nil {
+				return port, nil
+			}
+		}
+	}
+
+	// If no preferred port is available, find a random free port using :0
+	if port, err = listen(0); err == nil {
+		return port, nil
+	}
+
+	return 0, fmt.Errorf("failed to find free port: %w", err)
 }

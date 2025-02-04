@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/util"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -16,21 +17,21 @@ type CacheFileProvider struct {
 	Cache            *cache.Cache
 	ClientIdentifier clients.Identifier
 
-	modifiedFiles map[string]struct{}
-	deletedFiles  map[string]struct{}
+	modifiedFiles *util.Set[string]
+	deletedFiles  *util.Set[string]
 }
 
 func NewCacheFileProvider(c *cache.Cache, ci clients.Identifier) *CacheFileProvider {
 	return &CacheFileProvider{
 		Cache:            c,
 		ClientIdentifier: ci,
-		modifiedFiles:    make(map[string]struct{}),
-		deletedFiles:     make(map[string]struct{}),
+		modifiedFiles:    util.NewSet[string](),
+		deletedFiles:     util.NewSet[string](),
 	}
 }
 
 func (c *CacheFileProvider) List() ([]string, error) {
-	uris := util.Keys(c.Cache.GetAllFiles())
+	uris := outil.Keys(c.Cache.GetAllFiles())
 
 	paths := make([]string, len(uris))
 	for i, u := range uris {
@@ -78,13 +79,10 @@ func (c *CacheFileProvider) Rename(from, to string) error {
 	}
 
 	c.Cache.SetFileContents(toURI, content)
-
-	c.modifiedFiles[to] = struct{}{}
-
+	c.modifiedFiles.Add(to)
 	c.Cache.Delete(fromURI)
-
-	delete(c.modifiedFiles, from)
-	c.deletedFiles[from] = struct{}{}
+	c.modifiedFiles.Remove(from)
+	c.deletedFiles.Add(from)
 
 	return nil
 }

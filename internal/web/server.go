@@ -5,14 +5,18 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/arl/statsviz"
 
 	"github.com/styrainc/regal/internal/explorer"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/styrainc/regal/internal/util"
 
 	_ "net/http/pprof" //nolint:gosec
 )
@@ -27,13 +31,15 @@ var tpl = template.Must(template.New("main.tpl").ParseFS(assets, "assets/main.tp
 
 type Server struct {
 	cache        *cache.Cache
+	logWriter    io.Writer
+	logLevel     log.Level
 	workspaceURI string
 	baseURL      string
 	client       clients.Identifier
 }
 
-func NewServer(cache *cache.Cache) *Server {
-	return &Server{cache: cache}
+func NewServer(cache *cache.Cache, logWriter io.Writer, level log.Level) *Server {
+	return &Server{cache: cache, logWriter: logWriter, logLevel: level}
 }
 
 func (s *Server) SetWorkspaceURI(uri string) {
@@ -62,6 +68,12 @@ type stringResult struct {
 
 func (s *Server) Start(_ context.Context) {
 	mux := http.NewServeMux()
+
+	err := statsviz.Register(mux)
+	if err != nil {
+		s.log(log.LevelMessage, fmt.Sprintf("failed to register statsviz handler: %v", err))
+	}
+
 	mux.HandleFunc("GET /explorer/", func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/explorer/")
 		policyURI := s.workspaceURI + "/" + path
@@ -132,15 +144,51 @@ func (s *Server) Start(_ context.Context) {
 	mux.HandleFunc("/debug/pprof/profile", http.DefaultServeMux.ServeHTTP)
 	mux.HandleFunc("/debug/pprof/heap", http.DefaultServeMux.ServeHTTP)
 
-	listener, err := net.Listen("tcp", "localhost:0")
+	// root handler for those looking for what the server is
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		_, err := w.Write([]byte(`
+<h1>Regal Language Server</h1>
+<ul>
+<li><a href="/debug/pprof/">pprof</a></li>
+<li><a href="/debug/statsviz">statsviz</a></li>
+</ul>`))
+		if err != nil {
+			s.log(log.LevelMessage, fmt.Sprintf("failed to write response: %v", err))
+		}
+	})
+
+	freePort, err := util.FreePort(5052, 5053, 5054)
 	if err != nil {
-		panic(err)
+		s.log(log.LevelMessage, "preferred web server ports are not available, using random port")
+
+		freePort = 0
+	}
+
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", freePort))
+	if err != nil {
+		s.log(log.LevelMessage, fmt.Sprintf("failed to start web server: %v", err))
+
+		return
 	}
 
 	s.baseURL = "http://" + listener.Addr().String()
 
-	fmt.Fprintf(os.Stderr, "starting web server for docs on %s\n", s.baseURL)
+	s.log(log.LevelMessage, "starting web server for docs on "+s.baseURL)
 
 	//nolint:gosec // this is a local server, no timeouts needed
-	panic(http.Serve(listener, mux))
+	err = http.Serve(listener, mux)
+	if err != nil {
+		s.log(log.LevelMessage, fmt.Sprintf("failed to serve web server: %v", err))
+	}
+}
+
+//nolint:unparam
+func (s *Server) log(level log.Level, message string) {
+	if !s.logLevel.ShouldLog(level) {
+		return
+	}
+
+	if s.logWriter != nil {
+		fmt.Fprintln(s.logWriter, message)
+	}
 }

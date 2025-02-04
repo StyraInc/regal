@@ -45,11 +45,11 @@ func TestCacheFileProvider(t *testing.T) {
 		t.Fatalf("failed to rename file: %s", err)
 	}
 
-	if _, ok := cfp.deletedFiles["file:///tmp/foo.rego"]; !ok {
+	if !cfp.deletedFiles.Contains("file:///tmp/foo.rego") {
 		t.Fatalf("expected file to be deleted")
 	}
 
-	if _, ok := cfp.modifiedFiles["file:///tmp/wow.rego"]; !ok {
+	if !cfp.modifiedFiles.Contains("file:///tmp/wow.rego") {
 		t.Fatalf("expected file to be modified")
 	}
 

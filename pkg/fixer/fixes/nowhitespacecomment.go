@@ -26,18 +26,18 @@ func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]Fix
 			continue
 		}
 
-		if loc.Col > len(lines[loc.Row-1]) || loc.Col < 1 {
+		if loc.Column > len(lines[loc.Row-1]) || loc.Column < 1 {
 			continue
 		}
 
 		line := lines[loc.Row-1]
 
 		// unexpected character at location column, skipping
-		if line[loc.Col-1] != byte('#') {
+		if line[loc.Column-1] != byte('#') {
 			continue
 		}
 
-		lines[loc.Row-1] = line[0:loc.Col] + " " + line[loc.Col:]
+		lines[loc.Row-1] = line[0:loc.Column] + " " + line[loc.Column:]
 		fixed = true
 	}
 

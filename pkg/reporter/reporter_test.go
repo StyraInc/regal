@@ -19,8 +19,6 @@ var rep = report.Report{
 	Summary: report.Summary{
 		FilesScanned:  3,
 		NumViolations: 2,
-		numWarnings:   1,
-		numsErrors:    0,
 		FilesFailed:   2,
 		RulesSkipped:  1,
 	},

@@ -27,20 +27,18 @@ const (
 // NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {
 	return &Fixer{
-		registeredFixes:          make(map[string]any),
-		registeredMandatoryFixes: make(map[string]any),
-		registeredRoots:          make([]string, 0),
-		onConflictOperation:      OnConflictError,
+		registeredFixes:     make(map[string]any),
+		registeredRoots:     make([]string, 0),
+		onConflictOperation: OnConflictError,
 	}
 }
 
 // Fixer must be instantiated via NewFixer.
 type Fixer struct {
-	registeredFixes          map[string]any
-	registeredMandatoryFixes map[string]any
-	onConflictOperation      OnConflictOperation
-	registeredRoots          []string
-	versionsMap              map[string]ast.RegoVersion
+	registeredFixes     map[string]any
+	onConflictOperation OnConflictOperation
+	registeredRoots     []string
+	versionsMap         map[string]ast.RegoVersion
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
@@ -58,9 +56,7 @@ func (f *Fixer) SetRegoVersionsMap(versionsMap map[string]ast.RegoVersion) {
 // violations that can be fixed by fixes.
 func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
 	for _, fix := range fixes {
-		if _, mandatory := f.registeredMandatoryFixes[fix.Name()]; !mandatory {
-			f.registeredFixes[fix.Name()] = fix
-		}
+		f.registeredFixes[fix.Name()] = fix
 	}
 }
 
@@ -86,32 +82,8 @@ func (f *Fixer) GetFixForName(name string) (fixes.Fix, bool) {
 	return fixInstance, true
 }
 
-func (f *Fixer) GetMandatoryFixForName(name string) (fixes.Fix, bool) {
-	fix, ok := f.registeredMandatoryFixes[name]
-	if !ok {
-		return nil, false
-	}
-
-	fixInstance, ok := fix.(fixes.Fix)
-	if !ok {
-		return nil, false
-	}
-
-	return fixInstance, true
-}
-
 func (f *Fixer) Fix(ctx context.Context, l *linter.Linter, fp fileprovider.FileProvider) (*Report, error) {
 	fixReport := NewReport()
-
-	// Early return if there are no registered mandatory fixes
-	if len(f.registeredMandatoryFixes) == 0 && len(f.registeredFixes) == 0 {
-		return fixReport, nil
-	}
-
-	// Apply mandatory fixes
-	if err := f.applyMandatoryFixes(fp, fixReport); err != nil {
-		return nil, err
-	}
 
 	// If there are no registered fixes that require a linter, return the report
 	if len(f.registeredFixes) == 0 {
@@ -194,66 +166,6 @@ func (f *Fixer) FixViolations(
 	}
 
 	return fixReport, nil
-}
-
-// applyMandatoryFixes handles the application of mandatory fixes to all files.
-func (f *Fixer) applyMandatoryFixes(fp fileprovider.FileProvider, fixReport *Report) error {
-	if len(f.registeredMandatoryFixes) == 0 {
-		return nil
-	}
-
-	for {
-		fixMadeInIteration := false
-
-		files, err := fp.List()
-		if err != nil {
-			return fmt.Errorf("failed to list files: %w", err)
-		}
-
-		for _, file := range files {
-			for fix := range f.registeredMandatoryFixes {
-				fixInstance, ok := f.GetMandatoryFixForName(fix)
-				if !ok {
-					return fmt.Errorf("no mandatory fix matched %s", fix)
-				}
-
-				fc, err := fp.Get(file)
-				if err != nil {
-					return fmt.Errorf("failed to get file %s: %w", file, err)
-				}
-
-				fixCandidate := fixes.FixCandidate{
-					Filename: file,
-					Contents: fc,
-				}
-
-				fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
-					BaseDir: util.FindClosestMatchingRoot(file, f.registeredRoots),
-				})
-				if err != nil {
-					return fmt.Errorf("failed to fix %s: %w", file, err)
-				}
-
-				for _, fixResult := range fixResults {
-					if fc != fixResult.Contents {
-						if err := fp.Put(file, fixResult.Contents); err != nil {
-							return fmt.Errorf("failed to write fixed rego for file %s: %w", file, err)
-						}
-
-						fixReport.AddFileFix(file, fixResult)
-
-						fixMadeInIteration = true
-					}
-				}
-			}
-		}
-
-		if !fixMadeInIteration {
-			break
-		}
-	}
-
-	return nil
 }
 
 // applyLinterFixes handles the application of fixes that require linter violation triggers.

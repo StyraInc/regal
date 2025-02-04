@@ -116,7 +116,9 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 			numsError++
 		}
 	}
+
 	pluralScanned := ""
+
 	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
 		pluralScanned = "s"
 	}
@@ -133,28 +135,31 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 		}
 
 		footer += fmt.Sprintf(" %d violation%s ", r.Summary.NumViolations, pluralViolations)
-		if numsWarning > 0 {
 
+		if numsWarning > 0 {
 			pluralWarnings := ""
+
 			if numsWarning == 0 {
 				pluralWarnings = "s"
 			}
+
 			if numsWarning > 1 {
 				pluralWarnings = "s"
 			}
 
 			pluralError := ""
+
 			if numsError == 0 {
 				pluralError = "s"
 			}
+
 			if numsError > 1 {
 				pluralError = "s"
 			}
 
 			footer += fmt.Sprintf("(%d warning%s,%d Error%s) found", numsWarning, pluralWarnings, numsError, pluralError)
-		} else {
-			footer += fmt.Sprintf("found")
 		}
+
 		if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
 			pluralFailed := ""
 			if r.Summary.FilesFailed > 1 {
@@ -326,10 +331,13 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	}
 	// plurals
 	pluralScanned := ""
+
 	if r.Summary.FilesScanned > 1 || r.Summary.FilesScanned == 0 {
 		pluralScanned = "s"
 	}
+
 	pluralViolations := ""
+
 	if r.Summary.NumViolations > 1 || r.Summary.NumViolations == 0 {
 		pluralViolations = "s"
 	}
@@ -339,6 +347,7 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 		r.Summary.NumViolations, pluralViolations)
 	// rendering the table
 	table.Render()
+
 	_, err := fmt.Fprintln(tr.out, strings.TrimSuffix(sb.String(), ""), summary)
 
 	return err

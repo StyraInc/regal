@@ -157,9 +157,10 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 				pluralError = "s"
 			}
 
-			footer += fmt.Sprintf("(%d warning%s,%d Error%s) ", numsWarning, pluralWarnings, numsError, pluralError)
+			footer += fmt.Sprintf("(%d warning%s,%d Error%s) found", numsWarning, pluralWarnings, numsError, pluralError)
+		} else {
+			footer += "found"
 		}
-		footer += fmt.Sprintf("found")
 
 		if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
 			pluralFailed := ""

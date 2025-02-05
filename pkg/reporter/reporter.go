@@ -106,7 +106,19 @@ func NewJUnitReporter(out io.Writer) JUnitReporter {
 func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	table := buildPrettyViolationsTable(r.Violations)
 
+	numsWarning := 0
+	numsError := 0
+
+	for _, violation := range r.Violations {
+		if violation.Level == "warning" {
+			numsWarning++
+		} else if violation.Level == "error" {
+			numsError++
+		}
+	}
+
 	pluralScanned := ""
+
 	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
 		pluralScanned = "s"
 	}
@@ -117,11 +129,38 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 		footer += " No violations found."
 	} else {
 		pluralViolations := ""
+
 		if r.Summary.NumViolations > 1 {
 			pluralViolations = "s"
 		}
 
-		footer += fmt.Sprintf(" %d violation%s found", r.Summary.NumViolations, pluralViolations)
+		footer += fmt.Sprintf(" %d violation%s ", r.Summary.NumViolations, pluralViolations)
+
+		if numsWarning > 0 {
+			pluralWarnings := ""
+
+			if numsWarning == 0 {
+				pluralWarnings = "s"
+			}
+
+			if numsWarning > 1 {
+				pluralWarnings = "s"
+			}
+
+			pluralError := ""
+
+			if numsError == 0 {
+				pluralError = "s"
+			}
+
+			if numsError > 1 {
+				pluralError = "s"
+			}
+
+			footer += fmt.Sprintf("(%d warning%s,%d Error%s) found", numsWarning, pluralWarnings, numsError, pluralError)
+		} else {
+			footer += "found"
+		}
 
 		if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
 			pluralFailed := ""
@@ -294,11 +333,13 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	}
 	// plurals
 	pluralScanned := ""
+
 	if r.Summary.FilesScanned > 1 || r.Summary.FilesScanned == 0 {
 		pluralScanned = "s"
 	}
 
 	pluralViolations := ""
+
 	if r.Summary.NumViolations > 1 || r.Summary.NumViolations == 0 {
 		pluralViolations = "s"
 	}

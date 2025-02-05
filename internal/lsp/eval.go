@@ -149,14 +149,8 @@ func prepareRegoArgs(
 		bundleArgs = append(bundleArgs, rego.ParsedBundle(key, &b))
 	}
 
-	args := []func(*rego.Rego){
-		rego.ParsedQuery(query),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-		rego.EnablePrintStatements(true),
-		rego.PrintHook(printHook),
-	}
-
+	args := []func(*rego.Rego){rego.ParsedQuery(query), rego.EnablePrintStatements(true), rego.PrintHook(printHook)}
+	args = append(args, builtins.RegalBuiltinRegoFuncs...)
 	args = append(args, bundleArgs...)
 
 	var caps *config.Capabilities

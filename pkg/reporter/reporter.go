@@ -106,8 +106,7 @@ func NewJUnitReporter(out io.Writer) JUnitReporter {
 func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 	table := buildPrettyViolationsTable(r.Violations)
 
-	numsWarning := 0
-	numsError := 0
+	numsWarning, numsError := 0, 0
 
 	for _, violation := range r.Violations {
 		if violation.Level == "warning" {
@@ -117,73 +116,33 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 		}
 	}
 
-	pluralScanned := ""
-
-	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
-		pluralScanned = "s"
-	}
-
-	footer := fmt.Sprintf("%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
+	footer := fmt.Sprintf("%d %s linted.", r.Summary.FilesScanned, pluralize("file", r.Summary.FilesScanned))
 
 	if r.Summary.NumViolations == 0 {
 		footer += " No violations found."
 	} else {
-		pluralViolations := ""
-
-		if r.Summary.NumViolations > 1 {
-			pluralViolations = "s"
-		}
-
-		footer += fmt.Sprintf(" %d violation%s ", r.Summary.NumViolations, pluralViolations)
+		footer += fmt.Sprintf(" %d %s ", r.Summary.NumViolations, pluralize("violation", r.Summary.NumViolations))
 
 		if numsWarning > 0 {
-			pluralWarnings := ""
-
-			if numsWarning == 0 {
-				pluralWarnings = "s"
-			}
-
-			if numsWarning > 1 {
-				pluralWarnings = "s"
-			}
-
-			pluralError := ""
-
-			if numsError == 0 {
-				pluralError = "s"
-			}
-
-			if numsError > 1 {
-				pluralError = "s"
-			}
-
-			footer += fmt.Sprintf("(%d warning%s,%d Error%s) found", numsWarning, pluralWarnings, numsError, pluralError)
+			footer += fmt.Sprintf("(%d %s, %d %s) found",
+				numsError, pluralize("error", numsError), numsWarning, pluralize("warning", numsWarning),
+			)
 		} else {
 			footer += "found"
 		}
 
 		if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
-			pluralFailed := ""
-			if r.Summary.FilesFailed > 1 {
-				pluralFailed = "s"
-			}
-
-			footer += fmt.Sprintf(" in %d file%s.", r.Summary.FilesFailed, pluralFailed)
+			footer += fmt.Sprintf(" in %d %s.", r.Summary.FilesFailed, pluralize("file", r.Summary.FilesFailed))
 		} else {
 			footer += "."
 		}
 	}
 
 	if r.Summary.RulesSkipped > 0 {
-		pluralSkipped := ""
-		if r.Summary.RulesSkipped > 1 {
-			pluralSkipped = "s"
-		}
-
 		footer += fmt.Sprintf(
-			" %d rule%s skipped:\n",
+			" %d %s skipped:\n",
 			r.Summary.RulesSkipped,
-			pluralSkipped,
+			pluralize("rule", r.Summary.RulesSkipped),
 		)
 
 		for _, notice := range r.Notices {
@@ -331,22 +290,10 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	for _, violation := range r.Violations {
 		table.Append([]string{violation.Location.String(), violation.Description})
 	}
-	// plurals
-	pluralScanned := ""
 
-	if r.Summary.FilesScanned > 1 || r.Summary.FilesScanned == 0 {
-		pluralScanned = "s"
-	}
-
-	pluralViolations := ""
-
-	if r.Summary.NumViolations > 1 || r.Summary.NumViolations == 0 {
-		pluralViolations = "s"
-	}
-
-	summary := fmt.Sprintf("%d file%s linted , %d violation%s found.",
-		r.Summary.FilesScanned, pluralScanned,
-		r.Summary.NumViolations, pluralViolations)
+	summary := fmt.Sprintf("%d %s linted , %d %s found.",
+		r.Summary.FilesScanned, pluralize("file", r.Summary.FilesScanned),
+		r.Summary.NumViolations, pluralize("violation", r.Summary.NumViolations))
 	// rendering the table
 	table.Render()
 
@@ -396,11 +343,6 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 		}
 	}
 
-	pluralScanned := ""
-	if r.Summary.FilesScanned == 0 || r.Summary.FilesScanned > 1 {
-		pluralScanned = "s"
-	}
-
 	// https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
 	if summaryFileLoc, ok := os.LookupEnv("GITHUB_STEP_SUMMARY"); ok && summaryFileLoc != "" {
 		summaryFile, err := os.OpenFile(summaryFileLoc, os.O_APPEND|os.O_WRONLY, 0o644)
@@ -413,26 +355,15 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 		}()
 
 		fmt.Fprintf(summaryFile, "### Regal Lint Report\n\n")
-
-		fmt.Fprintf(summaryFile, "%d file%s linted.", r.Summary.FilesScanned, pluralScanned)
+		fmt.Fprintf(summaryFile, "%d %s linted.", r.Summary.FilesScanned, pluralize("file", r.Summary.FilesScanned))
 
 		if r.Summary.NumViolations == 0 {
 			fmt.Fprintf(summaryFile, " No violations found")
 		} else {
-			pluralViolations := ""
-			if r.Summary.NumViolations > 1 {
-				pluralViolations = "s"
-			}
-
-			fmt.Fprintf(summaryFile, " %d violation%s found", r.Summary.NumViolations, pluralViolations)
+			fmt.Fprintf(summaryFile, " %d %s found", r.Summary.NumViolations, pluralize("violation", r.Summary.NumViolations))
 
 			if r.Summary.FilesScanned > 1 && r.Summary.FilesFailed > 0 {
-				pluralFailed := ""
-				if r.Summary.FilesFailed > 1 {
-					pluralFailed = "s"
-				}
-
-				fmt.Fprintf(summaryFile, " in %d file%s.", r.Summary.FilesFailed, pluralFailed)
+				fmt.Fprintf(summaryFile, " in %d %s.", r.Summary.FilesFailed, pluralize("file", r.Summary.FilesFailed))
 				fmt.Fprintf(summaryFile, " See Files tab in PR for locations and details.\n\n")
 
 				fmt.Fprintf(summaryFile, "#### Violations\n\n")
@@ -500,9 +431,7 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 
 func getLocation(violation report.Violation) *sarif.Location {
 	physicalLocation := sarif.NewPhysicalLocation().
-		WithArtifactLocation(
-			sarif.NewSimpleArtifactLocation(violation.Location.File),
-		)
+		WithArtifactLocation(sarif.NewSimpleArtifactLocation(violation.Location.File))
 
 	region := sarif.NewRegion().
 		WithStartLine(violation.Location.Row).
@@ -587,4 +516,12 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 	}
 
 	return testSuites.WriteXML(tr.out)
+}
+
+func pluralize(singular string, count int) string {
+	if count == 1 {
+		return singular
+	}
+
+	return singular + "s"
 }

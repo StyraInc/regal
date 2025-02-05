@@ -20,7 +20,12 @@ func Capabilities() *ast.Capabilities {
 		&ast.Builtin{
 			Name: builtins.RegalLastMeta.Name,
 			Decl: builtins.RegalLastMeta.Decl,
-		})
+		},
+		&ast.Builtin{
+			Name: builtins.RegalIsFormattedMeta.Name,
+			Decl: builtins.RegalIsFormattedMeta.Decl,
+		},
+	)
 
 	return caps
 }

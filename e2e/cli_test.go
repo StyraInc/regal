@@ -909,8 +909,8 @@ bar/main_test.rego -> wow/foo-bar/baz/main_test.rego:
 
 foo/main.rego -> wow/main.rego:
 - directory-package-mismatch
-- opa-fmt
 - no-whitespace-comment
+- opa-fmt
 
 foo/main_test.rego -> wow/main_test.rego:
 - directory-package-mismatch
@@ -919,13 +919,13 @@ foo/main_test.rego -> wow/main_test.rego:
 
 In project root: %[1]s/v0
 main.rego:
-- opa-fmt
+- use-rego-v1
 - no-whitespace-comment
 
 In project root: %[1]s/v1
 main.rego:
-- opa-fmt
 - no-whitespace-comment
+- opa-fmt
 `, td)
 
 	if act := stdout.String(); exp != act {

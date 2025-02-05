@@ -132,14 +132,9 @@ func prepareQuery(ctx context.Context, store storage.Store, query string) (*rego
 }
 
 func prepareRegoArgs(store storage.Store, query ast.Body) []func(*rego.Rego) {
-	return []func(*rego.Rego){
+	return append([]func(*rego.Rego){
 		rego.Store(store),
 		rego.ParsedQuery(query),
 		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-		// Uncomment for development
-		// rego.EnablePrintStatements(true),
-		// rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
-	}
+	}, builtins.RegalBuiltinRegoFuncs...)
 }

@@ -116,12 +116,12 @@ type policy struct {
 
 func initialize() {
 	createArgs := func(args ...func(*rego.Rego)) []func(*rego.Rego) {
-		return append([]func(*rego.Rego){
+		always := append([]func(*rego.Rego){
 			rego.ParsedBundle("regal", &rbundle.LoadedBundle),
-			rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-			rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
 			rego.StoreReadAST(true),
-		}, args...)
+		}, builtins.RegalBuiltinRegoFuncs...)
+
+		return append(always, args...)
 	}
 
 	keywordRegoArgs := createArgs(rego.Query("data.regal.ast.keywords"))

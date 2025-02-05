@@ -7,6 +7,7 @@ toolchain go1.23.3
 require (
 	dario.cat/mergo v1.0.1
 	github.com/anderseknert/roast v0.7.0
+	github.com/arl/statsviz v0.6.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.8.0
@@ -32,7 +33,6 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.1.5 // indirect
 	github.com/agnivade/levenshtein v1.2.0 // indirect
-	github.com/arl/statsviz v0.6.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect

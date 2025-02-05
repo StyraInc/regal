@@ -2,15 +2,18 @@
 package builtins
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/anderseknert/roast/pkg/encoding"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/format"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/tester"
 	"github.com/open-policy-agent/opa/v1/topdown/builtins"
 	"github.com/open-policy-agent/opa/v1/types"
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/parse"
 )
@@ -36,6 +39,26 @@ var RegalLastMeta = &rego.Function{
 				Description("performance optimized last index retrieval"),
 		),
 		types.Named("element", types.A),
+	),
+}
+
+var RegalBuiltinRegoFuncs = []func(*rego.Rego){
+	rego.Function1(RegalLastMeta, RegalLast),
+	rego.Function2(RegalParseModuleMeta, RegalParseModule),
+	rego.Function2(RegalIsFormattedMeta, RegalIsFormatted),
+}
+
+// RegalIsFormattedMeta metadata for regal.is_formatted.
+var RegalIsFormattedMeta = &rego.Function{
+	Name: "regal.is_formatted",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("input", types.S).
+				Description("input string to check for formatting"),
+			types.Named("options", types.NewObject(nil, types.NewDynamicProperty(types.S, types.A))).
+				Description("formatting options"),
+		),
+		types.B,
 	),
 }
 
@@ -101,6 +124,40 @@ func RegalLast(_ rego.BuiltinContext, arr *ast.Term) (*ast.Term, error) {
 	return nil, nil //nolint:nilnil
 }
 
+var regoVersionTerm = ast.StringTerm("rego_version")
+
+func RegalIsFormatted(_ rego.BuiltinContext, input *ast.Term, options *ast.Term) (*ast.Term, error) {
+	inputStr, err := builtins.StringOperand(input.Value, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	optionsObj, err := builtins.ObjectOperand(options.Value, 2)
+	if err != nil {
+		return nil, err
+	}
+
+	regoVersion := ast.RegoV1
+
+	versionTerm := optionsObj.Get(regoVersionTerm)
+	if versionTerm != nil {
+		if v, ok := versionTerm.Value.(ast.String); ok && v == "v0" {
+			regoVersion = ast.RegoV0
+		}
+	}
+
+	// We don't need to process annotations for formatting.
+	popts := ast.ParserOptions{ProcessAnnotation: false, RegoVersion: regoVersion}
+	source := util.StringToByteSlice(string(inputStr))
+
+	result, err := format.SourceWithOpts("", source, format.Opts{RegoVersion: regoVersion, ParserOptions: &popts})
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.InternedBooleanTerm(bytes.Equal(source, result)), nil
+}
+
 // TestContextBuiltins returns the list of builtins as expected by the test runner.
 func TestContextBuiltins() []*tester.Builtin {
 	return []*tester.Builtin{
@@ -117,6 +174,13 @@ func TestContextBuiltins() []*tester.Builtin {
 				Decl: RegalLastMeta.Decl,
 			},
 			Func: rego.Function1(RegalLastMeta, RegalLast),
+		},
+		{
+			Decl: &ast.Builtin{
+				Name: RegalIsFormattedMeta.Name,
+				Decl: RegalIsFormattedMeta.Decl,
+			},
+			Func: rego.Function2(RegalIsFormattedMeta, RegalIsFormatted),
 		},
 	}
 }

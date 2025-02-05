@@ -21,8 +21,6 @@ import (
 	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/rules"
 )
 
 type tableCommandParams struct {
@@ -127,14 +125,6 @@ func createTable(args []string) (io.Reader, error) {
 			category,
 			"[" + title + "](" + docs.CreateDocsURL(category, title) + ")",
 			annotations.Description,
-		})
-	}
-
-	for _, rule := range rules.AllGoRules(config.Config{}) {
-		tableMap[rule.Category()] = append(tableMap[rule.Category()], []string{
-			rule.Category(),
-			"[" + rule.Name() + "](" + rule.Documentation() + ")",
-			rule.Description(),
 		})
 	}
 

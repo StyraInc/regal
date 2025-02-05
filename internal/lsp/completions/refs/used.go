@@ -38,13 +38,11 @@ func prepareQuery() (*rego.PreparedEvalQuery, error) {
 		},
 	}
 
-	regoArgs := []func(*rego.Rego){
+	regoArgs := append([]func(*rego.Rego){
 		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.ParsedBundle("internal", &dataBundle),
 		rego.Query(`data.regal.lsp.completion.ref_names`),
-		rego.Function2(builtins.RegalParseModuleMeta, builtins.RegalParseModule),
-		rego.Function1(builtins.RegalLastMeta, builtins.RegalLast),
-	}
+	}, builtins.RegalBuiltinRegoFuncs...)
 
 	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
 	if err != nil {

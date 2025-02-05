@@ -6276,6 +6276,35 @@
         },
         "type": "function"
       }
+    },
+    {
+      "name": "regal.is_formatted",
+      "decl": {
+        "args": [
+          {
+            "description": "input string to check for formatting",
+            "name": "input",
+            "type": "string"
+          },
+          {
+            "description": "formatting options",
+            "dynamic": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "any"
+              }
+            },
+            "name": "options",
+            "type": "object"
+          }
+        ],
+        "result": {
+          "type": "boolean"
+        },
+        "type": "function"
+      }
     }
   ],
   "features": [

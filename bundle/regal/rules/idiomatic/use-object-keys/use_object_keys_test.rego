@@ -30,6 +30,31 @@ test_fail_use_object_keys_not_some_in_comprehension if {
 	}}
 }
 
+test_fail_use_object_keys_not_some_in_comprehension_single_var if {
+	r := rule.report with input as ast.policy(`comp := {k | some k, _ in object}`)
+
+	r == {{
+		"category": "idiomatic",
+		"description": "Prefer to use `object.keys`",
+		"level": "error",
+		"location": {
+			"col": 9,
+			"end": {
+				"col": 34,
+				"row": 3,
+			},
+			"file": "policy.rego",
+			"row": 3,
+			"text": "comp := {k | some k, _ in object}",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/use-object-keys", "idiomatic"),
+		}],
+		"title": "use-object-keys",
+	}}
+}
+
 test_fail_use_object_keys_not_some_comprehension if {
 	r := rule.report with input as ast.policy(`comp := {k | some k; input.object[k]}`)
 

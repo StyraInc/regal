@@ -6,25 +6,28 @@ import data.regal.ast
 import data.regal.result
 import data.regal.util
 
-_exprs[sprintf("%d", [rule_index])][loc.row] contains expr if {
-	some rule_index, rule in input.rules
-	some expr in rule.body
-	loc := util.to_location_object(expr.location)
+_exprs[sprintf("%d", [rule_index])][row] contains expr if {
+	some rule_index
+	expr := input.rules[rule_index].body[_]
+	row := to_number(substring(expr.location, 0, indexof(expr.location, ":")))
 }
 
-_exprs[sprintf("%d", [rule_index])][loc.row] contains expr if {
-	some rule_index, rule in input.rules
-	some rule_expr in rule.body
-	some expr in rule_expr.terms.body
-	loc := util.to_location_object(expr.location)
+_exprs[sprintf("%d", [rule_index])][row] contains expr if {
+	some rule_index
+	expr := input.rules[rule_index].body[_].terms.body[_]
+
+	row := to_number(substring(expr.location, 0, indexof(expr.location, ":")))
 }
 
 _loop_start_points[rule_index][loc.row] contains var if {
 	some rule_index
-	some var in ast.found.vars[rule_index].assign
-	some expr in _exprs[rule_index][_]
-	some term in expr
-	ast.is_wildcard(regal.last(regal.last(term).value))
+	var := ast.found.vars[rule_index].assign[_]
+	term := _exprs[rule_index][_][_][_]
+
+	last := regal.last(regal.last(term).value)
+	last.type == "var"
+	startswith(last.value, "$")
+
 	loc := util.to_location_object(var.location)
 	loc.row == util.to_location_object(term[0].location).row
 	# no need to ignore vars here in comprehensions, since we are only looking
@@ -33,8 +36,9 @@ _loop_start_points[rule_index][loc.row] contains var if {
 
 _loop_start_points[rule_index][loc.row] contains var if {
 	some rule_index
-	some context in {"some", "somein", "every"}
-	some var in ast.found.vars[rule_index][context]
+	some context in ["some", "somein", "every"]
+	var := ast.found.vars[rule_index][context][_]
+
 	loc := util.to_location_object(var.location)
 
 	# ignore vars in comprehensions
@@ -47,20 +51,19 @@ _loop_start_points[rule_index][loc.row] contains var if {
 	}
 }
 
-_loop_start_points[rule_index][loc.row] contains var if {
+_loop_start_points[rule_index][row] contains var if {
 	some rule_index
-	some call in ast.function_calls[rule_index]
+	call := ast.function_calls[rule_index][_]
 
 	call.name == "walk"
 	call.args[1].type == "array"
 
 	some var in ast.find_term_vars(call.args[1].value)
-	loc := util.to_location_object(var.location)
+	row := to_number(substring(var.location, 0, indexof(var.location, ":")))
 }
 
 _assignment_index[rule_index][var.value] contains row if {
-	some rule_index
-	some row
+	some rule_index, row
 	some var in _loop_start_points[rule_index][row]
 }
 
@@ -81,13 +84,11 @@ _assignment_index[rule_index][var.value] contains loc.row if {
 
 report contains violation if {
 	some rule_index, sps in _loop_start_points
-	sp_rows := {row | some row, _ in sps}
-
-	first_loop_row := min(sp_rows)
+	first_loop_row := min(object.keys(sps))
 
 	some row
-	row > first_loop_row
 	some expr in _exprs[rule_index][row]
+	row > first_loop_row
 
 	# if there are any term vars used in the expression, then they must have been
 	# declared after the first loop

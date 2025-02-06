@@ -147,6 +147,8 @@ incremental if input.y
 
 prefer_strings_count := count(indexof_n("foobarbaz", "a"))
 
+use_object_keys := {k | some k; input.object[k]}
+
 ### Style ###
 
 # avoid-get-and-list-prefix

@@ -89,6 +89,8 @@ rules:
       level: error
     use-in-operator:
       level: error
+    use-object-keys:
+      level: error
     use-some-for-output-vars:
       level: error
     use-strings-count:

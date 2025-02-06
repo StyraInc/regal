@@ -246,6 +246,7 @@ The following rules are currently available:
 | idiomatic   | [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)                               | Use the `contains` keyword                                |
 | idiomatic   | [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)                                           | Use the `if` keyword                                      |
 | idiomatic   | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                         | Use in to check for membership                            |
+| idiomatic   | [use-object-keys](https://docs.styra.com/regal/rules/idiomatic/use-object-keys)                         | Prefer to use `object.keys`                               |
 | idiomatic   | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)       | Use `some` to declare output variables                    |
 | idiomatic   | [use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count)                     | Use `strings.count` where possible                        |
 | imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)               | Avoid importing input                                     |

@@ -302,3 +302,9 @@ walk_no_path if {
 	walk(input, [path, value])
 	value == "violation"
 }
+
+non_loop_expression if {
+	some role in input.roles
+	endswith(user.email, "example.com")
+	role == "admin"
+}

@@ -30,6 +30,7 @@ report contains violation if {
 	not ast.var_in_head(input.rules[to_number(rule_index)].head, var.value)
 	not ast.var_in_call(ast.function_calls, rule_index, var.value)
 	not _ref_base_vars[rule_index][var.value]
+	not _comprehension_term_vars[rule_index][var.value]
 
 	# this is by far the most expensive condition to check, so only do
 	# so when all other conditions apply
@@ -51,4 +52,13 @@ _ref_base_vars[rule_index][term.value] contains term if {
 	term := ast.found.refs[rule_index][_].value[0]
 
 	not ast.is_wildcard(term)
+}
+
+_comprehension_term_vars[rule_index] contains var.value if {
+	some rule_index, comprehensions in ast.found.comprehensions
+	some comprehension in comprehensions
+
+	only_head := object.remove(comprehension.value, ["body"])
+
+	some var in ast.find_term_vars(only_head)
 }

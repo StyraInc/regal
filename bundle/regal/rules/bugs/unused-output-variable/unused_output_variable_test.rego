@@ -176,3 +176,24 @@ test_success_not_output_variable_argument if {
 	r := rule.report with input as module
 	r == set()
 }
+
+test_success_not_unused_comprehension_term if {
+	module := ast.with_rego_v1(`success if {x | input[x]}`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_not_unused_comprehension_term_complex if {
+	module := ast.with_rego_v1(`success if {[x, y] | input[x][y]}`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
+test_success_not_unused_comprehension_term_key_value if {
+	module := ast.with_rego_v1(`success if {x: y | input[x][y]}`)
+
+	r := rule.report with input as module
+	r == set()
+}

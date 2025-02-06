@@ -42,3 +42,15 @@ test_to_location_object if {
 		"text": "allow if {\n\ttrue\n}",
 	}
 }
+
+test_point_in_range if {
+	util.point_in_range([1, 2], [[0, 0], [1, 10]]) == true
+	util.point_in_range([0, 3], [[0, 1], [0, 4]]) == true
+	util.point_in_range([0, 0], [[0, 0], [0, 2]]) == true
+	util.point_in_range([0, 2], [[0, 0], [0, 2]]) == true
+	util.point_in_range([6, 6], [[5, 10], [7, 3]]) == true
+
+	util.point_in_range([0, 0], [[0, 1], [1, 10]]) == false
+	util.point_in_range([0, 3], [[0, 1], [0, 2]]) == false
+	util.point_in_range([9, 3], [[0, 1], [0, 2]]) == false
+}

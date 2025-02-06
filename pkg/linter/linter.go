@@ -298,19 +298,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	l.dataBundle = &bundle.Bundle{
-		Manifest: bundle.Manifest{
-			Roots:    &[]string{"internal"},
-			Metadata: map[string]any{"name": "internal"},
-		},
-		Data: map[string]any{
-			"internal": map[string]any{
-				"combined_config": config.ToMap(*conf),
-				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
-				"path_prefix":     l.pathPrefix,
-			},
-		},
-	}
+	l.dataBundle = l.createDataBundle(*conf)
 
 	ignore := conf.Ignore.Files
 
@@ -538,18 +526,7 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 		return []string{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	l.dataBundle = &bundle.Bundle{
-		Manifest: bundle.Manifest{
-			Roots:    &[]string{"internal"},
-			Metadata: map[string]any{"name": "internal"},
-		},
-		Data: map[string]any{
-			"internal": map[string]any{
-				"combined_config": config.ToMap(*conf),
-				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
-			},
-		},
-	}
+	l.dataBundle = l.createDataBundle(*conf)
 
 	queryStr := `[rule |
         data.regal.rules[cat][rule]
@@ -604,18 +581,7 @@ func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, e
 		return []string{}, fmt.Errorf("failed to merge config: %w", err)
 	}
 
-	l.dataBundle = &bundle.Bundle{
-		Manifest: bundle.Manifest{
-			Roots:    &[]string{"internal"},
-			Metadata: map[string]any{"name": "internal"},
-		},
-		Data: map[string]any{
-			"internal": map[string]any{
-				"combined_config": config.ToMap(*conf),
-				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
-			},
-		},
-	}
+	l.dataBundle = l.createDataBundle(*conf)
 
 	queryStr := `[rule |
         data.regal.rules[cat][rule].aggregate
@@ -657,7 +623,7 @@ func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, e
 	return enabledRules, nil
 }
 
-func (l Linter) paramsToRulesConfig() map[string]any {
+func (l Linter) createDataBundle(conf config.Config) *bundle.Bundle {
 	params := map[string]any{
 		"disable_all":      l.disableAll,
 		"disable_category": util.NullToEmpty(l.disableCategory),
@@ -668,24 +634,29 @@ func (l Linter) paramsToRulesConfig() map[string]any {
 		"ignore_files":     util.NullToEmpty(l.ignoreFiles),
 	}
 
-	return map[string]any{
-		"eval": map[string]any{
-			"params": params,
+	return &bundle.Bundle{
+		Manifest: bundle.Manifest{
+			Roots:    &[]string{"internal", "eval"},
+			Metadata: map[string]any{"name": "internal"},
+		},
+		Data: map[string]any{
+			"eval": map[string]any{
+				"params": params,
+			},
+			"internal": map[string]any{
+				"combined_config": config.ToMap(conf),
+				"capabilities":    rio.ToMap(config.CapabilitiesForThisVersion()),
+				"path_prefix":     l.pathPrefix,
+			},
 		},
 	}
 }
 
 func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
-	dataBundle := bundle.Bundle{
-		Data:     l.paramsToRulesConfig(),
-		Manifest: bundle.Manifest{Roots: &[]string{"eval"}},
-	}
-
 	regoArgs := append([]func(*rego.Rego){
 		rego.StoreReadAST(true),
 		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
-		rego.ParsedBundle("regal_eval_params", &dataBundle),
 	}, builtins.RegalBuiltinRegoFuncs...)
 
 	if l.debugMode && l.printHook == nil {

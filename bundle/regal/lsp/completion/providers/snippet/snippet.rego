@@ -18,6 +18,8 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
+	not endswith(trim_space(line), "=")
+
 	location.in_rule_body(line)
 
 	word := location.word_at(line, input.regal.context.location.col)
@@ -26,8 +28,6 @@ items contains item if {
 
 	strings.any_prefix_match(snippet.prefix, word.text)
 	strings.count(line, snippet.prefix[0]) < 2
-
-	not endswith(trim_space(line), "=")
 
 	item := {
 		"label": sprintf("%s (snippet)", [label]),

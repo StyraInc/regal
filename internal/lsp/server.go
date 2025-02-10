@@ -2251,18 +2251,22 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 	case len(configRoots) > 1:
 		l.logf(
 			log.LevelMessage,
-			"warning: multiple config roots found in workspace:\n%s\nusing %q as root",
+			"warning: multiple configuration root directories found in workspace:\n%s\nusing %q as workspace root directory",
 			strings.Join(configRoots, "\n"),
 			configRoots[0],
 		)
 
 		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
 	case len(configRoots) == 1:
-		l.logf(log.LevelMessage, "using workspace directory %q as root", configRoots[0])
+		l.logf(log.LevelMessage, "using %q as workspace root directory", configRoots[0])
 
 		l.workspaceRootURI = uri.FromPath(l.clientIdentifier, configRoots[0])
 	default:
-		l.logf(log.LevelMessage, "using supplied root: %q, config may be inherited from parent directory", workspaceRootPath)
+		l.logf(
+			log.LevelMessage,
+			"using supplied workspace root directory: %q, config may be inherited from parent directory",
+			workspaceRootPath,
+		)
 	}
 
 	if l.clientIdentifier == clients.IdentifierGeneric {

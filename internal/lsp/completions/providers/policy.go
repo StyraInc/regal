@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage"
@@ -18,6 +16,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 // Policy provides suggestions that have been determined by Rego policy.

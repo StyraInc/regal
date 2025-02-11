@@ -7,9 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-	"github.com/anderseknert/roast/pkg/transform"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
@@ -19,6 +16,9 @@ import (
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/builtins"
+
+	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/transform"
 )
 
 type BuiltInCall struct {

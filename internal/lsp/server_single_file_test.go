@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/testutil"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the

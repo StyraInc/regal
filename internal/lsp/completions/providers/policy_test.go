@@ -5,8 +5,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
@@ -14,6 +12,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 func TestPolicyProvider_Example1(t *testing.T) {

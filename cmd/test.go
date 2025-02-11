@@ -30,9 +30,10 @@ import (
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/compile"
 	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
+
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 const benchmarkGoBenchOutput = "gobench"
@@ -229,7 +230,7 @@ func opaTest(args []string) int {
 func moduleLoader(regalRules *bundle.Bundle) ast.ModuleLoader {
 	// We use the package declarations to know which modules we still need, and return
 	// those from the embedded regal bundle.
-	extra := util.NewSet[string]()
+	extra := rutil.NewSet[string]()
 	for _, mod := range regalRules.Modules {
 		extra.Add(mod.Parsed.Package.Path.String())
 	}

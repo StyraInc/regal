@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"github.com/anderseknert/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/encoding"
 
 	_ "embed"
 )

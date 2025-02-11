@@ -3,8 +3,9 @@ package handler
 import (
 	"context"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 type handlerFunc[T any] func(T) (any, error)

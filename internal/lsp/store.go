@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 func NewRegalStore() storage.Store {

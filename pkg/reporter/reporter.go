@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/fatih/color"
 	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/olekukonko/tablewriter"
@@ -19,10 +18,12 @@ import (
 
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/novelty"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
+
+	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/util"
 )
 
 // Reporter releases linter reports in a format decided by the implementation.

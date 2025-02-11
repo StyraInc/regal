@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anderseknert/roast/pkg/transform"
-
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -18,6 +16,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
+
+	"github.com/styrainc/roast/pkg/transform"
 )
 
 func (l *LanguageServer) Eval(

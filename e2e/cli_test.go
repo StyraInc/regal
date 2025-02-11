@@ -23,9 +23,10 @@ import (
 	"github.com/open-policy-agent/opa/v1/tester"
 
 	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
+
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 func readProvidedConfig(t *testing.T) config.Config {
@@ -135,6 +136,9 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 }
 
+// NOTE(ae): this test *will fail* when run via "go test -e2e" and a normal development binary is used for the test.
+// This is because proposing fixes is only enabled when regal is built with the "regal_standalone" build tag. I spent
+// way more time on chasing that down than I would have wanted, so leaving this here for future me and others.
 func TestLintProposeToRunFix(t *testing.T) {
 	t.Parallel()
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
@@ -191,8 +195,8 @@ func TestLintV1Violations(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	ruleNames := util.NewSet[string]()
-	excludedRules := util.NewSet(
+	ruleNames := rutil.NewSet[string]()
+	excludedRules := rutil.NewSet(
 		"implicit-future-keywords",
 		"use-if",
 		"use-contains",
@@ -215,7 +219,7 @@ func TestLintV1Violations(t *testing.T) {
 	}
 
 	// Note that some violations occur more than one time.
-	violationNames := util.NewSet[string]()
+	violationNames := rutil.NewSet[string]()
 	for _, violation := range rep.Violations {
 		violationNames.Add(violation.Title)
 	}
@@ -252,8 +256,8 @@ func TestLintV0NoRegoV1ImportViolations(t *testing.T) {
 	}
 
 	// Note that some violations occur more than one time.
-	violationNames := util.NewSet[string]()
-	expected := util.NewSet("implicit-future-keywords", "use-if", "use-contains")
+	violationNames := rutil.NewSet[string]()
+	expected := rutil.NewSet("implicit-future-keywords", "use-if", "use-contains")
 
 	for _, violation := range rep.Violations {
 		violationNames.Add(violation.Title)
@@ -288,8 +292,8 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 	}
 
 	// Note that some violations occur more than one time.
-	violationNames := util.NewSet[string]()
-	expected := util.NewSet("use-if", "use-contains", "use-rego-v1", "rule-named-if")
+	violationNames := rutil.NewSet[string]()
+	expected := rutil.NewSet("use-if", "use-contains", "use-rego-v1", "rule-named-if")
 
 	for _, violation := range rep.Violations {
 		violationNames.Add(violation.Title)
@@ -348,7 +352,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		t.Fatalf("expected JSON response, got %v", stdout.String())
 	}
 
-	violationNames := util.NewSet[string]()
+	violationNames := rutil.NewSet[string]()
 
 	for _, violation := range rep.Violations {
 		violationNames.Add(violation.Title)

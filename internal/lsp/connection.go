@@ -27,10 +27,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/util/concurrent"
+	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 type ConnectionOptions struct {

@@ -6,7 +6,6 @@ toolchain go1.23.3
 
 require (
 	dario.cat/mergo v1.0.1
-	github.com/anderseknert/roast v0.7.0
 	github.com/arl/statsviz v0.6.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.18.0
@@ -25,6 +24,7 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.2.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6
+	github.com/styrainc/roast v0.8.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -726,6 +726,10 @@ import data.unresolved`,
 	}
 }
 
+// 1809032500 ns/op	3227205712 B/op	63995081 allocs/op
+// 1692214541 ns/op	3089440208 B/op	60822121 allocs/op main
+// 1654144083 ns/op	3044255536 B/op	60234057 allocs/op opa-fmt-remodel
+// ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
@@ -750,6 +754,9 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
+// 268203979 ns/op	501748262 B/op	 9724107 allocs/op
+// 258819136 ns/op	497016108 B/op	 9632445 allocs/op
+// ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).

@@ -21,6 +21,8 @@ import (
 	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/docs"
 	"github.com/styrainc/regal/internal/util"
+
+	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 type tableCommandParams struct {
@@ -93,7 +95,7 @@ func createTable(args []string) (io.Reader, error) {
 
 	tableMap := map[string][][]string{}
 
-	traversedTitles := util.NewSet[string]()
+	traversedTitles := rutil.NewSet[string]()
 
 	for _, entry := range flattened {
 		annotations := entry.Annotations

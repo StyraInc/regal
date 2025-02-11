@@ -1,10 +1,10 @@
 package lsp
 
 import (
-	"github.com/anderseknert/roast/pkg/encoding"
-
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 func toAnySlice(a ...string) *[]any {

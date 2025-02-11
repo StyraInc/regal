@@ -45,6 +45,7 @@ linters-settings:
       - standard
       - default
       - prefix(github.com/open-policy-agent/opa)
+      - prefix(github.com/styrainc/roast)
       - prefix(github.com/styrainc/regal)
       - blank
       - dot

@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/anderseknert/roast/pkg/encoding"
 	"github.com/spf13/cobra"
 
 	"github.com/styrainc/regal/pkg/version"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 type versionCommandParams struct {

@@ -2516,9 +2516,12 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 }
 
 func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string) error {
-	fileDiags, ok := l.cache.GetFileDiagnostics(fileURI)
-	if !ok {
-		fileDiags = []types.Diagnostic{}
+	// first, set the diagnostics for the file to the current parse errors
+	fileDiags, _ := l.cache.GetParseErrors(fileURI)
+
+	// if there are no parse errors, then we can check for lint errors
+	if len(fileDiags) == 0 {
+		fileDiags, _ = l.cache.GetFileDiagnostics(fileURI)
 	}
 
 	resp := types.FileDiagnostics{

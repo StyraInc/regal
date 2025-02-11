@@ -90,9 +90,15 @@ report contains violation if {
 	some expr in _exprs[rule_index][row]
 	row > first_loop_row
 
+	term_vars := ast.find_term_vars(expr)
+
+	# users are able to use print statements for debugging purposes.
+	# Continued use is detected by another rule.
+	term_vars[0].value != "print"
+
 	# if there are any term vars used in the expression, then they must have been
 	# declared after the first loop
-	every term_var in ast.find_term_vars(expr) {
+	every term_var in term_vars {
 		term_var_rows := object.get(_assignment_index, [rule_index, term_var.value], {0})
 		min(term_var_rows) < first_loop_row
 	}

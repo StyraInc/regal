@@ -130,6 +130,16 @@ allow if {
 	r == set()
 }
 
+test_ok_loop_expression_is_print if {
+	r := rule.report with input as ast.policy(`
+allow if {
+	some user in data.users
+	print("hello")
+}`)
+
+	r == set()
+}
+
 test_ok_when_dependent_vars_are_also_in_loop if {
 	r := rule.report with input as ast.policy(`
 allow if {

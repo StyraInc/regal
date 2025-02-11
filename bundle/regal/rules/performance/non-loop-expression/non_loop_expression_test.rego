@@ -169,26 +169,16 @@ allow if {
 	user.email == input.email
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 2,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 39,
 			"row": 6,
-			"end": {
-				"col": 39,
-				"row": 6,
-			},
-			"text": "\tendswith(input.email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "\tendswith(input.email, \"acmecorp.com\")",
+	})
 }
 
 test_fail_single_some if {
@@ -199,26 +189,16 @@ allow if {
 	user.emails[email] == input.email
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 2,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 39,
 			"row": 6,
-			"end": {
-				"col": 39,
-				"row": 6,
-			},
-			"text": "\tendswith(input.email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "\tendswith(input.email, \"acmecorp.com\")",
+	})
 }
 
 test_fail_wildcard if {
@@ -229,26 +209,16 @@ allow if {
 	input.foo == foo
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"level": "error",
-		"location": {
-			"col": 2,
-			"end": {
-				"col": 39,
-				"row": 6,
-			},
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"end": {
+			"col": 39,
 			"row": 6,
-			"text": "\tendswith(input.email, \"acmecorp.com\")",
 		},
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-	}}
+		"file": "policy.rego",
+		"row": 6,
+		"text": "\tendswith(input.email, \"acmecorp.com\")",
+	})
 }
 
 # this should be the basis for another rule, but for now it should be a non-error
@@ -274,26 +244,16 @@ allow if {
 	email == input.user_email
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 2,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 7,
+		"end": {
+			"col": 44,
 			"row": 7,
-			"end": {
-				"col": 44,
-				"row": 7,
-			},
-			"text": "\tendswith(input.user_email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "\tendswith(input.user_email, \"acmecorp.com\")",
+	})
 }
 
 test_wildcard_assign if {
@@ -304,26 +264,16 @@ allow if {
 	user.email == input.user_email
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 2,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 44,
 			"row": 6,
-			"end": {
-				"col": 44,
-				"row": 6,
-			},
-			"text": "\tendswith(input.user_email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "\tendswith(input.user_email, \"acmecorp.com\")",
+	})
 }
 
 test_some_key_value if {
@@ -335,26 +285,16 @@ allow if {
 	userID != 0
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 2,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 2,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 44,
 			"row": 6,
-			"end": {
-				"col": 44,
-				"row": 6,
-			},
-			"text": "\tendswith(input.user_email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "\tendswith(input.user_email, \"acmecorp.com\")",
+	})
 }
 
 test_every if {
@@ -366,24 +306,26 @@ allow if {
     }
 }`)
 
-	r == {{
-		"category": "performance",
-		"description": "Non loop expression in loop",
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
-		}],
-		"title": "non-loop-expression",
-		"location": {
-			"col": 9,
-			"file": "policy.rego",
+	r == with_location({
+		"col": 9,
+		"file": "policy.rego",
+		"row": 6,
+		"end": {
+			"col": 46,
 			"row": 6,
-			"end": {
-				"col": 46,
-				"row": 6,
-			},
-			"text": "        endswith(input.email, \"acmecorp.com\")",
 		},
-		"level": "error",
-	}}
+		"text": "        endswith(input.email, \"acmecorp.com\")",
+	})
 }
+
+with_location(location) := {{
+	"category": "performance",
+	"description": "Non-loop expression",
+	"related_resources": [{
+		"description": "documentation",
+		"ref": config.docs.resolve_url("$baseUrl/$category/non-loop-expression", "performance"),
+	}],
+	"title": "non-loop-expression",
+	"location": location,
+	"level": "error",
+}}

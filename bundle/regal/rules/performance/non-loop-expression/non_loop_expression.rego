@@ -1,10 +1,34 @@
 # METADATA
-# description: Non loop expression in loop
+# description: Non-loop expression
 package regal.rules.performance["non-loop-expression"]
 
 import data.regal.ast
 import data.regal.result
 import data.regal.util
+
+report contains violation if {
+	some rule_index, sps in _loop_start_points
+	first_loop_row := min(object.keys(sps))
+
+	some row
+	some expr in _exprs[rule_index][row]
+	row > first_loop_row
+
+	term_vars := ast.find_term_vars(expr)
+
+	# users are able to use print statements for debugging purposes.
+	# Continued use is detected by another rule.
+	term_vars[0].value != "print"
+
+	# if there are any term vars used in the expression, then they must have been
+	# declared after the first loop
+	every term_var in term_vars {
+		term_var_rows := object.get(_assignment_index, [rule_index, term_var.value], {0})
+		min(term_var_rows) < first_loop_row
+	}
+
+	violation := result.fail(rego.metadata.chain(), result.location(expr))
+}
 
 _exprs[sprintf("%d", [rule_index])][row] contains expr if {
 	some rule_index
@@ -80,28 +104,4 @@ _assignment_index[rule_index][var.value] contains loc.row if {
 		not util.point_in_range([loc.row, loc.col], range)
 		not util.point_in_range([loc.end.row, loc.end.col], range)
 	}
-}
-
-report contains violation if {
-	some rule_index, sps in _loop_start_points
-	first_loop_row := min(object.keys(sps))
-
-	some row
-	some expr in _exprs[rule_index][row]
-	row > first_loop_row
-
-	term_vars := ast.find_term_vars(expr)
-
-	# users are able to use print statements for debugging purposes.
-	# Continued use is detected by another rule.
-	term_vars[0].value != "print"
-
-	# if there are any term vars used in the expression, then they must have been
-	# declared after the first loop
-	every term_var in term_vars {
-		term_var_rows := object.get(_assignment_index, [rule_index, term_var.value], {0})
-		min(term_var_rows) < first_loop_row
-	}
-
-	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }

@@ -774,22 +774,16 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 				// handle this ourselves as it's a rename and not a content edit
 				fixed = false
 			case "regal.debug":
-				if len(params.Arguments) != 3 {
-					l.logf(log.LevelMessage, "expected three arguments, got %d", len(params.Arguments))
+				file := args.Target
+				if file == "" {
+					l.logf(log.LevelMessage, "expected command target to be set, got %q", file)
 
 					break
 				}
 
-				file, ok := params.Arguments[0].(string)
-				if !ok {
-					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
-
-					break
-				}
-
-				path, ok := params.Arguments[1].(string)
-				if !ok {
-					l.logf(log.LevelMessage, "expected second argument to be a string, got %T", params.Arguments[1])
+				path := args.QueryPath
+				if path == "" {
+					l.logf(log.LevelMessage, "expected command query path to be set, got %q", path)
 
 					break
 				}
@@ -813,29 +807,16 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					l.logf(log.LevelMessage, "regal/startDebugging failed: %v", err.Error())
 				}
 			case "regal.eval":
-				if len(params.Arguments) != 3 {
-					l.logf(log.LevelMessage, "expected three arguments, got %d", len(params.Arguments))
+				file := args.Target
+				if file == "" {
+					l.logf(log.LevelMessage, "expected command target to be set, got %q", file)
 
 					break
 				}
 
-				file, ok := params.Arguments[0].(string)
-				if !ok {
-					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
-
-					break
-				}
-
-				path, ok := params.Arguments[1].(string)
-				if !ok {
-					l.logf(log.LevelMessage, "expected second argument to be a string, got %T", params.Arguments[1])
-
-					break
-				}
-
-				line, ok := params.Arguments[2].(float64)
-				if !ok {
-					l.logf(log.LevelMessage, "expected third argument to be a number, got %T", params.Arguments[2])
+				path := args.QueryPath
+				if path == "" {
+					l.logf(log.LevelMessage, "expected command query path to be set, got %q", path)
 
 					break
 				}
@@ -905,7 +886,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					*l.clientInitializationOptions.EvalCodelensDisplayInline {
 					responseParams := map[string]any{
 						"result": result,
-						"line":   line,
+						"line":   args.Row,
 						"target": target,
 						// only used when the target is 'package'
 						"package": strings.TrimPrefix(currentModule.Package.Path.String(), "data."),

@@ -101,6 +101,23 @@ _cut_col(i, len, line, _, end_col) := substring(line, 0, end_col) if {
 }
 
 # METADATA
+# scope: document
+# description: returns true if point is within range of row,col range
+default point_in_range(_, _) := false
+
+point_in_range(p, range) if {
+	p[0] >= range[0][0]
+	p[0] <= range[1][0]
+	p[1] >= range[0][1]
+	p[1] <= range[1][1]
+}
+
+point_in_range(p, range) if {
+	p[0] > range[0][0]
+	p[0] < range[1][0]
+}
+
+# METADATA
 # description: short-hand helper to prepare values for pretty-printing
 json_pretty(value) := json.marshal_with_options(value, {
 	"indent": "  ",

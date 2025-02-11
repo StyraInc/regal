@@ -28,7 +28,7 @@ report contains violation if {
 	# we don't care what symbol.value[2] is, as it's not assigned in the head
 	# but symbol.value[3] should be a ref without vars
 
-	symbol.value[3].type == "ref"
+	symbol.value[3].type in {"ref", "var"}
 
 	ast.static_ref(symbol.value[3].value)
 

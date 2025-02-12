@@ -20,7 +20,7 @@ linters:
     - ireturn
     - funlen
     - gomoddirectives # need replacements for wasip1
-    - exportloopref # deprecated
+    - tenv # deprecated
 linters-settings:
   tagliatelle:
     case:

@@ -1,37 +1,12 @@
 package examples
 
 import (
-	"fmt"
+	"sync"
 
 	"github.com/styrainc/roast/pkg/encoding"
 
 	_ "embed"
 )
-
-// GetBuiltInLink returns the URL for the built-in function documentation
-// if it has been documented, otherwise it returns false.
-func GetBuiltInLink(builtinName string) (string, bool) {
-	path, ok := index.BuiltIns[builtinName]
-	if ok {
-		return fmt.Sprintf("%s/%s", baseURL, path), true
-	}
-
-	return "", false
-}
-
-// GetKeywordLink returns the URL for the keyword documentation
-// if it has been documented, otherwise it returns false.
-func GetKeywordLink(keyword string) (string, bool) {
-	path, ok := index.Keywords[keyword]
-	if ok {
-		return fmt.Sprintf("%s/%s", baseURL, path), true
-	}
-
-	return "", false
-}
-
-//go:embed index.json
-var indexJSON []byte
 
 type indexData struct {
 	BuiltIns map[string]string `json:"builtins"`
@@ -40,14 +15,42 @@ type indexData struct {
 
 const baseURL = "https://docs.styra.com/opa/rego-by-example"
 
-var index *indexData
+var (
+	//go:embed index.json
+	indexJSON []byte
+	indexOnce = sync.OnceValue(createIndex)
+)
 
-func init() {
-	index = &indexData{}
+func createIndex() *indexData {
+	index := &indexData{}
 
-	json := encoding.JSON()
-
-	if err := json.Unmarshal(indexJSON, index); err != nil {
+	if err := encoding.JSON().Unmarshal(indexJSON, index); err != nil {
 		panic("failed to unmarshal built-in index: " + err.Error())
 	}
+
+	return index
+}
+
+// GetBuiltInLink returns the URL for the built-in function documentation
+// if it has been documented, otherwise it returns false.
+func GetBuiltInLink(builtinName string) (string, bool) {
+	index := indexOnce()
+	path, ok := index.BuiltIns[builtinName]
+	if ok {
+		return baseURL + "/" + path, true
+	}
+
+	return "", false
+}
+
+// GetKeywordLink returns the URL for the keyword documentation
+// if it has been documented, otherwise it returns false.
+func GetKeywordLink(keyword string) (string, bool) {
+	index := indexOnce()
+	path, ok := index.Keywords[keyword]
+	if ok {
+		return baseURL + "/" + path, true
+	}
+
+	return "", false
 }

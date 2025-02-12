@@ -11,7 +11,7 @@ package policy
 
 allow if {
     some email in input.emails
-    admin in input.roles # <- this is not required in the loop
+    "admin" in input.roles # <- this is not required in the loop
     endswith(email, "@example.com")
 }
 ```
@@ -22,7 +22,7 @@ allow if {
 package policy
 
 allow if {
-    admin in input.roles # <- moved out of the loop
+    "admin" in input.roles # <- moved out of the loop
     some email in input.emails
     endswith(email, "@example.com")
 }

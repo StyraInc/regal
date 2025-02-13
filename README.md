@@ -173,11 +173,8 @@ policies. More than that, it'll unlock a whole new set of features that leverage
 [language server](#regal-language-server), like context-aware completion suggestions, informative tooltips on hover,
 or go-to-definition.
 
-Elevate your policy development experience with Regal in
-[VS Code](https://marketplace.visualstudio.com/items?itemName=tsandall.opa),
-[Zed](https://github.com/StyraInc/zed-rego), [Neovim](https://docs.styra.com/regal/editor-support#neovim),
-[Helix](https://docs.styra.com/regal/editor-support#helix) and
-[other editors](https://docs.styra.com/regal/editor-support)!
+Elevate your policy development experience with Regal in VS Code, Neovim, Zed, Helix
+and more on our [Editor Support page](https://docs.styra.com/regal/editor-support)!
 
 To learn more about the features provided by the Regal language server, see the
 [Language Server](https://docs.styra.com/regal/language-server) page.

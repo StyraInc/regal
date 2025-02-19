@@ -1,8 +1,8 @@
 module github.com/styrainc/regal
 
-go 1.22.7
+go 1.23.6
 
-toolchain go1.23.3
+toolchain go1.24.0
 
 require (
 	dario.cat/mergo v1.0.1
@@ -11,11 +11,11 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-git/go-git/v5 v5.13.2
+	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-dap v0.12.0
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v1.1.0
 	github.com/owenrumney/go-sarif/v2 v2.3.3

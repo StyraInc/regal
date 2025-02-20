@@ -221,18 +221,13 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 
 	var configSearchPath string
 
-	cwd, _ := os.Getwd()
-
 	m := metrics.New()
 	if params.metrics {
 		m.Timer(regalmetrics.RegalConfigSearch).Start()
 	}
 
 	if len(args) == 1 {
-		configSearchPath = args[0]
-		if !strings.HasPrefix(args[0], "/") {
-			configSearchPath = filepath.Join(cwd, args[0])
-		}
+		configSearchPath, _ = filepath.Abs(args[0])
 	} else {
 		configSearchPath, _ = os.Getwd()
 	}

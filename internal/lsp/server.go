@@ -105,8 +105,7 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	c := cache.NewCache()
 	store := NewRegalStore()
 
-	var ls *LanguageServer
-	ls = &LanguageServer{
+	ls := &LanguageServer{
 		cache:                       c,
 		regoStore:                   store,
 		logWriter:                   opts.LogWriter,
@@ -116,13 +115,14 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		builtinsPositionJobs:        make(chan lintFileJob, 10),
 		commandRequest:              make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:            make(chan lintFileJob, 10),
-		configWatcher:               lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf}),
 		completionsManager:          completions.NewDefaultManager(ctx, c, store),
 		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
 		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
 		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
 	}
+
+	ls.configWatcher = lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf})
 
 	return ls
 }

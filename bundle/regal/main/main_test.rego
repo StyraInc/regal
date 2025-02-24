@@ -225,6 +225,17 @@ test_exclude_files_rule_config_with_path_prefix if {
 	rules_to_run == {}
 }
 
+test_exclude_files_rule_config_with_root_path_prefix if {
+	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+
+	rules_to_run := main._rules_to_run with config.merged_config as cfg
+		with config.for_rule as {"level": "error", "ignore": {"files": ["foo/*"]}}
+		with input.regal.file.name as "/foo/bar/p.rego"
+		with config.path_prefix as "/"
+
+	rules_to_run == {}
+}
+
 test_not_exclude_files_rule_config_with_path_prefix if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 

@@ -45,6 +45,7 @@ func updateParse(
 		// if the parse was ok, clear the parse errors
 		cache.SetParseErrors(fileURI, []types.Diagnostic{})
 		cache.SetModule(fileURI, module)
+		cache.SetSuccessfulParseLineCount(fileURI, len(lines))
 
 		if err := PutFileMod(ctx, store, fileURI, module); err != nil {
 			return false, fmt.Errorf("failed to update rego store with parsed module: %w", err)

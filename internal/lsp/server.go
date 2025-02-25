@@ -1660,9 +1660,27 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 }
 
 func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
+	lastSuccessfullyParsedLineCount, everParsed := l.cache.GetSuccessfulParseLineCount(params.TextDocument.URI)
+
+	// if the file has always been unparsable, we can return early
+	// as there is no value to be gained from showing code lenses.
+	if !everParsed {
+		return noCodeLenses, nil
+	}
+
 	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
 	if ok && len(parseErrors) > 0 {
-		return noCodeLenses, nil
+		// if there are parse errors, but the line count is the same, then we
+		// still show them based on the last parsed module.
+		contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
+		if !ok {
+			// we have no contents for an unknown reason
+			return noCodeLenses, nil
+		}
+
+		if len(strings.Split(contents, "\n")) != lastSuccessfullyParsedLineCount {
+			return noCodeLenses, nil
+		}
 	}
 
 	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)

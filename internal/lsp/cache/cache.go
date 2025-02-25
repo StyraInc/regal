@@ -47,6 +47,10 @@ type Cache struct {
 	// to be used for hover hints.
 	keywordLocationsFile *concurrent.Map[string, map[uint][]types.KeywordLocation]
 
+	// when a file is successfully parsed, the number of lines in the file is stored
+	// here. This is used to gracefully fail when exiting unparsable files.
+	successfulParseLineCounts *concurrent.Map[string, int]
+
 	// fileRefs is a map of file URI to refs that are defined in that file. These are
 	// intended to be used for completions in other files.
 	// fileRefs is expected to be updated when a file is successfully parsed.
@@ -55,15 +59,16 @@ type Cache struct {
 
 func NewCache() *Cache {
 	return &Cache{
-		fileContents:           concurrent.MapOf(make(map[string]string)),
-		ignoredFileContents:    concurrent.MapOf(make(map[string]string)),
-		modules:                concurrent.MapOf(make(map[string]*ast.Module)),
-		aggregateData:          concurrent.MapOf(make(map[string][]report.Aggregate)),
-		diagnosticsFile:        concurrent.MapOf(make(map[string][]types.Diagnostic)),
-		diagnosticsParseErrors: concurrent.MapOf(make(map[string][]types.Diagnostic)),
-		builtinPositionsFile:   concurrent.MapOf(make(map[string]map[uint][]types.BuiltinPosition)),
-		keywordLocationsFile:   concurrent.MapOf(make(map[string]map[uint][]types.KeywordLocation)),
-		fileRefs:               concurrent.MapOf(make(map[string]map[string]types.Ref)),
+		fileContents:              concurrent.MapOf(make(map[string]string)),
+		ignoredFileContents:       concurrent.MapOf(make(map[string]string)),
+		modules:                   concurrent.MapOf(make(map[string]*ast.Module)),
+		aggregateData:             concurrent.MapOf(make(map[string][]report.Aggregate)),
+		diagnosticsFile:           concurrent.MapOf(make(map[string][]types.Diagnostic)),
+		diagnosticsParseErrors:    concurrent.MapOf(make(map[string][]types.Diagnostic)),
+		builtinPositionsFile:      concurrent.MapOf(make(map[string]map[uint][]types.BuiltinPosition)),
+		keywordLocationsFile:      concurrent.MapOf(make(map[string]map[uint][]types.KeywordLocation)),
+		fileRefs:                  concurrent.MapOf(make(map[string]map[string]types.Ref)),
+		successfulParseLineCounts: concurrent.MapOf(make(map[string]int)),
 	}
 }
 
@@ -165,6 +170,11 @@ func (c *Cache) Rename(oldKey, newKey string) {
 	if refs, ok := c.fileRefs.Get(oldKey); ok {
 		c.fileRefs.Set(newKey, refs)
 		c.fileRefs.Delete(oldKey)
+	}
+
+	if lineCount, ok := c.successfulParseLineCounts.Get(oldKey); ok {
+		c.successfulParseLineCounts.Set(newKey, lineCount)
+		c.successfulParseLineCounts.Delete(oldKey)
 	}
 }
 
@@ -287,6 +297,14 @@ func (c *Cache) GetAllFileRefs() map[string]map[string]types.Ref {
 	return c.fileRefs.Clone()
 }
 
+func (c *Cache) GetSuccessfulParseLineCount(fileURI string) (int, bool) {
+	return c.successfulParseLineCounts.Get(fileURI)
+}
+
+func (c *Cache) SetSuccessfulParseLineCount(fileURI string, count int) {
+	c.successfulParseLineCounts.Set(fileURI, count)
+}
+
 // Delete removes all cached data for a given URI. Ignored file contents are
 // also removed if found for a matching URI.
 func (c *Cache) Delete(fileURI string) {
@@ -299,6 +317,7 @@ func (c *Cache) Delete(fileURI string) {
 	c.builtinPositionsFile.Delete(fileURI)
 	c.keywordLocationsFile.Delete(fileURI)
 	c.fileRefs.Delete(fileURI)
+	c.successfulParseLineCounts.Delete(fileURI)
 }
 
 func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string, error) {

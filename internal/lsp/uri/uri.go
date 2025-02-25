@@ -3,9 +3,15 @@ package uri
 import (
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
+)
+
+var (
+	drivePattern             = regexp.MustCompile(`^([A-Za-z]):`)
+	drivePatternMaybeEncoded = regexp.MustCompile(`^([A-Za-z])(%3[aA]|:)`)
 )
 
 // FromPath converts a file path to a URI for a given client.
@@ -15,21 +21,34 @@ func FromPath(client clients.Identifier, path string) string {
 	path = strings.TrimPrefix(path, "file://")
 	path = strings.TrimPrefix(path, "/")
 
-	if client == clients.IdentifierVSCode {
-		// Convert Windows path separators to Unix separators
-		path = filepath.ToSlash(path)
-
-		// spaces must be percent-encoded
-		path = strings.ReplaceAll(path, " ", "%20")
-
-		// If the path is a Windows path, the colon after the drive letter needs to be
-		// percent-encoded.
-		if parts := strings.Split(path, ":"); len(parts) > 1 {
-			path = parts[0] + "%3A" + parts[1]
-		}
+	var driveLetter string
+	if matches := drivePattern.FindStringSubmatch(path); len(matches) > 0 {
+		driveLetter = matches[1] + ":"
 	}
 
-	return "file://" + "/" + path
+	if driveLetter != "" {
+		path = strings.TrimPrefix(path, driveLetter)
+	}
+
+	parts := strings.Split(filepath.ToSlash(path), "/")
+	for i, part := range parts {
+		parts[i] = url.QueryEscape(part)
+		parts[i] = strings.ReplaceAll(parts[i], "+", "%20")
+	}
+
+	if client == clients.IdentifierVSCode {
+		if driveLetter != "" {
+			return "file:///" + url.QueryEscape(driveLetter) + strings.Join(parts, "/")
+		}
+
+		return "file:///" + strings.Join(parts, "/")
+	}
+
+	if driveLetter != "" {
+		return "file:///" + driveLetter + strings.Join(parts, "/")
+	}
+
+	return "file:///" + strings.Join(parts, "/")
 }
 
 // ToPath converts a URI to a file path from a format for a given client.
@@ -48,10 +67,16 @@ func ToPath(client clients.Identifier, uri string) string {
 	}
 
 	if client == clients.IdentifierVSCode {
+		path = strings.TrimPrefix(path, "/")
 		// handling case for windows when the drive letter is set
-		if strings.Contains(path, ":") || strings.Contains(path, "%3A") {
-			path = strings.Replace(path, "%3A", ":", 1)
-			path = strings.TrimPrefix(path, "/")
+
+		var driveLetter string
+
+		if matches := drivePatternMaybeEncoded.FindStringSubmatch(path); len(matches) > 1 {
+			path = strings.TrimPrefix(path, matches[0])
+			path = matches[1] + ":" + strings.TrimPrefix(path, driveLetter)
+		} else {
+			path = "/" + path
 		}
 	}
 

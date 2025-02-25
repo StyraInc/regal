@@ -18,7 +18,7 @@ func TestPathToURI(t *testing.T) {
 			path: "/foo/bar",
 			want: "file:///foo/bar",
 		},
-		"unix prefixed": {
+		"unix prefixed with file:// already": {
 			path: "file:///foo/bar",
 			want: "file:///foo/bar",
 		},
@@ -56,17 +56,21 @@ func TestPathToURI_VSCode(t *testing.T) {
 			path: "/foo/bar baz",
 			want: "file:///foo/bar%20baz",
 		},
+		"unix colon in path": {
+			path: "/foo/bar:baz",
+			want: "file:///foo/bar%3Abaz",
+		},
 		"unix prefixed": {
 			path: "file:///foo/bar",
 			want: "file:///foo/bar",
 		},
-		"windows encoded": {
-			path: "c%3A/foo/bar",
-			want: "file:///c%3A/foo/bar",
-		},
 		"windows not encoded": {
 			path: "c:/foo/bar",
 			want: "file:///c%3A/foo/bar",
+		},
+		"windows not encoded extra colon in path": {
+			path: "c:/foo/bar:1",
+			want: "file:///c%3A/foo/bar%3A1",
 		},
 	}
 
@@ -139,6 +143,10 @@ func TestURIToPath_VSCode(t *testing.T) {
 			uri:  "file:///Users/foo/bar%20baz",
 			want: filepath.FromSlash("/Users/foo/bar baz"),
 		},
+		"unix encoded with colon in path": {
+			uri:  "file:///Users/foo/bar%3Abaz",
+			want: filepath.FromSlash("/Users/foo/bar:baz"),
+		},
 		// these other examples shouldn't happen, but we should handle them
 		"windows not encoded": {
 			uri:  "file://c:/foo/bar",
@@ -146,10 +154,6 @@ func TestURIToPath_VSCode(t *testing.T) {
 		},
 		"windows not prefixed": {
 			uri:  "c:/foo/bar",
-			want: filepath.FromSlash("c:/foo/bar"),
-		},
-		"windows not prefixed, but encoded": {
-			uri:  "c%3A/foo/bar",
 			want: filepath.FromSlash("c:/foo/bar"),
 		},
 	}

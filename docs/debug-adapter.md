@@ -1,6 +1,7 @@
 # Debug Adapter
 
-In addition to being a language server, Regal can act as a
+In addition to being a [language server](/regal/language-server),
+Regal can act as a
 [Debug Adapter](https://microsoft.github.io/debug-adapter-protocol/).
 A Debug Adapter is a program that can communicate with a debugger client,
 such as Visual Studio Code's debugger, to provide debugging capabilities

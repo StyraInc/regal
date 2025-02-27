@@ -179,6 +179,14 @@ to search each parent directory up until the workspace root directory. It is rec
 your `.gitignore` file so that you can work freely with evaluation in any directory without having your input
 accidentally committed.
 
+### Code lenses (Debugging)
+
+Regal also implements the
+[Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/).
+This allows users to trigger debugging sessions for their policies by invoking a
+code lens on a rule. For more information, see the [Debug Adapter](./debug-adapter.md)
+page.
+
 #### Editor support
 
 While the code lens feature is part of the LSP specification, the action that is triggered by a code lens

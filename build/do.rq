@@ -1,4 +1,4 @@
-#!/usr/bin/env rq
+#!/usr/bin/env -S go tool git.sr.ht/~charles/rq/cmd/rq
 # rq: query data.script.main
 # rq: output /dev/null
 
@@ -94,6 +94,7 @@ job contains "pr" if {
 	# format
 	fmt_all
 	write_readme
+	golangcilintfix
 
 	# verify
 	golangcilint
@@ -312,27 +313,7 @@ fetch_eopa_caps if {
 }
 
 fmt_all if {
-	gci
-	gofumpt
 	opafmt
-}
-
-gci if {
-	run(concat(" ", [
-		"gci write",
-		"-s standard",
-		"-s default",
-		"-s prefix(github.com/open-policy-agent/opa)",
-		"-s prefix(github.com/styrainc/roast)",
-		"-s prefix(github.com/styrainc/regal)",
-		"-s blank",
-		"-s dot",
-		".",
-	]))
-}
-
-gofumpt if {
-	run("gofumpt -w .")
 }
 
 opafmt if {
@@ -341,6 +322,10 @@ opafmt if {
 
 golangcilint if {
 	run("golangci-lint run ./...")
+}
+
+golangcilintfix if {
+	run("golangci-lint run --fix ./...")
 }
 
 tasks := sort([[annotation.title, annotation.description] |

@@ -14,6 +14,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
+	"github.com/styrainc/regal/internal/cache"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
 	"github.com/styrainc/regal/internal/testutil"
@@ -726,13 +727,14 @@ import data.unresolved`,
 	}
 }
 
-// 1809032500 ns/op	3227205712 B/op	63995081 allocs/op
-// 1692214541 ns/op	3089440208 B/op	60822121 allocs/op main
-// 1654144083 ns/op	3044255536 B/op	60234057 allocs/op opa-fmt-remodel
+// 1133583042 ns/op	3185226192 B/op	61392363 allocs/op
+// 1111341875 ns/op	3181965048 B/op	61390130 allocs/op
+//
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
+		WithBaseCache(cache.NewBaseCache()).
 		WithEnableAll(true)
 
 	b.ResetTimer()
@@ -756,10 +758,12 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 
 // 268203979 ns/op	501748262 B/op	 9724107 allocs/op
 // 258819136 ns/op	497016108 B/op	 9632445 allocs/op
+// 170215493 ns/op	497115590 B/op	 9228106 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
+		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true)
 
 	b.ResetTimer()

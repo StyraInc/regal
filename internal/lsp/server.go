@@ -20,12 +20,14 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/ast/oracle"
 	"github.com/open-policy-agent/opa/v1/format"
 	"github.com/open-policy-agent/opa/v1/storage"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/capabilities"
+	"github.com/styrainc/regal/internal/compile"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -37,7 +39,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/handler"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/opa/oracle"
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
@@ -1819,6 +1820,8 @@ func (l *LanguageServer) handleTextDocumentDefinition(params types.DefinitionPar
 		Modules:  modules,
 		Buffer:   outil.StringToByteSlice(contents),
 	}
+
+	orc := orc.WithCompiler(compile.NewCompilerWithRegalBuiltins())
 
 	definition, err := orc.FindDefinition(query)
 	if err != nil {

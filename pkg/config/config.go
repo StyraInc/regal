@@ -800,24 +800,19 @@ func (rule *Rule) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("marshalling rule failed %w", err)
 	}
 
-	json := encoding.JSON()
-
-	return json.Marshal(&result) //nolint:wrapcheck
+	return encoding.JSON().Marshal(&result) //nolint:wrapcheck
 }
 
 func (rule *Rule) UnmarshalJSON(data []byte) error {
 	var result map[string]any
-
-	json := encoding.JSON()
-
-	if err := json.Unmarshal(data, &result); err != nil {
+	if err := encoding.JSON().Unmarshal(data, &result); err != nil {
 		return fmt.Errorf("unmarshalling rule failed %w", err)
 	}
 
 	return rule.mapToConfig(result)
 }
 
-func (rule *Rule) MarshalYAML() (interface{}, error) {
+func (rule *Rule) MarshalYAML() (any, error) {
 	result := make(map[string]any)
 	result[keyLevel] = rule.Level
 

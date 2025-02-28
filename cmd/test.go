@@ -331,6 +331,8 @@ func runTests(ctx context.Context, txn storage.Transaction, runner *tester.Runne
 				exitCode = 2
 			}
 
+			tr.Trace = nil
+
 			if tr.Skip && exitCode == 0 && testParams.skipExitZero {
 				// there is a skipped test, adding the flag -z exits 0 if there are no failures
 				exitCode = 0

@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v1.0.0](https://openpolicyagent.org/badge/v1.0.0)
+![OPA v1.2.0](https://openpolicyagent.org/badge/v1.2.0)
 [![codecov](https://codecov.io/github/StyraInc/regal/graph/badge.svg?token=EQK01YF3X3)](https://codecov.io/github/StyraInc/regal)
 [![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/StyraInc/regal/releases)
 
@@ -22,13 +22,13 @@ development, whether you're an experienced Rego developer or just starting out.
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
-## **New!** Regal and OPA 1.0
+## **New!** Regal and OPA 1.0+
 
-OPA 1.0 was [just released](https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828),
-and starting from version v0.30.0, Regal supports working with both OPA 1.0 policies and Rego from earlier versions
+OPA 1.0 was [recently released](https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828),
+and starting from version v0.30.0, Regal supports working with both OPA 1.0+ policies and Rego from earlier versions
 of OPA. While everything should work without additional configuration, we recommend checking out our documentation on
-using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero) for the best possible experience managing
-projects of any given Rego version, or even a mix of them.
+using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero) and later for the best possible experience
+managing projects of any given Rego version, or even a mix of them.
 
 ## Goals
 
@@ -297,9 +297,9 @@ The following rules are currently available:
 
 <!-- RULES_TABLE_END -->
 
-Rules in all category except for those in `custom` are **enabled** by default. Some rules however — like `use-contains`
-and `use-if` — are conditionally enabled only when a version of OPA/Rego before 1.0 is targeted. See the configuration
-options below if you want to use Regal to lint "legacy" policies.
+Rules in all categories except for those in `custom` are **enabled** by default. Some rules however — like
+`use-contains` and `use-if` — are conditionally enabled only when a version of OPA/Rego before 1.0 is targeted. See the
+configuration options below if you want to use Regal to lint "legacy" policies.
 
 **Aggregate Rules**
 

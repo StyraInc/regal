@@ -749,17 +749,10 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					args,
 				)
 			case "regal.fix.directory-package-mismatch":
-				fileURL, ok := params.Arguments[0].(string)
-				if !ok {
-					l.logf(log.LevelMessage, "expected first argument to be a string, got %T", params.Arguments[0])
-
-					break
-				}
-
 				params, err := l.fixRenameParams(
 					"Rename file to match package path",
 					&fixes.DirectoryPackageMismatch{},
-					fileURL,
+					args.Target,
 				)
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to fix directory package mismatch: %s", err)
@@ -2398,8 +2391,12 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 			l.configWatcher.Watch(configFile.Name())
 		case globalConfigDir != "":
 			globalConfigFile := filepath.Join(globalConfigDir, "config.yaml")
-			l.logf(log.LevelMessage, "using global config file: %s", globalConfigFile)
-			l.configWatcher.Watch(globalConfigFile)
+			// the file might not exist and we only want to log we're using the
+			// global file if it does.
+			if _, err = os.Stat(globalConfigFile); err == nil {
+				l.logf(log.LevelMessage, "using global config file: %s", globalConfigFile)
+				l.configWatcher.Watch(globalConfigFile)
+			}
 		default:
 			l.logf(log.LevelMessage, "no config file found for workspace: %s", err)
 		}

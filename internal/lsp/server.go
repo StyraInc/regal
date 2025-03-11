@@ -1229,7 +1229,7 @@ func (l *LanguageServer) fixEditParams(
 func (l *LanguageServer) fixRenameParams(
 	label string,
 	fix fixes.Fix,
-	fileURL string,
+	fileURI string,
 ) (types.ApplyWorkspaceAnyEditParams, error) {
 	var result types.ApplyWorkspaceAnyEditParams
 
@@ -1248,7 +1248,7 @@ func (l *LanguageServer) fixRenameParams(
 		{
 			Title: fix.Name(),
 			Location: report.Location{
-				File: uri.ToPath(l.clientIdentifier, fileURL),
+				File: uri.ToPath(l.clientIdentifier, fileURI),
 			},
 		},
 	}
@@ -1295,6 +1295,14 @@ func (l *LanguageServer) fixRenameParams(
 
 	oldURI := uri.FromPath(l.clientIdentifier, oldFile)
 	newURI := uri.FromPath(l.clientIdentifier, fixedFile)
+
+	// is the newURI still in the root?
+	if !strings.HasPrefix(newURI, l.workspaceRootURI) {
+		return types.ApplyWorkspaceAnyEditParams{
+			Label: label,
+			Edit:  types.WorkspaceAnyEdit{},
+		}, errors.New("cannot move file out of workspace root, consider using a workspace config or manually setting roots")
+	}
 
 	// are there old dirs?
 	dirs, err := util.DirCleanUpPaths(

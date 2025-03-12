@@ -157,7 +157,7 @@ test_enable_single_rule_with_config if {
 test_all_rules_are_in_provided_configuration if {
 	missing_config := {title |
 		some category, title
-		data.regal.rules[category][title]
+		data.regal.rules[category][title].report
 		not endswith(title, "_test")
 		not config.provided.rules[category][title]
 	}

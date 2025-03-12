@@ -72,6 +72,5 @@ issues:
     # than whole whole workspace / directory. This happens when opening up
     # one of these files in VS Code, which will have the linter complain
     # loudly. Hopefully this workaround can be removed in the future.
-    - oracle.go
     - scanner.go
     - tokens.go

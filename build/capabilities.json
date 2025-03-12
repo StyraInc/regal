@@ -2034,6 +2034,20 @@
       }
     },
     {
+      "name": "internal.test_case",
+      "decl": {
+        "args": [
+          {
+            "dynamic": {
+              "type": "any"
+            },
+            "type": "array"
+          }
+        ],
+        "type": "function"
+      }
+    },
+    {
       "name": "intersection",
       "description": "Returns the intersection of the given input sets.",
       "categories": [

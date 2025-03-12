@@ -43,6 +43,7 @@ import (
 type Linter struct {
 	printHook            print.Hook
 	metrics              metrics.Metrics
+	baseCache            topdown.BaseCache
 	inputModules         *rules.Input
 	userConfig           *config.Config
 	combinedCfg          *config.Config
@@ -279,6 +280,15 @@ func (l Linter) WithCollectQuery(enabled bool) Linter {
 // a subsequent run of a single file lint.
 func (l Linter) WithAggregates(aggregates map[string][]report.Aggregate) Linter {
 	l.overriddenAggregates = aggregates
+
+	return l
+}
+
+// WithBaseCache sets the base cache (cache for "JSON" documents) to use for evaluation.
+// This feature is **experimental** and should not be relied on by external clients for
+// the time being.
+func (l Linter) WithBaseCache(baseCache topdown.BaseCache) Linter {
+	l.baseCache = baseCache
 
 	return l
 }
@@ -797,6 +807,10 @@ func (l Linter) lintWithRegoRules(
 
 			evalArgs := []rego.EvalOption{
 				rego.EvalParsedInput(inputValue),
+			}
+
+			if l.baseCache != nil {
+				evalArgs = append(evalArgs, rego.EvalBaseCache(l.baseCache))
 			}
 
 			if l.metrics != nil {

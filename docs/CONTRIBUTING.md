@@ -11,16 +11,15 @@ The following tools are required to build, test and lint Regal:
 
 - The latest version of [Go](https://go.dev/doc/install)
 - The [golangci-lint](https://golangci-lint.run/usage/install/#local-installation) linter
-- The [gci](https://github.com/daixiang0/gci) import formatter
-- The [gofumpt](https://github.com/mvdan/gofumpt) formatter
-- The [markdownlint](https://github.com/DavidAnson/markdownlint) linter
-
-Recommended, but not required:
-
+- [Node](https://nodejs.org/en) in order to run the following tools:
+  - The [markdownlint](https://github.com/DavidAnson/markdownlint) linter
+  - [dprint](https://github.com/dprint/dprint) for checking JSON, YAML, etc
 - The [rq](https://git.sr.ht/~charles/rq) tool. This is used for automating and simplifying many of the tasks outlined
   in this document, and is (ab)used as a Rego-based replacement for Make in this project. Check out the
   [do.rq](https://github.com/StyraInc/regal/blob/main/build/do.rq) file to see what that looks like, and for
-  documentation on the available tasks.
+  documentation on the available tasks. Note that this is a
+  [tool dependency](https://www.jvt.me/posts/2025/01/27/go-tools-124/) of Regal and does not need to be installed
+  separately.
 
 ## Contributing New Rules
 
@@ -116,17 +115,11 @@ Regal uses [golangci-lint](https://golangci-lint.run/) with most linters enabled
 golangci-lint run ./...
 ```
 
-In order to please the [gci](https://github.com/daixiang0/gci) linter, you may either manually order imports, or have
-them automatically ordered and grouped by the tool:
+Note that for many issues reported, and in particular those related to style, it is often possible to run with the
+`--fix` flag to have the issues automatically fixed:
 
 ```shell
-gci write \
-  -s standard \
-  -s default \
-  -s "prefix(github.com/open-policy-agent/opa)" \
-  -s "prefix(github.com/styrainc/regal)" \
-  -s blank \
-  -s dot .
+golangci-lint run --fix ./...
 ```
 
 In order to ensure consistent formatting in our markdown docs, we use the

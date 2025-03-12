@@ -22,6 +22,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
+	"github.com/styrainc/regal/internal/cache"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/update"
@@ -257,7 +258,8 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		WithEnabledCategories(params.enableCategory.v...).
 		WithEnabledRules(params.enable.v...).
 		WithDebugMode(params.debug).
-		WithInputPaths(args)
+		WithInputPaths(args).
+		WithBaseCache(cache.NewBaseCache())
 
 	if params.enablePrint {
 		regal = regal.WithPrintHook(topdown.NewPrintHook(os.Stderr))

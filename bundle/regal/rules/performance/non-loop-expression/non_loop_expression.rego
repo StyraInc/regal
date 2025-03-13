@@ -43,12 +43,18 @@ _exprs[sprintf("%d", [rule_index])][row] contains expr if {
 	row := to_number(substring(expr.location, 0, indexof(expr.location, ":")))
 }
 
+# cover iteration in the form of:
+# x := foo.bar[_]
+# x = foo.bar[_]
 _loop_start_points[rule_index][loc.row] contains var if {
 	some rule_index
 	var := ast.found.vars[rule_index].assign[_]
 	term := _exprs[rule_index][_][_][_]
 
-	last := regal.last(regal.last(term).value)
+	last_term := regal.last(term)
+	last_term.type == "ref"
+
+	last := regal.last(last_term.value)
 	last.type == "var"
 	startswith(last.value, "$")
 
@@ -58,6 +64,10 @@ _loop_start_points[rule_index][loc.row] contains var if {
 	# for top level wildcards in the final term.
 }
 
+# cover iteration in the form of:
+# some x in foo.bar
+# some x, y in foo.bar
+# every x, y in foo.bar
 _loop_start_points[rule_index][loc.row] contains var if {
 	some rule_index
 	some context in ["some", "somein", "every"]

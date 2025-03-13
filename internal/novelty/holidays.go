@@ -1,3 +1,5 @@
+//go:build regal_enable_novelty
+
 package novelty
 
 import (

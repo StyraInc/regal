@@ -864,4 +864,4 @@ If there's something you'd like to have added to the roadmap, either open an iss
 ## Community
 
 For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+the Styra community on [Slack](https://inviter.co/styra)!

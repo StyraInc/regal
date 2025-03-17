@@ -221,4 +221,4 @@ Also note that not all clients (i.e. editors) may support all features of a lang
 ## Community
 
 If you'd like to discuss the Regal's language server, or just talk about Regal in general, please join us in the
-`#regal` channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+`#regal` channel in the Styra Community [Slack](https://inviter.co/styra)!

@@ -45,7 +45,7 @@ Regal.
 - All the steps for building, testing and linting in this document should pass
 
 If you're struggling with any of the above points, or you're unsure of what to do, no worries! Just say so in your PR,
-or ask for advice in the `#regal` channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+or ask for advice in the `#regal` channel in the Styra Community [Slack](https://inviter.co/styra)!
 
 ### Rules Development Workflow
 
@@ -171,4 +171,4 @@ $ wasmtime --dir $(pwd) regal -- lint bundle
 ## Community
 
 If you'd like to discuss Regal development or just talk about Regal in general, please join us in the `#regal`
-channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+channel in the Styra Community [Slack](https://inviter.co/styra)!

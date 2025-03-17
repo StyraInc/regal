@@ -70,4 +70,4 @@ Companies and organizations using Regal (not counting organizations behind the o
 ## Community
 
 If you'd like to discuss Regal adoption or just talk about Regal in general, please join us in the `#regal`
-channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+channel in the Styra Community [Slack](https://inviter.co/styra)!

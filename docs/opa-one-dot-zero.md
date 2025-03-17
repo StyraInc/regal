@@ -73,4 +73,4 @@ effort.
 ## Community
 
 If you have any questions related to OPA 1.0 and Regal, please join the Styra community on
-[Slack](https://communityinviter.com/apps/styracommunity/signup) and we'll be happy to help you out!
+[Slack](https://inviter.co/styra) and we'll be happy to help you out!

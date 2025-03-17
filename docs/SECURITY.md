@@ -10,5 +10,5 @@ be no exception.
 ## Reporting a Vulnerability
 
 Security issues may be reported either by email to [devrel@styra.com](mailto:devrel@styra.com), or to the admins in the
-[Styra Community Slack](https://communityinviter.com/apps/styracommunity/signup). You should expect a response within 24
+[Styra Community Slack](https://inviter.co/styra). You should expect a response within 24
 hours, but most likely much sooner.

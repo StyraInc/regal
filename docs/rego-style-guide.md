@@ -95,4 +95,4 @@ anything not found there are base documents to be provided at runtime.
 ## Community
 
 If you'd like to discuss the Rego Style Guide for Regal, or just talk about Regal in general, please join us in the
-`#regal` channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+`#regal` channel in the Styra Community [Slack](https://inviter.co/styra)!

@@ -44,4 +44,4 @@ which will compile a final report and present it to the user.
 ## Community
 
 If you'd like to discuss Regal's architecture or just talk about Regal in general, please join us in the `#regal`
-channel in the Styra Community [Slack](https://communityinviter.com/apps/styracommunity/signup)!
+channel in the Styra Community [Slack](https://inviter.co/styra)!

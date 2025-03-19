@@ -18,6 +18,8 @@ rules:
       level: ignore
     if-object-literal:
       level: error
+    import-shadows-rule:
+      level: error
     impossible-not:
       level: error
     inconsistent-args:
@@ -123,11 +125,11 @@ rules:
   performance:
     defer-assignment:
       level: error
+    non-loop-expression:
+      level: error
     walk-no-path:
       level: error
     with-outside-test-context:
-      level: error
-    non-loop-expression:
       level: error
   style:
     avoid-get-and-list-prefix:

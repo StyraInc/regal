@@ -10,6 +10,11 @@ report contains violation if {
 
 	cur_name := ast.ref_static_to_string(rule1.head.ref)
 
+	# tests aren't really incremental rules, and other rules
+	# will flag multiple rules with the same name
+	not startswith(cur_name, "test_")
+	not startswith(cur_name, "todo_test_")
+
 	some j, rule2 in input.rules
 
 	j > i

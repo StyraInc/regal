@@ -128,6 +128,19 @@ test_fail_messy_incremental_nested_variable_rule_definitiion if {
 	})
 }
 
+test_success_messy_test_is_ignored if {
+	module := ast.policy(`
+	test_foo if 1
+
+	foo := 1
+
+	test_foo if 2
+	`)
+
+	r := rule.report with input as module
+	r == set()
+}
+
 expected := {
 	"category": "style",
 	"description": "Messy incremental rule",

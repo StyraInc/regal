@@ -210,6 +210,7 @@ The following rules are currently available:
 | bugs        | [duplicate-rule](https://docs.styra.com/regal/rules/bugs/duplicate-rule)                                | Duplicate rule                                            |
 | bugs        | [if-empty-object](https://docs.styra.com/regal/rules/bugs/if-empty-object)                              | Empty object following `if`                               |
 | bugs        | [if-object-literal](https://docs.styra.com/regal/rules/bugs/if-object-literal)                          | Object literal following `if`                             |
+| bugs        | [import-shadows-rule](https://docs.styra.com/regal/rules/bugs/import-shadows-rule)                      | Import shadows rule                                       |
 | bugs        | [impossible-not](https://docs.styra.com/regal/rules/bugs/impossible-not)                                | Impossible `not` condition                                |
 | bugs        | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                          | Inconsistently named function arguments                   |
 | bugs        | [internal-entrypoint](https://docs.styra.com/regal/rules/bugs/internal-entrypoint)                      | Entrypoint can't be marked internal                       |

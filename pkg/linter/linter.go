@@ -69,7 +69,6 @@ type Linter struct {
 	hasCustomRules       bool
 }
 
-//nolint:gochecknoglobals
 var lintQuery = ast.MustParseBody("lint := data.regal.main.lint")
 
 // NewLinter creates a new Regal linter.

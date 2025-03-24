@@ -1,4 +1,4 @@
-//nolint:nilerr,nilnil,gochecknoglobals
+//nolint:nilerr,nilnil
 package lsp
 
 import (

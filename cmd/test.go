@@ -74,9 +74,9 @@ func (f loaderFilter) Apply(abspath string, info os.FileInfo, depth int) bool {
 	})
 }
 
-var testParams = newTestCommandParams() //nolint: gochecknoglobals
+var testParams = newTestCommandParams()
 
-var testCommand = &cobra.Command{ //nolint: gochecknoglobals
+var testCommand = &cobra.Command{
 	Hidden: true,
 	Use:    "test <path> [path [...]]",
 	Short:  "Execute Rego test cases for Regal",

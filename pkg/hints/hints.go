@@ -35,7 +35,6 @@ func GetForError(e error) ([]string, error) {
 	return hintKeys, nil
 }
 
-//nolint:gochecknoglobals
 var patterns = map[string]*regexp.Regexp{
 	`eval-conflict-error/complete-rules-must-not-produce-multiple-outputs`: regexp.MustCompile(`^eval_conflict_error: complete rules must not produce multiple outputs$`),
 	`eval-conflict-error/object-keys-must-be-unique`:                       regexp.MustCompile(`^object insert conflict$|^eval_conflict_error: object keys must be unique$`),

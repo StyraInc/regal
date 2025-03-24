@@ -25,8 +25,6 @@ type CompileResult struct {
 type stage struct{ name, metricName string }
 
 // NOTE(sr): copied from 0.68.0.
-//
-//nolint:gochecknoglobals
 var stages = []stage{
 	{"ResolveRefs", "compile_stage_resolve_refs"},
 	{"InitLocalVarGen", "compile_stage_init_local_var_gen"},

@@ -13,6 +13,4 @@ import (
 var Bundle embed.FS
 
 // LoadedBundle contains the loaded contents of the Bundle.
-//
-//nolint:gochecknoglobals
 var LoadedBundle = rio.MustLoadRegalBundleFS(Bundle)

@@ -26,7 +26,6 @@ const mainTemplate = "main.tpl"
 //go:embed assets/*
 var assets embed.FS
 
-//nolint:gochecknoglobals
 var tpl = template.Must(template.New("main.tpl").ParseFS(assets, "assets/main.tpl"))
 
 type Server struct {

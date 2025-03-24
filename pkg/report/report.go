@@ -162,8 +162,8 @@ func (r *Report) AggregateProfileToSortedProfile(numResults int) {
 // ViolationsFileCount returns the number of files containing violations.
 func (r *Report) ViolationsFileCount() map[string]int {
 	fc := map[string]int{}
-	for _, violation := range r.Violations {
-		fc[violation.Location.File]++
+	for i := range r.Violations {
+		fc[r.Violations[i].Location.File]++
 	}
 
 	return fc

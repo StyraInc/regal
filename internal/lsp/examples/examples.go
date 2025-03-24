@@ -35,6 +35,7 @@ func createIndex() *indexData {
 // if it has been documented, otherwise it returns false.
 func GetBuiltInLink(builtinName string) (string, bool) {
 	index := indexOnce()
+
 	path, ok := index.BuiltIns[builtinName]
 	if ok {
 		return baseURL + "/" + path, true
@@ -47,6 +48,7 @@ func GetBuiltInLink(builtinName string) (string, bool) {
 // if it has been documented, otherwise it returns false.
 func GetKeywordLink(keyword string) (string, bool) {
 	index := indexOnce()
+
 	path, ok := index.Keywords[keyword]
 	if ok {
 		return baseURL + "/" + path, true

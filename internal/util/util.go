@@ -164,12 +164,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 
 	dir := filepath.Dir(target)
 
-	for {
-		// check if we reached the preserved dir
-		if preserveDirs.Contains(dir) {
-			break
-		}
-
+	for !preserveDirs.Contains(dir) {
 		parts := strings.Split(dir, rio.PathSeparator)
 		if len(parts) == 1 {
 			break

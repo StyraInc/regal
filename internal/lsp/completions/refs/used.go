@@ -52,7 +52,6 @@ func prepareQuery() (*rego.PreparedEvalQuery, error) {
 	return &preparedQuery, nil
 }
 
-//nolint:gochecknoglobals
 var pqOnce = sync.OnceValues(prepareQuery)
 
 // UsedInModule returns a list of ref names suitable for completion that are

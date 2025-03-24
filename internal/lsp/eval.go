@@ -46,14 +46,14 @@ func (l *LanguageServer) Eval(
 
 	allBundles := make(map[string]bundle.Bundle)
 
-	for k, v := range dataBundles {
-		if v.Manifest.Roots == nil {
+	for k := range dataBundles {
+		if dataBundles[k].Manifest.Roots == nil {
 			l.logf(log.LevelMessage, "bundle %s has no roots and will be skipped", k)
 
 			continue
 		}
 
-		allBundles[k] = v
+		allBundles[k] = dataBundles[k]
 	}
 
 	allBundles["workspace"] = bundle.Bundle{
@@ -145,6 +145,8 @@ func prepareRegoArgs(
 	cfg *config.Config,
 ) []func(*rego.Rego) {
 	bundleArgs := make([]func(*rego.Rego), 0, len(bundles))
+	// this copy is expensive, but I don't think we can avoid it
+	//nolint:gocritic
 	for key, b := range bundles {
 		bundleArgs = append(bundleArgs, rego.ParsedBundle(key, &b))
 	}

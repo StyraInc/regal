@@ -98,14 +98,12 @@ func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []Bui
 	return builtinCalls
 }
 
-//nolint:gochecknoglobals
 var (
 	keywordsPreparedQuery          *rego.PreparedEvalQuery
 	ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
 	codeLensPreparedQuery          *rego.PreparedEvalQuery
 )
 
-//nolint:gochecknoglobals
 var preparedQueriesInitOnce sync.Once
 
 type policy struct {

@@ -18,7 +18,7 @@ import (
 	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
-var builtinCache = concurrent.MapOf(make(map[*ast.Builtin]string)) //nolint:gochecknoglobals
+var builtinCache = concurrent.MapOf(make(map[*ast.Builtin]string))
 
 func writeFunctionSnippet(sb *strings.Builder, builtin *ast.Builtin) {
 	sb.WriteString("```rego\n")
@@ -81,7 +81,7 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 
 	exampleLink, ok := examples.GetBuiltInLink(builtin.Name)
 	if ok {
-		sb.WriteString(fmt.Sprintf("[View Usage Examples](%s)\n", exampleLink))
+		fmt.Fprintf(sb, "[View Usage Examples](%s)\n", exampleLink)
 	}
 
 	writeFunctionSnippet(sb, builtin)

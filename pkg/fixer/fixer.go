@@ -110,6 +110,9 @@ func (f *Fixer) FixViolations(
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
+	// rangeValCopy may be expensive, but this is not critical enough
+	// to motivate cluttering the code
+	//nolint:gocritic
 	for _, violation := range violations {
 		file := violation.Location.File
 
@@ -219,6 +222,7 @@ func (f *Fixer) applyLinterFixes(
 			break
 		}
 
+		//nolint:gocritic
 		for _, violation := range rep.Violations {
 			file := violation.Location.File
 

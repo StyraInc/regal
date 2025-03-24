@@ -218,6 +218,7 @@ The following rules are currently available:
 | bugs        | [leaked-internal-reference](https://docs.styra.com/regal/rules/bugs/leaked-internal-reference)          | Outside reference to internal rule or function            |
 | bugs        | [not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop)                        | Use of != in loop                                         |
 | bugs        | [redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check)          | Redundant existence check                                 |
+| bugs        | [redundant-loop-count](https://docs.styra.com/regal/rules/bugs/redundant-loop-count)                    | Redundant count before loop                               |
 | bugs        | [rule-assigns-default](https://docs.styra.com/regal/rules/bugs/rule-assigns-default)                    | Rule assigned its default value                           |
 | bugs        | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                                  | Rule named "if"                                           |
 | bugs        | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                    | Rule name shadows built-in                                |

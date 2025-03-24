@@ -85,6 +85,11 @@ redundant_existence_check if {
 	startswith(input.foo, "bar")
 }
 
+redundant_loop_count if {
+	count(input.coll) > 0
+	some x in input.coll
+}
+
 deprecated_builtin := all([true])
 
 partial contains "foo"

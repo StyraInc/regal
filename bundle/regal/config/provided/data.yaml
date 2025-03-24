@@ -34,6 +34,8 @@ rules:
       level: error
     redundant-existence-check:
       level: error
+    redundant-loop-count:
+      level: error
     rule-assigns-default:
       level: error
     rule-named-if:

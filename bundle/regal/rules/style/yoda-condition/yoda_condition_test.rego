@@ -38,6 +38,23 @@ test_fail_yoda_conditions_not_equals if {
 	])
 }
 
+test_fail_yoda_conditions_greater_and_less_than if {
+	module := ast.policy(`rule if {
+		1 < count(input.bar)
+		1 > count(input.bar)
+		1 <= count(input.bar)
+		1 >= count(input.bar)
+	}`)
+	r := rule.report with input as module
+
+	r == expected_with_location([
+		{"col": 3, "end": {"row": 4, "col": 23}, "file": "policy.rego", "row": 4, "text": "\t\t1 < count(input.bar)"},
+		{"col": 3, "end": {"row": 5, "col": 23}, "file": "policy.rego", "row": 5, "text": "\t\t1 > count(input.bar)"},
+		{"col": 3, "end": {"row": 6, "col": 24}, "file": "policy.rego", "row": 6, "text": "\t\t1 <= count(input.bar)"},
+		{"col": 3, "end": {"row": 7, "col": 24}, "file": "policy.rego", "row": 7, "text": "\t\t1 >= count(input.bar)"},
+	])
+}
+
 test_success_no_yoda_condition if {
 	module := ast.policy(`rule if {
 		input.bar == "foo"

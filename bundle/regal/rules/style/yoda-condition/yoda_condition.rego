@@ -9,7 +9,7 @@ report contains violation if {
 	value := ast.found.refs[_][_]
 
 	value[0].value[0].type == "var"
-	value[0].value[0].value in {"equal", "neq"} # perhaps add more operators here?
+	value[0].value[0].value in {"equal", "neq", "gt", "lt", "gte", "lte"}
 	value[1].type in ast.scalar_types
 
 	not value[2].type in ast.scalar_types

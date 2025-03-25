@@ -98,6 +98,11 @@ impossible_not if {
 	not partial
 }
 
+time_now_ns_twice := time.now_ns() - now if {
+	now := time.now_ns()
+	numbers.range(1, 10)
+}
+
 argument_always_wildcard(_) if true
 
 argument_always_wildcard(_) if true

@@ -44,6 +44,8 @@ rules:
       level: error
     sprintf-arguments-mismatch:
       level: error
+    time-now-ns-twice:
+      level: error
     top-level-iteration:
       level: error
     unassigned-return-value:

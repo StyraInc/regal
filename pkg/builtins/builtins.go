@@ -1,4 +1,4 @@
-//nolint:gochecknoglobals,wrapcheck
+//nolint:wrapcheck
 package builtins
 
 import (

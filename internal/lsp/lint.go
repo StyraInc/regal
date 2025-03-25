@@ -293,6 +293,8 @@ func convertReportToDiagnostics(
 ) map[string][]types.Diagnostic {
 	fileDiags := make(map[string][]types.Diagnostic)
 
+	// rangeValCopy necessary, as value copied in loop anyway
+	//nolint:gocritic
 	for _, item := range rpt.Violations {
 		// here errors are presented as warnings, and warnings as info
 		// to differentiate from parse errors

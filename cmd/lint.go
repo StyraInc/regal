@@ -118,8 +118,8 @@ func init() {
 			errorsFound := 0
 			warningsFound := 0
 
-			for _, violation := range rep.Violations {
-				switch violation.Level {
+			for i := range rep.Violations {
+				switch rep.Violations[i].Level {
 				case "error":
 					errorsFound++
 				case "warning":

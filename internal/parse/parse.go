@@ -27,10 +27,7 @@ func ParserOptions() ast.ParserOptions {
 	}
 }
 
-//nolint:gochecknoglobals
-var (
-	attemptVersionOrder = [2]ast.RegoVersion{ast.RegoV1, ast.RegoV0}
-)
+var attemptVersionOrder = [2]ast.RegoVersion{ast.RegoV1, ast.RegoV0}
 
 // ModuleWithOpts parses a module with the given options. If the Rego version is unknown, the function
 // may attempt to run several parser versions to determine the correct version. Setting the Rego version

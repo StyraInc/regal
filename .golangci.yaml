@@ -1,76 +1,111 @@
+version: "2"
 linters:
-  enable-all: true
+  default: all
   disable:
-    # annoying
-    - gocyclo
-    - tagliatelle
-    - nestif
-    - gocognit
-    - varnamelen
-    - nonamedreturns
-    - testpackage
-    - goconst
-    - gochecknoinits
-    - mnd
-    - inamedparam
-    - err113
-    - godox
-    - exhaustruct
+    # these linters are disabled either because they
+    # are annoying or because they are deprecated
     - cyclop
-    - ireturn
+    - err113
+    - exhaustive
+    - exhaustruct
     - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocyclo
+    - godox
     - gomoddirectives # need replacements for wasip1
-    - tenv # deprecated
-linters-settings:
-  tagliatelle:
-    case:
+    - inamedparam
+    - ireturn
+    - mnd
+    - nestif
+    - nonamedreturns
+    - tagliatelle
+    - testpackage
+    - varnamelen
+  settings:
+    depguard:
       rules:
-        json: snake
-  revive:
-    rules:
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-parameter
-      - name: unused-parameter
-        severity: warning
-        disabled: false
-        arguments:
-          - allowRegex: "^_"
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-receiver
-      - name: unused-receiver
-        severity: warning
-        disabled: false
-        arguments:
-          - allowRegex: "^_"
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/open-policy-agent/opa)
-      - prefix(github.com/styrainc/roast)
-      - prefix(github.com/styrainc/regal)
-      - blank
-      - dot
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "gopkg.in/yaml.v2"
-            desc: use yaml.v3 only
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-      # this is nice, but it doesn't seem possible to disable
-      # this for tests? definitely don't want this in tests
-      - fieldalignment
-
-issues:
-  exclude-dirs:
-    - internal/lsp/opa
-  exclude-files:
-    # For whatever reason, the exclude-dirs setting isn't honored when
-    # golangci-lint is targeting one of these files *specifically* rather
-    # than whole whole workspace / directory. This happens when opening up
-    # one of these files in VS Code, which will have the linter complain
-    # loudly. Hopefully this workaround can be removed in the future.
-    - scanner.go
-    - tokens.go
+        main:
+          deny:
+            - pkg: gopkg.in/yaml.v2
+              desc: use yaml.v3 only
+    gocritic:
+      disabled-checks:
+        - hugeParam
+      enabled-checks:
+        - filepathJoin
+        - dupImport
+        - redundantSprint
+        - stringConcatSimplify
+      enabled-tags:
+        - performance
+    govet:
+      disable:
+        - shadow
+        # this is nice, but it doesn't seem possible to disable
+        # this for tests? definitely don't want this in tests
+        - fieldalignment
+      enable-all: true
+    perfsprint:
+      err-error: true
+    revive:
+      rules:
+        # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-parameter
+        - name: unused-parameter
+          arguments:
+            - allowRegex: ^_
+          severity: warning
+          disabled: false
+        # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unused-receiver
+        - name: unused-receiver
+          arguments:
+            - allowRegex: ^_
+          severity: warning
+          disabled: false
+    staticcheck:
+      checks:
+        - all
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - scanner.go
+      - tokens.go
+      - internal/lsp/opa
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/open-policy-agent/opa)
+        - prefix(github.com/styrainc/roast)
+        - prefix(github.com/styrainc/regal)
+        - blank
+        - dot
+  exclusions:
+    generated: lax
+    paths:
+      - internal/lsp/opa
+      # For whatever reason, the exclude-dirs setting isn't honored when
+      # golangci-lint is targeting one of these files *specifically* rather
+      # than whole whole workspace / directory. This happens when opening up
+      # one of these files in VS Code, which will have the linter complain
+      # loudly. Hopefully this workaround can be removed in the future.
+      - scanner.go
+      - tokens.go

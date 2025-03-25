@@ -109,10 +109,11 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 
 	numsWarning, numsError := 0, 0
 
-	for _, violation := range r.Violations {
-		if violation.Level == "warning" {
+	for i := range r.Violations {
+		switch r.Violations[i].Level {
+		case "warning":
 			numsWarning++
-		} else if violation.Level == "error" {
+		case "error":
 			numsError++
 		}
 	}
@@ -167,8 +168,8 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 
 	fixableViolations := util.NewSet[string]()
 
-	for _, violation := range r.Violations {
-		if fix, ok := f.GetFixForName(violation.Title); ok {
+	for i := range r.Violations {
+		if fix, ok := f.GetFixForName(r.Violations[i].Title); ok {
 			fixableViolations.Add(fix.Name())
 		}
 	}
@@ -226,6 +227,8 @@ func buildPrettyViolationsTable(violations []report.Violation) string {
 	cyan := color.New(color.FgCyan).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 
+	// rangeValCopy, but Not performance sensitive
+	//nolint:gocritic
 	for i, violation := range violations {
 		description := red(violation.Description)
 		if violation.Level == "warning" {
@@ -288,8 +291,8 @@ func (tr CompactReporter) Publish(_ context.Context, r report.Report) error {
 	table.SetColWidth(80)
 	table.SetAutoWrapText(true)
 
-	for _, violation := range r.Violations {
-		table.Append([]string{violation.Location.String(), violation.Description})
+	for i := range r.Violations {
+		table.Append([]string{r.Violations[i].Location.String(), r.Violations[i].Description})
 	}
 
 	summary := fmt.Sprintf("%d %s linted , %d %s found.",
@@ -331,7 +334,7 @@ func (tr GitHubReporter) Publish(ctx context.Context, r report.Report) error {
 		r.Violations = []report.Violation{}
 	}
 
-	for _, violation := range r.Violations {
+	for _, violation := range r.Violations { //nolint:gocritic
 		if _, err := fmt.Fprintf(tr.out,
 			"::%s file=%s,line=%d,col=%d::%s\n",
 			violation.Level,
@@ -388,7 +391,7 @@ func (tr SarifReporter) Publish(_ context.Context, r report.Report) error {
 
 	run := sarif.NewRunWithInformationURI("Regal", "https://docs.styra.com/regal")
 
-	for _, violation := range r.Violations {
+	for _, violation := range r.Violations { //nolint:gocritic
 		pb := sarif.NewPropertyBag()
 		pb.Add("category", violation.Category)
 
@@ -461,8 +464,8 @@ func getDocumentationURL(violation report.Violation) string {
 
 func getUniqueViolationURLs(violations []report.Violation) map[string]string {
 	urls := make(map[string]string)
-	for _, violation := range violations {
-		urls[violation.Description] = getDocumentationURL(violation)
+	for i := range violations {
+		urls[violations[i].Description] = getDocumentationURL(violations[i])
 	}
 
 	return urls
@@ -478,7 +481,7 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 	files := make([]string, 0)
 	violationsPerFile := map[string][]report.Violation{}
 
-	for _, violation := range r.Violations {
+	for _, violation := range r.Violations { //nolint:gocritic
 		files = append(files, violation.Location.File)
 		violationsPerFile[violation.Location.File] = append(violationsPerFile[violation.Location.File], violation)
 	}
@@ -490,7 +493,7 @@ func (tr JUnitReporter) Publish(_ context.Context, r report.Report) error {
 			Name: file,
 		}
 
-		for _, violation := range violationsPerFile[file] {
+		for _, violation := range violationsPerFile[file] { //nolint:gocritic
 			text := ""
 			if violation.Location.Text != nil {
 				text = strings.TrimSpace(*violation.Location.Text)

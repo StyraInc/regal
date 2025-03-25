@@ -100,7 +100,7 @@ func CheckAndWarn(opts Options, w io.Writer) {
 See %s for the latest release.
 `
 
-	w.Write([]byte(fmt.Sprintf(tmpl, latestVersion, opts.CurrentVersion, ctaURL)))
+	fmt.Fprintf(w, tmpl, latestVersion, opts.CurrentVersion, ctaURL)
 }
 
 func getLatestVersion(ctx context.Context, opts Options) (string, error) {

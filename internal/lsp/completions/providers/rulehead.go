@@ -82,11 +82,11 @@ func (*RuleHead) Run(
 		symbol := completion.Variable
 		detail := "Rule"
 
-		switch {
-		case ref.Kind == types.ConstantRule:
+		switch ref.Kind {
+		case types.ConstantRule:
 			symbol = completion.Constant
 			detail = "Constant Rule"
-		case ref.Kind == types.Function:
+		case types.Function:
 			symbol = completion.Function
 			detail = "Function"
 		}

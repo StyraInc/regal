@@ -14,7 +14,6 @@ func ptr(s string) *string {
 	return &s
 }
 
-//nolint:gochecknoglobals
 var rep = report.Report{
 	Summary: report.Summary{
 		FilesScanned:  3,

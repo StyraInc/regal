@@ -81,8 +81,6 @@ job contains "tasks" if {
 # description: |
 #   Run all recommended tasks before submitting a PR
 # related_resources:
-#   - https://github.com/daixiang0/gci
-#   - https://github.com/mvdan/gofumpt
 #   - https://github.com/golangci/golangci-lint
 #   - https://github.com/open-policy-agent/opa
 job contains "pr" if {

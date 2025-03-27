@@ -75,5 +75,4 @@ _dynamic_ref(value) if {
 }
 
 _call_or_non_static(ref) if ref.value[0].type == "call"
-
 _call_or_non_static(ref) if not ast.static_ref(ref)

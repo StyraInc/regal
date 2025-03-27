@@ -37,7 +37,6 @@ _args_vars(fn) := {name |
 }
 
 _named_vars(arg) := {arg.value} if arg.type == "var"
-
 _named_vars(arg) := {var.value | some var in ast.find_term_vars(arg)} if arg.type in {"array", "object", "set"}
 
 # METADATA

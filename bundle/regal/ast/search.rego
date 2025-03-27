@@ -179,7 +179,6 @@ find_vars(node) := array.concat(
 # hack to work around the different input models of linting vs. the lsp package.. we
 # should probably consider something more robust
 _rules := input.rules
-
 _rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
 
 # METADATA:

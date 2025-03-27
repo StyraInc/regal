@@ -44,7 +44,5 @@ _illegal_value_ref(value, rule, identifiers) if {
 }
 
 _is_arg_or_input(value, rule) if value in ast.function_arg_names(rule)
-
 _is_arg_or_input(value, _) if startswith(_path(value), "input.")
-
 _is_arg_or_input("input", _)

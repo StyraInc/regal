@@ -33,9 +33,7 @@ _enabled(true, false) := false
 default _valid_test_file_name(_) := false
 
 _valid_test_file_name(filename) if endswith(filename, "_test.rego")
-
-# Styra DAS convention considered OK
-_valid_test_file_name("test.rego")
+_valid_test_file_name("test.rego") # Styra DAS convention considered OK
 
 _cfg := config.for_rule("bugs", "leaked-internal-reference")
 

@@ -108,7 +108,6 @@ _except_imports contains exception if {
 }
 
 _trim_data(path) := array.slice(path, 1, count(path)) if path[0] == "data"
-
 _trim_data(path) := path if path[0] != "data"
 
 _wildcard_match(imp_path, all_known_refs, except_imports) if {

@@ -191,7 +191,6 @@ is_output_var(rule, var) if {
 # description: as the name implies, answers whether provided value is a ref
 # scope: document
 is_ref(value) if value.type == "ref"
-
 is_ref(value) if value[0].type == "ref"
 
 # METADATA
@@ -237,7 +236,6 @@ _exclude_arg("assign", 0, _)
 ref_to_string(ref) := concat("", [_ref_part_to_string(i, part) | some i, part in ref])
 
 _ref_part_to_string(0, part) := part.value
-
 _ref_part_to_string(i, part) := _format_part(part) if i > 0
 
 _format_part(part) := sprintf(".%s", [part.value]) if {
@@ -328,7 +326,6 @@ implicit_boolean_assignment(rule) if {
 
 # or sometimes, like this...
 implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
-
 implicit_boolean_assignment(rule) if util.to_location_object(rule.head.value.location).col == 1
 
 # METADATA

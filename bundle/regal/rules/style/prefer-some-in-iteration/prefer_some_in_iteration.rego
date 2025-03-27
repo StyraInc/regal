@@ -88,7 +88,6 @@ _invalid_some_context(rule, path) if {
 _invalid_some_context(rule, path) if object.get(rule, array.slice(path, 0, count(path) - 2), {}).type == "call"
 
 _impossible_some(node) if node.type in {"array", "object", "set"}
-
 _impossible_some(node) if node.key
 
 # technically this is not an _impossible_ some, as we could replace e.g. `"x" == input[_]`

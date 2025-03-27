@@ -20,5 +20,4 @@ report contains violation if {
 }
 
 _significant_name(imp) := imp.alias
-
 _significant_name(imp) := regal.last(imp.path.value).value if not imp.alias

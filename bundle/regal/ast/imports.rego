@@ -62,15 +62,11 @@ imports_keyword(imports, keyword) if {
 }
 
 _imported_identifier(imp) := imp.alias
-
 _imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
 
 _arr(xs) := [y.value | some y in xs.path.value]
 
 _has_keyword(["future", "keywords"], _)
-
 _has_keyword(["future", "keywords", "every"], "in")
-
 _has_keyword(["future", "keywords", keyword], keyword)
-
 _has_keyword(["rego", "v1"], _)

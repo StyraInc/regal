@@ -72,5 +72,4 @@ _ignored_import_paths contains path if {
 }
 
 _normalize_part(0, part) := part if part != "data"
-
 _normalize_part(i, part) := part if i > 0

@@ -26,5 +26,4 @@ report contains violation if {
 _cfg := config.for_rule("style", "default-over-else")
 
 _considered_rules := input.rules if _cfg["prefer-default-functions"] == true
-
 _considered_rules := ast.rules if not _cfg["prefer-default-functions"]

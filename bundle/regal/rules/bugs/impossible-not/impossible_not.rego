@@ -109,7 +109,6 @@ aggregate_report contains violation if {
 }
 
 _var_to_ref(terms) := [terms] if terms.type == "var"
-
 _var_to_ref(terms) := terms.value if terms.type == "ref"
 
 _to_string(ref) := concat(".", [part.value | some part in ref])

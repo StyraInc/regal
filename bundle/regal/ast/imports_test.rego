@@ -2,22 +2,20 @@ package regal.ast_test
 
 import data.regal.ast
 
-test_imports_keyword_rego_v1 if {
+test_imports_keyword_rego_v1[keyword] if {
 	module := ast.policy("import rego.v1")
 
-	ast.imports_keyword(module.imports, "in")
-	ast.imports_keyword(module.imports, "if")
-	ast.imports_keyword(module.imports, "every")
-	ast.imports_keyword(module.imports, "contains")
+	some keyword in ["in", "if", "every", "contains"]
+
+	ast.imports_keyword(module.imports, keyword)
 }
 
-test_imports_keyword_future_keywords_all if {
+test_imports_keyword_future_keywords_all[keyword] if {
 	module := ast.policy("import future.keywords")
 
-	ast.imports_keyword(module.imports, "in")
-	ast.imports_keyword(module.imports, "if")
-	ast.imports_keyword(module.imports, "every")
-	ast.imports_keyword(module.imports, "contains")
+	some keyword in ["in", "if", "every", "contains"]
+
+	ast.imports_keyword(module.imports, keyword)
 }
 
 test_imports_keyword_future_keywords_single if {

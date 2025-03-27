@@ -89,10 +89,7 @@ _location_to_text(row, col, end_row, end_col) := text if {
 }
 
 _cut_col(0, 1, line, col, end_col) := substring(line, col - 1, end_col - 1)
-
-_cut_col(0, len, line, _, _) := line if {
-	len > 1
-}
+_cut_col(0, len, line, _, _) := line if len > 1
 
 _cut_col(i, len, line, _, end_col) := substring(line, 0, end_col) if {
 	i == len
@@ -132,7 +129,6 @@ rest(arr) := array.slice(arr, 1, count(arr))
 # description: converts x to set if array, returns x if set
 # scope: document
 to_set(x) := x if is_set(x)
-
 to_set(x) := {y | some y in x} if not is_set(x)
 
 # METADATA

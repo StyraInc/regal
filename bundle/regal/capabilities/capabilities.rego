@@ -30,18 +30,14 @@ has_strings_count if "strings.count" in object.keys(config.capabilities.builtins
 # description: true if the `if` keyword is available
 # scope: document
 has_if if "if" in config.capabilities.future_keywords
-
 has_if if has_rego_v1_feature
-
 has_if if is_opa_v1
 
 # METADATA
 # description: true if the `contains` keyword is available
 # scope: document
 has_contains if "contains" in config.capabilities.future_keywords
-
 has_contains if has_rego_v1_feature
-
 has_contains if is_opa_v1
 
 # METADATA

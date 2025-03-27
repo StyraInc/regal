@@ -58,7 +58,6 @@ aggregate(chain, aggregate_data) := entry if {
 }
 
 _category_title_from_path(path) := [category, title] if ["regal", "rules", category, title] = path
-
 _category_title_from_path(path) := [category, title] if ["custom", "regal", "rules", category, title] = path
 
 # METADATA
@@ -198,9 +197,7 @@ _with_text(loc_obj) := loc if {
 #   that will also include an `"end"` location attribute
 # scope: document
 location(x) := _with_text(util.to_location_object(x.location))
-
 location(x) := _with_text(util.to_location_object(x[0].location)) if is_array(x)
-
 location(x) := _with_text(util.to_location_object(x)) if is_string(x)
 
 # METADATA

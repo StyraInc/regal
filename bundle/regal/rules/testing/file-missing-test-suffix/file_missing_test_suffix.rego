@@ -21,6 +21,4 @@ report contains violation if {
 }
 
 _valid_test_file_name(filename) if endswith(filename, "_test.rego")
-
-# Styra DAS convention considered OK
-_valid_test_file_name("test.rego")
+_valid_test_file_name("test.rego") # Styra DAS convention considered OK

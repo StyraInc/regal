@@ -9,13 +9,9 @@ import data.regal.util
 # description: best-effort helper to determine if the current line is in a rule body
 # scope: document
 in_rule_body(line) if contains(line, " if ")
-
 in_rule_body(line) if contains(line, " contains ")
-
 in_rule_body(line) if contains(line, " else ")
-
 in_rule_body(line) if contains(line, "= ")
-
 in_rule_body(line) if regex.match(`^\s+`, line)
 
 # METADATA
@@ -126,5 +122,4 @@ ref_at(line, col) := word if {
 }
 
 _to_string(arr) := "" if count(arr) == 0
-
 _to_string(arr) := arr[0] if count(arr) > 0

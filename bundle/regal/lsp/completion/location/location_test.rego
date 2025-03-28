@@ -41,7 +41,7 @@ rule3 if {
 }
 
 # regal ignore:rule-length
-test_find_locals_at_location if {
+test_find_locals_at_location[loc] if {
 	policy := `package p
 
 import rego.v1
@@ -62,32 +62,18 @@ another if {
 	module := regal.parse_module("p.rego", policy)
 	lines := split(policy, "\n")
 
-	r1 := location.find_locals(module.rules, {"row": 6, "col": 1}) with input as module
-		with input.regal.file.lines as lines
-	r1 == set()
+	some [loc, want] in {
+		[{"row": 6, "col": 1}, set()],
+		[{"row": 6, "col": 10}, {"x"}],
+		[{"row": 10, "col": 1}, {"a", "b"}],
+		[{"row": 10, "col": 6}, {"a", "b", "c"}],
+		[{"row": 15, "col": 1}, {"x", "y"}],
+		[{"row": 16, "col": 1}, {"x", "y", "z"}],
+	}
 
-	r2 := location.find_locals(module.rules, {"row": 6, "col": 10}) with input as module
+	r := location.find_locals(module.rules, loc) with input as module
 		with input.regal.file.lines as lines
 		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r2 == {"x"}
 
-	r3 := location.find_locals(module.rules, {"row": 10, "col": 1}) with input as module
-		with input.regal.file.lines as lines
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r3 == {"a", "b"}
-
-	r4 := location.find_locals(module.rules, {"row": 10, "col": 6}) with input as module
-		with input.regal.file.lines as lines
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r4 == {"a", "b", "c"}
-
-	r5 := location.find_locals(module.rules, {"row": 15, "col": 1}) with input as module
-		with input.regal.file.lines as lines
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r5 == {"x", "y"}
-
-	r6 := location.find_locals(module.rules, {"row": 16, "col": 1}) with input as module
-		with input.regal.file.lines as lines
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
-	r6 == {"x", "y", "z"}
+	r == want
 }

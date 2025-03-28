@@ -5,36 +5,24 @@ import data.regal.config
 
 import data.regal.rules.bugs["if-object-literal"] as rule
 
-test_fail_if_empty_object if {
-	module := ast.with_rego_v1("rule if {}")
-	r := rule.report with input as module
-	r == {{
-		"category": "bugs",
-		"description": "Object literal following `if`",
-		"level": "error",
-		"location": {"col": 9, "file": "policy.rego", "row": 5, "text": "rule if {}", "end": {"col": 11, "row": 5}},
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/if-object-literal", "bugs"),
-		}],
-		"title": "if-object-literal",
-	}}
-}
+test_fail[name] if {
+	some name, [policy, location] in {
+		"empty_object": [
+			`rule if {}`,
+			{"col": 9, "row": 5, "text": "rule if {}", "end": {"col": 11, "row": 5}},
+		],
+		"non_empty_object": [
+			`rule if {"x": input.x}`,
+			{"col": 9, "row": 5, "text": `rule if {"x": input.x}`, "end": {"col": 23, "row": 5}},
+		],
+	}
 
-test_fail_non_empty_object if {
-	module := ast.with_rego_v1(`rule if {"x": input.x}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.with_rego_v1(policy)
 	r == {{
 		"category": "bugs",
 		"description": "Object literal following `if`",
 		"level": "error",
-		"location": {
-			"col": 9,
-			"file": "policy.rego",
-			"row": 5,
-			"text": `rule if {"x": input.x}`,
-			"end": {"col": 23, "row": 5},
-		},
+		"location": object.union({"file": "policy.rego"}, location),
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/if-object-literal", "bugs"),

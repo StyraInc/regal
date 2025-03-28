@@ -5,106 +5,57 @@ import data.regal.config
 
 import data.regal.rules.bugs["argument-always-wildcard"] as rule
 
-test_fail_single_function_single_argument_always_a_wildcard if {
-	module := ast.with_rego_v1(`
-	f(_) := 1
-	`)
+test_fail[name] if {
+	some name, case in cases
 
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(case.policy)
+
 	r == {{
 		"category": "bugs",
 		"description": "Argument is always a wildcard",
 		"level": "error",
-		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1", "end": {"col": 5, "row": 6}},
+		"location": object.union({"file": "policy.rego"}, case.location),
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
 		}],
 		"title": "argument-always-wildcard",
 	}}
+}
+
+cases["single function single argument always a wildcard"] := {
+	"policy": "f(_) := 1",
+	"location": {"col": 3, "end": {"col": 4, "row": 3}, "row": 3, "text": "f(_) := 1"},
+}
+
+cases["single argument always a wildcard"] := {
+	"policy": "f(_) := 1\nf(_) := 2",
+	"location": {"col": 3, "end": {"col": 4, "row": 3}, "row": 3, "text": "f(_) := 1"},
+}
+
+cases["single argument always a wildcard default function"] := {
+	"policy": "default f(_) := 1\nf(_) := 2",
+	"location": {"col": 11, "end": {"col": 12, "row": 3}, "row": 3, "text": "default f(_) := 1"},
+}
+
+cases["multiple argument always a wildcard"] := {
+	"policy": "f(x, _) := x + 1\nf(x, _) := x + 2",
+	"location": {"col": 6, "end": {"col": 7, "row": 3}, "row": 3, "text": "f(x, _) := x + 1"},
 }
 
 test_success_single_function_single_argument_always_a_wildcard_except_function_name if {
-	module := ast.with_rego_v1(`
-	mock_f(_) := 1
-	`)
+	module := ast.policy(`mock_f(_) := 1`)
 
 	r := rule.report with input as module with config.for_rule as {"except-function-name-pattern": "^mock_"}
+
 	r == set()
 }
 
-test_fail_single_argument_always_a_wildcard if {
-	module := ast.with_rego_v1(`
-	f(_) := 1
-	f(_) := 2
-	`)
-
-	r := rule.report with input as module
-	r == {{
-		"category": "bugs",
-		"description": "Argument is always a wildcard",
-		"level": "error",
-		"location": {"col": 4, "file": "policy.rego", "row": 6, "text": "\tf(_) := 1", "end": {"col": 5, "row": 6}},
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
-		}],
-		"title": "argument-always-wildcard",
-	}}
-}
-
-test_fail_single_argument_always_a_wildcard_default_function if {
-	module := ast.with_rego_v1(`
-	default f(_) := 1
-	f(_) := 2
-	`)
-
-	r := rule.report with input as module
-	r == {{
-		"category": "bugs",
-		"description": "Argument is always a wildcard",
-		"level": "error",
-		"location": {
-			"col": 12,
-			"file": "policy.rego",
-			"row": 6,
-			"text": "\tdefault f(_) := 1",
-			"end": {"col": 13, "row": 6},
-		},
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
-		}],
-		"title": "argument-always-wildcard",
-	}}
-}
-
-test_fail_multiple_argument_always_a_wildcard if {
-	module := ast.with_rego_v1(`
-	f(x, _) := x + 1
-	f(x, _) := x + 2
-	`)
-
-	r := rule.report with input as module
-	r == {{
-		"category": "bugs",
-		"description": "Argument is always a wildcard",
-		"level": "error",
-		"location": {"col": 7, "file": "policy.rego", "row": 6, "text": "\tf(x, _) := x + 1", "end": {"col": 8, "row": 6}},
-		"related_resources": [{
-			"description": "documentation",
-			"ref": config.docs.resolve_url("$baseUrl/$category/argument-always-wildcard", "bugs"),
-		}],
-		"title": "argument-always-wildcard",
-	}}
-}
-
 test_success_multiple_argument_not_always_a_wildcard if {
-	module := ast.with_rego_v1(`
-	f(x, _) := x + 1
-	f(_, y) := y + 2
+	r := rule.report with input as ast.policy(`
+		f(x, _) := x + 1
+		f(_, y) := y + 2
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }

@@ -17,10 +17,13 @@ test_json_pretty if {
 }`
 }
 
-test_rest if {
-	util.rest([1, 2, 3]) == [2, 3]
-	util.rest([1]) == []
-	util.rest([]) == []
+test_rest[of] if {
+	some [of, want] in {
+		[[1, 2, 3], [2, 3]],
+		[[1], []],
+		[[], []],
+	}
+	util.rest(of) == want
 }
 
 test_to_location_object if {
@@ -43,14 +46,16 @@ test_to_location_object if {
 	}
 }
 
-test_point_in_range if {
-	util.point_in_range([1, 2], [[0, 0], [1, 10]]) == true
-	util.point_in_range([0, 3], [[0, 1], [0, 4]]) == true
-	util.point_in_range([0, 0], [[0, 0], [0, 2]]) == true
-	util.point_in_range([0, 2], [[0, 0], [0, 2]]) == true
-	util.point_in_range([6, 6], [[5, 10], [7, 3]]) == true
-
-	util.point_in_range([0, 0], [[0, 1], [1, 10]]) == false
-	util.point_in_range([0, 3], [[0, 1], [0, 2]]) == false
-	util.point_in_range([9, 3], [[0, 1], [0, 2]]) == false
+test_point_in_range[sprintf("%v %v", [point, range])] if {
+	some [point, range, want] in [
+		[[1, 2], [[0, 0], [1, 10]], true],
+		[[0, 3], [[0, 1], [0, 4]], true],
+		[[0, 0], [[0, 0], [0, 2]], true],
+		[[0, 2], [[0, 0], [0, 2]], true],
+		[[6, 6], [[5, 10], [7, 3]], true],
+		[[0, 0], [[0, 1], [1, 10]], false],
+		[[0, 3], [[0, 1], [0, 2]], false],
+		[[9, 3], [[0, 1], [0, 2]], false],
+	]
+	util.point_in_range(point, range) == want
 }

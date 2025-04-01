@@ -24,9 +24,23 @@ allow := true if {
 }
 ```
 
+Which actually means:
+
+```rego
+package policy
+
+allow := true
+
+if {
+    authorized
+}
+```
+
 **Prefer**
 ```rego
 package policy
+
+import rego.v1
 
 allow := true if {
     authorized

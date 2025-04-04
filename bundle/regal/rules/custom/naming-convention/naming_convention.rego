@@ -33,9 +33,7 @@ report contains violation if {
 
 	target == "rule"
 
-	some rule in input.rules
-
-	not rule.head.args
+	some rule in ast.rules
 
 	name := ast.ref_to_string(rule.head.ref)
 

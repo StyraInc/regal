@@ -100,14 +100,14 @@ _is_name(term, pos) if {
 # description: all the rules (excluding functions) in the input AST
 rules := [rule |
 	some rule in input.rules
+
 	not rule.head.args
 ]
 
 # METADATA
 # description: all the test rules in the input AST
 tests := [rule |
-	some rule in input.rules
-	not rule.head.args
+	some rule in rules
 
 	startswith(ref_to_string(rule.head.ref), "test_")
 ]

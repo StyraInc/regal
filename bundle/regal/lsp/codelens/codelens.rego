@@ -64,17 +64,14 @@ _rule_lens(filename, rule, command, title) := {
 		"command": command,
 		"arguments": [json.marshal({
 			"target": filename,
-			"path": sprintf("%s.%s", [ast.ref_to_string(input["package"].path), ast.ref_static_to_string(rule.head.ref)]),
+			"path": sprintf("%s.%s", [
+				ast.ref_to_string(input["package"].path),
+				ast.ref_static_to_string(rule.head.ref),
+			]),
 			"row": util.to_location_object(rule.head.location).row,
 		})],
 	},
 }
-
-_rule_lens_args(filename, rule) := [
-	filename,
-	sprintf("%s.%s", [ast.ref_to_string(input["package"].path), ast.ref_static_to_string(rule.head.ref)]),
-	util.to_location_object(rule.head.location).row,
-]
 
 _unconditional_constant(rule) if {
 	not rule.body

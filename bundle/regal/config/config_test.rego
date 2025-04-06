@@ -77,3 +77,8 @@ test_all_configured_rules_exist if {
 }
 
 test_default_level_is_error if config.rule_level("unknown") == "error"
+
+test_path_prefix if {
+	config.path_prefix == ""
+	config.path_prefix == "foo" with data.internal.path_prefix as "foo"
+}

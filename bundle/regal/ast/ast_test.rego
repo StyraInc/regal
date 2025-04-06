@@ -356,3 +356,34 @@ x._z := false
 
 	{ast.ref_to_string(rule.head.ref) | some rule in public} == {"foo", "x.y"}
 }
+
+# only for coverage — we don't currently use is_ref as it's much too
+# expensive to call in a hot path https://github.com/open-policy-agent/opa/issues/7266
+# but as it's part of the "public API", we'll keep it around
+test_is_ref if {
+	ast.is_ref({"type": "ref", "value": "foo"})
+	ast.is_ref([{"type": "ref", "value": "foo"}])
+}
+
+test_var_in_head[case] if {
+	name := "foo"
+
+	some case, head in {
+		"value": {"value": {"type": "var", "value": name}},
+		"key": {"key": {"type": "var", "value": name}},
+		"term value": {"value": {"type": "object", "value": [[
+			{"value": "foo", "type": "string"},
+			{"type": "var", "value": name},
+		]]}},
+		"term key": {"key": {"type": "object", "value": [[
+			{"value": "foo", "type": "string"},
+			{"type": "var", "value": name},
+		]]}},
+		"ref": {"ref": [
+			{"type": "var", "value": "var"},
+			{"type": "var", "value": name},
+		]},
+	}
+
+	ast.var_in_head(head, "foo")
+}

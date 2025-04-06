@@ -89,6 +89,8 @@ rules:
       level: error
     prefer-set-or-object-rule:
       level: error
+    in-wildcard-key:
+      level: error
     use-contains:
       level: error
     use-if:

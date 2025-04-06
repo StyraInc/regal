@@ -143,6 +143,10 @@ use_in_operator if {
 	"item" == input.coll[_]
 }
 
+in_wildcard_key if {
+	some _, val in input.coll
+}
+
 prefer_set_or_object_rule := {x | some x in input; x == "violation"}
 
 equals_pattern_matching(x) := x == "x"

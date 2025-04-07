@@ -116,9 +116,3 @@ _in_on_row(location) := [keyword |
 ]
 
 _comment_row_index contains util.to_location_object(comment.location).row if some comment in input.comments
-
-_keywords := {
-	"in",
-	"some",
-	"every",
-}

@@ -371,21 +371,22 @@ is_chained_rule_body(rule, lines) if {
 }
 
 # METADATA
-# description: answers wether variable of `name` is found anywhere in provided rule `head`
+# description: answers whether variable of `name` is found anywhere in provided rule `head`
 # scope: document
 var_in_head(head, name) if {
+	head.value.type == "var"
 	head.value.value == name
 } else if {
+	head.key.type == "var"
 	head.key.value == name
 } else if {
-	some var in find_term_vars(head.value.value)
-	var.value == name
-} else if {
-	some var in find_term_vars(head.key.value)
-	var.value == name
-} else if {
-	some i, var in head.ref
+	some i, part in head.ref
 	i > 0
+	part.type == "var"
+	part.value == name
+} else if {
+	some type in ["value", "key"]
+	some var in find_term_vars(head[type].value)
 	var.value == name
 }
 

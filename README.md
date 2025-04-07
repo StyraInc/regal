@@ -240,6 +240,7 @@ The following rules are currently available:
 | idiomatic   | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)                 | Custom function may be replaced by `in` keyword           |
 | idiomatic   | [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)   | Directory structure should mirror package                 |
 | idiomatic   | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)         | Prefer pattern matching in function arguments             |
+| idiomatic   | [in-wildcard-key](https://docs.styra.com/regal/rules/idiomatic/in-wildcard-key)                         | Unnecessary wildcard key                                  |
 | idiomatic   | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)             | Missing entrypoint annotation                             |
 | idiomatic   | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)             | Use raw strings for regex patterns                        |
 | idiomatic   | [prefer-set-or-object-rule](https://docs.styra.com/regal/rules/idiomatic/prefer-set-or-object-rule)     | Prefer set or object rule over comprehension              |

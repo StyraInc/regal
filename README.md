@@ -252,6 +252,7 @@ The following rules are currently available:
 | idiomatic   | [use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count)                     | Use `strings.count` where possible                        |
 | imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)               | Avoid importing input                                     |
 | imports     | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                           | Circular import                                           |
+| imports     | [confusing-alias](https://docs.styra.com/regal/rules/imports/confusing-alias)                           | Confusing alias of existing import                        |
 | imports     | [ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import)                             | Reference ignores import                                  |
 | imports     | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)         | Use explicit future keyword imports                       |
 | imports     | [import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule)                       | Import declared after rule                                |

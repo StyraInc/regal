@@ -19,6 +19,9 @@ import input
 import data.foo
 import data.foo
 
+# confusing-alias
+import data.foo as bar
+
 import data.redundant.alias as alias
 
 # redundant-data-import

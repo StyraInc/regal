@@ -25,7 +25,7 @@ test_rule_named_foo_not_allowed if {
 				"row": 1,
 				"col": 12,
 			},
-			"text": "foo := true"
+			"text": "foo := true",
 		},
 		"related_resources": [{
 			"description": "documentation",

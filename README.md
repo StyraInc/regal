@@ -279,6 +279,7 @@ The following rules are currently available:
 | style       | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)                     | Function argument used for return value                   |
 | style       | [line-length](https://docs.styra.com/regal/rules/style/line-length)                                     | Line too long                                             |
 | style       | [messy-rule](https://docs.styra.com/regal/rules/style/messy-rule)                                       | Messy incremental rule                                    |
+| style       | [mixed-iteration](https://docs.styra.com/regal/rules/style/mixed-iteration)                             | Mixed iteration style                                     |
 | style       | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)                 | Comment should start with whitespace                      |
 | style       | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                             | File should be formatted with `opa fmt`                   |
 | style       | [pointless-reassignment](https://docs.styra.com/regal/rules/style/pointless-reassignment)               | Pointless reassignment of variable                        |

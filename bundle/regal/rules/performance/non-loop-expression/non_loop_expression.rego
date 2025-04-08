@@ -10,8 +10,8 @@ report contains violation if {
 	some rule_index, sps in _loop_start_points
 	first_loop_row := min(object.keys(sps))
 
-	some row
-	some expr in _exprs[rule_index][row]
+	some row, expr
+	_exprs[rule_index][row][expr]
 	row > first_loop_row
 
 	term_vars := ast.find_term_vars(expr)
@@ -95,14 +95,14 @@ _loop_start_points[rule_index][row] contains var if {
 	row := to_number(substring(var.location, 0, indexof(var.location, ":")))
 }
 
-_assignment_index[rule_index][var.value] contains row if {
+_assignment_index[rule_index][var_value] contains row if {
 	some rule_index, row
-	some var in _loop_start_points[rule_index][row]
+	var_value := _loop_start_points[rule_index][row][_].value
 }
 
 _assignment_index[rule_index][var.value] contains loc.row if {
 	some rule_index
-	some var in ast.found.vars[rule_index].assign
+	var := ast.found.vars[rule_index].assign[_]
 	loc := util.to_location_object(var.location)
 
 	# ignore vars in comprehensions

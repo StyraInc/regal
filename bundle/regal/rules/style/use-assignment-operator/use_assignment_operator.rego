@@ -7,9 +7,9 @@ import data.regal.result
 
 report contains violation if {
 	# foo = "bar"
-	# default foo = "bar
+	# default foo = "bar"
 	# foo(bar) = "baz"
-	# default foo(_) = "bar
+	# default foo(_) = "bar"
 	some rule in input.rules
 	not rule.head.assign
 	not rule.head.key

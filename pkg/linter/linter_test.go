@@ -14,6 +14,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
+	"github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/cache"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/test"
@@ -782,5 +783,52 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 
 	if len(rep.Violations) != 0 {
 		_ = rep.Violations
+	}
+}
+
+// Runs a separate benchmark for each rule in the bundle. Note that this will take *several* minutes to run,
+// meaning you do NOT want to do this more than occasionally. You may however find it helpful to use this with
+// a single, or handful of rules to get a better idea of how long they take to run, and relative to each other.
+// The reason why this is currently so slow is that we parse + compile everything for each rule, which is really
+// something we should fix: https://github.com/StyraInc/regal/issues/1394
+func BenchmarkEachRule(b *testing.B) {
+	conf, err := config.LoadConfigWithDefaultsFromBundle(&bundle.LoadedBundle, nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for _, category := range conf.Rules {
+		for ruleName := range category {
+			// Uncomment / modify this to benchmark specific rule(s) only
+			//
+			// if ruleName != "metasyntactic-variable" {
+			// 	continue
+			// }
+			b.Run(ruleName, func(b *testing.B) {
+				linter := NewLinter().
+					WithInputPaths([]string{"../../bundle"}).
+					WithBaseCache(cache.NewBaseCache()).
+					WithDisableAll(true).
+					WithEnabledRules(ruleName)
+
+				b.ResetTimer()
+				b.ReportAllocs()
+
+				var err error
+
+				var rep report.Report
+
+				for range b.N {
+					rep, err = linter.Lint(context.Background())
+					if err != nil {
+						b.Fatal(err)
+					}
+				}
+
+				if len(rep.Violations) != 0 {
+					_ = rep.Violations
+				}
+			})
+		}
 	}
 }

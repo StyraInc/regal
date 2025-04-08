@@ -14,7 +14,8 @@ import data.regal.util
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_if
 
 report contains violation if {
-	# Note: this covers both rules and functions, which is what we want here
+	max_line_length := object.get(config.for_rule("custom", "one-liner-rule"), "max-line-length", 120)
+
 	some rule in input.rules
 
 	# Bail out of rules with else for now. It is possible that they can be made
@@ -37,9 +38,6 @@ report contains violation if {
 	# Technically, the `if` could be on another line, but who would do that?
 	regex.match(`\s+if`, lines[0])
 	_rule_body_brackets(lines)
-
-	cfg := config.for_rule("custom", "one-liner-rule")
-	max_line_length := object.get(cfg, "max-line-length", 120)
 
 	# ideally we'd take style preference into account but for now assume tab == 4 spaces
 	# then just add the sum of the line counts minus the removed '{' character

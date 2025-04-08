@@ -14,11 +14,9 @@ report contains violation if {
 	not rule["default"]
 	not rule.body
 
+	ast.static_ref(rule.head.value)
+
 	name := ast.ref_static_to_string(rule.head.ref)
-
-	value := rule.head.value
-
-	ast.static_ref(value)
 
 	# part 2 - find corresponding assignment of constant on negated condition
 	# example: `rule := 1 if not input.foo`
@@ -34,7 +32,8 @@ report contains violation if {
 	ast.is_constant(sibling.head.value)
 	count(sibling.body) == 1
 	sibling.body[0].negated
-	ast.ref_to_string(sibling.body[0].terms.value) == ast.ref_to_string(value.value)
+
+	ast.ref_value_equal(sibling.body[0].terms.value, rule.head.value.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(sibling.body[0]))
 }

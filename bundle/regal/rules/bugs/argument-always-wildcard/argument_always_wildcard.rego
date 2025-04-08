@@ -5,11 +5,12 @@ package regal.rules.bugs["argument-always-wildcard"]
 import data.regal.ast
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 report contains violation if {
 	some name, functions in _function_groups
 
-	fn := _any_member(functions)
+	fn := util.any_set_item(functions)
 
 	some pos in numbers.range(0, count(fn.head.args) - 1)
 
@@ -30,5 +31,3 @@ _function_groups[name] contains fn if {
 }
 
 _function_name_excepted(cfg, name) if regex.match(cfg["except-function-name-pattern"], name)
-
-_any_member(s) := [x | some x in s][0]

@@ -12,9 +12,8 @@ import data.regal.result
 
 report contains violation if {
 	some node
-	ast.negated_expressions[_][node]
+	ast.negated_expressions[_][node].terms.type == "var"
 
-	node.terms.type == "var"
 	strings.any_prefix_match(node.terms.value, {
 		"cannot_",
 		"no_",

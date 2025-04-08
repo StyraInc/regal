@@ -7,7 +7,6 @@ import data.regal.result
 
 report contains violation if {
 	cfg := config.for_rule("style", "line-length")
-
 	max_line_length := object.get(cfg, "max-line-length", 120)
 
 	some i, line in input.regal.file.lines

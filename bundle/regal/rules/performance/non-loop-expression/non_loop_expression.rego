@@ -86,10 +86,9 @@ _loop_start_points[rule_index][loc.row] contains var if {
 }
 
 _loop_start_points[rule_index][row] contains var if {
-	some rule_index
-	call := ast.function_calls[rule_index][_]
+	some rule_index, call
+	ast.function_calls[rule_index][call].name == "walk"
 
-	call.name == "walk"
 	call.args[1].type == "array"
 
 	some var in ast.find_term_vars(call.args[1].value)

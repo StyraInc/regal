@@ -63,7 +63,7 @@ _possible_top_level_iteration(rule) if {
 _invalid_some_context(rule, path) if {
 	some p in util.all_paths(path)
 
-	node := object.get(rule, p, [])
+	node := object.get(rule, p, false)
 
 	_impossible_some(node)
 }

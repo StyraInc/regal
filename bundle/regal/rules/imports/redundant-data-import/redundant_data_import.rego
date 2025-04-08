@@ -5,11 +5,10 @@ package regal.rules.imports["redundant-data-import"]
 import data.regal.result
 
 report contains violation if {
-	some imported in input.imports
+	path := input.imports[_].path.value
 
-	count(imported.path.value) == 1
+	count(path) == 1
+	path[0].value == "data"
 
-	imported.path.value[0].value == "data"
-
-	violation := result.fail(rego.metadata.chain(), result.location(imported.path.value[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(path[0]))
 }

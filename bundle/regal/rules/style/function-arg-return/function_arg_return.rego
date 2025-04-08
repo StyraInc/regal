@@ -12,10 +12,8 @@ report contains violation if {
 	excluded_functions := {name | some name in cfg["except-functions"]} | {"print"}
 	included_functions := ast.all_function_names - excluded_functions
 
-	some rule_index in ast.rule_index_strings
-	some fn in ast.function_calls[rule_index]
-
-	fn.name in included_functions
+	some fn
+	ast.function_calls[_][fn].name in included_functions
 
 	count(fn.args) > count(ast.all_functions[fn.name].decl.args)
 

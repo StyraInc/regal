@@ -6,10 +6,9 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule_index
-	call := ast.function_calls[rule_index][_]
+	some rule_index, call
+	ast.function_calls[rule_index][call].name == "walk"
 
-	call.name == "walk"
 	call.args[1].type == "array"
 	call.args[1].value[0].type == "var"
 
@@ -45,9 +44,7 @@ _var_in_arg(arg, var) if {
 }
 
 _var_in_ref(rule_index, var) if {
-	some ref_var in ast.found.vars[rule_index].ref
-
-	var.value == ref_var.value
+	ast.found.vars[rule_index].ref[_].value == var.value
 }
 
 _var_in_ref(rule_index, var) if {

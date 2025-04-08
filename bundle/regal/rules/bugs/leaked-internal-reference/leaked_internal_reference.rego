@@ -9,21 +9,21 @@ import data.regal.result
 report contains violation if {
 	_enabled(_valid_test_file_name(input.regal.file.name), _enable_for_test_files)
 
-	ref := ast.found.refs[_][_]
+	value := ast.found.refs[_][_].value
 
-	contains(ast.ref_to_string(ref.value), "._")
+	contains(ast.ref_to_string(value), "._")
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(ref.value))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(value))
 }
 
 report contains violation if {
 	_enabled(_valid_test_file_name(input.regal.file.name), _enable_for_test_files)
 
-	some imported in input.imports
+	value := input.imports[_].path.value
 
-	contains(ast.ref_to_string(imported.path.value), "._")
+	contains(ast.ref_to_string(value), "._")
 
-	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(imported.path.value))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(value))
 }
 
 default _enabled(_, _) := true
@@ -35,8 +35,6 @@ default _valid_test_file_name(_) := false
 _valid_test_file_name(filename) if endswith(filename, "_test.rego")
 _valid_test_file_name("test.rego") # Styra DAS convention considered OK
 
-_cfg := config.for_rule("bugs", "leaked-internal-reference")
-
 default _enable_for_test_files := false
 
-_enable_for_test_files := object.get(_cfg, "include-test-files", false)
+_enable_for_test_files := config.for_rule("bugs", "leaked-internal-reference")["include-test-files"]

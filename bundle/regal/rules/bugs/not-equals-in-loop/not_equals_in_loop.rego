@@ -6,17 +6,17 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some expr in ast.exprs[_]
+	terms := ast.exprs[_][_].terms
 
-	expr.terms[0].type == "ref"
-	expr.terms[0].value[0].type == "var"
-	expr.terms[0].value[0].value == "neq"
+	terms[0].type == "ref"
+	terms[0].value[0].type == "var"
+	terms[0].value[0].value == "neq"
 
-	some neq_term in array.slice(expr.terms, 1, count(expr.terms))
+	some neq_term in array.slice(terms, 1, count(terms))
 	neq_term.type == "ref"
 
 	some value in neq_term.value
 	ast.is_wildcard(value)
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr.terms[0]))
+	violation := result.fail(rego.metadata.chain(), result.location(terms[0]))
 }

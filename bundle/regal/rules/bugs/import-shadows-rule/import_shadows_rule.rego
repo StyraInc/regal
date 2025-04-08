@@ -6,11 +6,10 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some i
-	ref := input.rules[i].head.ref
+	head := input.rules[_].head
 
-	count(ref) == 1
-	ast.ref_to_string(ref) in ast.imported_identifiers
+	count(head.ref) == 1
+	head.ref[0].value in ast.imported_identifiers
 
-	violation := result.fail(rego.metadata.chain(), result.location(input.rules[i].head))
+	violation := result.fail(rego.metadata.chain(), result.location(head))
 }

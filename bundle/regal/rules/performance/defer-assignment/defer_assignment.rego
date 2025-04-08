@@ -22,8 +22,8 @@ report contains violation if {
 	not ast.is_assignment(next)
 	not ast.var_in_head(rule.head, var.value)
 	not _var_used_in_expression(var, next)
-	not _iteration_expression(next)
-	not _print_call(next)
+	not _iteration_expression(next.terms)
+	not _print_call(next.terms)
 
 	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }
@@ -80,18 +80,18 @@ _var_used_in_expression(var, expr) if {
 # while not technically checking of use here:
 # the next expression having symbols indicate iteration, and
 # we don't want to defer assignment into a loop
-_iteration_expression(expr) if expr.terms.symbols
+_iteration_expression(terms) if terms.symbols
 
 # likewise with every
-_iteration_expression(expr) if expr.terms.domain
+_iteration_expression(terms) if terms.domain
 
 # and walk
-_iteration_expression(expr) if {
-	expr.terms[0].value[0].type == "var"
-	expr.terms[0].value[0].value == "walk"
+_iteration_expression(terms) if {
+	terms[0].value[0].type == "var"
+	terms[0].value[0].value == "walk"
 }
 
-_print_call(expr) if {
-	expr.terms[0].value[0].type == "var"
-	expr.terms[0].value[0].value == "print"
+_print_call(terms) if {
+	terms[0].value[0].type == "var"
+	terms[0].value[0].value == "print"
 }

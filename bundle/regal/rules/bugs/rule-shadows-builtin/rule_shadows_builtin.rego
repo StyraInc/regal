@@ -6,9 +6,9 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some rule in input.rules
+	head := input.rules[_].head
 
-	ast.ref_to_string(rule.head.ref) in ast.builtin_namespaces
+	ast.ref_to_string(head.ref) in ast.builtin_namespaces
 
-	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
+	violation := result.fail(rego.metadata.chain(), result.location(head))
 }

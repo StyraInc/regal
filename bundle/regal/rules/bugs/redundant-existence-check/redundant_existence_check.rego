@@ -17,12 +17,9 @@ report contains violation if {
 
 	ast.static_ref(expr.terms)
 
-	ref_str := ast.ref_to_string(expr.terms.value)
-	next_expr := rule.body[expr_index + 1]
+	some term in rule.body[expr_index + 1].terms
 
-	some term in next_expr.terms
-
-	ast.ref_to_string(term.value) == ref_str
+	ast.ref_value_equal(expr.terms.value, term.value)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }
@@ -55,12 +52,10 @@ report contains violation if {
 
 	rule.head.value.type == "ref"
 
-	ref_str := ast.ref_to_string(rule.head.value.value)
-
 	some expr in ast.exprs[rule_index]
 
 	expr.terms.type == "ref"
-	ast.ref_to_string(expr.terms.value) == ref_str
+	ast.ref_value_equal(expr.terms.value, rule.head.value.value)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }

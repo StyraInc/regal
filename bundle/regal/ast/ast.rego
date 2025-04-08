@@ -109,7 +109,7 @@ rules := [rule |
 tests := [rule |
 	some rule in rules
 
-	startswith(ref_to_string(rule.head.ref), "test_")
+	startswith(rule.head.ref[0].value, "test_")
 ]
 
 # METADATA
@@ -218,7 +218,7 @@ function_calls[rule_index] contains call if {
 	]
 
 	call := {
-		"name": ref_to_string(ref[0].value),
+		"name": name,
 		"location": ref[0].location,
 		"args": args,
 	}
@@ -230,6 +230,18 @@ _exclude_arg(_, _, arg) if arg.type == "call"
 # first "arg" of assign is the variable to assign to.. special case we simply
 # ignore here, as it's covered elsewhere
 _exclude_arg("assign", 0, _)
+
+# METADATA
+# description: |
+#   true if both ref values (or "paths") are equal in type and value for each path component, ignoring locations
+ref_value_equal(v1, v2) if {
+	count(v1) == count(v2)
+
+	every i, part in v1 {
+		part.type == v2[i].type
+		part.value == v2[i].value
+	}
+}
 
 # METADATA
 # description: returns the "path" string of any given ref value

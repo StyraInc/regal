@@ -111,6 +111,51 @@ func TestLintEmptyDir(t *testing.T) {
 	}
 }
 
+func TestLintFileFromStdin(t *testing.T) {
+	t.Parallel()
+
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
+
+	cmd := exec.Command(binary(), "lint", "-f", "json", "-")
+	cmd.Stdin = strings.NewReader("package p\n\nallow =  true")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if exp, act := "", stderr.String(); exp != act {
+		t.Errorf("expected stderr %q, got %q", exp, act)
+	}
+
+	var rep report.Report
+	if err := json.Unmarshal(stdout.Bytes(), &rep); err != nil {
+		t.Fatalf("expected JSON response, got %v", stdout.String())
+	}
+
+	if rep.Summary.NumViolations != 2 {
+		t.Errorf("epected 2 violations, got %d", rep.Summary.NumViolations)
+	}
+
+	violations := make([]string, 0, len(rep.Violations))
+	for _, violation := range rep.Violations {
+		violations = append(violations, violation.Title)
+	}
+
+	slices.Sort(violations)
+
+	expected := []string{"opa-fmt", "use-assignment-operator"}
+
+	if !slices.Equal(violations, expected) {
+		t.Errorf("expected violations %v, got %v", expected, violations)
+	}
+
+	if exp, act := 3, cmd.ProcessState.ExitCode(); exp != act {
+		t.Errorf("expected exit code %d, got %d", exp, act)
+	}
+}
+
 func TestLintNonExistentDir(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("skipping on Windows as the error message is different")

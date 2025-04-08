@@ -79,7 +79,6 @@ test_rule_violation_if_repetition_of_more_than_one_path_component if {
 	}
 }
 
-# regal ignore:rule-length
 test_rule_violation_if_repetition_multiple if {
 	module := regal.parse_module("example.rego", `
     package policy.foo.bar

@@ -53,7 +53,6 @@ test_aggregate_rule_contains_single_self_ref if {
 	}}
 }
 
-# regal ignore:rule-length
 test_aggregate_rule_surfaces_refs if {
 	module := regal.parse_module("example.rego", `
     package policy.foo

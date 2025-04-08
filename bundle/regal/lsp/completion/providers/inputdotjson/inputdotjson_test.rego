@@ -2,7 +2,6 @@ package regal.lsp.completion.providers.inputdotjson_test
 
 import data.regal.lsp.completion.providers.inputdotjson as provider
 
-# regal ignore:rule-length
 test_matching_input_suggestions if {
 	items := provider.items with input as input_obj
 	items == {

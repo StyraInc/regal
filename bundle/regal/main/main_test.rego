@@ -327,7 +327,6 @@ test_camelcase if {
 	{notice.title | some notice in result.lint.notices} == {"file-missing-test-suffix", "directory-package-mismatch"}
 }
 
-# regal ignore:rule-length
 test_main_lint if {
 	policy := `package p
 	x = 1`

@@ -5,7 +5,6 @@ import data.regal.capabilities
 
 import data.regal.lsp.completion.location
 
-# regal ignore:rule-length
 test_find_rule_from_location if {
 	policy := `package p
 
@@ -40,7 +39,6 @@ rule3 if {
 	ast.ref_to_string(r3.head.ref) == "rule3"
 }
 
-# regal ignore:rule-length
 test_find_locals_at_location[loc] if {
 	policy := `package p
 

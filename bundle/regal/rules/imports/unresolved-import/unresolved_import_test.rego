@@ -4,7 +4,6 @@ import data.regal.config
 
 import data.regal.rules.imports["unresolved-import"] as rule
 
-# regal ignore:rule-length
 test_fail_identifies_unresolved_imports if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 	import data.bar

@@ -4,7 +4,6 @@ import data.regal.config
 
 import data.regal.rules.imports["prefer-package-imports"] as rule
 
-# regal ignore:rule-length
 test_aggregate_collects_imports_with_location if {
 	r := rule.aggregate with input as regal.parse_module("p.rego", `
 	package a

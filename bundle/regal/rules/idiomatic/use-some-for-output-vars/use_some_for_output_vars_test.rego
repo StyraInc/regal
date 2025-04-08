@@ -30,7 +30,6 @@ test_fail_output_var_not_declared if {
 	}}
 }
 
-# regal ignore:rule-length
 test_fail_multiple_output_vars_not_declared if {
 	r := rule.report with input as ast.policy(`allow if {
 		foo := input.foo[i].bar[j]

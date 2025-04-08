@@ -188,6 +188,7 @@ rules:
       except-empty-body: true
       level: error
       max-rule-length: 30
+      max-test-rule-length: 60
     rule-name-repeats-package:
       level: error
     todo-comment:

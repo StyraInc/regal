@@ -4,7 +4,6 @@ import data.regal.config
 
 import data.regal.rules.custom["missing-metadata"] as rule
 
-# regal ignore:rule-length
 test_success_aggregate_format_as_expected if {
 	module := regal.parse_module("p.rego", `# METADATA
 # title: pkg
@@ -66,7 +65,6 @@ package foo.bar
 	r == set()
 }
 
-# regal ignore:rule-length
 test_fail_missing_package_metadata_report if {
 	module := regal.parse_module("p.rego", "package foo.bar")
 	aggregated := rule.aggregate with input as module

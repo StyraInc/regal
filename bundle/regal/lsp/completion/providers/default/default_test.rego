@@ -28,7 +28,6 @@ import rego.v1
 	}}
 }
 
-# regal ignore:rule-length
 test_default_completion_on_typing_with_rule_suggestions if {
 	policy := `package policy
 

@@ -32,6 +32,8 @@ rules:
       level: error
       # default limit is 30 lines
       max-rule-length: 30
+      # default limit is 60 lines for test rules (i.e. prefixed with 'test_')
+      max-test-rule-length: 60
       # whether to count comments as lines
       # by default, this is set to false
       count-comments: false

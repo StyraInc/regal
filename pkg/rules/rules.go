@@ -203,6 +203,7 @@ func inputFromStdin() (Input, error) {
 	return Input{
 		FileContent: map[string]string{"stdin": policy},
 		Modules:     map[string]*ast.Module{"stdin": module},
+		FileNames:   []string{"stdin"},
 	}, nil
 }
 

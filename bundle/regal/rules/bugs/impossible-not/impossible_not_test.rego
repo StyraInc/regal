@@ -64,7 +64,6 @@ test_fail_multivalue_not_reference_different_package_using_direct_reference if {
 	})
 }
 
-# regal ignore:rule-length
 test_fail_multivalue_not_reference_different_package_using_import if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 

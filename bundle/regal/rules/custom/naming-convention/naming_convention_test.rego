@@ -146,7 +146,6 @@ test_success_var_name_matches_pattern if {
 	r == set()
 }
 
-# regal ignore:rule-length
 test_fail_multiple_conventions if {
 	policy := regal.parse_module("policy.rego", `package foo.bar
 

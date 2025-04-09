@@ -3,7 +3,6 @@ package regal.ast_test
 import data.regal.ast
 import data.regal.capabilities
 
-# regal ignore:rule-length
 test_find_vars if {
 	policy := `
 	package p
@@ -107,7 +106,6 @@ test_function_decls_multiple_same_name if {
 	is_object(custom)
 }
 
-# regal ignore:rule-length
 test_comment_blocks if {
 	policy := `package p
 
@@ -138,7 +136,6 @@ allow := true
 	]
 }
 
-# regal ignore:rule-length
 test_find_vars_in_local_scope if {
 	policy := `
 	package p

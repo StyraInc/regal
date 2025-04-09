@@ -3,7 +3,6 @@ package regal.lsp.completion.providers.snippet_test
 import data.regal.lsp.completion.providers.snippet as provider
 import data.regal.lsp.completion.providers.test_utils as util
 
-# regal ignore:rule-length
 test_snippet_completion_on_typing_partial_prefix if {
 	policy := `package policy
 
@@ -43,7 +42,6 @@ allow if {
 	}
 }
 
-# regal ignore:rule-length
 test_snippet_completion_on_typing_full_prefix if {
 	policy := `package policy
 
@@ -96,7 +94,6 @@ allow if {
 	items == set()
 }
 
-# regal ignore:rule-length
 test_snippet_completion_on_invoked if {
 	policy := `package policy
 
@@ -160,7 +157,6 @@ allow if `
 	}
 }
 
-# regal ignore:rule-length
 test_metadata_snippet_completion if {
 	policy := `package policy
 

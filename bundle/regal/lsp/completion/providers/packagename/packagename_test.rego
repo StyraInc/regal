@@ -33,7 +33,6 @@ test_package_name_completion_on_typing if {
 	}}
 }
 
-# regal ignore:rule-length
 test_package_name_completion_on_typing_multiple_suggestions if {
 	policy := `package b`
 	provider_input := {"regal": {
@@ -79,7 +78,6 @@ test_package_name_completion_on_typing_multiple_suggestions if {
 	}
 }
 
-# regal ignore:rule-length
 test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 	policy := `package `
 	provider_input := {"regal": {

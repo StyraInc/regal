@@ -223,7 +223,6 @@ test_success_ref_head_rule_with_var_if if {
 	r == set()
 }
 
-# regal ignore:rule-length
 test_fail_unification_in_else if {
 	r := rule.report with input as ast.with_rego_v1(`
 	allow if {

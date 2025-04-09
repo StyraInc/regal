@@ -47,7 +47,6 @@ test_success_similar_but_not_duplicate_rule if {
 	r == set()
 }
 
-# regal ignore:rule-length
 test_fail_multiple_duplicate_rules if {
 	module := ast.with_rego_v1(`
 

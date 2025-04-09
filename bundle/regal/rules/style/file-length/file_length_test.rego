@@ -4,7 +4,6 @@ import data.regal.config
 
 import data.regal.rules.style["file-length"] as rule
 
-# regal ignore:rule-length
 test_fail_configured_file_length_exceeded if {
 	module := regal.parse_module("policy.rego", `package policy
 

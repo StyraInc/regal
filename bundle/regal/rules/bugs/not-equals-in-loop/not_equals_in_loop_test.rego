@@ -4,7 +4,6 @@ import data.regal.ast
 import data.regal.config
 import data.regal.rules.bugs["not-equals-in-loop"] as rule
 
-# regal ignore:rule-length
 test_fail_neq_in_loop if {
 	r := rule.report with input as ast.policy(`deny if {
 		"admin" != input.user.groups[_]

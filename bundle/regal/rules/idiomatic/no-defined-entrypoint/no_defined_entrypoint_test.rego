@@ -4,7 +4,6 @@ import data.regal.config
 
 import data.regal.rules.idiomatic["no-defined-entrypoint"] as rule
 
-# regal ignore:rule-length
 test_aggregate_entrypoints if {
 	module := regal.parse_module("policy.rego", `
 # METADATA

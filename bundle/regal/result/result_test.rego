@@ -81,7 +81,6 @@ test_related_resources_generated_by_result_fail_for_builtin_rule if {
 	}
 }
 
-# regal ignore:rule-length
 test_aggregate_function_builtin_rule if {
 	chain := [
 		{"path": ["regal", "rules", "testing", "aggregation", "report"]},

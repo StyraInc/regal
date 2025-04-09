@@ -4,8 +4,6 @@ import data.regal.config
 
 import data.regal.rules.style["rule-length"] as rule
 
-# yes, ironic
-# regal ignore:rule-length
 test_fail_rule_longer_than_configured_max_length if {
 	module := regal.parse_module("policy.rego", `package p
 

@@ -264,6 +264,8 @@ comprehension_term_assignment := [x |
 
 pointless_reassignment := yoda_condition
 
+mixed_iteration if some x in input[_]
+
 ### Testing ###
 
 # this will also trigger the test-outside-test-package rule

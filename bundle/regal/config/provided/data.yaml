@@ -83,13 +83,13 @@ rules:
       level: error
     equals-pattern-matching:
       level: error
+    in-wildcard-key:
+      level: error
     no-defined-entrypoint:
       level: error
     non-raw-regex-pattern:
       level: error
     prefer-set-or-object-rule:
-      level: error
-    in-wildcard-key:
       level: error
     use-contains:
       level: error
@@ -168,6 +168,8 @@ rules:
       level: error
       max-line-length: 120
     messy-rule:
+      level: error
+    mixed-iteration:
       level: error
     no-whitespace-comment:
       level: error

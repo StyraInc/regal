@@ -7,11 +7,11 @@ import data.regal.result
 
 # some _, v in input
 report contains violation if {
-	some symbols in ast.found.symbols[_]
+	some symbols
+	ast.found.symbols[_][symbols][0].type == "call"
 
 	symbol := symbols[0]
 
-	symbol.type == "call"
 	symbol.value[0].value[0].type == "var"
 	symbol.value[0].value[1].type == "string"
 	symbol.value[0].value[0].value == "internal"

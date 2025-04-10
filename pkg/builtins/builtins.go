@@ -3,6 +3,7 @@ package builtins
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -150,12 +151,31 @@ func RegalIsFormatted(_ rego.BuiltinContext, input *ast.Term, options *ast.Term)
 	popts := ast.ParserOptions{ProcessAnnotation: false, RegoVersion: regoVersion}
 	source := util.StringToByteSlice(string(inputStr))
 
-	result, err := format.SourceWithOpts("", source, format.Opts{RegoVersion: regoVersion, ParserOptions: &popts})
+	result, err := formatRego(source, format.Opts{RegoVersion: regoVersion, ParserOptions: &popts})
 	if err != nil {
 		return nil, err
 	}
 
 	return ast.InternedBooleanTerm(bytes.Equal(source, result)), nil
+}
+
+func formatRego(source []byte, opts format.Opts) (result []byte, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch r := r.(type) {
+			case string:
+				err = fmt.Errorf("error formatting: %s", r)
+			case error:
+				err = r
+			default:
+				err = fmt.Errorf("error formatting: %v", r)
+			}
+		}
+	}()
+
+	result, err = format.SourceWithOpts("", source, opts)
+
+	return
 }
 
 // TestContextBuiltins returns the list of builtins as expected by the test runner.

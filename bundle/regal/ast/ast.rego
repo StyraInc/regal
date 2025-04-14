@@ -86,15 +86,11 @@ package_name := concat(".", package_path)
 # description: provides all static string values from ref
 named_refs(ref) := [term |
 	some i, term in ref
-	_is_name(term, i)
+	_is_name(term.type, i)
 ]
 
-_is_name(term, 0) if term.type == "var"
-
-_is_name(term, pos) if {
-	pos > 0
-	term.type == "string"
-}
+_is_name("var", 0)
+_is_name("string", pos) if pos > 0
 
 # METADATA
 # description: all the rules (excluding functions) in the input AST
@@ -197,10 +193,7 @@ is_ref(value) if value[0].type == "ref"
 # description: |
 #   returns an array of all rule indices, as strings. this will be needed until
 #   https://github.com/open-policy-agent/opa/issues/6736 is fixed
-rule_index_strings := [s |
-	some i, _ in _rules
-	s := sprintf("%d", [i])
-]
+rule_index_strings := [sprintf("%d", [i]) | some i, _ in _rules]
 
 # METADATA
 # description: |
@@ -214,7 +207,7 @@ function_calls[rule_index] contains call if {
 	args := [arg |
 		some i, arg in array.slice(ref, 1, 100)
 
-		not _exclude_arg(name, i, arg)
+		not _exclude_arg(name, i, arg.type)
 	]
 
 	call := {
@@ -224,11 +217,10 @@ function_calls[rule_index] contains call if {
 	}
 }
 
-# these will be aggregated as calls anyway, so let's try and keep this flat
-_exclude_arg(_, _, arg) if arg.type == "call"
-
-# first "arg" of assign is the variable to assign to.. special case we simply
-# ignore here, as it's covered elsewhere
+# exclude arg if:
+# - first "arg" of assign is the variable to assign to
+# - call - covered elsewhere
+_exclude_arg(_, _, "call")
 _exclude_arg("assign", 0, _)
 
 # METADATA
@@ -279,6 +271,7 @@ static_ref(ref) if not _non_static_ref(ref)
 # optimized inverse of static_ref benefitting from early exit
 # 128 is used only as a reasonable (well...) upper limit for a ref, but the
 # slice will be capped at the length of the ref anyway (avoids count)
+# regal ignore:narrow-argument
 _non_static_ref(ref) if array.slice(ref.value, 1, 128)[_].type in {"var", "ref"}
 
 # METADATA
@@ -358,7 +351,7 @@ negated_expressions[rule_index] contains value if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 

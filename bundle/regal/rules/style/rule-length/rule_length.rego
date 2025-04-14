@@ -11,17 +11,18 @@ report contains violation if {
 
 	some rule in input.rules
 
-	lines := split(util.to_location_object(rule.location).text, "\n")
+	rule_location := util.to_location_object(rule.location)
+	lines := split(rule_location.text, "\n")
 
-	_line_count(cfg, rule, lines) > cfg[_max_length_property(rule.head)]
+	_line_count(cfg, rule_location.row, lines) > cfg[_max_length_property(rule.head)]
 
-	not _generated_body_exception(cfg, rule)
+	not _no_body_exception(cfg, rule)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-_generated_body_exception(conf, rule) if {
-	conf["except-empty-body"] == true
+_no_body_exception(cfg, rule) if {
+	cfg["except-empty-body"] == true
 	not rule.body
 }
 
@@ -31,11 +32,11 @@ _max_length_property(head) := "max-test-rule-length" if startswith(head.ref[0].v
 
 _line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
 
-_line_count(cfg, rule, lines) := n if {
+_line_count(cfg, rule_row, lines) := n if {
 	not cfg["count-comments"]
 
 	# Note that this assumes } on its own line
-	body_start := util.to_location_object(rule.location).row + 1
+	body_start := rule_row + 1
 	body_end := (body_start + count(lines)) - 3
 	body_total := (body_end - body_start) + 1
 

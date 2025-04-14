@@ -132,6 +132,12 @@ to_set(x) := x if is_set(x)
 to_set(x) := {y | some y in x} if not is_set(x)
 
 # METADATA
+# description: converts x to array if set, returns x if array
+# scope: document
+to_array(x) := x if is_array(x)
+to_array(x) := [y | some y in x] if not is_array(x)
+
+# METADATA
 # description: true if s1 and s2 has any intersecting items
 intersects(s1, s2) if count(intersection({s1, s2})) > 0
 
@@ -150,3 +156,26 @@ any_set_item(s) := [x | some x in s][0] # this is convoluted.. but can't think o
 # METADATA
 # description: returns last index of item, or undefined (*not* -1) if missing
 last_indexof(arr, item) := regal.last([i | some i, x in arr; x == item])
+
+# METADATA
+# description: |
+#   returns the longest common 'prefix' sequence found in coll (set or array of arrays)
+#   e.g. [[1, 2, 3, 4], [1, 2, 4], [1, 2, 5]] would return [1, 2]
+#   if any of the passed collections are empty, the result is an empty array
+longest_prefix(coll) := [] if {
+	[] in coll
+} else := prefix if {
+	arr := to_array(coll)
+	end := min([count(seq) | some seq in arr]) - 1
+	rng := numbers.range(0, end)
+	eqn := max([n |
+		some n in rng
+
+		first := arr[0][n]
+		every sub in arr {
+			sub[n] == first
+		}
+	])
+
+	prefix := array.slice(arr[0], 0, eqn + 1)
+}

@@ -21,7 +21,7 @@ report contains violation if {
 
 	not ast.is_assignment(next)
 	not ast.var_in_head(rule.head, var.value)
-	not _var_used_in_expression(var, next)
+	not _var_value_used_in_expression(var.value, next)
 	not _iteration_expression(next.terms)
 	not _print_call(next.terms)
 
@@ -37,44 +37,44 @@ _ref_with_vars(node) if {
 	term.type == "var"
 }
 
-_var_used_in_expression(var, expr) if {
+_var_value_used_in_expression(value, expr) if {
 	not expr.terms.symbols
 
 	is_array(expr.terms)
 
 	some term in expr.terms
 
-	walk(term, [_, value])
+	walk(term, [_, node])
 
-	value.type == "var"
-	value.value == var.value
+	node.type == "var"
+	node.value == value
 }
 
-_var_used_in_expression(var, expr) if {
+_var_value_used_in_expression(value, expr) if {
 	some w in expr["with"]
 
-	walk(w, [_, value])
+	walk(w, [_, node])
 
-	value.type == "var"
-	value.value == var.value
+	node.type == "var"
+	node.value == value
 }
 
-_var_used_in_expression(var, expr) if {
+_var_value_used_in_expression(value, expr) if {
 	# `not x`
 	is_object(expr.terms)
 
 	expr.terms.type == "var"
-	expr.terms.value == var.value
+	expr.terms.value == value
 } else if {
 	# `not x.y`
 	is_object(expr.terms)
 
 	some term in expr.terms.value
 
-	walk(term, [_, value])
+	walk(term, [_, node])
 
-	value.type == "var"
-	value.value == var.value
+	node.type == "var"
+	node.value == value
 }
 
 # while not technically checking of use here:

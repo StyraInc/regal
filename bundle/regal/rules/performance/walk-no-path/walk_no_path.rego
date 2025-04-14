@@ -18,7 +18,7 @@ report contains violation if {
 	not ast.var_in_head(input.rules[to_number(rule_index)].head, path_var.value)
 
 	not _var_in_other_call(ast.function_calls, rule_index, path_var)
-	not _var_in_ref(rule_index, path_var)
+	not _var_value_in_ref(rule_index, path_var.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(call))
 }
@@ -43,14 +43,5 @@ _var_in_arg(arg, var) if {
 	term_var.location != var.location
 }
 
-_var_in_ref(rule_index, var) if {
-	ast.found.vars[rule_index].ref[_].value == var.value
-}
-
-_var_in_ref(rule_index, var) if {
-	term := ast.found.refs[rule_index][_].value[0] # regal ignore:external-reference
-
-	not ast.is_wildcard(term)
-
-	var.value == term.value
-}
+_var_value_in_ref(rule_index, value) if ast.found.vars[rule_index].ref[_].value == value
+_var_value_in_ref(rule_index, value) if ast.found.refs[rule_index][_].value[0].value == value

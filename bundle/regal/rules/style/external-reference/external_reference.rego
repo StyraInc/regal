@@ -11,7 +11,7 @@ report contains violation if {
 
 	some fn in ast.functions
 
-	args_vars := _args_vars(fn)
+	args_vars := _args_vars(fn.head.args)
 
 	head_vars := {v.value | some v in ast.find_vars(fn.head.value)}
 	body_vars := {v.value | some v in ast.find_vars(fn.body)}
@@ -31,8 +31,8 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }
 
-_args_vars(fn) := {name |
-	some arg in fn.head.args
+_args_vars(args) := {name |
+	some arg in args
 	some name in _named_vars(arg)
 }
 

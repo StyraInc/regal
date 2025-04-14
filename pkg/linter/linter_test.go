@@ -728,9 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1188808042 ns/op	3332404200 B/op	63908530 allocs/op
-// 1148661583 ns/op	3173734464 B/op	61290539 allocs/op
-//
+// 1145727583 ns/op	3184970896 B/op	61571557 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().

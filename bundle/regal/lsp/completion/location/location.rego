@@ -48,16 +48,16 @@ end_location_estimate(location) := end if {
 
 # METADATA
 # description: |
-#   find and return rule at provided location
-#   undefined if provided location is not within the range of a rule
-find_rule(rules, location) := [rule |
+#   find and return rule at provided row
+#   undefined if provided row is not within the range of a rule
+find_rule(rules, row) := [rule |
 	some i, rule in rules
 
 	start_location := util.to_location_object(rule.location)
 	end_location := end_location_estimate(start_location)
 
-	location.row >= start_location.row
-	location.row <= end_location.row
+	row >= start_location.row
+	row <= end_location.row
 ][0]
 
 # METADATA
@@ -66,7 +66,7 @@ find_rule(rules, location) := [rule |
 #   declarations or assignment) at the given location. note that this expects
 #   `location` as a map, not a string
 find_locals(rules, location) := tmp if {
-	rul := find_rule(rules, location)
+	rul := find_rule(rules, location.row)
 	tmp := ast.find_names_in_local_scope(rul, location)
 }
 

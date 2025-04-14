@@ -16,8 +16,8 @@ report contains violation if {
 	not ast.implicit_boolean_assignment(rule)
 	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
-	loc := result.location(rule)
-	eq_col := _eq_col(loc)
+	loc := result.location(rule.head)
+	eq_col := _eq_col(loc.location.text)
 
 	violation := result.fail(rego.metadata.chain(), object.union(
 		loc,
@@ -40,7 +40,7 @@ report contains violation if {
 	not ast.implicit_boolean_assignment(rule)
 
 	loc := result.location(result.location(rule.head.ref[0]))
-	eq_col := _eq_col(loc)
+	eq_col := _eq_col(loc.location.text)
 
 	violation := result.fail(rego.metadata.chain(), object.union(
 		loc,
@@ -72,7 +72,7 @@ report contains violation if {
 	# extract the text from location to see if '=' is used for
 	# assignment
 	regex.match(`else\s*=`, loc.location.text)
-	eq_col := _eq_col(loc)
+	eq_col := _eq_col(loc.location.text)
 
 	violation := result.fail(rego.metadata.chain(), object.union(
 		loc,
@@ -86,4 +86,4 @@ report contains violation if {
 	))
 }
 
-_eq_col(loc) := max([0, indexof(loc.location.text, "=")]) + 1
+_eq_col(text) := max([0, indexof(text, "=")]) + 1

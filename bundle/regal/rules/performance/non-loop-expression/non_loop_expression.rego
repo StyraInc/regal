@@ -30,16 +30,17 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(expr))
 }
 
-_exprs[sprintf("%d", [rule_index])][row] contains expr if {
-	some rule_index
-	expr := input.rules[rule_index].body[_]
+_exprs[rule_index][row] contains expr if {
+	some i
+	expr := input.rules[i].body[_]
+	rule_index := ast.rule_index_strings[i]
 	row := to_number(substring(expr.location, 0, indexof(expr.location, ":")))
 }
 
-_exprs[sprintf("%d", [rule_index])][row] contains expr if {
-	some rule_index
-	expr := input.rules[rule_index].body[_].terms.body[_]
-
+_exprs[rule_index][row] contains expr if {
+	some i
+	expr := input.rules[i].body[_].terms.body[_]
+	rule_index := ast.rule_index_strings[i]
 	row := to_number(substring(expr.location, 0, indexof(expr.location, ":")))
 }
 

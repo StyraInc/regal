@@ -6,7 +6,9 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some i, rule in input.rules
+	some i
+	input.rules[i].head.value.type == "ref"
+	rule := input.rules[i]
 
 	# skip if vars in the ref head
 	count([part |
@@ -14,8 +16,6 @@ report contains violation if {
 		i > 0
 		part.type == "var"
 	]) == 0
-
-	rule.head.value.type == "ref"
 
 	some part in array.slice(rule.head.value.value, 1, 128)
 
@@ -25,18 +25,16 @@ report contains violation if {
 
 	# this is expensive, but the preconditions should ensure that
 	# very few rules evaluate this far
-	not _var_in_body(rule, part)
+	not _var_in_body(rule, part.value)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
-_var_in_body(rule, var) if {
-	walk(rule.body, [_, value])
-	value.type == "var"
-	value.value == var.value
+_var_in_body(rule, value) if {
+	walk(rule.body, [_, node])
+	node.type == "var"
+	node.value == value
 }
-
-_path(loc) := concat(".", {l.value | some l in loc})
 
 _illegal_value_ref(value, rule, identifiers) if {
 	not value in identifiers
@@ -44,5 +42,5 @@ _illegal_value_ref(value, rule, identifiers) if {
 }
 
 _is_arg_or_input(value, rule) if value in ast.function_arg_names(rule)
-_is_arg_or_input(value, _) if startswith(_path(value), "input.")
+_is_arg_or_input(value, _) if value[0].value == "input"
 _is_arg_or_input("input", _)

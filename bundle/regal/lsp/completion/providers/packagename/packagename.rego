@@ -24,7 +24,7 @@ items contains item if {
 
 	word := location.ref_at(line, input.regal.context.location.col)
 
-	some suggestion in _suggestions(fix_dir, word)
+	some suggestion in _suggestions(fix_dir, word.text)
 
 	item := {
 		"label": suggestion,
@@ -39,7 +39,7 @@ items contains item if {
 
 _base(path) := substring(path, 0, regal.last(indexof_n(path, "/")))
 
-_suggestions(dir, word) := [path |
+_suggestions(dir, text) := [path |
 	parts := split(dir, ".")
 	len_p := count(parts)
 	some n in numbers.range(0, len_p)
@@ -47,5 +47,5 @@ _suggestions(dir, word) := [path |
 	path := concat(".", array.slice(parts, n, len_p))
 	path != ""
 
-	startswith(path, word.text)
+	startswith(path, text)
 ]

@@ -33,8 +33,8 @@ report contains violation if {
 	)
 }
 
-_has_word_above_threshold(line, conf) if {
-	threshold := conf["non-breakable-word-threshold"]
+_has_word_above_threshold(line, cfg) if {
+	threshold := cfg["non-breakable-word-threshold"]
 
 	some word in split(line, " ")
 	count(word) > threshold

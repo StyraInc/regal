@@ -59,3 +59,28 @@ test_point_in_range[sprintf("%v %v", [point, range])] if {
 	]
 	util.point_in_range(point, range) == want
 }
+
+test_longest_prefix[test.coll] if {
+	tests := [
+		{
+			"coll": [[1, 2], [1, 2, 3], [1, 2, 3, 4]],
+			"want": [1, 2],
+		},
+		{
+			"coll": [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]],
+			"want": [1],
+		},
+		{
+			"coll": [[1, 2], [1, 2, 3], [2, 2, 3, 4], []],
+			"want": [],
+		},
+		{
+			"coll": [["a", "b", "c"], ["a", "b", "c", 1], ["a", "b", "c", "d"]],
+			"want": ["a", "b", "c"],
+		},
+	]
+
+	some test in tests
+
+	util.longest_prefix(test.coll) == test.want
+}

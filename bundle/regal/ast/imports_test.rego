@@ -37,3 +37,10 @@ test_imports_keyword_future_keywords_every if {
 	not ast.imports_keyword(module.imports, "if")
 	not ast.imports_keyword(module.imports, "contains")
 }
+
+test_imports_all_kewords_opa_1dot0[keyword] if {
+	some keyword in ["in", "if", "every", "contains"]
+
+	ast.imports_keyword([], keyword) with input.regal.file.rego_version as "v1"
+		with data.regal.capabilities.is_opa_v1 as true
+}

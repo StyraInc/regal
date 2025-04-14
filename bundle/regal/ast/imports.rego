@@ -1,5 +1,7 @@
 package regal.ast
 
+import data.regal.capabilities
+
 default imports := []
 
 # METADATA
@@ -46,9 +48,13 @@ resolved_imports[identifier] := path if {
 #   returns true if provided path (like ["data", "foo", "bar"]) is in the
 #   list of imports (which is commonly ast.imports)
 imports_has_path(imports, path) if {
-	some imp in imports
+	pv := imports[_].path.value
 
-	_arr(imp) == path
+	count(pv) == count(path)
+
+	every i, part in path {
+		part == pv[i].value
+	}
 }
 
 # METADATA
@@ -56,15 +62,16 @@ imports_has_path(imports, path) if {
 #   returns whether a keyword is imported in the policy, either explicitly
 #   like "future.keywords.if" or implicitly like "future.keywords" or "rego.v1"
 imports_keyword(imports, keyword) if {
-	some imp in imports
+	capabilities.is_opa_v1 # regal ignore:external-reference
+	input.regal.file.rego_version != "v0"
+} else if {
+	pv := imports[_].path.value
 
-	_has_keyword(_arr(imp), keyword)
+	_has_keyword([p.value | some p in pv], keyword)
 }
 
 _imported_identifier(imp) := imp.alias
 _imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
-
-_arr(xs) := [y.value | some y in xs.path.value]
 
 _has_keyword(["future", "keywords"], _)
 _has_keyword(["future", "keywords", "every"], "in")

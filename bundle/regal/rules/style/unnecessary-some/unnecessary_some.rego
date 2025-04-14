@@ -7,7 +7,7 @@ import data.regal.result
 
 report contains violation if {
 	# No need to traverse rules here if we're not importing `in`
-	ast.imports_keyword(input.imports, "in")
+	ast.imports_keyword(ast.imports, "in")
 
 	symbols := ast.found.symbols[_][_]
 

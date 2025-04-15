@@ -1,0 +1,33 @@
+package regal.rules.imports["unknown-reference_test"]
+
+import data.regal.ast
+import data.regal.config
+
+import data.regal.rules.imports["unknown-reference"] as rule
+
+# Example test, replace with your own
+# test_rule_named_foo_not_allowed if {
+# 	module := ast.policy("foo := true")
+# 	r := rule.report with input as module
+# 	# Use print(r) here to see the report. Great for development!
+# 	r == {{
+# 		"category": "imports",
+# 		"description": "Add description of rule here!",
+# 		"level": "error",
+# 		"location": {
+# 			"file": "policy.rego",
+# 			"row": 1,
+# 			"col": 1,
+# 			"end": {
+# 				"row": 1,
+# 				"col": 12,
+# 			},
+# 			"text": "foo := true"
+# 		},
+# 		"related_resources": [{
+# 			"description": "documentation",
+# 			"ref": config.docs.resolve_url("$baseUrl/$category/unknown-reference", "imports"),
+# 		}],
+# 		"title": "unknown-reference",
+# 	}}
+# }

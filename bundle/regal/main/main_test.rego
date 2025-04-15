@@ -370,7 +370,7 @@ test_notices if {
 	}
 
 	notices := main.lint.notices with main._rules_to_run as {"idiomatic": {"testme"}}
-		with data.regal.rules.idiomatic.testme.notices as {notice}
+		with data.regal.rules.idiomatic.testme.notices as {notice} # regal ignore:unresolved-reference
 		with input.regal.operations as ["lint"]
 
 	notices == {notice}

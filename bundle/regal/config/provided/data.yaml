@@ -1,6 +1,4 @@
-features:
-  remote:
-    check-version: true
+capabilities_url: regal:///capabilities/default
 rules:
   bugs:
     annotation-without-metadata:
@@ -125,6 +123,8 @@ rules:
     redundant-alias:
       level: error
     redundant-data-import:
+      level: error
+    unknown-reference:
       level: error
     unresolved-import:
       level: error

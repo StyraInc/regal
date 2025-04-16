@@ -126,6 +126,8 @@ rules:
       level: error
     redundant-data-import:
       level: error
+    unknown-reference:
+      level: error
     unresolved-import:
       level: error
     use-rego-v1:

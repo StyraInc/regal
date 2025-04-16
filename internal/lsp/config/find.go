@@ -14,7 +14,11 @@ import (
 func FindConfigRoots(path string) ([]string, error) {
 	var foundRoots []string
 
-	err := filepath.WalkDir(path, func(path string, info os.DirEntry, _ error) error {
+	err := filepath.WalkDir(path, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if info.IsDir() || !strings.HasSuffix(path, ".yaml") {
 			return nil
 		}

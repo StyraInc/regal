@@ -14,6 +14,7 @@ aggregate contains content if {
 	content := result.aggregate(rego.metadata.chain(), {
 		"exported_rules": object.keys(ast.rule_head_locations),
 		"expanded_refs": _all_full_path_refs,
+		"prefix_tree": _prefix_tree,
 	})
 }
 
@@ -55,14 +56,17 @@ aggregate_report contains violation if {
 		some export in entry.aggregate_data.exported_rules
 	}
 
+	prefix_tree := {prefix |
+		some entry in input.aggregate
+		some prefix in entry.aggregate_data.prefix_tree
+	}
+
 	some entry in input.aggregate
 	some ref_full_name, ref_locations in entry.aggregate_data.expanded_refs
+	ref_full_path := split(ref_full_name, ".")
+	not ref_full_path in prefix_tree
+	not _refers_to_rule_content(ref_full_path, all_exports_in_bundle)
 
-	# TODO: is pre-fix tree a posibility here?
-	# rough calculation of running it a few times in terminal, this loop is almost 50% of the runtime
-	every endpoint in all_exports_in_bundle {
-		not _is_known_ref(ref_full_name, endpoint)
-	}
 
 	some ref in ref_locations
 
@@ -89,4 +93,21 @@ _is_known_ref(ref_full_name, _) if {
 
 	some exception in cfg["except-imports"]
 	glob.match(exception, [], ref_full_name)
+}
+
+_prefix_tree contains prefix_path if {
+	some rule_name, _ in ast.rule_head_locations
+	rule_path := split(rule_name, ".")
+	some i in numbers.range(0, count(rule_path))
+	prefix_path := array.slice(rule_path, 0, i) 
+	# path := rule_path[i]
+}
+
+default _refers_to_rule_content(_, _) := false
+
+_refers_to_rule_content(ref_full_path, rules_paths) if {
+	some i in numbers.range(0, count(ref_full_path))
+	path_prefix := concat(".", array.slice(ref_full_path, 0, i) )
+
+	path_prefix in rules_paths
 }

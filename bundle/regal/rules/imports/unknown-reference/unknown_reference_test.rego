@@ -147,35 +147,35 @@ test_fail_everything_all_at_once if {
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
 	expected := {
 		with_location({
-		"file": "p1.rego",
-		"row": 5,
-		"col": 7,
-		"end": {
+			"file": "p1.rego",
 			"row": 5,
-			"col": 10,
-		},
-		"text": "\tx := bar.unknown",
-	}),
+			"col": 7,
+			"end": {
+				"row": 5,
+				"col": 10,
+			},
+			"text": "\tx := bar.unknown",
+		}),
 		with_location({
-		"file": "p1.rego",
-		"row": 6,
-		"col": 7,
-		"end": {
+			"file": "p1.rego",
 			"row": 6,
-			"col": 10,
-		},
-		"text": "\ty := qux.unknown",
-	}),
+			"col": 7,
+			"end": {
+				"row": 6,
+				"col": 10,
+			},
+			"text": "\ty := qux.unknown",
+		}),
 		with_location({
-		"file": "p1.rego",
-		"row": 7,
-		"col": 7,
-		"end": {
+			"file": "p1.rego",
 			"row": 7,
-			"col": 11,
-		},
-		"text": "\tz := data.qux.unknown",
-	}),
+			"col": 7,
+			"end": {
+				"row": 7,
+				"col": 11,
+			},
+			"text": "\tz := data.qux.unknown",
+		}),
 	}
 	r == expected
 }

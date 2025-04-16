@@ -261,7 +261,7 @@ The following rules are currently available:
 | imports     | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)             | Prefer importing packages over rules                      |
 | imports     | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                           | Redundant alias                                           |
 | imports     | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)               | Redundant import of data                                  |
-| imports     | [unknown-reference](https://docs.styra.com/regal/rules/imports/unknown-reference)                       | Add description of rule here!                             |
+| imports     | [unknown-reference](https://docs.styra.com/regal/rules/imports/unknown-reference)                       | Reference to unknown field.                               |
 | imports     | [unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import)                       | Unresolved import                                         |
 | imports     | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                                   | Use `import rego.v1`                                      |
 | performance | [defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment)                     | Assignment can be deferred                                |

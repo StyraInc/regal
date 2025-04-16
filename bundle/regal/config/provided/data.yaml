@@ -1,4 +1,6 @@
-capabilities_url: regal:///capabilities/default
+features:
+  remote:
+    check-version: true
 rules:
   bugs:
     annotation-without-metadata:

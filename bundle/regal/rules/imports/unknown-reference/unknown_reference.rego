@@ -8,7 +8,7 @@ import data.regal.result
 import data.regal.util
 
 # METADATA
-# description: collects imports and exported refs from each module
+# description: collects exported and full of used refs from each module
 aggregate contains content if {
 	# regal ignore:unconditional-assignment
 	content := result.aggregate(rego.metadata.chain(), {
@@ -26,11 +26,10 @@ _refs contains ref if {
 	_ref := ast.found.refs[_][_].value
 	_name := ast.ref_static_to_string(_ref)
 	not _name in ast.builtin_names
-	ref := {
+	ref := object.union(result.location(_ref), {
 		"name": _name,
 		"path": split(_name, "."),
-		"location": _ref[0].location,
-	}
+	})
 }
 
 _all_full_path_refs[ref.name] contains ref if {
@@ -47,6 +46,9 @@ _all_full_path_refs[expanded_ref] contains ref if {
 	expanded_ref := concat(".", full_path_array)
 }
 
+# METADATA
+# schemas:
+#   - input: schema.regal.aggregate
 aggregate_report contains violation if {
 	all_exports_in_bundle := {export |
 		some entry in input.aggregate
@@ -64,13 +66,7 @@ aggregate_report contains violation if {
 
 	some ref in ref_locations
 
-	# todo: this should probably be done with result.location but it doesnt work
-	loc := {"location": {
-		"file": sprintf("%s:%s", [entry.aggregate_source.file, ref.location]),
-		"text": sprintf("%s (%s) does not exist", [ref.name, ref_full_name]),
-	}}
-
-	violation := result.fail(rego.metadata.chain(), loc)
+	violation := result.fail(rego.metadata.chain(), result.location(ref))
 }
 
 # METADATA
@@ -89,7 +85,7 @@ _is_known_ref(ref_full_name, rule) if {
 }
 
 _is_known_ref(ref_full_name, _) if {
-	cfg := config.for_rule("imports", "unknown-ref")
+	cfg := config.for_rule("imports", "unknown-reference")
 
 	some exception in cfg["except-imports"]
 	glob.match(exception, [], ref_full_name)

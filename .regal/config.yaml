@@ -7,7 +7,7 @@ rules:
   custom:
     missing-metadata:
       level: error
-      # except-rule-path-pattern: \.report$
+      except-rule-path-pattern: \.report$
       # TODO: this should be in the default config, but it seems
       #       like the ignore attribute isn't read from there
       ignore:

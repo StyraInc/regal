@@ -541,7 +541,7 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 	queryStr := `[rule |
         data.regal.rules[cat][rule]
 		object.get(data.regal.rules[cat][rule], "notices", set()) == set()
-        data.regal.config.for_rule(cat, rule).level != "ignore"
+        not data.regal.config.ignored_rule(cat, rule)
     ]`
 
 	query := ast.MustParseBody(queryStr)
@@ -595,7 +595,7 @@ func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, e
 
 	queryStr := `[rule |
         data.regal.rules[cat][rule].aggregate
-        data.regal.config.for_rule(cat, rule).level != "ignore"
+        not data.regal.config.ignored_rule(cat, rule)
     ]`
 
 	query := ast.MustParseBody(queryStr)

@@ -52,21 +52,13 @@ _file_name_relative_to_root(filename, root) := trim_prefix(
 }
 
 _rules_to_run[category] contains title if {
-	relative_filename := _file_name_relative_to_root(
-		input.regal.file.name,
-		config.path_prefix,
-	)
+	relative_filename := _file_name_relative_to_root(input.regal.file.name, config.path_prefix)
 
 	some category, title
 	config.merged_config.rules[category][title]
 
-	config.for_rule(category, title).level != "ignore"
-
-	not config.excluded_file(
-		category,
-		title,
-		relative_filename,
-	)
+	not config.ignored_rule(category, title)
+	not config.excluded_file(category, title, relative_filename)
 }
 
 _notices contains _grouped_notices[_][_][_]
@@ -123,8 +115,7 @@ report contains violation if {
 
 	violation := data.custom.regal.rules[category][title].report[_]
 
-	config.for_rule(category, title).level != "ignore"
-
+	not config.ignored_rule(category, title)
 	not config.excluded_file(category, title, file_name_relative_to_root)
 	not _ignored(violation, ast.ignore_directives)
 }
@@ -147,7 +138,7 @@ aggregate[category_title] contains entry if {
 aggregate[category_title] contains entry if {
 	some category, title
 
-	config.for_rule(category, title).level != "ignore"
+	not config.ignored_rule(category, title)
 	not config.excluded_file(category, title, input.regal.file.name)
 
 	entries := _mark_if_empty(data.custom.regal.rules[category][title].aggregate)
@@ -200,7 +191,7 @@ aggregate_report contains violation if {
 	some key in object.keys(input.aggregates_internal)
 	[category, title] := split(key, "/")
 
-	config.for_rule(category, title).level != "ignore"
+	not config.ignored_rule(category, title)
 	not config.excluded_file(category, title, input.regal.file.name)
 
 	input_for_rule := object.remove(

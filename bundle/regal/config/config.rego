@@ -34,72 +34,64 @@ capabilities := object.union(merged_config.capabilities, {"special": _special})
 
 _special contains "no_filename" if input.regal.file.name == "stdin"
 
+default _params := {}
+
+_params := data.eval.params
+
 default for_rule(_, _) := {"level": "error"}
 
 # METADATA
 # description: |
 #   Returns the configuration applied (i.e. the provided configuration
-#   merged with any user configuration and possibly command line overrides)
-#   to the rule matching the category and title.
+#   merged with any user configuration). Rule authors should normally not
+#   consider the `level`` attribute, as whether a rule is evaluated or not
+#   is determined by the main policy, based not only on configuration but
+#   potentially also overrides. Use `level_for_rule` to determine the
+#   exact level as determined during evaluation.
 # scope: document
-for_rule(category, title) := _with_level(category, title, "ignore") if {
-	_force_disabled(category, title)
-} else := _with_level(category, title, "error") if {
-	_force_enabled(category, title)
-} else := c if {
-	# regal ignore:external-reference
-	m := merged_config.rules[category][title]
-	c := object.union(m, {"level": rule_level(m)})
-}
-
-_with_level(category, title, level) := c if {
-	# regal ignore:external-reference
-	m := merged_config.rules[category][title]
-	c := object.union(m, {"level": level})
-} else := {"level": level}
+for_rule(category, title) := merged_config.rules[category][title] # regal ignore:external-reference
 
 # METADATA
-# description: returns the level set for rule, otherwise "error"
-# scope: document
-default rule_level(_) := "error"
+# description: answers whether a rule is ignored in the most efficient way
+ignored_rule(category, title) if {
+	_force_disabled(_params, category, title)
+} else if {
+	merged_config.rules[category][title].level == "ignore"
+	not _force_enabled(_params, category, title)
+}
 
-rule_level(cfg) := cfg.level
+# METADATA
+# description: returns the level set for rule, based on configuration and possibly overrides
+level_for_rule(category, title) := "ignore" if {
+	_force_disabled(_params, category, title)
+} else := "error" if {
+	_force_enabled(_params, category, title)
+} else := level if {
+	level := merged_config.rules[category][title].level # regal ignore:external-reference
+} else := "error"
 
-_force_disabled(_, title) if title in data.eval.params.disable # regal ignore:external-reference
+_force_disabled(params, _, title) if title in params.disable # regal ignore:external-reference
 
-_force_disabled(category, title) if {
-	# regal ignore:external-reference
-	params := data.eval.params
-
+_force_disabled(params, category, title) if {
 	params.disable_all
 	not category in params.enable_category
 	not title in params.enable
 }
 
-_force_disabled(category, title) if {
-	# regal ignore:external-reference
-	params := data.eval.params
-
+_force_disabled(params, category, title) if {
 	category in params.disable_category
 	not title in params.enable
 }
 
-# regal ignore:external-reference
-_force_enabled(_, title) if title in data.eval.params.enable
+_force_enabled(params, _, title) if title in params.enable
 
-_force_enabled(category, title) if {
-	# regal ignore:external-reference
-	params := data.eval.params
-
+_force_enabled(params, category, title) if {
 	params.enable_all
 	not category in params.disable_category
 	not title in params.disable
 }
 
-_force_enabled(category, title) if {
-	# regal ignore:external-reference
-	params := data.eval.params
-
+_force_enabled(params, category, title) if {
 	category in params.enable_category
 	not title in params.disable
 }

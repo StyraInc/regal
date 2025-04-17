@@ -15,15 +15,15 @@ params(override) := object.union(
 )
 
 test_disable_all_no_config if {
-	c := config.for_rule("test", "test-case") with data.eval.params as params({"disable_all": true})
+	c := config.level_for_rule("test", "test-case") with data.eval.params as params({"disable_all": true})
 
-	c == {"level": "ignore"}
+	c == "ignore"
 }
 
 test_enable_all_no_config if {
-	c := config.for_rule("test", "test-case") with data.eval.params as params({"enable_all": true})
+	c := config.level_for_rule("test", "test-case") with data.eval.params as params({"enable_all": true})
 
-	c == {"level": "error"}
+	c == "error"
 }
 
 test_config[name] if {
@@ -46,13 +46,16 @@ test_config[name] if {
 		"enable_single_rule_with_config": [{"enable": ["test-case"]}, "error"],
 	}
 
-	c := config.for_rule("test", "test-case") with data.eval.params as params(override)
-		with config.merged_config as {"rules": {"test": {"test-case": {
-			"level": "ignore",
-			"important_setting": 42,
-		}}}}
+	l := config.level_for_rule("test", "test-case") with data.eval.params as params(override)
 
-	c == {"level": want_level, "important_setting": 42}
+	l == want_level
+
+	c := config.for_rule("test", "test-case") with config.merged_config as {"rules": {"test": {"test-case": {
+		"level": "ignore",
+		"important_setting": 42,
+	}}}}
+
+	c == {"level": "ignore", "important_setting": 42}
 }
 
 test_all_rules_are_in_provided_configuration if {
@@ -75,8 +78,6 @@ test_all_configured_rules_exist if {
 
 	count(missing_rules) == 0
 }
-
-test_default_level_is_error if config.rule_level("unknown") == "error"
 
 test_path_prefix if {
 	config.path_prefix == ""

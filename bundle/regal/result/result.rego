@@ -148,7 +148,7 @@ _fail_annotated(metadata, details) := violation if {
 	category := with_location.custom.category
 	with_category := object.union(with_location, {
 		"category": category,
-		"level": config.rule_level(config.for_rule(category, metadata.title)),
+		"level": config.level_for_rule(category, metadata.title),
 	})
 
 	without_custom_and_scope := object.remove(with_category, ["custom", "scope", "schemas"])
@@ -166,7 +166,7 @@ _fail_annotated_custom(metadata, details) := violation if {
 	category := with_location.custom.category
 	with_category := object.union(with_location, {
 		"category": category,
-		"level": config.rule_level(config.for_rule(category, metadata.title)),
+		"level": config.level_for_rule(category, metadata.title),
 	})
 
 	violation := object.remove(with_category, ["custom", "scope", "schemas"])

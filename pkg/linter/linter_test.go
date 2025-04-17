@@ -728,8 +728,8 @@ import data.unresolved`,
 	}
 }
 
-// 1173608750 ns/op	3293593016 B/op	63366367 allocs/op
-// 1157190875 ns/op	3285082192 B/op	63014329 allocs/op
+// 1188808042 ns/op	3332404200 B/op	63908530 allocs/op
+// 1148661583 ns/op	3173734464 B/op	61290539 allocs/op
 //
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {

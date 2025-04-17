@@ -13,6 +13,11 @@ rules:
       ignore:
         files:
           - "*_test.rego"
+    narrow-argument:
+      level: error
+      exclude-args:
+        - cfg
+        - rule
   style:
     line-length:
       level: error

@@ -26,16 +26,16 @@ rule3 if {
 
 	module := regal.parse_module("p.rego", policy)
 
-	not location.find_rule(module.rules, {"row": 2, "col": 6}) with input.regal.file.lines as lines
+	not location.find_rule(module.rules, 2) with input.regal.file.lines as lines
 
-	r1 := location.find_rule(module.rules, {"row": 5, "col": 6}) with input.regal.file.lines as lines
+	r1 := location.find_rule(module.rules, 5) with input.regal.file.lines as lines
 
 	ast.ref_to_string(r1.head.ref) == "rule1"
 
-	r2 := location.find_rule(module.rules, {"row": 9, "col": 11}) with input.regal.file.lines as lines
+	r2 := location.find_rule(module.rules, 9) with input.regal.file.lines as lines
 	ast.ref_to_string(r2.head.ref) == "rule2"
 
-	r3 := location.find_rule(module.rules, {"row": 15, "col": 0}) with input.regal.file.lines as lines
+	r3 := location.find_rule(module.rules, 15) with input.regal.file.lines as lines
 	ast.ref_to_string(r3.head.ref) == "rule3"
 }
 

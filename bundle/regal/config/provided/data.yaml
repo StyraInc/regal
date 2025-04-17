@@ -64,6 +64,8 @@ rules:
       level: ignore
     naming-convention:
       level: ignore
+    narrow-argument:
+      level: ignore
     one-liner-rule:
       level: ignore
       max-line-length: 120

@@ -78,7 +78,6 @@ fail(metadata, details) := violation if {
 	some category, title
 	["regal", "rules", category, title] = link.path
 
-	# NOTE: consider allowing annotation to override any derived values?
 	annotation := object.union(link.annotations, {
 		"custom": {"category": category},
 		"title": title,
@@ -131,6 +130,7 @@ notice(metadata) := result if {
 	}
 }
 
+# regal ignore:narrow-argument
 _related_resources(annotations, _, _) := annotations.related_resources
 
 _related_resources(annotations, category, title) := rr if {

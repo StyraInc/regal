@@ -30,8 +30,7 @@ keywords[row] contains keyword if {
 # METADATA
 # description: collects the `package` keyword
 keywords[loc.row] contains keyword if {
-	pkg := input["package"]
-	loc := util.to_location_object(pkg.location)
+	loc := util.to_location_object(input["package"].location)
 
 	keyword := {
 		"name": "package",
@@ -45,9 +44,9 @@ keywords[loc.row] contains keyword if {
 # METADATA
 # description: collects the `import` keyword
 keywords[loc.row] contains keyword if {
-	some imp in input.imports
+	location := input.imports[_].location
 
-	loc := util.to_location_object(imp.location)
+	loc := util.to_location_object(location)
 
 	keyword := {
 		"name": "import",
@@ -61,9 +60,9 @@ keywords[loc.row] contains keyword if {
 # METADATA
 # description: collects the `contains` keyword
 keywords[loc.row] contains keyword if {
-	some rule in input.rules
+	location := input.rules[_].head.location
 
-	loc := util.to_location_object(rule.head.location)
+	loc := util.to_location_object(location)
 	col := indexof(loc.text, " contains ")
 
 	col > 0
@@ -89,25 +88,25 @@ _keywords_with_location(value) := keywords if {
 	value.terms.symbols
 
 	location := util.to_location_object(value.terms.location)
-	keywords := array.concat([{"name": "some", "location": location}], _in_on_row(location))
+	keywords := array.concat([{"name": "some", "location": location}], _in_on_row(location.row))
 }
 
 _keywords_with_location(value) := keywords if {
 	value.domain
 
 	location := util.to_location_object(value.location)
-	keywords := array.concat([{"name": "every", "location": location}], _in_on_row(location))
+	keywords := array.concat([{"name": "every", "location": location}], _in_on_row(location.row))
 }
 
-_in_on_row(location) := [keyword |
-	in_col := indexof(input.regal.file.lines[location.row - 1], " in ")
+_in_on_row(row) := [keyword |
+	in_col := indexof(input.regal.file.lines[row - 1], " in ")
 	keyword := {
 		"name": "in",
 		"location": {
-			"row": location.row,
+			"row": row,
 			"col": in_col + 2,
 			"end": {
-				"row": location.row,
+				"row": row,
 				"col": in_col + 4,
 			},
 			"text": "in",

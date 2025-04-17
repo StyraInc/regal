@@ -11,27 +11,27 @@ report contains violation if {
 
 	some rule in input.rules
 
-	var := _var_in_head(rule)
-	last := regal.last(rule.body)
+	var := _var_in_head(rule.head)
+	terms := regal.last(rule.body).terms
 
-	last.terms[0].value[0].type == "var"
-	last.terms[0].value[0].value in {"eq", "assign"}
-	last.terms[1].type == "var"
-	last.terms[1].value == var
+	terms[0].value[0].type == "var"
+	terms[0].value[0].value in {"eq", "assign"}
+	terms[1].type == "var"
+	terms[1].value == var
 
-	not _scalar_fail(cfg, last.terms[2], ast.scalar_types)
+	not _scalar_fail(cfg, terms[2].type, ast.scalar_types)
 
-	violation := result.fail(rego.metadata.chain(), result.location(last.terms[2]))
+	violation := result.fail(rego.metadata.chain(), result.location(terms[2]))
 }
 
-_var_in_head(rule) := rule.head.value.value if rule.head.value.type == "var"
+_var_in_head(head) := head.value.value if head.value.type == "var"
 
-_var_in_head(rule) := rule.head.key.value if {
-	not rule.head.value
-	rule.head.key.type == "var"
+_var_in_head(head) := head.key.value if {
+	not head.value
+	head.key.type == "var"
 }
 
-_scalar_fail(cfg, term, scalar_types) if {
+_scalar_fail(cfg, term_type, scalar_types) if {
 	cfg["only-scalars"] == true
-	not term.type in scalar_types
+	not term_type in scalar_types
 }

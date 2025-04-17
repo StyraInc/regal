@@ -54,7 +54,7 @@ _find_some_in_decl_vars(value) := vars if {
 # description: |
 #   find vars like input[x].foo[y] where x and y are vars
 #   note: value.type == "ref" check must have been done before calling this function
-find_ref_vars(value) := [var |
+find_ref_vars(value) := [var | # regal ignore:narrow-argument
 	some i, var in value.value
 
 	i > 0
@@ -146,8 +146,8 @@ _find_vars(value, last) := {"args": arg_vars} if {
 	count(arg_vars) > 0
 }
 
-_rule_index(rule) := sprintf("%d", [i]) if {
-	some i, r in _rules # regal ignore:external-reference
+_rule_index(rule) := rule_index_strings[i] if { # regal ignore:external-reference
+	some i, r in _rules
 	r == rule
 }
 
@@ -196,7 +196,7 @@ found.vars[rule_index][context] contains var if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [path, value])
 
@@ -211,7 +211,7 @@ found.vars[rule_index].ref contains var if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 
@@ -229,7 +229,7 @@ found.refs[rule_index] contains value if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 
@@ -240,7 +240,7 @@ found.refs[rule_index] contains value if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 
@@ -253,7 +253,7 @@ found.symbols[rule_index] contains value.symbols if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 }
@@ -264,7 +264,7 @@ found.comprehensions[rule_index] contains value if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := sprintf("%d", [i])
+	rule_index := rule_index_strings[i]
 
 	walk(rule, [_, value])
 
@@ -281,7 +281,7 @@ find_vars_in_local_scope(rule, location) := [var |
 	var := found.vars[_rule_index(rule)][_][_] # regal ignore:external-reference
 
 	not is_wildcard(var)
-	_before_location(rule, var, util.to_location_object(location))
+	_before_location(rule.head, var, util.to_location_object(location))
 ]
 
 _end_location(location) := end if {
@@ -295,20 +295,22 @@ _end_location(location) := end if {
 
 # special case — the value location of the rule head "sees"
 # all local variables declared in the rule body
-_before_location(rule, _, location) if {
+# regal ignore:narrow-argument
+_before_location(head, _, location) if {
 	loc := util.to_location_object(location)
 
-	value_start := util.to_location_object(rule.head.value.location)
+	value_start := util.to_location_object(head.value.location)
 
 	loc.row >= value_start.row
 	loc.col >= value_start.col
 
-	value_end := _end_location(util.to_location_object(rule.head.value.location))
+	value_end := _end_location(value_start)
 
 	loc.row <= value_end.row
 	loc.col <= value_end.col
 }
 
+# regal ignore:narrow-argument
 _before_location(_, var, location) if {
 	util.to_location_object(var.location).row < util.to_location_object(location).row
 }
@@ -324,15 +326,13 @@ _before_location(_, var, location) if {
 # METADATA
 # description: find *only* names in the local scope, and not e.g. rule names
 find_names_in_local_scope(rule, location) := names if {
-	fn_arg_names := _function_arg_names(rule)
+	fn_arg_names := {arg.value |
+		some arg in rule.head.args
+		arg.type == "var"
+	}
 	var_names := {var.value | some var in find_vars_in_local_scope(rule, util.to_location_object(location))}
 
 	names := fn_arg_names | var_names
-}
-
-_function_arg_names(rule) := {arg.value |
-	some arg in rule.head.args
-	arg.type == "var"
 }
 
 # METADATA
@@ -352,7 +352,7 @@ find_names_in_scope(rule, location) := names if {
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	some some_var in found.vars[_rule_index(rule)]["some"] # regal ignore:external-reference
-	_before_location(rule, some_var, location)
+	_before_location(rule.head, some_var, location)
 }
 
 # METADATA

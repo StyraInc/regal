@@ -29,9 +29,9 @@ report contains violation if {
 
 	# Note that this will give us the text representation of the whole rule,
 	# which we'll need as the "if" is only visible here ¯\_(ツ)_/¯
-	text := util.to_location_object(rule.location).text
+	rule_location := util.to_location_object(rule.location)
 	lines := [line |
-		some s in split(text, "\n")
+		some s in split(rule_location.text, "\n")
 		line := trim_space(s)
 	]
 
@@ -44,7 +44,7 @@ report contains violation if {
 	# redundant parens added by `opa fmt` :/
 	((4 + count(lines[0])) + count(lines[1])) - 1 < max_line_length
 
-	not _comment_in_body(rule, object.get(input, "comments", []), lines)
+	not _comment_in_body(rule_location.row, object.get(input, "comments", []), lines)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
@@ -58,13 +58,11 @@ _rule_body_brackets(lines) if {
 	startswith(lines[1], "{")
 }
 
-_comment_in_body(rule, comments, lines) if {
-	rule_location := util.to_location_object(rule.location)
-
+_comment_in_body(rule_row, comments, lines) if {
 	some comment in comments
 
 	comment_location := util.to_location_object(comment.location)
 
-	comment_location.row > rule_location.row
-	comment_location.row < rule_location.row + count(lines)
+	comment_location.row > rule_row
+	comment_location.row < rule_row + count(lines)
 }

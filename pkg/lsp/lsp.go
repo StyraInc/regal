@@ -2,12 +2,14 @@ package lsp
 
 import (
 	"context"
+	"os"
 
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	jsonrpc2_ws "github.com/sourcegraph/jsonrpc2/websocket"
 
 	"github.com/styrainc/regal/internal/lsp"
+	"github.com/styrainc/regal/internal/lsp/log"
 )
 
 type Handle struct {
@@ -16,7 +18,10 @@ type Handle struct {
 }
 
 func New(ctx context.Context, ws *websocket.Conn) (*Handle, error) {
-	opts := lsp.LanguageServerOptions{}
+	opts := lsp.LanguageServerOptions{
+		LogWriter: os.Stderr,
+		LogLevel:  log.LevelDebug,
+	}
 	ls := lsp.NewLanguageServer(ctx, &opts)
 	jconn := jsonrpc2.NewConn(
 		ctx,
@@ -28,10 +33,6 @@ func New(ctx context.Context, ws *websocket.Conn) (*Handle, error) {
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartHoverWorker(ctx)
 	go ls.StartCommandWorker(ctx)
-	go ls.StartConfigWorker(ctx)
-	go ls.StartWorkspaceStateWorker(ctx)
-	go ls.StartTemplateWorker(ctx)
-	go ls.StartWebServer(ctx)
 
 	return &Handle{
 		conn: jconn,

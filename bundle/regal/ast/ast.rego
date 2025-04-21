@@ -37,10 +37,10 @@ operators := {
 # description: |
 #   returns true if provided term is either a scalar or a collection of ground values
 # scope: document
-is_constant(term) if term.type in scalar_types # regal ignore:external-reference
+is_constant(term) if term.type in scalar_types
 
 is_constant(term) if {
-	term.type in {"array", "object"}
+	term.type in {"array", "object", "set"}
 	not has_term_var(term.value)
 }
 
@@ -158,12 +158,14 @@ rule_names contains ref_to_string(rule.head.ref) if some rule in rules
 # METADATA
 # description: |
 #   determine if var in var (e.g. `x` in `input[x]`) is used as input or output
+#   input = variable value set elsewhere in the policy
+#   output =  variable value set in this location (unification)
 # scope: document
 is_output_var(rule, var) if {
 	# test the cheap and common case first, and 'else' only when it's not
 	is_wildcard(var)
 } else if {
-	not var.value in (rule_names | imported_identifiers) # regal ignore:external-reference
+	not var.value in (rule_names | imported_identifiers)
 
 	num_above := count([1 |
 		some above in find_vars_in_local_scope(rule, var.location)
@@ -237,7 +239,9 @@ ref_value_equal(v1, v2) if {
 
 # METADATA
 # description: returns the "path" string of any given ref value
-ref_to_string(ref) := concat("", [_ref_part_to_string(i, part) | some i, part in ref])
+ref_to_string(ref) := ref[0].value if {
+	count(ref) == 1
+} else := concat("", [_ref_part_to_string(i, part) | some i, part in ref])
 
 _ref_part_to_string(0, part) := part.value
 _ref_part_to_string(i, part) := _format_part(part) if i > 0
@@ -285,7 +289,6 @@ builtin_functions_called contains name if {
 # description: |
 #   Returns custom functions declared in input policy in the same format as builtin capabilities
 function_decls(rules) := {rule_name: decl |
-	# regal ignore:external-reference
 	some rule in functions
 
 	rule_name := ref_to_string(rule.head.ref)

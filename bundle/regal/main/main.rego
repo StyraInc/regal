@@ -55,7 +55,7 @@ _rules_to_run[category] contains title if {
 	relative_filename := _file_name_relative_to_root(input.regal.file.name, config.path_prefix)
 
 	some category, title
-	config.merged_config.rules[category][title]
+	config.rules[category][title]
 
 	not config.ignored_rule(category, title)
 	not config.excluded_file(category, title, relative_filename)

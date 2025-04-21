@@ -193,9 +193,7 @@ test_exclude_files_rule_config if {
 }
 
 test_exclude_files_rule_config_with_path_prefix_relative_name if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
-
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
+	rules_to_run := main._rules_to_run with config.rules as {"testing": {"test": {"level": "error"}}}
 		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
 		with input.regal.file.name as "bar/p.rego"
 		with config.path_prefix as "/foo" # ignored as not prefix of input file

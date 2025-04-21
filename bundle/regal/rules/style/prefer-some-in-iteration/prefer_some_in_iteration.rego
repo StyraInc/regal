@@ -80,8 +80,8 @@ _invalid_some_context(rule, path) if {
 
 	node.terms[0].type == "ref"
 	node.terms[0].value[0].type == "var"
-	node.terms[0].value[0].value in ast.all_function_names # regal ignore:external-reference
-	not node.terms[0].value[0].value in ast.operators # regal ignore:external-reference
+	node.terms[0].value[0].value in ast.all_function_names
+	not node.terms[0].value[0].value in ast.operators
 }
 
 # if previous node is of type call, also don't recommend `some .. in`
@@ -98,5 +98,5 @@ _impossible_some(node) if {
 	node.terms[0].value[0].value in {"eq", "equal"}
 
 	some term in node.terms
-	term.type in ast.scalar_types # regal ignore:external-reference
+	term.type in ast.scalar_types
 }

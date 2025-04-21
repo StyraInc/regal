@@ -1,16 +1,12 @@
 package regal.rules.custom["naming-convention_test"]
 
 import data.regal.ast
-import data.regal.capabilities
 import data.regal.config
 import data.regal.rules.custom["naming-convention"] as rule
 
 test_fail_package_name_does_not_match_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["package"], "pattern": `^foo\.bar\..+$`}],
-	}
-	r := rule.report with input as regal.parse_module("policy.rego", "package foo.bar") with config.for_rule as cfg
+	r := rule.report with input as regal.parse_module("policy.rego", "package foo.bar")
+		with config.rules as conventions([{"targets": ["package"], "pattern": `^foo\.bar\..+$`}])
 
 	r == {expected(
 		`Naming convention violation: package name "foo.bar" does not match pattern '^foo\.bar\..+$'`,
@@ -28,21 +24,15 @@ test_fail_package_name_does_not_match_pattern if {
 }
 
 test_success_package_name_matches_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["package"], "pattern": `^foo\.bar$`}],
-	}
-	r := rule.report with input as regal.parse_module("policy.rego", "package foo.bar") with config.for_rule as cfg
+	r := rule.report with input as regal.parse_module("policy.rego", "package foo.bar")
+		with config.rules as conventions([{"targets": ["package"], "pattern": `^foo\.bar$`}])
 
 	r == set()
 }
 
 test_fail_rule_name_does_not_match_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["rule"], "pattern": "^[a-z]+$"}],
-	}
-	r := rule.report with input as ast.policy(`FOO := true`) with config.for_rule as cfg
+	r := rule.report with input as ast.policy(`FOO := true`)
+		with config.rules as conventions([{"targets": ["rule"], "pattern": "^[a-z]+$"}])
 
 	r == {expected(
 		`Naming convention violation: rule name "FOO" does not match pattern '^[a-z]+$'`,
@@ -60,21 +50,15 @@ test_fail_rule_name_does_not_match_pattern if {
 }
 
 test_success_rule_name_matches_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["rule"], "pattern": "^[a-z]+$"}],
-	}
-	r := rule.report with input as ast.policy(`foo := true`) with config.for_rule as cfg
+	r := rule.report with input as ast.policy(`foo := true`)
+		with config.rules as conventions([{"targets": ["rule"], "pattern": "^[a-z]+$"}])
 
 	r == set()
 }
 
 test_fail_function_name_does_not_match_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["function"], "pattern": "^[a-z]+$"}],
-	}
-	r := rule.report with input as ast.policy(`fooBar(_) := true`) with config.for_rule as cfg
+	r := rule.report with input as ast.policy(`fooBar(_) := true`)
+		with config.rules as conventions([{"targets": ["function"], "pattern": "^[a-z]+$"}])
 
 	r == {expected(
 		`Naming convention violation: function name "fooBar" does not match pattern '^[a-z]+$'`,
@@ -92,11 +76,8 @@ test_fail_function_name_does_not_match_pattern if {
 }
 
 test_success_function_name_matches_pattern if {
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["function"], "pattern": "^[a-z_]+$"}],
-	}
-	r := rule.report with input as ast.policy(`foo_bar(_) := true`) with config.for_rule as cfg
+	r := rule.report with input as ast.policy(`foo_bar(_) := true`)
+		with config.rules as conventions([{"targets": ["function"], "pattern": "^[a-z_]+$"}])
 
 	r == set()
 }
@@ -108,11 +89,8 @@ test_fail_var_name_does_not_match_pattern if {
 		fooBar == true
 	}
 	`)
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["variable"], "pattern": "^[a-z_]+$"}],
-	}
-	r := rule.report with input as policy with config.for_rule as cfg
+	r := rule.report with input as policy
+		with config.rules as conventions([{"targets": ["variable"], "pattern": "^[a-z_]+$"}])
 
 	r == {expected(
 		`Naming convention violation: variable name "fooBar" does not match pattern '^[a-z_]+$'`,
@@ -137,11 +115,8 @@ test_success_var_name_matches_pattern if {
 		foo_bar == "works"
 	}
 	`)
-	cfg := {
-		"level": "error",
-		"conventions": [{"targets": ["variable"], "pattern": "^[a-z_]+$"}],
-	}
-	r := rule.report with input as policy with config.for_rule as cfg
+	r := rule.report with input as policy
+		with config.rules as conventions([{"targets": ["variable"], "pattern": "^[a-z_]+$"}])
 
 	r == set()
 }
@@ -156,13 +131,11 @@ test_fail_multiple_conventions if {
 		fooBar == true
 	}
 	`)
-	cfg := {"level": "error", "conventions": [
-		{"targets": ["package"], "pattern": `^acmecorp\.[a-z_\.]+$`},
-		{"targets": ["rule", "variable"], "pattern": "^bar$|^foo_bar$"},
-	]}
 	r := rule.report with input as policy
-		with config.for_rule as cfg
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.rules as conventions([
+			{"targets": ["package"], "pattern": `^acmecorp\.[a-z_\.]+$`},
+			{"targets": ["rule", "variable"], "pattern": "^bar$|^foo_bar$"},
+		])
 
 	r == {
 		expected(
@@ -218,3 +191,8 @@ expected(description, location) := {
 	}],
 	"title": "naming-convention",
 }
+
+conventions(arr) := {"custom": {"naming-convention": {
+	"level": "error",
+	"conventions": arr,
+}}}

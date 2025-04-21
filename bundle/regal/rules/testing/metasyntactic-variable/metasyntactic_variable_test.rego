@@ -92,5 +92,4 @@ expected := {
 	"title": "metasyntactic-variable",
 }
 
-# regal ignore:external-reference
 expected_with_location(location) := object.union(expected, {"location": location})

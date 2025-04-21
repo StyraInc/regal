@@ -8,11 +8,8 @@ import data.regal.result
 
 # target: package
 report contains violation if {
-	cfg := config.for_rule("custom", "naming-convention")
-	some convention in cfg.conventions
-	some target in convention.targets
-
-	target == "package"
+	some convention in config.rules.custom["naming-convention"].conventions
+	"package" in convention.targets
 
 	not regex.match(convention.pattern, ast.package_name)
 
@@ -27,11 +24,8 @@ report contains violation if {
 
 # target: rule
 report contains violation if {
-	cfg := config.for_rule("custom", "naming-convention")
-	some convention in cfg.conventions
-	some target in convention.targets
-
-	target == "rule"
+	some convention in config.rules.custom["naming-convention"].conventions
+	"rule" in convention.targets
 
 	some rule in ast.rules
 
@@ -50,11 +44,8 @@ report contains violation if {
 
 # target: function
 report contains violation if {
-	cfg := config.for_rule("custom", "naming-convention")
-	some convention in cfg.conventions
-	some target in convention.targets
-
-	target == "function"
+	some convention in config.rules.custom["naming-convention"].conventions
+	"function" in convention.targets
 
 	some rule in ast.functions
 

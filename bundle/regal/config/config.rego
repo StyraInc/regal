@@ -29,6 +29,10 @@ docs["resolve_url"](url, category) := replace(
 merged_config := data.internal.combined_config
 
 # METADATA
+# description: the merged (default and user) configuration for rules
+rules := merged_config.rules
+
+# METADATA
 # description: the resolved capabilities sourced from Regal and user configuration
 capabilities := object.union(merged_config.capabilities, {"special": _special})
 
@@ -49,14 +53,14 @@ default for_rule(_, _) := {"level": "error"}
 #   potentially also overrides. Use `level_for_rule` to determine the
 #   exact level as determined during evaluation.
 # scope: document
-for_rule(category, title) := merged_config.rules[category][title] # regal ignore:external-reference
+for_rule(category, title) := rules[category][title]
 
 # METADATA
 # description: answers whether a rule is ignored in the most efficient way
 ignored_rule(category, title) if {
 	_force_disabled(_params, category, title)
 } else if {
-	merged_config.rules[category][title].level == "ignore"
+	rules[category][title].level == "ignore"
 	not _force_enabled(_params, category, title)
 }
 
@@ -67,10 +71,10 @@ level_for_rule(category, title) := "ignore" if {
 } else := "error" if {
 	_force_enabled(_params, category, title)
 } else := level if {
-	level := merged_config.rules[category][title].level # regal ignore:external-reference
+	level := rules[category][title].level
 } else := "error"
 
-_force_disabled(params, _, title) if title in params.disable # regal ignore:external-reference
+_force_disabled(params, _, title) if title in params.disable
 
 _force_disabled(params, category, title) if {
 	params.disable_all

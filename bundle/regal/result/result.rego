@@ -45,10 +45,8 @@ aggregate(chain, aggregate_data) := entry if {
 			"title": title,
 		},
 		"aggregate_source": {
-			# regal ignore:external-reference
 			"file": input.regal.file.name,
 			"package_path": [part.value |
-				# regal ignore:external-reference
 				some i, part in input["package"].path
 				i > 0
 			],
@@ -137,7 +135,6 @@ _related_resources(annotations, category, title) := rr if {
 	not annotations.related_resources
 	rr := [{
 		"description": "documentation",
-		# regal ignore:external-reference
 		"ref": sprintf("%s/%s/%s", [config.docs.base_url, category, title]),
 	}]
 }
@@ -183,8 +180,8 @@ _resource_urls(related_resources, category) := [r |
 # the range and will highlight based on that rather than `text`.
 _with_text(loc_obj) := loc if {
 	loc := {"location": object.union(loc_obj, {
-		"file": input.regal.file.name, # regal ignore:external-reference
-		"text": input.regal.file.lines[loc_obj.row - 1], # regal ignore:external-reference
+		"file": input.regal.file.name,
+		"text": input.regal.file.lines[loc_obj.row - 1],
 	})}
 
 	loc_obj.row

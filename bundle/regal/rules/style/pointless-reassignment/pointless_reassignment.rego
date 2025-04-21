@@ -19,8 +19,7 @@ report contains violation if {
 
 # pointless reassignment in rule body
 report contains violation if {
-	some rule in input.rules
-	some expr in rule.body
+	expr := input.rules[_].body[_]
 
 	not expr["with"]
 

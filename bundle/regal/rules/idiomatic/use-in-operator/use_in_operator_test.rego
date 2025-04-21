@@ -251,5 +251,4 @@ expected := {
 	"location": {"file": "policy.rego"},
 }
 
-# regal ignore:external-reference
 expected_with_location(location) := {object.union(expected, {"location": location})} if is_object(location)

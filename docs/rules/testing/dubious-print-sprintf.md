@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-allow {
+allow if {
     # if any of input.name or input.domain are undefined, this will just print <undefined>
     print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 
@@ -20,7 +20,7 @@ allow {
 ```rego
 package policy
 
-allow {
+allow if {
     # if any of input.name or input.domain are undefined, this will still print the whole
     # sentence, with the value undefined printed as such, e.g.
     # name is: admin domain is: <undefined>

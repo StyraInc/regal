@@ -728,8 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1145727583 ns/op	3184970896 B/op	61571557 allocs/op
-// 1083952583 ns/op	3105174424 B/op	59992494 allocs/op
+// 1070530708 ns/op	3041023912 B/op	58063258 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
@@ -759,6 +758,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 // 268203979 ns/op	501748262 B/op	 9724107 allocs/op
 // 258819136 ns/op	497016108 B/op	 9632445 allocs/op
 // 170215493 ns/op	497115590 B/op	 9228106 allocs/op
+// 155879726 ns/op	444934614 B/op	 8362362 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().

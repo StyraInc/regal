@@ -78,6 +78,21 @@ _find_every_vars(value) := vars if {
 
 # METADATA
 # description: |
+#   true if a var of 'name' can be found in the provided AST node
+has_named_var(node, name) if {
+	node.type == "var"
+	node.value == name
+} else if {
+	node.type in {"array", "object", "set", "ref"}
+
+	walk(node.value, [_, nested])
+
+	nested.type == "var"
+	nested.value == name
+}
+
+# METADATA
+# description: |
 #   traverses all nodes in provided terms (using `walk`), and returns an array with
 #   all variables declared in terms, i,e [x, y] or {x: y}, etc.
 find_term_vars(terms) := [term |
@@ -208,16 +223,12 @@ found.vars[rule_index][context] contains var if {
 }
 
 found.vars[rule_index].ref contains var if {
-	some i, rule in _rules
-
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
+	some rule_index in rule_index_strings
+	some ref
+	found.refs[rule_index][ref].type == "ref"
 
-	walk(rule, [_, value])
-
-	value.type == "ref"
-
-	some x, var in value.value
+	some x, var in ref.value
 	x > 0
 	var.type == "var"
 }

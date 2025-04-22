@@ -50,8 +50,6 @@ _ref_vars[rule_index][var.value] contains var if {
 _ref_base_vars[rule_index][term.value] contains term if {
 	some rule_index
 	term := ast.found.refs[rule_index][_].value[0]
-
-	not ast.is_wildcard(term)
 }
 
 _comprehension_term_vars[rule_index] contains var.value if {

@@ -28,7 +28,7 @@ default allow := false
 
 first_name(full_name) := split(full_name, " ")[0]
 
-allow {
+allow if {
     username := input.user.name
     # .. more conditions ..
 }
@@ -46,7 +46,7 @@ While it often is "harmless" to use the unification operator (`=`) for assignmen
 removes any ambiguities around intent, and prevents some hard to debug issues. Consider:
 
 ```rego
-allow {
+allow if {
     username = input.user.name
     # .. more conditions ..
 }

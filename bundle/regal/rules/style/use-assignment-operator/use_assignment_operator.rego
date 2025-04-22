@@ -6,14 +6,16 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
+	# NOTE: All these cases already covered by opa fmt
 	# foo = "bar"
 	# default foo = "bar"
 	# foo(bar) = "baz"
 	# default foo(_) = "bar"
 	some rule in input.rules
+
+	rule.head.value.location
 	not rule.head.assign
 	not rule.head.key
-	not ast.implicit_boolean_assignment(rule)
 	not ast.is_chained_rule_body(rule, input.regal.file.lines)
 
 	loc := result.location(rule.head)

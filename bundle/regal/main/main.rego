@@ -43,13 +43,7 @@ lint.aggregate.violations := aggregate_report if {
 }
 
 _file_name_relative_to_root(filename, "/") := trim_prefix(filename, "/")
-
-_file_name_relative_to_root(filename, root) := trim_prefix(
-	filename,
-	concat("", [root, "/"]),
-) if {
-	root != "/"
-}
+_file_name_relative_to_root(filename, root) := trim_prefix(filename, concat("", [root, "/"])) if root != "/"
 
 _rules_to_run[category] contains title if {
 	relative_filename := _file_name_relative_to_root(input.regal.file.name, config.path_prefix)

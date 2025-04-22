@@ -324,17 +324,13 @@ function_ret_in_args(fn_name, terms) if {
 }
 
 # METADATA
-# description: answers if provided rule is implicitly assigned boolean true, i.e. allow { .. } or not
+# description: answers if provided rule is implicitly assigned boolean true, i.e. allow if { .. } or not
+# custom:
+#   deprecated: |
+#     this is now handled by the roast package, and there's little
+#     point in using this over a `rule.head.value.location` check directly
 # scope: document
-implicit_boolean_assignment(rule) if {
-	# note the missing location attribute here, which is how we distinguish
-	# between implicit and explicit assignments
-	rule.head.value == {"type": "boolean", "value": true}
-}
-
-# or sometimes, like this...
-implicit_boolean_assignment(rule) if rule.head.value.location == rule.head.location
-implicit_boolean_assignment(rule) if util.to_location_object(rule.head.value.location).col == 1
+implicit_boolean_assignment(rule) if not rule.head.value.location
 
 # METADATA
 # description: |
@@ -358,7 +354,7 @@ negated_expressions[rule_index] contains value if {
 
 	walk(rule, [_, value])
 
-	value.negated
+	value.negated == true
 }
 
 # METADATA
@@ -382,20 +378,13 @@ is_chained_rule_body(rule, lines) if {
 # description: answers whether variable of `name` is found anywhere in provided rule `head`
 # scope: document
 var_in_head(head, name) if {
-	head.value.type == "var"
-	head.value.value == name
+	has_named_var(head.value, name)
 } else if {
-	head.key.type == "var"
-	head.key.value == name
+	has_named_var(head.key, name)
 } else if {
 	some i, part in head.ref
 	i > 0
-	part.type == "var"
-	part.value == name
-} else if {
-	some type in ["value", "key"]
-	some var in find_term_vars(head[type].value)
-	var.value == name
+	has_named_var(part, name)
 }
 
 # METADATA
@@ -403,20 +392,7 @@ var_in_head(head, name) if {
 #   true if var of `name` is referenced in any `calls` (likely,
 #   `ast.function_calls`) in the rule of given `rule_index`
 # scope: document
-var_in_call(calls, rule_index, name) if _var_in_arg(calls[rule_index][_].args[_], name)
-
-_var_in_arg(arg, name) if {
-	arg.type == "var"
-	arg.value == name
-}
-
-_var_in_arg(arg, name) if {
-	arg.type in {"array", "object", "set"}
-
-	some var in find_term_vars(arg)
-
-	var.value == name
-}
+var_in_call(calls, rule_index, name) if has_named_var(calls[rule_index][_].args[_], name)
 
 # METADATA
 # description: answers wether provided expression is an assignment (using `:=`)

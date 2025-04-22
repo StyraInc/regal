@@ -8,7 +8,7 @@
 ```rego
 package policy
 
-allow {
+allow if {
     userinfo := data.users[id]
     # ...
 }
@@ -16,14 +16,16 @@ allow {
 
 **Prefer**
 ```rego
-allow {
+package policy
+
+allow if {
     some id
     userinfo := data.users[id]
     # ...
 }
 
 # alternatively, and arguably more idiomatic:
-allow {
+allow if {
     some id, userinfo in data.users
     # ...
 }

@@ -62,7 +62,7 @@ imports_has_path(imports, path) if {
 #   returns whether a keyword is imported in the policy, either explicitly
 #   like "future.keywords.if" or implicitly like "future.keywords" or "rego.v1"
 imports_keyword(imports, keyword) if {
-	capabilities.is_opa_v1 # regal ignore:external-reference
+	capabilities.is_opa_v1
 	input.regal.file.rego_version != "v0"
 } else if {
 	pv := imports[_].path.value

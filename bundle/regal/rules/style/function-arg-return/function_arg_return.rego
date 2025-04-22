@@ -7,10 +7,8 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	cfg := config.for_rule("style", "function-arg-return")
-
-	excluded_functions := {name | some name in cfg["except-functions"]} | {"print"}
-	included_functions := ast.all_function_names - excluded_functions
+	excluded_functions := {name | some name in config.rules.style["function-arg-return"]["except-functions"]}
+	included_functions := (ast.all_function_names - excluded_functions) - {"print"}
 
 	some fn
 	ast.function_calls[_][fn].name in included_functions

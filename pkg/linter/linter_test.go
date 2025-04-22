@@ -729,6 +729,7 @@ import data.unresolved`,
 }
 
 // 1145727583 ns/op	3184970896 B/op	61571557 allocs/op
+// 1083952583 ns/op	3105174424 B/op	59992494 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().

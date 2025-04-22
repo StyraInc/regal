@@ -66,7 +66,7 @@ _first_named_arg_location(indices, name) := [arg.location |
 
 _arg_used_in_call(indices, name) if {
 	some i in indices
-	some call in ast.function_calls[ast.rule_index_strings[i]] # regal ignore:external-reference
+	some call in ast.function_calls[ast.rule_index_strings[i]]
 	some arg in call.args
 
 	# only check for vars here, as refs are already dealt with

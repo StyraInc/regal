@@ -5,7 +5,6 @@ package regal.config
 #   determines if file should be excluded, either because it's globally
 #   ignored, or because the specific rule configuration excludes it
 excluded_file(category, title, file) if {
-	# regal ignore:external-reference
 	some pattern in _global_ignore_patterns
 	_exclude(pattern, file)
 } else if {

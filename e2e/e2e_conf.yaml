@@ -3,3 +3,8 @@ project:
   roots:
     - path: v0
       rego-version: 0
+
+rules:
+  style:
+    external-reference:
+      max-allowed: 0

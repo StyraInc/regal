@@ -105,7 +105,7 @@ _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, va
 	fn_name := ref_to_string(value[0].value)
 
 	not contains(fn_name, "$")
-	fn_name in all_function_names # regal ignore:external-reference
+	fn_name in all_function_names
 	function_ret_in_args(fn_name, value)
 }
 
@@ -146,7 +146,7 @@ _find_vars(value, last) := {"args": arg_vars} if {
 	count(arg_vars) > 0
 }
 
-_rule_index(rule) := rule_index_strings[i] if { # regal ignore:external-reference
+_rule_index(rule) := rule_index_strings[i] if {
 	some i, r in _rules
 	r == rule
 }
@@ -278,9 +278,9 @@ found.comprehensions[rule_index] contains value if {
 #   assignments / unification, but it's likely good enough since other rules
 #   recommend against those
 find_vars_in_local_scope(rule, location) := [var |
-	var := found.vars[_rule_index(rule)][_][_] # regal ignore:external-reference
+	var := found.vars[_rule_index(rule)][_][_]
 
-	not is_wildcard(var)
+	not startswith(var.value, "$")
 	_before_location(rule.head, var, util.to_location_object(location))
 ]
 
@@ -351,7 +351,7 @@ find_names_in_scope(rule, location) := names if {
 #   find all variables declared via `some` declarations (and *not* `some .. in`)
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
-	some some_var in found.vars[_rule_index(rule)]["some"] # regal ignore:external-reference
+	some some_var in found.vars[_rule_index(rule)]["some"]
 	_before_location(rule.head, some_var, location)
 }
 

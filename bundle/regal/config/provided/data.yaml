@@ -159,6 +159,7 @@ rules:
       level: error
     external-reference:
       level: error
+      max-allowed: 2
     file-length:
       level: error
       max-file-length: 500

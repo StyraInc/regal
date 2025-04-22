@@ -2,6 +2,7 @@ package regal.lsp.completion_test
 
 import data.regal.ast
 import data.regal.capabilities
+import data.regal.config
 
 import data.regal.lsp.completion
 
@@ -20,9 +21,7 @@ test_ref_names if {
 		imp.foo == data.x
 	}
 	`)
-
-	ref_names := completion.ref_names with input as module
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	ref_names := completion.ref_names with input as module with config.capabilities as capabilities.provided
 
 	ref_names == {
 		"imp",

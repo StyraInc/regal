@@ -73,7 +73,7 @@ test_success_unresolved_imports_are_excepted if {
 	x := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-		with config.for_rule as {"level": "error", "except-imports": ["data.bar.excepted"]}
+		with config.rules as {"imports": {"unresolved-import": {"except-imports": ["data.bar.excepted"]}}}
 
 	r == set()
 }
@@ -86,7 +86,7 @@ test_success_unresolved_imports_with_wildcards_are_excepted if {
 	x := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": agg1}
-		with config.for_rule as {"level": "error", "except-imports": ["data.bar.*"]}
+		with config.rules as {"imports": {"unresolved-import": {"except-imports": ["data.bar.*"]}}}
 
 	r == set()
 }

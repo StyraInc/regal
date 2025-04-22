@@ -85,7 +85,7 @@ _args_indices[name] contains rule_index if {
 }
 
 _functions[name] contains func if {
-	cfg := config.for_rule("custom", "narrow-argument")
+	cfg := config.rules.custom["narrow-argument"]
 
 	some i
 	args := input.rules[i].head.args

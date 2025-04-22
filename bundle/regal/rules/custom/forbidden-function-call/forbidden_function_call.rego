@@ -8,14 +8,14 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	cfg := config.for_rule("custom", "forbidden-function-call")
+	forbidden := util.to_set(config.rules.custom["forbidden-function-call"]["forbidden-functions"])
 
 	# avoid traversal if no forbidden function is called
-	util.intersects(util.to_set(cfg["forbidden-functions"]), ast.builtin_functions_called)
+	util.intersects(forbidden, ast.builtin_functions_called)
 
 	ref := ast.found.refs[_][_]
 	name := ast.ref_to_string(ref[0].value)
-	name in cfg["forbidden-functions"]
+	name in forbidden
 
 	violation := result.fail(rego.metadata.chain(), result.location(ref))
 }

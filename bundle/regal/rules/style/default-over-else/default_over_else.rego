@@ -23,7 +23,6 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(else_head))
 }
 
-_cfg := config.for_rule("style", "default-over-else")
-
-_considered_rules := input.rules if _cfg["prefer-default-functions"] == true
-_considered_rules := ast.rules if not _cfg["prefer-default-functions"]
+_considered_rules := input.rules if {
+	config.rules.style["default-over-else"]["prefer-default-functions"] == true
+} else := ast.rules

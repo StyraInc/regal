@@ -8,7 +8,8 @@ test_fail_line_too_long if {
 	r := rule.report with input as ast.with_rego_v1(`allow if {
 foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | some q in input.nonsense]
 	}`)
-		with config.for_rule as {"level": "error", "max-line-length": 80}
+		with config.rules as {"style": {"line-length": {"max-line-length": 80}}}
+
 	r == {{
 		"category": "style",
 		"description": "Line too long",
@@ -34,7 +35,7 @@ test_success_line_too_long_but_non_breakable_word if {
 	# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened
 	allow := true
 	`)
-		with config.for_rule as {"level": "error", "max-line-length": 40, "non-breakable-word-threshold": 50}
+		with config.rules as {"style": {"line-length": {"max-line-length": 40, "non-breakable-word-threshold": 50}}}
 
 	r == set()
 }
@@ -45,7 +46,8 @@ test_fail_line_too_long_but_below_breakable_word_threshold if {
 	# Long url: https://www.example.com/this/is/a/very/long
 	allow := true
 	`)
-		with config.for_rule as {"level": "error", "max-line-length": 40, "non-breakable-word-threshold": 60}
+		with config.rules as {"style": {"line-length": {"max-line-length": 40, "non-breakable-word-threshold": 60}}}
+
 	r == {{
 		"category": "style",
 		"description": "Line too long",
@@ -70,7 +72,8 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 	r := rule.report with input as ast.with_rego_v1(`# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened
 	allow := true
 	`)
-		with config.for_rule as {"level": "error"}
+		with config.rules as {"style": {"line-length": {"level": "error"}}}
+
 	r == {{
 		"category": "style",
 		"description": "Line too long",
@@ -93,6 +96,7 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 
 test_success_line_not_too_long if {
 	r := rule.report with input as ast.policy(`allow if { "foo" == "bar" }`)
-		with config.for_rule as {"level": "error", "max-line-length": 80}
+		with config.rules as {"style": {"line-length": {"max-line-length": 80}}}
+
 	r == set()
 }

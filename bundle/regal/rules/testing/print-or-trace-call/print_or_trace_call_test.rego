@@ -1,7 +1,9 @@
 package regal.rules.testing["print-or-trace-call_test"]
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
+
 import data.regal.rules.testing["print-or-trace-call"] as rule
 
 test_fail_call_to_print_and_trace if {
@@ -10,7 +12,8 @@ test_fail_call_to_print_and_trace if {
 
 		x := [i | i = 0; trace("bar")]
 	}`)
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities.provided}
+		with config.capabilities as capabilities.provided
+
 	r == {
 		expected_with_location({
 			"col": 3,

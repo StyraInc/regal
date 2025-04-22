@@ -10,9 +10,8 @@ test_fail_print_sprintf if {
 	module := ast.policy(`y if {
 		print(sprintf("name is: %s domain is: %s", [input.name, input.domain]))
 	}`)
+	r := rule.report with input as module with config.capabilities as capabilities.provided
 
-	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",
@@ -42,9 +41,8 @@ test_fail_bodies_print_sprintf if {
 			print(sprintf("x is: %s", [x]))
 		]
 	}`)
+	r := rule.report with input as module with config.capabilities as capabilities.provided
 
-	r := rule.report with input as module
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == {{
 		"category": "testing",
 		"description": "Dubious use of print and sprintf",

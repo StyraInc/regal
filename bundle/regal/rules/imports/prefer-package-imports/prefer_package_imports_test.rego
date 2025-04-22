@@ -134,10 +134,11 @@ test_success_aggregate_report_ignored_import_path if {
 		}},
 	}
 
-	r := rule.aggregate_report with input.aggregate as aggregate with config.for_rule as {
-		"level": "error",
-		"ignore-import-paths": ["data.b.c"],
-	}
+	r := rule.aggregate_report with input.aggregate as aggregate
+		with config.rules as {"imports": {"prefer-package-imports": {
+			"level": "error",
+			"ignore-import-paths": ["data.b.c"],
+		}}}
 
 	r == set()
 }

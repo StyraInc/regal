@@ -15,11 +15,10 @@ test_multiple_failures if {
 	# both camel case and unification operator
 	default camelCase = "yes"
 	`
-	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {
-			"prefer-snake-case": {"level": "error"},
-			"use-assignment-operator": {"level": "error"},
-		}}}
+	report := main.report with input as regal.parse_module("p.rego", policy) with config.rules as {"style": {
+		"prefer-snake-case": {"level": "error"},
+		"use-assignment-operator": {"level": "error"},
+	}}
 
 	count(report) == 2
 }
@@ -30,7 +29,7 @@ test_expect_failure if {
 	camelCase := "yes"
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 
 	count(report) == 1
 }
@@ -41,7 +40,7 @@ test_ignore_rule_config if {
 	camelCase := "yes"
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "ignore"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "ignore"}}}
 
 	count(report) == 0
 }
@@ -53,7 +52,7 @@ test_ignore_directive_failure if {
 	camelCase := "yes"
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 
 	count(report) == 1
 }
@@ -65,7 +64,7 @@ test_ignore_directive_success if {
 	camelCase := "yes"
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 
 	count(report) == 0
 }
@@ -76,7 +75,7 @@ test_ignore_directive_success_same_line if {
 	camelCase := "yes" # regal ignore:prefer-snake-case
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 
 	count(report) == 0
 }
@@ -87,7 +86,7 @@ test_ignore_directive_success_same_line_trailing_directive if {
 	camelCase := "yes" # camelCase is nice! # regal ignore:prefer-snake-case
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 
 	count(report) == 0
 }
@@ -98,7 +97,7 @@ test_ignore_directive_success_same_line_todo_comment if {
 	camelCase := "yes" # TODO! camelCase isn't nice! # regal ignore:todo-comment
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"todo-comment": {"level": "error"}}}}
+		with config.rules as {"style": {"todo-comment": {"level": "error"}}}
 
 	count(report) == 0
 }
@@ -109,11 +108,10 @@ test_ignore_directive_multiple_success if {
 	# regal ignore:prefer-snake-case,use-assignment-operator
 	default camelCase = "yes"
 	`
-	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {
-			"prefer-snake-case": {"level": "error"},
-			"use-assignment-operator": {"level": "error"},
-		}}}
+	report := main.report with input as regal.parse_module("p.rego", policy) with config.rules as {"style": {
+		"prefer-snake-case": {"level": "error"},
+		"use-assignment-operator": {"level": "error"},
+	}}
 
 	count(report) == 0
 }
@@ -124,11 +122,10 @@ test_ignore_directive_multiple_mixed_success if {
 	# regal ignore:prefer-snake-case,todo-comment
 	default camelCase = "yes"
 	`
-	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {
-			"prefer-snake-case": {"level": "error"},
-			"use-assignment-operator": {"level": "error"},
-		}}}
+	report := main.report with input as regal.parse_module("p.rego", policy) with config.rules as {"style": {
+		"prefer-snake-case": {"level": "error"},
+		"use-assignment-operator": {"level": "error"},
+	}}
 
 	count(report) == 1
 }
@@ -136,17 +133,13 @@ test_ignore_directive_multiple_mixed_success if {
 test_ignore_directive_collected_in_aggregate_rule if {
 	module := regal.parse_module("p.rego", `package p
 
-	import rego.v1
-
 	# regal ignore:unresolved-import
 	import data.unresolved
 	`)
 
-	mock_input := object.union(module, {"regal": {"operations": ["lint"]}})
+	lint := main.lint with input as object.union(module, {"regal": {"operations": ["lint"]}})
 
-	lint := main.lint with input as mock_input
-
-	lint.ignore_directives == {"p.rego": {6: ["unresolved-import"]}}
+	lint.ignore_directives == {"p.rego": {4: ["unresolved-import"]}}
 }
 
 test_ignore_directive_enforced_in_aggregate_rule if {
@@ -155,7 +148,7 @@ test_ignore_directive_enforced_in_aggregate_rule if {
 		"regal": {"file": {"name": "p.rego"}},
 		"ignore_directives": {},
 	}
-		with config.merged_config as {"rules": {"imports": {"unresolved-import": {"level": "error"}}}}
+		with config.rules as {"imports": {"unresolved-import": {"level": "error"}}}
 		with data.regal.rules.imports["unresolved-import"].aggregate_report as {{
 			"category": "imports",
 			"level": "error",
@@ -170,7 +163,7 @@ test_ignore_directive_enforced_in_aggregate_rule if {
 		"regal": {"file": {"name": "p.rego"}},
 		"ignore_directives": {"p.rego": {"6": ["unresolved-import"]}},
 	}
-		with config.merged_config as {"rules": {"imports": {"unresolved-import": {"level": "error"}}}}
+		with config.rules as {"imports": {"unresolved-import": {"level": "error"}}}
 		with data.regal.rules.imports["unresolved-import"].aggregate_report as {{
 			"category": "imports",
 			"level": "error",
@@ -186,15 +179,17 @@ test_exclude_files_rule_config if {
 
 	camelCase := "yes"
 	`
-	cfg := {"rules": {"style": {"prefer-snake-case": {"level": "error", "ignore": {"files": ["p.rego"]}}}}}
-	report := main.report with input as regal.parse_module("p.rego", policy) with config.merged_config as cfg
+	cfg := {"style": {"prefer-snake-case": {"level": "error", "ignore": {"files": ["p.rego"]}}}}
+	report := main.report with input as regal.parse_module("p.rego", policy) with config.rules as cfg
 
 	count(report) == 0
 }
 
 test_exclude_files_rule_config_with_path_prefix_relative_name if {
-	rules_to_run := main._rules_to_run with config.rules as {"testing": {"test": {"level": "error"}}}
-		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as {"testing": {"test": {
+		"level": "error",
+		"ignore": {"files": ["bar/*"]},
+	}}}
 		with input.regal.file.name as "bar/p.rego"
 		with config.path_prefix as "/foo" # ignored as not prefix of input file
 
@@ -202,10 +197,9 @@ test_exclude_files_rule_config_with_path_prefix_relative_name if {
 }
 
 test_not_exclude_files_rule_config_with_path_prefix_relative_name if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["notmatching/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "bar/p.rego"
 		with config.path_prefix as "/foo" # ignored as not prefix of input file
 
@@ -213,10 +207,9 @@ test_not_exclude_files_rule_config_with_path_prefix_relative_name if {
 }
 
 test_exclude_files_rule_config_with_path_prefix if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["bar/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "/foo/bar/p.rego"
 		with config.path_prefix as "/foo"
 
@@ -224,10 +217,9 @@ test_exclude_files_rule_config_with_path_prefix if {
 }
 
 test_exclude_files_rule_config_with_root_path_prefix if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["foo/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["foo/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "/foo/bar/p.rego"
 		with config.path_prefix as "/"
 
@@ -235,10 +227,9 @@ test_exclude_files_rule_config_with_root_path_prefix if {
 }
 
 test_not_exclude_files_rule_config_with_path_prefix if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["notmatching/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "/foo/bar/p.rego"
 		with config.path_prefix as "/foo"
 
@@ -246,10 +237,9 @@ test_not_exclude_files_rule_config_with_path_prefix if {
 }
 
 test_exclude_files_rule_config_with_uri_and_path_prefix if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["bar/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["bar/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "file:///foo/bar/p.rego"
 		with config.path_prefix as "file:///foo"
 
@@ -257,10 +247,9 @@ test_exclude_files_rule_config_with_uri_and_path_prefix if {
 }
 
 test_not_exclude_files_rule_config_with_uri_and_path_prefix if {
-	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
+	cfg := {"testing": {"test": {"level": "error", "ignore": {"files": ["notmatching/*"]}}}}
 
-	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error", "ignore": {"files": ["notmatching/*"]}}
+	rules_to_run := main._rules_to_run with config.rules as cfg
 		with input.regal.file.name as "file:///foo/bar/p.rego"
 		with config.path_prefix as "file:///foo"
 
@@ -273,7 +262,7 @@ test_force_exclude_file_eval_param if {
 	camelCase := "yes"
 	`
 	report := main.report with input as regal.parse_module("p.rego", policy)
-		with config.merged_config as {"rules": {"style": {"prefer-snake-case": {"level": "error"}}}}
+		with config.rules as {"style": {"prefer-snake-case": {"level": "error"}}}
 		with data.eval.params.ignore_files as ["p.rego"]
 
 	count(report) == 0
@@ -333,9 +322,9 @@ test_main_lint if {
 
 	mock_input := object.union(module, {"regal": {"operations": ["lint"]}})
 
-	cfg := {"rules": {"style": {"use-assignment-operator": {"level": "error"}}}}
+	cfg := {"style": {"use-assignment-operator": {"level": "error"}}}
 
-	result := main.lint with input as mock_input with config.merged_config as cfg
+	result := main.lint with input as mock_input with config.rules as cfg
 
 	result.violations == {{
 		"category": "style",
@@ -365,7 +354,6 @@ test_rules_to_run_not_excluded if {
 	cfg := {"rules": {"testing": {"test": {"level": "error"}}}}
 
 	rules_to_run := main._rules_to_run with config.merged_config as cfg
-		with config.for_rule as {"level": "error"}
 		with input.regal.file.name as "p.rego"
 		with config.excluded_file as false
 
@@ -416,7 +404,6 @@ test_aggregate_bundled_rule if {
 
 test_aggregate_custom_rule if {
 	agg := main.aggregate with data.custom.regal.rules as {"foo": {"bar": {"aggregate": {"baz"}}}}
-		with config.for_rule as {"level": "error"}
 		with config.excluded_file as false
 		with input.regal.file.name as "p.rego"
 

@@ -8,7 +8,7 @@ import data.regal.rules.bugs["var-shadows-builtin"] as rule
 
 test_fail_var_shadows_builtin if {
 	module := ast.with_rego_v1(`allow if http := "yes"`)
-	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with input as module with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "bugs",
@@ -33,16 +33,14 @@ test_fail_var_shadows_builtin if {
 }
 
 test_success_var_does_not_shadow_builtin if {
-	module := ast.with_rego_v1(`allow if answer := "yes"`)
+	r := rule.report with input as ast.policy(`allow if a := "yes"`) with config.capabilities as capabilities.provided
 
-	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }
 
 # https://github.com/StyraInc/regal/issues/1163
 test_success_print_excluded if {
-	module := ast.with_rego_v1(`x if print([y - 1])`)
+	r := rule.report with input as ast.policy(`x if print([y - 1])`) with config.capabilities as capabilities.provided
 
-	r := rule.report with input as module with data.internal.combined_config as {"capabilities": capabilities.provided}
 	r == set()
 }

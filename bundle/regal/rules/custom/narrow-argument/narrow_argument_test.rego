@@ -10,6 +10,7 @@ test_fail_can_be_narrowed_single_ref if {
 		fun(obj) if obj.number == 1
 		fun(obj) if obj.number == 2
 	`)
+		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == {{
 		"category": "custom",
@@ -38,6 +39,7 @@ test_fail_can_be_narrowed_prefixed_ref if {
 		fun(obj) if obj.x.y.number == 1
 		fun(obj) if obj.x.y.string == "1"
 	`)
+		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == {{
 		"category": "custom",

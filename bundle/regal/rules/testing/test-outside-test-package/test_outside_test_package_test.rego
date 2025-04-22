@@ -5,9 +5,8 @@ import data.regal.config
 import data.regal.rules.testing["test-outside-test-package"] as rule
 
 test_fail_test_outside_test_package if {
-	r := rule.report with input as ast.with_rego_v1(`test_foo if { false }`)
-		with config.for_rule as {"level": "error"}
-		with input.regal.file.name as "p_test.rego"
+	r := rule.report with input as ast.with_rego_v1(`test_foo if { false }`) with input.regal.file.name as "p_test.rego"
+
 	r == {{
 		"category": "testing",
 		"description": "Test outside of test package",

@@ -88,10 +88,8 @@ test_fail_conditionless_else_custom_function_prefer_default_functions if {
 		input.foo
 	} else := 1
 	`)
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
-		"prefer-default-functions": true,
-	}
+	r := rule.report with input as module
+		with config.rules as {"style": {"default-over-else": {"prefer-default-functions": true}}}
 
 	r == with_location({
 		"col": 4,
@@ -111,10 +109,8 @@ test_success_conditionless_else_custom_function_not_constant if {
 		input.foo
 	} else := y
 	`)
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
-		"prefer-default-functions": true,
-	}
+	r := rule.report with input as module
+		with config.rules as {"style": {"default-over-else": {"prefer-default-functions": true}}}
 
 	r == set()
 }

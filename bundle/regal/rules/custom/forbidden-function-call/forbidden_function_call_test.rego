@@ -1,6 +1,7 @@
 package regal.rules.custom["forbidden-function-call_test"]
 
 import data.regal.ast
+import data.regal.capabilities
 import data.regal.config
 
 import data.regal.rules.custom["forbidden-function-call"] as rule
@@ -8,11 +9,11 @@ import data.regal.rules.custom["forbidden-function-call"] as rule
 test_fail_forbidden_function if {
 	module := ast.policy(`foo := http.send({"method": "GET", "url": "https://example.com"})`)
 
-	r := rule.report with input as module with config.for_rule as {
+	r := rule.report with input as module with config.rules as {"custom": {"forbidden-function-call": {
 		"level": "error",
 		"forbidden-functions": ["http.send"],
-	}
-		with data.internal.combined_config as {"capabilities": data.regal.capabilities.provided}
+	}}}
+		with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "custom",

@@ -76,7 +76,7 @@ test_ignore_test_file_by_default if {
 test_ignore_test_file_can_be_disabled if {
 	r := rule.report with input as ast.with_rego_v1(`foo := data.bar._wow`)
 		with input.regal.file.name as "p_test.rego"
-		with config.for_rule as {"include-test-files": true}
+		with config.rules as {"bugs": {"leaked-internal-reference": {"include-test-files": true}}}
 
 	r == expected_with_location({
 		"file": "p_test.rego",

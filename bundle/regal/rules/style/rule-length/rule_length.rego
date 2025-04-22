@@ -7,7 +7,7 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	cfg := config.for_rule("style", "rule-length")
+	cfg := config.rules.style["rule-length"]
 
 	some rule in input.rules
 

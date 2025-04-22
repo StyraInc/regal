@@ -47,6 +47,7 @@ _file_name_relative_to_root(filename, root) := trim_prefix(filename, concat("", 
 
 _rules_to_run[category] contains title if {
 	relative_filename := _file_name_relative_to_root(input.regal.file.name, config.path_prefix)
+	not config.ignored_globally(relative_filename)
 
 	some category, title
 	config.rules[category][title]
@@ -104,6 +105,7 @@ report contains violation if {
 # Check custom rules
 report contains violation if {
 	file_name_relative_to_root := trim_prefix(input.regal.file.name, concat("", [config.path_prefix, "/"]))
+	not config.ignored_globally(file_name_relative_to_root)
 
 	some category, title
 
@@ -130,6 +132,8 @@ aggregate[category_title] contains entry if {
 # description: collects aggregates in custom rules
 # scope: rule
 aggregate[category_title] contains entry if {
+	not config.ignored_globally(input.regal.file.name)
+
 	some category, title
 
 	not config.ignored_rule(category, title)
@@ -182,6 +186,8 @@ aggregate_report contains violation if {
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
+	not config.ignored_globally(input.regal.file.name)
+
 	some key in object.keys(input.aggregates_internal)
 	[category, title] := split(key, "/")
 

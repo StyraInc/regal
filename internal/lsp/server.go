@@ -1592,7 +1592,11 @@ func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionPar
 			})
 		}
 
-		if l.clientIdentifier == clients.IdentifierVSCode {
+		if diag.CodeDescription == nil {
+			l.logf(log.LevelMessage, "missing code description and href for %q", diag.Code)
+		}
+
+		if l.clientIdentifier == clients.IdentifierVSCode && diag.CodeDescription != nil {
 			// always show the docs link
 			txt := "Show documentation for " + diag.Code
 			actions = append(actions, types.CodeAction{

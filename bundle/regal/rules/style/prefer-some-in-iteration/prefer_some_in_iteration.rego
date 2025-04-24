@@ -10,11 +10,13 @@ import data.regal.util
 report contains violation if {
 	cfg := config.rules.style["prefer-some-in-iteration"]
 
-	some i, rule in input.rules
+	some rule in input.rules
 
 	not _possible_top_level_iteration(rule)
 
-	walk(rule, [path, value])
+	some node in ["head", "body", "else"]
+
+	walk(rule[node], [path, value])
 
 	value.type == "ref"
 
@@ -34,7 +36,7 @@ report contains violation if {
 	num_output_vars < cfg["ignore-nesting-level"]
 
 	not _except_sub_attribute(cfg, value.value)
-	not _invalid_some_context(input.rules[i], path)
+	not _invalid_some_context(rule, array.concat([node], path))
 
 	violation := result.fail(rego.metadata.chain(), result.location(value))
 }

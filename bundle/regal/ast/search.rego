@@ -208,12 +208,10 @@ _rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
 #   - somein
 #   - ref
 found.vars[rule_index][context] contains var if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
+	some node in ["head", "body", "else"]
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [path, value])
+	walk(_rules[i][node], [path, value])
 
 	last := regal.last(path)
 	last in {"terms", "symbols", "args"}

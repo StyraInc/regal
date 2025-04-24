@@ -352,7 +352,9 @@ negated_expressions[rule_index] contains value if {
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 	rule_index := rule_index_strings[i]
 
-	walk(rule, [_, value])
+	some node in ["head", "body", "else"]
+
+	walk(rule[node], [_, value])
 
 	value.negated == true
 }

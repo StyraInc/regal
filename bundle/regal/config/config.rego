@@ -38,7 +38,15 @@ capabilities := object.union(merged_config.capabilities, {"special": _special})
 
 _special contains "no_filename" if input.regal.file.name == "stdin"
 
-default _params := {}
+default _params := {
+	"ignore_files": [],
+	"disable_all": false,
+	"enable_all": false,
+	"disable_category": [],
+	"enable_category": [],
+	"disable": [],
+	"enable": [],
+}
 
 _params := data.eval.params
 
@@ -77,7 +85,7 @@ level_for_rule(category, title) := "ignore" if {
 _force_disabled(params, _, title) if title in params.disable
 
 _force_disabled(params, category, title) if {
-	params.disable_all
+	params.disable_all == true
 	not category in params.enable_category
 	not title in params.enable
 }
@@ -90,7 +98,7 @@ _force_disabled(params, category, title) if {
 _force_enabled(params, _, title) if title in params.enable
 
 _force_enabled(params, category, title) if {
-	params.enable_all
+	params.enable_all == true
 	not category in params.disable_category
 	not title in params.disable
 }

@@ -101,9 +101,7 @@ _to_string(i, part) := "**" if {
 }
 
 _except_imports contains exception if {
-	cfg := config.for_rule("imports", "unresolved-import")
-
-	some str in cfg["except-imports"]
+	some str in config.rules.imports["unresolved-import"]["except-imports"]
 	exception := _trim_data(split(str, "."))
 }
 

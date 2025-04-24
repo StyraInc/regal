@@ -37,4 +37,4 @@ _valid_test_file_name("test.rego") # Styra DAS convention considered OK
 
 default _enable_for_test_files := false
 
-_enable_for_test_files := config.for_rule("bugs", "leaked-internal-reference")["include-test-files"]
+_enable_for_test_files := config.rules.bugs["leaked-internal-reference"]["include-test-files"]

@@ -10,7 +10,7 @@ test_fail_missing_rego_v1_import if {
 
 	foo if not bar
 	`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "imports",
@@ -40,6 +40,6 @@ test_success_rego_v1_import if {
 
 	foo if not bar
 	`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 	r == set()
 }

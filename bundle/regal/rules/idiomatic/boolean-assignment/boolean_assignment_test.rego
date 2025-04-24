@@ -8,7 +8,7 @@ import data.regal.rules.idiomatic["boolean-assignment"] as rule
 
 test_boolean_assignment_in_rule_head if {
 	r := rule.report with input as ast.policy("more_than_one := input.count > 1")
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "idiomatic",
@@ -33,15 +33,15 @@ test_boolean_assignment_in_rule_head if {
 }
 
 test_success_uses_if_instead_of_boolean_assignment_in_rule_head if {
-	r := rule.report with input as ast.with_rego_v1("more_than_one if input.count > 1")
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with input as ast.policy("more_than_one if input.count > 1")
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_non_boolean_assignment_in_rule_head if {
-	r := rule.report with input as ast.with_rego_v1(`foo := lower("FOO")`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with input as ast.policy(`foo := lower("FOO")`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }

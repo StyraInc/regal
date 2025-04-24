@@ -6,11 +6,10 @@ import data.regal.config
 import data.regal.rules.custom["prefer-value-in-head"] as rule
 
 test_fail_value_could_be_in_head_assign if {
-	module := ast.policy(`value := x if {
+	r := rule.report with input as ast.policy(`value := x if {
 		input.x
 		x := 10
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 
 	r == expected_with_location({
 		"col": 8,
@@ -24,11 +23,10 @@ test_fail_value_could_be_in_head_assign if {
 }
 
 test_fail_value_could_be_in_head_assign_composite if {
-	module := ast.policy(`value := x if {
+	r := rule.report with input as ast.policy(`value := x if {
 		input.x
 		x := {"foo": 10}
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 
 	r == expected_with_location({
 		"col": 8,
@@ -42,17 +40,16 @@ test_fail_value_could_be_in_head_assign_composite if {
 }
 
 test_fail_value_is_in_head_assign if {
-	r := rule.report with input as ast.policy(`value := 10 if { input.x }`) with config.for_rule as {"level": "error"}
+	r := rule.report with input as ast.policy(`value := 10 if { input.x }`)
 
 	r == set()
 }
 
 test_fail_value_could_be_in_head_eq if {
-	module := ast.policy(`value := x if {
+	r := rule.report with input as ast.policy(`value := x if {
 		input.x
 		x = 10
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 
 	r == expected_with_location({
 		"col": 7,
@@ -67,7 +64,7 @@ test_fail_value_could_be_in_head_eq if {
 }
 
 test_success_value_is_in_head_eq if {
-	r := rule.report with input as ast.policy(`value = x if { input.x }`) with config.for_rule as {"level": "error"}
+	r := rule.report with input as ast.policy(`value = x if { input.x }`)
 
 	r == set()
 }
@@ -77,7 +74,8 @@ test_fail_value_could_be_in_head_but_not_a_scalar if {
 		input.x
 		x := [i | i := input[_]]
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error", "only-scalars": true}
+	r := rule.report with input as module
+		with config.rules as {"custom": {"prefer-value-in-head": {"only-scalars": true}}}
 
 	r == set()
 }
@@ -87,7 +85,8 @@ test_fail_value_could_be_in_head_and_is_a_scalar if {
 		input.x
 		x := 5
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error", "only-scalars": true}
+	r := rule.report with input as module
+		with config.rules as {"custom": {"prefer-value-in-head": {"only-scalars": true}}}
 
 	r == expected_with_location({
 		"col": 8,
@@ -101,11 +100,10 @@ test_fail_value_could_be_in_head_and_is_a_scalar if {
 }
 
 test_fail_value_could_be_in_head_multivalue_rule if {
-	module := ast.with_rego_v1(`violations contains violation if {
+	r := rule.report with input as ast.with_rego_v1(`violations contains violation if {
 		input.bad
 		violation := "not good!"
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 
 	r == expected_with_location({
 		"col": 16,
@@ -119,11 +117,10 @@ test_fail_value_could_be_in_head_multivalue_rule if {
 }
 
 test_fail_value_could_be_in_head_object_rule if {
-	module := ast.policy(`foo["bar"] := x if {
+	r := rule.report with input as ast.policy(`foo["bar"] := x if {
 		input.foo
 		x := "bar"
 	}`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 
 	r == expected_with_location({
 		"col": 8,

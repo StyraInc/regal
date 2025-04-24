@@ -15,8 +15,4 @@ report contains violation if {
 }
 
 _whitespace_comment(text) if regex.match(`^(#*)(\s+.*|$)`, text)
-
-_whitespace_comment(text) if {
-	except_pattern := config.for_rule("style", "no-whitespace-comment")["except-pattern"]
-	regex.match(except_pattern, text)
-}
+_whitespace_comment(text) if regex.match(config.rules.style["no-whitespace-comment"]["except-pattern"], text)

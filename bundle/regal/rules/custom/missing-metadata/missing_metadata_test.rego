@@ -59,16 +59,15 @@ test_success_not_missing_package_metadata_report if {
 # title: pkg
 package foo.bar
 `)
-	aggregated := rule.aggregate with input as module
-	r := rule.aggregate_report with input.aggregate as aggregated
+	a := rule.aggregate with input as module
+	r := rule.aggregate_report with input.aggregate as a with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == set()
 }
 
 test_fail_missing_package_metadata_report if {
-	module := regal.parse_module("p.rego", "package foo.bar")
-	aggregated := rule.aggregate with input as module
-	r := rule.aggregate_report with input.aggregate as aggregated
+	a := rule.aggregate with input as regal.parse_module("p.rego", "package foo.bar")
+	r := rule.aggregate_report with input.aggregate as a with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == {{
 		"category": "custom",
@@ -102,6 +101,7 @@ package foo.bar
 	agg2 := rule.aggregate with input as module2
 
 	r := rule.aggregate_report with input.aggregate as {agg1, agg2}
+		with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == set()
 }
@@ -117,7 +117,7 @@ baz := true
 `)
 
 	a := rule.aggregate with input as module
-	r := rule.aggregate_report with input.aggregate as a
+	r := rule.aggregate_report with input.aggregate as a with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == set()
 }
@@ -130,7 +130,7 @@ package foo.bar
 baz := true
 `)
 	a := rule.aggregate with input as module
-	r := rule.aggregate_report with input.aggregate as a with config.for_rule as {"level": "error"}
+	r := rule.aggregate_report with input.aggregate as a with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == {{
 		"category": "custom",
@@ -172,6 +172,7 @@ rule := false
 	agg2 := rule.aggregate with input as module2
 
 	r := rule.aggregate_report with input.aggregate as {agg1, agg2}
+		with config.rules as {"custom": {"missing-metadata": {}}}
 
 	r == set()
 }

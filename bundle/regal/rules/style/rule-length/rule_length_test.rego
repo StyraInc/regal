@@ -1,5 +1,6 @@
 package regal.rules.style["rule-length_test"]
 
+import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.style["rule-length"] as rule
@@ -14,11 +15,10 @@ test_fail_rule_longer_than_configured_max_length if {
 		input.x
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
+	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
 		"max-rule-length": 3,
 		"count-comments": true,
-	}
+	}}}
 
 	r == {{
 		"category": "style",
@@ -53,11 +53,11 @@ test_success_rule_not_longer_than_configured_max_length if {
 	}
 	`)
 
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
+	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
 		"max-rule-length": 30,
 		"count-comments": true,
-	}
+	}}}
+
 	r == set()
 }
 
@@ -72,11 +72,10 @@ test_success_rule_longer_than_configured_max_length_but_comments if {
 	}
 	`)
 
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
+	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
 		"max-rule-length": 2,
 		"count-comments": false,
-	}
+	}}}
 	r == set()
 }
 
@@ -91,24 +90,21 @@ test_success_rule_longer_than_configured_max_length_but_no_body_and_exception_co
 	}
 	`)
 
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
+	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
 		"max-rule-length": 2,
 		"except-empty-body": true,
-	}
+	}}}
+
 	r == set()
 }
 
 test_success_rule_length_equals_max_length if {
-	module := regal.parse_module("policy.rego", `package p
+	module := ast.policy("my_tiny_rule := true")
 
-	my_tiny_rule := true
-	`)
-
-	r := rule.report with input as module with config.for_rule as {
-		"level": "error",
+	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
 		"max-rule-length": 1,
 		"count-comments": false,
-	}
+	}}}
+
 	r == set()
 }

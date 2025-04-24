@@ -8,7 +8,7 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	cfg := config.for_rule("style", "prefer-some-in-iteration")
+	cfg := config.rules.style["prefer-some-in-iteration"]
 
 	some i, rule in input.rules
 

@@ -10,6 +10,7 @@ params(override) := object.union(
 		"enable_all": false,
 		"enable_category": [],
 		"enable": [],
+		"ignore_files": [],
 	},
 	override,
 )
@@ -49,13 +50,6 @@ test_config[name] if {
 	l := config.level_for_rule("test", "test-case") with data.eval.params as params(override)
 
 	l == want_level
-
-	c := config.for_rule("test", "test-case") with config.merged_config as {"rules": {"test": {"test-case": {
-		"level": "ignore",
-		"important_setting": 42,
-	}}}}
-
-	c == {"level": "ignore", "important_setting": 42}
 }
 
 test_all_rules_are_in_provided_configuration if {

@@ -2,6 +2,7 @@ package regal.lsp.completion.location_test
 
 import data.regal.ast
 import data.regal.capabilities
+import data.regal.config
 
 import data.regal.lsp.completion.location
 
@@ -71,7 +72,7 @@ another if {
 
 	r := location.find_locals(module.rules, loc) with input as module
 		with input.regal.file.lines as lines
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == want
 }

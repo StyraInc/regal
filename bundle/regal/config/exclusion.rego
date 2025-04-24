@@ -2,32 +2,35 @@ package regal.config
 
 # METADATA
 # description: |
-#   determines if file should be excluded, either because it's globally
-#   ignored, or because the specific rule configuration excludes it
+#   determines if file should be excluded, either because of an override,
+#   or because the specific rule configuration excludes it
+#
+#   imitates .gitignore pattern matching as best it can
+#   ref: https://git-scm.com/docs/gitignore#_pattern_format
 excluded_file(category, title, file) if {
-	some pattern in _global_ignore_patterns
-	_exclude(pattern, file)
-} else if {
-	some pattern in for_rule(category, title).ignore.files
-	_exclude(pattern, file)
+	some compiled in _patterns_compiler(rules[category][title].ignore.files)
+	glob.match(compiled, ["/"], file)
 }
 
-_global_ignore_patterns := data.eval.params.ignore_files if {
-	count(data.eval.params.ignore_files) > 0
-} else := merged_config.ignore.files
-
-# exclude imitates .gitignore pattern matching as best it can
-# ref: https://git-scm.com/docs/gitignore#_pattern_format
-_exclude(pattern, file) if {
-	some p in _pattern_compiler(pattern)
-	glob.match(p, ["/"], file)
+# METADATA
+# description: determines if file is ignored globally, via an override or the configuration
+ignored_globally(file) if {
+	some compiled in _global_ignore_patterns
+	glob.match(compiled, ["/"], file)
 }
+
+_global_ignore_patterns := compiled if {
+	compiled := _patterns_compiler(_params.ignore_files)
+} else := _patterns_compiler(merged_config.ignore.files)
 
 # pattern_compiler transforms a glob pattern into a set of glob
 # patterns to make the combined set behave as .gitignore
-_pattern_compiler(pattern) := {pat |
+_patterns_compiler(patterns) := {pat |
+	some pattern in patterns
 	some p in _leading_doublestar_pattern(trim_prefix(_internal_slashes(pattern), "/"))
 	some pat in _trailing_slash(p)
+} if {
+	count(patterns) > 0
 }
 
 # Internal slashes means that the path is relative to root,
@@ -36,8 +39,7 @@ _pattern_compiler(pattern) := {pat |
 # myfiledir and mydir/ turns into **/myfiledir and **/mydir/
 # mydir/p and mydir/d/ are returned as is
 _internal_slashes(pattern) := pattern if {
-	s := substring(pattern, 0, count(pattern) - 1)
-	contains(s, "/")
+	contains(trim_suffix(pattern, "/"), "/")
 } else := concat("", ["**/", pattern])
 
 # **/pattern might match my/dir/pattern and pattern

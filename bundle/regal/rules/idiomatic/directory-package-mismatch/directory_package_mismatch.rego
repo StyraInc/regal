@@ -30,12 +30,10 @@ report contains violation if {
 	)
 }
 
-_pkg_path_values := ast.package_path if {
-	not config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
-}
+_pkg_path_values := ast.package_path if not config.rules.idiomatic["directory-package-mismatch"]["exclude-test-suffix"]
 
 _pkg_path_values := without_test_suffix if {
-	config.for_rule("idiomatic", "directory-package-mismatch")["exclude-test-suffix"]
+	config.rules.idiomatic["directory-package-mismatch"]["exclude-test-suffix"] == true
 
 	without_test_suffix := array.concat(
 		array.slice(ast.package_path, 0, count(ast.package_path) - 1),

@@ -62,9 +62,7 @@ _resolves(path, pkg_paths) if count([path |
 ]) > 0
 
 _ignored_import_paths contains path if {
-	cfg := config.for_rule("imports", "prefer-package-imports")
-
-	some item in cfg["ignore-import-paths"]
+	some item in config.rules.imports["prefer-package-imports"]["ignore-import-paths"]
 	path := [part |
 		some i, p in split(item, ".")
 		part := _normalize_part(i, p)

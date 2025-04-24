@@ -64,8 +64,7 @@ report contains violation if {
 
 # target: var
 report contains violation if {
-	cfg := config.for_rule("custom", "naming-convention")
-	some convention in cfg.conventions
+	some convention in config.rules.custom["naming-convention"].conventions
 	some target in convention.targets
 
 	target in {"var", "variable"}

@@ -10,9 +10,9 @@ test_fail_simple_iteration if {
 		var := input.foo[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2)
+	r := rule.report with config.rules as allow_nesting(2)
 		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 10,
@@ -31,8 +31,9 @@ test_fail_simple_iteration_comprehension if {
 		p := input.foo[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 8,
@@ -51,8 +52,9 @@ test_fail_simple_iteration_output_var if {
 		input.foo[x]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 3,
@@ -72,8 +74,9 @@ test_fail_simple_iteration_output_var_some_decl if {
 		input.foo[x]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 3,
@@ -93,8 +96,9 @@ test_success_some_in_var_input if {
 		input.foo[x] == 1
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -105,8 +109,9 @@ test_success_allow_nesting_zero if {
 		input.foo[_].bar[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(0) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(0)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -116,8 +121,9 @@ test_success_allow_nesting_one if {
 		input.foo[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(1) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(1)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -127,8 +133,9 @@ test_success_allow_nesting_two if {
 		input.foo[_].bar[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -138,8 +145,9 @@ test_fail_allow_nesting_two if {
 		input.foo[_]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 3,
@@ -162,8 +170,9 @@ test_success_not_output_vars if {
 		input.foo[x].bar[y]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -178,20 +187,19 @@ test_success_output_var_to_input_var if {
 		input.bar[x]
 	}`)
 
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_fail_complex_comprehension_term if {
-	policy := ast.with_rego_v1(`
+	policy := ast.policy(`foo := [{"foo": bar} | input[bar]]`)
 
-	foo := [{"foo": bar} | input[bar]]
-	`)
-
-	r := rule.report with config.for_rule as allow_nesting(2) with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(2)
+		with input as policy
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -202,13 +210,12 @@ test_success_allow_if_subattribute if {
 		bar == "baz"
 	}`)
 
-	r := rule.report with config.for_rule as {
-		"level": "error",
+	r := rule.report with config.rules as {"style": {"prefer-some-in-iteration": {
 		"ignore-if-sub-attribute": true,
 		"ignore-nesting-level": 5,
-	}
+	}}}
 		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
@@ -219,13 +226,12 @@ test_fail_ignore_if_subattribute_disabled if {
 		bar == "baz"
 	}`)
 
-	r := rule.report with config.for_rule as {
-		"level": "error",
+	r := rule.report with config.rules as {"style": {"prefer-some-in-iteration": {
 		"ignore-if-sub-attribute": false,
 		"ignore-nesting-level": 5,
-	}
+	}}}
 		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == with_location({
 		"col": 10,
@@ -244,134 +250,78 @@ test_success_allow_if_inside_array if {
 		bar := [input.foo[_] == 1]
 	}`)
 
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-if-sub-attribute": true,
-		"ignore-nesting-level": 5,
-	}
+	r := rule.report with config.rules as allow_nesting(5)
 		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_allow_if_inside_set if {
-	policy := ast.with_rego_v1(`s := {input.foo[_] == 1}`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-if-sub-attribute": true,
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.with_rego_v1(`s := {input.foo[_] == 1}`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_allow_if_inside_object if {
-	policy := ast.with_rego_v1(`s := {foo: input.foo[_] == 1}`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-if-sub-attribute": true,
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.policy(`s := {foo: input.foo[_] == 1}`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_allow_if_inside_rule_head_key if {
-	policy := ast.with_rego_v1(`s contains input.foo[_]`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-if-sub-attribute": true,
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.with_rego_v1(`s contains input.foo[_]`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_allow_if_contains_check_eq if {
-	policy := ast.with_rego_v1(`no_violation if {
-		"x" = input.foo[_]
-	}`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.policy(`no_violation if "x" = input.foo[_]`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_allow_if_contains_check_equal if {
-	policy := ast.with_rego_v1(`no_violation if {
-		"x" == input.foo[_]
-	}`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.with_rego_v1(`no_violation if "x" == input.foo[_]`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_iteration_in_args if {
-	policy := ast.with_rego_v1(`no_violation if {
-		startswith(input.foo[_], "f")
-	}`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.policy(`no_violation if startswith(input.foo[_], "f")`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_iteration_in_args_call_in_comprehension_head if {
-	policy := ast.with_rego_v1(`r := [f(obj[k], v) | some k, v in p]`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-nesting-level": 5,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.policy(`r := [f(obj[k], v) | some k, v in p]`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_top_level_iteration if {
-	policy := ast.with_rego_v1(`r := input.foo[_]`)
-
-	r := rule.report with config.for_rule as {
-		"level": "error",
-		"ignore-nesting-level": 2,
-	}
-		with input as policy
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with config.rules as allow_nesting(5)
+		with input as ast.policy(`r := input.foo[_]`)
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
-allow_nesting(i) := {
-	"level": "error",
-	"ignore-nesting-level": i,
-}
+allow_nesting(i) := {"style": {"prefer-some-in-iteration": {"ignore-nesting-level": i}}}
 
 with_location(location) := {{
 	"category": "style",

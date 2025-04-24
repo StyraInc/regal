@@ -362,4 +362,4 @@ is_github if rq.env().GITHUB_ACTION
 error_nonzero(run_result, message) if {
 	run_result.exitcode != 0
 	rq.error(sprintf("%s\nstdout:%s\nstderr:\n%s\n", [message, run_result.stdout, run_result.stderr]))
-} else = true
+} else := true

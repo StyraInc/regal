@@ -12,7 +12,7 @@ test_fail_could_be_one_liner if {
 		input.yes
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == expected_with_location({
 		"col": 2,
@@ -32,7 +32,7 @@ test_fail_could_be_one_liner_all_keywords if {
 		input.yes
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == expected_with_location({
 		"col": 2,
@@ -55,7 +55,7 @@ test_fail_could_be_one_liner_allman_style if {
 	}
 	`)
 
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 	r == expected_with_location({
 		"col": 2,
 		"row": 5,
@@ -74,7 +74,7 @@ test_success_too_long_for_a_one_liner if {
 	}
 	`)
 
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 	r == set()
 }
 
@@ -84,7 +84,8 @@ test_success_too_long_for_a_one_liner_configured_line_length if {
 		some_really_long_rule_name_in_fact_53_characters_long
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error", "max-line-length": 50}
+	r := rule.report with input as module
+		with config.rules as {"custom": {"one-liner-rule": {"level": "error", "max-line-length": 50}}}
 
 	r == set()
 }
@@ -96,8 +97,8 @@ test_success_no_one_liner_comment_in_rule_body if {
 		1 == 1
 	}
 	`)
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
 	r == set()
 }
 
@@ -107,7 +108,7 @@ test_success_no_one_liner_comment_in_rule_body_same_line if {
 		1 == 1 # Surely one equals one
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == set()
 }
@@ -119,7 +120,7 @@ test_success_no_one_liner_comment_in_rule_body_line_below if {
 		# Surely one equals one
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == set()
 }
@@ -130,13 +131,14 @@ test_success_does_not_use_if_v0 if {
 		1 == 1
 	}
 	`)
-	r := rule.report with input as module with config.for_rule as {"level": "error"}
+	r := rule.report with input as module with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == set()
 }
 
 test_success_already_a_one_liner if {
-	r := rule.report with input as ast.with_rego_v1(`allow if 1 == 1`) with config.for_rule as {"level": "error"}
+	r := rule.report with input as ast.with_rego_v1(`allow if 1 == 1`)
+		with config.rules as {"custom": {"one-liner-rule": {"level": "error"}}}
 
 	r == set()
 }

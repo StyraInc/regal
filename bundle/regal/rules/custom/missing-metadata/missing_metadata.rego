@@ -54,12 +54,14 @@ _rule_locations[rule_path] := location if {
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
+	cfg := config.rules.custom["missing-metadata"]
+
 	some pkg_path, aggs in _package_path_aggs
 	every item in aggs {
 		item.aggregate_data.package_annotated == false
 	}
 
-	not _excepted_package_pattern(config.for_rule("custom", "missing-metadata"), pkg_path)
+	not _excepted_package_pattern(cfg, pkg_path)
 
 	first_item := [item | some item in aggs][0]
 
@@ -77,13 +79,15 @@ aggregate_report contains violation if {
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
+	cfg := config.rules.custom["missing-metadata"]
+
 	some rule_path, aggregates in _rule_path_aggs
 
 	every aggregate in aggregates {
 		aggregate.annotated == false
 	}
 
-	not _excepted_rule_pattern(config.for_rule("custom", "missing-metadata"), rule_path)
+	not _excepted_rule_pattern(cfg, rule_path)
 
 	any_item := util.any_set_item(aggregates)
 

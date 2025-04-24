@@ -2,6 +2,7 @@ package regal.ast_test
 
 import data.regal.ast
 import data.regal.capabilities
+import data.regal.config
 
 test_find_vars if {
 	policy := `
@@ -38,10 +39,7 @@ test_find_vars if {
 	}
 	`
 
-	module := regal.parse_module("p.rego", policy)
-
-	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
-
+	vars := ast.find_vars(regal.parse_module("p.rego", policy).rules) with config.capabilities as capabilities.provided
 	names := {var.value |
 		some var in vars
 		var.type == "var"
@@ -61,10 +59,7 @@ test_find_vars_comprehension_lhs if {
 	}
 	`
 
-	module := regal.parse_module("p.rego", policy)
-
-	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
-
+	vars := ast.find_vars(regal.parse_module("p.rego", policy).rules) with config.capabilities as capabilities.provided
 	names := {var.value |
 		some var in vars
 		var.type == "var"
@@ -83,11 +78,12 @@ test_find_vars_function_ret_return_args if {
 	`
 
 	module := regal.parse_module("p.rego", policy)
+	vars := ast.find_vars(module.rules) with config.capabilities as capabilities.provided with input.rules as []
+	names := {var.value |
+		some var in vars
+		var.type == "var"
+	}
 
-	vars := ast.find_vars(module.rules) with data.internal.combined_config as {"capabilities": capabilities.provided}
-		with input.rules as []
-
-	names := {var.value | some var in vars; var.type == "var"}
 	names == {"path", "value"}
 }
 
@@ -217,7 +213,7 @@ test_find_names_in_scope if {
 	allow_rule := module.rules[3]
 
 	in_scope := ast.find_names_in_scope(allow_rule, {"col": 1, "row": 30}) with input as module
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	in_scope == {"bar", "global", "comp", "allow", "a", "b", "c", "d", "e"}
 }
@@ -241,9 +237,7 @@ test_find_some_decl_names_in_scope if {
 
 var_names(vars) := {var.value | some var in vars}
 
-test_provided_capabilities_never_undefined if {
-	capabilities.provided == {} with data.internal as {}
-}
+test_provided_capabilities_never_undefined if capabilities.provided == {} with data.internal as {}
 
 test_function_calls if {
 	calls := ast.function_calls["0"] with input as ast.with_rego_v1(`

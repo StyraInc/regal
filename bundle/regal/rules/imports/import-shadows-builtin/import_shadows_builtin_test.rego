@@ -8,7 +8,7 @@ import data.regal.rules.imports["import-shadows-builtin"] as rule
 
 test_fail_import_shadows_builtin_name if {
 	r := rule.report with input as ast.policy(`import data.print`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "imports",
@@ -34,7 +34,7 @@ test_fail_import_shadows_builtin_name if {
 
 test_fail_import_shadows_builtin_namespace if {
 	r := rule.report with input as ast.policy(`import input.foo.http`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == {{
 		"category": "imports",
@@ -59,15 +59,14 @@ test_fail_import_shadows_builtin_namespace if {
 }
 
 test_success_import_does_not_shadows_builtin_name if {
-	r := rule.report with input as ast.policy(`import data.users`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+	r := rule.report with input as ast.policy(`import data.users`) with config.capabilities as capabilities.provided
 
 	r == set()
 }
 
 test_success_import_shadows_but_alias_does_not if {
 	r := rule.report with input as ast.policy(`import data.http as http_attributes`)
-		with data.internal.combined_config as {"capabilities": capabilities.provided}
+		with config.capabilities as capabilities.provided
 
 	r == set()
 }

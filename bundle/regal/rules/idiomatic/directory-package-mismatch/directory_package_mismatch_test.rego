@@ -6,14 +6,14 @@ import data.regal.rules.idiomatic["directory-package-mismatch"] as rule
 
 test_success_directory_structure_package_path_match if {
 	module := regal.parse_module("foo/bar/baz/p.rego", "package foo.bar.baz")
-	r := rule.report with input as module with config.for_rule as _default_config
+	r := rule.report with input as module with config.rules as _default_config
 
 	r == set()
 }
 
 test_fail_directory_structure_package_path_mismatch if {
 	module := regal.parse_module("foo/bar/baz/p.rego", "package foo.baz.bar")
-	r := rule.report with input as module with config.for_rule as _default_config
+	r := rule.report with input as module with config.rules as _default_config
 
 	r == with_location({
 		"col": 9,
@@ -29,7 +29,7 @@ test_fail_directory_structure_package_path_mismatch if {
 
 test_success_directory_structure_package_path_match_longer_directory_path if {
 	module := regal.parse_module("system/directories/foo/bar/baz/p.rego", "package foo.bar.baz")
-	r := rule.report with input as module with config.for_rule as _default_config
+	r := rule.report with input as module with config.rules as _default_config
 
 	r == set()
 }
@@ -46,7 +46,7 @@ with_location(location) := {{
 	"title": "directory-package-mismatch",
 }}
 
-_default_config := {
+_default_config := {"idiomatic": {"directory-package-mismatch": {
 	"level": "error",
 	"exclude-test-suffix": true,
-}
+}}}

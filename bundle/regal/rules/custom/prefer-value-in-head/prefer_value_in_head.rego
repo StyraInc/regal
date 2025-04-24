@@ -7,8 +7,6 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	cfg := config.for_rule("custom", "prefer-value-in-head")
-
 	some rule in input.rules
 
 	var := _var_in_head(rule.head)
@@ -19,7 +17,7 @@ report contains violation if {
 	terms[1].type == "var"
 	terms[1].value == var
 
-	not _scalar_fail(cfg, terms[2].type, ast.scalar_types)
+	not _scalar_fail(terms[2].type, ast.scalar_types)
 
 	violation := result.fail(rego.metadata.chain(), result.location(terms[2]))
 }
@@ -31,7 +29,7 @@ _var_in_head(head) := head.key.value if {
 	head.key.type == "var"
 }
 
-_scalar_fail(cfg, term_type, scalar_types) if {
-	cfg["only-scalars"] == true
+_scalar_fail(term_type, scalar_types) if {
+	config.rules.custom["prefer-value-in-head"]["only-scalars"] == true
 	not term_type in scalar_types
 }

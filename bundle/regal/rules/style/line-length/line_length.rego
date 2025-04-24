@@ -6,8 +6,7 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	cfg := config.for_rule("style", "line-length")
-	max_line_length := object.get(cfg, "max-line-length", 120)
+	max_line_length := object.get(config.rules, ["style", "line-length", "max-line-length"], 120)
 
 	some i, line in input.regal.file.lines
 
@@ -16,7 +15,7 @@ report contains violation if {
 	line_length := count(line)
 	line_length > max_line_length
 
-	not _has_word_above_threshold(line, cfg)
+	not _has_word_above_threshold(line)
 
 	violation := result.fail(
 		rego.metadata.chain(),
@@ -33,8 +32,8 @@ report contains violation if {
 	)
 }
 
-_has_word_above_threshold(line, cfg) if {
-	threshold := cfg["non-breakable-word-threshold"]
+_has_word_above_threshold(line) if {
+	threshold := config.rules.style["line-length"]["non-breakable-word-threshold"]
 
 	some word in split(line, " ")
 	count(word) > threshold

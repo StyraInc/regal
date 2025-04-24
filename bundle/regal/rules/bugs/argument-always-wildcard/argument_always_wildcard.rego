@@ -19,7 +19,7 @@ report contains violation if {
 		ast.is_wildcard(function.head.args[pos])
 	}
 
-	not _function_name_excepted(config.for_rule("bugs", "argument-always-wildcard"), name)
+	not _function_name_excepted(name)
 
 	violation := result.fail(rego.metadata.chain(), result.location(fn.head.args[pos]))
 }
@@ -30,4 +30,6 @@ _function_groups[name] contains fn if {
 	name := ast.ref_to_string(fn.head.ref)
 }
 
-_function_name_excepted(cfg, name) if regex.match(cfg["except-function-name-pattern"], name)
+_function_name_excepted(name) if {
+	regex.match(config.rules.bugs["argument-always-wildcard"]["except-function-name-pattern"], name)
+}

@@ -55,7 +55,8 @@ test_fail_no_leading_whitespace_multiple_hashes if {
 }
 
 test_success_excepted_pattern if {
-	r := rule.report with input as ast.policy(`#-- foo`) with config.for_rule as {"except-pattern": "^--"}
+	r := rule.report with input as ast.policy(`#-- foo`)
+		with config.rules as {"style": {"no-whitespace-comment": {"except-pattern": "^--"}}}
 
 	r == set()
 }

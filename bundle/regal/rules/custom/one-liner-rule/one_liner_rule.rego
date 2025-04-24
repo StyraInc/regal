@@ -14,7 +14,7 @@ import data.regal.util
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_if
 
 report contains violation if {
-	max_line_length := object.get(config.for_rule("custom", "one-liner-rule"), "max-line-length", 120)
+	max_line_length := object.get(config.rules, ["custom", "one-liner-rule", "max-line-length"], 120)
 
 	some rule in input.rules
 

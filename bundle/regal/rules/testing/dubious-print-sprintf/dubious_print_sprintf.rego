@@ -9,7 +9,7 @@ report contains violation if {
 	# skip traversing refs if no print calls are registered
 	"print" in ast.builtin_functions_called
 
-	value := ast.found.refs[_][_]
+	value := ast.found.calls[_][_]
 
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "print"

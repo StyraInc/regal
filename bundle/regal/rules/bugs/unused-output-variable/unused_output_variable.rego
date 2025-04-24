@@ -21,12 +21,13 @@ import data.regal.result
 #   ```
 report contains violation if {
 	some rule_index
-	var_refs := _ref_vars[rule_index][_]
+	var_refs := ast.found.vars[rule_index].ref
 
 	count(var_refs) == 1
 
 	some var in var_refs
 
+	not ast.is_wildcard(var)
 	not ast.var_in_head(input.rules[to_number(rule_index)].head, var.value)
 	not ast.var_in_call(ast.function_calls, rule_index, var.value)
 	not _ref_base_vars[rule_index][var.value]
@@ -37,13 +38,6 @@ report contains violation if {
 	ast.is_output_var(input.rules[to_number(rule_index)], var)
 
 	violation := result.fail(rego.metadata.chain(), result.location(var))
-}
-
-_ref_vars[rule_index][var.value] contains var if {
-	some rule_index
-	var := ast.found.vars[rule_index].ref[_]
-
-	not ast.is_wildcard(var)
 }
 
 # "a" in "a[foo]", and not foo

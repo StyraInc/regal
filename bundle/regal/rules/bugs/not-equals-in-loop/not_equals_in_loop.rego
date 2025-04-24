@@ -6,7 +6,10 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	terms := ast.exprs[_][_].terms
+	some rule_index, i
+	ast.found.expressions[rule_index][i].terms[0].type == "ref"
+
+	terms := ast.found.expressions[rule_index][i].terms
 
 	terms[0].type == "ref"
 	terms[0].value[0].type == "var"

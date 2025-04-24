@@ -25,7 +25,7 @@ _multivalue_rules contains path if {
 
 _negated_refs contains negated_ref if {
 	some rule_index, value
-	ast.negated_expressions[rule_index][value]
+	ast.found.expressions[rule_index][value].negated
 
 	# if terms is an array, it's a function call, and most likely not "impossible"
 	is_object(value.terms)

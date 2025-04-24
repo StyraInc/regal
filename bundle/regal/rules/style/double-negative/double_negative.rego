@@ -11,8 +11,9 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some node
-	ast.negated_expressions[_][node].terms.type == "var"
+	some node, i
+	ast.found.expressions[i][node].negated
+	ast.found.expressions[i][node].terms.type == "var"
 
 	strings.any_prefix_match(node.terms.value, {
 		"cannot_",

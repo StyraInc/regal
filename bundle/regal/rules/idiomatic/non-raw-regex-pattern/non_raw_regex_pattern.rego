@@ -10,7 +10,7 @@ report contains violation if {
 	# skip traversing refs if no builtin regex function calls are registered
 	util.intersects(_re_pattern_function_names, ast.builtin_functions_called)
 
-	value := ast.found.refs[_][_]
+	value := ast.found.calls[_][_]
 
 	value[0].value[0].type == "var"
 	value[0].value[0].value == "regex"

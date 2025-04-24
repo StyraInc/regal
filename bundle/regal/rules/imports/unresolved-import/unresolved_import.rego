@@ -20,7 +20,7 @@ aggregate contains entry if {
 
 		# Special case for custom rules, where we don't want to flag e.g. `import data.regal.ast`
 		# as unknown, even though it's not a package included in evaluation.
-		not _custom_regal_package_and_import(ast.package_path, path)
+		not _custom_regal_package_and_import(ast.package_path, path[0])
 
 		imp := object.union(result.location(_import), {"path": path})
 	]
@@ -63,25 +63,16 @@ aggregate_report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(imp))
 }
 
-_custom_regal_package_and_import(pkg_path, path) if {
+_custom_regal_package_and_import(pkg_path, "regal") if {
 	pkg_path[0] == "custom"
 	pkg_path[1] == "regal"
-	path[0] == "regal"
 }
 
 # the package part will always be included exported refs
 # but if we have a rule like foo.bar.baz
 # we'll want to include both foo.bar and foo.bar.baz
 _to_paths(pkg_path, ref) := util.all_paths(_to_path(pkg_path, ref)) if count(ref) < 3
-
-_to_paths(pkg_path, ref) := paths if {
-	count(ref) > 2
-
-	paths := [path |
-		some p in util.all_paths(ref)
-		path := _to_path(pkg_path, p)
-	]
-}
+_to_paths(pkg_path, ref) := [_to_path(pkg_path, p) | some p in util.all_paths(ref)] if count(ref) > 2
 
 _to_path(pkg_path, ref) := array.concat(pkg_path, [str |
 	some i, part in ref

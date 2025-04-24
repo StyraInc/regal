@@ -9,7 +9,7 @@ import data.regal.result
 # description: check rule bodies for redundant existence checks
 report contains violation if {
 	some rule_index, rule in input.rules
-	some expr_index, expr in ast.exprs[rule_index]
+	some expr_index, expr in _exprs[rule_index]
 
 	expr.terms.type == "ref"
 
@@ -52,10 +52,16 @@ report contains violation if {
 
 	rule.head.value.type == "ref"
 
-	some expr in ast.exprs[rule_index]
+	some expr in _exprs[rule_index]
 
 	expr.terms.type == "ref"
 	ast.ref_value_equal(expr.terms.value, rule.head.value.value)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
+}
+
+# all top-level expressions in module
+_exprs[rule_index][expr_index] := expr if {
+	some rule_index, rule in input.rules
+	some expr_index, expr in rule.body
 }

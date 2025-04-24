@@ -13,7 +13,7 @@ report contains violation if {
 	# avoid traversal if no forbidden function is called
 	util.intersects(forbidden, ast.builtin_functions_called)
 
-	ref := ast.found.refs[_][_]
+	ref := ast.found.calls[_][_]
 	name := ast.ref_to_string(ref[0].value)
 	name in forbidden
 

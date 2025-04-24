@@ -47,17 +47,20 @@ report contains violation if {
 	# Multi-value rule
 	rule.head.key.type == "var"
 
-	not rule.body[0]["with"]
+	expr := rule.body[0]
 
-	_assignment_expr(rule.body[0].terms)
+	not expr["with"]
 
-	rule.body[0].terms[1].type == "var"
-	rule.body[0].terms[1].value == rule.head.key.value
+	_assignment_expr(expr.terms)
 
-	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(rule.body[0].terms))
+	expr.terms[1].type == "var"
+	expr.terms[1].value == rule.head.key.value
+
+	violation := result.fail(rego.metadata.chain(), result.infix_expr_location(expr.terms))
 }
 
 # Assignment using either = or :=
+# regal ignore:narrow-argument
 _assignment_expr(terms) if {
 	terms[0].type == "ref"
 	terms[0].value[0].type == "var"

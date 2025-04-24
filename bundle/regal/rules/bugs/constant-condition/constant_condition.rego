@@ -5,20 +5,13 @@ package regal.rules.bugs["constant-condition"]
 import data.regal.ast
 import data.regal.result
 
-# NOTE: The constant condition checks currently don't do nesting!
-# Additionally, there are several other conditions that could be considered
-# constant, or if not, redundant... so this rule should be expanded in time
-
 # METADATA
 # description: single scalar value, like a lone `true` inside a rule body
 # scope: rule
 report contains violation if {
-	terms := input.rules[_].body[_].terms
+	terms := ast.found.expressions[_][_].terms
 
-	# We could probably include arrays and objects too, as a single compound value
-	# is not very useful, but it's not as clear cut as scalars, as you could have
-	# something like {"a": foo(input.x) == "bar"} which is not a constant condition,
-	# however meaningless it may be. Maybe consider for another rule?
+	# We could include composite types too, but less comomon and more expensive to check
 	terms.type in ast.scalar_types
 
 	violation := result.fail(rego.metadata.chain(), result.location(terms))
@@ -30,7 +23,7 @@ report contains violation if {
 report contains violation if {
 	operators := {"equal", "gt", "gte", "lt", "lte", "neq"}
 
-	expr := input.rules[_].body[_]
+	expr := ast.found.expressions[_][_]
 
 	expr.terms[0].value[0].type == "var"
 	expr.terms[0].value[0].value in operators

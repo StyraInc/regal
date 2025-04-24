@@ -63,11 +63,48 @@ test_fail_can_be_narrowed_prefixed_ref if {
 	}}
 }
 
+test_fail_can_be_narrowed_prefixed_array_ref if {
+	r := rule.report with input as ast.policy(`
+		fun(arr) if arr[0].y.number == 1
+		fun(arr) if arr[0].y.string == "1"
+	`)
+		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
+
+	r == {{
+		"category": "custom",
+		"description": "Argument arr always referenced by a common prefix, value passed can be narrowed to arr[0].y",
+		"level": "error",
+		"location": {
+			"col": 7,
+			"end": {
+				"col": 10,
+				"row": 4,
+			},
+			"file": "policy.rego",
+			"row": 4,
+			"text": "\t\tfun(arr) if arr[0].y.number == 1",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/narrow-argument", "custom"),
+		}],
+		"title": "narrow-argument",
+	}}
+}
+
 test_success_can_not_be_narrowed_arg_is_least_common_denominator if {
 	r := rule.report with input as ast.policy(`
 		fun(obj) if obj.typ == "string"
 		fun(obj) if obj.val == "string"
 	`)
+		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
+
+	r == set()
+}
+
+test_success_nested_or_variable_path_not_narrowed if {
+	r := rule.report with input as ast.policy(`foo(lines) := lines[bar - 1]`)
+		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == set()
 }

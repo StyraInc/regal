@@ -15,7 +15,7 @@ notices contains result.notice(rego.metadata.chain()) if not capabilities.has_st
 # METADATA
 # description: flag calls to `count` where the first argument is a call to `indexof_n`
 report contains violation if {
-	ref := ast.found.refs[_][_]
+	ref := ast.found.calls[_][_]
 
 	ref[0].value[0].type == "var"
 	ref[0].value[0].value == "count"

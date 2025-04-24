@@ -23,7 +23,7 @@ report contains violation if {
 
 	not expr["with"]
 
-	[lhs, rhs] := ast.assignment_terms(expr)
+	[lhs, rhs] := ast.assignment_terms(expr.terms)
 
 	lhs.type == "var"
 	rhs.type == "var"

@@ -24,6 +24,14 @@ const (
 	OnConflictRename OnConflictOperation = "rename"
 )
 
+// Fixer must be instantiated via NewFixer.
+type Fixer struct {
+	registeredFixes     map[string]any
+	onConflictOperation OnConflictOperation
+	registeredRoots     []string
+	versionsMap         map[string]ast.RegoVersion
+}
+
 // NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {
 	return &Fixer{
@@ -31,14 +39,6 @@ func NewFixer() *Fixer {
 		registeredRoots:     make([]string, 0),
 		onConflictOperation: OnConflictError,
 	}
-}
-
-// Fixer must be instantiated via NewFixer.
-type Fixer struct {
-	registeredFixes     map[string]any
-	onConflictOperation OnConflictOperation
-	registeredRoots     []string
-	versionsMap         map[string]ast.RegoVersion
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.

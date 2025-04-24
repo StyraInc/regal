@@ -14,9 +14,39 @@ test_fail_too_many_values_in_array if {
 		"location": {
 			"row": 5,
 			"col": 14,
-			"end": {"col": 26, "row": 5},
+			"end": {
+				"col": 26,
+				"row": 5,
+			},
 			"file": "policy.rego",
 			"text": "x := sprintf(\"%s\", [1, 2])",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/sprintf-arguments-mismatch", "bugs"),
+		}],
+		"title": "sprintf-arguments-mismatch",
+	}}
+}
+
+test_fail_too_many_values_in_array_nested if {
+	r := rule.report with input as ast.with_rego_v1(`x := [1 |
+		y := [s | s := sprintf("%s", [1, 2])]
+	]`)
+
+	r == {{
+		"category": "bugs",
+		"description": "Mismatch in `sprintf` arguments count",
+		"level": "error",
+		"location": {
+			"col": 26,
+			"end": {
+				"col": 38,
+				"row": 6,
+			},
+			"file": "policy.rego",
+			"row": 6,
+			"text": "\t\ty := [s | s := sprintf(\"%s\", [1, 2])]",
 		},
 		"related_resources": [{
 			"description": "documentation",
@@ -35,7 +65,10 @@ test_fail_too_few_values_in_array if {
 		"location": {
 			"row": 5,
 			"col": 14,
-			"end": {"col": 25, "row": 5},
+			"end": {
+				"col": 25,
+				"row": 5,
+			},
 			"file": "policy.rego",
 			"text": `x := sprintf("%s%v", [1])`,
 		},
@@ -87,7 +120,10 @@ test_fail_first_arg_is_variable_with_nonmatching_pattern if {
 		"level": "error",
 		"location": {
 			"col": 11,
-			"end": {"col": 21, "row": 7},
+			"end": {
+				"col": 21,
+				"row": 7,
+			},
 			"file": "policy.rego",
 			"row": 7,
 			"text": "\t\tsprintf(s, [\"foo\"])",

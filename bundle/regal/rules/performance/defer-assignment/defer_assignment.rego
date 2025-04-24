@@ -9,7 +9,7 @@ report contains violation if {
 	some i, rule in input.rules
 	some j, expr in rule.body
 
-	[var, rhs] := ast.assignment_terms(expr)
+	[var, rhs] := ast.assignment_terms(expr.terms)
 
 	not _ref_with_vars(rhs)
 
@@ -19,7 +19,7 @@ report contains violation if {
 
 	next := rule.body[j + 1]
 
-	not ast.is_assignment(next)
+	not ast.is_assignment(next.terms[0])
 	not ast.var_in_head(rule.head, var.value)
 	not _var_value_used_in_expression(var.value, next)
 	not _iteration_expression(next.terms)
@@ -91,6 +91,7 @@ _iteration_expression(terms) if {
 	terms[0].value[0].value == "walk"
 }
 
+# regal ignore:narrow-argument
 _print_call(terms) if {
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value == "print"

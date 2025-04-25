@@ -22,6 +22,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/tester"
 
+	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
@@ -181,10 +182,11 @@ func TestLintNonExistentDir(t *testing.T) {
 	}
 }
 
-// NOTE(ae): this test *will fail* when run via "go test -e2e" and a normal development binary is used for the test.
-// This is because proposing fixes is only enabled when regal is built with the "regal_standalone" build tag. I spent
-// way more time on chasing that down than I would have wanted, so leaving this here for future me and others.
 func TestLintProposeToRunFix(t *testing.T) {
+	if !mode.Standalone {
+		t.Skip("test requires regal to be built with the 'regal_standalone' build tag")
+	}
+
 	t.Parallel()
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
@@ -1045,8 +1047,7 @@ allow := true
 func TestFixWithConflicts(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	initialState := map[string]string{
 		".regal/config.yaml": "", // needed to find the root in the right place
@@ -1112,8 +1113,7 @@ Cannot move multiple files to: bar/bar.rego
 func TestFixWithConflictRenaming(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 
 	initialState := map[string]string{
 		".regal/config.yaml": "", // needed to find the root in the right place
@@ -1292,8 +1292,7 @@ rules:
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	t.Parallel()
 
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	cwd := testutil.Must(os.Getwd())(t)
 
 	err := regal(&stdout, &stderr)(

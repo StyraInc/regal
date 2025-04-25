@@ -17,6 +17,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/loader/filter"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
+	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/roast/pkg/encoding"
 )
@@ -180,6 +181,55 @@ func FindManifestLocations(root string) ([]string, error) {
 	}
 
 	return foundBundleRoots, nil
+}
+
+func ModulesFromCustomRuleFS(customRuleFS files.FS, rootPath string) (map[string]*ast.Module, error) {
+	modules := make(map[string]*ast.Module)
+	filter := ExcludeTestFilter()
+
+	err := files.WalkDir(customRuleFS, rootPath, func(path string, d files.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to walk custom rule FS: %w", err)
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("failed to get info for custom rule file: %w", err)
+		}
+
+		if filter("", info, 0) {
+			return nil
+		}
+
+		f, err := customRuleFS.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open custom rule file: %w", err)
+		}
+		defer f.Close()
+
+		bs, err := io.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("failed to read custom rule file: %w", err)
+		}
+
+		m, err := ast.ParseModule(path, outil.ByteSliceToString(bs))
+		if err != nil {
+			return fmt.Errorf("failed to parse custom rule file %q: %w", path, err)
+		}
+
+		modules[path] = m
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk custom rule FS: %w", err)
+	}
+
+	return modules, nil
 }
 
 // NOTE: These are mirrored here merely to provide correct capabilities for the

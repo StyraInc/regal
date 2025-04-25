@@ -12,9 +12,8 @@ import data.regal.result
 import data.regal.util
 
 _refs contains ref if {
-	r := ast.found.refs[_][_]
-
-	r.value[0].value == "data"
+	some r
+	ast.found.refs[_][r].value[0].value == "data"
 
 	ast.static_ref(r)
 

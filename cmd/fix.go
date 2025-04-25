@@ -411,8 +411,7 @@ please run fix from a clean state to support the use of git to undo, or use --fo
 
 	if !params.dryRun {
 		for _, file := range fileProvider.DeletedFiles() {
-			err := os.Remove(file)
-			if err != nil {
+			if err := os.Remove(file); err != nil {
 				return fmt.Errorf("failed to delete file %s: %w", file, err)
 			}
 

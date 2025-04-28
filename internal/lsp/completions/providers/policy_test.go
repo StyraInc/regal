@@ -140,7 +140,7 @@ allow if {
 		labels = append(labels, item.Label)
 	}
 
-	expected := []string{"example", "example.foo"}
+	expected := []string{"input", "example", "example.foo"}
 	if !slices.Equal(expected, labels) {
 		t.Fatalf("expected %v, got %v", expected, labels)
 	}

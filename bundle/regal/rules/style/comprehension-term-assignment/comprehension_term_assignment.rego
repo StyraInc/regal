@@ -25,7 +25,7 @@ report contains violation if {
 
 	some expr in comp.body
 
-	[lhs, rhs] := ast.assignment_terms(expr)
+	[lhs, rhs] := ast.assignment_terms(expr.terms)
 
 	lhs.type == comp.term.type
 	lhs.value == comp.term.value
@@ -55,7 +55,7 @@ report contains violation if {
 
 	some expr in comp.body
 
-	[lhs, rhs] := ast.assignment_terms(expr)
+	[lhs, rhs] := ast.assignment_terms(expr.terms)
 
 	some kind in ["key", "value"]
 

@@ -14,7 +14,7 @@ report contains violation if {
 	rule_location := util.to_location_object(rule.location)
 	lines := split(rule_location.text, "\n")
 
-	_line_count(cfg, rule_location.row, lines) > cfg[_max_length_property(rule.head)]
+	_line_count(cfg, rule_location.row, lines) > cfg[_max_length_property(rule.head.ref[0].value)]
 
 	not _no_body_exception(cfg, rule)
 
@@ -28,7 +28,7 @@ _no_body_exception(cfg, rule) if {
 
 default _max_length_property(_) := "max-rule-length"
 
-_max_length_property(head) := "max-test-rule-length" if startswith(head.ref[0].value, "test_")
+_max_length_property(value) := "max-test-rule-length" if startswith(value, "test_")
 
 _line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
 

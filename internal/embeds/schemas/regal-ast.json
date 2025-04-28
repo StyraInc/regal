@@ -232,9 +232,6 @@
     },
     "head": {
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "ref": {
           "$ref": "#/$defs/ref"
         },

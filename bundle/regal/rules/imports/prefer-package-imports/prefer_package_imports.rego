@@ -19,7 +19,7 @@ aggregate contains entry if {
 
 		# Special case for custom rules, where we don't want to flag e.g. `import data.regal.ast`
 		# as unknown, even though it's not a package included in evaluation.
-		not _custom_regal_package_and_import(ast.package_path, path)
+		not _custom_regal_package_and_import(ast.package_path, path[0])
 
 		imp := object.union(result.location(_import), {"path": path})
 	]
@@ -30,10 +30,9 @@ aggregate contains entry if {
 	})
 }
 
-_custom_regal_package_and_import(pkg_path, path) if {
+_custom_regal_package_and_import(pkg_path, "regal") if {
 	pkg_path[0] == "custom"
 	pkg_path[1] == "regal"
-	path[0] == "regal"
 }
 
 # METADATA

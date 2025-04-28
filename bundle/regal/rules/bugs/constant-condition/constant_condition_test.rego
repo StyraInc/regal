@@ -12,7 +12,45 @@ test_fail_simple_constant_condition if {
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
-		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1", "end": {"row": 4, "col": 3}},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 4,
+			"text": "\t1",
+			"end": {
+				"row": 4,
+				"col": 3,
+			},
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
+		}],
+		"title": "constant-condition",
+		"level": "error",
+	}}
+}
+
+test_fail_simple_constant_condition_nested if {
+	r := rule.report with input as ast.policy(`allow if {
+		every x in [1, 2] {
+			1
+			x == 2
+		}
+	}`)
+
+	r == {{
+		"category": "bugs",
+		"description": "Constant condition",
+		"location": {
+			"col": 4,
+			"end": {
+				"col": 5,
+				"row": 5,
+			},
+			"file": "policy.rego",
+			"row": 5, "text": "\t\t\t1",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
@@ -55,7 +93,45 @@ test_fail_operator_constant_condition if {
 	r == {{
 		"category": "bugs",
 		"description": "Constant condition",
-		"location": {"col": 2, "file": "policy.rego", "row": 4, "text": "\t1 == 1", "end": {"col": 8, "row": 4}},
+		"location": {
+			"col": 2,
+			"file": "policy.rego",
+			"row": 4,
+			"text": "\t1 == 1",
+			"end": {
+				"col": 8,
+				"row": 4,
+			},
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),
+		}],
+		"title": "constant-condition",
+		"level": "error",
+	}}
+}
+
+test_fail_operator_constant_condition_nested if {
+	r := rule.report with input as ast.policy(`nested := [1 |
+		c := [2 |
+			1 == 1
+		]
+	]`)
+
+	r == {{
+		"category": "bugs",
+		"description": "Constant condition",
+		"location": {
+			"col": 4,
+			"end": {
+				"col": 10,
+				"row": 5,
+			},
+			"file": "policy.rego",
+			"row": 5,
+			"text": "\t\t\t1 == 1",
+		},
 		"related_resources": [{
 			"description": "documentation",
 			"ref": config.docs.resolve_url("$baseUrl/$category/constant-condition", "bugs"),

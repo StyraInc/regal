@@ -54,7 +54,7 @@ _is_array_conversion(value) if {
 
 	count(body) == 1
 
-	[lhs, rhs] := ast.assignment_terms(body[0])
+	[lhs, rhs] := ast.assignment_terms(body[0].terms)
 
 	# Assignment to comprehension variable
 	lhs.type == "var"

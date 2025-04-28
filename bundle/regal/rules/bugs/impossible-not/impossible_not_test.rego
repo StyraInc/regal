@@ -34,6 +34,31 @@ test_fail_multivalue_not_reference_same_package if {
 	})
 }
 
+test_fail_multivalue_not_reference_same_package_nested_expression if {
+	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
+
+	partial contains "foo"`)
+
+	agg2 := rule.aggregate with input as regal.parse_module("p2.rego", `package foo
+
+	test_foo if {
+		comprehension := [1 | not partial]
+	}`)
+
+	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
+	r == expected_with_location({
+		"col": 29,
+		"end": {
+			"col": 36,
+			"row": 4,
+		},
+		"file": "p2.rego",
+		"row": 4,
+		"text": "not partial",
+	})
+}
+
 test_fail_multivalue_not_reference_different_package_using_direct_reference if {
 	agg1 := rule.aggregate with input as regal.parse_module("p1.rego", `package foo
 

@@ -29,8 +29,7 @@ report contains violation if {
 	# bail out early if no the deprecated built-ins are in capabilities
 	util.intersects(object.keys(config.capabilities.builtins), deprecated_builtins)
 
-	ref := ast.found.refs[_][_]
-	call := ref[0]
+	call := ast.found.calls[_][_][0]
 
 	ast.ref_to_string(call.value) in deprecated_builtins
 

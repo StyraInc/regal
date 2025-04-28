@@ -10,19 +10,13 @@ _find_nested_vars(obj) := [value |
 
 # simple assignment, i.e. `x := 100` returns `x`
 # always returns a single var, but wrapped in an
-# array for consistency
-_find_assign_vars(value) := var if {
-	value[1].type == "var"
-	var := [value[1]]
-}
-
+# array for consistency or
 # 'destructuring' array assignment, i.e.
-# [a, b, c] := [1, 2, 3]
-# or
-# {a: b} := {"foo": "bar"}
-_find_assign_vars(value) := vars if {
-	value[1].type in {"array", "object"}
-	vars := _find_nested_vars(value[1])
+# [a, b, c] := [1, 2, 3] or {a: b} := {"foo": "bar"}
+_find_assign_vars(value) := [value] if {
+	value.type == "var"
+} else := _find_nested_vars(value) if {
+	value.type in {"array", "object"}
 }
 
 # var declared via `some`, i.e. `some x` or `some x, y`
@@ -32,16 +26,10 @@ _find_some_decl_vars(value) := [v |
 ]
 
 # single var declared via `some in`, i.e. `some x in y`
-_find_some_in_decl_vars(value) := vars if {
-	arr := value[0].value
-	count(arr) == 3
-
-	vars := _find_nested_vars(arr[1])
-}
+_find_some_in_decl_vars(arr) := _find_nested_vars(arr[1]) if count(arr) == 3
 
 # two vars declared via `some in`, i.e. `some x, y in z`
-_find_some_in_decl_vars(value) := vars if {
-	arr := value[0].value
+_find_some_in_decl_vars(arr) := vars if {
 	count(arr) == 4
 
 	vars := [v |
@@ -128,14 +116,14 @@ _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, va
 # left-hand side is equally dubious, but we'll treat `x = 1` as `x := 1` for
 # the purpose of this function until we have a more robust way of dealing with
 # unification
-_find_vars(value, last) := {"assign": _find_assign_vars(value)} if {
+_find_vars(value, last) := {"assign": _find_assign_vars(value[1])} if {
 	last == "terms"
 	value[0].type == "ref"
 	value[0].value[0].type == "var"
 	value[0].value[0].value in {"assign", "eq"}
 }
 
-_find_vars(value, last) := {"somein": _find_some_in_decl_vars(value)} if {
+_find_vars(value, last) := {"somein": _find_some_in_decl_vars(value[0].value)} if {
 	last == "symbols"
 	value[0].type == "call"
 }
@@ -208,10 +196,13 @@ _rules := data.workspace.parsed[input.regal.file.uri].rules if not input.rules
 #   - somein
 #   - ref
 found.vars[rule_index][context] contains var if {
-	some i, rule_index in rule_index_strings
+	some i, rule in _rules
+
+	rule_index := rule_index_strings[i]
+
 	some node in ["head", "body", "else"]
 
-	walk(_rules[i][node], [path, value])
+	walk(rule[node], [path, value])
 
 	last := regal.last(path)
 	last in {"terms", "symbols", "args"}
@@ -233,7 +224,6 @@ found.vars[rule_index].ref contains var if {
 
 # METADATA
 # description: all refs found in module
-# scope: document
 found.refs[rule_index] contains value if {
 	some i, rule in _rules
 
@@ -245,7 +235,9 @@ found.refs[rule_index] contains value if {
 	value.type == "ref"
 }
 
-found.refs[rule_index] contains value if {
+# METADATA
+# description: all calls found in module
+found.calls[rule_index] contains value if {
 	some i, rule in _rules
 
 	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
@@ -278,6 +270,21 @@ found.comprehensions[rule_index] contains value if {
 	walk(rule, [_, value])
 
 	value.type in {"arraycomprehension", "objectcomprehension", "setcomprehension"}
+}
+
+# METADATA
+# description: set containing all negated expressions in input AST
+found.expressions[rule_index] contains value if {
+	some i, rule in _rules
+
+	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
+	rule_index := rule_index_strings[i]
+
+	some node in ["head", "body", "else"]
+
+	walk(rule[node], [_, value])
+
+	value.terms
 }
 
 # METADATA
@@ -362,11 +369,4 @@ find_names_in_scope(rule, location) := names if {
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	some some_var in found.vars[_rule_index(rule)]["some"]
 	_before_location(rule.head, some_var, location)
-}
-
-# METADATA
-# description: all expressions in module
-exprs[rule_index][expr_index] := expr if {
-	some rule_index, rule in input.rules
-	some expr_index, expr in rule.body
 }

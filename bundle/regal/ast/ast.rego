@@ -203,7 +203,7 @@ rule_index_strings := [sprintf("%d", [i]) | some i, _ in _rules]
 #   keyed by rule index
 function_calls[rule_index] contains call if {
 	some rule_index in rule_index_strings
-	some ref in found.refs[rule_index]
+	some ref in found.calls[rule_index]
 
 	name := ref_to_string(ref[0].value)
 	args := [arg |
@@ -345,21 +345,6 @@ all_functions := object.union(config.capabilities.builtins, function_decls(input
 all_function_names := object.keys(all_functions)
 
 # METADATA
-# description: set containing all negated expressions in input AST
-negated_expressions[rule_index] contains value if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	some node in ["head", "body", "else"]
-
-	walk(rule[node], [_, value])
-
-	value.negated == true
-}
-
-# METADATA
 # description: |
 #   true if rule head contains no identifier, but is a chained rule body immediately following the previous one:
 #   foo {
@@ -398,15 +383,15 @@ var_in_call(calls, rule_index, name) if has_named_var(calls[rule_index][_].args[
 
 # METADATA
 # description: answers wether provided expression is an assignment (using `:=`)
-is_assignment(expr) if {
-	expr.terms[0].type == "ref"
-	expr.terms[0].value[0].type == "var"
-	expr.terms[0].value[0].value == "assign"
+is_assignment(term) if {
+	term.type == "ref"
+	term.value[0].type == "var"
+	term.value[0].value == "assign"
 }
 
 # METADATA
 # description: returns the terms in an assignment (`:=`) expression, or undefined if not assignment
-assignment_terms(expr) := [expr.terms[1], expr.terms[2]] if is_assignment(expr)
+assignment_terms(terms) := [terms[1], terms[2]] if is_assignment(terms[0])
 
 # METADATA
 # description: |

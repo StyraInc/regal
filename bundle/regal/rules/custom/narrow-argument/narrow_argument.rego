@@ -17,7 +17,6 @@ report contains violation if {
 	not _arg_used_in_call(indices, arg)
 
 	location := result.location(_first_named_arg_location(indices, arg))
-
 	violation := result.fail(rego.metadata.chain(), object.union(
 		location,
 		{"description": _message(count(refs), arg, narrowed)},
@@ -42,8 +41,9 @@ _narrow(refs) := narrowed if {
 	arr := util.any_set_item(refs)
 
 	count(arr) > 1
+	not _nested(arr)
 
-	narrowed := concat(".", arr)
+	narrowed := ast.ref_to_string(_to_terms(arr))
 }
 
 _narrow(refs) := narrowed if {
@@ -52,8 +52,9 @@ _narrow(refs) := narrowed if {
 	prefix := util.longest_prefix(refs)
 
 	count(prefix) > 1
+	not _nested(prefix)
 
-	narrowed := concat(".", prefix)
+	narrowed := ast.ref_to_string(_to_terms(prefix))
 }
 
 _first_named_arg_location(indices, name) := [arg.location |
@@ -126,6 +127,14 @@ _first_var_pos(ref) := pos if {
 	][0]
 } else := count(ref) + 1
 
-_exclude_arg(cfg, name) if {
-	name in cfg["exclude-args"]
+_exclude_arg(cfg, name) if name in cfg["exclude-args"]
+
+_to_terms(arr) := [_to_term(item) | some item in arr]
+
+_to_term(value) := {"type": "number", "value": value} if is_number(value)
+_to_term(value) := {"type": "string", "value": value} if is_string(value)
+
+_nested(arr) if {
+	some item in arr
+	not type_name(item) in ast.scalar_types
 }

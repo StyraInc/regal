@@ -33,6 +33,37 @@ test_fail_unused_return_value if {
 	}}
 }
 
+test_fail_unused_return_value_nested if {
+	r := rule.report with input as ast.with_rego_v1(`allow if {
+		comprehension := [x |
+			indexof("s", "s")
+			x := 1
+		]
+	}`)
+		with config.capabilities as capabilities.provided
+
+	r == {{
+		"category": "bugs",
+		"description": "Non-boolean return value unassigned",
+		"level": "error",
+		"location": {
+			"col": 4,
+			"end": {
+				"col": 11,
+				"row": 7,
+			},
+			"file": "policy.rego",
+			"row": 7,
+			"text": "\t\t\tindexof(\"s\", \"s\")",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/unassigned-return-value", "bugs"),
+		}],
+		"title": "unassigned-return-value",
+	}}
+}
+
 test_success_unused_boolean_return_value if {
 	r := rule.report with input as ast.policy(`allow if { startswith("s", "s") }`)
 		with config.capabilities as capabilities.provided

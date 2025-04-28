@@ -102,32 +102,6 @@ type LanguageServerOptions struct {
 	WorkspaceDiagnosticsPoll time.Duration
 }
 
-func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *LanguageServer {
-	c := cache.NewCache()
-	store := NewRegalStore()
-
-	ls := &LanguageServer{
-		cache:                       c,
-		regoStore:                   store,
-		logWriter:                   opts.LogWriter,
-		logLevel:                    opts.LogLevel,
-		lintFileJobs:                make(chan lintFileJob, 10),
-		lintWorkspaceJobs:           make(chan lintWorkspaceJob, 10),
-		builtinsPositionJobs:        make(chan lintFileJob, 10),
-		commandRequest:              make(chan types.ExecuteCommandParams, 10),
-		templateFileJobs:            make(chan lintFileJob, 10),
-		completionsManager:          completions.NewDefaultManager(ctx, c, store),
-		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
-		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
-		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
-		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
-	}
-
-	ls.configWatcher = lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf})
-
-	return ls
-}
-
 type LanguageServer struct {
 	logWriter io.Writer
 	logLevel  log.Level
@@ -180,6 +154,32 @@ type lintWorkspaceJob struct {
 	// later updates to aggregate state is made as files are changed.
 	OverwriteAggregates bool
 	AggregateReportOnly bool
+}
+
+func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *LanguageServer {
+	c := cache.NewCache()
+	store := NewRegalStore()
+
+	ls := &LanguageServer{
+		cache:                       c,
+		regoStore:                   store,
+		logWriter:                   opts.LogWriter,
+		logLevel:                    opts.LogLevel,
+		lintFileJobs:                make(chan lintFileJob, 10),
+		lintWorkspaceJobs:           make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:        make(chan lintFileJob, 10),
+		commandRequest:              make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:            make(chan lintFileJob, 10),
+		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
+		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
+		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
+		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
+	}
+
+	ls.configWatcher = lsconfig.NewWatcher(&lsconfig.WatcherOpts{LogFunc: ls.logf})
+
+	return ls
 }
 
 //nolint:wrapcheck
@@ -477,59 +477,6 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 			}
 		}
 	}
-}
-
-func (l *LanguageServer) getLoadedConfig() *config.Config {
-	l.loadedConfigLock.RLock()
-	defer l.loadedConfigLock.RUnlock()
-
-	return l.loadedConfig
-}
-
-func (l *LanguageServer) getEnabledNonAggregateRules() []string {
-	l.loadedConfigLock.RLock()
-	defer l.loadedConfigLock.RUnlock()
-
-	return l.loadedConfigEnabledNonAggregateRules
-}
-
-func (l *LanguageServer) getEnabledAggregateRules() []string {
-	l.loadedConfigLock.RLock()
-	defer l.loadedConfigLock.RUnlock()
-
-	return l.loadedConfigEnabledAggregateRules
-}
-
-// loadEnabledRulesFromConfig is used to cache the enabled rules for the current
-// config. These take some time to compute and only change when config changes,
-// so we can store them on the server to speed up diagnostic runs.
-func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
-	lint := linter.NewLinter().WithUserConfig(cfg)
-
-	enabledRules, err := lint.DetermineEnabledRules(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to determine enabled rules: %w", err)
-	}
-
-	enabledAggregateRules, err := lint.DetermineEnabledAggregateRules(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to determine enabled aggregate rules: %w", err)
-	}
-
-	l.loadedConfigLock.Lock()
-	defer l.loadedConfigLock.Unlock()
-
-	l.loadedConfigEnabledNonAggregateRules = []string{}
-
-	for _, r := range enabledRules {
-		if !slices.Contains(enabledAggregateRules, r) {
-			l.loadedConfigEnabledNonAggregateRules = append(l.loadedConfigEnabledNonAggregateRules, r)
-		}
-	}
-
-	l.loadedConfigEnabledAggregateRules = enabledAggregateRules
-
-	return nil
 }
 
 func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
@@ -1073,6 +1020,59 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 
 func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
+}
+
+func (l *LanguageServer) getLoadedConfig() *config.Config {
+	l.loadedConfigLock.RLock()
+	defer l.loadedConfigLock.RUnlock()
+
+	return l.loadedConfig
+}
+
+func (l *LanguageServer) getEnabledNonAggregateRules() []string {
+	l.loadedConfigLock.RLock()
+	defer l.loadedConfigLock.RUnlock()
+
+	return l.loadedConfigEnabledNonAggregateRules
+}
+
+func (l *LanguageServer) getEnabledAggregateRules() []string {
+	l.loadedConfigLock.RLock()
+	defer l.loadedConfigLock.RUnlock()
+
+	return l.loadedConfigEnabledAggregateRules
+}
+
+// loadEnabledRulesFromConfig is used to cache the enabled rules for the current
+// config. These take some time to compute and only change when config changes,
+// so we can store them on the server to speed up diagnostic runs.
+func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
+	lint := linter.NewLinter().WithUserConfig(cfg)
+
+	enabledRules, err := lint.DetermineEnabledRules(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to determine enabled rules: %w", err)
+	}
+
+	enabledAggregateRules, err := lint.DetermineEnabledAggregateRules(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to determine enabled aggregate rules: %w", err)
+	}
+
+	l.loadedConfigLock.Lock()
+	defer l.loadedConfigLock.Unlock()
+
+	l.loadedConfigEnabledNonAggregateRules = []string{}
+
+	for _, r := range enabledRules {
+		if !slices.Contains(enabledAggregateRules, r) {
+			l.loadedConfigEnabledNonAggregateRules = append(l.loadedConfigEnabledNonAggregateRules, r)
+		}
+	}
+
+	l.loadedConfigEnabledAggregateRules = enabledAggregateRules
+
+	return nil
 }
 
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {

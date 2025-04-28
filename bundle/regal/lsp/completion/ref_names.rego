@@ -8,6 +8,12 @@ import data.regal.ast
 #   built-in functions are not included as they are provided by another completions provider
 # scope: document
 ref_names contains name if {
+	name := ast.ref_static_to_string(ast.found.calls[_][_].value)
+
+	not name in ast.builtin_names
+}
+
+ref_names contains name if {
 	name := ast.ref_static_to_string(ast.found.refs[_][_].value)
 
 	not name in ast.builtin_names

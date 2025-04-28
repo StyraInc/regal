@@ -64,6 +64,33 @@ func (w *Watcher) Start(ctx context.Context) error {
 	return nil
 }
 
+func (w *Watcher) Watch(configFilePath string) {
+	w.pathUpdates <- configFilePath
+}
+
+func (w *Watcher) Stop() error {
+	if w.fsWatcher != nil {
+		if err := w.fsWatcher.Close(); err != nil {
+			return fmt.Errorf("failed to close fsnotify watcher: %w", err)
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+func (w *Watcher) IsWatching() bool {
+	w.fsWatcherLock.Lock()
+	defer w.fsWatcherLock.Unlock()
+
+	if w.fsWatcher == nil {
+		return false
+	}
+
+	return len(w.fsWatcher.WatchList()) > 0
+}
+
 func (w *Watcher) loop(ctx context.Context) {
 	for {
 		select {
@@ -108,31 +135,4 @@ func (w *Watcher) loop(ctx context.Context) {
 			return
 		}
 	}
-}
-
-func (w *Watcher) Watch(configFilePath string) {
-	w.pathUpdates <- configFilePath
-}
-
-func (w *Watcher) Stop() error {
-	if w.fsWatcher != nil {
-		if err := w.fsWatcher.Close(); err != nil {
-			return fmt.Errorf("failed to close fsnotify watcher: %w", err)
-		}
-
-		return nil
-	}
-
-	return nil
-}
-
-func (w *Watcher) IsWatching() bool {
-	w.fsWatcherLock.Lock()
-	defer w.fsWatcherLock.Unlock()
-
-	if w.fsWatcher == nil {
-		return false
-	}
-
-	return len(w.fsWatcher.WatchList()) > 0
 }

@@ -17,6 +17,7 @@ rules:
       level: error
       exclude-args:
         - cfg
+        - metadata
         - rule
   style:
     line-length:

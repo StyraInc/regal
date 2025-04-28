@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1034816959 ns/op	2910685336 B/op	55738401 allocs/op
+// 1051226167 ns/op	2910032936 B/op	55760097 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
@@ -755,9 +755,35 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
-// 268203979 ns/op	501748262 B/op	 9724107 allocs/op
-// 258819136 ns/op	497016108 B/op	 9632445 allocs/op
-// 170215493 ns/op	497115590 B/op	 9228106 allocs/op
+// 993500875 ns/op	2857931240 B/op	54621501 allocs/op
+// ...
+func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
+	ctx := context.Background()
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithBaseCache(cache.NewBaseCache()).
+		WithEnableAll(true).
+		MustPrepare(ctx)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	var err error
+
+	var rep report.Report
+
+	for range b.N {
+		rep, err = linter.Lint(ctx)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
+	}
+}
+
 // 155879726 ns/op	444934614 B/op	 8362362 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
@@ -765,6 +791,34 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	var err error
+
+	var rep report.Report
+
+	for range b.N {
+		rep, err = linter.Lint(context.Background())
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+
+	if len(rep.Violations) != 0 {
+		_ = rep.Violations
+	}
+}
+
+// 93754264 ns/op	388401130 B/op	 7198094 allocs/op
+// ...
+func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithBaseCache(cache.NewBaseCache()).
+		WithDisableAll(true).
+		MustPrepare(context.Background())
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -796,6 +850,12 @@ func BenchmarkEachRule(b *testing.B) {
 		b.Fatal(err)
 	}
 
+	linter := NewLinter().
+		WithInputPaths([]string{"../../bundle"}).
+		WithBaseCache(cache.NewBaseCache()).
+		WithDisableAll(true).
+		MustPrepare(context.Background())
+
 	for _, category := range conf.Rules {
 		for ruleName := range category {
 			// Uncomment / modify this to benchmark specific rule(s) only
@@ -803,13 +863,11 @@ func BenchmarkEachRule(b *testing.B) {
 			// if ruleName != "metasyntactic-variable" {
 			// 	continue
 			// }
-			b.Run(ruleName, func(b *testing.B) {
-				linter := NewLinter().
-					WithInputPaths([]string{"../../bundle"}).
-					WithBaseCache(cache.NewBaseCache()).
-					WithDisableAll(true).
-					WithEnabledRules(ruleName)
+			if ruleName != "confusing-alias" {
+				continue
+			}
 
+			b.Run(ruleName, func(b *testing.B) {
 				b.ResetTimer()
 				b.ReportAllocs()
 
@@ -818,7 +876,7 @@ func BenchmarkEachRule(b *testing.B) {
 				var rep report.Report
 
 				for range b.N {
-					rep, err = linter.Lint(context.Background())
+					rep, err = linter.WithEnabledRules(ruleName).Lint(context.Background())
 					if err != nil {
 						b.Fatal(err)
 					}

@@ -249,8 +249,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		m.Timer(regalmetrics.RegalConfigSearch).Stop()
 	}
 
-	regal := linter.NewEmptyLinter().
-		WithAddedBundle(&rbundle.LoadedBundle).
+	regal := linter.NewLinter().
 		WithDisableAll(params.disableAll).
 		WithDisabledCategories(params.disableCategory.v...).
 		WithDisabledRules(params.disable.v...).
@@ -329,6 +328,11 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	}
 
 	go updateCheckAndWarn(params, &rbundle.LoadedBundle, &userConfig)
+
+	regal, err = regal.Prepare(ctx)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to prepare for linting: %w", err)
+	}
 
 	result, err := regal.Lint(ctx)
 	if err != nil {

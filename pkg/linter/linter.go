@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -67,9 +67,27 @@ type Linter struct {
 	profiling            bool
 	instrumentation      bool
 	hasCustomRules       bool
+	isPrepared           bool
+
+	preparedQuery *rego.PreparedEvalQuery
 }
 
-var lintQuery = ast.MustParseBody("lint := data.regal.main.lint")
+var (
+	lintQueryStr         = "lint := data.regal.main.lint"
+	enabledRulesQueryStr = `[rule |
+		data.regal.rules[cat][rule]
+		object.get(data.regal.rules[cat][rule], "notices", set()) == set()
+		not data.regal.config.ignored_rule(cat, rule)
+	]`
+	enabledAggregateRulesQueryStr = `[rule |
+		data.regal.rules[cat][rule].aggregate
+		not data.regal.config.ignored_rule(cat, rule)
+	]`
+
+	lintQuery                  = ast.MustParseBody(lintQueryStr)
+	enabledRulesQuery          = ast.MustParseBody(enabledRulesQueryStr)
+	enabledAggregateRulesQuery = ast.MustParseBody(enabledAggregateRulesQueryStr)
+)
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
@@ -102,6 +120,7 @@ func (l Linter) WithInputModules(input *rules.Input) Linter {
 // WithAddedBundle adds a bundle of rules and data to include in evaluation.
 func (l Linter) WithAddedBundle(b *bundle.Bundle) Linter {
 	l.ruleBundles = append(l.ruleBundles, b)
+	l.isPrepared = false
 
 	return l
 }
@@ -132,6 +151,8 @@ func (l Linter) WithCustomRules(paths []string) Linter {
 		}
 	}
 
+	l.isPrepared = false
+
 	return l
 }
 
@@ -143,8 +164,9 @@ func (l Linter) WithCustomRulesFromFS(f fs.FS, rootPath string) Linter {
 	}
 
 	l.hasCustomRules = true
+	l.isPrepared = false
 
-	modules, err := loadModulesFromCustomRuleFS(f, rootPath)
+	modules, err := rio.ModulesFromCustomRuleFS(f, rootPath)
 	if err != nil {
 		l.customRuleError = err
 
@@ -168,6 +190,7 @@ func (l Linter) WithDebugMode(debugMode bool) Linter {
 // WithUserConfig provides config overrides set by the user.
 func (l Linter) WithUserConfig(cfg config.Config) Linter {
 	l.userConfig = &cfg
+	l.isPrepared = false
 
 	return l
 }
@@ -175,6 +198,7 @@ func (l Linter) WithUserConfig(cfg config.Config) Linter {
 // WithDisabledRules disables provided rules. This overrides configuration provided in file.
 func (l Linter) WithDisabledRules(disable ...string) Linter {
 	l.disable = disable
+	l.isPrepared = false
 
 	return l
 }
@@ -182,6 +206,7 @@ func (l Linter) WithDisabledRules(disable ...string) Linter {
 // WithDisableAll disables all rules when set to true. This overrides configuration provided in file.
 func (l Linter) WithDisableAll(disableAll bool) Linter {
 	l.disableAll = disableAll
+	l.isPrepared = false
 
 	return l
 }
@@ -189,6 +214,7 @@ func (l Linter) WithDisableAll(disableAll bool) Linter {
 // WithDisabledCategories disables provided categories of rules. This overrides configuration provided in file.
 func (l Linter) WithDisabledCategories(disableCategory ...string) Linter {
 	l.disableCategory = disableCategory
+	l.isPrepared = false
 
 	return l
 }
@@ -196,6 +222,7 @@ func (l Linter) WithDisabledCategories(disableCategory ...string) Linter {
 // WithEnabledRules enables provided rules. This overrides configuration provided in file.
 func (l Linter) WithEnabledRules(enable ...string) Linter {
 	l.enable = enable
+	l.isPrepared = false
 
 	return l
 }
@@ -203,6 +230,7 @@ func (l Linter) WithEnabledRules(enable ...string) Linter {
 // WithEnableAll enables all rules when set to true. This overrides configuration provided in file.
 func (l Linter) WithEnableAll(enableAll bool) Linter {
 	l.enableAll = enableAll
+	l.isPrepared = false
 
 	return l
 }
@@ -210,6 +238,7 @@ func (l Linter) WithEnableAll(enableAll bool) Linter {
 // WithEnabledCategories enables provided categories of rules. This overrides configuration provided in file.
 func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
 	l.enableCategory = enableCategory
+	l.isPrepared = false
 
 	return l
 }
@@ -217,6 +246,7 @@ func (l Linter) WithEnabledCategories(enableCategory ...string) Linter {
 // WithIgnore excludes files matching patterns. This overrides configuration provided in file.
 func (l Linter) WithIgnore(ignore []string) Linter {
 	l.ignoreFiles = ignore
+	l.isPrepared = false
 
 	return l
 }
@@ -253,6 +283,7 @@ func (l Linter) WithInstrumentation(enabled bool) Linter {
 // referenced in the linter configuration with absolute file paths or URIs.
 func (l Linter) WithPathPrefix(pathPrefix string) Linter {
 	l.pathPrefix = pathPrefix
+	l.isPrepared = false
 
 	return l
 }
@@ -292,25 +323,61 @@ func (l Linter) WithBaseCache(baseCache topdown.BaseCache) Linter {
 	return l
 }
 
+// Prepare stores linter preparation state, like the determined configuration,
+// and the query perpared for linting.
+// Experimental: while used internally, the details of what is prepared here
+// are very likely to change in the future, and this method should not yet be
+// relied on by external clients.
+func (l Linter) Prepare(ctx context.Context) (Linter, error) {
+	conf, err := l.GetConfig()
+	if err != nil {
+		return l, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	if err := l.validate(conf); err != nil {
+		return l, fmt.Errorf("validation failed: %w", err)
+	}
+
+	l.combinedCfg = conf
+	l.dataBundle = l.createDataBundle(*conf)
+
+	l.preparedQuery, err = l.prepareQuery(ctx)
+	if err != nil {
+		return l, fmt.Errorf("failed to prepare query: %w", err)
+	}
+
+	l.isPrepared = true
+
+	return l, nil
+}
+
+// MustPrepare prepares the linter and panics on errors. Mostly used for tests.
+// Experimental: see description of Prepare.
+func (l Linter) MustPrepare(ctx context.Context) Linter {
+	l, err := l.Prepare(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("failed to prepare linter: %v", err))
+	}
+
+	return l
+}
+
 // Lint runs the linter on provided policies.
 func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLint)
 
 	finalReport := report.Report{}
 
-	err := l.validate()
-	if err != nil {
-		return report.Report{}, fmt.Errorf("validation failed: %w", err)
+	if !l.isPrepared {
+		var err error
+
+		l, err = l.Prepare(ctx)
+		if err != nil {
+			return report.Report{}, fmt.Errorf("failed to prepare linter: %w", err)
+		}
 	}
 
-	conf, err := l.GetConfig()
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to merge config: %w", err)
-	}
-
-	l.dataBundle = l.createDataBundle(*conf)
-
-	ignore := conf.Ignore.Files
+	ignore := l.combinedCfg.Ignore.Files
 
 	if len(l.ignoreFiles) > 0 {
 		ignore = l.ignoreFiles
@@ -329,7 +396,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	var versionsMap map[string]ast.RegoVersion
 
 	if l.pathPrefix != "" && !strings.HasPrefix(l.pathPrefix, "file://") {
-		versionsMap, err = config.AllRegoVersions(l.pathPrefix, conf)
+		versionsMap, err = config.AllRegoVersions(l.pathPrefix, l.combinedCfg)
 		if err != nil && l.debugMode {
 			log.Printf("failed to get configured Rego versions: %v", err)
 		}
@@ -366,17 +433,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
 	}
 
-	regoArgs, err := l.prepareRegoArgs(lintQuery)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
-
-	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
-	if err != nil {
-		return report.Report{}, fmt.Errorf("failed preparing query for linting: %w", err)
-	}
-
-	regoReport, err := l.lintWithRegoRules(ctx, &pq, input)
+	regoReport, err := l.lintWithRegoRules(ctx, input)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
@@ -408,12 +465,16 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if len(allAggregates) > 0 {
-		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, &pq, allAggregates, regoReport.IgnoreDirectives)
+		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 		}
 
 		finalReport.Violations = append(finalReport.Violations, aggregateReport.Violations...)
+
+		if l.profiling {
+			finalReport.AggregateProfile = aggregateReport.AggregateProfile
+		}
 	}
 
 	finalReport.Summary = report.Summary{
@@ -437,7 +498,12 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if l.profiling {
-		finalReport.AggregateProfile = regoReport.AggregateProfile
+		if finalReport.AggregateProfile == nil {
+			finalReport.AggregateProfile = regoReport.AggregateProfile
+		} else {
+			maps.Copy(finalReport.AggregateProfile, regoReport.AggregateProfile)
+		}
+
 		finalReport.AggregateProfileToSortedProfile(10)
 		finalReport.AggregateProfile = nil
 	}
@@ -445,18 +511,27 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	return finalReport, nil
 }
 
-func (l Linter) validate() error {
+func (l Linter) prepareQuery(ctx context.Context) (*rego.PreparedEvalQuery, error) {
+	regoArgs, err := l.prepareRegoArgs(lintQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	pq, err := rego.New(regoArgs...).PrepareForEval(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query for linting: %w", err)
+	}
+
+	return &pq, nil
+}
+
+func (l Linter) validate(conf *config.Config) error {
 	if len(l.inputPaths) == 0 && l.inputModules == nil && len(l.overriddenAggregates) == 0 {
 		return errors.New("nothing provided to lint")
 	}
 
 	if l.customRuleError != nil {
 		return fmt.Errorf("failed to load custom rules: %w", l.customRuleError)
-	}
-
-	conf, err := l.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to merge config: %w", err)
 	}
 
 	validCategories := rutil.NewSet[string]()
@@ -527,7 +602,7 @@ func (l Linter) validate() error {
 }
 
 // DetermineEnabledRules returns the list of rules that are enabled based on
-// the supplied configuration. This makes use of the Rego and Go rule settings
+// the supplied configuration. This makes use of the linter rule settings
 // to produce a single list of the rules that are to be run on this linter
 // instance.
 func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
@@ -538,54 +613,22 @@ func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
 
 	l.dataBundle = l.createDataBundle(*conf)
 
-	queryStr := `[rule |
-        data.regal.rules[cat][rule]
-		object.get(data.regal.rules[cat][rule], "notices", set()) == set()
-        not data.regal.config.ignored_rule(cat, rule)
-    ]`
-
-	query := ast.MustParseBody(queryStr)
-
-	regoArgs, err := l.prepareRegoArgs(query)
+	regoArgs, err := l.prepareRegoArgs(enabledRulesQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query %s: %w", queryStr, err)
+		return nil, fmt.Errorf("failed preparing query %s: %w", enabledRulesQueryStr, err)
 	}
 
 	rs, err := rego.New(regoArgs...).Eval(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed evaluating query %s: %w", queryStr, err)
+		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledRulesQueryStr, err)
 	}
 
-	if len(rs) != 1 || len(rs[0].Expressions) != 1 {
-		return nil, fmt.Errorf("expected exactly one expression, got %d", len(rs[0].Expressions))
-	}
-
-	list, ok := rs[0].Expressions[0].Value.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("expected list, got %T", rs[0].Expressions[0].Value)
-	}
-
-	enabledRules := make([]string, 0)
-
-	for _, item := range list {
-		rule, ok := item.(string)
-		if !ok {
-			return nil, fmt.Errorf("expected string, got %T", item)
-		}
-
-		enabledRules = append(enabledRules, rule)
-	}
-
-	slices.Sort(enabledRules)
-
-	return enabledRules, nil
+	return getEnabledRules(rs)
 }
 
 // DetermineEnabledAggregateRules returns the list of aggregate rules that are
-// enabled based on the configuration. This does not include any go rules.
+// enabled based on the configuration.
 func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, error) {
-	enabledRules := make([]string, 0)
-
 	conf, err := l.GetConfig()
 	if err != nil {
 		return []string{}, fmt.Errorf("failed to merge config: %w", err)
@@ -593,31 +636,30 @@ func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, e
 
 	l.dataBundle = l.createDataBundle(*conf)
 
-	queryStr := `[rule |
-        data.regal.rules[cat][rule].aggregate
-        not data.regal.config.ignored_rule(cat, rule)
-    ]`
-
-	query := ast.MustParseBody(queryStr)
-
-	regoArgs, err := l.prepareRegoArgs(query)
+	regoArgs, err := l.prepareRegoArgs(enabledAggregateRulesQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed preparing query %s: %w", queryStr, err)
+		return nil, fmt.Errorf("failed preparing query %s: %w", enabledAggregateRulesQueryStr, err)
 	}
 
 	rs, err := rego.New(regoArgs...).Eval(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed evaluating query %s: %w", queryStr, err)
+		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledAggregateRulesQueryStr, err)
 	}
 
+	return getEnabledRules(rs)
+}
+
+func getEnabledRules(rs rego.ResultSet) ([]string, error) {
 	if len(rs) != 1 || len(rs[0].Expressions) != 1 {
 		return nil, fmt.Errorf("expected exactly one expression, got %d", len(rs[0].Expressions))
 	}
 
-	list, ok := rs[0].Expressions[0].Value.([]interface{})
+	list, ok := rs[0].Expressions[0].Value.([]any)
 	if !ok {
 		return nil, fmt.Errorf("expected list, got %T", rs[0].Expressions[0].Value)
 	}
+
+	enabledRules := make([]string, 0, len(list))
 
 	for _, item := range list {
 		rule, ok := item.(string)
@@ -712,58 +754,8 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	return regoArgs, nil
 }
 
-func loadModulesFromCustomRuleFS(customRuleFS fs.FS, rootPath string) (map[string]*ast.Module, error) {
-	modules := make(map[string]*ast.Module)
-	filter := rio.ExcludeTestFilter()
-
-	err := fs.WalkDir(customRuleFS, rootPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("failed to walk custom rule FS: %w", err)
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		info, err := d.Info()
-		if err != nil {
-			return fmt.Errorf("failed to get info for custom rule file: %w", err)
-		}
-
-		if filter("", info, 0) {
-			return nil
-		}
-
-		f, err := customRuleFS.Open(path)
-		if err != nil {
-			return fmt.Errorf("failed to open custom rule file: %w", err)
-		}
-		defer f.Close()
-
-		bs, err := io.ReadAll(f)
-		if err != nil {
-			return fmt.Errorf("failed to read custom rule file: %w", err)
-		}
-
-		m, err := ast.ParseModule(path, outil.ByteSliceToString(bs))
-		if err != nil {
-			return fmt.Errorf("failed to parse custom rule file %q: %w", path, err)
-		}
-
-		modules[path] = m
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to walk custom rule FS: %w", err)
-	}
-
-	return modules, nil
-}
-
 func (l Linter) lintWithRegoRules(
 	ctx context.Context,
-	pq *rego.PreparedEvalQuery,
 	input rules.Input,
 ) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
@@ -826,7 +818,7 @@ func (l Linter) lintWithRegoRules(
 				evalArgs = append(evalArgs, rego.EvalInstrument(true))
 			}
 
-			resultSet, err := pq.Eval(ctx, evalArgs...)
+			resultSet, err := l.preparedQuery.Eval(ctx, evalArgs...)
 			if err != nil {
 				errCh <- fmt.Errorf("error encountered in query evaluation %w", err)
 
@@ -902,7 +894,6 @@ func (l Linter) lintWithRegoRules(
 
 func (l Linter) lintWithRegoAggregateRules(
 	ctx context.Context,
-	pq *rego.PreparedEvalQuery,
 	aggregates map[string][]report.Aggregate,
 	ignoreDirectives map[string]map[string][]string,
 ) (report.Report, error) {
@@ -940,7 +931,13 @@ func (l Linter) lintWithRegoAggregateRules(
 		evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
 	}
 
-	resultSet, err := pq.Eval(ctx, evalArgs...)
+	var prof *profiler.Profiler
+	if l.profiling {
+		prof = profiler.New()
+		evalArgs = append(evalArgs, rego.EvalQueryTracer(prof))
+	}
+
+	resultSet, err := l.preparedQuery.Eval(ctx, evalArgs...)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 	}
@@ -952,6 +949,16 @@ func (l Linter) lintWithRegoAggregateRules(
 
 	for i := range result.Violations {
 		result.Violations[i].IsAggregate = true
+	}
+
+	if l.profiling {
+		profRep := prof.ReportTopNResults(10, []string{"total_time_ns"})
+
+		result.AggregateProfile = make(map[string]report.ProfileEntry)
+
+		for _, rs := range profRep {
+			result.AggregateProfile[rs.Location.String()] = regalmetrics.FromExprStats(rs)
+		}
 	}
 
 	return result, nil
@@ -1010,9 +1017,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 		log.Println(outil.ByteSliceToString(bs))
 	}
 
-	l.combinedCfg = &mergedConf
-
-	return l.combinedCfg, nil
+	return &mergedConf, nil
 }
 
 func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {

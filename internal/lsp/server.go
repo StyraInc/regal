@@ -1517,6 +1517,8 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 }
 
 func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionParams) (any, error) {
+	l.logf(log.LevelMessage, "handleTextDocumentCodeAction params: %+v", params)
+
 	if l.ignoreURI(params.TextDocument.URI) {
 		return noCodeActions, nil
 	}

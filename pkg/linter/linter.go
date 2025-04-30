@@ -511,6 +511,84 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	return finalReport, nil
 }
 
+// DetermineEnabledRules returns the list of rules that are enabled based on
+// the supplied configuration. This makes use of the linter rule settings
+// to produce a single list of the rules that are to be run on this linter
+// instance.
+func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
+	conf, err := l.GetConfig()
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	l.dataBundle = l.createDataBundle(*conf)
+
+	regoArgs, err := l.prepareRegoArgs(enabledRulesQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query %s: %w", enabledRulesQueryStr, err)
+	}
+
+	rs, err := rego.New(regoArgs...).Eval(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledRulesQueryStr, err)
+	}
+
+	return getEnabledRules(rs)
+}
+
+// DetermineEnabledAggregateRules returns the list of aggregate rules that are
+// enabled based on the configuration.
+func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, error) {
+	conf, err := l.GetConfig()
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to merge config: %w", err)
+	}
+
+	l.dataBundle = l.createDataBundle(*conf)
+
+	regoArgs, err := l.prepareRegoArgs(enabledAggregateRulesQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing query %s: %w", enabledAggregateRulesQueryStr, err)
+	}
+
+	rs, err := rego.New(regoArgs...).Eval(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledAggregateRulesQueryStr, err)
+	}
+
+	return getEnabledRules(rs)
+}
+
+// GetConfig returns the final configuration for the linter, i.e. Regal's default
+// configuration plus any user-provided configuration merged on top of it.
+func (l Linter) GetConfig() (*config.Config, error) {
+	if l.combinedCfg != nil {
+		return l.combinedCfg, nil
+	}
+
+	regalBundle, err := l.getBundleByName("regal")
+	if err != nil {
+		return &config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
+	}
+
+	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(regalBundle, l.userConfig)
+	if err != nil {
+		return &config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
+	}
+
+	if l.debugMode {
+		bs, err := yaml.Marshal(mergedConf)
+		if err != nil {
+			return &config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
+		}
+
+		log.Println("merged provided and user config:")
+		log.Println(outil.ByteSliceToString(bs))
+	}
+
+	return &mergedConf, nil
+}
+
 func (l Linter) prepareQuery(ctx context.Context) (*rego.PreparedEvalQuery, error) {
 	regoArgs, err := l.prepareRegoArgs(lintQuery)
 	if err != nil {
@@ -599,54 +677,6 @@ func (l Linter) validate(conf *config.Config) error {
 	}
 
 	return nil
-}
-
-// DetermineEnabledRules returns the list of rules that are enabled based on
-// the supplied configuration. This makes use of the linter rule settings
-// to produce a single list of the rules that are to be run on this linter
-// instance.
-func (l Linter) DetermineEnabledRules(ctx context.Context) ([]string, error) {
-	conf, err := l.GetConfig()
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to merge config: %w", err)
-	}
-
-	l.dataBundle = l.createDataBundle(*conf)
-
-	regoArgs, err := l.prepareRegoArgs(enabledRulesQuery)
-	if err != nil {
-		return nil, fmt.Errorf("failed preparing query %s: %w", enabledRulesQueryStr, err)
-	}
-
-	rs, err := rego.New(regoArgs...).Eval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledRulesQueryStr, err)
-	}
-
-	return getEnabledRules(rs)
-}
-
-// DetermineEnabledAggregateRules returns the list of aggregate rules that are
-// enabled based on the configuration.
-func (l Linter) DetermineEnabledAggregateRules(ctx context.Context) ([]string, error) {
-	conf, err := l.GetConfig()
-	if err != nil {
-		return []string{}, fmt.Errorf("failed to merge config: %w", err)
-	}
-
-	l.dataBundle = l.createDataBundle(*conf)
-
-	regoArgs, err := l.prepareRegoArgs(enabledAggregateRulesQuery)
-	if err != nil {
-		return nil, fmt.Errorf("failed preparing query %s: %w", enabledAggregateRulesQueryStr, err)
-	}
-
-	rs, err := rego.New(regoArgs...).Eval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed evaluating query %s: %w", enabledAggregateRulesQueryStr, err)
-	}
-
-	return getEnabledRules(rs)
 }
 
 func getEnabledRules(rs rego.ResultSet) ([]string, error) {
@@ -988,36 +1018,6 @@ func resultSetToReport(resultSet rego.ResultSet, aggregate bool) (report.Report,
 	}
 
 	return r, nil
-}
-
-// GetConfig returns the final configuration for the linter, i.e. Regal's default
-// configuration plus any user-provided configuration merged on top of it.
-func (l Linter) GetConfig() (*config.Config, error) {
-	if l.combinedCfg != nil {
-		return l.combinedCfg, nil
-	}
-
-	regalBundle, err := l.getBundleByName("regal")
-	if err != nil {
-		return &config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
-	}
-
-	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(regalBundle, l.userConfig)
-	if err != nil {
-		return &config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
-	}
-
-	if l.debugMode {
-		bs, err := yaml.Marshal(mergedConf)
-		if err != nil {
-			return &config.Config{}, fmt.Errorf("failed to marshal config: %w", err)
-		}
-
-		log.Println("merged provided and user config:")
-		log.Println(outil.ByteSliceToString(bs))
-	}
-
-	return &mergedConf, nil
 }
 
 func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {

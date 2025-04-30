@@ -216,11 +216,11 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		}
 	}
 
-	var regalDir *os.File
-
-	var customRulesDir string
-
-	var configSearchPath string
+	var (
+		regalDir         *os.File
+		customRulesDir   string
+		configSearchPath string
+	)
 
 	m := metrics.New()
 	if params.metrics {

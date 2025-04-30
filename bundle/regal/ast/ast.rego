@@ -227,13 +227,27 @@ _exclude_arg("assign", 0, _)
 
 # METADATA
 # description: |
-#   true if both ref values (or "paths") are equal in type and value for each path component, ignoring locations
+#   true if both ref values (or "paths") are equal in type
+#   and value for each path component, ignoring locations
 ref_value_equal(v1, v2) if {
 	count(v1) == count(v2)
 
 	every i, part in v1 {
 		part.type == v2[i].type
 		part.value == v2[i].value
+	}
+}
+
+# METADATA
+# description: |
+#   true if all terms in `terms1` are also present in `terms2`
+#   regardless of length, and ignoring locations
+is_terms_subset(terms1, terms2) if {
+	count(terms1) <= count(terms2)
+
+	every i, term in terms1 {
+		term.type == terms2[i].type
+		term.value == terms2[i].value
 	}
 }
 

@@ -3,10 +3,9 @@ package update
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,17 +25,13 @@ var updateModule string
 const CheckVersionDisableEnvVar = "REGAL_DISABLE_VERSION_CHECK"
 
 type Options struct {
-	CurrentVersion string
-	CurrentTime    time.Time
-
-	StateDir string
-
+	CurrentTime       time.Time
+	CurrentVersion    string
+	StateDir          string
 	ReleaseServerHost string
 	ReleaseServerPath string
-
-	CTAURLPrefix string
-
-	Debug bool
+	CTAURLPrefix      string
+	Debug             bool
 }
 
 type latestVersionFileContents struct {
@@ -44,17 +39,21 @@ type latestVersionFileContents struct {
 	LatestVersion string    `json:"latest_version"`
 }
 
+type decision struct {
+	NeedsUpdate   bool   `json:"needs_update"`
+	LatestVersion string `json:"latest_version"`
+	CTA           string `json:"cta"`
+}
+
+var query = ast.MustParseBody("result := data.update.check")
+
 func CheckAndWarn(opts Options, w io.Writer) {
-	// this is a shortcut heuristic to avoid and version checking
-	// when in dev/test etc.
+	// this is a shortcut heuristic to avoid version checking when in dev/test etc.
 	if !strings.HasPrefix(opts.CurrentVersion, "v") {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	latestVersion, err := getLatestVersion(ctx, opts)
+	latestVersion, err := getLatestCachedVersion(opts)
 	if err != nil {
 		if opts.Debug {
 			w.Write([]byte(err.Error()))
@@ -65,10 +64,13 @@ func CheckAndWarn(opts Options, w io.Writer) {
 
 	regoArgs := []func(*rego.Rego){
 		rego.Module("update.rego", updateModule),
-		rego.Query(`data.update.needs_update`),
+		rego.ParsedQuery(query),
 		rego.ParsedInput(ast.NewObject(
 			ast.Item(ast.StringTerm("current_version"), ast.StringTerm(opts.CurrentVersion)),
 			ast.Item(ast.StringTerm("latest_version"), ast.StringTerm(latestVersion)),
+			ast.Item(ast.StringTerm("cta_url_prefix"), ast.StringTerm(opts.CTAURLPrefix)),
+			ast.Item(ast.StringTerm("release_server_host"), ast.StringTerm(opts.ReleaseServerHost)),
+			ast.Item(ast.StringTerm("release_server_path"), ast.StringTerm(opts.ReleaseServerPath)),
 		)),
 	}
 
@@ -81,45 +83,54 @@ func CheckAndWarn(opts Options, w io.Writer) {
 		return
 	}
 
-	if !rs.Allowed() {
+	result, err := resultSetToDecision(rs)
+	if err != nil {
 		if opts.Debug {
-			w.Write([]byte("Regal is up to date"))
+			w.Write([]byte(err.Error()))
 		}
 
 		return
 	}
 
-	ctaURLPrefix := "https://github.com/StyraInc/regal/releases/tag/"
-	if opts.CTAURLPrefix != "" {
-		ctaURLPrefix = opts.CTAURLPrefix
+	if result.NeedsUpdate {
+		if err = saveLatestCachedVersion(opts, result.LatestVersion); err != nil && opts.Debug {
+			w.Write([]byte(err.Error()))
+		}
+
+		w.Write([]byte(result.CTA))
+
+		return
 	}
 
-	ctaURL := ctaURLPrefix + latestVersion
-
-	tmpl := `A new version of Regal is available (%s). You are running %s.
-See %s for the latest release.
-`
-
-	fmt.Fprintf(w, tmpl, latestVersion, opts.CurrentVersion, ctaURL)
+	if opts.Debug {
+		w.Write([]byte("Regal is up to date"))
+	}
 }
 
-func getLatestVersion(ctx context.Context, opts Options) (string, error) {
+func resultSetToDecision(rs rego.ResultSet) (decision, error) {
+	if len(rs) == 0 || rs[0].Bindings["result"] == nil {
+		return decision{}, errors.New("no result set")
+	}
+
+	var result decision
+	if err := encoding.JSONRoundTrip(rs[0].Bindings["result"], &result); err != nil {
+		return decision{}, fmt.Errorf("failed to decode result set: %w", err)
+	}
+
+	return result, nil
+}
+
+func getLatestCachedVersion(opts Options) (string, error) {
 	if opts.StateDir != "" {
 		// first, attempt to get the file from previous invocations to save on remote calls
 		latestVersionFilePath := filepath.Join(opts.StateDir, "latest_version.json")
 
-		_, err := os.Stat(latestVersionFilePath)
-		if err == nil {
+		if file, err := os.Open(latestVersionFilePath); err == nil {
+			defer file.Close()
+
 			var preExistingState latestVersionFileContents
 
-			file, err := os.Open(latestVersionFilePath)
-			if err != nil {
-				return "", fmt.Errorf("failed to open file: %w", err)
-			}
-
-			json := encoding.JSON()
-
-			if err := json.NewDecoder(file).Decode(&preExistingState); err != nil {
+			if err := encoding.JSON().NewDecoder(file).Decode(&preExistingState); err != nil {
 				return "", fmt.Errorf("failed to decode existing version state file: %w", err)
 			}
 
@@ -129,60 +140,22 @@ func getLatestVersion(ctx context.Context, opts Options) (string, error) {
 		}
 	}
 
-	client := http.Client{}
+	return "", nil
+}
 
-	releaseServerHost := "https://api.github.com"
-	if opts.ReleaseServerHost != "" {
-		releaseServerHost = strings.TrimSuffix(opts.ReleaseServerHost, "/")
+func saveLatestCachedVersion(opts Options, latestVersion string) error {
+	if opts.StateDir != "" {
+		content := latestVersionFileContents{LatestVersion: latestVersion, CheckedAt: opts.CurrentTime}
 
-		if !strings.HasPrefix(releaseServerHost, "http") {
-			releaseServerHost = "https://" + releaseServerHost
+		bs, err := encoding.JSON().MarshalIndent(content, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal state file: %w", err)
+		}
+
+		if err = os.WriteFile(opts.StateDir+"/latest_version.json", bs, 0o600); err != nil {
+			return fmt.Errorf("failed to write state file: %w", err)
 		}
 	}
 
-	releaseServerURL, err := url.Parse(releaseServerHost)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse release server URL: %w", err)
-	}
-
-	releaseServerPath := "/repos/styrainc/regal/releases/latest"
-	if opts.ReleaseServerPath != "" {
-		releaseServerPath = opts.ReleaseServerPath
-	}
-
-	releaseServerURL.Path = releaseServerPath
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, releaseServerURL.String(), nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to make request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	var responseData struct {
-		TagName string `json:"tag_name"`
-	}
-
-	json := encoding.JSON()
-	if err = json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	stateBs, err := json.MarshalIndent(latestVersionFileContents{
-		LatestVersion: responseData.TagName,
-		CheckedAt:     opts.CurrentTime,
-	}, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal state file: %w", err)
-	}
-
-	if err = os.WriteFile(opts.StateDir+"/latest_version.json", stateBs, 0o600); err != nil {
-		return "", fmt.Errorf("failed to write state file: %w", err)
-	}
-
-	return responseData.TagName, nil
+	return nil
 }

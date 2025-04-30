@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1051226167 ns/op	2910032936 B/op	55760097 allocs/op
+// 1111071791 ns/op	3001557280 B/op	58184205 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
@@ -755,7 +755,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
-// 993500875 ns/op	2857931240 B/op	54621501 allocs/op
+// 1011992167 ns/op	2949576920 B/op	57079296 allocs/op
 // ...
 func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 	ctx := context.Background()
@@ -863,10 +863,6 @@ func BenchmarkEachRule(b *testing.B) {
 			// if ruleName != "metasyntactic-variable" {
 			// 	continue
 			// }
-			if ruleName != "confusing-alias" {
-				continue
-			}
-
 			b.Run(ruleName, func(b *testing.B) {
 				b.ResetTimer()
 				b.ReportAllocs()

@@ -263,6 +263,7 @@ The following rules are currently available:
 | imports     | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                           | Redundant alias                                           |
 | imports     | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)               | Redundant import of data                                  |
 | imports     | [unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import)                       | Unresolved import                                         |
+| imports     | [unresolved-reference](https://docs.styra.com/regal/rules/imports/unresolved-reference)                 | Unresolved Reference                                      |
 | imports     | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                                   | Use `import rego.v1`                                      |
 | performance | [defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment)                     | Assignment can be deferred                                |
 | performance | [non-loop-expression](https://docs.styra.com/regal/rules/performance/non-loop-expression)               | Non-loop expression                                       |

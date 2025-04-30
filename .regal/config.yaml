@@ -23,3 +23,12 @@ rules:
     line-length:
       level: error
       non-breakable-word-threshold: 100
+  imports:
+    unresolved-reference:
+      level: error
+      except-paths:
+        - data.eval.**
+        - data.internal**
+        - data.workspace.**
+        - data.regal.config.provided**
+        - data.custom.regal**

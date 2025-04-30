@@ -19,7 +19,7 @@ report contains violation if {
 
 	some term in rule.body[expr_index + 1].terms
 
-	ast.ref_value_equal(expr.terms.value, term.value)
+	ast.is_terms_subset(expr.terms.value, term.value)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }
@@ -55,7 +55,7 @@ report contains violation if {
 	some expr in _exprs[rule_index]
 
 	expr.terms.type == "ref"
-	ast.ref_value_equal(expr.terms.value, rule.head.value.value)
+	ast.is_terms_subset(expr.terms.value, rule.head.value.value)
 
 	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(expr.terms.value))
 }

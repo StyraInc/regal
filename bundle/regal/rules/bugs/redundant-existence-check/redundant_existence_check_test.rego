@@ -12,6 +12,28 @@ test_fail_redundant_existence_check if {
 		startswith(input.foo, "bar")
 	}`)
 	r := rule.report with input as module
+
+	r == {{
+		"category": "bugs",
+		"description": "Redundant existence check",
+		"level": "error",
+		"location": {"col": 3, "file": "policy.rego", "row": 7, "text": "\t\tinput.foo", "end": {"col": 12, "row": 7}},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/redundant-existence-check", "bugs"),
+		}],
+		"title": "redundant-existence-check",
+	}}
+}
+
+test_fail_redundant_existence_check_subset if {
+	module := ast.with_rego_v1(`
+	redundant if {
+		input.foo
+		startswith(input.foo.bar, "bar")
+	}`)
+	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Redundant existence check",
@@ -43,6 +65,7 @@ test_success_not_redundant_existence_check_with_cancels if {
 		rule.foo == 1
 	}`)
 	r := rule.report with input as module
+
 	r == set()
 }
 
@@ -52,6 +75,7 @@ test_fail_redundant_existence_check_head_assignment_of_ref if {
 		input.foo
 	}`)
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Redundant existence check",
@@ -71,6 +95,7 @@ test_fail_redundant_existence_check_function_arg if {
 		foo
 	}`)
 	r := rule.report with input as module
+
 	r == {{
 		"category": "bugs",
 		"description": "Redundant existence check",

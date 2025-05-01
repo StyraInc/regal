@@ -47,6 +47,7 @@ example would create the following directory structure under `.regal/rules`:
 custom/regal/rules/naming/foo-bar-baz/foo_bar_baz.rego
 custom/regal/rules/naming/foo-bar-baz/foo_bar_baz_test.rego
 ```
+
 If you'd rather create this directory structure in some other place than the current working directory, you may use the
 `--output` flag to specify a different location. The generated rule includes a simple example, which can be verified by
 running `regal test .regal/rules`. Modify the rule and the test to suit your needs!
@@ -75,6 +76,7 @@ If we were to write the simplest policy possible, and parse it using `regal pars
 package declaration:
 
 **policy.rego**
+
 ```rego
 package policy
 ```
@@ -158,9 +160,10 @@ Starting from top to bottom, these are the components comprising our custom rule
 1. The package of custom rules **must** start with `custom.regal.rules`, followed by the category of the rule, and the
    title (which is commonly quoted as rule names use `-` for spaces).
 1. The `data.regal.result` provides some helpers for formatting the result of a violation for inclusion in a report.
-1. Regal rules make heavy use of [metadata annotations](https://www.openpolicyagent.org/docs/latest/annotations/) in
-   order to document the purpose of the rule, along with any other information that could potentially be useful.
-   All rule packages **must** have a `description`. Providing links to additional documentation under
+1. Regal rules make heavy use of [metadata annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
+   in order to document the purpose of the rule, along with any other
+   information that could potentially be useful. All rule packages **must** have
+   a `description`. Providing links to additional documentation under
    `related_resources` is recommended, but not required.
 1. Note the `schema` attribute present in the metadata annotation. Adding this is optional, but highly recommended, as
    it will make the compiler aware of the structure of the input, i.e. the AST. This allows the compiler to fail when
@@ -312,6 +315,7 @@ aggregate_report contains violation if {
     })
 }
 ```
+
 As you can see, the aggregate rule is split into two parts — one that collects data (`aggregate`), and one that reports
 violations (`aggregate_report`).
 

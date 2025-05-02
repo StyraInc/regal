@@ -19,6 +19,11 @@ rules:
         - cfg
         - metadata
         - rule
+    one-liner-rule:
+      level: error
+    prefer-value-in-head:
+      level: error
+      only-scalars: true
   style:
     line-length:
       level: error

@@ -84,18 +84,16 @@ keywords[keyword.location.row] contains keyword if {
 	some keyword in _keywords_with_location(value)
 }
 
-_keywords_with_location(value) := keywords if {
+_keywords_with_location(value) := array.concat([{"name": "some", "location": location}], _in_on_row(location.row)) if {
 	value.terms.symbols
 
 	location := util.to_location_object(value.terms.location)
-	keywords := array.concat([{"name": "some", "location": location}], _in_on_row(location.row))
 }
 
-_keywords_with_location(value) := keywords if {
+_keywords_with_location(value) := array.concat([{"name": "every", "location": location}], _in_on_row(location.row)) if {
 	value.domain
 
 	location := util.to_location_object(value.location)
-	keywords := array.concat([{"name": "every", "location": location}], _in_on_row(location.row))
 }
 
 _in_on_row(row) := [keyword |

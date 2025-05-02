@@ -20,14 +20,13 @@ default _package_annotated := false
 
 _package_annotated if input["package"].annotations
 
-_rule_annotations[rule_path] contains annotated if {
+_rule_annotations[rule_path] contains count(object.get(rule, "annotations", [])) > 0 if {
 	some rule in ast.public_rules_and_functions
 	every part in rule.head.ref {
 		not startswith(part.value, "_")
 	}
 
 	rule_path := concat(".", [ast.package_name, ast.ref_static_to_string(rule.head.ref)])
-	annotated := count(object.get(rule, "annotations", [])) > 0
 }
 
 _rule_locations[rule_path] := location if {

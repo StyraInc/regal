@@ -24,11 +24,7 @@ _parsed_current_file := data.workspace.parsed[input.regal.file.uri]
 
 _current_file_package := ast.ref_to_string(_parsed_current_file["package"].path)
 
-_current_file_imports contains ref if {
-	some imp in _parsed_current_file.imports
-
-	ref := ast.ref_to_string(imp.path.value)
-}
+_current_file_imports contains ast.ref_to_string(imp.path.value) if some imp in _parsed_current_file.imports
 
 _current_package_refs contains ref if {
 	some ref in _workspace_rule_refs
@@ -54,21 +50,18 @@ _other_package_refs contains ref if {
 }
 
 # from the current package
-_rule_ref_suggestions contains pkg_ref if {
+_rule_ref_suggestions contains trim_prefix(ref, sprintf("%s.", [_current_file_package])) if {
 	some ref in _current_package_refs
-
-	pkg_ref := trim_prefix(ref, sprintf("%s.", [_current_file_package]))
 }
 
 # from imported packages
-_rule_ref_suggestions contains pkg_ref if {
+_rule_ref_suggestions contains trim_prefix(ref, sprintf("%s.", [prefix])) if {
 	some ref in _imported_package_refs
 	some imported_package in _current_file_imports
 
 	startswith(ref, imported_package)
 
 	prefix := regex.replace(imported_package, `\.[^\.]+$`, "")
-	pkg_ref := trim_prefix(ref, sprintf("%s.", [prefix]))
 }
 
 # from any other package

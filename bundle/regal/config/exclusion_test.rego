@@ -76,9 +76,7 @@ test_excluded_file_with_ignore if {
 		with config.merged_config as object.union(rules_config_error, rules_config_ignore_delta)
 }
 
-test_ignored_globally if {
-	config.ignored_globally("p.rego") with config.merged_config as config_ignore
-}
+test_ignored_globally if config.ignored_globally("p.rego") with config.merged_config as config_ignore
 
 test_excluded_file_cli_flag if {
 	config.ignored_globally("p.rego") with data.eval.params as params({"ignore_files": ["p.rego"]})

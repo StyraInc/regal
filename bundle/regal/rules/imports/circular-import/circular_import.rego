@@ -115,21 +115,15 @@ _package_locations[referenced_pkg][referencing_pkg] contains location if {
 # METADATA
 # schemas:
 #   - input: schema.regal.aggregate
-_import_graph[pkg] contains edge if {
+_import_graph[pkg] contains pkg_ref.package_path if {
 	some ag_pkg in input.aggregate
 
 	pkg := sprintf("data.%s", [concat(".", ag_pkg.aggregate_source.package_path)])
 
 	some pkg_ref in ag_pkg.aggregate_data.refs
-
-	edge := pkg_ref.package_path
 }
 
-_reachable_index[pkg] := reachable if {
-	some pkg, _ in _import_graph
-
-	reachable := graph.reachable(_import_graph, {pkg})
-}
+_reachable_index[pkg] := graph.reachable(_import_graph, {pkg}) if some pkg, _ in _import_graph
 
 _self_reachable contains pkg if {
 	some pkg, _ in _import_graph

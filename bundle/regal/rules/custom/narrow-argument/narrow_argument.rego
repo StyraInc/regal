@@ -35,26 +35,22 @@ _message(n, arg, narrowed) := sprintf(
 	n > 1
 }
 
-_narrow(refs) := narrowed if {
+_narrow(refs) := ast.ref_to_string(_to_terms(arr)) if {
 	count(refs) == 1
 
 	arr := util.any_set_item(refs)
 
 	count(arr) > 1
 	not _nested(arr)
-
-	narrowed := ast.ref_to_string(_to_terms(arr))
 }
 
-_narrow(refs) := narrowed if {
+_narrow(refs) := ast.ref_to_string(_to_terms(prefix)) if {
 	count(refs) > 1
 
 	prefix := util.longest_prefix(refs)
 
 	count(prefix) > 1
 	not _nested(prefix)
-
-	narrowed := ast.ref_to_string(_to_terms(prefix))
 }
 
 _first_named_arg_location(indices, name) := [arg.location |

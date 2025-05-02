@@ -24,8 +24,6 @@ notices contains result.notice(rego.metadata.chain()) if {
 	input.regal.file.rego_version != "v0"
 }
 
-report contains violation if {
+report contains result.fail(rego.metadata.chain(), result.location(input["package"])) if {
 	not ast.imports_has_path(ast.imports, ["rego", "v1"])
-
-	violation := result.fail(rego.metadata.chain(), result.location(input["package"]))
 }

@@ -143,10 +143,8 @@ test_build_suggestions if {
 	provider._suggestions("foo.bar.baz", "ba") == ["bar.baz", "baz"]
 }
 
-test_build_suggestions_invoked if {
-	provider._suggestions("foo.bar.baz", "") == [
-		"foo.bar.baz",
-		"bar.baz",
-		"baz",
-	]
-}
+test_build_suggestions_invoked if provider._suggestions("foo.bar.baz", "") == [
+	"foo.bar.baz",
+	"bar.baz",
+	"baz",
+]

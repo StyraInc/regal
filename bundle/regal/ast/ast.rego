@@ -62,10 +62,7 @@ builtin_names := object.keys(config.capabilities.builtins)
 # description: |
 #   set containing the namespaces of all built-in functions (given the active capabilities),
 #   like "http" in `http.send` or "sum" in `sum``
-builtin_namespaces contains namespace if {
-	some name in builtin_names
-	namespace := split(name, ".")[0]
-}
+builtin_namespaces contains split(name, ".")[0] if some name in builtin_names
 
 # METADATA
 # description: |
@@ -273,10 +270,7 @@ _format_part(part) := sprintf(".%s", [part.value]) if {
 #   non-static (i.e. variable) value, if any:
 #   foo.bar -> foo.bar
 #   foo.bar[baz] -> foo.bar
-ref_static_to_string(ref) := str if {
-	rs := ref_to_string(ref)
-	str := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1))
-}
+ref_static_to_string(ref) := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1)) if rs := ref_to_string(ref)
 
 _trim_from_var(ref_str, vars) := ref_str if {
 	count(vars) == 0

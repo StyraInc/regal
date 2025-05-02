@@ -15,10 +15,7 @@ aggregate contains result.aggregate(rego.metadata.chain(), {
 	"prefix_tree": _prefix_tree,
 })
 
-_import_aliases[alias_key] := string_value if {
-	some alias_key, value in ast.resolved_imports
-	string_value := concat(".", value)
-}
+_import_aliases[alias_key] := concat(".", value) if some alias_key, value in ast.resolved_imports
 
 # an import is shadowed if it shares name with a rule
 _shadowed_imports contains rule_name if {
@@ -32,7 +29,7 @@ _shadowed_imports contains var_name if {
 	_import_aliases[var_name]
 }
 
-_refs contains ref if {
+_refs contains object.union(result.location(term), {"name": name, "path": path}) if {
 	term := ast.found.refs[_][_].value
 	name := ast.ref_static_to_string(term)
 
@@ -40,11 +37,6 @@ _refs contains ref if {
 
 	path := split(name, ".")
 	not path[0] in _shadowed_imports
-
-	ref := object.union(result.location(term), {
-		"name": name,
-		"path": path,
-	})
 }
 
 _all_full_path_refs[ref.name] contains ref if {
@@ -112,9 +104,8 @@ _is_resolved_ref(ref_full_name, _, all_exports_in_bundle) if {
 	path_prefix in all_exports_in_bundle
 }
 
-_prefix_tree contains prefix_path if {
+_prefix_tree contains array.slice(rule_path, 0, i) if {
 	some rule_name, _ in ast.rule_head_locations
 	rule_path := split(rule_name, ".")
 	some i in numbers.range(0, count(rule_path))
-	prefix_path := array.slice(rule_path, 0, i)
 }

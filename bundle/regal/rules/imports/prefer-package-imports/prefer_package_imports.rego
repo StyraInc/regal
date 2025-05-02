@@ -60,12 +60,8 @@ _resolves(path, pkg_paths) if count([path |
 	pkg_path == array.slice(path, 0, count(pkg_path))
 ]) > 0
 
-_ignored_import_paths contains path if {
+_ignored_import_paths contains [_normalize_part(i, p) | some i, p in split(item, ".")] if {
 	some item in config.rules.imports["prefer-package-imports"]["ignore-import-paths"]
-	path := [part |
-		some i, p in split(item, ".")
-		part := _normalize_part(i, p)
-	]
 }
 
 _normalize_part(0, part) := part if part != "data"

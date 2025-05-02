@@ -93,9 +93,7 @@ test_function_calls if {
 	{"assign", "f"} == {call.name | some call in calls}
 }
 
-test_implicit_boolean_assignment if {
-	ast.implicit_boolean_assignment(ast.with_rego_v1(`a.b if true`).rules[0])
-}
+test_implicit_boolean_assignment if ast.implicit_boolean_assignment(ast.with_rego_v1(`a.b if true`).rules[0])
 
 test_ref_to_string if {
 	ast.ref_to_string([{"type": "var", "value": "data"}]) == `data`

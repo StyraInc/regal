@@ -51,7 +51,7 @@ find_ref_vars(value) := [var | # regal ignore:narrow-argument
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
 # or `every`, i.e. `every x, y in y {}`
-_find_every_vars(value) := vars if {
+_find_every_vars(value) := array.concat(key_var, val_var) if {
 	key_var := [value.key |
 		value.key.type == "var"
 		indexof(value.key.value, "$") == -1
@@ -60,8 +60,6 @@ _find_every_vars(value) := vars if {
 		value.value.type == "var"
 		indexof(value.value.value, "$") == -1
 	]
-
-	vars := array.concat(key_var, val_var)
 }
 
 # METADATA

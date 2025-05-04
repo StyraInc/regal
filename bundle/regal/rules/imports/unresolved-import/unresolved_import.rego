@@ -22,7 +22,7 @@ aggregate contains entry if {
 		# as unknown, even though it's not a package included in evaluation.
 		not _custom_regal_package_and_import(ast.package_path, path[0])
 
-		imp := object.union(result.location(_import), {"path": path})
+		imp := [path, _import.location]
 	]
 
 	exported_refs := {ast.package_path} | {ref |
@@ -43,24 +43,21 @@ aggregate contains entry if {
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
-	all_known_refs := {path |
-		some entry in input.aggregate
-		some path in entry.aggregate_data.exported_refs
-	}
+	all_known_refs := {path | path := input.aggregate[_].aggregate_data.exported_refs[_]}
 
-	all_imports := {imp |
-		some entry in input.aggregate
-		some imp in entry.aggregate_data.imports
-	}
+	some entry in input.aggregate
+	some [path, location] in entry.aggregate_data.imports
 
-	some imp in all_imports
-	not imp.path in (all_known_refs | _except_imports)
+	not path in (all_known_refs | _except_imports)
 
 	# cheap operation failed — need to check wildcards here to account
 	# for map generating / general ref head rules
-	not _wildcard_match(imp.path, all_known_refs, _except_imports)
+	not _wildcard_match(path, all_known_refs, _except_imports)
 
-	violation := result.fail(rego.metadata.chain(), result.location(imp))
+	violation := result.fail(rego.metadata.chain(), {"location": object.union(util.to_location_no_text(location), {
+		"file": entry.aggregate_source.file,
+		"text": sprintf("import %s", [concat(".", array.concat(["data"], path))]),
+	})})
 }
 
 _custom_regal_package_and_import(pkg_path, "regal") if {

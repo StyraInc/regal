@@ -5,6 +5,7 @@ package regal.rules.imports["prefer-package-imports"]
 import data.regal.ast
 import data.regal.config
 import data.regal.result
+import data.regal.util
 
 # METADATA
 # description: collects imports and package paths from each module
@@ -21,7 +22,7 @@ aggregate contains entry if {
 		# as unknown, even though it's not a package included in evaluation.
 		not _custom_regal_package_and_import(ast.package_path, path[0])
 
-		imp := object.union(result.location(_import), {"path": path})
+		imp := [path, _import.location]
 	]
 
 	entry := result.aggregate(rego.metadata.chain(), {
@@ -41,17 +42,17 @@ _custom_regal_package_and_import(pkg_path, "regal") if {
 aggregate_report contains violation if {
 	all_package_paths := {entry.aggregate_data.package_path | some entry in input.aggregate}
 
-	all_imports := {imp |
-		some entry in input.aggregate
-		some imp in entry.aggregate_data.imports
-	}
+	some entry in input.aggregate
+	some [path, location] in entry.aggregate_data.imports
 
-	some imp in all_imports
-	_resolves(imp.path, all_package_paths)
-	not imp.path in all_package_paths
-	not imp.path in _ignored_import_paths
+	_resolves(path, all_package_paths)
+	not path in all_package_paths
+	not path in _ignored_import_paths
 
-	violation := result.fail(rego.metadata.chain(), {"location": imp.location})
+	violation := result.fail(rego.metadata.chain(), {"location": object.union(util.to_location_no_text(location), {
+		"file": entry.aggregate_source.file,
+		"text": sprintf("import %s", [concat(".", array.concat(["data"], path))]),
+	})})
 }
 
 # returns true if the path "resolves" to *any* package part of the same length as the path

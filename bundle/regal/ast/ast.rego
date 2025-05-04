@@ -145,7 +145,7 @@ function_arg_names(rule) := [arg.value | some arg in rule.head.args]
 
 # METADATA
 # description: all the rule and function names in the input AST
-rule_and_function_names contains ref_to_string(rule.head.ref) if some rule in input.rules
+rule_and_function_names contains ref_static_to_string(rule.head.ref) if some rule in input.rules
 
 # METADATA
 # description: all identifiers in the input AST (rule and function names, plus imported names)
@@ -153,7 +153,7 @@ identifiers := rule_and_function_names | imported_identifiers
 
 # METADATA
 # description: all rule names in the input AST (excluding functions)
-rule_names contains ref_to_string(rule.head.ref) if some rule in rules
+rule_names contains ref_static_to_string(rule.head.ref) if some rule in rules
 
 # METADATA
 # description: |
@@ -273,10 +273,7 @@ _format_part(part) := sprintf(".%s", [part.value]) if {
 #   non-static (i.e. variable) value, if any:
 #   foo.bar -> foo.bar
 #   foo.bar[baz] -> foo.bar
-ref_static_to_string(ref) := str if {
-	rs := ref_to_string(ref)
-	str := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1))
-}
+ref_static_to_string(ref) := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1)) if rs := ref_to_string(ref)
 
 _trim_from_var(ref_str, vars) := ref_str if {
 	count(vars) == 0

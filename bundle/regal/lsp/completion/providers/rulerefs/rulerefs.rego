@@ -76,11 +76,7 @@ _rule_ref_suggestions contains ref if some ref in _other_package_refs
 
 # also suggest the unimported packages themselves
 # e.g. data.foo.rule will also generate data.foo as a suggestion
-_rule_ref_suggestions contains pkg if {
-	some ref in _other_package_refs
-
-	pkg := regex.replace(ref, `\.[^\.]+$`, "")
-}
+_rule_ref_suggestions contains regex.replace(ref, `\.[^\.]+$`, "") if some ref in _other_package_refs
 
 _matching_rule_ref_suggestions contains ref if {
 	_line != ""

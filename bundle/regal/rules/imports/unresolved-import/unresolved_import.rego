@@ -88,9 +88,8 @@ _to_string(i, part) := "**" if {
 	part.type == "var"
 }
 
-_except_imports contains exception if {
+_except_imports contains _trim_data(split(str, ".")) if {
 	some str in config.rules.imports["unresolved-import"]["except-imports"]
-	exception := _trim_data(split(str, "."))
 }
 
 _trim_data(path) := array.slice(path, 1, count(path)) if path[0] == "data"

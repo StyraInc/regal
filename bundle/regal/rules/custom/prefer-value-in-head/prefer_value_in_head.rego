@@ -18,6 +18,7 @@ report contains violation if {
 	terms[1].value == var
 
 	not _scalar_fail(terms[2].type, ast.scalar_types)
+	not _excepted_var_name(var)
 
 	violation := result.fail(rego.metadata.chain(), result.location(terms[2]))
 }
@@ -33,3 +34,5 @@ _scalar_fail(term_type, scalar_types) if {
 	config.rules.custom["prefer-value-in-head"]["only-scalars"] == true
 	not term_type in scalar_types
 }
+
+_excepted_var_name(name) if name in config.rules.custom["prefer-value-in-head"]["except-var-names"]

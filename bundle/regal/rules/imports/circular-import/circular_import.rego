@@ -112,11 +112,7 @@ _import_graph[pkg] contains edge if {
 	edge := ag_pkg.aggregate_data.refs[_][0]
 }
 
-_reachable_index[pkg] := reachable if {
-	some pkg, _ in _import_graph
-
-	reachable := graph.reachable(_import_graph, {pkg})
-}
+_reachable_index[pkg] := graph.reachable(_import_graph, {pkg}) if some pkg, _ in _import_graph
 
 _self_reachable contains pkg if {
 	some pkg, _ in _import_graph

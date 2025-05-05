@@ -62,10 +62,7 @@ builtin_names := object.keys(config.capabilities.builtins)
 # description: |
 #   set containing the namespaces of all built-in functions (given the active capabilities),
 #   like "http" in `http.send` or "sum" in `sum``
-builtin_namespaces contains namespace if {
-	some name in builtin_names
-	namespace := split(name, ".")[0]
-}
+builtin_namespaces contains split(name, ".")[0] if some name in builtin_names
 
 # METADATA
 # description: |

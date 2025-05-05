@@ -74,6 +74,10 @@ rules:
       # whether to only suggest moving scalar values (strings, numbers, booleans, null)
       # to the head, and not expressions or functions
       only-scalars: false
+      # variable names to exempt from the rule (by default, none)
+      except-var-names:
+        - report
+        - violation
 ```
 
 ## Related Resources

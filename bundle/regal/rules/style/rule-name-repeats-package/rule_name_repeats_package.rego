@@ -21,14 +21,9 @@ report contains violation if {
 
 _titleize(str) := upper(str) if count(str) == 1
 
-_titleize(str) := result if {
+_titleize(str) := concat("", array.concat([upper(chrs[0])], array.slice(chrs, 1, count(chrs)))) if {
 	chrs := regex.split(``, str)
 	count(chrs) > 1
-
-	result := concat(
-		"",
-		array.concat([upper(chrs[0])], array.slice(chrs, 1, count(chrs))),
-	)
 }
 
 _num_package_path_components := count(ast.package_path)
@@ -43,13 +38,11 @@ _possible_path_component_combinations contains combination if {
 	)
 }
 
-_possible_offending_prefixes contains prefix if {
+_possible_offending_prefixes contains concat("_", combination) if {
 	some combination in _possible_path_component_combinations
-
-	prefix := concat("_", combination)
 }
 
-_possible_offending_prefixes contains prefix if {
+_possible_offending_prefixes contains concat("", formatted_combination) if {
 	some combination in _possible_path_component_combinations
 
 	count(combination) > 1
@@ -58,6 +51,4 @@ _possible_offending_prefixes contains prefix if {
 		some word in util.rest(combination)
 		w := _titleize(word)
 	])
-
-	prefix := concat("", formatted_combination)
 }

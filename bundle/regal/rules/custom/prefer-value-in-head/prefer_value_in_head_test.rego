@@ -133,6 +133,16 @@ test_fail_value_could_be_in_head_object_rule if {
 	})
 }
 
+test_success_var_name_is_in_excepted_set if {
+	r := rule.report with input as ast.policy(`value := x if {
+		input.x
+		x := 10
+	}`)
+		with config.rules as {"custom": {"prefer-value-in-head": {"except-var-names": ["x"]}}}
+
+	r == set()
+}
+
 expected := {
 	"category": "custom",
 	"description": "Prefer value in rule head",

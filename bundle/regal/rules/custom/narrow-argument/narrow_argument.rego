@@ -35,26 +35,22 @@ _message(n, arg, narrowed) := sprintf(
 	n > 1
 }
 
-_narrow(refs) := narrowed if {
+_narrow(refs) := ast.ref_to_string(_to_terms(arr)) if {
 	count(refs) == 1
 
 	arr := util.any_set_item(refs)
 
 	count(arr) > 1
 	not _nested(arr)
-
-	narrowed := ast.ref_to_string(_to_terms(arr))
 }
 
-_narrow(refs) := narrowed if {
+_narrow(refs) := ast.ref_to_string(_to_terms(prefix)) if {
 	count(refs) > 1
 
 	prefix := util.longest_prefix(refs)
 
 	count(prefix) > 1
 	not _nested(prefix)
-
-	narrowed := ast.ref_to_string(_to_terms(prefix))
 }
 
 _first_named_arg_location(indices, name) := [arg.location |
@@ -85,7 +81,7 @@ _args_indices[name] contains rule_index if {
 	rule_index := _functions[name][_].rule_index
 }
 
-_functions[name] contains func if {
+_functions[name] contains {"rule_index": i, "args_refs": args_refs} if {
 	cfg := config.rules.custom["narrow-argument"]
 
 	some i
@@ -116,7 +112,6 @@ _functions[name] contains func if {
 	}
 
 	name := ast.ref_to_string(input.rules[i].head.ref)
-	func := {"rule_index": i, "args_refs": args_refs}
 }
 
 _first_var_pos(ref) := pos if {

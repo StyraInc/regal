@@ -25,7 +25,7 @@ imported_identifiers contains _imported_identifier(imp) if {
 # METADATA
 # description: |
 #   map of all imported paths in the input module, keyed by their identifier or "namespace"
-resolved_imports[identifier] := path if {
+resolved_imports[identifier] := paths[0] if {
 	some identifier in imported_identifiers
 
 	# this should really be just a 1:1 mapping, but until OPA 1.0 we cannot
@@ -39,8 +39,6 @@ resolved_imports[identifier] := path if {
 
 		path := [part.value | some part in imp.path.value]
 	]
-
-	path := paths[0]
 }
 
 # METADATA

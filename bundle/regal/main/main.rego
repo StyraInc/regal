@@ -14,33 +14,23 @@ import data.regal.util
 
 # METADATA
 # description: set of all notices returned from linter rules
-lint.notices := _notices if {
-	"lint" in input.regal.operations
-}
+lint.notices := _notices if "lint" in input.regal.operations
 
 # METADATA
 # description: map of all ignore directives encountered when linting
-lint.ignore_directives[input.regal.file.name] := ast.ignore_directives if {
-	"lint" in input.regal.operations
-}
+lint.ignore_directives[input.regal.file.name] := ast.ignore_directives if "lint" in input.regal.operations
 
 # METADATA
 # description: all violations from non-aggregate rules
-lint.violations := report if {
-	"lint" in input.regal.operations
-}
+lint.violations := report if "lint" in input.regal.operations
 
 # METADATA
 # description: map of all aggregated data from aggregate rules, keyed by category/title
-lint.aggregates := aggregate if {
-	"collect" in input.regal.operations
-}
+lint.aggregates := aggregate if "collect" in input.regal.operations
 
 # METADATA
 # description: all violations from aggregate rules
-lint.aggregate.violations := aggregate_report if {
-	"aggregate" in input.regal.operations
-}
+lint.aggregate.violations := aggregate_report if "aggregate" in input.regal.operations
 
 _file_name_relative_to_root(filename, "/") := trim_prefix(filename, "/")
 _file_name_relative_to_root(filename, root) := trim_prefix(filename, concat("", [root, "/"])) if root != "/"

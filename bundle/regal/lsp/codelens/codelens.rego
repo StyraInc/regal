@@ -33,9 +33,7 @@ _eval_lenses contains {
 	},
 }
 
-_eval_lenses contains _rule_lens(input.regal.file.name, rule, "regal.eval", "Evaluate") if {
-	some rule in ast.rules
-}
+_eval_lenses contains _rule_lens(input.regal.file.name, rule, "regal.eval", "Evaluate") if some rule in ast.rules
 
 _debug_lenses contains {
 	"range": location.to_range(result.location(input["package"]).location),

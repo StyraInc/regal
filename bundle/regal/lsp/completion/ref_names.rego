@@ -23,6 +23,4 @@ ref_names contains name if {
 # if they have imported data.foo as bar, then bar should be suggested.
 # this also has the benefit of skipping future.* and rego.v1 as
 # imported_identifiers will only match data.* and input.*
-ref_names contains name if {
-	some name in ast.imported_identifiers
-}
+ref_names contains name if some name in ast.imported_identifiers

@@ -14,8 +14,6 @@ import data.regal.util
 notices contains result.notice(rego.metadata.chain()) if not capabilities.has_if
 
 report contains violation if {
-	max_line_length := object.get(config.rules, ["custom", "one-liner-rule", "max-line-length"], 120)
-
 	some rule in input.rules
 
 	# Bail out of rules with else for now. It is possible that they can be made
@@ -35,22 +33,25 @@ report contains violation if {
 		line := trim_space(s)
 	]
 
-	# Technically, the `if` could be on another line, but who would do that?
 	regex.match(`\s+if`, lines[0])
 	_rule_body_brackets(lines)
 
 	# ideally we'd take style preference into account but for now assume tab == 4 spaces
 	# then just add the sum of the line counts minus the removed '{' character
 	# redundant parens added by `opa fmt` :/
-	((4 + count(lines[0])) + count(lines[1])) - 1 < max_line_length
+	((4 + count(lines[0])) + count(lines[1])) - 1 < _max_line_length
 
 	not _comment_in_body(rule_location.row, object.get(input, "comments", []), lines)
 
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head))
 }
 
+default _max_line_length := 120
+
+_max_line_length := config.rules.custom["one-liner-rule"]["max-line-length"]
+
 # K&R style
-_rule_body_brackets(lines) if endswith(lines[0], "{")
+_rule_body_brackets(lines) if regex.match(`.*if\s*{$`, lines[0])
 
 # Allman style
 _rule_body_brackets(lines) if {

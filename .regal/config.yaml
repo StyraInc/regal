@@ -19,6 +19,8 @@ rules:
         - cfg
         - metadata
         - rule
+    one-liner-rule:
+      level: error
   style:
     line-length:
       level: error

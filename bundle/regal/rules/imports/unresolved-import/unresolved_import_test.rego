@@ -30,7 +30,7 @@ test_fail_identifies_unresolved_imports if {
 				"col": 8,
 				"row": 5,
 			},
-			"text": "\timport data.nope",
+			"text": "import data.nope",
 		}),
 		with_location({
 			"file": "p1.rego",
@@ -40,7 +40,7 @@ test_fail_identifies_unresolved_imports if {
 				"col": 8,
 				"row": 4,
 			},
-			"text": "\timport data.bar.nope",
+			"text": "import data.bar.nope",
 		}),
 	}
 }

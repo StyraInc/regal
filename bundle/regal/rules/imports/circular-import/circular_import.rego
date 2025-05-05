@@ -11,27 +11,17 @@ import data.regal.ast
 import data.regal.result
 import data.regal.util
 
-_refs contains ref if {
+_refs contains [concat(".", [e.value | some e in r.value]), r.location] if {
 	some r
 	ast.found.refs[_][r].value[0].value == "data"
 
 	ast.static_ref(r)
-
-	ref := {
-		"package_path": concat(".", [e.value | some e in r.value]),
-		"location": object.remove(util.to_location_object(r.location), {"text"}),
-	}
 }
 
-_refs contains ref if {
+_refs contains [concat(".", [e.value | some e in imported.path.value]), imported.path.location] if {
 	some imported in ast.imports
 
 	imported.path.value[0].value == "data"
-
-	ref := {
-		"package_path": concat(".", [e.value | some e in imported.path.value]),
-		"location": object.remove(util.to_location_object(imported.path.location), {"text"}),
-	}
 }
 
 # METADATA
@@ -99,11 +89,10 @@ aggregate_report contains violation if {
 _package_locations[referenced_pkg][referencing_pkg] contains location if {
 	some ag_pkg in input.aggregate
 
-	some ref in ag_pkg.aggregate_data.refs
+	some [referenced_pkg, referenced_location] in ag_pkg.aggregate_data.refs
 
-	referenced_pkg := ref.package_path
 	referencing_pkg := sprintf("data.%s", [concat(".", ag_pkg.aggregate_source.package_path)])
-	ref_loc := util.to_location_object(ref.location)
+	ref_loc := util.to_location_no_text(referenced_location)
 
 	location := {
 		"file": ag_pkg.aggregate_source.file,
@@ -120,9 +109,7 @@ _import_graph[pkg] contains edge if {
 
 	pkg := sprintf("data.%s", [concat(".", ag_pkg.aggregate_source.package_path)])
 
-	some pkg_ref in ag_pkg.aggregate_data.refs
-
-	edge := pkg_ref.package_path
+	edge := ag_pkg.aggregate_data.refs[_][0]
 }
 
 _reachable_index[pkg] := reachable if {

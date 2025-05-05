@@ -68,6 +68,22 @@ to_location_object(loc) := {
 to_location_object(loc) := loc if is_object(loc)
 
 # METADATA
+# description: convert location string to location object, without the 'text' attribute
+# scope: document
+to_location_no_text(loc) := {
+	"row": to_number(r),
+	"col": to_number(c),
+	"end": {
+		"row": to_number(er),
+		"col": to_number(ec),
+	},
+} if {
+	is_string(loc)
+
+	[r, c, er, ec] := split(loc, ":")
+}
+
+# METADATA
 # description: efficiently extracts row number from location string
 to_location_row(loc) := to_number(regex.replace(loc, `^(\d+):.*`, "$1"))
 

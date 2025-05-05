@@ -259,8 +259,8 @@ import data.quz
 			if aggregateData, ok := entry["aggregate_data"].(map[string]any); ok {
 				if importsList, ok := aggregateData["imports"].([]any); ok {
 					for _, imp := range importsList {
-						if impMap, ok := imp.(map[string]any); ok {
-							if pathList, ok := impMap["path"].([]any); ok {
+						if item, ok := imp.([]any); ok {
+							if pathList, ok := item[0].([]any); ok {
 								pathParts := []string{}
 
 								for _, p := range pathList {

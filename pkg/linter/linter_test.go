@@ -538,7 +538,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 		t.Errorf("expected violation to be on column 3, got %d", violation.Location.Column)
 	}
 
-	if *violation.Location.Text != "\t\timport data.foo.allow" {
+	if *violation.Location.Text != "import data.foo.allow" {
 		t.Errorf("expected violation to be on 'import data.foo.allow', got %q", *violation.Location.Text)
 	}
 }
@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1130275167 ns/op	3204268280 B/op	62150928 allocs/op - a few small tweaks
+// 1095128583 ns/op	3171781928 B/op	61097537 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().

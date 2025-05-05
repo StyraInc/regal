@@ -137,16 +137,7 @@ test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 
 test_build_suggestions if {
 	provider._suggestions("foo.bar.baz", "foo") == ["foo.bar.baz"]
-
 	provider._suggestions("foo.bar.baz", "bar") == ["bar.baz"]
-
 	provider._suggestions("foo.bar.baz", "ba") == ["bar.baz", "baz"]
-}
-
-test_build_suggestions_invoked if {
-	provider._suggestions("foo.bar.baz", "") == [
-		"foo.bar.baz",
-		"bar.baz",
-		"baz",
-	]
+	provider._suggestions("foo.bar.baz", "") == ["foo.bar.baz", "bar.baz", "baz"]
 }

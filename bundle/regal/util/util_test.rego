@@ -4,6 +4,7 @@ import data.regal.util
 
 test_find_duplicates if {
 	util.find_duplicates([1, 1, 2, 3, 3, 3]) == {{0, 1}, {3, 4, 5}}
+	util.find_duplicates([1, 2, 3]) == set()
 }
 
 test_json_pretty if {

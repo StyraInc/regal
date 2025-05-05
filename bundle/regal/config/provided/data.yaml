@@ -136,6 +136,8 @@ rules:
       level: error
     unresolved-reference:
       level: error
+      excepted_export_patterns:
+        - "**.test_*"
     use-rego-v1:
       level: error
   performance:

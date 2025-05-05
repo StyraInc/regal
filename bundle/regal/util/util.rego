@@ -67,6 +67,10 @@ to_location_object(loc) := {
 
 to_location_object(loc) := loc if is_object(loc)
 
+# METADATA
+# description: efficiently extracts row number from location string
+to_location_row(loc) := to_number(regex.replace(loc, `^(\d+):.*`, "$1"))
+
 _location_to_text(row, col, end_row, end_col) := substring(
 	input.regal.file.lines[row - 1],
 	col - 1,

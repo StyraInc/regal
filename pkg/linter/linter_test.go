@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1111071791 ns/op	3001557280 B/op	58184205 allocs/op
+// 1130275167 ns/op	3204268280 B/op	62150928 allocs/op - a few small tweaks
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	linter := NewLinter().
@@ -755,7 +755,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
-// 1011992167 ns/op	2949576920 B/op	57079296 allocs/op
+// 1082386000 ns/op	3147603112 B/op	61016216 allocs/op
 // ...
 func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 	ctx := context.Background()

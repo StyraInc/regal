@@ -9,112 +9,119 @@ import data.regal.util
 
 # METADATA
 # description: collects exported and full of used refs from each module
-aggregate contains result.aggregate(rego.metadata.chain(), {
-	"exported_rules": object.keys(ast.rule_head_locations),
-	"expanded_refs": _all_full_path_refs,
-	"prefix_tree": _prefix_tree,
-})
+aggregate contains entry if {
+	exported := object.keys(ast.rule_head_locations)
 
-_import_aliases[alias_key] := string_value if {
-	some alias_key, value in ast.resolved_imports
-	string_value := concat(".", value)
+	entry := result.aggregate(rego.metadata.chain(), {
+		"exported_rules": exported,
+		"expanded_refs": _all_full_path_refs,
+		"prefix_tree": {prefix_path |
+			some rule_name in exported
+			rule_path := split(rule_name, ".")
+			some i in numbers.range(1, count(rule_path))
+			prefix_path := array.slice(rule_path, 0, i)
+		},
+	})
 }
 
 # an import is shadowed if it shares name with a rule
 _shadowed_imports contains rule_name if {
 	some rule_name in ast.rule_names
-	_import_aliases[rule_name]
+	ast.resolved_imports[rule_name]
 }
 
 # an import is shadowed if it shares name with a variable (or function argument)
 _shadowed_imports contains var_name if {
 	var_name := ast.found.vars[_][_][_].value
-	_import_aliases[var_name]
+	ast.resolved_imports[var_name]
 }
 
 _refs contains ref if {
-	term := ast.found.refs[_][_].value
-	name := ast.ref_static_to_string(term)
+	terms := ast.found.refs[_][_].value
+	terms[0].value != "input"
+
+	name := ast.ref_static_to_string(terms)
 
 	not name in ast.builtin_names
+	not name in ast.rule_and_function_names
+	not terms[0].value in _shadowed_imports
 
-	path := split(name, ".")
-	not path[0] in _shadowed_imports
-
-	ref := object.union(result.location(term), {
+	# util.to_location_row inlined for some extra performance
+	row := to_number(regex.replace(terms[0].location, `^(\d+):.*`, "$1"))
+	ref := {
 		"name": name,
-		"path": path,
-	})
+		"text": input.regal.file.lines[row - 1],
+		"location": terms[0].location,
+	}
 }
 
-_all_full_path_refs[ref.name] contains ref if {
+_all_full_path_refs[ref.name] contains [ref.location, ref.text] if {
 	some ref in _refs
-	ref.path[0] == "data"
+	startswith(ref.name, "data.")
 }
 
-_all_full_path_refs[expanded_ref] contains ref if {
+_all_full_path_refs[expanded_ref] contains [ref.location, ref.text] if {
 	some ref in _refs
-	full_source_prefix := _import_aliases[ref.path[0]]
-
-	full_path_array := array.concat([full_source_prefix], util.rest(ref.path))
-
-	expanded_ref := concat(".", full_path_array)
+	path := split(ref.name, ".")
+	expanded_ref := concat(".", array.concat(ast.resolved_imports[path[0]], util.rest(path)))
 }
 
 # METADATA
 # schemas:
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
-	all_exports_in_bundle := {export |
-		some entry in input.aggregate
-		some export in entry.aggregate_data.exported_rules
-	}
-
-	prefix_tree := {prefix |
-		some entry in input.aggregate
-		some prefix in entry.aggregate_data.prefix_tree
-	}
+	all_exports := {export | export := input.aggregate[_].aggregate_data.exported_rules[_]}
+	prefix_tree := {prefix | prefix := input.aggregate[_].aggregate_data.prefix_tree[_]}
 
 	some entry in input.aggregate
-	some ref_full_name, ref_locations in entry.aggregate_data.expanded_refs
+	some name, refs in entry.aggregate_data.expanded_refs
 
-	# Ignore everything after the first "[" in the ref name. E.g. foo.bar[0].baz becomes foo.bar
-	simplified_ref_name := split(ref_full_name, "[")[0]
+	# ignore everything after the first "[" in the ref name. E.g. foo.bar[0].baz becomes foo.bar
+	ref_name := split(name, "[")[0]
+	ref_path := split(ref_name, ".")
 
-	not _is_resolved_ref(simplified_ref_name, prefix_tree, all_exports_in_bundle)
+	# a reference is considered resolved with respect to a rule if
+	# 1: it is the prefix of a rule
+	# 2: it indexes into a rule - we do not consider the possible data
+	# 3: the reference is ignored in the config
+	not ref_path in prefix_tree
+	not _is_resolved_ref(ref_path, all_exports)
+	not _is_excepted(ref_name)
 
-	some ref in ref_locations
-	violation := result.fail(rego.metadata.chain(), result.location(ref))
+	some ref in refs
+
+	violation := result.fail(rego.metadata.chain(), _to_location_object(ref[0], ref[1], entry.aggregate_source.file))
 }
 
-# METADATA
-# description: a reference is valid with respect to a rule if
-# custom:
-#   1: it is the prefix of a rule
-#   2: it indexes into a rule - we do not consider the possible data
-#   3: the reference is ignored in the config
-_is_resolved_ref(ref_full_name, _, _) if {
+_is_excepted(ref_full_name) if {
 	some exception in config.rules.imports["unresolved-reference"]["except-paths"]
 	glob.match(exception, [], ref_full_name)
 }
 
-_is_resolved_ref(ref_full_name, prefix_tree, _) if {
-	ref_full_path := split(ref_full_name, ".")
-	ref_full_path in prefix_tree
-}
-
-_is_resolved_ref(ref_full_name, _, all_exports_in_bundle) if {
-	ref_full_path := split(ref_full_name, ".")
-
-	some i in numbers.range(0, count(ref_full_path))
+_is_resolved_ref(ref_full_path, all_exports) if {
+	some i in numbers.range(1, count(ref_full_path))
 	path_prefix := concat(".", array.slice(ref_full_path, 0, i))
 
-	path_prefix in all_exports_in_bundle
+	path_prefix in all_exports
 }
 
-_prefix_tree contains prefix_path if {
-	some rule_name, _ in ast.rule_head_locations
-	rule_path := split(rule_name, ".")
-	some i in numbers.range(0, count(rule_path))
-	prefix_path := array.slice(rule_path, 0, i)
+# like util.to_location_object, but with text and file passed in
+# as we don't have access to the usual input.regal.file attributes
+# in the context of reporting aggregated data
+_to_location_object(loc, text, file) := {"location": {
+	"file": file,
+	"row": row,
+	"col": col,
+	"text": text,
+	"end": {
+		"row": end_row,
+		"col": end_col,
+	},
+}} if {
+	[r, c, er, ec] := split(loc, ":")
+
+	row := to_number(r)
+	col := to_number(c)
+	end_row := to_number(er)
+	end_col := to_number(ec)
 }

@@ -54,6 +54,4 @@ _to_value(cm, ncm, line) := null if {
 #   regal test --coverage bundle \
 #   | opa eval -f pretty -I -d build/simplecov/simplecov.rego 'data.build.simplecov.not_covered'
 # entrypoint: true
-not_covered[file] := info.not_covered if {
-	some file, info in input.files
-}
+not_covered[file] := info.not_covered if some file, info in input.files

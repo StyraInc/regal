@@ -1,50 +1,34 @@
 package regal.rules.imports["circular-import_test"]
 
+import data.regal.ast
 import data.regal.config
 
 import data.regal.rules.imports["circular-import"] as rule
 
 test_aggregate_rule_empty_if_no_refs if {
-	module := regal.parse_module("example.rego", `
-    package policy
-
-    allow := true
-    `)
-
-	aggregate := rule.aggregate with input as module
+	aggregate := rule.aggregate with input as ast.policy("allow := true")
 
 	aggregate == set()
 }
 
 test_aggregate_rule_empty_if_no_static_refs if {
-	module := regal.parse_module("example.rego", `
-    package policy
-
-    allow := data[foo]
-    `)
-
-	aggregate := rule.aggregate with input as module
+	aggregate := rule.aggregate with input as ast.policy("allow := data[foo]")
 
 	aggregate == set()
 }
 
 test_aggregate_rule_contains_single_self_ref if {
-	module := regal.parse_module("example.rego", `
-    package example
-
-    import data.example
-    `)
-	aggregate := rule.aggregate with input as module
+	aggregate := rule.aggregate with input as ast.policy("import data.example")
 
 	aggregate == {{
-		"aggregate_data": {"refs": {["data.example", "4:12:4:24"]}},
-		"aggregate_source": {"file": "example.rego", "package_path": ["example"]},
+		"aggregate_data": {"refs": {["data.example", "3:8:3:20"]}},
+		"aggregate_source": {"file": "policy.rego", "package_path": ["policy"]},
 		"rule": {"category": "imports", "title": "circular-import"},
 	}}
 }
 
 test_aggregate_rule_surfaces_refs if {
-	module := regal.parse_module("example.rego", `
+	aggregate := rule.aggregate with input as regal.parse_module("example.rego", `
     package policy.foo
 
     import future.keywords
@@ -58,8 +42,6 @@ test_aggregate_rule_surfaces_refs if {
       message := "deny"
     }
     `)
-
-	aggregate := rule.aggregate with input as module
 
 	aggregate == {{
 		"aggregate_data": {"refs": {

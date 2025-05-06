@@ -43,7 +43,7 @@ test_fail_nested_inconsistent_args if {
 }
 
 test_success_not_inconsistent_args if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	foo(a, b) if a == b
 	foo(a, b) if a > b
 
@@ -58,7 +58,7 @@ test_success_not_inconsistent_args if {
 }
 
 test_success_using_wildcard if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	foo(a, b) if a == b
 	foo(_, b) if b.foo
 
@@ -70,7 +70,7 @@ test_success_using_wildcard if {
 }
 
 test_success_using_pattern_matching if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	foo(a, b) if a == b
 	foo(a, "foo") if a.foo
 
@@ -84,7 +84,7 @@ test_success_using_pattern_matching if {
 # this is a compiler error, so let's not flag it here
 # see https://github.com/StyraInc/regal/issues/1250
 test_success_incorrect_arity if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	foo(a, b) if a == b
 	foo(a, b, c) if a > b > c
 	foo(b, a) if a == b

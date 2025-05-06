@@ -7,7 +7,7 @@ import data.regal.config
 import data.regal.lsp.completion
 
 test_ref_names if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	import data.imp
 	import data.foo.bar as bb
 

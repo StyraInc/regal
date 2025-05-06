@@ -10,7 +10,6 @@ test_fail_can_be_narrowed_single_ref if {
 		fun(obj) if obj.number == 1
 		fun(obj) if obj.number == 2
 	`)
-		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == {{
 		"category": "custom",
@@ -39,7 +38,6 @@ test_fail_can_be_narrowed_prefixed_ref if {
 		fun(obj) if obj.x.y.number == 1
 		fun(obj) if obj.x.y.string == "1"
 	`)
-		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == {{
 		"category": "custom",
@@ -68,7 +66,6 @@ test_fail_can_be_narrowed_prefixed_array_ref if {
 		fun(arr) if arr[0].y.number == 1
 		fun(arr) if arr[0].y.string == "1"
 	`)
-		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == {{
 		"category": "custom",
@@ -97,14 +94,12 @@ test_success_can_not_be_narrowed_arg_is_least_common_denominator if {
 		fun(obj) if obj.typ == "string"
 		fun(obj) if obj.val == "string"
 	`)
-		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == set()
 }
 
 test_success_nested_or_variable_path_not_narrowed if {
 	r := rule.report with input as ast.policy(`foo(lines) := lines[bar - 1]`)
-		with config.rules as {"custom": {"narrow-argument": {"level": "error"}}}
 
 	r == set()
 }

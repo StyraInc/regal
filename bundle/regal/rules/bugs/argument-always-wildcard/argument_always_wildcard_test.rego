@@ -44,9 +44,7 @@ cases["multiple argument always a wildcard"] := {
 }
 
 test_success_single_function_single_argument_always_a_wildcard_except_function_name if {
-	module := ast.policy(`mock_f(_) := 1`)
-
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`mock_f(_) := 1`)
 		with config.rules as {"bugs": {"argument-always-wildcard": {"except-function-name-pattern": "^mock_"}}}
 
 	r == set()

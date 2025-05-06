@@ -6,12 +6,11 @@ import data.regal.config
 import data.regal.rules.bugs["import-shadows-rule"] as rule
 
 test_fail_import_shadows_rule if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	import data.foo.bar
 
 	bar := 1
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -36,12 +35,11 @@ test_fail_import_shadows_rule if {
 }
 
 test_fail_import_alias_shadows_rule if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	import data.foo as bar
 
 	bar := 1
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -66,23 +64,21 @@ test_fail_import_alias_shadows_rule if {
 }
 
 test_success_import_does_not_shadow_rule if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	import data.foo.bar
 
 	foo := 1
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_import_alias_does_not_shadow_rule if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	import data.foo as bar
 
 	foo := 1
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }

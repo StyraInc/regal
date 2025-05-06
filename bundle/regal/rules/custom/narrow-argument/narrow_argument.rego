@@ -82,8 +82,6 @@ _args_indices[name] contains rule_index if {
 }
 
 _functions[name] contains {"rule_index": i, "args_refs": args_refs} if {
-	cfg := config.rules.custom["narrow-argument"]
-
 	some i
 	args := input.rules[i].head.args
 
@@ -91,7 +89,7 @@ _functions[name] contains {"rule_index": i, "args_refs": args_refs} if {
 		some arg in args
 		arg.type == "var"
 		not startswith(arg.value, "$")
-		not _exclude_arg(cfg, arg.value)
+		not _exclude_arg(arg.value)
 	}
 
 	# we don't care for functions without named variable arguments
@@ -122,7 +120,7 @@ _first_var_pos(ref) := pos if {
 	][0]
 } else := count(ref) + 1
 
-_exclude_arg(cfg, name) if name in cfg["exclude-args"]
+_exclude_arg(name) if name in config.rules.custom["narrow-argument"]["exclude-args"]
 
 _to_terms(arr) := [_to_term(item) | some item in arr]
 

@@ -64,31 +64,31 @@ test_fail_object_comprehension_could_be_rule if {
 }
 
 test_success_set_comprehension_array_to_set_conversion_ref_iteration if {
-	r := rule.report with input as ast.with_rego_v1(`my_set := {s | s := arr[_]}`)
+	r := rule.report with input as ast.policy(`my_set := {s | s := arr[_]}`)
 
 	r == set()
 }
 
 test_success_set_comprehension_array_to_set_conversion_ref_nested_iteration if {
-	r := rule.report with input as ast.with_rego_v1(`my_set := {s | s := a.b.c[_]}`)
+	r := rule.report with input as ast.policy(`my_set := {s | s := a.b.c[_]}`)
 
 	r == set()
 }
 
 test_success_set_comprehension_array_to_set_conversion_ref_nested_iteration_sub_attribute if {
-	r := rule.report with input as ast.with_rego_v1(`my_set := {s | s := a.b.c[_].d}`)
+	r := rule.report with input as ast.policy(`my_set := {s | s := a.b.c[_].d}`)
 
 	r == set()
 }
 
 test_success_set_comprehension_array_to_set_conversion_some_in if {
-	r := rule.report with input as ast.with_rego_v1(`my_set := {s | some s in arr}`)
+	r := rule.report with input as ast.policy(`my_set := {s | some s in arr}`)
 
 	r == set()
 }
 
 test_success_set_comprehension_but_rule_body if {
-	r := rule.report with input as ast.with_rego_v1(`my_set := {s | some s in arr; s == ""} if { some_condition }`)
+	r := rule.report with input as ast.policy(`my_set := {s | some s in arr; s == ""} if { some_condition }`)
 
 	r == set()
 }

@@ -6,9 +6,8 @@ import data.regal.config
 import data.regal.rules.testing["metasyntactic-variable"] as rule
 
 test_fail_rule_named_foo if {
-	module := ast.policy("foo := true")
+	r := rule.report with input as ast.policy("foo := true")
 
-	r := rule.report with input as module
 	r == {expected_with_location({
 		"col": 1,
 		"file": "policy.rego",
@@ -22,12 +21,11 @@ test_fail_rule_named_foo if {
 }
 
 test_fail_metasyntactic_vars if {
-	module := ast.policy(`allow if {
+	r := rule.report with input as ast.policy(`allow if {
 		fooBar := true
 		input[baz]
 	}`)
 
-	r := rule.report with input as module
 	r == {
 		expected_with_location({
 			"col": 3,
@@ -53,9 +51,8 @@ test_fail_metasyntactic_vars if {
 }
 
 test_fail_metasyntactic_vars_ref_head_strings if {
-	module := ast.policy(`foo.a.BAR.b.C.baz := true`)
+	r := rule.report with input as ast.policy(`foo.a.BAR.b.C.baz := true`)
 
-	r := rule.report with input as module
 	r == {
 		expected_with_location({
 			"col": 1,

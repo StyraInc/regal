@@ -37,12 +37,11 @@ test_fail_simple_duplicate_rule if {
 }
 
 test_success_similar_but_not_duplicate_rule if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	allow if input.foo == "bar"
 
 	allow if input.foo == "bar "
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }

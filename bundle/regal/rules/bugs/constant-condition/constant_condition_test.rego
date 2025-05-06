@@ -147,6 +147,6 @@ test_success_non_constant_condition if {
 }
 
 test_success_adding_constant_to_set if {
-	r := rule.report with input as ast.with_rego_v1(`rule contains "message"`)
+	r := rule.report with input as ast.policy(`rule contains "message"`)
 	r == set()
 }

@@ -30,7 +30,7 @@ foo == bar; bar == baz; [a, b, c, d, e, f] := [1, 2, 3, 4, 5, 6]; qux := [q | so
 }
 
 test_success_line_too_long_but_non_breakable_word if {
-	r := rule.report with input as ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 
 	# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened
 	allow := true
@@ -72,7 +72,6 @@ test_fail_line_exceeds_120_characters_even_if_not_in_config if {
 	r := rule.report with input as ast.with_rego_v1(`# Long url: https://www.example.com/this/is/a/very/long/url/that/cannot/be/shortened/and/should/trigger/an/error/anyway/so/that/it/can/be/shortened
 	allow := true
 	`)
-		with config.rules as {"style": {"line-length": {"level": "error"}}}
 
 	r == {{
 		"category": "style",

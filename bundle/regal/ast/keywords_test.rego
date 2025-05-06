@@ -3,9 +3,7 @@ package regal.ast_test
 import data.regal.ast
 
 test_keywords_package if {
-	policy := `package policy`
-
-	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
+	kwds := ast.keywords with input as ast.policy("")
 
 	count(kwds) == 1 # lines with keywords
 
@@ -20,11 +18,7 @@ test_keywords_package if {
 }
 
 test_keywords_import if {
-	policy := `package policy
-
-import data.foo`
-
-	kwds := ast.keywords with input as regal.parse_module("p.rego", policy)
+	kwds := ast.keywords with input as ast.policy("import data.foo")
 
 	count(kwds) == 2 # lines with keywords
 

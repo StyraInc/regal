@@ -6,82 +6,76 @@ import data.regal.config
 import data.regal.rules.performance["walk-no-path"] as rule
 
 test_fail_walk_can_have_path_omitted if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		walk(input, [path, value])
 		value == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == {with_location({
 		"col": 3,
 		"end": {
 			"col": 7,
-			"row": 7,
+			"row": 5,
 		},
 		"file": "policy.rego",
-		"row": 7,
+		"row": 5,
 		"text": "\t\twalk(input, [path, value])",
 	})}
 }
 
 test_success_path_is_wildcard if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		walk(input, [_, value])
 		value == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_path_in_head if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	rule[path] := "foo" if {
 		walk(input, [path, value])
 		value == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_path_in_call if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		walk(input, [path, value])
 		path == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_path_in_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		walk(input, [path, value])
 		input[path] == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_path_in_ref_in_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		walk(input, [path, value])
 		input[path[0]] == 1
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }

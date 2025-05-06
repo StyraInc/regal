@@ -6,14 +6,14 @@ import data.regal.config
 import data.regal.rules.performance["defer-assignment"] as rule
 
 test_fail_can_defer_assignment_simple if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	allow if {
 		resp := http.send({"method": "get", "url": "http://localhost"})
 		input.foo == "bar"
 		resp.status_code == 200
 	}
 	`)
-	r := rule.report with input as module
+
 	r == {with_location({
 		"col": 3,
 		"end": {
@@ -30,85 +30,84 @@ test_fail_can_defer_assignment_simple if {
 # be deferrable, but we won't e.g. defer assignments into loop bodies, etc
 
 test_success_can_not_defer_assignment_var_used_in_next_expression if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		x == true
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_var_used_in_next_negated_expression if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		not x
 	}
 	`)
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_can_not_defer_loop_assignment if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input[foo][bar]
 		input.x == 2
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_array_assignment if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		[x, y] := foo("bar")
 		input.x == 2
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_in_group if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := 1
 		y := 2
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_var_in_rule_head if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	rule[x] := 1 if {
 		x := input.x
 		input.bar == "baz"
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_some if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		some foo in bar
 		x == 5
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_every if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		every foo in bar {
@@ -116,53 +115,53 @@ test_success_can_not_defer_assignment_next_expression_every if {
 		}
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_walk if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		walk(input, [p, v])
 		v == x
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_has_with if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	test_allow if {
 		x := input.x
 		allow with input as x
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_with_in_arg if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	rule if {
 		u := "u"
 		input == "U" with input as upper(u)
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_can_not_defer_assignment_next_expression_print_call if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		x := input.x
 		print("here!")
 		x == "yes"
 	}
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 

@@ -36,18 +36,13 @@ test_fail_should_use_if if {
 }
 
 test_success_uses_if if {
-	module := ast.with_rego_v1(`rule := [true |
-		input[_]
-	] if {
-		input.attribute
-	}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy("rule := [true | input[_]] if input.attribute")
 
 	r == set()
 }
 
 test_success_no_body_no_if if {
-	r := rule.report with input as ast.with_rego_v1(`rule := "without body"`)
+	r := rule.report with input as ast.policy(`rule := "without body"`)
 
 	r == set()
 }

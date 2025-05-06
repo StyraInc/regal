@@ -6,20 +6,19 @@ import data.regal.config
 import data.regal.rules.style["messy-rule"] as rule
 
 test_success_non_messy_definition if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	foo if true
 
 	foo if 5 == 1
 
 	bar if false
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_fail_messy_definition if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	foo if true
 
 	bar if false
@@ -30,17 +29,17 @@ test_fail_messy_definition if {
 
 	r == expected_with_location({
 		"col": 2,
-		"row": 10,
+		"row": 8,
 		"end": {
 			"col": 15,
-			"row": 10,
+			"row": 8,
 		},
 		"text": "\tfoo if 5 == 1",
 	})
 }
 
 test_fail_messy_default_definition if {
-	module := ast.with_rego_v1(`
+	module := ast.policy(`
 	default foo := true
 
 	bar if false
@@ -51,10 +50,10 @@ test_fail_messy_default_definition if {
 
 	r == expected_with_location({
 		"col": 2,
-		"row": 10,
+		"row": 8,
 		"end": {
 			"col": 15,
-			"row": 10,
+			"row": 8,
 		},
 		"text": "\tfoo if 5 == 1",
 	})
@@ -82,20 +81,19 @@ test_fail_messy_nested_rule_definition if {
 }
 
 test_success_non_incremental_nested_rule_definition if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	base.foo if true
 
 	bar if false
 
 	base.bar if 5 == 1
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_non_messy_ref_head_rules if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	keywords[foo.bar] contains "foo"
 
 	keywords[foo] contains "foo"
@@ -103,7 +101,6 @@ test_success_non_messy_ref_head_rules if {
 	keywords[foo.baz] contains "foo"
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 

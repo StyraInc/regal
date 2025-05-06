@@ -209,22 +209,25 @@ test_success_partial_rule if {
 }
 
 test_success_using_if if {
-	r := rule.report with input as ast.with_rego_v1(`foo if 1 == 1`)
+	r := rule.report with input as ast.policy(`foo if 1 == 1`)
+
 	r == set()
 }
 
 test_success_ref_head_rule_if if {
-	r := rule.report with input as ast.with_rego_v1(`a.b.c if true`)
+	r := rule.report with input as ast.policy(`a.b.c if true`)
+
 	r == set()
 }
 
 test_success_ref_head_rule_with_var_if if {
-	r := rule.report with input as ast.with_rego_v1(`works[x] if x := 5`)
+	r := rule.report with input as ast.policy(`works[x] if x := 5`)
+
 	r == set()
 }
 
 test_fail_unification_in_else if {
-	r := rule.report with input as ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		input.x
 	} else = true if {
@@ -240,9 +243,9 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 9, "file": "policy.rego", "row": 8, "text": "\t} else = true if {", "end": {
+			"location": {"col": 9, "file": "policy.rego", "row": 6, "text": "\t} else = true if {", "end": {
 				"col": 10,
-				"row": 8,
+				"row": 6,
 			}},
 			"level": "error",
 		},
@@ -254,9 +257,9 @@ test_fail_unification_in_else if {
 				"ref": config.docs.resolve_url("$baseUrl/$category/use-assignment-operator", "style"),
 			}],
 			"title": "use-assignment-operator",
-			"location": {"col": 9, "file": "policy.rego", "row": 10, "text": "\t} else = false", "end": {
+			"location": {"col": 9, "file": "policy.rego", "row": 8, "text": "\t} else = false", "end": {
 				"col": 10,
-				"row": 10,
+				"row": 8,
 			}},
 			"level": "error",
 		},
@@ -264,7 +267,7 @@ test_fail_unification_in_else if {
 }
 
 test_success_assignment_in_else if {
-	r := rule.report with input as ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		input.x
 	} else := true if {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp"
 	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 type Handle struct {
@@ -22,7 +23,17 @@ func New(ctx context.Context, ws *websocket.Conn) (*Handle, error) {
 		LogWriter: os.Stderr,
 		LogLevel:  log.LevelDebug,
 	}
-	ls := lsp.NewLanguageServer(ctx, &opts)
+	cfg := config.Config{
+		Rules: map[string]config.Category{
+			"idiomatic": {
+				"directory-package-mismatch": config.Rule{
+					Level: "ignore",
+				},
+			},
+		},
+	}
+
+	ls := lsp.NewLanguageServerMinimal(ctx, &opts, &cfg)
 	jconn := jsonrpc2.NewConn(
 		ctx,
 		jsonrpc2_ws.NewObjectStream(ws),
@@ -45,7 +56,7 @@ func (h *Handle) Wait(ctx context.Context) error {
 	case <-h.conn.DisconnectNotify():
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return ctx.Err() //nolint:wrapcheck
 	}
 }
 

@@ -12,6 +12,9 @@ import data.circular_import
 
 # Imports
 
+# pointless-import
+import data.all_violations
+
 # avoid-importing-input
 import input
 

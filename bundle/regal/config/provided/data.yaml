@@ -122,15 +122,17 @@ rules:
       level: error
     import-shadows-import:
       level: error
+    pointless-import:
+      level: error
     prefer-package-imports:
       level: error
     redundant-alias:
       level: error
     redundant-data-import:
       level: error
-    unresolved-reference:
-      level: error
     unresolved-import:
+      level: error
+    unresolved-reference:
       level: error
     use-rego-v1:
       level: error

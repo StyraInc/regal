@@ -6,13 +6,12 @@ import data.regal.config
 import data.regal.rules.bugs["unused-output-variable"] as rule
 
 test_fail_unused_output_variable if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	fail if {
 		input[x]
 	}
 	`)
 
-	r := rule.report with input as module
 	r == {{
 		"category": "bugs",
 		"description": "Unused output variable",
@@ -27,14 +26,13 @@ test_fail_unused_output_variable if {
 }
 
 test_fail_unused_output_variable_some if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	fail if {
 		some xx
 		input[xx]
 	}
 	`)
 
-	r := rule.report with input as module
 	r == {{
 		"category": "bugs",
 		"description": "Unused output variable",
@@ -49,62 +47,37 @@ test_fail_unused_output_variable_some if {
 }
 
 test_success_unused_wildcard if {
-	module := ast.with_rego_v1(`
-	success if {
-		input[_]
-	}
-	`)
+	r := rule.report with input as ast.policy("success if input[_]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_variable_in_head_value if {
-	module := ast.with_rego_v1(`
-	success := x if {
-		input[x]
-	}
-	`)
+	r := rule.report with input as ast.policy("success := x if input[x]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_variable_in_head_term_value if {
-	module := ast.with_rego_v1(`
-	success := {x} if {
-		input[x]
-	}
-	`)
+	r := rule.report with input as ast.policy("success := {x} if input[x]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_variable_in_head_term_key if {
-	module := ast.with_rego_v1(`
-	success contains {x} if {
-		input[x]
-	}
-	`)
+	r := rule.report with input as ast.policy("success contains {x} if input[x]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_variable_in_head_key if {
-	module := ast.with_rego_v1(`
-	success contains x if {
-		input[x]
-	}
-	`)
+	r := rule.report with input as ast.policy("success contains x if input[x]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_output_variable_function_call if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	success if {
 		some x
 		input[x]
@@ -112,12 +85,11 @@ test_success_not_unused_output_variable_function_call if {
 	}
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_output_variable_function_call_arg_term if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	success if {
 		some x
 		input[x]
@@ -125,75 +97,61 @@ test_success_not_unused_output_variable_function_call_arg_term if {
 	}
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_output_variable_other_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	success if {
 		some x
 		input[x] == data.foo[x]
 	}
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_output_variable_head_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	success[x] if {
 		some x
 		input[x]
 	}
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_output_variable_rule if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	x := 1
 
-	success := x if {
-		input[x]
-	}
+	success := x if input[x]
 	`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_output_variable_argument if {
-	module := ast.with_rego_v1(`
-	success(x) if {
-		input[x]
-	}
-	`)
+	r := rule.report with input as ast.policy("success(x) if input[x]")
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_comprehension_term if {
-	module := ast.with_rego_v1(`success if {x | input[x]}`)
+	r := rule.report with input as ast.with_rego_v1(`success if {x | input[x]}`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_comprehension_term_complex if {
-	module := ast.with_rego_v1(`success if {[x, y] | input[x][y]}`)
+	r := rule.report with input as ast.policy(`success if {[x, y] | input[x][y]}`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_unused_comprehension_term_key_value if {
-	module := ast.with_rego_v1(`success if {x: y | input[x][y]}`)
+	r := rule.report with input as ast.policy(`success if {x: y | input[x][y]}`)
 
-	r := rule.report with input as module
 	r == set()
 }

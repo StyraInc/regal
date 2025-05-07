@@ -29,13 +29,11 @@ test_rule_empty_if_no_repetition if {
 }
 
 test_rule_violation_if_repetition if {
-	module := regal.parse_module("example.rego", `
+	r := rule.report with input as regal.parse_module("example.rego", `
     package policy.foo.bar
 
     bar := true
     `)
-
-	r := rule.report with input as module
 
 	r == {object.union(
 		base_result,
@@ -53,13 +51,11 @@ test_rule_violation_if_repetition if {
 }
 
 test_rule_violation_if_repetition_of_more_than_one_path_component if {
-	module := regal.parse_module("example.rego", `package policy.foo.bar.baz
+	r := rule.report with input as regal.parse_module("example.rego", `package policy.foo.bar.baz
     foo_bar_baz := true
 
     barBaz := 1
     `)
-
-	r := rule.report with input as module
 
 	r == {
 		object.union(base_result, {"location": {
@@ -80,15 +76,13 @@ test_rule_violation_if_repetition_of_more_than_one_path_component if {
 }
 
 test_rule_violation_if_repetition_multiple if {
-	module := regal.parse_module("example.rego", `
+	r := rule.report with input as regal.parse_module("example.rego", `
     package policy.foo.bar
 
     bar := true
     barNumber := 3
     barString := "string"
     `)
-
-	r := rule.report with input as module
 
 	r == {
 		object.union(base_result, {"location": {
@@ -116,13 +110,11 @@ test_rule_violation_if_repetition_multiple if {
 }
 
 test_rule_violation_if_repetition_in_function if {
-	module := regal.parse_module("example.rego", `
+	r := rule.report with input as regal.parse_module("example.rego", `
     package policy.foo.bar
 
     bar(_) := true
     `)
-
-	r := rule.report with input as module
 
 	r == {object.union(
 		base_result,
@@ -137,13 +129,11 @@ test_rule_violation_if_repetition_in_function if {
 }
 
 test_rule_violation_if_repetition_in_defaults if {
-	module := regal.parse_module("example.rego", `package policy.foo.bar
+	r := rule.report with input as regal.parse_module("example.rego", `package policy.foo.bar
 
     default bar(_) := true
     default barNumber := 3
     `)
-
-	r := rule.report with input as module
 
 	r == {
 		object.union(base_result, {"location": {
@@ -164,15 +154,13 @@ test_rule_violation_if_repetition_in_defaults if {
 }
 
 test_rule_violation_if_repetition_ref_head_rule if {
-	module := regal.parse_module("example.rego", `
+	r := rule.report with input as regal.parse_module("example.rego", `
 	package policy
 
 	import rego.v1
 
 	policy.decision contains "nope"
 	`)
-
-	r := rule.report with input as module
 
 	r == {object.union(base_result, {"location": {
 		"col": 2,

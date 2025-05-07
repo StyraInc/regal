@@ -6,12 +6,11 @@ import data.regal.config
 import data.regal.rules.bugs["redundant-existence-check"] as rule
 
 test_fail_redundant_existence_check if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	redundant if {
 		input.foo
 		startswith(input.foo, "bar")
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -27,12 +26,11 @@ test_fail_redundant_existence_check if {
 }
 
 test_fail_redundant_existence_check_subset if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	redundant if {
 		input.foo
 		startswith(input.foo.bar, "bar")
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -48,33 +46,30 @@ test_fail_redundant_existence_check_subset if {
 }
 
 test_success_not_redundant_existence_check if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	redundant if {
 		input.foo
 		something_expensive
 		startswith(input.foo, "bar")
 	}`)
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_redundant_existence_check_with_cancels if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	not_redundant if {
 		rule.foo with input as {}
 		rule.foo == 1
 	}`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_fail_redundant_existence_check_head_assignment_of_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	redundant := input.foo if {
 		input.foo
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -90,11 +85,10 @@ test_fail_redundant_existence_check_head_assignment_of_ref if {
 }
 
 test_fail_redundant_existence_check_function_arg if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	fun(foo) if {
 		foo
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",

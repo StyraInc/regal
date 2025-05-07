@@ -115,7 +115,7 @@ test_success_uses_some if {
 }
 
 test_success_var_in_comprehension_body if {
-	r := rule.report with input as ast.with_rego_v1(`build_obj(params) if {
+	r := rule.report with input as ast.policy(`build_obj(params) if {
 		paths := {"foo": ["bar"]}
 		param_objects := [f(paths[key], val) | some key, val in paths]
 	}`)
@@ -123,27 +123,27 @@ test_success_var_in_comprehension_body if {
 }
 
 test_success_some_iteration if {
-	rule.report with input as ast.with_rego_v1(`allow if {
+	rule.report with input as ast.policy(`allow if {
 		some i in input
 		foo[i]
 	}`) == set()
 
-	rule.report with input as ast.with_rego_v1(`allow if {
+	rule.report with input as ast.policy(`allow if {
 		some i, x in input
 		input.user.roles[i]
 	}`) == set()
 
-	rule.report with input as ast.with_rego_v1(`allow if {
+	rule.report with input as ast.policy(`allow if {
 		some x, i in input
 		input.user.roles[i]
 	}`) == set()
 
-	rule.report with input as ast.with_rego_v1(`allow if {
+	rule.report with input as ast.policy(`allow if {
 		some x, i in input
 		input.user.roles[x][i]
 	}`) == set()
 
-	rule.report with input as ast.with_rego_v1(`allow if {
+	rule.report with input as ast.policy(`allow if {
 		some i in input
 		input.user.roles[_]
 	}`) == set()
@@ -157,5 +157,6 @@ test_success_not_an_output_var if {
 			# i now an *input* var
 			"admin" == input.user.roles[i]
 		}`)
+
 	r == set()
 }

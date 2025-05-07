@@ -6,11 +6,10 @@ import data.regal.config
 import data.regal.rules.style["default-over-not"] as rule
 
 test_fail_default_over_not if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 	user := input.user
 	user := "foo" if not input.user
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "style",
@@ -35,19 +34,19 @@ test_fail_default_over_not if {
 }
 
 test_success_non_constant_value if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	user := input.user
 	user := var if not input.user
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }
 
 test_success_var_in_ref if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	user := input[x].user
 	user := "foo" if not input[x].user
 	`)
-	r := rule.report with input as module
+
 	r == set()
 }

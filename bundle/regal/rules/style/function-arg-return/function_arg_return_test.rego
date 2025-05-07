@@ -58,7 +58,7 @@ test_fail_function_arg_return_value_multi_part_ref if {
 }
 
 test_success_function_arg_return_value_except_function if {
-	r := rule.report with input as ast.with_rego_v1(`foo := i if { indexof("foo", "o", i) }`)
+	r := rule.report with input as ast.policy(`foo := i if { indexof("foo", "o", i) }`)
 		with config.capabilities as capabilities.provided
 		with config.rules as {"style": {"function-arg-return": {"except-functions": ["indexof"]}}}
 

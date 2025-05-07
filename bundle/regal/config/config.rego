@@ -28,8 +28,12 @@ docs["resolve_url"](url, category) := replace(
 # description: the default configuration with user config merged on top (if provided)
 merged_config := data.internal.combined_config
 
+# ensure that config.rules can be referenced in tests even without mocking
+default rules := {}
+
 # METADATA
 # description: the merged (default and user) configuration for rules
+# scope: document
 rules := merged_config.rules
 
 # METADATA

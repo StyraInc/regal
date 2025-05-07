@@ -6,13 +6,12 @@ import data.regal.config
 import data.regal.rules.bugs["time-now-ns-twice"] as rule
 
 test_fail_time_now_ns_called_twice if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	took := then if {
 		now := time.now_ns()
 		numbers.range(1, 10)
 		then := time.now_ns() - now
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -37,12 +36,11 @@ test_fail_time_now_ns_called_twice if {
 }
 
 test_fail_time_now_ns_called_twice_body_and_head if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	took := time.now_ns() - now if {
 		now := time.now_ns()
 		numbers.range(1, 10)
 	}`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -67,17 +65,16 @@ test_fail_time_now_ns_called_twice_body_and_head if {
 }
 
 test_success_time_now_ns_called_once if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	rule if {
 		print(time.now_ns())
 	}`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_time_now_ns_called_twice_but_different_rule_indices if {
-	module := ast.policy(`
+	r := rule.report with input as ast.policy(`
 	rule if {
 		print(time.now_ns())
 	}
@@ -86,7 +83,6 @@ test_success_time_now_ns_called_twice_but_different_rule_indices if {
 		print(time.now_ns())
 	}
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }

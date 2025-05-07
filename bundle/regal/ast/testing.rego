@@ -1,7 +1,9 @@
 package regal.ast
 
 # METADATA
-# description: parses provided policy with all future keywords imported. Primarily for testing.
+# description: |
+#   parses provided policy with all future keywords imported. Primarily for testing.
+#   deprecated: use ast.policy instead
 with_rego_v1(policy) := regal.parse_module("policy.rego", concat("", [
 	`package policy
 

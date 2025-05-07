@@ -56,26 +56,20 @@ test_fail_yoda_conditions_greater_and_less_than if {
 }
 
 test_success_no_yoda_condition if {
-	module := ast.policy(`rule if {
-		input.bar == "foo"
-	}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`rule if input.bar == "foo"`)
+
 	r == set()
 }
 
 test_success_constants_on_both_sides if {
-	module := ast.policy(`rule if {
-		"foo" == "foo"
-	}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`rule if "foo" == "foo"`)
+
 	r == set()
 }
 
 test_success_exclude_ref_with_vars if {
-	module := ast.policy(`rule if {
-		"foo" == input.bar[_]
-	}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`rule if "foo" == input.bar[_]`)
+
 	r == set()
 }
 

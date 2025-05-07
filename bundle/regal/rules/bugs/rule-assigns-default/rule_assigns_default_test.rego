@@ -6,7 +6,7 @@ import data.regal.config
 import data.regal.rules.bugs["rule-assigns-default"] as rule
 
 test_fail_rule_assigned_default_value if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 
 	default allow := false
 
@@ -14,7 +14,6 @@ test_fail_rule_assigned_default_value if {
 		some conditions in policy
 	}
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",

@@ -6,11 +6,10 @@ import data.regal.config
 import data.regal.rules.bugs["annotation-without-metadata"] as rule
 
 test_fail_annotation_without_metadata if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.with_rego_v1(`
 # title: allow
 allow := false
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "bugs",
@@ -35,33 +34,28 @@ allow := false
 }
 
 test_success_annotation_with_metadata if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 # METADATA
 # title: allow
 allow := false
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }
 
 test_success_annotation_but_no_metadata_location if {
-	module := ast.with_rego_v1(`
-allow := false # title: allow
-	`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`allow := false # title: allow`)
 
 	r == set()
 }
 
 test_success_annotation_without_metadata_but_comment_preceding if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 # something that is not an annotation here will cancel this rule
 # as this is less likely to be a mistake... but weird
 # title: allow
 allow := false
 	`)
-	r := rule.report with input as module
 
 	r == set()
 }

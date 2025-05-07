@@ -11,11 +11,11 @@ test_fail[name] if {
 			`rule if {}`,
 			{
 				"col": 9,
-				"row": 5,
+				"row": 3,
 				"text": "rule if {}",
 				"end": {
 					"col": 11,
-					"row": 5,
+					"row": 3,
 				},
 			},
 		],
@@ -23,17 +23,17 @@ test_fail[name] if {
 			`rule if {"x": input.x}`,
 			{
 				"col": 9,
-				"row": 5,
+				"row": 3,
 				"text": `rule if {"x": input.x}`,
 				"end": {
 					"col": 23,
-					"row": 5,
+					"row": 3,
 				},
 			},
 		],
 	}
+	r := rule.report with input as ast.policy(policy)
 
-	r := rule.report with input as ast.with_rego_v1(policy)
 	r == {{
 		"category": "bugs",
 		"description": "Object literal following `if`",
@@ -48,7 +48,7 @@ test_fail[name] if {
 }
 
 test_success_not_an_object if {
-	module := ast.with_rego_v1(`rule if { true }`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.with_rego_v1(`rule if { true }`)
+
 	r == set()
 }

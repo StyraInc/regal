@@ -6,8 +6,7 @@ import data.regal.config
 import data.regal.rules.bugs["if-empty-object"] as rule
 
 test_fail_if_empty_object if {
-	module := ast.with_rego_v1("rule if {}")
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy("rule if {}")
 
 	r == {{
 		"category": "bugs",
@@ -16,11 +15,11 @@ test_fail_if_empty_object if {
 		"location": {
 			"col": 1,
 			"file": "policy.rego",
-			"row": 5,
+			"row": 3,
 			"text": "rule if {}",
 			"end": {
 				"col": 11,
-				"row": 5,
+				"row": 3,
 			},
 		},
 		"related_resources": [{
@@ -34,7 +33,7 @@ test_fail_if_empty_object if {
 test_success_if_non_empty_object if {
 	# this is arguably just as useless, but we'll defer
 	# to the constant-condition rule for these cases
-	module := ast.with_rego_v1(`rule if {"foo": "bar"}`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy(`rule if {"foo": "bar"}`)
+
 	r == set()
 }

@@ -55,7 +55,7 @@ test_fail_neq_in_loop if {
 }
 
 test_fail_neq_in_loop_one_liner if {
-	r := rule.report with input as ast.with_rego_v1(`deny if "admin" != input.user.groups[_]`)
+	r := rule.report with input as ast.policy(`deny if "admin" != input.user.groups[_]`)
 
 	r == {{
 		"category": "bugs",
@@ -64,10 +64,10 @@ test_fail_neq_in_loop_one_liner if {
 		"location": {
 			"col": 17,
 			"file": "policy.rego",
-			"row": 5,
+			"row": 3,
 			"end": {
 				"col": 19,
-				"row": 5,
+				"row": 3,
 			},
 			"text": "deny if \"admin\" != input.user.groups[_]",
 		},

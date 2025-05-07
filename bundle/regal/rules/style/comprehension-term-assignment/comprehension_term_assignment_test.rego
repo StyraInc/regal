@@ -132,17 +132,16 @@ test_fail_object_comprehension_value_assignment_static_ref if {
 }
 
 test_success_not_flagging_function_call if {
-	module := ast.with_rego_v1(`comp := [x |
+	r := rule.report with input as ast.policy(`comp := [x |
 		some y in input
 		x := http.send({"method": "get", "url": sprintf("https://example.org/%s", [y])})
 	]`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_flagging_composite_values if {
-	module := ast.with_rego_v1(`comp := [x |
+	r := rule.report with input as ast.policy(`comp := [x |
 		some y in input
 		x := {
 			"foo": "bar",
@@ -150,45 +149,40 @@ test_success_not_flagging_composite_values if {
 		}
 	]`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_flagging_single_expression if {
-	module := ast.with_rego_v1(`comp := [x | x := input.foo[_].bar]`)
+	r := rule.report with input as ast.policy(`comp := [x | x := input.foo[_].bar]`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_flagging_dynamic_ref if {
-	module := ast.with_rego_v1(`f(x) := [1, x, 3]
+	r := rule.report with input as ast.policy(`f(x) := [1, x, 3]
 
 	find_vars(node) := [x |
 		some var in node
 		x := f(var)[_]
 	]`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_flagging_custom_function_call if {
-	module := ast.with_rego_v1(`rows := [row |
+	r := rule.report with input as ast.policy(`rows := [row |
 		some comment in comments
 		row := util.to_location_object(comment.location).row
 	]`)
 
-	r := rule.report with input as module
 	r == set()
 }
 
 test_success_not_flagging_assigned_comprehension if {
-	module := ast.with_rego_v1(`comp := [x |
+	r := rule.report with input as ast.policy(`comp := [x |
 		some var in input
 		x := [y | some y in var]
 	]`)
 
-	r := rule.report with input as module
 	r == set()
 }

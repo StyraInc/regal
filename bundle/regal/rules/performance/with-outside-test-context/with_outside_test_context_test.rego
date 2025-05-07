@@ -6,12 +6,11 @@ import data.regal.config
 import data.regal.rules.performance["with-outside-test-context"] as rule
 
 test_fail_with_used_outside_test if {
-	module := ast.with_rego_v1(`
+	r := rule.report with input as ast.policy(`
 	allow if {
 		not foo.deny with input as {}
 	}
 	`)
-	r := rule.report with input as module
 
 	r == {{
 		"category": "performance",
@@ -20,10 +19,10 @@ test_fail_with_used_outside_test if {
 		"location": {
 			"col": 16,
 			"file": "policy.rego",
-			"row": 7,
+			"row": 5,
 			"end": {
 				"col": 32,
-				"row": 7,
+				"row": 5,
 			},
 			"text": "\t\tnot foo.deny with input as {}",
 		},
@@ -36,23 +35,13 @@ test_fail_with_used_outside_test if {
 }
 
 test_success_with_used_in_test if {
-	module := ast.with_rego_v1(`
-	test_foo_deny if {
-		not foo.deny with input as {}
-	}
-	`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy("test_foo_deny if not foo.deny with input as {}")
 
 	r == set()
 }
 
 test_success_with_used_in_todo_test if {
-	module := ast.with_rego_v1(`
-	todo_test_foo_deny if {
-		not foo.deny with input as {}
-	}
-	`)
-	r := rule.report with input as module
+	r := rule.report with input as ast.policy("todo_test_foo_deny if not foo.deny with input as {}")
 
 	r == set()
 }

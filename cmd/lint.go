@@ -411,7 +411,7 @@ func formatError(format string, err error) error {
 	// currently, JSON and SARIF will get the same generic JSON error format
 	switch format {
 	case formatJSON, formatSarif:
-		bs, err := json.MarshalIndent(map[string]interface{}{
+		bs, err := json.MarshalIndent(map[string]any{
 			"errors": []string{err.Error()},
 		}, "", "  ")
 		if err != nil {

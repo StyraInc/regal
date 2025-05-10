@@ -89,9 +89,9 @@ foo := true
 import data.example
 `)
 
-	store := inmem.NewFromObject(map[string]interface{}{
-		"workspace": map[string]interface{}{
-			"parsed": map[string]interface{}{
+	store := inmem.NewFromObject(map[string]any{
+		"workspace": map[string]any{
+			"parsed": map[string]any{
 				"file:///file1.rego": file1,
 				"file:///file2.rego": file2,
 			},

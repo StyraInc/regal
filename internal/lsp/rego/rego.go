@@ -59,7 +59,7 @@ func LocationFromPosition(pos types.Position) *ast.Location {
 func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []BuiltInCall {
 	builtinCalls := make([]BuiltInCall, 0)
 
-	callVisitor := ast.NewGenericVisitor(func(x interface{}) bool {
+	callVisitor := ast.NewGenericVisitor(func(x any) bool {
 		var terms []*ast.Term
 
 		switch node := x.(type) {

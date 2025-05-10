@@ -21,7 +21,7 @@ func NewDebugLogger(localLogger logging.Logger, level logging.Level) *DebugLogge
 	}
 }
 
-func (l *DebugLogger) Debug(fmt string, a ...interface{}) {
+func (l *DebugLogger) Debug(fmt string, a ...any) {
 	if l == nil {
 		return
 	}
@@ -31,7 +31,7 @@ func (l *DebugLogger) Debug(fmt string, a ...interface{}) {
 	l.send(logging.Debug, fmt, a...)
 }
 
-func (l *DebugLogger) Info(fmt string, a ...interface{}) {
+func (l *DebugLogger) Info(fmt string, a ...any) {
 	if l == nil {
 		return
 	}
@@ -41,7 +41,7 @@ func (l *DebugLogger) Info(fmt string, a ...interface{}) {
 	l.send(logging.Info, fmt, a...)
 }
 
-func (l *DebugLogger) Error(fmt string, a ...interface{}) {
+func (l *DebugLogger) Error(fmt string, a ...any) {
 	if l == nil {
 		return
 	}
@@ -51,7 +51,7 @@ func (l *DebugLogger) Error(fmt string, a ...interface{}) {
 	l.send(logging.Error, fmt, a...)
 }
 
-func (l *DebugLogger) Warn(fmt string, a ...interface{}) {
+func (l *DebugLogger) Warn(fmt string, a ...any) {
 	if l == nil {
 		return
 	}
@@ -61,7 +61,7 @@ func (l *DebugLogger) Warn(fmt string, a ...interface{}) {
 	l.send(logging.Warn, fmt, a...)
 }
 
-func (l *DebugLogger) WithFields(map[string]interface{}) logging.Logger {
+func (l *DebugLogger) WithFields(map[string]any) logging.Logger {
 	if l == nil {
 		return nil
 	}
@@ -116,7 +116,7 @@ func (l *DebugLogger) SetLevelFromString(level string) {
 	}
 }
 
-func (l *DebugLogger) send(level logging.Level, fmt string, a ...interface{}) {
+func (l *DebugLogger) send(level logging.Level, fmt string, a ...any) {
 	if l == nil || l.ProtocolManager == nil || !l.remoteEnabled || level > l.level {
 		return
 	}

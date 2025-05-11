@@ -26,6 +26,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/sourcegraph/jsonrpc2"
 
@@ -53,31 +54,19 @@ type ConnectionLoggingConfig struct {
 
 func (cfg *ConnectionLoggingConfig) ShouldLog(method string) bool {
 	if len(cfg.IncludeMethods) > 0 {
-		for _, m := range cfg.IncludeMethods {
-			if m == method {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(cfg.IncludeMethods, method)
 	}
 
-	for _, m := range cfg.ExcludeMethods {
-		if m == method {
-			return false
-		}
-	}
-
-	return true
+	return !slices.Contains(cfg.ExcludeMethods, method)
 }
 
-type ConnectionHandlerFunc func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) (result interface{}, err error)
+type ConnectionHandlerFunc func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) (result any, err error)
 
 type connectionLogger struct {
 	writer io.Writer
 }
 
-func (c *connectionLogger) Printf(format string, v ...interface{}) {
+func (c *connectionLogger) Printf(format string, v ...any) {
 	fmt.Fprintf(c.writer, format, v...)
 }
 

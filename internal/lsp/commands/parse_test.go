@@ -20,7 +20,7 @@ func TestParse(t *testing.T) {
 		"extract target only": {
 			ExecuteCommandParams: types.ExecuteCommandParams{
 				Command:   "example",
-				Arguments: []interface{}{"target"},
+				Arguments: []any{"target"},
 			},
 			ParseOptions:     ParseOptions{TargetArgIndex: 0},
 			ExpectedTarget:   "target",
@@ -29,7 +29,7 @@ func TestParse(t *testing.T) {
 		"extract target and location": {
 			ExecuteCommandParams: types.ExecuteCommandParams{
 				Command:   "example",
-				Arguments: []interface{}{"target", "1", 2}, // different types for testing, but should be strings
+				Arguments: []any{"target", "1", 2}, // different types for testing, but should be strings
 			},
 			ParseOptions:     ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 			ExpectedTarget:   "target",
@@ -38,7 +38,7 @@ func TestParse(t *testing.T) {
 		"extract from JSON": {
 			ExecuteCommandParams: types.ExecuteCommandParams{
 				Command:   "example",
-				Arguments: []interface{}{"target", "1", 2}, // different types for testing, but should be strings
+				Arguments: []any{"target", "1", 2}, // different types for testing, but should be strings
 			},
 			ParseOptions:     ParseOptions{TargetArgIndex: 0, RowArgIndex: 1, ColArgIndex: 2},
 			ExpectedTarget:   "target",
@@ -91,7 +91,7 @@ func TestParse_Errors(t *testing.T) {
 		"error extracting target": {
 			ExecuteCommandParams: types.ExecuteCommandParams{
 				Command:   "example",
-				Arguments: []interface{}{}, // empty and so nothing can be extracted
+				Arguments: []any{}, // empty and so nothing can be extracted
 			},
 			ParseOptions:  ParseOptions{TargetArgIndex: 0},
 			ExpectedError: "no args supplied",

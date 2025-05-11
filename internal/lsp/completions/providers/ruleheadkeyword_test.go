@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -43,15 +44,7 @@ deny` + " "
 	}
 
 	for _, comp := range completions {
-		found := false
-
-		for _, label := range expectedLabels {
-			if comp.Label == label {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(expectedLabels, comp.Label)
 
 		if !found {
 			t.Fatalf("Expected label to be one of %v, got: %v", expectedLabels, comp.Label)

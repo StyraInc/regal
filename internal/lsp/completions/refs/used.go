@@ -79,7 +79,7 @@ func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
 		return []string{}, nil
 	}
 
-	foundRefs, ok := rs[0].Expressions[0].Value.([]interface{})
+	foundRefs, ok := rs[0].Expressions[0].Value.([]any)
 	if !ok {
 		return nil, fmt.Errorf("unexpected type %T", rs[0].Expressions[0].Value)
 	}

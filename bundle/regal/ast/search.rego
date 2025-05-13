@@ -147,6 +147,7 @@ _find_vars(value, last) := {"args": arg_vars} if {
 	count(arg_vars) > 0
 }
 
+# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 _rule_index(rule) := rule_index_strings[i] if {
 	some i, r in _rules
 	r == rule
@@ -210,12 +211,10 @@ found.vars[rule_index][context] contains var if {
 }
 
 found.vars[rule_index].ref contains var if {
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 	some rule_index in rule_index_strings
-	some ref
-	found.refs[rule_index][ref].type == "ref"
-
+	some ref in found.refs[rule_index]
 	some x, var in ref.value
+
 	x > 0
 	var.type == "var"
 }
@@ -223,12 +222,9 @@ found.vars[rule_index].ref contains var if {
 # METADATA
 # description: all refs found in module
 found.refs[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value.type == "ref"
 }
@@ -236,12 +232,9 @@ found.refs[rule_index] contains value if {
 # METADATA
 # description: all calls found in module
 found.calls[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value[0].type == "ref"
 }
@@ -249,23 +242,17 @@ found.calls[rule_index] contains value if {
 # METADATA
 # description: all symbols found in module
 found.symbols[rule_index] contains value.symbols if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 }
 
 # METADATA
 # description: all comprehensions found in module
 found.comprehensions[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value.type in {"arraycomprehension", "objectcomprehension", "setcomprehension"}
 }
@@ -273,14 +260,10 @@ found.comprehensions[rule_index] contains value if {
 # METADATA
 # description: set containing all negated expressions in input AST
 found.expressions[rule_index] contains value if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
+	some i, rule_index in rule_index_strings
 	some node in ["head", "body", "else"]
 
-	walk(rule[node], [_, value])
+	walk(_rules[i][node], [_, value])
 
 	value.terms
 }

@@ -270,11 +270,13 @@ _format_part(part) := sprintf(".%s", [part.value]) if {
 #   non-static (i.e. variable) value, if any:
 #   foo.bar -> foo.bar
 #   foo.bar[baz] -> foo.bar
-ref_static_to_string(ref) := _trim_from_var(rs, regex.find_n(`\[[^"]`, rs, 1)) if rs := ref_to_string(ref)
-
-_trim_from_var(ref_str, vars) := ref_str if {
-	count(vars) == 0
-} else := substring(ref_str, 0, indexof(ref_str, vars[0]))
+ref_static_to_string(ref) := ref_to_string(array.slice(ref, 0, first_non_static)) if {
+	first_non_static := [i |
+		some i, part in ref
+		i > 0
+		part.type in {"var", "ref"}
+	][0]
+} else := ref_to_string(ref)
 
 # METADATA
 # description: true if ref contains only static parts

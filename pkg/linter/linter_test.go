@@ -728,18 +728,21 @@ import data.unresolved`,
 	}
 }
 
-// 1095128583 ns/op	3171781928 B/op	61097537 allocs/op
+// 1026018375 ns/op	3086348312 B/op	59359755 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
+	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
-		WithEnableAll(true)
+		WithUserConfig(conf)
 
 	b.ResetTimer()
 	b.ReportAllocs()
-
-	var err error
 
 	var rep report.Report
 
@@ -751,24 +754,27 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 
 	if len(rep.Violations) != 0 {
-		_ = rep.Violations
+		b.Fatalf("expected no violations, got %v", rep.Violations)
 	}
 }
 
-// 1082386000 ns/op	3147603112 B/op	61016216 allocs/op
+// 986385125 ns/op	3034152352 B/op	58220573 allocs/op
 // ...
 func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
+	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	ctx := context.Background()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
-		WithEnableAll(true).
+		WithUserConfig(conf).
 		MustPrepare(ctx)
 
 	b.ResetTimer()
 	b.ReportAllocs()
-
-	var err error
 
 	var rep report.Report
 
@@ -780,11 +786,11 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 	}
 
 	if len(rep.Violations) != 0 {
-		_ = rep.Violations
+		b.Fatalf("expected no violations, got %v", rep.Violations)
 	}
 }
 
-// 155879726 ns/op	444934614 B/op	 8362362 allocs/op
+// 164353357 ns/op	455624941 B/op	 8560088 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
@@ -807,11 +813,11 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	}
 
 	if len(rep.Violations) != 0 {
-		_ = rep.Violations
+		b.Fatalf("expected no violations, got %v", rep.Violations)
 	}
 }
 
-// 93754264 ns/op	388401130 B/op	 7198094 allocs/op
+// 97546746 ns/op	401323023 B/op	 7427903 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 	linter := NewLinter().
@@ -850,11 +856,12 @@ func BenchmarkEachRule(b *testing.B) {
 		b.Fatal(err)
 	}
 
+	ctx := context.Background()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true).
-		MustPrepare(context.Background())
+		MustPrepare(ctx)
 
 	for _, category := range conf.Rules {
 		for ruleName := range category {
@@ -872,7 +879,7 @@ func BenchmarkEachRule(b *testing.B) {
 				var rep report.Report
 
 				for range b.N {
-					rep, err = linter.WithEnabledRules(ruleName).Lint(context.Background())
+					rep, err = linter.WithEnabledRules(ruleName).Lint(ctx)
 					if err != nil {
 						b.Fatal(err)
 					}

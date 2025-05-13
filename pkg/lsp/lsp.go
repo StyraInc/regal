@@ -18,22 +18,16 @@ type Handle struct {
 	ls   *lsp.LanguageServer
 }
 
-func New(ctx context.Context, ws *websocket.Conn) (*Handle, error) {
+func New(ctx context.Context, ws *websocket.Conn, c *config.Config) (*Handle, error) {
 	opts := lsp.LanguageServerOptions{
 		LogWriter: os.Stderr,
-		LogLevel:  log.LevelDebug,
+		LogLevel:  log.LevelOff,
 	}
-	cfg := config.Config{
-		Rules: map[string]config.Category{
-			"idiomatic": {
-				"directory-package-mismatch": config.Rule{
-					Level: "ignore",
-				},
-			},
-		},
+	if os.Getenv("REGAL_DEBUG") != "" {
+		opts.LogLevel = log.LevelDebug
 	}
 
-	ls := lsp.NewLanguageServerMinimal(ctx, &opts, &cfg)
+	ls := lsp.NewLanguageServerMinimal(ctx, &opts, c)
 	jconn := jsonrpc2.NewConn(
 		ctx,
 		jsonrpc2_ws.NewObjectStream(ws),

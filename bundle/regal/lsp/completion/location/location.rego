@@ -38,12 +38,9 @@ from_start_of_line_to_position(position) := {
 # description: |
 #   estimate where the location "ends" based on its text attribute,
 #   both line and column
-end_location_estimate(location) := end if {
-	lines := split(location.text, "\n")
-	end := {
-		"row": (location.row + count(lines)) - 1,
-		"col": count(regal.last(lines)),
-	}
+end_location_estimate(location) := {
+	"row": location.row + strings.count(location.text, "\n"),
+	"col": count(regex.replace(location.text, `.*\n`, "")),
 }
 
 # METADATA
@@ -54,10 +51,9 @@ find_rule(rules, row) := [rule |
 	some i, rule in rules
 
 	start_location := util.to_location_object(rule.location)
-	end_location := end_location_estimate(start_location)
 
 	row >= start_location.row
-	row <= end_location.row
+	row <= end_location_estimate(start_location).row
 ][0]
 
 # METADATA

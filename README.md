@@ -245,6 +245,7 @@ The following rules are currently available:
 | idiomatic   | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)             | Missing entrypoint annotation                             |
 | idiomatic   | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)             | Use raw strings for regex patterns                        |
 | idiomatic   | [prefer-set-or-object-rule](https://docs.styra.com/regal/rules/idiomatic/prefer-set-or-object-rule)     | Prefer set or object rule over comprehension              |
+| idiomatic   | [single-item-in](https://docs.styra.com/regal/rules/idiomatic/single-item-in)                           | Avoid `in` for single item collection                     |
 | idiomatic   | [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)                               | Use the `contains` keyword                                |
 | idiomatic   | [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)                                           | Use the `if` keyword                                      |
 | idiomatic   | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                         | Use in to check for membership                            |

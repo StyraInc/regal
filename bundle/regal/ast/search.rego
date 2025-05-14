@@ -147,6 +147,7 @@ _find_vars(value, last) := {"args": arg_vars} if {
 	count(arg_vars) > 0
 }
 
+# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 _rule_index(rule) := rule_index_strings[i] if {
 	some i, r in _rules
 	r == rule
@@ -210,12 +211,10 @@ found.vars[rule_index][context] contains var if {
 }
 
 found.vars[rule_index].ref contains var if {
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
 	some rule_index in rule_index_strings
-	some ref
-	found.refs[rule_index][ref].type == "ref"
-
+	some ref in found.refs[rule_index]
 	some x, var in ref.value
+
 	x > 0
 	var.type == "var"
 }
@@ -223,12 +222,9 @@ found.vars[rule_index].ref contains var if {
 # METADATA
 # description: all refs found in module
 found.refs[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value.type == "ref"
 }
@@ -236,12 +232,9 @@ found.refs[rule_index] contains value if {
 # METADATA
 # description: all calls found in module
 found.calls[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value[0].type == "ref"
 }
@@ -249,23 +242,17 @@ found.calls[rule_index] contains value if {
 # METADATA
 # description: all symbols found in module
 found.symbols[rule_index] contains value.symbols if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 }
 
 # METADATA
 # description: all comprehensions found in module
 found.comprehensions[rule_index] contains value if {
-	some i, rule in _rules
+	some i, rule_index in rule_index_strings
 
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
-	walk(rule, [_, value])
+	walk(_rules[i], [_, value])
 
 	value.type in {"arraycomprehension", "objectcomprehension", "setcomprehension"}
 }
@@ -273,14 +260,10 @@ found.comprehensions[rule_index] contains value if {
 # METADATA
 # description: set containing all negated expressions in input AST
 found.expressions[rule_index] contains value if {
-	some i, rule in _rules
-
-	# converting to string until https://github.com/open-policy-agent/opa/issues/6736 is fixed
-	rule_index := rule_index_strings[i]
-
+	some i, rule_index in rule_index_strings
 	some node in ["head", "body", "else"]
 
-	walk(rule[node], [_, value])
+	walk(_rules[i][node], [_, value])
 
 	value.terms
 }
@@ -298,40 +281,23 @@ find_vars_in_local_scope(rule, location) := [var |
 	_before_location(rule.head, var, util.to_location_object(location))
 ]
 
-_end_location(location) := end if {
-	loc := util.to_location_object(location)
-	lines := split(loc.text, "\n")
-	end := {
-		"row": (loc.row + count(lines)) - 1,
-		"col": loc.col + count(regal.last(lines)),
-	}
-}
-
 # special case — the value location of the rule head "sees"
 # all local variables declared in the rule body
 # regal ignore:narrow-argument
-_before_location(head, _, location) if {
-	loc := util.to_location_object(location)
-
+_before_location(head, _, loc) if {
 	value_start := util.to_location_object(head.value.location)
 
 	loc.row >= value_start.row
 	loc.col >= value_start.col
-
-	value_end := _end_location(value_start)
-
-	loc.row <= value_end.row
-	loc.col <= value_end.col
+	loc.row <= value_start.row + strings.count(value_start.text, "\n")
+	loc.col <= value_start.col + count(regex.replace(value_start.text, `.*\n`, ""))
 }
 
 # regal ignore:narrow-argument
-_before_location(_, var, location) if {
-	util.to_location_object(var.location).row < util.to_location_object(location).row
-}
+_before_location(_, var, loc) if util.to_location_object(var.location).row < loc.row
 
-_before_location(_, var, location) if {
+_before_location(_, var, loc) if {
 	var_loc := util.to_location_object(var.location)
-	loc := util.to_location_object(location)
 
 	var_loc.row == loc.row
 	var_loc.col < loc.col
@@ -366,5 +332,5 @@ find_names_in_scope(rule, location) := names if {
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	some some_var in found.vars[_rule_index(rule)]["some"]
-	_before_location(rule.head, some_var, location)
+	_before_location(rule.head, some_var, util.to_location_object(location))
 }

@@ -16,7 +16,7 @@ _multivalue_rules contains path if {
 	not rule.head.value
 
 	# ignore general ref head rules for now
-	every path in array.slice(rule.head.ref, 1, count(rule.head.ref)) {
+	every path in array.slice(rule.head.ref, 1, 100) {
 		path.type == "string"
 	}
 
@@ -121,7 +121,7 @@ _resolve(ref, _, imported_symbols) := concat(".", resolved) if {
 
 	resolved := array.concat(
 		imported_symbols[ref[0].value],
-		[part.value | some part in array.slice(ref, 1, count(ref))],
+		[part.value | some part in array.slice(ref, 1, 100)],
 	)
 }
 

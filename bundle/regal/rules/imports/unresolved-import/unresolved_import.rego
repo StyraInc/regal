@@ -52,7 +52,7 @@ aggregate_report contains violation if {
 
 	# cheap operation failed — need to check wildcards here to account
 	# for map generating / general ref head rules
-	not _wildcard_match(path, all_known_refs, _except_imports)
+	not _wildcard_match(path, (all_known_refs | _except_imports))
 
 	violation := result.fail(rego.metadata.chain(), {"location": object.union(util.to_location_no_text(location), {
 		"file": entry.aggregate_source.file,
@@ -88,29 +88,14 @@ _to_string(i, part) := "**" if {
 	part.type == "var"
 }
 
-_except_imports contains _trim_data(split(str, ".")) if {
+_except_imports contains split(trim_prefix(str, "data."), ".") if {
 	some str in config.rules.imports["unresolved-import"]["except-imports"]
 }
 
-_trim_data(path) := array.slice(path, 1, count(path)) if path[0] == "data"
-_trim_data(path) := path if path[0] != "data"
-
-_wildcard_match(imp_path, all_known_refs, except_imports) if {
-	except_imports_wildcards := {path |
-		some except in except_imports
-		path := concat(".", except)
-		contains(path, "*")
-	}
-
-	all_known_refs_wildcards := {path |
-		some ref in all_known_refs
-		path := concat(".", ref)
-		contains(path, "*")
-	}
-
-	all_wildcard_paths := except_imports_wildcards | all_known_refs_wildcards
-
-	some path in all_wildcard_paths
+_wildcard_match(imp_path, refs_and_except_imports) if {
+	some except in refs_and_except_imports
+	path := concat(".", except)
+	contains(path, "*")
 
 	# note that we are quite forgiving here, as we'll match the
 	# shortest path component containing a wildcard at the end..

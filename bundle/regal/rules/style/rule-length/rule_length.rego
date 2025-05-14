@@ -11,10 +11,9 @@ report contains violation if {
 
 	some rule in input.rules
 
-	rule_location := util.to_location_object(rule.location)
-	lines := split(rule_location.text, "\n")
+	text := util.to_location_object(rule.location).text
 
-	_line_count(cfg, rule_location.row, lines) > cfg[_max_length_property(rule.head.ref[0].value)]
+	_line_count(cfg, text) > cfg[_max_length_property(rule.head.ref[0].value)]
 
 	not _no_body_exception(cfg, rule)
 
@@ -30,26 +29,13 @@ default _max_length_property(_) := "max-rule-length"
 
 _max_length_property(value) := "max-test-rule-length" if startswith(value, "test_")
 
-_line_count(cfg, _, lines) := count(lines) if cfg["count-comments"] == true
+_line_count(cfg, text) := strings.count(text, "\n") + 1 if cfg["count-comments"] == true
 
-_line_count(cfg, rule_row, lines) := n if {
+_line_count(cfg, text) := n if {
 	not cfg["count-comments"]
 
-	# Note that this assumes } on its own line
-	body_start := rule_row + 1
-	body_end := (body_start + count(lines)) - 3
-	body_total := (body_end - body_start) + 1
-
-	# This does not take into account comments that are
-	# on the same line as regular code
-	body_comments := count([1 |
-		some comment in input.comments
-
-		loc := util.to_location_object(comment.location)
-
-		loc.row >= body_start
-		loc.row <= body_end
+	n := count([1 |
+		some line in split(text, "\n")
+		not startswith(trim_space(line), "#")
 	])
-
-	n := body_total - body_comments
 }

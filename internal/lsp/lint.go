@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -195,9 +196,7 @@ func updateFileDiagnostics(
 
 	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootURI)
 
-	files := cache.GetAllFiles()
-
-	for uri := range files {
+	for uri := range cache.GetAllFiles() {
 		// if a file has parse errors, continue to show these until they're addressed
 		parseErrs, ok := cache.GetParseErrors(uri)
 		if ok && len(parseErrs) > 0 {
@@ -244,8 +243,7 @@ func updateAllDiagnostics(
 	}
 
 	if aggregatesReportOnly {
-		regalInstance = regalInstance.
-			WithAggregates(cache.GetFileAggregates())
+		regalInstance = regalInstance.WithAggregates(cache.GetFileAggregates())
 	} else {
 		input := rules.NewInput(files, modules)
 		regalInstance = regalInstance.WithInputModules(&input)
@@ -287,11 +285,8 @@ func updateAllDiagnostics(
 	return nil
 }
 
-func convertReportToDiagnostics(
-	rpt *report.Report,
-	workspaceRootURI string,
-) map[string][]types.Diagnostic {
-	fileDiags := make(map[string][]types.Diagnostic)
+func convertReportToDiagnostics(rpt *report.Report, workspaceRootURI string) map[string][]types.Diagnostic {
+	fileDiags := make(map[string][]types.Diagnostic, len(rpt.Violations))
 
 	// rangeValCopy necessary, as value copied in loop anyway
 	//nolint:gocritic
@@ -303,7 +298,9 @@ func convertReportToDiagnostics(
 			severity = 3
 		}
 
-		diag := types.Diagnostic{
+		file := cmp.Or(item.Location.File, workspaceRootURI)
+
+		fileDiags[file] = append(fileDiags[file], types.Diagnostic{
 			Severity: severity,
 			Range:    getRangeForViolation(item),
 			Message:  item.Description,
@@ -316,13 +313,7 @@ func convertReportToDiagnostics(
 					item.Title,
 				),
 			},
-		}
-
-		if item.Location.File == "" {
-			fileDiags[workspaceRootURI] = append(fileDiags[workspaceRootURI], diag)
-		} else {
-			fileDiags[item.Location.File] = append(fileDiags[item.Location.File], diag)
-		}
+		})
 	}
 
 	return fileDiags
@@ -349,8 +340,5 @@ func getRangeForViolation(item report.Violation) types.Range {
 		end.Character = start.Character + uint(itemLen)
 	}
 
-	return types.Range{
-		Start: start,
-		End:   end,
-	}
+	return types.Range{Start: start, End: end}
 }

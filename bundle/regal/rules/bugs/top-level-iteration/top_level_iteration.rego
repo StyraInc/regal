@@ -17,7 +17,7 @@ report contains violation if {
 		part.type == "var"
 	]) == 0
 
-	some part in array.slice(rule.head.value.value, 1, 128)
+	some part in array.slice(rule.head.value.value, 1, 100)
 
 	part.type == "var"
 

@@ -15,7 +15,7 @@ report contains violation if {
 	terms[0].value[0].type == "var"
 	terms[0].value[0].value == "neq"
 
-	some neq_term in array.slice(terms, 1, count(terms))
+	some neq_term in array.slice(terms, 1, 100)
 	neq_term.type == "ref"
 
 	some value in neq_term.value

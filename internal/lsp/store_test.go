@@ -14,7 +14,7 @@ import (
 
 type illegalResolver struct{}
 
-func (illegalResolver) Resolve(ref ast.Ref) (interface{}, error) {
+func (illegalResolver) Resolve(ref ast.Ref) (any, error) {
 	return nil, fmt.Errorf("illegal value: %v", ref)
 }
 

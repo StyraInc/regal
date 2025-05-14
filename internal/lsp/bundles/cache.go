@@ -87,15 +87,7 @@ func (c *Cache) Refresh() ([]string, error) {
 
 	// remove any bundles that are no longer present on disk
 	for root := range c.bundles {
-		found := false
-
-		for _, foundRoot := range foundBundleRoots {
-			if root == foundRoot {
-				found = true
-
-				break
-			}
-		}
+		found := slices.Contains(foundBundleRoots, root)
 
 		if !found {
 			delete(c.bundles, root)

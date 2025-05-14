@@ -73,7 +73,7 @@ test_success_rule_longer_than_configured_max_length_but_comments if {
 	`)
 
 	r := rule.report with input as module with config.rules as {"style": {"rule-length": {
-		"max-rule-length": 2,
+		"max-rule-length": 3,
 		"count-comments": false,
 	}}}
 	r == set()

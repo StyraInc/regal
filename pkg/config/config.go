@@ -125,6 +125,21 @@ const (
 	standaloneConfigFileName = ".regal.yaml"
 )
 
+func FromPath(path string) (Config, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to open config file: %w", err)
+	}
+
+	defer file.Close()
+
+	conf := Config{}
+
+	err = yaml.NewDecoder(file).Decode(&conf)
+
+	return conf, err //nolint:wrapcheck
+}
+
 // FindConfig attempts to find either the .regal directory or .regal.yaml
 // config file, and returns the appropriate file or an error.
 func FindConfig(path string) (*os.File, error) {

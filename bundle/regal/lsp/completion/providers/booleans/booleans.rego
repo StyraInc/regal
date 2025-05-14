@@ -16,7 +16,6 @@ items contains item if {
 	words := regex.split(`\s+`, line)
 
 	words_on_line := count(words)
-
 	previous_word := words[words_on_line - 2]
 
 	previous_word in {"==", ":="}

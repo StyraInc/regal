@@ -70,15 +70,11 @@ aggregate_report contains violation if {
 
 	some pkg in g # this will the only package
 
-	location := [e |
-		some e in _package_locations[pkg][pkg]
-	][0]
-
 	violation := result.fail(
 		rego.metadata.chain(),
 		{
 			"description": sprintf("Circular self-dependency in: %s", [pkg]),
-			"location": location,
+			"location": [e | some e in _package_locations[pkg][pkg]][0],
 		},
 	)
 }

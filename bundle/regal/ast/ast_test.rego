@@ -12,7 +12,7 @@ test_function_decls_multiple_same_name if {
 	f(y) := y if false
 	`
 	module := regal.parse_module("p.rego", policy)
-	custom := ast.function_decls(module.rules)
+	custom := ast.function_decls with input as module
 
 	# we only need to assert there wasn't a conflict in the above
 	# call, not what value was returned
@@ -122,6 +122,16 @@ test_ref_to_string if {
 		{"type": "string", "value": "lsp"},
 		{"type": "string", "value": "completion_test"},
 	]) == `data.regal.lsp.completion_test`
+	ast.ref_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "number", "value": 1},
+	]) == `data.regal[1]`
+	ast.ref_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "boolean", "value": true},
+	]) == `data.regal[true]`
 }
 
 test_ref_static_to_string if {
@@ -144,6 +154,21 @@ test_ref_static_to_string if {
 		{"type": "string", "value": "lsp"},
 		{"type": "string", "value": "completion_test"},
 	]) == `data.regal.lsp.completion_test`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "number", "value": 1},
+	]) == `data.regal[1]`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "boolean", "value": true},
+	]) == `data.regal[true]`
+	ast.ref_static_to_string([
+		{"type": "var", "value": "data"},
+		{"type": "string", "value": "regal"},
+		{"type": "boolean", "value": false},
+	]) == `data.regal[false]`
 }
 
 test_rule_head_locations if {

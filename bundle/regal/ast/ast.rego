@@ -298,26 +298,14 @@ builtin_functions_called contains name if {
 # METADATA
 # description: |
 #   Returns custom functions declared in input policy in the same format as builtin capabilities
-function_decls(rules) := {rule_name: decl |
-	some rule in functions
-
-	rule_name := ref_to_string(rule.head.ref)
-
-	# ensure we only get one set of args, or we'll have a conflict
-	args := [[item |
-		some arg in rule.head.args
-		item := {"type": "any"}
-	] |
-		some rule in rules
-		ref_to_string(rule.head.ref) == rule_name
-	][0]
-
-	decl := {"decl": {"args": args, "result": {"type": "any"}}}
+function_decls[name] := {"decl": {"args": [{"type": "any"} | head.args[_]], "result": {"type": "any"}}} if {
+	head := functions[_].head
+	name := ref_to_string(head.ref)
 }
 
 # METADATA
 # description: returns the args for function past the expected number of args
-function_ret_args(fn_name, terms) := array.slice(terms, count(all_functions[fn_name].decl.args) + 1, count(terms))
+function_ret_args(fn_name, terms) := array.slice(terms, count(all_functions[fn_name].decl.args) + 1, 100)
 
 # METADATA
 # description: true if last argument of function is a return assignment
@@ -325,7 +313,7 @@ function_ret_in_args(fn_name, terms) if {
 	# special case: print does not have a last argument as it's variadic
 	fn_name != "print"
 
-	rest := array.slice(terms, 1, count(terms))
+	rest := array.slice(terms, 1, 100)
 
 	# for now, bail out of nested calls
 	not "call" in {term.type | some term in rest}
@@ -346,7 +334,7 @@ implicit_boolean_assignment(rule) if not rule.head.value.location
 # description: |
 #   object containing all available built-in and custom functions in the
 #   scope of the input AST, keyed by function name
-all_functions := object.union(config.capabilities.builtins, function_decls(input.rules))
+all_functions := object.union(config.capabilities.builtins, function_decls)
 
 # METADATA
 # description: |

@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1026018375 ns/op	3086348312 B/op	59359755 allocs/op
+// 1014243250 ns/op	3038609032 B/op	58135767 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
@@ -758,7 +758,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	}
 }
 
-// 986385125 ns/op	3034152352 B/op	58220573 allocs/op
+// 949510938 ns/op	2982001764 B/op	57011741 allocs/op
 // ...
 func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))

@@ -21,17 +21,11 @@ report contains violation if {
 	value.type == "ref"
 
 	vars_in_ref := ast.find_ref_vars(value)
-
 	count(vars_in_ref) > 0
 
-	num_output_vars := count([var |
-		some var in vars_in_ref
-
-		# we don't need the location of each var, but using the first
-		# ref will do, and will hopefully help with caching the result
-		ast.is_output_var(rule, var)
-	])
-
+	# we don't need the location of each var, but using the first
+	# ref will do, and will hopefully help with caching the result
+	num_output_vars := count([ast.is_output_var(rule, var) | some var in vars_in_ref])
 	num_output_vars != 0
 	num_output_vars < cfg["ignore-nesting-level"]
 

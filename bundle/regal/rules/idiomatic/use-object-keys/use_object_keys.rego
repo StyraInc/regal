@@ -46,7 +46,7 @@ report contains violation if {
 	ref := _ref(comprehension.value.body)
 
 	vars := [part |
-		some part in array.slice(ref, 1, 128)
+		some part in array.slice(ref, 1, 100)
 		part.type == "var"
 	]
 

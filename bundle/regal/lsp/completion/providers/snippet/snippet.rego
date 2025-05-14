@@ -19,7 +19,6 @@ items contains item if {
 	line := input.regal.file.lines[position.line]
 
 	not endswith(trim_space(line), "=")
-
 	location.in_rule_body(line)
 
 	word := location.word_at(line, input.regal.context.location.col)
@@ -46,10 +45,9 @@ items contains item if {
 	line := input.regal.file.lines[position.line]
 
 	startswith("metadata", line)
-
 	word := location.word_at(line, input.regal.context.location.col)
 
-	items := {
+	some item in {
 		{
 			"label": "metadata annotation [title, description] (snippet)",
 			"kind": kind.snippet,
@@ -71,8 +69,6 @@ items contains item if {
 			"insertTextFormat": 2, # snippet
 		},
 	}
-
-	some item in items
 }
 
 _snippets := {

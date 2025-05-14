@@ -19,23 +19,12 @@ report contains violation if {
 	violation := result.fail(rego.metadata.chain(), result.location(rule.head.ref[0]))
 }
 
-_titleize(str) := upper(str) if count(str) == 1
-
-_titleize(str) := concat("", array.concat([upper(chrs[0])], array.slice(chrs, 1, count(chrs)))) if {
-	chrs := regex.split(``, str)
-	count(chrs) > 1
-}
-
-_num_package_path_components := count(ast.package_path)
-
 _possible_path_component_combinations contains combination if {
-	some end in numbers.range(1, _num_package_path_components)
+	num_package_path_components := count(ast.package_path)
 
-	combination := array.slice(
-		ast.package_path,
-		_num_package_path_components - end,
-		_num_package_path_components,
-	)
+	some end in numbers.range(1, num_package_path_components)
+
+	combination := array.slice(ast.package_path, num_package_path_components - end, num_package_path_components)
 }
 
 _possible_offending_prefixes contains concat("_", combination) if {
@@ -49,6 +38,7 @@ _possible_offending_prefixes contains concat("", formatted_combination) if {
 
 	formatted_combination := array.concat([combination[0]], [w |
 		some word in util.rest(combination)
-		w := _titleize(word)
+
+		w := regex.replace(word, `^[a-z]`, upper(substring(word, 0, 1)))
 	])
 }

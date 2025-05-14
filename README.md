@@ -1,7 +1,7 @@
 # Regal
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg?branch=main)](https://github.com/styrainc/regal/actions)
-![OPA v1.3.0](https://openpolicyagent.org/badge/v1.3.0)
+![OPA v1.4.2](https://openpolicyagent.org/badge/v1.4.2)
 [![codecov](https://codecov.io/github/StyraInc/regal/graph/badge.svg?token=EQK01YF3X3)](https://codecov.io/github/StyraInc/regal)
 [![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/StyraInc/regal/releases)
 
@@ -21,14 +21,6 @@ development, whether you're an experienced Rego developer or just starting out.
 > adj : of notable excellence or magnificence : splendid
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
-
-## **New!** Regal and OPA 1.0+
-
-OPA 1.0 was [recently released](https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828),
-and starting from version v0.30.0, Regal supports working with both OPA 1.0+ policies and Rego from earlier versions
-of OPA. While everything should work without additional configuration, we recommend checking out our documentation on
-using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero) and later for the best possible experience
-managing projects of any given Rego version, or even a mix of them.
 
 ## Goals
 
@@ -459,7 +451,7 @@ It's also possible to ignore messages on a per-file basis. The available methods
 - [Ignoring Files Globally](#ignoring-files-globally) or
   [Ignoring a Rule in Some Files](#ignoring-a-rule-in-some-files).
 
-### Ignoring a Rule In Config
+### Ignoring a Rule in Config
 
 If you want to ignore a rule, set its level to `ignore` in the configuration file:
 
@@ -471,7 +463,7 @@ rules:
       level: ignore
 ```
 
-### Ignoring a Category In Config
+### Ignoring a Category in Config
 
 If you want to ignore a category of rules, set its default level to `ignore` in the configuration file:
 
@@ -482,7 +474,7 @@ rules:
       level: ignore
 ```
 
-### Ignoring All Rules In Config
+### Ignoring All Rules in Config
 
 If you want to ignore all rules, set the default level to `ignore` in the configuration file:
 
@@ -757,20 +749,12 @@ are:
 
 ## OPA Check and Strict Mode
 
-Linting with Regal assumes syntactically correct Rego. If there are errors parsing any files during linting, the
-process is aborted and any parser errors are logged similarly to OPA. OPA itself provides a "linter" of sorts,
-via the `opa check` command and its `--strict` flag. This checks the provided Rego files not only for syntax errors,
-but also for OPA [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations.
-
-> **Note** It is recommended to run `opa check --strict` as part of your policy build process, and address any violations
-> reported there before running Regal. Why both commands? Couldn't the strict mode checks be integrated in Regal?
-> That would certainly be an option. However, most of the strict mode checks will be made default / mandatory as part
-> of a future OPA 1.0 release, at which point they'd be made immediately obsolete as part of Regal. There are a few
-> strict mode checks that likely will remain optional in OPA, and we may choose to integrate them into Regal in the
-> future.
->
-> Until then, the recommendation is to run both `opa check --strict` and `regal lint` as part of your policy build
-> and test process.
+OPA itself provides a "linter" of sorts, via the `opa check` command and its `--strict` flag. This checks the provided
+Rego files not only for syntax errors, but also for OPA
+[strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations. Most of the strict
+mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
+provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
+to run `opa check --strict` against your policies before linting with Regal.
 
 ## Regal Language Server
 
@@ -813,6 +797,14 @@ See the
 for an extensive overview of all features, and their meaning.
 
 See the [Editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
+
+## Regal and OPA 1.0+
+
+Starting from version v0.30.0, Regal supports working with both
+[OPA 1.0+]((https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828))
+policies and Rego from earlier versions of OPA. While everything should work without additional configuration,
+we recommend checking out our documentation on using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero)
+and later for the best possible experience managing projects of any given Rego version, or even a mix of them.
 
 ## Resources
 

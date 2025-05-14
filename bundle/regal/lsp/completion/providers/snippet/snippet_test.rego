@@ -4,13 +4,9 @@ import data.regal.lsp.completion.providers.snippet as provider
 import data.regal.lsp.completion.providers.test_utils as util
 
 test_snippet_completion_on_typing_partial_prefix if {
-	policy := `package policy
-
-import rego.v1
-
-allow if {
+	policy := _with_header(`allow if {
 	e
-}`
+}`)
 	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 2})
 	items == {
 		{
@@ -43,13 +39,9 @@ allow if {
 }
 
 test_snippet_completion_on_typing_full_prefix if {
-	policy := `package policy
-
-import rego.v1
-
-allow if {
+	policy := _with_header(`allow if {
 	every
-}`
+}`)
 	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 6})
 	items == {
 		{
@@ -82,25 +74,16 @@ allow if {
 }
 
 test_snippet_completion_on_typing_no_repeat if {
-	policy := `package policy
-
-import rego.v1
-
-allow if {
+	policy := _with_header(`allow if {
 	some e in [1,2,3] some
-}
-`
+}`)
+
 	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 21})
 	items == set()
 }
 
 test_snippet_completion_on_invoked if {
-	policy := `package policy
-
-import rego.v1
-
-allow if `
-	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 10})
+	items := provider.items with input as util.input_with_location(_with_header(`allow if `), {"row": 5, "col": 10})
 	items == {
 		{
 			"detail": "every key-value iteration",
@@ -158,13 +141,7 @@ allow if `
 }
 
 test_metadata_snippet_completion if {
-	policy := `package policy
-
-import rego.v1
-
-
-`
-	items := provider.items with input as util.input_with_location(policy, {"row": 5, "col": 1})
+	items := provider.items with input as util.input_with_location(_with_header(``), {"row": 5, "col": 1})
 	items == {
 		{
 			"detail": "metadata annotation",
@@ -194,3 +171,5 @@ import rego.v1
 		},
 	}
 }
+
+_with_header(policy) := concat("\n\n", ["package policy", "import rego.v1", policy])

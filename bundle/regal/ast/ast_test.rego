@@ -12,7 +12,7 @@ test_function_decls_multiple_same_name if {
 	f(y) := y if false
 	`
 	module := regal.parse_module("p.rego", policy)
-	custom := ast.function_decls(module.rules)
+	custom := ast.function_decls with input as module
 
 	# we only need to assert there wasn't a conflict in the above
 	# call, not what value was returned

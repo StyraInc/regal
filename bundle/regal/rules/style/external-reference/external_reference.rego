@@ -8,7 +8,7 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	fn_namespaces := {split(name, ".")[0] | some name in ast.all_function_names}
+	fn_namespaces := {regex.replace(name, `\..*`, "") | some name in ast.all_function_names}
 
 	some i
 	arg_vars := _args_vars(input.rules[i].head.args)

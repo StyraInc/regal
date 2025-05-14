@@ -8,7 +8,7 @@ import data.regal.result
 report contains violation if {
 	count(ast.functions) > 0
 
-	# Comprehension indexing
+	# comprehension indexing
 	function_args_by_name := {name: args_list |
 		some i
 		name := ast.ref_to_string(ast.functions[i].head.ref)
@@ -21,12 +21,9 @@ report contains violation if {
 	}
 
 	some name, args_list in function_args_by_name
+	not _arity_mismatch(args_list) # leave that to the compiler
 
-	# leave that to the compiler
-	not _arity_mismatch(args_list)
-
-	# "Partition" the args by their position
-	by_position := [s |
+	by_position := [s | # "partition" the args by their position
 		some i, _ in args_list[0]
 		s := [item[i] | some item in args_list]
 	]

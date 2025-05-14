@@ -281,40 +281,23 @@ find_vars_in_local_scope(rule, location) := [var |
 	_before_location(rule.head, var, util.to_location_object(location))
 ]
 
-_end_location(location) := end if {
-	loc := util.to_location_object(location)
-	lines := split(loc.text, "\n")
-	end := {
-		"row": (loc.row + count(lines)) - 1,
-		"col": loc.col + count(regal.last(lines)),
-	}
-}
-
 # special case — the value location of the rule head "sees"
 # all local variables declared in the rule body
 # regal ignore:narrow-argument
-_before_location(head, _, location) if {
-	loc := util.to_location_object(location)
-
+_before_location(head, _, loc) if {
 	value_start := util.to_location_object(head.value.location)
 
 	loc.row >= value_start.row
 	loc.col >= value_start.col
-
-	value_end := _end_location(value_start)
-
-	loc.row <= value_end.row
-	loc.col <= value_end.col
+	loc.row <= value_start.row + strings.count(value_start.text, "\n")
+	loc.col <= value_start.col + count(regex.replace(value_start.text, `.*\n`, ""))
 }
 
 # regal ignore:narrow-argument
-_before_location(_, var, location) if {
-	util.to_location_object(var.location).row < util.to_location_object(location).row
-}
+_before_location(_, var, loc) if util.to_location_object(var.location).row < loc.row
 
-_before_location(_, var, location) if {
+_before_location(_, var, loc) if {
 	var_loc := util.to_location_object(var.location)
-	loc := util.to_location_object(location)
 
 	var_loc.row == loc.row
 	var_loc.col < loc.col
@@ -349,5 +332,5 @@ find_names_in_scope(rule, location) := names if {
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
 	some some_var in found.vars[_rule_index(rule)]["some"]
-	_before_location(rule.head, some_var, location)
+	_before_location(rule.head, some_var, util.to_location_object(location))
 }

@@ -5,7 +5,6 @@ package regal.rules.imports["unresolved-reference"]
 import data.regal.ast
 import data.regal.config
 import data.regal.result
-import data.regal.util
 
 # METADATA
 # description: collects exported and full of used refs from each module
@@ -60,10 +59,12 @@ _all_full_path_refs[ref.name] contains [ref.location, ref.text] if {
 	startswith(ref.name, "data.")
 }
 
-_all_full_path_refs[expanded_ref] contains [ref.location, ref.text] if {
+_all_full_path_refs[expanded] contains [ref.location, ref.text] if {
 	some ref in _refs
-	path := split(ref.name, ".")
-	expanded_ref := concat(".", array.concat(ast.resolved_imports[path[0]], util.rest(path)))
+
+	ref_root := regex.replace(ref.name, `^([^\.]+)\..*`, "$1") # anything before the first ".", like "bar" in "foo.bar"
+	resolved := concat(".", ast.resolved_imports[ref_root]) #    resolve that root, e.g. "data.regal.foo"
+	expanded := regex.replace(ref.name, `^([^\.]+)`, resolved) # add back the suffix, e.g. "data.regal.foo.bar"
 }
 
 # METADATA
@@ -76,8 +77,8 @@ aggregate_report contains violation if {
 	some entry in input.aggregate
 	some name, refs in entry.aggregate_data.expanded_refs
 
-	# ignore everything after the first "[" in the ref name. E.g. foo.bar[0].baz becomes foo.bar
-	ref_name := split(name, "[")[0]
+	# ignore everything from the first "[" in the ref name. E.g. foo.bar[0].baz becomes foo.bar
+	ref_name := regex.replace(name, `^([^\[]+)\[.*`, "$1")
 	ref_path := split(ref_name, ".")
 
 	# a reference is considered resolved with respect to a rule if

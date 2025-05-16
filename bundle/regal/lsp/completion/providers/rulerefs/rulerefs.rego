@@ -57,7 +57,7 @@ _other_package_refs contains ref if {
 _rule_ref_suggestions contains pkg_ref if {
 	some ref in _current_package_refs
 
-	pkg_ref := trim_prefix(ref, sprintf("%s.", [_current_file_package]))
+	pkg_ref := trim_prefix(ref, concat("", [_current_file_package, "."]))
 }
 
 # from imported packages
@@ -68,7 +68,7 @@ _rule_ref_suggestions contains pkg_ref if {
 	startswith(ref, imported_package)
 
 	prefix := regex.replace(imported_package, `\.[^\.]+$`, "")
-	pkg_ref := trim_prefix(ref, sprintf("%s.", [prefix]))
+	pkg_ref := trim_prefix(ref, concat("", [prefix, "."]))
 }
 
 # from any other package

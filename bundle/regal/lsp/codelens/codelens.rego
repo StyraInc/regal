@@ -62,7 +62,7 @@ _rule_lens(filename, rule, command, title) := {
 		"command": command,
 		"arguments": [json.marshal({
 			"target": filename,
-			"path": sprintf("%s.%s", [
+			"path": concat(".", [
 				ast.ref_to_string(input["package"].path),
 				ast.ref_static_to_string(rule.head.ref),
 			]),

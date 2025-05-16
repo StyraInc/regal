@@ -91,7 +91,7 @@ word_at(line, col) := word if {
 	word := {
 		"offset_before": count(word_before),
 		"offset_after": count(word_after),
-		"text": sprintf("%s%s", [word_before, word_after]),
+		"text": concat("", [word_before, word_after]),
 	}
 }
 
@@ -110,7 +110,7 @@ ref_at(line, col) := word if {
 	word := {
 		"offset_before": count(word_before),
 		"offset_after": count(word_after),
-		"text": sprintf("%s%s", [word_before, word_after]),
+		"text": concat("", [word_before, word_after]),
 	}
 }
 

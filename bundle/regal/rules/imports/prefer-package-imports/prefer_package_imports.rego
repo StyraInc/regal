@@ -51,7 +51,7 @@ aggregate_report contains violation if {
 
 	violation := result.fail(rego.metadata.chain(), {"location": object.union(util.to_location_no_text(location), {
 		"file": entry.aggregate_source.file,
-		"text": sprintf("import %s", [concat(".", array.concat(["data"], path))]),
+		"text": concat("", ["import data.", concat(".", path)]),
 	})})
 }
 

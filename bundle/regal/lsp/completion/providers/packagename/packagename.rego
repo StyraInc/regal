@@ -32,7 +32,7 @@ items contains item if {
 		"detail": "suggested package name based on directory structure",
 		"textEdit": {
 			"range": location.word_range(word, position),
-			"newText": sprintf("%s\n\n", [suggestion]),
+			"newText": concat("", [suggestion, "\n\n"]),
 		},
 	}
 }

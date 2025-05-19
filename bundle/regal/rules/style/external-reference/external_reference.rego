@@ -8,14 +8,12 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	fn_namespaces := {regex.replace(name, `\..*`, "") | some name in ast.all_function_names}
-
 	some i
 	arg_vars := _args_vars(input.rules[i].head.args)
 	own_vars := {value | value := ast.found.vars[ast.rule_index_strings[i]][_][_].value}
 
 	# note: parens added by opa fmt 🤦
-	allowed_refs := (arg_vars | own_vars) | fn_namespaces
+	allowed_refs := (arg_vars | own_vars) | ast.all_function_namespaces
 
 	external := [value |
 		some node in ["head", "body", "else"]

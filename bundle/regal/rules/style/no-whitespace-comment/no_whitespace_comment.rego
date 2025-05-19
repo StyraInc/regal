@@ -9,10 +9,10 @@ import data.regal.result
 report contains violation if {
 	some comment in ast.comments_decoded
 
-	not _whitespace_comment(comment.text)
+	not regex.match(`^[\s#]*$|^#*[\s]+.*$`, comment.text)
+	not _excepted(comment.text)
 
 	violation := result.fail(rego.metadata.chain(), result.location(comment))
 }
 
-_whitespace_comment(text) if regex.match(`^(#*)(\s+.*|$)`, text)
-_whitespace_comment(text) if regex.match(config.rules.style["no-whitespace-comment"]["except-pattern"], text)
+_excepted(text) if regex.match(config.rules.style["no-whitespace-comment"]["except-pattern"], text)

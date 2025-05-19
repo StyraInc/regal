@@ -103,11 +103,9 @@ _find_vars(value, last) := {"term": find_term_vars(function_ret_args(fn_name, va
 	value[0].value[0].type == "var"
 	value[0].value[0].value != "assign"
 
-	fn_name := ref_to_string(value[0].value)
+	fn_name := ref_static_to_string(value[0].value)
 
-	not contains(fn_name, "$")
-	fn_name in all_function_names
-	function_ret_in_args(fn_name, value)
+	function_ret_in_args(all_function_names[fn_name], value)
 }
 
 # `=` isn't necessarily assignment, and only considering the variable on the

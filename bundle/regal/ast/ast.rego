@@ -62,7 +62,7 @@ builtin_names := object.keys(config.capabilities.builtins)
 # description: |
 #   set containing the namespaces of all built-in functions (given the active capabilities),
 #   like "http" in `http.send` or "sum" in `sum``
-builtin_namespaces contains split(name, ".")[0] if some name in builtin_names
+builtin_namespaces contains regex.replace(name, `\..*`, "") if some name in builtin_names
 
 # METADATA
 # description: |
@@ -341,6 +341,14 @@ all_functions := object.union(config.capabilities.builtins, function_decls)
 #   set containing all available built-in and custom function names in the
 #   scope of the input AST
 all_function_names := object.keys(all_functions)
+
+# METADATA
+# description: set containing the namespaces of all functions, built-in and custom
+all_function_namespaces := builtin_namespaces | custom_function_namespaces
+
+# METADATA
+# description: set containing the namespaces of all custom functions
+custom_function_namespaces contains regex.replace(name, `\..*`, "") if some name in object.keys(function_decls)
 
 # METADATA
 # description: |

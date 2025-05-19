@@ -48,16 +48,13 @@ annotations := array.concat(
 #   found in input AST, indexed by the row they're at
 ignore_directives[row] := rules if {
 	some comment in comments_decoded
-	text := trim_space(comment.text)
 
-	i := indexof(text, "regal ignore:")
-	i != -1
+	contains(comment.text, "regal ignore:")
 
-	list := regex.replace(substring(text, i + 13, -1), `\s`, "")
 	loc := util.to_location_object(comment.location)
-
 	row := loc.row + 1
-	rules := split(list, ",")
+
+	rules := regex.split(`,\s*`, trim_space(regex.replace(comment.text, `^.*regal ignore:\s*(\S+)`, "$1")))
 }
 
 # METADATA

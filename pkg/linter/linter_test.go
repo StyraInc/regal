@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 1035519750 ns/op	3059417808 B/op	58536544 allocs/op
+// 968805333 ns/op	2970674744 B/op	56876788 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))

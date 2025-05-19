@@ -45,21 +45,19 @@ aggregate_report contains violation if {
 	some entry in input.aggregate
 	some [path, location] in entry.aggregate_data.imports
 
-	_resolves(path, all_package_paths)
 	not path in all_package_paths
 	not path in _ignored_import_paths
+
+	count([path |
+		some pkg_path in all_package_paths
+		pkg_path == array.slice(path, 0, count(pkg_path))
+	]) > 0
 
 	violation := result.fail(rego.metadata.chain(), {"location": object.union(util.to_location_no_text(location), {
 		"file": entry.aggregate_source.file,
 		"text": concat("", ["import data.", concat(".", path)]),
 	})})
 }
-
-# returns true if the path "resolves" to *any* package part of the same length as the path
-_resolves(path, pkg_paths) if count([path |
-	some pkg_path in pkg_paths
-	pkg_path == array.slice(path, 0, count(pkg_path))
-]) > 0
 
 _ignored_import_paths contains split(trim_prefix(item, "data."), ".") if {
 	some item in config.rules.imports["prefer-package-imports"]["ignore-import-paths"]

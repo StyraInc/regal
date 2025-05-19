@@ -14,10 +14,10 @@ aggregate contains entry if {
 	entry := result.aggregate(rego.metadata.chain(), {
 		"exported_rules": exported,
 		"expanded_refs": _all_full_path_refs,
-		"prefix_tree": {prefix_path |
+		"prefix_tree": {["data"]} | {prefix_path |
 			some rule_name in exported
 			rule_path := split(rule_name, ".")
-			some i in numbers.range(1, count(rule_path))
+			some i in numbers.range(2, count(rule_path))
 			prefix_path := array.slice(rule_path, 0, i)
 		},
 	})

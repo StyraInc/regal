@@ -9,7 +9,7 @@ import data.regal.util
 report contains violation if {
 	some i, block in ast.comments.blocks
 
-	startswith(trim_space(block[0].text), "METADATA")
+	regex.match(`^\s*METADATA`, block[0].text)
 
 	last_row := util.to_location_object(regal.last(block).location).row
 
@@ -30,11 +30,11 @@ _annotation_at_row(row) := annotation if {
 # detached metadata is allowed only if another metadata block follows
 # directly after the metadata block
 _allow_detached(last_row, i, blocks, lines) if {
-	next_block := blocks[i + 1]
+	next_block_start := blocks[i + 1][0]
 
-	startswith(trim_space(next_block[0].text), "METADATA")
+	regex.match(`^\s*METADATA`, next_block_start.text)
 
-	next_block_row := util.to_location_object(next_block[0].location).row
+	next_block_row := util.to_location_object(next_block_start.location).row
 	lines_between := array.slice(lines, last_row, next_block_row - 1)
 
 	every line in lines_between {

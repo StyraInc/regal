@@ -14,7 +14,7 @@ import data.regal.util
 
 # METADATA
 # description: set of all notices returned from linter rules
-lint.notices := _notices if "lint" in input.regal.operations
+lint.notices contains _grouped_notices[_][_][_] if "lint" in input.regal.operations
 
 # METADATA
 # description: map of all ignore directives encountered when linting
@@ -45,8 +45,6 @@ _rules_to_run[category] contains title if {
 	not config.ignored_rule(category, title)
 	not config.excluded_file(category, title, relative_filename)
 }
-
-_notices contains _grouped_notices[_][_][_]
 
 _grouped_notices[category][title] contains notice if {
 	some category, title
@@ -163,12 +161,12 @@ aggregate_report contains violation if {
 	# regal ignore:with-outside-test-context
 	some violation in data.regal.rules[category][title].aggregate_report with input as input_for_rule
 
-	# some aggregate violations won't have a location at all, like no-defined-entrypoint
-	file := object.get(violation, ["location", "file"], "")
-
-	ignore_directives := object.get(input.ignore_directives, file, {})
-
-	not _ignored(violation, util.keys_to_numbers(ignore_directives))
+	not _ignored(violation, util.keys_to_numbers(object.get(
+		input.ignore_directives,
+		# some aggregate violations won't have a location at all, like no-defined-entrypoint
+		object.get(violation, ["location", "file"], ""),
+		{},
+	)))
 }
 
 # METADATA
@@ -192,10 +190,8 @@ aggregate_report contains violation if {
 	# regal ignore:with-outside-test-context
 	some violation in data.custom.regal.rules[category][title].aggregate_report with input as input_for_rule
 
-	# for custom rules, we can't assume that the author included
-	# a location in the violation, although they _really_ should
-	file := object.get(violation, ["location", "file"], "")
-	ignore_directives := object.get(input, ["ignore_directives", file], {})
+	# don't assume that the author included a location in the violation, although they really should
+	ignore_directives := object.get(input, ["ignore_directives", object.get(violation, ["location", "file"], "")], {})
 
 	not _ignored(violation, util.keys_to_numbers(ignore_directives))
 }

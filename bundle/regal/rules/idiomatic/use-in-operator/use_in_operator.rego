@@ -6,7 +6,11 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	some terms in _eq_exprs_terms
+	terms := input.rules[_].body[_].terms
+
+	terms[0].type == "ref"
+	terms[0].value[0].type == "var"
+	terms[0].value[0].value in {"eq", "equal"}
 
 	nl_terms := _non_loop_term(terms)
 	count(nl_terms) == 1
@@ -17,14 +21,6 @@ report contains violation if {
 	# Use the non-loop term position to determine the
 	# location of the loop term (3 is the count of terms)
 	violation := result.fail(rego.metadata.chain(), result.location(terms[3 - nlt.pos]))
-}
-
-_eq_exprs_terms contains terms if {
-	terms := input.rules[_].body[_].terms
-
-	terms[0].type == "ref"
-	terms[0].value[0].type == "var"
-	terms[0].value[0].value in {"eq", "equal"}
 }
 
 _non_loop_term(terms) := [{"pos": i + 1, "term": term} |

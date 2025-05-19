@@ -8,14 +8,13 @@ import data.regal.result
 report contains violation if {
 	some block in ast.comments.blocks
 
-	startswith(trim_space(block[0].text), "METADATA")
+	regex.match(`^\s*METADATA`, block[0].text)
 
-	text := concat("\n", [entry.text |
+	some attribute in object.keys(yaml.unmarshal(concat("\n", [entry.text |
 		some i, entry in block
 		i > 0
-	])
+	])))
 
-	some attribute in object.keys(yaml.unmarshal(text))
 	not attribute in ast.comments.metadata_attributes
 
 	violation := result.fail(rego.metadata.chain(), result.location([line |

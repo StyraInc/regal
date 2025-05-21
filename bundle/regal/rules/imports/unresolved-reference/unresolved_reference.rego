@@ -9,18 +9,33 @@ import data.regal.result
 # METADATA
 # description: collects exported and full of used refs from each module
 aggregate contains entry if {
-	exported := object.keys(ast.rule_head_locations)
+	exported := {rule |
+		some rule in object.keys(ast.rule_head_locations)
+		not rule in unexported_rules
+	}
 
 	entry := result.aggregate(rego.metadata.chain(), {
 		"exported_rules": exported,
 		"expanded_refs": _all_full_path_refs,
-		"prefix_tree": {["data"]} | {prefix_path |
+		"prefix_set": {["data"]} | {prefix_path |
 			some rule_name in exported
 			rule_path := split(rule_name, ".")
 			some i in numbers.range(2, count(rule_path))
 			prefix_path := array.slice(rule_path, 0, i)
 		},
 	})
+}
+
+default _excepted_export_patterns := {"**.test_*"}
+
+_excepted_export_patterns := config.rules.imports["unresolved-reference"].excepted_export_patterns
+
+# METADATA
+# description: removes rules that are ignored in the config file
+unexported_rules contains rule_name if {
+	some rule_name, _ in ast.rule_head_locations
+	some exception in _excepted_export_patterns
+	glob.match(exception, [], rule_name)
 }
 
 # an import is shadowed if it shares name with a rule
@@ -43,6 +58,8 @@ _refs contains ref if {
 
 	not name in ast.builtin_names
 	not name in ast.rule_and_function_names
+	not name in unexported_rules
+
 	not terms[0].value in _shadowed_imports
 
 	# util.to_location_row inlined for some extra performance
@@ -72,7 +89,7 @@ _all_full_path_refs[expanded] contains [ref.location, ref.text] if {
 #   - input: schema.regal.aggregate
 aggregate_report contains violation if {
 	all_exports := {export | export := input.aggregate[_].aggregate_data.exported_rules[_]}
-	prefix_tree := {prefix | prefix := input.aggregate[_].aggregate_data.prefix_tree[_]}
+	prefix_set := {prefix | prefix := input.aggregate[_].aggregate_data.prefix_set[_]}
 
 	some entry in input.aggregate
 	some name, refs in entry.aggregate_data.expanded_refs
@@ -85,7 +102,7 @@ aggregate_report contains violation if {
 	# 1: it is the prefix of a rule
 	# 2: it indexes into a rule - we do not consider the possible data
 	# 3: the reference is ignored in the config
-	not ref_path in prefix_tree
+	not ref_path in prefix_set
 	not _is_resolved_ref(ref_path, all_exports)
 	not _is_excepted(ref_name)
 

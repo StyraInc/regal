@@ -55,7 +55,7 @@ allow if public_resource
 ## Rationale
 
 The default scope for metadata annotating a rule is the `rule` scope, which
-"[applies to the individual rule statement](https://www.openpolicyagent.org/docs/latest/policy-language/#scope)" only.
+"[applies to the individual rule statement](https://www.openpolicyagent.org/docs/policy-language/#scope)" only.
 This default is sensible for a rule defined only once, but is somewhat ambiguous for a rule defined incrementally, like
 the `allow` rule in the examples above. Was the intention really to annotate that single definition, or the rule as
 whole? Most likely the latter, and that's what the `document` scope is for.
@@ -81,7 +81,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
+- OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
 - Regal Docs: [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/ambiguous-scope/ambiguous_scope.rego)
 

@@ -25,7 +25,7 @@ mfa if "mfa" in object.keys(input.claims)
 ## Rationale
 
 Checking if a key exists in an object (regardless of the attribute's value) used to be done using custom functions. With
-the introduction of the [object.keys](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-object-objectkeys)
+the introduction of the [object.keys](https://www.openpolicyagent.org/docs/policy-reference/#builtin-object-objectkeys)
 (OPA [v0.47.0](https://github.com/open-policy-agent/opa/releases/tag/v0.47.0)) function, this is no longer necessary,
 and using the built-in function together with `in` should be preferred.
 

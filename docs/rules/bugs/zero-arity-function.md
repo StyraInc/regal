@@ -23,7 +23,7 @@ first_user := input.users[0]
 Zero-arity functions, or functions without arguments, aren't treated as functions by Rego, but as regular rules. For
 that reason, they should also be expressed as such. One potential benefit of using functions over rules is that
 functions don't contribute to the
-[document](https://www.openpolicyagent.org/docs/latest/philosophy/#the-opa-document-model) when a package is evaluated,
+[document](https://www.openpolicyagent.org/docs/philosophy/#the-opa-document-model) when a package is evaluated,
 and as such sometimes used to "hide" information from the result of evaluation. Whether this is a good practice or not,
 it importantly *doesn't work* with zero-arity functions, as they are treated as rules and *do* contribute to the
 document.
@@ -49,7 +49,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [The OPA Document Model](https://www.openpolicyagent.org/docs/latest/philosophy/#the-opa-document-model)
+- OPA Docs: [The OPA Document Model](https://www.openpolicyagent.org/docs/philosophy/#the-opa-document-model)
 - OPA Issues: [Allow user-defined zero-argument functions in Rego](https://github.com/open-policy-agent/opa/issues/6315)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/zero-arity-function/zero_arity_function.rego)
 

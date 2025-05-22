@@ -80,7 +80,7 @@ Whichever way you choose is up to you. Consistency is key!
 ### Bundles
 
 While directory structure doesn't matter to OPA when parsing _policies_, directories parsed as
-[bundles](https://www.openpolicyagent.org/docs/latest/management-bundles/) will read _data_ (`data.json` or
+[bundles](https://www.openpolicyagent.org/docs/management-bundles/) will read _data_ (`data.json` or
 `data.yaml`) files and insert the data in the `data` document tree based on the directory structure relative
 to the bundle root. Having policies structured in the same manner provides a uniform experience, and makes it
 easier to understand where both policies and data come from.
@@ -135,7 +135,7 @@ rules:
 
 - Rego Style Guide: [Package name should match file location](https://docs.styra.com/opa/rego-style-guide#package-name-should-match-file-location)
 - Regal Docs: [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package)
-- OPA Docs: [Bundles](https://www.openpolicyagent.org/docs/latest/management-bundles/)
+- OPA Docs: [Bundles](https://www.openpolicyagent.org/docs/management-bundles/)
 - Styra Docs: [Styra DAS](https://docs.styra.com/das)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/directory-package-mismatch/directory_package_mismatch.rego)
 

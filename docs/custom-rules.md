@@ -120,7 +120,7 @@ convention on any policy in a repository. Packages may be named anything, but mu
 organization (Acme Corp). So `package acme.corp.policy` should be allowed, but not `package policy` or
 `package policy.acme.corp`. One exception: policy authors should be allowed to write policy for the `system.log` package
 provided by OPA to allow
-[masking](https://www.openpolicyagent.org/docs/latest/management-decision-logs/#masking-sensitive-data) sensitive data
+[masking](https://www.openpolicyagent.org/docs/management-decision-logs/#masking-sensitive-data) sensitive data
 from decision logs.
 
 An example policy to implement this requirement might look something like this:
@@ -160,7 +160,7 @@ Starting from top to bottom, these are the components comprising our custom rule
 1. The package of custom rules **must** start with `custom.regal.rules`, followed by the category of the rule, and the
    title (which is commonly quoted as rule names use `-` for spaces).
 1. The `data.regal.result` provides some helpers for formatting the result of a violation for inclusion in a report.
-1. Regal rules make heavy use of [metadata annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
+1. Regal rules make heavy use of [metadata annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
    in order to document the purpose of the rule, along with any other
    information that could potentially be useful. All rule packages **must** have
    a `description`. Providing links to additional documentation under

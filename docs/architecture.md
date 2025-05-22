@@ -18,10 +18,10 @@ When running Regal against a directory, like `regal lint my-policies/`, Regal do
   [forbids shadowing](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin) (i.e. using the same name as)
   built-in functions and operators.
 - Since rule bodies aren’t necessarily flat, but may contain nested bodies of constructs such as
-  [comprehensions](https://www.openpolicyagent.org/docs/latest/policy-language/#comprehensions) or
-  [every](https://www.openpolicyagent.org/docs/latest/policy-language/#every-keyword) blocks, many linter rules need to
+  [comprehensions](https://www.openpolicyagent.org/docs/policy-language/#comprehensions) or
+  [every](https://www.openpolicyagent.org/docs/policy-language/#every-keyword) blocks, many linter rules need to
   traverse all expressions in order to find what they are looking for. This is normally done with the help of the
-  built-in [walk](https://www.openpolicyagent.org/docs/latest/policy-reference/#graph) function.
+  built-in [walk](https://www.openpolicyagent.org/docs/policy-reference/#graph) function.
 - Traversing huge AST structures — and some policies contain millions of AST nodes! — takes time. This isn’t noticeable
   when linting a single file, but for some of the largest policy repositories out there, with several thousands of
   policy files and tests, the cost may be prohibitive. To alleviate this, Regal is implemented to process files

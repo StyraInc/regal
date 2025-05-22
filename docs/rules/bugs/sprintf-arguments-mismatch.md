@@ -60,7 +60,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Built-in Functions: `sprintf`](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-strings-sprintf)
+- OPA Docs: [Built-in Functions: `sprintf`](https://www.openpolicyagent.org/docs/policy-reference/#builtin-strings-sprintf)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/sprintf-arguments-mismatch/sprintf_arguments_mismatch.rego)
 
 ## Community

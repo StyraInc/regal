@@ -52,7 +52,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Membership and iteration: `in`](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
+- OPA Docs: [Membership and iteration: `in`](https://www.openpolicyagent.org/docs/policy-language/#membership-and-iteration-in)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/unnecessary-some/unnecessary_some.rego)
 
 ## Community

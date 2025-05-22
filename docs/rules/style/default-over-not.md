@@ -43,7 +43,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Default Keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#default-keyword)
+- OPA Docs: [Default Keyword](https://www.openpolicyagent.org/docs/policy-language/#default-keyword)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/default-over-not/default_over_not.rego)
 
 ## Community

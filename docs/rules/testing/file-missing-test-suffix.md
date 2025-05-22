@@ -24,7 +24,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/latest/policy-testing/)
+- OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/policy-testing/)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/file-missing-test-suffix/file_missing_test_suffix.rego)
 
 ## Community

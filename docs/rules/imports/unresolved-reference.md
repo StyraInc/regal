@@ -40,8 +40,8 @@ rules:
 ## Related Resources
 
 - Unresolved Import Rule: [unresolved-import](./unresolved-import)
-- OPA Docs: [Imports](https://www.openpolicyagent.org/docs/latest/policy-language/#imports)
-- OPA Docs: [Collaboration Using Import](https://www.openpolicyagent.org/docs/latest/faq/#collaboration-using-import)
+- OPA Docs: [Imports](https://www.openpolicyagent.org/docs/policy-language/#imports)
+- OPA Docs: [Collaboration Using Import](https://www.openpolicyagent.org/docs/faq/#collaboration-using-import)
 - OPA Issues: [Missing import should create error](https://github.com/open-policy-agent/opa/issues/491)
 
 ## Community

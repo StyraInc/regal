@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/github/StyraInc/regal/graph/badge.svg?token=EQK01YF3X3)](https://codecov.io/github/StyraInc/regal)
 [![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/StyraInc/regal/releases)
 
-Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/latest/policy-language/), making
+Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/policy-language/), making
 your Rego magnificent, and you the ruler of rules!
 
 With its extensive set of linter rules, documentation and editor integrations, Regal is the perfect companion for policy
@@ -601,7 +601,7 @@ Note: the `rego-version` attribute in the configuration file has precedence over
 
 While many projects consider the project's root directory (in editors often referred to as **workspace**) their
 "main" directory for policies, some projects may contain code from other languages, policy "subprojects", or multiple
-[bundles](https://www.openpolicyagent.org/docs/latest/management-bundles/). While most of Regal's features works
+[bundles](https://www.openpolicyagent.org/docs/management-bundles/). While most of Regal's features works
 independently of this — linting, for example, doesn't consider where in a workspace policies are located as long as
 those locations aren't [ignored](#ignoring-files-globally) — some features, like automatically
 [fixing](https://docs.styra.com/regal/fixing) violations, benefit from knowing when a project contains multiple roots.
@@ -637,7 +637,7 @@ in which the command was run.
 ## Capabilities
 
 By default, Regal will lint your policies using the
-[capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities) of the latest version of OPA
+[capabilities](https://www.openpolicyagent.org/docs/deployments/#capabilities) of the latest version of OPA
 known to Regal (i.e. the latest version of OPA at the time Regal was released). Sometimes you might want to tell Regal
 that some rules aren't applicable to your project (yet!). As an example, if you're running OPA v0.46.0, you likely won't
 be helped by the [custom-has-key](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) rule, as it
@@ -751,7 +751,7 @@ are:
 
 OPA itself provides a "linter" of sorts, via the `opa check` command and its `--strict` flag. This checks the provided
 Rego files not only for syntax errors, but also for OPA
-[strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) violations. Most of the strict
+[strict mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode) violations. Most of the strict
 mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
 provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
 to run `opa check --strict` against your policies before linting with Regal.

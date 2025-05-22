@@ -105,7 +105,7 @@ func DefinedInModule(module *ast.Module, builtins map[string]*ast.Builtin) map[s
 func defaultDescription(name string) string {
 	return fmt.Sprintf(`# %s
 
-See [METADATA Documentation](https://www.openpolicyagent.org/docs/latest/policy-language/#metadata)
+See [METADATA Documentation](https://www.openpolicyagent.org/docs/policy-language/#metadata)
 to add more detail.`, name)
 }
 

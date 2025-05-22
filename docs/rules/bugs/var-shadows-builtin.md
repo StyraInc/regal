@@ -46,7 +46,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
+- OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/policy-reference/#built-in-functions)
 - OPA Repo: [builtin_metadata.json](https://github.com/open-policy-agent/opa/blob/main/builtin_metadata.json)
 - Regal Docs: [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/var-shadows-builtin/var_shadows_builtin.rego)

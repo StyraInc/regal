@@ -140,9 +140,9 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Generating Sets](https://www.openpolicyagent.org/docs/latest/policy-language/#generating-sets)
-- OPA Docs: [Generating Objects](https://www.openpolicyagent.org/docs/latest/policy-language/#generating-objects)
-- OPA Docs: [Comprehensions](https://www.openpolicyagent.org/docs/latest/policy-language/#comprehensions)
+- OPA Docs: [Generating Sets](https://www.openpolicyagent.org/docs/policy-language/#generating-sets)
+- OPA Docs: [Generating Objects](https://www.openpolicyagent.org/docs/policy-language/#generating-objects)
+- OPA Docs: [Comprehensions](https://www.openpolicyagent.org/docs/policy-language/#comprehensions)
 - Styra Blog: [Five Things You Didn't Know About OPA](https://www.styra.com/blog/five-things-you-didnt-know-about-opa/)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/prefer-set-or-object-rule/prefer_set_or_object_rule.rego)
 

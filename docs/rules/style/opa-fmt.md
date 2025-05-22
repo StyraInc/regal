@@ -35,7 +35,7 @@ indent_size = 4
 OPA 1.0 makes Rego v1 the default. This change mandated some changes to the
 functionality of the `opa fmt` command and a number of new options for working
 with mixed version code bases. See the
-[OPA documentation](https://www.openpolicyagent.org/docs/latest/cli/#opa-fmt)
+[OPA documentation](https://www.openpolicyagent.org/docs/cli/#opa-fmt)
 for the command's options.
 
 In Regal, a v0 file will have the `opa-fmt` violation unless it's been formatted
@@ -61,7 +61,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [CLI Reference `opa fmt`](https://www.openpolicyagent.org/docs/latest/cli/#opa-fmt)
+- OPA Docs: [CLI Reference `opa fmt`](https://www.openpolicyagent.org/docs/cli/#opa-fmt)
 
 ## Community
 

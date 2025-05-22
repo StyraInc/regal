@@ -1,4 +1,4 @@
-### [json.filter](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-object-jsonfilter)
+### [json.filter](https://www.openpolicyagent.org/docs/policy-reference/#builtin-object-jsonfilter)
 
 ```rego
 filtered := json.filter(object, paths)

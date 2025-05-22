@@ -84,7 +84,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [With Keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#with-keyword)
+- OPA Docs: [With Keyword](https://www.openpolicyagent.org/docs/policy-language/#with-keyword)
 - Styra Blog: [Dynamic Policy Composition for OPA](https://www.styra.com/blog/dynamic-policy-composition-for-opa/)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/performance/with-outside-test-context/with_outside_test_context.rego)
 

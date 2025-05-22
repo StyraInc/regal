@@ -52,7 +52,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode)
+- OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/import-shadows-import/import_shadows_import.rego)
 
 ## Community

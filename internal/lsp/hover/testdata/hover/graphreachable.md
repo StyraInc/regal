@@ -1,4 +1,4 @@
-### [graph.reachable](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-graph-graphreachable)
+### [graph.reachable](https://www.openpolicyagent.org/docs/policy-reference/#builtin-graph-graphreachable)
 
 ```rego
 output := graph.reachable(graph, initial)

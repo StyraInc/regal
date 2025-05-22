@@ -25,7 +25,7 @@ keys := object.keys(input.object)
 ## Rationale
 
 Instead of using a set comprehension to collect keys from an object, prefer to use the built-in function
-[object.keys](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-object-objectkeys).
+[object.keys](https://www.openpolicyagent.org/docs/policy-reference/#builtin-object-objectkeys).
 This option is both more declarative and better conveys the intent of the code.
 
 ## Configuration Options
@@ -42,7 +42,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [object.keys](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-object-objectkeys)
+- OPA Docs: [object.keys](https://www.openpolicyagent.org/docs/policy-reference/#builtin-object-objectkeys)
 
 ## Community
 

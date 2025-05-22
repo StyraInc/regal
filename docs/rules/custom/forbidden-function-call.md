@@ -7,11 +7,11 @@
 ## Description
 
 This custom rule allows providing Regal a list of
-[built-in functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions) that should be
+[built-in functions](https://www.openpolicyagent.org/docs/policy-reference/#built-in-functions) that should be
 considered forbidden. Any call to a function in the list will be reported as a violation.
 
 Another, more advanced, option to achieve the same result is the
-[capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities) feature in OPA. While a more
+[capabilities](https://www.openpolicyagent.org/docs/deployments/#capabilities) feature in OPA. While a more
 capable option, allowing things like:
 
 - Adding new custom built-in functions that OPA should be aware of
@@ -45,8 +45,8 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Capabilities](https://www.openpolicyagent.org/docs/latest/deployments/#capabilities)
-- OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions)
+- OPA Docs: [Capabilities](https://www.openpolicyagent.org/docs/deployments/#capabilities)
+- OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/policy-reference/#built-in-functions)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/custom/forbidden-function-call/forbidden_function_call.rego)
 
 ## Community

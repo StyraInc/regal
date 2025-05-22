@@ -58,7 +58,7 @@ rule that is meant to be queried for decisions from the outside. While it might 
 rules are meant to be queried, adding an extra line of two of metadata will help make it obvious to others.
 
 Marking a package or rule via an
-[entrypoint annotation attribute](https://www.openpolicyagent.org/docs/latest/policy-language/#entrypoint) not only
+[entrypoint annotation attribute](https://www.openpolicyagent.org/docs/policy-language/#entrypoint) not only
 provides good documentation for others, but also unlocks programmatic possibilities, like:
 
 1. Your policy library may be compiled to WebAssembly without extra entrypoint arguments
@@ -83,8 +83,8 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Metadata](https://www.openpolicyagent.org/docs/latest/policy-language/#metadata)
-- OPA Docs: [Entrypoint](https://www.openpolicyagent.org/docs/latest/policy-language/#entrypoint)
+- OPA Docs: [Metadata](https://www.openpolicyagent.org/docs/policy-language/#metadata)
+- OPA Docs: [Entrypoint](https://www.openpolicyagent.org/docs/policy-language/#entrypoint)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/no-defined-entrypoint/no_defined_entrypoint.rego)
 
 ## Community

@@ -1,4 +1,4 @@
-### [indexof](https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-strings-indexof)
+### [indexof](https://www.openpolicyagent.org/docs/policy-reference/#builtin-strings-indexof)
 
 ```rego
 output := indexof(haystack, needle)

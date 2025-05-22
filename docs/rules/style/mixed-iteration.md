@@ -68,7 +68,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)
-- OPA Docs: [Membership and iteration](https://www.openpolicyagent.org/docs/latest/policy-language/#membership-and-iteration-in)
+- OPA Docs: [Membership and iteration](https://www.openpolicyagent.org/docs/policy-language/#membership-and-iteration-in)
 
 ## Community
 

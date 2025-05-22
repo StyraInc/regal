@@ -56,7 +56,7 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 	}
 
 	link := fmt.Sprintf(
-		"https://www.openpolicyagent.org/docs/latest/policy-reference/#builtin-%s-%s",
+		"https://www.openpolicyagent.org/docs/policy-reference/#builtin-%s-%s",
 		rego.BuiltinCategory(builtin),
 		strings.ReplaceAll(builtin.Name, ".", ""),
 	)

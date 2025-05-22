@@ -29,7 +29,7 @@ additionally makes them easier to identify as such.
 ## Limitations
 
 This rule currently only scans regex string literals in the place of the `pattern` argument of the various
-[regex built-in functions](https://www.openpolicyagent.org/docs/latest/policy-reference/#regex). It will not **not**
+[regex built-in functions](https://www.openpolicyagent.org/docs/policy-reference/#regex). It will not **not**
 try to "resolve" patterns assigned to variables. The following example would as such not render a warning:
 
 ```rego
@@ -57,7 +57,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Use raw strings for regex patterns](https://github.com/StyraInc/rego-style-guide#use-raw-strings-for-regex-patterns)
-- OPA Docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/latest/policy-reference/#regex)
+- OPA Docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/policy-reference/#regex)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/non-raw-regex-pattern/non_raw_regex_pattern.rego)
 
 ## Community

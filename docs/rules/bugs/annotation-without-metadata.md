@@ -29,7 +29,7 @@ allow if {
 
 A comment that starts with `<annotation-attribute>:` but is not part of a metadata block is likely a mistake. Add
 `# METADATA` above the line to turn it into a
-[metadata](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations) block.
+[metadata](https://www.openpolicyagent.org/docs/policy-language/#annotations) block.
 
 ## Configuration Options
 
@@ -45,7 +45,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/latest/policy-language/#annotations)
+- OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/annotation-without-metadata/annotation_without_metadata.rego)
 
 ## Community

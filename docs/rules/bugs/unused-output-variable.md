@@ -63,7 +63,7 @@ allow if {
 }
 ```
 
-And a [strict mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode) check for unused
+And a [strict mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode) check for unused
 variables defined in assignment (`:=`), or as a function arguments:
 
 ```rego
@@ -94,7 +94,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)
-- OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/latest/policy-language/#strict-mode)
+- OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/unused-output-variable/unused_output_variable.rego)
 
 ## Community

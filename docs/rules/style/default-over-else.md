@@ -30,7 +30,7 @@ The `else` keyword has a single purpose in Rego — to allow a policy author to 
 several `else`-clauses are chained or not, it's common to use a last "fallback" `else` to cover all cases not covered by
 the conditions in the preceding `else`-bodies. A kind of "catch all", or "default" condition. This is useful, but Rego
 arguably provides a more idiomatic construct for default assignment: the
-[default keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#default-keyword).
+[default keyword](https://www.openpolicyagent.org/docs/policy-language/#default-keyword).
 
 While the end result is the same, default assignment has the benefit of more clearly — and **before** the conditional
 assignments — communicating what the *safe* option is. This is particularly important for
@@ -93,7 +93,7 @@ rules:
 
 ## Related Resources
 
-- OPA Docs: [Default Keyword](https://www.openpolicyagent.org/docs/latest/policy-language/#default-keyword)
+- OPA Docs: [Default Keyword](https://www.openpolicyagent.org/docs/policy-language/#default-keyword)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/default-over-else/default_over_else.rego)
 
 ## Community

@@ -844,24 +844,16 @@ If you want to embed Regal in another project or product, please reach out!
 
 ## Roadmap
 
-The Regal project roadmap is subject to change, but these are some of the features we're planning to work on
-in the near future:
+The current Roadmap items are all related to the preparation for
+[Regal 1.0](https://github.com/StyraInc/regal/issues/979):
 
-### Linter
-
-- [x] Full support for both OPA 1.0 policies and older versions of Rego
-- [ ] Allow remediation of more `style` category rules using the `regal fix` command
-- [ ] Add [unused-rule](https://github.com/StyraInc/regal/issues/358) linter
-- [x] Add [unused-output-variable](https://github.com/StyraInc/regal/issues/60) linter
-
-### Language Server
-
-- [ ] Make "Check on save" unnecessary by allowing diagnostics to include
-      [compilation errors](https://github.com/StyraInc/regal/issues/745)
-- [x] Add Code Lens to "Evaluate" any rule or package (VS Code only, initially)
-- [ ] Implement [Signature Help](https://github.com/StyraInc/regal/issues/695) feature
-
-The roadmap is updated when all the current items have been completed.
+- [ ] [Go API: Refactor the Location object in Violation (#1554)](https://github.com/StyraInc/regal/issues/1554)
+- [ ] [Rego API: Provide a stable and well-documented Rego API (#1555)](https://github.com/StyraInc/regal/issues/1555)
+- [ ] [Go API: Audit and reduce the public Go API surface (#1556)](https://github.com/StyraInc/regal/issues/1556)
+- [ ] [Custom Rules: Tighten up Authoring experience (#1559)](https://github.com/StyraInc/regal/issues/1559)
+- [ ] [docs: Improve automated documentation generation (#1557)](https://github.com/StyraInc/regal/issues/1557)
+- [ ] [docs: Break down README into smaller units (#1558)](https://github.com/StyraInc/regal/issues/1558)
+- [ ] [lsp: Support a JetBrains LSP client (#1560)](https://github.com/StyraInc/regal/issues/1560)
 
 If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!
 

@@ -77,6 +77,15 @@ func TestRegoVersionFromVersionsMap(t *testing.T) {
 			Filename:        "/foo/bar.rego",
 			ExpectedVersion: ast.RegoV1,
 		},
+		"file has version from current dir (no leading slash)": {
+			VersionsMap: map[string]ast.RegoVersion{
+				"foo":     ast.RegoV1,
+				"bar":     ast.RegoV0,
+				"unknown": ast.RegoUndefined,
+			},
+			Filename:        "/foo/bar.rego",
+			ExpectedVersion: ast.RegoV1,
+		},
 		"file has version from parent dir": {
 			VersionsMap: map[string]ast.RegoVersion{
 				"foo":     ast.RegoV1,

@@ -43,21 +43,15 @@ items contains item if {
 _excluded(line, position) if _function_args_position(substring(line, 0, position.character))
 
 _function_args_position(text) if {
-	text == trim_left(text, " \t")
 	contains(text, "(")
 	not contains(text, "=")
+	text == trim_left(text, " \t")
 }
 
 default _same_line_loop_vars(_) := []
 
-_same_line_loop_vars(line) := d if {
-	expr := trim_space(line)
+_same_line_loop_vars(line) := vars if {
+	regex.match(`^\s*(some|every)`, line)
 
-	strings.any_prefix_match(expr, {"some", "every"})
-
-	# ---------------------------------------------------> "some k, v in coll"
-	a := substring(expr, 0, indexof(expr, " in")) # -----> "some k, v"
-	b := trim_prefix(trim_prefix(a, "some"), "every") # -> "k, v"
-	c := replace(b, " ", "") # --------------------------> "k,v"
-	d := split(c, ",") # --------------------------------> [k, v] or [v]
+	vars := split(regex.replace(line, `(?:\s*(?:some|every)\s+)(\w+)(?:,?\s*)(\w+)?(?:\s+.*)in.*`, "$1,$2"), ",")
 }

@@ -50,7 +50,7 @@ find_ref_vars(value) := [var | # regal ignore:narrow-argument
 ]
 
 # one or two vars declared via `every`, i.e. `every x in y {}`
-# or `every`, i.e. `every x, y in y {}`
+# or `every`, i.e. `every x, y in z {}`
 _find_every_vars(value) := array.concat(key_var, val_var) if {
 	key_var := [value.key |
 		value.key.type == "var"
@@ -256,7 +256,7 @@ found.comprehensions[rule_index] contains value if {
 }
 
 # METADATA
-# description: set containing all negated expressions in input AST
+# description: set containing all expressions in input AST
 found.expressions[rule_index] contains value if {
 	some i, rule_index in rule_index_strings
 	some node in ["head", "body", "else"]

@@ -577,7 +577,7 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 	}
 
 	if rep.Summary.NumViolations != 2 {
-		t.Errorf("expected 2 violations, got %d", rep.Summary.NumViolations)
+		t.Fatalf("expected 2 violations, got %d", rep.Summary.NumViolations)
 	}
 
 	if rep.Summary.NumViolations == 0 {

@@ -728,7 +728,7 @@ import data.unresolved`,
 	}
 }
 
-// 968805333 ns/op	2970674744 B/op	56876788 allocs/op
+// 968805333 ns/op	2970674744 B/op	56876788 allocs/op - main
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
@@ -740,9 +740,6 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithUserConfig(conf)
-
-	b.ResetTimer()
-	b.ReportAllocs()
 
 	var rep report.Report
 
@@ -773,9 +770,6 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 		WithUserConfig(conf).
 		MustPrepare(ctx)
 
-	b.ResetTimer()
-	b.ReportAllocs()
-
 	var rep report.Report
 
 	for range b.N {
@@ -790,16 +784,13 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 	}
 }
 
-// 164353357 ns/op	455624941 B/op	 8560088 allocs/op
+// 6	 168875708 ns/op	455586606 B/op	 8537889 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true)
-
-	b.ResetTimer()
-	b.ReportAllocs()
 
 	var err error
 
@@ -825,9 +816,6 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true).
 		MustPrepare(context.Background())
-
-	b.ResetTimer()
-	b.ReportAllocs()
 
 	var err error
 

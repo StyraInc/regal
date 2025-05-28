@@ -1,4 +1,8 @@
-# Editor support
+---
+sidebar_position: 7
+---
+
+# Editor Support
 
 ## Visual Studio Code
 

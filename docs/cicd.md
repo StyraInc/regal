@@ -1,3 +1,8 @@
+---
+sidebar_label: CI/CD
+sidebar_position: 8
+---
+
 # Using Regal in your build pipeline
 
 Its possible to use Regal to lint your Rego policies in your CI/CD pipeline(s)!

@@ -1,3 +1,8 @@
+---
+sidebar_custom_props:
+  exclude: true
+---
+
 # Security Policy
 
 ## Supported Versions

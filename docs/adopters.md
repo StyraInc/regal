@@ -1,3 +1,7 @@
+---
+sidebar_position: 13
+---
+
 # Adopters
 
 We're happy to be trusted by the following projects and organizations.

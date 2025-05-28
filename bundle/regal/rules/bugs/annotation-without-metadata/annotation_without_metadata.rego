@@ -12,7 +12,7 @@ report contains violation if {
 	location := util.to_location_object(block[0].location)
 
 	location.col == 1
-	ast.comments.annotation_match(trim_space(block[0].text))
+	ast.comments.annotation_match(block[0].text)
 
 	violation := result.fail(rego.metadata.chain(), result.location(block[0]))
 }

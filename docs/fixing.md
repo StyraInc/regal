@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # Fixing Violations
 
 For each violation Regal is able to detect, there is a documentation page explaining the issue in detail and how to fix

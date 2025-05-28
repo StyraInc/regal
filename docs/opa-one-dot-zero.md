@@ -1,3 +1,8 @@
+---
+sidebar_label: OPA 1.0
+sidebar_position: 14
+---
+
 # OPA 1.0 and Regal
 
 While we always recommend using the latest version of OPA, we're well aware that there may be situations where — for

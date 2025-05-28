@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # Pre-Commit Hooks
 
 [Pre-Commit](https://pre-commit.com) is a framework for managing and maintaining multi-language pre-commit hooks.

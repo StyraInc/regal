@@ -1,3 +1,7 @@
+---
+sidebar_position: 10
+---
+
 # Debug Adapter
 
 In addition to being a [language server](/regal/language-server),

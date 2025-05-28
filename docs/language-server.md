@@ -1,3 +1,7 @@
+---
+sidebar_position: 9
+---
+
 # Language Server
 
 In order to support Rego policy development in editors like

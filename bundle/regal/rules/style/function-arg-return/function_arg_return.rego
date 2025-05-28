@@ -7,8 +7,7 @@ import data.regal.config
 import data.regal.result
 
 report contains violation if {
-	excluded_functions := {name | some name in config.rules.style["function-arg-return"]["except-functions"]}
-	included_functions := (ast.all_function_names - excluded_functions) - {"print"}
+	included_functions := ast.all_function_names - _excluded_functions
 
 	some fn
 	ast.function_calls[_][fn].name in included_functions
@@ -17,3 +16,6 @@ report contains violation if {
 
 	violation := result.fail(rego.metadata.chain(), result.location(regal.last(fn.args)))
 }
+
+_excluded_functions contains "print"
+_excluded_functions contains name if some name in config.rules.style["function-arg-return"]["except-functions"]

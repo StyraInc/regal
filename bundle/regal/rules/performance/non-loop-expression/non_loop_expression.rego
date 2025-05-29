@@ -49,8 +49,9 @@ _exprs[rule_index][row] contains expr if {
 # x = foo.bar[_]
 _loop_start_points[rule_index][loc.row] contains var if {
 	some rule_index
-	var := ast.found.vars[rule_index].assign[_]
 	term := _exprs[rule_index][_][_][_]
+
+	is_array(term)
 
 	last_term := regal.last(term)
 	last_term.type == "ref"
@@ -58,6 +59,8 @@ _loop_start_points[rule_index][loc.row] contains var if {
 	last := regal.last(last_term.value)
 	last.type == "var"
 	startswith(last.value, "$")
+
+	some var in ast.found.vars[rule_index].assign
 
 	loc := util.to_location_object(var.location)
 	loc.row == util.to_location_object(term[0].location).row

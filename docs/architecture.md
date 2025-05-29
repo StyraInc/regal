@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # Architecture
 
 Or "How does Regal work?"

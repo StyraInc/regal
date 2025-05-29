@@ -1,3 +1,7 @@
+---
+sidebar_position: 11
+---
+
 # Remote Features
 
 This page outlines the features of Regal that need internet access to function.

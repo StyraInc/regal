@@ -1,3 +1,8 @@
+---
+sidebar_custom_props:
+  exclude: true
+---
+
 # Development
 
 If you'd like to contribute to Regal, here are some pointers to help get you started.

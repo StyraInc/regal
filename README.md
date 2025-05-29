@@ -182,122 +182,22 @@ about how to set up Regal to lint your policies on every commit or pull request.
 
 Regal comes with a set of built-in rules, grouped by category.
 
-- **bugs**: Common mistakes, potential bugs and inefficiencies in Rego policies.
-- **custom**: Custom, rules where enforcement can be adjusted to match your preferences.
-- **idiomatic**: Suggestions for more idiomatic constructs.
-- **imports**: Best practices for imports.
-- **style**: [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
-- **testing**: Rules for testing and development.
+- [**bugs**](https://docs.styra.com/regal/rules/bugs):
+  Common mistakes, potential bugs and inefficiencies in Rego policies.
+- [**custom**](https://docs.styra.com/regal/rules/custom):
+  Custom rules where enforcement can be adjusted to match your preferences.
+- [**idiomatic**](https://docs.styra.com/regal/rules/idiomatic):
+  Suggestions for more idiomatic constructs.
+- [**imports**](https://docs.styra.com/regal/rules/imports):
+  Best practices for imports.
+- [**style**](https://docs.styra.com/regal/rules/style):
+  [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
+- [**testing**](https://docs.styra.com/regal/rules/testing):
+  Rules for testing and development.
+- [**performance**](https://docs.styra.com/regal/rules/performance):
+  Rules for improving performance of policies.
 
-The following rules are currently available:
-
-<!-- RULES_TABLE_START -->
-
-|  Category   |                                                  Title                                                  |                        Description                        |
-|-------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| bugs        | [annotation-without-metadata](https://docs.styra.com/regal/rules/bugs/annotation-without-metadata)      | Annotation without metadata                               |
-| bugs        | [argument-always-wildcard](https://docs.styra.com/regal/rules/bugs/argument-always-wildcard)            | Argument is always a wildcard                             |
-| bugs        | [constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition)                        | Constant condition                                        |
-| bugs        | [deprecated-builtin](https://docs.styra.com/regal/rules/bugs/deprecated-builtin)                        | Avoid using deprecated built-in functions                 |
-| bugs        | [duplicate-rule](https://docs.styra.com/regal/rules/bugs/duplicate-rule)                                | Duplicate rule                                            |
-| bugs        | [if-empty-object](https://docs.styra.com/regal/rules/bugs/if-empty-object)                              | Empty object following `if`                               |
-| bugs        | [if-object-literal](https://docs.styra.com/regal/rules/bugs/if-object-literal)                          | Object literal following `if`                             |
-| bugs        | [import-shadows-rule](https://docs.styra.com/regal/rules/bugs/import-shadows-rule)                      | Import shadows rule                                       |
-| bugs        | [impossible-not](https://docs.styra.com/regal/rules/bugs/impossible-not)                                | Impossible `not` condition                                |
-| bugs        | [inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args)                          | Inconsistently named function arguments                   |
-| bugs        | [internal-entrypoint](https://docs.styra.com/regal/rules/bugs/internal-entrypoint)                      | Entrypoint can't be marked internal                       |
-| bugs        | [invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute)        | Invalid attribute in metadata annotation                  |
-| bugs        | [leaked-internal-reference](https://docs.styra.com/regal/rules/bugs/leaked-internal-reference)          | Outside reference to internal rule or function            |
-| bugs        | [not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop)                        | Use of != in loop                                         |
-| bugs        | [redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check)          | Redundant existence check                                 |
-| bugs        | [redundant-loop-count](https://docs.styra.com/regal/rules/bugs/redundant-loop-count)                    | Redundant count before loop                               |
-| bugs        | [rule-assigns-default](https://docs.styra.com/regal/rules/bugs/rule-assigns-default)                    | Rule assigned its default value                           |
-| bugs        | [rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if)                                  | Rule named "if"                                           |
-| bugs        | [rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin)                    | Rule name shadows built-in                                |
-| bugs        | [sprintf-arguments-mismatch](https://docs.styra.com/regal/rules/bugs/sprintf-arguments-mismatch)        | Mismatch in `sprintf` arguments count                     |
-| bugs        | [time-now-ns-twice](https://docs.styra.com/regal/rules/bugs/time-now-ns-twice)                          | Repeated calls to `time.now_ns`                           |
-| bugs        | [top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration)                      | Iteration in top-level assignment                         |
-| bugs        | [unassigned-return-value](https://docs.styra.com/regal/rules/bugs/unassigned-return-value)              | Non-boolean return value unassigned                       |
-| bugs        | [unused-output-variable](https://docs.styra.com/regal/rules/bugs/unused-output-variable)                | Unused output variable                                    |
-| bugs        | [var-shadows-builtin](https://docs.styra.com/regal/rules/bugs/var-shadows-builtin)                      | Variable name shadows built-in                            |
-| bugs        | [zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function)                      | Avoid functions without args                              |
-| custom      | [forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call)            | Forbidden function call                                   |
-| custom      | [missing-metadata](https://docs.styra.com/regal/rules/custom/missing-metadata)                          | Package or rule missing metadata                          |
-| custom      | [naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention)                        | Naming convention violation                               |
-| custom      | [narrow-argument](https://docs.styra.com/regal/rules/custom/narrow-argument)                            | Function argument can be narrowed                         |
-| custom      | [one-liner-rule](https://docs.styra.com/regal/rules/custom/one-liner-rule)                              | Rule body could be made a one-liner                       |
-| custom      | [prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head)                  | Prefer value in rule head                                 |
-| idiomatic   | [ambiguous-scope](https://docs.styra.com/regal/rules/idiomatic/ambiguous-scope)                         | Ambiguous metadata scope                                  |
-| idiomatic   | [boolean-assignment](https://docs.styra.com/regal/rules/idiomatic/boolean-assignment)                   | Prefer `if` over boolean assignment                       |
-| idiomatic   | [custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct)       | Custom function may be replaced by `in` and `object.keys` |
-| idiomatic   | [custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct)                 | Custom function may be replaced by `in` keyword           |
-| idiomatic   | [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)   | Directory structure should mirror package                 |
-| idiomatic   | [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)         | Prefer pattern matching in function arguments             |
-| idiomatic   | [in-wildcard-key](https://docs.styra.com/regal/rules/idiomatic/in-wildcard-key)                         | Unnecessary wildcard key                                  |
-| idiomatic   | [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)             | Missing entrypoint annotation                             |
-| idiomatic   | [non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern)             | Use raw strings for regex patterns                        |
-| idiomatic   | [prefer-set-or-object-rule](https://docs.styra.com/regal/rules/idiomatic/prefer-set-or-object-rule)     | Prefer set or object rule over comprehension              |
-| idiomatic   | [single-item-in](https://docs.styra.com/regal/rules/idiomatic/single-item-in)                           | Avoid `in` for single item collection                     |
-| idiomatic   | [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)                               | Use the `contains` keyword                                |
-| idiomatic   | [use-if](https://docs.styra.com/regal/rules/idiomatic/use-if)                                           | Use the `if` keyword                                      |
-| idiomatic   | [use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator)                         | Use in to check for membership                            |
-| idiomatic   | [use-object-keys](https://docs.styra.com/regal/rules/idiomatic/use-object-keys)                         | Prefer to use `object.keys`                               |
-| idiomatic   | [use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars)       | Use `some` to declare output variables                    |
-| idiomatic   | [use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count)                     | Use `strings.count` where possible                        |
-| imports     | [avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input)               | Avoid importing input                                     |
-| imports     | [circular-import](https://docs.styra.com/regal/rules/imports/circular-import)                           | Circular import                                           |
-| imports     | [confusing-alias](https://docs.styra.com/regal/rules/imports/confusing-alias)                           | Confusing alias of existing import                        |
-| imports     | [ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import)                             | Reference ignores import                                  |
-| imports     | [implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords)         | Use explicit future keyword imports                       |
-| imports     | [import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule)                       | Import declared after rule                                |
-| imports     | [import-shadows-builtin](https://docs.styra.com/regal/rules/imports/import-shadows-builtin)             | Import shadows built-in namespace                         |
-| imports     | [import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import)               | Import shadows another import                             |
-| imports     | [pointless-import](https://docs.styra.com/regal/rules/imports/pointless-import)                         | Importing own package is pointless                        |
-| imports     | [prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports)             | Prefer importing packages over rules                      |
-| imports     | [redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias)                           | Redundant alias                                           |
-| imports     | [redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import)               | Redundant import of data                                  |
-| imports     | [unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import)                       | Unresolved import                                         |
-| imports     | [unresolved-reference](https://docs.styra.com/regal/rules/imports/unresolved-reference)                 | Unresolved Reference                                      |
-| imports     | [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)                                   | Use `import rego.v1`                                      |
-| performance | [defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment)                     | Assignment can be deferred                                |
-| performance | [non-loop-expression](https://docs.styra.com/regal/rules/performance/non-loop-expression)               | Non-loop expression                                       |
-| performance | [walk-no-path](https://docs.styra.com/regal/rules/performance/walk-no-path)                             | Call to `walk` can be optimized                           |
-| performance | [with-outside-test-context](https://docs.styra.com/regal/rules/performance/with-outside-test-context)   | `with` used outside test context                          |
-| style       | [avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix)         | Avoid `get_` and `list_` prefix for rules and functions   |
-| style       | [chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body)                         | Avoid chaining rule bodies                                |
-| style       | [comprehension-term-assignment](https://docs.styra.com/regal/rules/style/comprehension-term-assignment) | Assignment can be moved to comprehension term             |
-| style       | [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)                         | Prefer default assignment over fallback else              |
-| style       | [default-over-not](https://docs.styra.com/regal/rules/style/default-over-not)                           | Prefer default assignment over negated condition          |
-| style       | [detached-metadata](https://docs.styra.com/regal/rules/style/detached-metadata)                         | Detached metadata annotation                              |
-| style       | [double-negative](https://docs.styra.com/regal/rules/style/double-negative)                             | Avoid double negatives                                    |
-| style       | [external-reference](https://docs.styra.com/regal/rules/style/external-reference)                       | External reference in function                            |
-| style       | [file-length](https://docs.styra.com/regal/rules/style/file-length)                                     | Max file length exceeded                                  |
-| style       | [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)                     | Function argument used for return value                   |
-| style       | [line-length](https://docs.styra.com/regal/rules/style/line-length)                                     | Line too long                                             |
-| style       | [messy-rule](https://docs.styra.com/regal/rules/style/messy-rule)                                       | Messy incremental rule                                    |
-| style       | [mixed-iteration](https://docs.styra.com/regal/rules/style/mixed-iteration)                             | Mixed iteration style                                     |
-| style       | [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)                 | Comment should start with whitespace                      |
-| style       | [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)                                             | File should be formatted with `opa fmt`                   |
-| style       | [pointless-reassignment](https://docs.styra.com/regal/rules/style/pointless-reassignment)               | Pointless reassignment of variable                        |
-| style       | [prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case)                         | Prefer snake_case for names                               |
-| style       | [prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration)           | Prefer `some .. in` for iteration                         |
-| style       | [rule-length](https://docs.styra.com/regal/rules/style/rule-length)                                     | Max rule length exceeded                                  |
-| style       | [rule-name-repeats-package](https://docs.styra.com/regal/rules/style/rule-name-repeats-package)         | Rule name repeats package                                 |
-| style       | [todo-comment](https://docs.styra.com/regal/rules/style/todo-comment)                                   | Avoid TODO comments                                       |
-| style       | [trailing-default-rule](https://docs.styra.com/regal/rules/style/trailing-default-rule)                 | Default rule should be declared first                     |
-| style       | [unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment)           | Unconditional assignment in rule body                     |
-| style       | [unnecessary-some](https://docs.styra.com/regal/rules/style/unnecessary-some)                           | Unnecessary use of `some`                                 |
-| style       | [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)             | Prefer := over = for assignment                           |
-| style       | [yoda-condition](https://docs.styra.com/regal/rules/style/yoda-condition)                               | Yoda condition                                            |
-| testing     | [dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf)               | Dubious use of print and sprintf                          |
-| testing     | [file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix)         | Files containing tests should have a _test.rego suffix    |
-| testing     | [identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests)           | Multiple tests with same name                             |
-| testing     | [metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable)             | Metasyntactic variable name                               |
-| testing     | [print-or-trace-call](https://docs.styra.com/regal/rules/testing/print-or-trace-call)                   | Call to print or trace function                           |
-| testing     | [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package)       | Test outside of test package                              |
-| testing     | [todo-test](https://docs.styra.com/regal/rules/testing/todo-test)                                       | TODO test encountered                                     |
-
-<!-- RULES_TABLE_END -->
+Browse [All Available Rules](https://docs.styra.com/regal/rules).
 
 Rules in all categories except for those in `custom` are **enabled** by default. Some rules however — like
 `use-contains` and `use-if` — are conditionally enabled only when a version of OPA/Rego before 1.0 is targeted. See the

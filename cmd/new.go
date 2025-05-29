@@ -126,16 +126,6 @@ func scaffoldRule(params newRuleCommandParams) error {
 		if err := addToDataYAML(params); err != nil {
 			return err
 		}
-
-		r, err := createTable([]string{filepath.Join("bundle", "regal")})
-		if err != nil {
-			return err
-		}
-
-		newReadme := renderREADME(r)
-		readmePath := filepath.Join(params.output, "README.md")
-
-		return os.WriteFile(readmePath, []byte(newReadme), 0o600)
 	}
 
 	return fmt.Errorf("unsupported type %v", params.type_)

@@ -143,11 +143,10 @@ anything you can't figure out, don't hesitate to ask for help in the `#regal` Sl
 
 ## Documentation
 
-The table in the [Rules](../README.md#rules) section of the README is generated with the following command:
-
-```shell
-go run main.go table --write-to-readme bundle
-```
+The tables on the [rules pages](https://docs.styra.com/regal/rules) are
+generated from the individual
+[rule Markdown files](https://github.com/StyraInc/regal/tree/main/docs/rules)
+under `docs/rules`.
 
 ## Wasm (Experimental)
 

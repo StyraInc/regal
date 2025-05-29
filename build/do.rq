@@ -91,7 +91,6 @@ job contains "pr" if {
 
 	# format
 	fmt_all
-	write_readme
 	golangcilintfix
 
 	# verify
@@ -129,14 +128,6 @@ job contains "lint" if {
 job contains "e2e" if {
 	build(true)
 	e2e
-}
-
-# METADATA
-# title: check_readme
-# description: Verify that the rules table in the README is up-to-date
-job contains "check_readme" if {
-	build(true)
-	check_readme
 }
 
 build(true) if {
@@ -179,14 +170,6 @@ lint_ci if {
 	run_quiet("./regal lint --format github bundle")
 	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
 	run("npx --prefix build dprint --config build/dprint.json check")
-}
-
-check_readme if {
-	run("./regal table --compare-to-readme bundle")
-}
-
-write_readme if {
-	run("./regal table --write-to-readme bundle")
 }
 
 fetch_engine_caps if {

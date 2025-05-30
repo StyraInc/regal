@@ -31,6 +31,10 @@ linters:
           deny:
             - pkg: gopkg.in/yaml.v2
               desc: use yaml.v3 only
+    errcheck:
+      exclude-functions:
+        - (*github.com/olekukonko/tablewriter.Table).Append
+        - (*github.com/olekukonko/tablewriter.Table).Render
     gocritic:
       disabled-checks:
         - hugeParam

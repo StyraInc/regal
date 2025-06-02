@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/imports/use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1) on the Styra documentation website for the canonical representation of this page.
+
 # use-rego-v1
 
 **Summary**: Use `import rego.v1`

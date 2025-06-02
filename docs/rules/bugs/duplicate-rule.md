@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/duplicate-rule](https://docs.styra.com/regal/rules/bugs/duplicate-rule) on the Styra documentation website for the canonical representation of this page.
+
 # duplicate-rule
 
 **Summary**: Duplicate rule

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/impossible-not](https://docs.styra.com/regal/rules/bugs/impossible-not) on the Styra documentation website for the canonical representation of this page.
+
 # impossible-not
 
 **Summary**: Impossible `not` condition

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/rule-named-if](https://docs.styra.com/regal/rules/bugs/rule-named-if) on the Styra documentation website for the canonical representation of this page.
+
 # rule-named-if
 
 **Summary**: Rule named `if`

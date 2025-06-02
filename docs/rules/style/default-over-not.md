@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/default-over-not](https://docs.styra.com/regal/rules/style/default-over-not) on the Styra documentation website for the canonical representation of this page.
+
 # default-over-not
 
 **Summary**: Prefer default assignment over negated condition

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/custom/prefer-value-in-head](https://docs.styra.com/regal/rules/custom/prefer-value-in-head) on the Styra documentation website for the canonical representation of this page.
+
 # prefer-value-in-head
 
 **Summary**: Prefer value in rule head

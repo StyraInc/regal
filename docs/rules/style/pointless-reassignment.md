@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/pointless-reassignment](https://docs.styra.com/regal/rules/style/pointless-reassignment) on the Styra documentation website for the canonical representation of this page.
+
 # pointless-reassignment
 
 **Summary**: Pointless reassignment of variable

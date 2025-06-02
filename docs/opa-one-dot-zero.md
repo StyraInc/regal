@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [opa-one-dot-zero](https://docs.styra.com/regal/opa-one-dot-zero) on the Styra documentation website for the canonical representation of this page.
+
 ---
 sidebar_label: OPA 1.0
 sidebar_position: 14

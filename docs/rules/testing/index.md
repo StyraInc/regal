@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/testing/index](https://docs.styra.com/regal/rules/testing/index) on the Styra documentation website for the canonical representation of this page.
+
 ---
 title: Testing
 sidebar_position: 6

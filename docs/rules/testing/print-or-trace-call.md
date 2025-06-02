@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/testing/print-or-trace-call](https://docs.styra.com/regal/rules/testing/print-or-trace-call) on the Styra documentation website for the canonical representation of this page.
+
 # print-or-trace-call
 
 **Summary**: Call to `print` or `trace` function

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/custom/one-liner-rule](https://docs.styra.com/regal/rules/custom/one-liner-rule) on the Styra documentation website for the canonical representation of this page.
+
 # one-liner-rule
 
 **Summary**: Rule body could be made a one-liner

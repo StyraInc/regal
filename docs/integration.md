@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [integration](https://docs.styra.com/regal/integration) on the Styra documentation website for the canonical representation of this page.
+
 ---
 sidebar_position: 12
 ---

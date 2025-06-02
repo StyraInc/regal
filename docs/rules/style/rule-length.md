@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/rule-length](https://docs.styra.com/regal/rules/style/rule-length) on the Styra documentation website for the canonical representation of this page.
+
 # rule-length
 
 **Summary**: Max rule length exceeded

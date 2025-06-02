@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/use-in-operator](https://docs.styra.com/regal/rules/idiomatic/use-in-operator) on the Styra documentation website for the canonical representation of this page.
+
 # use-in-operator
 
 **Summary**: Use `in` to check for membership

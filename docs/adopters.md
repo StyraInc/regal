@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [adopters](https://docs.styra.com/regal/adopters) on the Styra documentation website for the canonical representation of this page.
+
 ---
 sidebar_position: 13
 ---

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt) on the Styra documentation website for the canonical representation of this page.
+
 # opa-fmt
 
 **Summary**: File should be formatted with `opa fmt`

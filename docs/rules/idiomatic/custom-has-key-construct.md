@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/custom-has-key-construct](https://docs.styra.com/regal/rules/idiomatic/custom-has-key-construct) on the Styra documentation website for the canonical representation of this page.
+
 # custom-has-key-construct
 
 **Summary**: Custom function may be replaced by `in` and `object.keys`

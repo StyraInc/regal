@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [remote-features](https://docs.styra.com/regal/remote-features) on the Styra documentation website for the canonical representation of this page.
+
 ---
 sidebar_position: 11
 ---

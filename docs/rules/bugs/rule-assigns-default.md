@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/rule-assigns-default](https://docs.styra.com/regal/rules/bugs/rule-assigns-default) on the Styra documentation website for the canonical representation of this page.
+
 # rule-assigns-default
 
 **Summary**: Rule assigned its default value

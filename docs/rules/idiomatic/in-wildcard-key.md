@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/in-wildcard-key](https://docs.styra.com/regal/rules/idiomatic/in-wildcard-key) on the Styra documentation website for the canonical representation of this page.
+
 # in-wildcard-key
 
 **Summary**: Unnecessary wildcard key

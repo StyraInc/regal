@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/imports/avoid-importing-input](https://docs.styra.com/regal/rules/imports/avoid-importing-input) on the Styra documentation website for the canonical representation of this page.
+
 # avoid-importing-input
 
 **Summary**: Avoid importing `input`

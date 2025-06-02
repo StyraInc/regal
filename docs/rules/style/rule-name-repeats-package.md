@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/rule-name-repeats-package](https://docs.styra.com/regal/rules/style/rule-name-repeats-package) on the Styra documentation website for the canonical representation of this page.
+
 # rule-name-repeats-package
 
 **Summary**: Avoid repeating package path in rule names

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/testing/identically-named-tests](https://docs.styra.com/regal/rules/testing/identically-named-tests) on the Styra documentation website for the canonical representation of this page.
+
 # identically-named-tests
 
 **Summary**: Multiple tests with same name

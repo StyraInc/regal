@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/performance/walk-no-path](https://docs.styra.com/regal/rules/performance/walk-no-path) on the Styra documentation website for the canonical representation of this page.
+
 # walk-no-path
 
 **Summary**: Call to `walk` can be optimized

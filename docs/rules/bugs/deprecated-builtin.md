@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/deprecated-builtin](https://docs.styra.com/regal/rules/bugs/deprecated-builtin) on the Styra documentation website for the canonical representation of this page.
+
 # deprecated-builtin
 
 **Summary**: Constant condition

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/use-if](https://docs.styra.com/regal/rules/idiomatic/use-if) on the Styra documentation website for the canonical representation of this page.
+
 # use-if
 
 **Summary**: Use the `if` keyword

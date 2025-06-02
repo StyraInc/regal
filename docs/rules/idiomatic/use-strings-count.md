@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/use-strings-count](https://docs.styra.com/regal/rules/idiomatic/use-strings-count) on the Styra documentation website for the canonical representation of this page.
+
 # use-strings-count
 
 **Summary**: Use `strings.count` where possible

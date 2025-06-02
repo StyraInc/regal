@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/messy-rule](https://docs.styra.com/regal/rules/style/messy-rule) on the Styra documentation website for the canonical representation of this page.
+
 # messy-rule
 
 **Summary**: Messy incremental rule

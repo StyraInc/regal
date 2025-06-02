@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/internal-entrypoint](https://docs.styra.com/regal/rules/bugs/internal-entrypoint) on the Styra documentation website for the canonical representation of this page.
+
 # internal-entrypoint
 
 **Summary**: Entrypoint can't be marked internal

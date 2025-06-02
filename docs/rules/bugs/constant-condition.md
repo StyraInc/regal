@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/constant-condition](https://docs.styra.com/regal/rules/bugs/constant-condition) on the Styra documentation website for the canonical representation of this page.
+
 # constant-condition
 
 **Summary**: Constant condition

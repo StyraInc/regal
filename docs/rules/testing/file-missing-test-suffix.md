@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/testing/file-missing-test-suffix](https://docs.styra.com/regal/rules/testing/file-missing-test-suffix) on the Styra documentation website for the canonical representation of this page.
+
 # file-missing-test-suffix
 
 **Summary**: Files containing tests should have a `_test.rego` suffix

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/imports/unresolved-import](https://docs.styra.com/regal/rules/imports/unresolved-import) on the Styra documentation website for the canonical representation of this page.
+
 # unresolved-import
 
 **Summary**: Unresolved import

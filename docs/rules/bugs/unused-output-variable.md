@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/unused-output-variable](https://docs.styra.com/regal/rules/bugs/unused-output-variable) on the Styra documentation website for the canonical representation of this page.
+
 # unused-output-variable
 
 **Summary**: Unused output variable

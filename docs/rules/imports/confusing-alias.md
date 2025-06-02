@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/imports/confusing-alias](https://docs.styra.com/regal/rules/imports/confusing-alias) on the Styra documentation website for the canonical representation of this page.
+
 # confusing-alias
 
 **Summary**: Confusing alias of existing import

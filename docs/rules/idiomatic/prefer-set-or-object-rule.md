@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/prefer-set-or-object-rule](https://docs.styra.com/regal/rules/idiomatic/prefer-set-or-object-rule) on the Styra documentation website for the canonical representation of this page.
+
 # prefer-set-or-object-rule
 
 **Summary**: Prefer set or object rule over comprehension

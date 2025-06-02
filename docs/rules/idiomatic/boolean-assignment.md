@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/idiomatic/boolean-assignment](https://docs.styra.com/regal/rules/idiomatic/boolean-assignment) on the Styra documentation website for the canonical representation of this page.
+
 # boolean-assignment
 
 **Summary**: Prefer `if` over boolean assignment

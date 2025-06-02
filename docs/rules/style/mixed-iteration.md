@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/mixed-iteration](https://docs.styra.com/regal/rules/style/mixed-iteration) on the Styra documentation website for the canonical representation of this page.
+
 # mixed-iteration
 
 **Summary**: Mixed iteration style

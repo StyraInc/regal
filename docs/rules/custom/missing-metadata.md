@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/custom/missing-metadata](https://docs.styra.com/regal/rules/custom/missing-metadata) on the Styra documentation website for the canonical representation of this page.
+
 # missing-metadata
 
 **Summary**: Package or rule missing metadata

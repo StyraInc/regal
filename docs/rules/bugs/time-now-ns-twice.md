@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/time-now-ns-twice](https://docs.styra.com/regal/rules/bugs/time-now-ns-twice) on the Styra documentation website for the canonical representation of this page.
+
 # time-now-ns-twice
 
 **Summary**: Repeated calls to `time.now_ns`

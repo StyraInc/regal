@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/if-empty-object](https://docs.styra.com/regal/rules/bugs/if-empty-object) on the Styra documentation website for the canonical representation of this page.
+
 # if-empty-object
 
 **This rule has been deprecated and replaced by the

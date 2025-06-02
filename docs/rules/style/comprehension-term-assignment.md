@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/comprehension-term-assignment](https://docs.styra.com/regal/rules/style/comprehension-term-assignment) on the Styra documentation website for the canonical representation of this page.
+
 # comprehension-term-assignment
 
 **Summary**: Assignment can be moved to comprehension term

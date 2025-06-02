@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return) on the Styra documentation website for the canonical representation of this page.
+
 # function-arg-return
 
 **Summary**: Return value assigned in function argument

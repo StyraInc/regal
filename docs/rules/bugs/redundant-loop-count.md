@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/redundant-loop-count](https://docs.styra.com/regal/rules/bugs/redundant-loop-count) on the Styra documentation website for the canonical representation of this page.
+
 # redundant-loop-count
 
 **Summary**: Redundant count before loop

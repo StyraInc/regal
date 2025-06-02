@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/imports/implicit-future-keywords](https://docs.styra.com/regal/rules/imports/implicit-future-keywords) on the Styra documentation website for the canonical representation of this page.
+
 # implicit-future-keywords
 
 **Summary**: Implicit future keywords

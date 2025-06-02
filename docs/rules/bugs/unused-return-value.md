@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/bugs/unused-return-value](https://docs.styra.com/regal/rules/bugs/unused-return-value) on the Styra documentation website for the canonical representation of this page.
+
 ---
 draft: true
 --- 

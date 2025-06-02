@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/custom/naming-convention](https://docs.styra.com/regal/rules/custom/naming-convention) on the Styra documentation website for the canonical representation of this page.
+
 # naming-convention
 
 **Summary**: Naming convention violation

@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/external-reference](https://docs.styra.com/regal/rules/style/external-reference) on the Styra documentation website for the canonical representation of this page.
+
 # external-reference
 
 **Summary**: External reference in function

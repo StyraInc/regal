@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/chained-rule-body](https://docs.styra.com/regal/rules/style/chained-rule-body) on the Styra documentation website for the canonical representation of this page.
+
 # chained-rule-body
 
 **Summary**: Avoid chaining rule bodies

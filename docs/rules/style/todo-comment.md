@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> Please see [rules/style/todo-comment](https://docs.styra.com/regal/rules/style/todo-comment) on the Styra documentation website for the canonical representation of this page.
+
 # todo-comment
 
 **Summary**: Avoid TODO Comments

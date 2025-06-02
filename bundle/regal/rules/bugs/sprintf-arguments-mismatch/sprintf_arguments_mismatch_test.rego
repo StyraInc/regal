@@ -157,3 +157,36 @@ test_success_escaped_verbs_are_ignored if {
 
 	r == set()
 }
+
+# verify fix for https://github.com/styrainc/regal/issues/1574
+test_fail_padding_not_accounted_for if {
+	r := rule.report with input as ast.policy(`x := sprintf("%-*s", ["foo"])`)
+
+	r == {{
+		"category": "bugs",
+		"description": "Mismatch in `sprintf` arguments count",
+		"level": "error",
+		"location": {
+			"col": 14,
+			"end": {
+				"col": 29,
+				"row": 3,
+			},
+			"file": "policy.rego",
+			"row": 3,
+			"text": "x := sprintf(\"%-*s\", [\"foo\"])",
+		},
+		"related_resources": [{
+			"description": "documentation",
+			"ref": config.docs.resolve_url("$baseUrl/$category/sprintf-arguments-mismatch", "bugs"),
+		}],
+		"title": "sprintf-arguments-mismatch",
+	}}
+}
+
+# verify fix for https://github.com/styrainc/regal/issues/1574
+test_success_padding_accounted_for if {
+	r := rule.report with input as ast.policy(`x := sprintf("%-*s", [2, "foo"])`)
+
+	r == set()
+}

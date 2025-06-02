@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch) on the Styra documentation website for the canonical representation of this page.
-
 # directory-package-mismatch
 
 **Summary**: Directory structure should mirror package

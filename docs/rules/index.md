@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/index](https://docs.styra.com/regal/rules/index) on the Styra documentation website for the canonical representation of this page.
-
 ---
 title: Rules
 sidebar_position: 2

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/performance/non-loop-expression](https://docs.styra.com/regal/rules/performance/non-loop-expression) on the Styra documentation website for the canonical representation of this page.
-
 # non-loop-expression
 
 **Summary**: Non loop expression in loop

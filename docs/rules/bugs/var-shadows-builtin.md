@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/var-shadows-builtin](https://docs.styra.com/regal/rules/bugs/var-shadows-builtin) on the Styra documentation website for the canonical representation of this page.
-
 # var-shadows-builtin
 
 **Summary**: Variable shadows built-in

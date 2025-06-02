@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/use-in-operator](https://docs.styra.com/regal/rules/style/use-in-operator) on the Styra documentation website for the canonical representation of this page.
-
 # use-in-operator
 
 ## Please Note

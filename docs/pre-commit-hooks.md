@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [pre-commit-hooks](https://docs.styra.com/regal/pre-commit-hooks) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 6
 ---

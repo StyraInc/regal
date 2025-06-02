@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/performance/with-outside-test-context](https://docs.styra.com/regal/rules/performance/with-outside-test-context) on the Styra documentation website for the canonical representation of this page.
-
 # with-outside-test-context
 
 **Summary**: `with` used outside of test context

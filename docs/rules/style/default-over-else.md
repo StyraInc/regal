@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/default-over-else](https://docs.styra.com/regal/rules/style/default-over-else) on the Styra documentation website for the canonical representation of this page.
-
 # default-over-else
 
 **Summary**: Prefer default assignment over fallback `else`

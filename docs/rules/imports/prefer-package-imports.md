@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/prefer-package-imports](https://docs.styra.com/regal/rules/imports/prefer-package-imports) on the Styra documentation website for the canonical representation of this page.
-
 # prefer-package-imports
 
 **Summary**: Prefer importing packages over rules

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/index](https://docs.styra.com/regal/rules/bugs/index) on the Styra documentation website for the canonical representation of this page.
-
 ---
 title: Bugs
 sidebar_position: 1

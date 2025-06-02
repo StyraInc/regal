@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [debug-adapter](https://docs.styra.com/regal/debug-adapter) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 10
 ---

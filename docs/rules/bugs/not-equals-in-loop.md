@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/not-equals-in-loop](https://docs.styra.com/regal/rules/bugs/not-equals-in-loop) on the Styra documentation website for the canonical representation of this page.
-
 # not-equals-in-loop
 
 **Summary**: Use of != in loop

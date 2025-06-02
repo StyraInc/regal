@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/circular-import](https://docs.styra.com/regal/rules/imports/circular-import) on the Styra documentation website for the canonical representation of this page.
-
 # circular-import
 
 **Summary**: Avoid circular imports

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/redundant-data-import](https://docs.styra.com/regal/rules/imports/redundant-data-import) on the Styra documentation website for the canonical representation of this page.
-
 # redundant-data-import
 
 **Summary**: Redundant import of data

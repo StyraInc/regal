@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains) on the Styra documentation website for the canonical representation of this page.
-
 # use-contains
 
 **Summary**: Use the `contains` keyword

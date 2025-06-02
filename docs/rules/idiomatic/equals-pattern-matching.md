@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching) on the Styra documentation website for the canonical representation of this page.
-
 # equals-pattern-matching
 
 **Summary**: Prefer pattern matching in function arguments

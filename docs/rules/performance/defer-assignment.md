@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/performance/defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment) on the Styra documentation website for the canonical representation of this page.
-
 # defer-assignment
 
 **Summary**: Assignment can be deferred

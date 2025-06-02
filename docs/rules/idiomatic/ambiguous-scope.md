@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/ambiguous-scope](https://docs.styra.com/regal/rules/idiomatic/ambiguous-scope) on the Styra documentation website for the canonical representation of this page.
-
 # ambiguous-scope
 
 **Summary**: Ambiguous metadata scope

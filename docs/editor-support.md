@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [editor-support](https://docs.styra.com/regal/editor-support) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 7
 ---

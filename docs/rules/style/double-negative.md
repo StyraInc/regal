@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/double-negative](https://docs.styra.com/regal/rules/style/double-negative) on the Styra documentation website for the canonical representation of this page.
-
 # double-negative
 
 **Summary**: Avoid double negatives

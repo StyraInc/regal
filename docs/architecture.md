@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [architecture](https://docs.styra.com/regal/architecture) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 4
 ---

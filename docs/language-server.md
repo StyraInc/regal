@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [language-server](https://docs.styra.com/regal/language-server) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 9
 ---

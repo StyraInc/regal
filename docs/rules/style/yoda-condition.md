@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/yoda-condition](https://docs.styra.com/regal/rules/style/yoda-condition) on the Styra documentation website for the canonical representation of this page.
-
 # yoda-condition
 
 **Summary**: Yoda condition, it is

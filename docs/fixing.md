@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [fixing](https://docs.styra.com/regal/fixing) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 3
 ---

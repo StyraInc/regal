@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/redundant-alias](https://docs.styra.com/regal/rules/imports/redundant-alias) on the Styra documentation website for the canonical representation of this page.
-
 # redundant-alias
 
 **Summary**: Redundant alias

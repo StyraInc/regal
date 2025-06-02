@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/unconditional-assignment](https://docs.styra.com/regal/rules/style/unconditional-assignment) on the Styra documentation website for the canonical representation of this page.
-
 # unconditional-assignment
 
 **Summary**: Unconditional assignment in rule body

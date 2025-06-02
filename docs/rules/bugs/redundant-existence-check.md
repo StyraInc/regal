@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/redundant-existence-check](https://docs.styra.com/regal/rules/bugs/redundant-existence-check) on the Styra documentation website for the canonical representation of this page.
-
 # redundant-existence-check
 
 **Summary**: Redundant existence check

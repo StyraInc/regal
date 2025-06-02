@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/ignored-import](https://docs.styra.com/regal/rules/imports/ignored-import) on the Styra documentation website for the canonical representation of this page.
-
 # ignored-import
 
 **Summary**: Reference ignores import

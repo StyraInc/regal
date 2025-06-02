@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/import-after-rule](https://docs.styra.com/regal/rules/imports/import-after-rule) on the Styra documentation website for the canonical representation of this page.
-
 # import-after-rule
 
 **Summary**: Import declared after rule

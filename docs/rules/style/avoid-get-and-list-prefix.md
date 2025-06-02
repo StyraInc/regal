@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/avoid-get-and-list-prefix](https://docs.styra.com/regal/rules/style/avoid-get-and-list-prefix) on the Styra documentation website for the canonical representation of this page.
-
 # avoid-get-and-list-prefix
 
 **Summary**: Avoid `get_` and `list_` prefix for rules and functions

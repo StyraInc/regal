@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/sprintf-arguments-mismatch](https://docs.styra.com/regal/rules/bugs/sprintf-arguments-mismatch) on the Styra documentation website for the canonical representation of this page.
-
 # sprintf-arguments-mismatch
 
 **Summary**: Mismatch in `sprintf` arguments count

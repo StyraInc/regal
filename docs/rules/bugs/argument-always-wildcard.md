@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/argument-always-wildcard](https://docs.styra.com/regal/rules/bugs/argument-always-wildcard) on the Styra documentation website for the canonical representation of this page.
-
 # argument-always-wildcard
 
 **Summary**: Argument is always a wildcard

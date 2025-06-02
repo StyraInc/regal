@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/unresolved-reference](https://docs.styra.com/regal/rules/imports/unresolved-reference) on the Styra documentation website for the canonical representation of this page.
-
 # unresolved-reference
 
 **Summary**: Unresolved Reference

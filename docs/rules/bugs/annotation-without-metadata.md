@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/annotation-without-metadata](https://docs.styra.com/regal/rules/bugs/annotation-without-metadata) on the Styra documentation website for the canonical representation of this page.
-
 # annotation-without-metadata
 
 **Summary**: Annotation without metadata

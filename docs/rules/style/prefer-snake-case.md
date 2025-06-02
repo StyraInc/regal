@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/prefer-snake-case](https://docs.styra.com/regal/rules/style/prefer-snake-case) on the Styra documentation website for the canonical representation of this page.
-
 # prefer-snake-case
 
 **Summary**: Prefer snake_case for names

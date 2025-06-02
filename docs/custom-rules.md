@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [custom-rules](https://docs.styra.com/regal/custom-rules) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_position: 5
 ---

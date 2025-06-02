@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [cicd](https://docs.styra.com/regal/cicd) on the Styra documentation website for the canonical representation of this page.
-
 ---
 sidebar_label: CI/CD
 sidebar_position: 8

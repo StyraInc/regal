@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/non-raw-regex-pattern](https://docs.styra.com/regal/rules/idiomatic/non-raw-regex-pattern) on the Styra documentation website for the canonical representation of this page.
-
 # non-raw-regex-pattern
 
 **Summary**: Use raw strings for regex patterns

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/import-shadows-import](https://docs.styra.com/regal/rules/imports/import-shadows-import) on the Styra documentation website for the canonical representation of this page.
-
 # import-shadows-import
 
 **Summary**: Import shadows import

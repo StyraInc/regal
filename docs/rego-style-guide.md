@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rego-style-guide](https://docs.styra.com/regal/rego-style-guide) on the Styra documentation website for the canonical representation of this page.
-
 # Rego Style Guide rules in Regal
 
 Some notes, and a checklist for tracking, on implementing linter rules based on the

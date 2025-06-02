@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/use-some-for-output-vars](https://docs.styra.com/regal/rules/idiomatic/use-some-for-output-vars) on the Styra documentation website for the canonical representation of this page.
-
 # use-some-for-output-vars
 
 **Summary**: Use `some` to declare output variables

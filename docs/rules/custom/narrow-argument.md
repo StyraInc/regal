@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/custom/narrow-argument](https://docs.styra.com/regal/rules/custom/narrow-argument) on the Styra documentation website for the canonical representation of this page.
-
 # narrow-argument
 
 **Summary**: Function argument can be narrowed

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint) on the Styra documentation website for the canonical representation of this page.
-
 # no-defined-entrypoint
 
 **Summary**: Missing entrypoint annotation

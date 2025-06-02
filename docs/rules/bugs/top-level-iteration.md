@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/top-level-iteration](https://docs.styra.com/regal/rules/bugs/top-level-iteration) on the Styra documentation website for the canonical representation of this page.
-
 # top-level-iteration
 
 **Summary**: Iteration in top-level assignment

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator) on the Styra documentation website for the canonical representation of this page.
-
 # use-assignment-operator
 
 **Summary**: Prefer `:=` over `=` for assignment

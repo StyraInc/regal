@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/zero-arity-function](https://docs.styra.com/regal/rules/bugs/zero-arity-function) on the Styra documentation website for the canonical representation of this page.
-
 # zero-arity-function
 
 **Summary**: Avoid functions without args

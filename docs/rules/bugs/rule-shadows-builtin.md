@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/rule-shadows-builtin](https://docs.styra.com/regal/rules/bugs/rule-shadows-builtin) on the Styra documentation website for the canonical representation of this page.
-
 # rule-shadows-builtin
 
 **Summary**: Rule name shadows built-in

@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/if-object-literal](https://docs.styra.com/regal/rules/bugs/if-object-literal) on the Styra documentation website for the canonical representation of this page.
-
 # if-object-literal
 
 **Summary**: Object literal following `if`

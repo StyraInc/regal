@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/unassigned-return-value](https://docs.styra.com/regal/rules/bugs/unassigned-return-value) on the Styra documentation website for the canonical representation of this page.
-
 # unassigned-return-value
 
 **Summary**: Non-boolean return value unassigned

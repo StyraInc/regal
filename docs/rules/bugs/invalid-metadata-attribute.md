@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/invalid-metadata-attribute](https://docs.styra.com/regal/rules/bugs/invalid-metadata-attribute) on the Styra documentation website for the canonical representation of this page.
-
 # invalid-metadata-attribute
 
 **Summary**: Invalid attribute in metadata annotation

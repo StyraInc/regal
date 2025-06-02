@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/testing/dubious-print-sprintf](https://docs.styra.com/regal/rules/testing/dubious-print-sprintf) on the Styra documentation website for the canonical representation of this page.
-
 # dubious-print-sprintf
 
 **Summary**: Dubious use of `print` and `sprintf`

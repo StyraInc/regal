@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/trailing-default-rule](https://docs.styra.com/regal/rules/style/trailing-default-rule) on the Styra documentation website for the canonical representation of this page.
-
 # trailing-default-rule
 
 **Summary**: Default rule should be declared first

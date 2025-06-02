@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/testing/metasyntactic-variable](https://docs.styra.com/regal/rules/testing/metasyntactic-variable) on the Styra documentation website for the canonical representation of this page.
-
 # metasyntactic-variable
 
 **Summary**: Metasyntactic variable name

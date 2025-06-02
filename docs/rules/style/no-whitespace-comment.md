@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment) on the Styra documentation website for the canonical representation of this page.
-
 # no-whitespace-comment
 
 **Summary**: Comment should start with whitespace

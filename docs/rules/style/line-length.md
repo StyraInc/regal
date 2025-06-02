@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/line-length](https://docs.styra.com/regal/rules/style/line-length) on the Styra documentation website for the canonical representation of this page.
-
 # line-length
 
 **Summary**: Line too long

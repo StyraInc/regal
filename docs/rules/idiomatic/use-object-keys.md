@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/use-object-keys](https://docs.styra.com/regal/rules/idiomatic/use-object-keys) on the Styra documentation website for the canonical representation of this page.
-
 # use-object-keys
 
 **Summary**: Prefer to use `object.keys`

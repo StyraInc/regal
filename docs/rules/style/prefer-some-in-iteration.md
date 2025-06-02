@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/prefer-some-in-iteration](https://docs.styra.com/regal/rules/style/prefer-some-in-iteration) on the Styra documentation website for the canonical representation of this page.
-
 # prefer-some-in-iteration
 
 **Summary**: Prefer `some .. in` for iteration

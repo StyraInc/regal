@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/single-item-in](https://docs.styra.com/regal/rules/idiomatic/single-item-in) on the Styra documentation website for the canonical representation of this page.
-
 # single-item-in
 
 **Summary**: Avoid `in` for single item collection

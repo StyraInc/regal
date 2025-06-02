@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/leaked-internal-reference](https://docs.styra.com/regal/rules/bugs/leaked-internal-reference) on the Styra documentation website for the canonical representation of this page.
-
 # leaked-internal-reference
 
 **Summary**: Outside reference to internal rule or function

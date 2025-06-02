@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/style/unnecessary-some](https://docs.styra.com/regal/rules/style/unnecessary-some) on the Styra documentation website for the canonical representation of this page.
-
 # unnecessary-some
 
 **Summary**: Unnecessary use of `some`

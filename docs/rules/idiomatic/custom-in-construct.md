@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/custom-in-construct](https://docs.styra.com/regal/rules/idiomatic/custom-in-construct) on the Styra documentation website for the canonical representation of this page.
-
 # custom-in-construct
 
 **Summary**: Custom function may be replaced by `in` keyword

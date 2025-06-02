@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/import-shadows-builtin](https://docs.styra.com/regal/rules/imports/import-shadows-builtin) on the Styra documentation website for the canonical representation of this page.
-
 # import-shadows-builtin
 
 **Summary**: Import shadows built-in namespace

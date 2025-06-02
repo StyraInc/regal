@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/custom/forbidden-function-call](https://docs.styra.com/regal/rules/custom/forbidden-function-call) on the Styra documentation website for the canonical representation of this page.
-
 # forbidden-function-call
 
 **Summary**: Forbidden function call

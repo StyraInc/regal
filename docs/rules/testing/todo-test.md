@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/testing/todo-test](https://docs.styra.com/regal/rules/testing/todo-test) on the Styra documentation website for the canonical representation of this page.
-
 # todo-test
 
 **Summary**: TODO test encountered

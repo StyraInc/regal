@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/inconsistent-args](https://docs.styra.com/regal/rules/bugs/inconsistent-args) on the Styra documentation website for the canonical representation of this page.
-
 # inconsistent-args
 
 **Summary**: Inconsistently named function arguments

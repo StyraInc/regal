@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/idiomatic/index](https://docs.styra.com/regal/rules/idiomatic/index) on the Styra documentation website for the canonical representation of this page.
-
 ---
 title: Idiomatic
 sidebar_position: 2

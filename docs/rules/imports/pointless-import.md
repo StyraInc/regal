@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/imports/pointless-import](https://docs.styra.com/regal/rules/imports/pointless-import) on the Styra documentation website for the canonical representation of this page.
-
 # pointless-import
 
 **Summary**: Importing own package is pointless

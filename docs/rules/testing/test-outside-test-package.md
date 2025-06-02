@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/testing/test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package) on the Styra documentation website for the canonical representation of this page.
-
 # test-outside-test-package
 
 **Summary**: Test outside of test package

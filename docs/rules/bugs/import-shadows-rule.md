@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> Please see [rules/bugs/import-shadows-rule](https://docs.styra.com/regal/rules/bugs/import-shadows-rule) on the Styra documentation website for the canonical representation of this page.
-
 # import-shadows-rule
 
 **Summary**: Import shadows rule

@@ -37,7 +37,9 @@ report contains violation if {
 
 	values_in_arr := count(fn.args[1].value)
 	str_no_escape := replace(format_term.value, "%%", "") # don't include '%%' as it's used to "escape" %
-	values_in_str := strings.count(str_no_escape, "%") - _repeated_explicit_argument_indexes(str_no_escape)
+	num_patterns := strings.count(str_no_escape, "%")
+	num_paddings := strings.count(str_no_escape, "%-*s") # these require 2 arguments to be provided
+	values_in_str := (num_patterns + num_paddings) - _repeated_explicit_argument_indexes(str_no_escape)
 
 	values_in_str != values_in_arr
 

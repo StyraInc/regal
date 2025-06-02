@@ -44,7 +44,8 @@ builds:
 kos:
   - # build settings are imported from this build
     build: linux-windows-build
-    repository: ghcr.io/styrainc/regal
+    repositories:
+      - ghcr.io/styrainc/regal
     tags:
       - "{{.Version}}"
       - latest
@@ -57,7 +58,8 @@ kos:
 
 archives:
   - id: binary
-    format: binary
+    formats:
+      - binary
     files:
       - none*
     # example: regal_Darwin_arm64

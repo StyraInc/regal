@@ -1,7 +1,6 @@
 package completions
 
 import (
-	"context"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -40,7 +39,7 @@ func TestManagerEarlyExitInsideComment(t *testing.T) {
 		},
 	}
 
-	completions, err := mgr.Run(context.Background(), completionParams, nil)
+	completions, err := mgr.Run(t.Context(), completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

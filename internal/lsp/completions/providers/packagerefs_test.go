@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -66,7 +65,7 @@ import
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(t.Context(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -142,7 +141,7 @@ import
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, nil)
+	completions, err := p.Run(t.Context(), c, completionParams, nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

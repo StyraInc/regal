@@ -2,7 +2,6 @@ package linter
 
 import (
 	"bytes"
-	"context"
 	"embed"
 	"path/filepath"
 	"slices"
@@ -38,7 +37,7 @@ camelCase if {
 
 	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 2 {
 		t.Fatalf("expected 2 violations, got %d", len(result.Violations))
@@ -96,7 +95,7 @@ r := input.foo[_]
 
 	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d - violations: %v", len(result.Violations), result.Violations)
@@ -281,7 +280,7 @@ or := 1
 				linter = linter.WithUserConfig(*tc.userConfig)
 			}
 
-			result := testutil.Must(linter.Lint(context.Background()))(t)
+			result := testutil.Must(linter.Lint(t.Context()))(t)
 
 			if len(result.Violations) != len(tc.expViolations) {
 				t.Fatalf("expected %d violation, got %d: %v",
@@ -317,7 +316,7 @@ func TestLintWithCustomRule(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -338,7 +337,7 @@ func TestLintWithErrorInEnable(t *testing.T) {
 		WithEnabledRules("foo").
 		WithInputModules(&input)
 
-	_, err := linter.Lint(context.Background())
+	_, err := linter.Lint(t.Context())
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -360,7 +359,7 @@ func TestLintWithCustomEmbeddedRules(t *testing.T) {
 		WithCustomRulesFromFS(testLintWithCustomEmbeddedRulesFS, "testdata").
 		WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
@@ -385,7 +384,7 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 0 {
 		t.Fatalf("expected no violation, got %d", len(result.Violations))
@@ -483,7 +482,7 @@ func TestLintWithPrintHook(t *testing.T) {
 		WithPrintHook(topdown.NewPrintHook(&bb)).
 		WithInputModules(&input)
 
-	if _, err := linter.Lint(context.Background()); err != nil {
+	if _, err := linter.Lint(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -518,7 +517,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 		WithEnabledRules("prefer-package-imports").
 		WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 1 {
 		t.Fatalf("expected one violation, got %d", len(result.Violations))
@@ -550,7 +549,7 @@ func TestEnabledRules(t *testing.T) {
 		WithDisableAll(true).
 		WithEnabledRules("opa-fmt", "no-whitespace-comment")
 
-	enabledRules, err := linter.DetermineEnabledRules(context.Background())
+	enabledRules, err := linter.DetermineEnabledRules(t.Context())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -592,12 +591,12 @@ rules:
 
 	linter := NewLinter().WithUserConfig(userConfig)
 
-	enabledRules, err := linter.DetermineEnabledRules(context.Background())
+	enabledRules, err := linter.DetermineEnabledRules(t.Context())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	enabledAggRules, err := linter.DetermineEnabledAggregateRules(context.Background())
+	enabledAggRules, err := linter.DetermineEnabledAggregateRules(t.Context())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -626,7 +625,7 @@ func TestEnabledAggregateRules(t *testing.T) {
 		WithDisableAll(true).
 		WithEnabledRules("opa-fmt", "unresolved-import", "use-assignment-operator")
 
-	enabledRules, err := linter.DetermineEnabledAggregateRules(context.Background())
+	enabledRules, err := linter.DetermineEnabledAggregateRules(t.Context())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -655,7 +654,7 @@ import data.foo.bar.unresolved
 		WithExportAggregates(true). // needed to be able to test the aggregates are set
 		WithInputModules(&input)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Aggregates) != 1 {
 		t.Fatalf("expected one aggregate, got %d", len(result.Aggregates))
@@ -693,7 +692,7 @@ import data.unresolved`,
 			WithExportAggregates(true).
 			WithInputModules(&input)
 
-		result := testutil.Must(linter.Lint(context.Background()))(t)
+		result := testutil.Must(linter.Lint(t.Context()))(t)
 
 		for k, aggs := range result.Aggregates {
 			allAggregates[k] = append(allAggregates[k], aggs...)
@@ -705,7 +704,7 @@ import data.unresolved`,
 		WithEnabledRules("unresolved-import").
 		WithAggregates(allAggregates)
 
-	result := testutil.Must(linter.Lint(context.Background()))(t)
+	result := testutil.Must(linter.Lint(t.Context()))(t)
 
 	if len(result.Violations) != 3 {
 		t.Fatalf("expected one violation, got %d", len(result.Violations))
@@ -744,7 +743,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	var rep report.Report
 
 	for range b.N {
-		rep, err = linter.Lint(context.Background())
+		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -763,7 +762,7 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	ctx := context.Background()
+	ctx := b.Context()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
@@ -797,7 +796,7 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	var rep report.Report
 
 	for range b.N {
-		rep, err = linter.Lint(context.Background())
+		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -815,14 +814,14 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true).
-		MustPrepare(context.Background())
+		MustPrepare(b.Context())
 
 	var err error
 
 	var rep report.Report
 
 	for range b.N {
-		rep, err = linter.Lint(context.Background())
+		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -844,7 +843,7 @@ func BenchmarkEachRule(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	ctx := context.Background()
+	ctx := b.Context()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).

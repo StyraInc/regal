@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/log"
@@ -14,11 +13,11 @@ func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	logger := newTestLogger(t)
 
 	ls := NewLanguageServer(
-		context.Background(),
+		t.Context(),
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
-	if err := ls.processHoverContentUpdate(context.Background(), "file://missing.rego", "foo"); err != nil {
+	if err := ls.processHoverContentUpdate(t.Context(), "file://missing.rego", "foo"); err != nil {
 		t.Fatal(err)
 	}
 

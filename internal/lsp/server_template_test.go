@@ -109,7 +109,7 @@ func TestTemplateContentsForFile(t *testing.T) {
 			logger := newTestLogger(t)
 
 			ls := NewLanguageServer(
-				context.Background(),
+				t.Context(),
 				&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 			)
 
@@ -147,7 +147,7 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 	testutil.MustWriteFile(t, filepath.Join(td, ".regal", "config.yaml"), []byte{})
 
 	ls := NewLanguageServer(
-		context.Background(),
+		t.Context(),
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
@@ -171,7 +171,7 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 	logger := newTestLogger(t)
 
 	ls := NewLanguageServer(
-		context.Background(),
+		t.Context(),
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
@@ -210,7 +210,7 @@ func TestNewFileTemplating(t *testing.T) {
 	tempDir := testutil.TempDirectoryOf(t, files)
 
 	// set up the server and client connections
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	receivedMessages := make(chan []byte, 10)

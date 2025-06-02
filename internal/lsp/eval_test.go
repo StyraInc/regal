@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"context"
 	"maps"
 	"os"
 	"path/filepath"
@@ -20,7 +19,7 @@ func TestEvalWorkspacePath(t *testing.T) {
 	logger := newTestLogger(t)
 
 	ls := NewLanguageServer(
-		context.Background(),
+		t.Context(),
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
@@ -50,7 +49,7 @@ func TestEvalWorkspacePath(t *testing.T) {
 		"exists": true,
 	}
 
-	res, err := ls.EvalWorkspacePath(context.TODO(), "data.policy1.allow", input)
+	res, err := ls.EvalWorkspacePath(t.Context(), "data.policy1.allow", input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,11 +65,11 @@ func TestEvalWorkspacePathInternalData(t *testing.T) {
 	logger := newTestLogger(t)
 
 	ls := NewLanguageServer(
-		context.Background(),
+		t.Context(),
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
-	res, err := ls.EvalWorkspacePath(context.TODO(), "object.keys(data.internal)", map[string]any{})
+	res, err := ls.EvalWorkspacePath(t.Context(), "object.keys(data.internal)", map[string]any{})
 	if err != nil {
 		t.Fatal(err)
 	}

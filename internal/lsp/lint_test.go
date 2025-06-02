@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
@@ -98,7 +97,7 @@ allow[msg] { 1 == 1; msg := "hello" }
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := context.Background()
+			ctx := t.Context()
 
 			c := cache.NewCache()
 			c.SetFileContents(testData.fileURI, testData.content)
@@ -224,7 +223,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 	state.SetFileDiagnostics(fileURI, []types.Diagnostic{})
 
 	if err := updateFileDiagnostics(
-		context.Background(),
+		t.Context(),
 		state,
 		conf,
 		fileURI,
@@ -258,7 +257,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 	}
 
 	if err := updateFileDiagnostics(
-		context.Background(),
+		t.Context(),
 		state,
 		conf,
 		fileURI,

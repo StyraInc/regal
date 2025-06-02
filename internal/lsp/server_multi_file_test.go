@@ -60,7 +60,7 @@ ignore:
 	clientHandler := createClientHandler(t, logger, messages)
 
 	// set up the server and client connections
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	ls, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)

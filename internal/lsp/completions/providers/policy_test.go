@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -44,7 +43,7 @@ allow if {
 		},
 	}, inmem.OptRoundTripOnWrite(false))
 
-	locals := NewPolicy(context.Background(), store)
+	locals := NewPolicy(t.Context(), store)
 
 	params := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{
@@ -57,7 +56,7 @@ allow if {
 	}
 
 	result, err := locals.Run(
-		context.Background(),
+		t.Context(),
 		c,
 		params,
 		&Options{ClientIdentifier: clients.IdentifierGeneric},
@@ -102,7 +101,7 @@ import data.example
 		},
 	})
 
-	locals := NewPolicy(context.Background(), store)
+	locals := NewPolicy(t.Context(), store)
 	fileEdited := `package example2
 
 import data.example
@@ -126,7 +125,7 @@ allow if {
 	}
 
 	result, err := locals.Run(
-		context.Background(),
+		t.Context(),
 		c,
 		params,
 		&Options{ClientIdentifier: clients.IdentifierGeneric},

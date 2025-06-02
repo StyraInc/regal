@@ -1,7 +1,6 @@
 package refs
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -30,7 +29,7 @@ deny contains input.parrot if {
 }
 `)
 
-	items, err := UsedInModule(context.Background(), mod)
+	items, err := UsedInModule(t.Context(), mod)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

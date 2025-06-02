@@ -16,7 +16,7 @@ func TestFormatting(t *testing.T) {
 	tempDir := t.TempDir()
 
 	// set up the server and client connections
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {

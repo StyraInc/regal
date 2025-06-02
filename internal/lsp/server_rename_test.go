@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,7 +23,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	logger := newTestLogger(t)
 
@@ -87,7 +86,7 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := newTestLogger(t)
 	tmpDir := t.TempDir()
 
@@ -185,7 +184,7 @@ func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 func TestLanguageServerFixRenameParamsWhenTargetOutsideRoot(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	logger := newTestLogger(t)
 	tmpDir := t.TempDir()
 

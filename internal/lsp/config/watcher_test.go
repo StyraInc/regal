@@ -24,7 +24,7 @@ foo: bar
 		t.Logf(l.String()+": "+s, a...)
 	}})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	go func() {

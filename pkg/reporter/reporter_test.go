@@ -2,7 +2,6 @@ package reporter
 
 import (
 	"bytes"
-	"context"
 	"os"
 	"strings"
 	"testing"
@@ -85,7 +84,7 @@ func TestPrettyReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewPrettyReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewPrettyReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -128,7 +127,7 @@ func TestPrettyReporterPublishLongText(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := NewPrettyReporter(&buf).Publish(context.Background(), longRep); err != nil {
+	if err := NewPrettyReporter(&buf).Publish(t.Context(), longRep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -141,7 +140,7 @@ func TestPrettyReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewPrettyReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewPrettyReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -154,7 +153,7 @@ func TestCompactReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewCompactReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewCompactReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -176,7 +175,7 @@ func TestCompactReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewCompactReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewCompactReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -189,7 +188,7 @@ func TestJSONReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewJSONReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewJSONReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -202,7 +201,7 @@ func TestJSONReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewJSONReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewJSONReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -216,7 +215,7 @@ func TestGitHubReporterPublish(t *testing.T) {
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
 
 	var buf bytes.Buffer
-	if err := NewGitHubReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewGitHubReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -238,7 +237,7 @@ func TestGitHubReporterPublishNoViolations(t *testing.T) {
 	t.Setenv("GITHUB_STEP_SUMMARY", "")
 
 	var buf bytes.Buffer
-	if err := NewGitHubReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewGitHubReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -251,7 +250,7 @@ func TestSarifReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewSarifReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewSarifReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -265,7 +264,7 @@ func TestSarifReporterViolationWithoutRegion(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewSarifReporter(&buf).Publish(context.Background(), report.Report{
+	if err := NewSarifReporter(&buf).Publish(t.Context(), report.Report{
 		Violations: []report.Violation{
 			{
 				Title:       "opa-fmt",
@@ -296,7 +295,7 @@ func TestSarifReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewSarifReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewSarifReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -309,7 +308,7 @@ func TestJUnitReporterPublish(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewJUnitReporter(&buf).Publish(context.Background(), rep); err != nil {
+	if err := NewJUnitReporter(&buf).Publish(t.Context(), rep); err != nil {
 		t.Fatal(err)
 	}
 
@@ -322,7 +321,7 @@ func TestJUnitReporterPublishNoViolations(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewJUnitReporter(&buf).Publish(context.Background(), report.Report{}); err != nil {
+	if err := NewJUnitReporter(&buf).Publish(t.Context(), report.Report{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -335,7 +334,7 @@ func TestJUnitReporterPublishViolationWithoutText(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	if err := NewJUnitReporter(&buf).Publish(context.Background(), report.Report{
+	if err := NewJUnitReporter(&buf).Publish(t.Context(), report.Report{
 		Violations: []report.Violation{{Title: "no-text"}},
 	}); err != nil {
 		t.Fatal(err)

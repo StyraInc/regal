@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"slices"
 	"strings"
 	"testing"
@@ -36,7 +35,7 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {
@@ -73,7 +72,7 @@ allow := c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {
@@ -112,7 +111,7 @@ allow if {
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {
@@ -149,7 +148,7 @@ allow if gt`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {
@@ -184,7 +183,7 @@ allow if c`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {
@@ -221,7 +220,7 @@ default allow := f`
 		},
 	}
 
-	completions, err := p.Run(context.Background(), c, completionParams, &Options{
+	completions, err := p.Run(t.Context(), c, completionParams, &Options{
 		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
 	})
 	if err != nil {

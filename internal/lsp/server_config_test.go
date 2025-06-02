@@ -51,7 +51,7 @@ allow := true
 	mainRegoFileURI := fileURIScheme + childDir + mainRegoFileName
 
 	// set up the server and client connections
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
@@ -122,7 +122,7 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 
 	tempDir := t.TempDir()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	// no op handler

@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -22,7 +21,7 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	t.Parallel()
 
 	store := NewRegalStore()
-	ctx := context.Background()
+	ctx := t.Context()
 	fileURI := "file:///example.rego"
 	module := parse.MustParseModule("package example\n\nrule := true")
 
@@ -100,7 +99,7 @@ func TestPutFileRefs(t *testing.T) {
 	t.Parallel()
 
 	store := NewRegalStore()
-	ctx := context.Background()
+	ctx := t.Context()
 	fileURI := "file:///example.rego"
 
 	if err := PutFileRefs(ctx, store, fileURI, []string{"foo", "bar"}); err != nil {

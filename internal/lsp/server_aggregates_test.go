@@ -42,7 +42,7 @@ import rego.v1
 	messages := createMessageChannels(files)
 	clientHandler := createClientHandler(t, logger, messages)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	_, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
@@ -169,7 +169,7 @@ package bar
 	logger := newTestLogger(t)
 	clientHandler := createClientHandler(t, logger, messages)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	tempDir := testutil.TempDirectoryOf(t, files)
@@ -219,7 +219,7 @@ import data.quz
 		".regal/config.yaml": ``,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	tempDir := testutil.TempDirectoryOf(t, files)
@@ -355,7 +355,7 @@ import rego.v1
 	clientHandler := createClientHandler(t, logger, messages)
 
 	// set up the server and client connections
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	_, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)

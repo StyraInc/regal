@@ -1,7 +1,6 @@
 package fixer
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -47,7 +46,7 @@ deny = true
 		"/root/main": ast.RegoV1,
 	})
 
-	fixReport, err := f.Fix(context.Background(), &l, memfp)
+	fixReport, err := f.Fix(t.Context(), &l, memfp)
 	if err != nil {
 		t.Fatalf("failed to fix: %v", err)
 	}

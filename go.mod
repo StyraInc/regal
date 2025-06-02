@@ -1,8 +1,6 @@
 module github.com/styrainc/regal
 
-go 1.23.9
-
-toolchain go1.24.3
+go 1.24.3
 
 require (
 	dario.cat/mergo v1.0.2

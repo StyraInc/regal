@@ -1,7 +1,6 @@
 package capabilities
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 )
@@ -19,7 +18,7 @@ func TestLookupFromFile(t *testing.T) {
 
 	urlForPath := "file://" + path
 
-	caps, err := Lookup(context.Background(), urlForPath)
+	caps, err := Lookup(t.Context(), urlForPath)
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)
 	}
@@ -39,7 +38,7 @@ func TestLookupFromEmbedded(t *testing.T) {
 	// Test that we can load a one of the existing OPA capabilities files
 	// via the embedded database.
 
-	caps, err := Lookup(context.Background(), "regal:///capabilities/opa/v0.55.0")
+	caps, err := Lookup(t.Context(), "regal:///capabilities/opa/v0.55.0")
 	if err != nil {
 		t.Errorf("unexpected error from Lookup: %v", err)
 	}

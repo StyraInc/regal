@@ -1,7 +1,6 @@
 package rego
 
 import (
-	"context"
 	"testing"
 
 	"github.com/styrainc/regal/internal/parse"
@@ -16,7 +15,7 @@ func TestCodeLenses(t *testing.T) {
 
 	module := parse.MustParseModule(contents)
 
-	lenses, er := CodeLenses(context.TODO(), "p.rego", contents, module)
+	lenses, er := CodeLenses(t.Context(), "p.rego", contents, module)
 	if er != nil {
 		t.Fatalf("unexpected error: %v", er)
 	}
@@ -43,7 +42,7 @@ func TestAllRuleHeadLocations(t *testing.T) {
 
 	module := parse.MustParseModule(contents)
 
-	ruleHeads, er := AllRuleHeadLocations(context.TODO(), "p.rego", contents, module)
+	ruleHeads, er := AllRuleHeadLocations(t.Context(), "p.rego", contents, module)
 	if er != nil {
 		t.Fatalf("unexpected error: %v", er)
 	}
@@ -73,7 +72,7 @@ func TestAllKeywords(t *testing.T) {
 
 	module := parse.MustParseModule(contents)
 
-	keywords, er := AllKeywords(context.TODO(), "p.rego", contents, module)
+	keywords, er := AllKeywords(t.Context(), "p.rego", contents, module)
 	if er != nil {
 		t.Fatalf("unexpected error: %v", er)
 	}

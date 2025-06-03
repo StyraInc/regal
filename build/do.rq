@@ -91,6 +91,7 @@ job contains "pr" if {
 
 	# format
 	fmt_all
+	write_readme
 	golangcilintfix
 
 	# verify
@@ -139,6 +140,14 @@ build(false) if {
 	run("go build -tags=regal_standalone")
 } else := true
 
+# METADATA
+# title: check_readme
+# description: Verify that the rules table in the README is up-to-date
+job contains "check_readme" if {
+	build(true)
+	check_readme
+}
+
 # any binary is good enough when calling `build(false)`, it doesn't need to be
 # built freshly
 binary_present if {
@@ -161,14 +170,14 @@ e2e if {
 lint if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
-	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md --ignore README.md docs/")
 	run("npx --prefix build dprint --config build/dprint.json check")
 }
 
 lint_ci if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
-	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md README.md docs/")
+	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md --ignore README.md docs/")
 	run("npx --prefix build dprint --config build/dprint.json check")
 }
 
@@ -291,6 +300,14 @@ fetch_eopa_caps if {
 	rq.write(cap.content, {"format": "raw", "file_path": cap.local}) |
 		some cap in new_caps
 	}
+}
+
+check_readme if {
+	run("./build/update-readme.sh check")
+}
+
+write_readme if {
+	run("./build/update-readme.sh write")
 }
 
 fmt_all if {

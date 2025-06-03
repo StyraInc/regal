@@ -1,15 +1,29 @@
+<!-- Please see docs/readme-sections/ to update readme content -->
+
+<!-- markdownlint-disable MD041 -->
+
 # Regal
+
+
+<!-- markdownlint-disable MD041 -->
 
 [![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg)](https://github.com/styrainc/regal/actions)
 ![OPA v1.5.0](https://openpolicyagent.org/badge/v1.5.0)
 [![codecov](https://codecov.io/github/StyraInc/regal/graph/badge.svg?token=EQK01YF3X3)](https://codecov.io/github/StyraInc/regal)
 [![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/StyraInc/regal/releases)
 
+
+<!-- markdownlint-disable MD041 -->
+
 Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/policy-language/), making
 your Rego magnificent, and you the ruler of rules!
 
 With its extensive set of linter rules, documentation and editor integrations, Regal is the perfect companion for policy
 development, whether you're an experienced Rego developer or just starting out.
+
+
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
 
 <img
   src="/docs/assets/regal-banner.png"
@@ -22,12 +36,18 @@ development, whether you're an experienced Rego developer or just starting out.
 
 \- [Merriam Webster](https://www.merriam-webster.com/dictionary/regal)
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Goals
 
 - Deliver an outstanding policy development experience by providing the best possible tools for that purpose
 - Identify common mistakes, bugs and inefficiencies in Rego policies, and suggest better approaches
 - Provide advice on [best practices](https://github.com/StyraInc/rego-style-guide), coding style, and tooling
 - Allow users, teams and organizations to enforce custom rules on their policy code
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## What People Say About Regal
 
@@ -48,13 +68,17 @@ development, whether you're an experienced Rego developer or just starting out.
 
 — Jimmy Ray, [Boeing](https://www.boeing.com/)
 
-See the [adopters](/docs/adopters.md) file for more Regal users.
+See the [adopters](https://docs.styra.com/regal/adopters) file for more Regal users.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Getting Started
 
 ### Download Regal
 
 **MacOS and Linux**
+
 ```shell
 brew install styrainc/packages/regal
 ```
@@ -68,33 +92,39 @@ for a list of package repositories which distribute Regal.
 Manual installation commands:
 
 **MacOS (Apple Silicon)**
+
 ```shell
 curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_arm64"
 ```
 
 **MacOS (x86_64)**
+
 ```shell
 curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_x86_64"
 ```
 
 **Linux (x86_64)**
+
 ```shell
 curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Linux_x86_64"
 chmod +x regal
 ```
 
 **Windows**
+
 ```shell
 curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/download/regal_Windows_x86_64.exe"
 ```
 
 **Docker**
+
 ```shell
 docker pull ghcr.io/styrainc/regal:latest
 ```
 
 See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
 published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
+
 </details>
 
 ### Try it out!
@@ -102,6 +132,7 @@ published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs
 First, author some Rego!
 
 **policy/authz.rego**
+
 ```rego
 package authz
 
@@ -120,8 +151,10 @@ Next, run `regal lint` pointed at one or more files or directories to have them 
 ```shell
 regal lint policy/
 ```
+
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable MD010 -->
+
 ```text
 Rule:         	non-raw-regex-pattern
 Description:  	Use raw strings for regex patterns
@@ -146,6 +179,7 @@ Documentation:	https://docs.styra.com/regal/rules/style/prefer-snake-case
 
 1 file linted. 3 violations found.
 ```
+
 <!-- markdownlint-restore -->
 <br />
 
@@ -162,7 +196,8 @@ companion for Rego development!
 
 Integrating Regal in your favorite editor means you'll get immediate feedback from the linter as you work on your
 policies. More than that, it'll unlock a whole new set of features that leverage Regal's
-[language server](#regal-language-server), like context-aware completion suggestions, informative tooltips on hover,
+[language server](https://docs.styra.com/regal/language-server),
+like context-aware completion suggestions, informative tooltips on hover,
 or go-to-definition.
 
 Elevate your policy development experience with Regal in VS Code, Neovim, Zed, Helix
@@ -175,8 +210,11 @@ To learn more about the features provided by the Regal language server, see the
 
 To ensure Regal's rules are enforced consistently in your project or organization,
 we've made it easy to run Regal as part of your builds.
-See the docs on [Using Regal in your build pipeline](./docs/cicd.md) to learn more
+See the docs on [Using Regal in your build pipeline](https://docs.styra.com/regal/cicd) to learn more
 about how to set up Regal to lint your policies on every commit or pull request.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Rules
 
@@ -207,15 +245,17 @@ configuration options below if you want to use Regal to lint "legacy" policies.
 
 Most Regal rules will use data only from a single file at a time, with no consideration for other files. A few rules
 however require data from multiple files, and will therefore collect, or aggregate, data from all files provided for
-linting. These rules are called *aggregate rules*, and will only be run when there is more than one file to lint, such
+linting. These rules are called _aggregate rules_, and will only be run when there is more than one file to lint, such
 as when linting a directory or a whole policy repository. One example of such a rule is the `prefer-package-imports`
 rule, which will aggregate package names and imports from all provided policies in order to determine if any imports
 are pointing to rules or functions rather than packages. You normally won't need to care about this distinction other
 than being aware of the fact that some linter rules won't be run when linting a single file.
 
 If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
-request, or better yet, submit a PR! See the [custom rules](/docs/custom-rules.md) page for more information on how to
-develop your own rules, for yourself or for inclusion in Regal.
+request, or better yet, submit a PR! See the
+[custom rules](https://docs.styra.com/regal/custom-rules)
+page for more information on how to develop your own rules, for yourself or for
+inclusion in Regal.
 
 ### Custom Rules
 
@@ -228,7 +268,10 @@ Since these rules require configuration provided by the user, or are more opinio
 disabled by default. In order to enable them, see the configuration options available for each rule for how to configure
 them according to your requirements.
 
-For more advanced requirements, see the guide on writing [custom rules](/docs/custom-rules.md) in Rego.
+For more advanced requirements, see the guide on writing [custom rules](https://docs.styra.com/regal/custom-rules) in Rego.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Configuration
 
@@ -236,14 +279,15 @@ A custom configuration file may be used to override the [default configuration](
 options provided by Regal. The most common use case for this is to change the severity level of a rule. These three
 levels are available:
 
-- `ignore`  — disable the rule entirely
+- `ignore` — disable the rule entirely
 - `warning` — report the violation without changing the exit code of the lint command
-- `error`   — report the violation and have the lint command exit with a non-zero exit code (default)
+- `error` — report the violation and have the lint command exit with a non-zero exit code (default)
 
 Additionally, some rules may have configuration options of their own. See the documentation page for a rule to learn
 more about it.
 
 **.regal/config.yaml** or **.regal.yaml**
+
 ```yaml
 rules:
   style:
@@ -263,16 +307,16 @@ rules:
       # in this example, test files are ignored
       ignore:
         files:
-          - "*_test.rego"
+        - "*_test.rego"
   custom:
     # custom rule configuration
     naming-convention:
       level: error
       conventions:
-        # ensure all package names start with "acmecorp" or "system"
-        - pattern: '^acmecorp\.[a-z_\.]+$|^system\.[a-z_\.]+$'
-          targets:
-            - package
+      # ensure all package names start with "acmecorp" or "system"
+      - pattern: '^acmecorp\.[a-z_\.]+$|^system\.[a-z_\.]+$'
+        targets:
+        - package
 
 capabilities:
   from:
@@ -288,17 +332,17 @@ capabilities:
 ignore:
   # files can be excluded from all lint rules according to glob-patterns
   files:
-    - file1.rego
-    - "*_tmp.rego"
+  - file1.rego
+  - "*_tmp.rego"
 
 project:
   roots:
-    # declares the 'main' and 'lib/jwt' directories as project roots
-    - main
-    - lib/jwt
-    # may also be provided as an object with additional options
-    - path: lib/legacy
-      rego-version: 0
+  # declares the 'main' and 'lib/jwt' directories as project roots
+  - main
+  - lib/jwt
+  # may also be provided as an object with additional options
+  - path: lib/legacy
+    rego-version: 0
 ```
 
 Regal will automatically search for a configuration file (`.regal/config.yaml`
@@ -324,6 +368,9 @@ configuration file is not found, hasn't been created yet or is not applicable.
 In such cases Regal will check for a configuration file at
 `~/.config/regal/config.yaml` instead.
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Ignoring Rules
 
 If one of Regal's rules doesn't align with your team's preferences, don't worry! Regal is not meant to be the law,
@@ -345,6 +392,8 @@ In summary, the CLI flags will override any configuration provided in the file, 
 specific line will override any other method.
 
 It's also possible to ignore messages on a per-file basis. The available methods are (ranked High to Lowest precedence):
+
+<!-- markdownlint-disable MD051 -->
 
 - Using the `--ignore-files` CLI flag.
   See [Ignoring Rules via CLI Flags](#ignoring-rules-via-cli-flags).
@@ -405,10 +454,10 @@ rules:
       level: error
       ignore:
         files:
-          # ignore line length in test files to accommodate messy test data
-          - "*_test.rego"
-          # specific file used only for testing
-          - "scratch.rego"
+        # ignore line length in test files to accommodate messy test data
+        - "*_test.rego"
+        # specific file used only for testing
+        - "scratch.rego"
 ```
 
 ### Ignoring Files Globally
@@ -423,8 +472,8 @@ If you want to ignore certain files for all rules, you can use the global ignore
 ```yaml
 ignore:
   files:
-    - file1.rego
-    - "*_tmp.rego"
+  - file1.rego
+  - "*_tmp.rego"
 ```
 
 ### Inline Ignore Directives
@@ -466,6 +515,9 @@ for the `regal lint` command:
 
 **Note:** all CLI flags override configuration provided in file.
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Configuring Rego Version
 
 From OPA 1.0 and onwards, it is no longer necessary to include `import rego.v1` in your policies in order to use
@@ -486,10 +538,10 @@ It is also possible to set the Rego version for individual project roots (see be
 ```yaml
 project:
   roots:
-    - path: lib/legacy
-      rego-version: 0
-    - path: main
-      rego-version: 1
+  - path: lib/legacy
+    rego-version: 0
+  - path: main
+    rego-version: 1
 ```
 
 Additionally, Regal will scan the project for any `.manifest` files, and user any `rego_version` found in the manifest
@@ -497,7 +549,12 @@ for all policies under that directory.
 
 Note: the `rego-version` attribute in the configuration file has precedence over `rego_version` found in manifest files.
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Project Roots
+
+<!-- markdownlint-disable MD051 -->
 
 While many projects consider the project's root directory (in editors often referred to as **workspace**) their
 "main" directory for policies, some projects may contain code from other languages, policy "subprojects", or multiple
@@ -511,19 +568,19 @@ To provide an example, consider the
 that a file declaring a `package` path like `policy.permissions.users` should also be located in a directory structure
 that mirrors that package, i.e. `policy/permissions/users`. When a violation against this rule is reported, the
 `regal fix` command, or its equivalent [Code Action](#regal-language-server) in editors, may when invoked remediate the
-issue by moving the file to the correct location. But where should the `policy/permissions/users` directory *itself*
+issue by moving the file to the correct location. But where should the `policy/permissions/users` directory _itself_
 reside?
 
 Normally, the answer to that question would be the **project**, or **workspace** root. But if the file was found
-in a subdirectory containing a **bundle**, the directory naturally belongs under that *bundle's root* instead. The
+in a subdirectory containing a **bundle**, the directory naturally belongs under that _bundle's root_ instead. The
 `roots` configuration option under the top-level `project` object allows you to tell Regal where these roots are,
 and have features like the `directory-package-mismatch` fixer work as you'd expect.
 
 ```yaml
 project:
   roots:
-    - bundle1
-    - bundle2
+  - bundle1
+  - bundle2
 ```
 
 The configuration file is not the only way Regal may determine project roots. Other ways include:
@@ -533,6 +590,9 @@ The configuration file is not the only way Regal may determine project roots. Ot
 
 If a feature that depends on project roots fails to identify any, it will either fail or fall back on the directory
 in which the command was run.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Capabilities
 
@@ -577,18 +637,18 @@ capabilities:
     version: v0.58.0
   minus:
     builtins:
-      # exclude rules that depend on the http.send built-in function
-      - name: http.send
+    # exclude rules that depend on the http.send built-in function
+    - name: http.send
   plus:
     builtins:
-      # make Regal aware of a custom "ldap.query" function
-      - name: ldap.query
-        type: function
-        decl:
-          args:
-            - type: string
-        result:
-          type: object
+    # make Regal aware of a custom "ldap.query" function
+    - name: ldap.query
+      type: function
+      decl:
+        args:
+        - type: string
+      result:
+        type: object
 ```
 
 ### Loading Capabilities from URLs
@@ -607,10 +667,13 @@ capabilities:
 
 Regal includes capabilities files for the following engines:
 
-| Engine | Website | Description |
-|--------|---------|-------------|
-| `opa`  | [OPA website](https://www.openpolicyagent.org/) | Open Policy Agent |
+| Engine | Website                                                         | Description          |
+| ------ | --------------------------------------------------------------- | -------------------- |
+| `opa`  | [OPA website](https://www.openpolicyagent.org/)                 | Open Policy Agent    |
 | `eopa` | [Enterprise OPA website](https://www.styra.com/enterprise-opa/) | Styra Enterprise OPA |
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Exit Codes
 
@@ -631,6 +694,9 @@ If `--fail-level warning` is supplied, warnings will result in a non-zero exit c
 - `2`: one or more warnings were found
 - `3`: one or more errors were found
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Output Formats
 
 The `regal lint` command allows specifying the output format by using the `--format` flag. The available output formats
@@ -647,6 +713,9 @@ are:
   reports
 - `junit` - JUnit XML output, e.g. for CI servers like GitLab that show these results in a merge request.
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## OPA Check and Strict Mode
 
 OPA itself provides a "linter" of sorts, via the `opa check` command and its `--strict` flag. This checks the provided
@@ -655,6 +724,9 @@ Rego files not only for syntax errors, but also for OPA
 mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
 provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
 to run `opa check --strict` against your policies before linting with Regal.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Regal Language Server
 
@@ -696,7 +768,11 @@ See the
 [documentation page for the language server](https://github.com/StyraInc/regal/blob/main/docs/language-server.md)
 for an extensive overview of all features, and their meaning.
 
-See the [Editor Support](/docs/editor-support.md) page for information about Regal support in different editors.
+See the [Editor Support](https://docs.styra.com/regal/editor-support)
+page for information about Regal support in different editors.
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Regal and OPA 1.0+
 
@@ -706,24 +782,25 @@ policies and Rego from earlier versions of OPA. While everything should work wit
 we recommend checking out our documentation on using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero)
 and later for the best possible experience managing projects of any given Rego version, or even a mix of them.
 
+
+<!-- If updating, please check resources-website.md too -->
+<!-- markdownlint-disable MD041 -->
+
 ## Resources
 
 ### Documentation
 
-- [Custom Rules](/docs/custom-rules.md) describes how to develop your own linter rules
-- [Architecture](/docs/architecture.md) provides a high-level technical overview of how Regal works
-- [Contributing](/docs/CONTRIBUTING.md) contains information about how to hack on Regal itself
-- [Go Integration](/docs/integration.md) describes how to integrate Regal in your Go application
-- [Rego Style Guide](/docs/rego-style-guide.md) contains notes on implementing the
-  [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules
-- [Pre-Commit Hooks](/docs/pre-commit-hooks.md) describes how to use Regal in pre-commit hooks
-- [Editor Support](/docs/editor-support.md) contains information about editor support for Regal
+Please see [Regal's Documentation Site](https://docs.styra.com/regal) for the
+canonical documentation of Regal.
+
+[Contributing](https://github.com/StyraInc/regal/blob/main/docs/CONTRIBUTING.md)
+contains information about how to hack on Regal itself.
 
 ### Talks
 
 - [OPA Maintainer Track, featuring Regal](https://www.youtube.com/watch?v=XtA-NKoJDaI), KubeCon London, 2025
 - [Regal the Rego Linter](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s), CNCF London meetup, June 2023
-[![Regal the Rego Linter](/docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
+  [![Regal the Rego Linter](/docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
 
 ### Blogs and Articles
 
@@ -737,10 +814,16 @@ and later for the best possible experience managing projects of any given Rego v
 - [Regal を使って Rego を Lint する](https://tech.dentsusoken.com/entry/2024/12/05/Regal_%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6_Rego_%E3%82%92_Lint_%E3%81%99%E3%82%8B)
   by Shibata Takao ([@shibata.takao](https://shodo.ink/@shibata.takao/))
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Status
 
 Regal is currently in beta. End-users should not expect any drastic changes, but any API may change without notice.
 If you want to embed Regal in another project or product, please reach out!
+
+
+<!-- markdownlint-disable MD041 -->
 
 ## Roadmap
 
@@ -757,7 +840,12 @@ The current Roadmap items are all related to the preparation for
 
 If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!
 
+
+<!-- markdownlint-disable MD041 -->
+
 ## Community
 
 For questions, discussions and announcements related to Styra products, services and open source projects, please join
 the Styra community on [Slack](https://inviter.co/styra)!
+
+

@@ -1,4 +1,4 @@
-# Editor support
+# Editor Support
 
 ## Visual Studio Code
 

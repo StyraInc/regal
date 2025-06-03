@@ -1,4 +1,4 @@
-# Integration
+# Go Integration
 
 :warning: Using Regal from Go is currently experimental and subject to change. Please swing by
 [Slack](https://inviter.co/styra) if you're keen to use Regal in a production system.

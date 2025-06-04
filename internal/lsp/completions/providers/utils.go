@@ -29,7 +29,7 @@ func completionLineHelper(c *cache.Cache, fileURI string, currentLineNumber uint
 		currentLine = lines[currentLineNumber]
 	}
 
-	return strings.Split(fileContents, "\n"), currentLine
+	return lines, currentLine
 }
 
 // groupKeyedRefsByDepth groups refs by their 'depth', where depth is the number of dots in the key.

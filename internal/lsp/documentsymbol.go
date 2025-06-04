@@ -133,11 +133,9 @@ func documentSymbols(
 func locationToRange(location *ast.Location) types.Range {
 	lines := bytes.Split(location.Text, []byte("\n"))
 
-	var endLine uint
-	if len(lines) == 1 {
-		endLine = uint(location.Row - 1)
-	} else {
-		endLine = uint(location.Row-1) + uint(len(lines)-1)
+	endLine := uint(location.Row - 1)
+	if len(lines) != 1 {
+		endLine += uint(len(lines) - 1)
 	}
 
 	return types.Range{

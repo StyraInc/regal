@@ -463,7 +463,7 @@ func getDocumentationURL(violation report.Violation) string {
 }
 
 func getUniqueViolationURLs(violations []report.Violation) map[string]string {
-	urls := make(map[string]string)
+	urls := make(map[string]string, len(violations))
 	for i := range violations {
 		urls[violations[i].Description] = getDocumentationURL(violations[i])
 	}

@@ -1684,7 +1684,7 @@ func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params 
 			return noCodeLenses, nil
 		}
 
-		if len(strings.Split(contents, "\n")) != lastSuccessfullyParsedLineCount {
+		if strings.Count(contents, "\n")+1 != lastSuccessfullyParsedLineCount {
 			return noCodeLenses, nil
 		}
 	}

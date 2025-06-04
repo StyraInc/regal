@@ -26,7 +26,7 @@ func NewInMemoryFileProvider(files map[string]string) *InMemoryFileProvider {
 }
 
 func NewInMemoryFileProviderFromFS(paths ...string) (*InMemoryFileProvider, error) {
-	files := make(map[string]string)
+	files := make(map[string]string, len(paths))
 
 	for _, path := range paths {
 		fc, err := os.ReadFile(path)

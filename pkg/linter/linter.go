@@ -452,7 +452,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		}
 	}
 
-	allAggregates := make(map[string][]report.Aggregate)
+	allAggregates := make(map[string][]report.Aggregate, len(l.overriddenAggregates)+len(regoReport.Aggregates))
 
 	if len(l.overriddenAggregates) > 0 {
 		for k, aggregates := range l.overriddenAggregates {
@@ -485,7 +485,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if l.exportAggregates {
-		finalReport.Aggregates = make(map[string][]report.Aggregate)
+		finalReport.Aggregates = make(map[string][]report.Aggregate, len(regoReport.Aggregates))
 		for k, aggregates := range regoReport.Aggregates {
 			finalReport.Aggregates[k] = append(finalReport.Aggregates[k], aggregates...)
 		}
@@ -867,7 +867,7 @@ func (l Linter) lintWithRegoRules(
 				// this is only the top 10 locations for a *single* file, not the final report.
 				profRep := prof.ReportTopNResults(10, []string{"total_time_ns"})
 
-				result.AggregateProfile = make(map[string]report.ProfileEntry)
+				result.AggregateProfile = make(map[string]report.ProfileEntry, len(profRep))
 
 				for _, rs := range profRep {
 					result.AggregateProfile[rs.Location.String()] = regalmetrics.FromExprStats(rs)
@@ -984,7 +984,7 @@ func (l Linter) lintWithRegoAggregateRules(
 	if l.profiling {
 		profRep := prof.ReportTopNResults(10, []string{"total_time_ns"})
 
-		result.AggregateProfile = make(map[string]report.ProfileEntry)
+		result.AggregateProfile = make(map[string]report.ProfileEntry, len(profRep))
 
 		for _, rs := range profRep {
 			result.AggregateProfile[rs.Location.String()] = regalmetrics.FromExprStats(rs)

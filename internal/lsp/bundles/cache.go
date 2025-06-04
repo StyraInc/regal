@@ -115,7 +115,7 @@ func (c *Cache) Get(root string) (bundle.Bundle, bool) {
 
 // All returns all the bundles in the cache.
 func (c *Cache) All() map[string]bundle.Bundle {
-	bundles := make(map[string]bundle.Bundle)
+	bundles := make(map[string]bundle.Bundle, len(c.bundles))
 
 	for root, cacheBundle := range c.bundles {
 		bundles[root] = cacheBundle.bundle

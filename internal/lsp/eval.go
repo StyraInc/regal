@@ -44,7 +44,7 @@ func (l *LanguageServer) Eval(
 		}
 	}
 
-	allBundles := make(map[string]bundle.Bundle)
+	allBundles := make(map[string]bundle.Bundle, len(dataBundles)+2)
 
 	for k := range dataBundles {
 		if dataBundles[k].Manifest.Roots == nil {

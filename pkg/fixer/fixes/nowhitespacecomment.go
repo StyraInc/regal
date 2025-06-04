@@ -12,12 +12,11 @@ func (*NoWhitespaceComment) Name() string {
 }
 
 func (n *NoWhitespaceComment) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {
-	lines := strings.Split(fc.Contents, "\n")
-
 	if opts == nil {
 		return nil, errors.New("missing runtime options")
 	}
 
+	lines := strings.Split(fc.Contents, "\n")
 	fixed := false
 
 	for _, loc := range opts.Locations {

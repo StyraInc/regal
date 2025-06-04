@@ -157,12 +157,12 @@ func TestCompactReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expect := `┌──────────────┬──────────────────────────────┐
-│   LOCATION   │         DESCRIPTION          │
-├──────────────┼──────────────────────────────┤
-│ a.rego:1:1   │ Rego must not break the law! │
-│ b.rego:22:18 │ Questionable decision found  │
-└──────────────┴──────────────────────────────┘
+	expect := `+--------------+------------------------------+
+|   Location   |         Description          |
++--------------+------------------------------+
+| a.rego:1:1   | Rego must not break the law! |
+| b.rego:22:18 | Questionable decision found  |
++--------------+------------------------------+
  3 files linted , 2 violations found.
 `
 
@@ -219,7 +219,7 @@ func TestGitHubReporterPublish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if expectTable := "Rule:           breaking-the-law"; !strings.Contains(buf.String(), expectTable) {
+	if expectTable := "Rule:         \tbreaking-the-law"; !strings.Contains(buf.String(), expectTable) {
 		t.Errorf("expected table output %q, got %q", expectTable, buf.String())
 	}
 

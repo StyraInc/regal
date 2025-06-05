@@ -1,12 +1,14 @@
 ---
 image: /img/regal.png
 sidebar_position: 1
-sidebar_label: Introduction
+title: Introduction
 ---
 
 <!-- markdownlint-disable MD041 -->
 
 import RegalIntro from '@site/src/components/RegalIntro';
+
+<!-- markdownlint-disable MD025 -->
 
 # Regal
 

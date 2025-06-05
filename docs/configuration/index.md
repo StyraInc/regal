@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-## Configuration
+# Configuration
 
 A custom configuration file may be used to override the [default configuration](https://github.com/StyraInc/regal/blob/main/bundle/regal/config/provided/data.yaml)
 options provided by Regal. The most common use case for this is to change the severity level of a rule. These three
@@ -82,7 +80,7 @@ A custom configuration may be also be provided using the `--config-file`/`-c`
 option for `regal lint`, which when provided will be used to override the
 default configuration.
 
-### User-level Configuration
+## User-level Configuration
 
 Generally, users will want to commit their Regal configuration file to the repo
 containing their Rego source code. This allows configurations to be shared

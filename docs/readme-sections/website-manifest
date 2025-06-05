@@ -3,15 +3,8 @@ goals.md
 testimonials.md
 getting-started.md
 rules.md
-configuration.md
-ignore-rules.md
-rego-version.md
-project-roots.md
-capabilities.md
-exit.md
-output.md
 strict.md
-ls.md
+ls-website.md
 opa1.md
 resources-website.md
 status.md

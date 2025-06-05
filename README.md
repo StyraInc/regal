@@ -216,128 +216,22 @@ about how to set up Regal to lint your policies on every commit or pull request.
 
 <!-- markdownlint-disable MD041 -->
 
-## Rules
+## Next Steps
 
-Regal comes with a set of built-in rules, grouped by category.
+Now you're up and running with Regal, take a look around some of our documentation
+to get a feel for the different features and capabilities of Regal.
 
-- [**bugs**](https://docs.styra.com/regal/rules/bugs):
-  Common mistakes, potential bugs and inefficiencies in Rego policies.
-- [**custom**](https://docs.styra.com/regal/rules/custom):
-  Custom rules where enforcement can be adjusted to match your preferences.
-- [**idiomatic**](https://docs.styra.com/regal/rules/idiomatic):
-  Suggestions for more idiomatic constructs.
-- [**imports**](https://docs.styra.com/regal/rules/imports):
-  Best practices for imports.
-- [**style**](https://docs.styra.com/regal/rules/style):
-  [Rego Style Guide](https://github.com/StyraInc/rego-style-guide) rules.
-- [**testing**](https://docs.styra.com/regal/rules/testing):
-  Rules for testing and development.
-- [**performance**](https://docs.styra.com/regal/rules/performance):
-  Rules for improving performance of policies.
-
-Browse [All Available Rules](https://docs.styra.com/regal/rules).
-
-Rules in all categories except for those in `custom` are **enabled** by default. Some rules however — like
-`use-contains` and `use-if` — are conditionally enabled only when a version of OPA/Rego before 1.0 is targeted. See the
-configuration options below if you want to use Regal to lint "legacy" policies.
-
-**Aggregate Rules**
-
-Most Regal rules will use data only from a single file at a time, with no consideration for other files. A few rules
-however require data from multiple files, and will therefore collect, or aggregate, data from all files provided for
-linting. These rules are called _aggregate rules_, and will only be run when there is more than one file to lint, such
-as when linting a directory or a whole policy repository. One example of such a rule is the `prefer-package-imports`
-rule, which will aggregate package names and imports from all provided policies in order to determine if any imports
-are pointing to rules or functions rather than packages. You normally won't need to care about this distinction other
-than being aware of the fact that some linter rules won't be run when linting a single file.
-
-If you'd like to see more rules, please [open an issue](https://github.com/StyraInc/regal/issues) for your feature
-request, or better yet, submit a PR! See the
-[custom rules](https://docs.styra.com/regal/custom-rules)
-page for more information on how to develop your own rules, for yourself or for
-inclusion in Regal.
-
-### Custom Rules
-
-The `custom` category is a special one, as the rules in this category allow you to enforce rules that are specific to
-your project, team or organization. This typically includes things like naming conventions, where you might want to
-ensure that, for example, all package names adhere to an organizational standard, like having a prefix matching the
-organization name.
-
-Since these rules require configuration provided by the user, or are more opinionated than other rules, they are
-disabled by default. In order to enable them, see the configuration options available for each rule for how to configure
-them according to your requirements.
-
-For more advanced requirements, see the guide on writing [custom rules](https://docs.styra.com/regal/custom-rules) in Rego.
-
-
-<!-- markdownlint-disable MD041 -->
-
-## OPA Check and Strict Mode
-
-OPA itself provides a "linter" of sorts, via the `opa check` command and its `--strict` flag. This checks the provided
-Rego files not only for syntax errors, but also for OPA
-[strict mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode) violations. Most of the strict
-mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
-provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
-to run `opa check --strict` against your policies before linting with Regal.
-
-
-<!-- markdownlint-disable MD041 -->
-
-## Regal Language Server
-
-In order to support linting directly in editors and IDE's, Regal implements parts of the
-[Language Server Protocol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
-(LSP). With Regal installed and available on your `$PATH`, editors like VS Code (using the
-[OPA extension](https://github.com/open-policy-agent/vscode-opa)) and Zed (using the
-[zed-rego](https://github.com/StyraInc/zed-rego) extension) can leverage Regal for diagnostics, i.e. linting,
-and have the results displayed directly in your editor as you work on your Rego policies. The Regal LSP implementation
-doesn't stop at linting though — it'll also provide features like tooltips on hover, go to definition, and document
-symbols helping you easily navigate the Rego code in your workspace.
-
-The Regal language server currently supports the following LSP features:
-
-- [x] [Diagnostics](https://docs.styra.com/regal/language-server#diagnostics) (linting)
-- [x] [Hover](https://docs.styra.com/regal/language-server#hover)
-      (for inline docs on built-in functions)
-- [x] [Go to definition](https://docs.styra.com/regal/language-server#go-to-definition)
-      (ctrl/cmd + click on a reference to go to definition)
-- [x] [Folding ranges](https://docs.styra.com/regal/language-server#folding-ranges)
-      (expand/collapse blocks, imports, comments)
-- [x] [Document and workspace symbols](https://docs.styra.com/regal/language-server#document-and-workspace-symbols)
-      (navigate to rules, functions, packages)
-- [x] [Inlay hints](https://docs.styra.com/regal/language-server#inlay-hints)
-      (show names of built-in function arguments next to their values)
-- [x] [Formatting](https://docs.styra.com/regal/language-server#formatting)
-- [x] [Code completions](https://docs.styra.com/regal/language-server#code-completions)
-- [x] [Code actions](https://docs.styra.com/regal/language-server#code-actions)
-      (quick fixes for linting issues)
-  - [x] [opa-fmt](https://docs.styra.com/regal/rules/style/opa-fmt)
-  - [x] [use-rego-v1](https://docs.styra.com/regal/rules/imports/use-rego-v1)
-  - [x] [use-assignment-operator](https://docs.styra.com/regal/rules/style/use-assignment-operator)
-  - [x] [no-whitespace-comment](https://docs.styra.com/regal/rules/style/no-whitespace-comment)
-  - [x] [directory-package-mismatch](https://docs.styra.com/regal/rules/idiomatic/directory-package-mismatch)
-- [x] [Code lenses](https://docs.styra.com/regal/language-server#code-lenses-evaluation)
-      (click to evaluate any package or rule directly in the editor)
-
-See the
-[documentation page for the language server](https://github.com/StyraInc/regal/blob/main/docs/language-server.md)
-for an extensive overview of all features, and their meaning.
-
-See the [Editor Support](https://docs.styra.com/regal/editor-support)
-page for information about Regal support in different editors.
-
-
-<!-- markdownlint-disable MD041 -->
-
-## Regal and OPA 1.0+
-
-Starting from version v0.30.0, Regal supports working with both
-[OPA 1.0+](https://blog.openpolicyagent.org/announcing-opa-1-0-a-new-standard-for-policy-as-code-a6d8427ee828)
-policies and Rego from earlier versions of OPA. While everything should work without additional configuration,
-we recommend checking out our documentation on using Regal with [OPA 1.0](https://docs.styra.com/regal/opa-one-dot-zero)
-and later for the best possible experience managing projects of any given Rego version, or even a mix of them.
+- [Rules](https://docs.styra.com/regal/rules)
+  - [Bugs](https://docs.styra.com/regal/rules/bugs): Common mistakes, potential bugs and inefficiencies in Rego policies.
+  - [Custom](https://docs.styra.com/regal/rules/custom): Custom rules where enforcement can be adjusted to match your preferences.
+  - [Idiomatic](https://docs.styra.com/regal/rules/idiomatic): Suggestions for more idiomatic constructs.
+  - [Imports](https://docs.styra.com/regal/rules/imports): Best practices for imports.
+  - [Style](https://docs.styra.com/regal/rules/style): Rego Style Guide rules.
+  - [Testing](https://docs.styra.com/regal/rules/testing): Rules for testing and development.
+  - [Performance](https://docs.styra.com/regal/rules/performance): Rules for improving performance of policies.
+- [Configuration](https://docs.styra.com/regal/configuration): Dig into some of the different configuration options available.
+- [Editor Support](https://docs.styra.com/regal/editor-support): Get Regal integrated into your editor of choice.
+- [CI/CD](https://docs.styra.com/regal/ci-cd): Run Regal as part of your automated checks.
 
 
 <!-- If updating, please check resources-website.md too -->

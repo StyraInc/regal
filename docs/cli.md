@@ -38,3 +38,12 @@ If `--fail-level warning` is supplied, warnings will result in a non-zero exit c
 - `0`: no errors or warnings were found
 - `2`: one or more warnings were found
 - `3`: one or more errors were found
+
+## OPA Check and Strict Mode
+
+OPA itself provides a "linter" of sorts, via the `opa check` command and its `--strict` flag. This checks the provided
+Rego files not only for syntax errors, but also for OPA
+[strict mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode) violations. Most of the strict
+mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
+provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
+to run `opa check --strict` against your policies before linting with Regal.

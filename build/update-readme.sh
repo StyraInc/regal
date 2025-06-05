@@ -22,7 +22,8 @@ while IFS= read -r file; do
     cat "$section_path" >> "$tmpfile"
     echo -e "\n" >> "$tmpfile"
   else
-    echo "Warning: Section file not found: $section_path" >&2
+    echo "Section file not found: $section_path" >&2
+    exit 1
   fi
 done < "$MANIFEST"
 

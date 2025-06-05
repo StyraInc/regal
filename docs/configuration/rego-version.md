@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-## Configuring Rego Version
+# Configuring Rego Version
 
 From OPA 1.0 and onwards, it is no longer necessary to include `import rego.v1` in your policies in order to use
 keywords like `if` and `contains`. Since Regal works with with both 1.0+ policies and older versions of Rego, the linter

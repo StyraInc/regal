@@ -1,4 +1,8 @@
-<!-- markdownlint-disable MD041 -->
+# CLI
+
+Regal's CLI is the main way to interact with Regal. In order to support
+different use cases (Local, CI, etc.) Regal's CLI is designed with a number of
+different formats and exit behaviors.
 
 ## Output Formats
 
@@ -15,3 +19,22 @@ are:
 - `sarif` - [SARIF](https://sarifweb.azurewebsites.net/) JSON output, for consumption by tools processing code analysis
   reports
 - `junit` - JUnit XML output, e.g. for CI servers like GitLab that show these results in a merge request.
+
+## Exit Codes
+
+Exit codes are used to indicate the result of the `lint` command. The `--fail-level` provided for `regal lint` may be
+used to change the exit code behavior, and allows a value of either `warning` or `error` (default).
+
+If `--fail-level error` is supplied, exit code will be zero even if warnings are present:
+
+- `0`: no errors were found
+- `0`: one or more warnings were found
+- `3`: one or more errors were found
+
+This is the default behavior.
+
+If `--fail-level warning` is supplied, warnings will result in a non-zero exit code:
+
+- `0`: no errors or warnings were found
+- `2`: one or more warnings were found
+- `3`: one or more errors were found

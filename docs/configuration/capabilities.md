@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-## Capabilities
+# Capabilities
 
 By default, Regal will lint your policies using the
 [capabilities](https://www.openpolicyagent.org/docs/deployments/#capabilities) of the latest version of OPA
@@ -57,7 +55,7 @@ capabilities:
         type: object
 ```
 
-### Loading Capabilities from URLs
+## Loading Capabilities from URLs
 
 Starting with Regal version v0.26.0, Regal can load capabilities from URLs with the `http`, or `https` schemes using
 the `capabilities.from.url` config key. For example, to load capabilities from `https://example.org/capabilities.json`,
@@ -69,7 +67,7 @@ capabilities:
     url: https://example.org/capabilities.json
 ```
 
-### Supported Engines
+## Supported Engines
 
 Regal includes capabilities files for the following engines:
 

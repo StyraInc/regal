@@ -1,12 +1,8 @@
-<!-- If updating, please check resources-website.md too -->
+<!-- If updating, please check resources.md too -->
+
 <!-- markdownlint-disable MD041 -->
 
-## Resources
-
-### Documentation
-
-Please see [Regal's Documentation Site](https://docs.styra.com/regal) for the
-canonical documentation of Regal.
+## Learn More
 
 [Contributing](https://github.com/StyraInc/regal/blob/main/docs/CONTRIBUTING.md)
 contains information about how to hack on Regal itself.
@@ -15,7 +11,7 @@ contains information about how to hack on Regal itself.
 
 - [OPA Maintainer Track, featuring Regal](https://www.youtube.com/watch?v=XtA-NKoJDaI), KubeCon London, 2025
 - [Regal the Rego Linter](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s), CNCF London meetup, June 2023
-  [![Regal the Rego Linter](/docs/assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
+  [![Regal the Rego Linter](./assets/regal_cncf_london.png)](https://www.youtube.com/watch?v=Xx8npd2TQJ0&t=2567s)
 
 ### Blogs and Articles
 

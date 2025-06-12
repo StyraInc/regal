@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-## Ignoring Rules
+# Ignoring Rules
 
 If one of Regal's rules doesn't align with your team's preferences, don't worry! Regal is not meant to be the law,
 and some rules may not make sense for your project, or parts of it.
@@ -29,7 +27,7 @@ It's also possible to ignore messages on a per-file basis. The available methods
 - [Ignoring Files Globally](#ignoring-files-globally) or
   [Ignoring a Rule in Some Files](#ignoring-a-rule-in-some-files).
 
-### Ignoring a Rule in Config
+## Ignoring a Rule in Config
 
 If you want to ignore a rule, set its level to `ignore` in the configuration file:
 
@@ -41,7 +39,7 @@ rules:
       level: ignore
 ```
 
-### Ignoring a Category in Config
+## Ignoring a Category in Config
 
 If you want to ignore a category of rules, set its default level to `ignore` in the configuration file:
 
@@ -52,7 +50,7 @@ rules:
       level: ignore
 ```
 
-### Ignoring All Rules in Config
+## Ignoring All Rules in Config
 
 If you want to ignore all rules, set the default level to `ignore` in the configuration file:
 
@@ -71,7 +69,7 @@ rules:
 
 **Tip**: providing a comment on ignored rules is a good way to communicate why the decision was made.
 
-### Ignoring a Rule in Some Files
+## Ignoring a Rule in Some Files
 
 You can use the `ignore` attribute inside any rule configuration to provide a list of files, or patterns, that should
 be ignored for that rule:
@@ -89,7 +87,7 @@ rules:
         - "scratch.rego"
 ```
 
-### Ignoring Files Globally
+## Ignoring Files Globally
 
 **Note**: Ignoring files will disable most language server features
 for those files. Only formatting will remain available.
@@ -105,7 +103,7 @@ ignore:
   - "*_tmp.rego"
 ```
 
-### Inline Ignore Directives
+## Inline Ignore Directives
 
 If you'd like to ignore a specific violation in a file, you can add an ignore directive above the line in question, or
 alternatively on the same line to the right of the expression:
@@ -129,7 +127,7 @@ Note that at this point in time, Regal only considers the same line or the line 
 does not apply to entire blocks of code (like rules, functions or even packages). See [configuration](#configuration)
 if you want to ignore certain rules altogether.
 
-### Ignoring Rules via CLI Flags
+## Ignoring Rules via CLI Flags
 
 For development and testing, rules or classes of rules may quickly be enabled or disabled using the relevant CLI flags
 for the `regal lint` command:
@@ -143,3 +141,8 @@ for the `regal lint` command:
 - `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
 
 **Note:** all CLI flags override configuration provided in file.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

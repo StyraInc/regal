@@ -1,6 +1,4 @@
-<!-- markdownlint-disable MD041 -->
-
-## Configuring Rego Version
+# Configuring Rego Version
 
 From OPA 1.0 and onwards, it is no longer necessary to include `import rego.v1` in your policies in order to use
 keywords like `if` and `contains`. Since Regal works with with both 1.0+ policies and older versions of Rego, the linter
@@ -30,3 +28,8 @@ Additionally, Regal will scan the project for any `.manifest` files, and user an
 for all policies under that directory.
 
 Note: the `rego-version` attribute in the configuration file has precedence over `rego_version` found in manifest files.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

@@ -2,7 +2,8 @@
 
 Its possible to use Regal to lint your Rego policies in your CI/CD pipeline(s)!
 
-This document will guide you on how to do so.
+This document will guide you on how to do so. Please also review the
+[CLI](./cli) documentation for more information on the available options.
 
 ## GitHub Actions
 
@@ -52,3 +53,8 @@ regal_lint_policies:
 
 The above will run Regal on the `policy` directory when a merge request is created or updated and will show linting
 violations as part of the merge request.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

@@ -92,3 +92,8 @@ configuration file is not found, hasn't been created yet or is not applicable.
 
 In such cases Regal will check for a configuration file at
 `~/.config/regal/config.yaml` instead.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

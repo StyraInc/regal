@@ -34,3 +34,8 @@ The configuration file is not the only way Regal may determine project roots. Ot
 
 If a feature that depends on project roots fails to identify any, it will either fail or fall back on the directory
 in which the command was run.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

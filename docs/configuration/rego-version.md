@@ -28,3 +28,8 @@ Additionally, Regal will scan the project for any `.manifest` files, and user an
 for all policies under that directory.
 
 Note: the `rego-version` attribute in the configuration file has precedence over `rego_version` found in manifest files.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

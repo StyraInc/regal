@@ -53,3 +53,8 @@ regal_lint_policies:
 
 The above will run Regal on the `policy` directory when a merge request is created or updated and will show linting
 violations as part of the merge request.
+
+## Community
+
+For questions, discussions and announcements related to Styra products, services and open source projects, please join
+the Styra community on [Slack](https://inviter.co/styra)!

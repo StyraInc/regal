@@ -62,7 +62,6 @@ _refs contains ref if {
 
 	not terms[0].value in _shadowed_imports
 
-	# util.to_location_row inlined for some extra performance
 	row := to_number(regex.replace(terms[0].location, `^(\d+):.*`, "$1"))
 	ref := {
 		"name": name,
@@ -132,14 +131,17 @@ _to_location_object(loc, text, file) := {"location": {
 	"col": col,
 	"text": text,
 	"end": {
-		"row": end_row,
+		"row": row,
 		"col": end_col,
 	},
 }} if {
-	[r, c, er, ec] := split(loc, ":")
+	vals := split(loc, ":")
 
-	row := to_number(r)
-	col := to_number(c)
-	end_row := to_number(er)
-	end_col := to_number(ec)
+	row := to_number(vals[0])
+	col := to_number(vals[1])
+
+	from_col := substring(text, col - 1, -1)
+	ref_text := substring(from_col, 0, indexof(from_col, " "))
+
+	end_col := to_number(vals[1]) + count(ref_text)
 }

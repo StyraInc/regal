@@ -18,10 +18,13 @@ items contains item if {
 	position := location.to_position(input.regal.context.location)
 	line := input.regal.file.lines[position.line]
 
-	not endswith(trim_space(line), "=")
 	location.in_rule_body(line)
 
 	word := location.word_at(line, input.regal.context.location.col)
+	before := trim_suffix(line, word.text)
+
+	# match empty line, or line ending with `if` or `|` plus whitespace
+	regex.match(`^\s+$|if\s+$|\|\s+$`, before)
 
 	some label, snippet in _snippets
 

@@ -19,7 +19,7 @@ func BenchmarkRegalLast(b *testing.B) {
 
 	var res *ast.Term
 
-	for range b.N {
+	for b.Loop() {
 		var err error
 
 		res, err = builtins.RegalLast(bctx, arr)
@@ -42,7 +42,7 @@ func BenchmarkRegalLastEmptyArr(b *testing.B) {
 
 	var err error
 
-	for range b.N {
+	for b.Loop() {
 		_, err = builtins.RegalLast(bctx, arr)
 	}
 

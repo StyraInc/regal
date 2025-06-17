@@ -82,6 +82,19 @@ test_snippet_completion_on_typing_no_repeat if {
 	items == set()
 }
 
+test_no_snippet_completion_on_[typed] if {
+	template := `allow if {
+	%s
+}`
+
+	some typed in ["i", "in", "inp", "inpu", "input", "input.", "input.x"]
+
+	policy := _with_header(sprintf(template, [typed]))
+
+	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 1 + count(typed)})
+	items == set()
+}
+
 test_snippet_completion_on_invoked if {
 	items := provider.items with input as util.input_with_location(_with_header(`allow if `), {"row": 5, "col": 10})
 	items == {

@@ -434,3 +434,14 @@ test_aggregate_report_custom_rule if {
 
 	violations == report
 }
+
+# verify fix for https://github.com/styrainc/regal/issues/1592
+test_big_number_causes_no_parser_error if {
+	policy := `package p
+
+	big := 1e1000
+	`
+	module = regal.parse_module("p.rego", policy)
+
+	module.rules[0].head.value.value == 1e1000
+}

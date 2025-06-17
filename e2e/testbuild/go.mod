@@ -91,7 +91,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
-	github.com/styrainc/roast v0.10.0 // indirect
+	github.com/styrainc/roast v0.11.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.26 // indirect

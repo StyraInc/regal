@@ -743,7 +743,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 
 	var rep report.Report
 
-	for range b.N {
+	for b.Loop() {
 		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
@@ -772,7 +772,7 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 
 	var rep report.Report
 
-	for range b.N {
+	for b.Loop() {
 		rep, err = linter.Lint(ctx)
 		if err != nil {
 			b.Fatal(err)
@@ -796,7 +796,7 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 
 	var rep report.Report
 
-	for range b.N {
+	for b.Loop() {
 		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
@@ -821,7 +821,7 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 
 	var rep report.Report
 
-	for range b.N {
+	for b.Loop() {
 		rep, err = linter.Lint(b.Context())
 		if err != nil {
 			b.Fatal(err)
@@ -866,7 +866,7 @@ func BenchmarkEachRule(b *testing.B) {
 
 				var rep report.Report
 
-				for range b.N {
+				for b.Loop() {
 					rep, err = linter.WithEnabledRules(ruleName).Lint(ctx)
 					if err != nil {
 						b.Fatal(err)

@@ -12,7 +12,7 @@ func BenchmarkPut(b *testing.B) {
 	ref := ast.MustParseRef("data.foo.bar.baz")
 	value := ast.String("qux")
 
-	for range b.N {
+	for b.Loop() {
 		cache.Put(ref, value)
 	}
 }
@@ -26,7 +26,7 @@ func BenchmarkGet(b *testing.B) {
 
 	r := ast.MustParseRef("data.foo.bar.baz")
 
-	for range b.N {
+	for b.Loop() {
 		_ = cache.Get(r)
 	}
 }

@@ -90,6 +90,17 @@ jobs:
         with:
           go-version-file: go.mod
       - run: |
+          go mod tidy
+        working-directory: e2e/testbuild
+      - name: display go.sum diff
+        working-directory: e2e/testbuild
+        run: |
+          git diff --exit-code go.sum && exit 0
+          echo "# go.sum diff" >> $GITHUB_STEP_SUMMARY
+          echo '```diff' >> $GITHUB_STEP_SUMMARY
+          git diff go.sum >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      - run: |
           go run .
         working-directory: e2e/testbuild
 

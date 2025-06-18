@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/styrainc/regal/cmd"
+
+	_ "github.com/styrainc/roast/pkg/intern"
 )
 
 func main() {

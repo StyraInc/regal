@@ -34,3 +34,18 @@ allow if {
 		},
 	}}
 }
+
+test_no_input_completion_on_[typed] if {
+	template := `allow if {
+	%s
+}`
+
+	some typed in ["foo.", "data.", "input."]
+
+	policy := _with_header(sprintf(template, [typed]))
+
+	items := provider.items with input as util.input_with_location(policy, {"row": 6, "col": 1 + count(typed)})
+	items == set()
+}
+
+_with_header(policy) := concat("\n\n", ["package policy", "import rego.v1", policy])

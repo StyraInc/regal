@@ -15,17 +15,17 @@ test_fail_identifies_unresolved_reference if {
 	x := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	expected := {with_location({
+
+	r == {with_location({
 		"file": "p1.rego",
 		"row": 4,
 		"col": 7,
 		"end": {
 			"row": 4,
-			"col": 10,
+			"col": 14,
 		},
 		"text": "\tx := bar.baz",
 	})}
-	r == expected
 }
 
 test_success_no_unresolved_reference if {
@@ -53,17 +53,17 @@ test_fail_identifies_unresolved_reference_with_alias if {
 	x := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	expected := {with_location({
+
+	r == {with_location({
 		"file": "p1.rego",
 		"row": 4,
 		"col": 7,
 		"end": {
 			"row": 4,
-			"col": 10,
+			"col": 14,
 		},
 		"text": "\tx := baz.qux",
 	})}
-	r == expected
 }
 
 test_success_identifies_reference_with_alias if {
@@ -77,6 +77,7 @@ test_success_identifies_reference_with_alias if {
 	qux := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -90,17 +91,17 @@ test_fail_identifies_unresolved_full_path if {
 	x := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
-	expected := {with_location({
+
+	r == {with_location({
 		"file": "p1.rego",
 		"row": 3,
 		"col": 7,
 		"end": {
 			"row": 3,
-			"col": 11,
+			"col": 19,
 		},
 		"text": "\tx := data.bar.baz",
 	})}
-	r == expected
 }
 
 test_success_identifies_full_path if {
@@ -113,6 +114,7 @@ test_success_identifies_full_path if {
 	baz := 1
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (agg1 | agg2)}
+
 	r == set()
 }
 
@@ -139,14 +141,14 @@ test_fail_everything_all_at_once if {
 	`)
 	r := rule.aggregate_report with input as {"aggregate": (((agg1 | agg2) | agg3) | agg4)}
 
-	expected := {
+	r == {
 		with_location({
 			"file": "p1.rego",
 			"row": 5,
 			"col": 7,
 			"end": {
 				"row": 5,
-				"col": 10,
+				"col": 18,
 			},
 			"text": "\tx := bar.unknown",
 		}),
@@ -156,7 +158,7 @@ test_fail_everything_all_at_once if {
 			"col": 7,
 			"end": {
 				"row": 6,
-				"col": 10,
+				"col": 18,
 			},
 			"text": "\ty := qux.unknown",
 		}),
@@ -166,12 +168,11 @@ test_fail_everything_all_at_once if {
 			"col": 7,
 			"end": {
 				"row": 7,
-				"col": 11,
+				"col": 23,
 			},
 			"text": "\tz := data.qux.unknown",
 		}),
 	}
-	r == expected
 }
 
 test_success_everything_all_at_once if {
@@ -261,7 +262,7 @@ test_fail_builtin_namespaces_are_not_ignored if {
 		"col": 14,
 		"end": {
 			"row": 4,
-			"col": 18,
+			"col": 26,
 		},
 		"text": "\tfun(foo) := time.now_nss",
 	})}

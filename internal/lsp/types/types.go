@@ -196,6 +196,8 @@ type CodeActionParams struct {
 
 type CodeActionContext struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
+	Only        []string     `json:"only,omitempty"`
+	TriggerKind *uint8       `json:"triggerKind,omitempty"`
 }
 
 type CodeAction struct {

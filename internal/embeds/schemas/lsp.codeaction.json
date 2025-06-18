@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "regal.lsp.codeaction",
+  "$ref": "#/$defs/input",
+  "$defs": {
+    "input": {
+      "properties": {
+        "params": {
+          "$ref": "#/$defs/params"
+        },
+        "regal": {
+          "$ref": "#/$defs/regal"
+        }
+      },
+      "type": "object"
+    },
+    "params": {
+      "properties": {
+        "textDocument": {
+          "$ref": "#/$defs/textDocument"
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        },
+        "context": {
+          "type": "object",
+          "description": "Context for the code action",
+          "properties": {
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/diagnostic"
+              }
+            },
+            "only": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "List of code action kinds to filter"
+              },
+              "description": "Optional list of code action kinds to filter the actions"
+            },
+            "triggerKind": {
+              "type": "integer",
+              "description": "Kind of trigger for the code action"
+            }
+          },
+          "required": [
+            "diagnostics"
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "textDocument",
+        "range",
+        "context"
+      ]
+    },
+    "regal": {
+      "properties": {
+        "client": {
+          "type": "object",
+          "description": "LSP client properties",
+          "properties": {
+            "identifier": {
+              "type": "integer",
+              "description": "Numeric identifier for the LSP client"
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "description": "Environment properties for the LSP client",
+          "properties": {
+            "workspace_root_uri": {
+              "type": "string",
+              "description": "URI of the workspace root"
+            },
+            "web_server_base_uri": {
+              "type": "string",
+              "description": "Base URI for Regal's local web server server"
+            }
+          },
+          "required": [
+            "workspace_root_uri",
+            "web_server_base_uri"
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "client",
+        "environment"
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "description": "Diagnostic information",
+      "properties": {
+        "range": {
+          "$ref": "#/$defs/range"
+        },
+        "message": {
+          "type": "string",
+          "description": "Diagnostic message"
+        },
+        "code": {
+          "type": "string",
+          "description": "Optional code associated with the diagnostic"
+        },
+        "codeDescription": {
+          "type": "object",
+          "description": "Optional code description for the diagnostic",
+          "properties": {
+            "href": {
+              "type": "string",
+              "description": "Link to the code description"
+            }
+          },
+          "required": [
+            "href"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the diagnostic"
+        },
+        "relatedInformation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "object",
+                "description": "Location related to the diagnostic",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "description": "URI of the location"
+                  },
+                  "range": {
+                    "$ref": "#/$defs/range"
+                  }
+                },
+                "required": [
+                  "uri",
+                  "range"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "description": "Message related to the diagnostic"
+              }
+            },
+            "required": [
+              "location",
+              "message"
+            ]
+          },
+          "description": "Related information for the diagnostic"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "description": "Tags associated with the diagnostic"
+          },
+          "description": "Optional tags for the diagnostic"
+        },
+        "data": {
+          "description": "Optional additional data of any type for the diagnostic"
+        }
+      },
+      "required": [
+        "message",
+        "range"
+      ]
+    },
+    "range": {
+      "type": "object",
+      "description": "Range of the diagnostic in the document",
+      "properties": {
+        "start": {
+          "type": "object",
+          "properties": {
+            "line": {
+              "type": "integer",
+              "description": "Starting line of the range"
+            },
+            "character": {
+              "type": "integer",
+              "description": "Starting character of the range"
+            }
+          },
+          "required": [
+            "line",
+            "character"
+          ]
+        },
+        "end": {
+          "type": "object",
+          "properties": {
+            "line": {
+              "type": "integer",
+              "description": "Ending line of the range"
+            },
+            "character": {
+              "type": "integer",
+              "description": "Ending character of the range"
+            }
+          },
+          "required": [
+            "line",
+            "character"
+          ]
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "textDocument": {
+      "type": "object",
+      "description": "Text document properties",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "URI of the text document"
+        }
+      },
+      "required": [
+        "uri"
+      ]
+    }
+  }
+}

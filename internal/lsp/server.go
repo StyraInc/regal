@@ -197,7 +197,7 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 	case "initialized":
 		return l.handleInitialized()
 	case "textDocument/codeAction":
-		return handler.WithParams(req, l.handleTextDocumentCodeAction)
+		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeAction)
 	case "textDocument/definition":
 		return handler.WithParams(req, l.handleTextDocumentDefinition)
 	case "textDocument/diagnostic":
@@ -1516,104 +1516,14 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 	return nil, nil
 }
 
-func (l *LanguageServer) handleTextDocumentCodeAction(params types.CodeActionParams) (any, error) {
+func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, params types.CodeActionParams) (any, error) {
 	if l.ignoreURI(params.TextDocument.URI) {
 		return noCodeActions, nil
 	}
 
-	actions := []types.CodeAction{}
+	codeActionContext := rego.NewCodeActionContext(l.clientIdentifier, l.webServer.GetBaseURL(), l.workspaceRootURI)
 
-	// only VS Code has the capability to open a provided URL, as far as we know
-	// if we learn about others with this capability later, we should add them!
-	if l.clientIdentifier == clients.IdentifierVSCode {
-		explorerURL := l.webServer.GetBaseURL() + "/explorer" +
-			strings.TrimPrefix(params.TextDocument.URI, l.workspaceRootURI)
-
-		actions = append(actions, types.CodeAction{
-			Title: "Explore compiler stages for this policy",
-			Kind:  "source.explore",
-			Command: types.Command{
-				Title:     "Explore compiler stages for this policy",
-				Command:   "vscode.open",
-				Arguments: &[]any{explorerURL},
-			},
-		})
-	}
-
-	for _, diag := range params.Context.Diagnostics {
-		switch diag.Code {
-		case ruleNameOPAFmt:
-			actions = append(actions, types.CodeAction{
-				Title:       "Format using opa fmt",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     FmtCommand(params.TextDocument.URI),
-			})
-		case ruleNameUseRegoV1:
-			actions = append(actions, types.CodeAction{
-				Title:       "Format for Rego v1 using opa fmt",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     FmtV1Command(params.TextDocument.URI),
-			})
-		case ruleNameUseAssignmentOperator:
-			actions = append(actions, types.CodeAction{
-				Title:       "Replace = with := in assignment",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     UseAssignmentOperatorCommand(params.TextDocument.URI, diag),
-			})
-		case ruleNameNoWhitespaceComment:
-			actions = append(actions, types.CodeAction{
-				Title:       "Format comment to have leading whitespace",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     NoWhiteSpaceCommentCommand(params.TextDocument.URI, diag),
-			})
-		case ruleNameDirectoryPackageMismatch:
-			actions = append(actions, types.CodeAction{
-				Title:       "Move file so that directory structure mirrors package path",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     DirectoryStructureMismatchCommand(params.TextDocument.URI, diag),
-			})
-		case ruleNameNonRawRegexPattern:
-			actions = append(actions, types.CodeAction{
-				Title:       "Replace \" with ` in regex pattern",
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command:     NonRawRegexPatternCommand(params.TextDocument.URI, diag),
-			})
-		}
-
-		if diag.CodeDescription == nil {
-			l.logf(log.LevelMessage, "missing code description and href for %q", diag.Code)
-		}
-
-		if l.clientIdentifier == clients.IdentifierVSCode && diag.CodeDescription != nil {
-			// always show the docs link
-			txt := "Show documentation for " + diag.Code
-			actions = append(actions, types.CodeAction{
-				Title:       txt,
-				Kind:        "quickfix",
-				Diagnostics: []types.Diagnostic{diag},
-				IsPreferred: truePtr,
-				Command: types.Command{
-					Title:     txt,
-					Command:   "vscode.open",
-					Arguments: &[]any{diag.CodeDescription.Href},
-				},
-			})
-		}
-	}
-
-	return actions, nil
+	return rego.CodeActions(ctx, codeActionContext, params) //nolint:wrapcheck
 }
 
 func (l *LanguageServer) handleWorkspaceExecuteCommand(params types.ExecuteCommandParams) (any, error) {

@@ -38,7 +38,7 @@ type Config struct {
 	Features        *Features           `json:"features,omitempty"         yaml:"features,omitempty"`
 	Project         *Project            `json:"project,omitempty"          yaml:"project,omitempty"`
 	CapabilitiesURL string              `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
-	Ignore          Ignore              `json:"ignore,omitempty"           yaml:"ignore,omitempty"`
+	Ignore          Ignore              `json:"ignore"                     yaml:"ignore"`
 }
 
 type Root struct {
@@ -381,7 +381,7 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
 	}
 
-	foundBundleRoots = append(foundBundleRoots, util.Map(util.FilepathJoiner(parent), manifestRoots)...)
+	foundBundleRoots = append(foundBundleRoots, util.Map(manifestRoots, util.FilepathJoiner(parent))...)
 
 	return foundBundleRoots, nil
 }

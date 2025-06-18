@@ -172,7 +172,7 @@ project:
 			t.Errorf("expected 5 locations, got %d", len(locations))
 		}
 
-		expected := util.Map(util.FilepathJoiner(root), []string{"", ".regal/rules", "baz", "bundle", "foo/bar"})
+		expected := util.Map([]string{"", ".regal/rules", "baz", "bundle", "foo/bar"}, util.FilepathJoiner(root))
 
 		if !slices.Equal(expected, locations) {
 			t.Errorf("expected\n%s\ngot\n%s", strings.Join(expected, "\n"), strings.Join(locations, "\n"))
@@ -207,7 +207,7 @@ project:
 			t.Errorf("expected 5 locations, got %d", len(locations))
 		}
 
-		expected := util.Map(util.FilepathJoiner(root), []string{"", "baz", "bundle", "foo/bar"})
+		expected := util.Map([]string{"", "baz", "bundle", "foo/bar"}, util.FilepathJoiner(root))
 
 		if !slices.Equal(expected, locations) {
 			t.Errorf("expected\n%s\ngot\n%s", strings.Join(expected, "\n"), strings.Join(locations, "\n"))

@@ -149,10 +149,9 @@ func RegoVersionFromVersionsMap(
 	}
 
 	selectedVersion := defaultVersion
+	dir := path.Join("/", filepath.Dir(filename))
 
 	var longestMatch int
-
-	dir := path.Join("/", filepath.Dir(filename))
 
 	for versionedDir := range versionsMap {
 		matchingVersionedDir := path.Join("/", versionedDir, "/")

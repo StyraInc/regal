@@ -36,7 +36,7 @@ type Violation struct {
 	Category         string            `json:"category"`
 	Level            string            `json:"level"`
 	RelatedResources []RelatedResource `json:"related_resources,omitempty"`
-	Location         Location          `json:"location,omitempty"`
+	Location         Location          `json:"location"`
 	IsAggregate      bool              `json:"-"`
 }
 

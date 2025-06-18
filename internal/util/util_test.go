@@ -114,7 +114,7 @@ func TestDirCleanUpPaths(t *testing.T) {
 			t.Parallel()
 
 			tempDir := testutil.TempDirectoryOf(t, test.State)
-			expected := Map(FilepathJoiner(tempDir), test.Expected)
+			expected := Map(test.Expected, FilepathJoiner(tempDir))
 
 			additionalPreserveTargets := []string{tempDir}
 			for i, v := range test.AdditionalPreserveTargets {

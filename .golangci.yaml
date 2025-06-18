@@ -76,6 +76,10 @@ linters:
         rules:
           json: snake
   exclusions:
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - forcetypeassert
     generated: lax
     presets:
       - comments

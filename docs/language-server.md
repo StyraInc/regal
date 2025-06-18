@@ -179,6 +179,18 @@ to search each parent directory up until the workspace root directory. It is rec
 your `.gitignore` file so that you can work freely with evaluation in any directory without having your input
 accidentally committed.
 
+#### Editor support
+
+The Evaluation code lens is supported in any language server client that
+supports the running of code lenses. The evaluation result is saved to
+`output.json` in the default case.
+
+The displaying of evaluation results in the current file or buffer is currently
+only supported in the
+[OPA VS Code extension](https://github.com/open-policy-agent/vscode-opa) and
+for Neovim users in
+[nvim-dap-rego](https://github.com/rinx/nvim-dap-rego/).
+
 ### Code lenses (Debugging)
 
 Regal also implements the

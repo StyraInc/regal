@@ -18,6 +18,10 @@ items contains item if {
 
 	startswith("input", word.text)
 
+	# input, as we mean it here, cannot follow dot (like data.input or input.input)
+	before := trim_suffix(line, word.text)
+	not endswith(before, ".")
+
 	item := {
 		"label": "input",
 		"kind": kind.keyword,

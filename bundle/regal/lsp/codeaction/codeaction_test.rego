@@ -100,7 +100,6 @@ test_code_actions_specific_to_vscode_reported_on_client_match if {
 		{
 			"title": "Show documentation for use-assignment-operator",
 			"kind": "quickfix",
-			"isPreferred": true,
 			"command": {
 				"arguments": ["https://docs.styra.com/regal/rules/style/use-assignment-operator"],
 				"command": "vscode.open",
@@ -158,7 +157,6 @@ test_code_actions_only_quickfix if {
 		{
 			"title": "Show documentation for use-assignment-operator",
 			"kind": "quickfix",
-			"isPreferred": true,
 			"command": {
 				"arguments": ["https://docs.styra.com/regal/rules/style/use-assignment-operator"],
 				"command": "vscode.open",

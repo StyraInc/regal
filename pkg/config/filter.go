@@ -117,11 +117,9 @@ func excludeFile(pattern, filename, pathPrefix string) (bool, error) {
 	pattern = strings.TrimPrefix(pattern, "/")
 
 	// Leading double-star?
-	var ps []string
-	if strings.HasPrefix(pattern, "**/") {
-		ps = []string{pattern, strings.TrimPrefix(pattern, "**/")}
-	} else {
-		ps = []string{pattern}
+	ps := []string{pattern}
+	if noPrefix, ok := strings.CutPrefix(pattern, "**/"); ok {
+		ps = append(ps, noPrefix)
 	}
 
 	var ps1 []string

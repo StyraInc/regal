@@ -66,7 +66,7 @@ func Must[T any](v T, err error) T {
 }
 
 // Map applies a function to each element of a slice and returns a new slice with the results.
-func Map[T, U any](f func(T) U, a []T) []U {
+func Map[T, U any](a []T, f func(T) U) []U {
 	b := make([]U, len(a))
 
 	for i, v := range a {

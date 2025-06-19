@@ -19,6 +19,7 @@ import (
 	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/dap"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 )
 
@@ -258,10 +259,7 @@ func (s *state) launch(ctx context.Context, r *godap.LaunchRequest) (*godap.Laun
 			return dap.NewLaunchResponse(), fmt.Errorf("invalid launch eval properties: %w", err)
 		}
 
-		funcs := make([]debug.LaunchOption, 0, len(builtins.RegalBuiltinRegoFuncs))
-		for _, f := range builtins.RegalBuiltinRegoFuncs {
-			funcs = append(funcs, debug.RegoOption(f))
-		}
+		funcs := util.Map(builtins.RegalBuiltinRegoFuncs, debug.RegoOption)
 
 		// FIXME: Should we protect this with a mutex?
 		s.session, err = s.debugger.LaunchEval(ctx, evalProps, funcs...)

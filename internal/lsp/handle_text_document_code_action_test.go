@@ -1,17 +1,27 @@
 package lsp
 
 import (
-	"slices"
+	"reflect"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/util"
+	"github.com/styrainc/regal/internal/web"
+
+	"github.com/styrainc/roast/pkg/encoding"
 )
 
 func TestHandleTextDocumentCodeAction(t *testing.T) {
 	t.Parallel()
 
-	l := &LanguageServer{clientIdentifier: clients.IdentifierGeneric}
+	webServer := &web.Server{}
+	webServer.SetBaseURL("http://foo.bar")
+
+	l := &LanguageServer{
+		clientIdentifier: clients.IdentifierGeneric,
+		webServer:        webServer,
+	}
 
 	uri := "file:///example.rego"
 
@@ -25,12 +35,8 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 	}
 
 	params := types.CodeActionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: uri,
-		},
-		Context: types.CodeActionContext{
-			Diagnostics: []types.Diagnostic{diag},
-		},
+		TextDocument: types.TextDocumentIdentifier{URI: uri},
+		Context:      types.CodeActionContext{Diagnostics: []types.Diagnostic{diag}},
 	}
 
 	expectedAction := types.CodeAction{
@@ -38,10 +44,18 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 		Kind:        "quickfix",
 		Diagnostics: params.Context.Diagnostics,
 		IsPreferred: truePtr,
-		Command:     UseAssignmentOperatorCommand(uri, diag),
+		Command: types.Command{
+			Title:   "Replace = with := in assignment",
+			Command: "regal.fix.use-assignment-operator",
+			Tooltip: "Replace = with := in assignment",
+			Arguments: toAnySlice(string(util.Must(encoding.JSON().Marshal(commandArgs{
+				Target:     uri,
+				Diagnostic: &diag,
+			})))),
+		},
 	}
 
-	result, err := l.handleTextDocumentCodeAction(params)
+	result, err := l.handleTextDocumentCodeAction(t.Context(), params)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -77,7 +91,74 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 		t.Fatalf("expected Command %q, got %q", exp, got)
 	}
 
-	if exp, got := *expectedAction.Command.Arguments, *actualAction.Command.Arguments; !slices.Equal(exp, got) {
-		t.Fatalf("expected Arguments %v, got %v", exp, got)
+	if actualAction.Command.Arguments == nil {
+		t.Fatal("expected Command.Arguments to be non-nil")
 	}
+
+	expArgs, actualArgs := *expectedAction.Command.Arguments, *actualAction.Command.Arguments
+	if exp, got := len(expArgs), len(actualArgs); exp != got {
+		t.Fatalf("expected %d arguments, got %d", exp, got)
+	}
+
+	var expDecoded, actualDecoded map[string]any
+
+	if err = encoding.JSON().Unmarshal([]byte(expArgs[0].(string)), &expDecoded); err != nil {
+		t.Fatalf("failed to unmarshal expected arguments: %v", err)
+	}
+
+	if err = encoding.JSON().Unmarshal([]byte(actualArgs[0].(string)), &actualDecoded); err != nil {
+		t.Fatalf("failed to unmarshal actual arguments: %v", err)
+	}
+
+	if !reflect.DeepEqual(expDecoded, actualDecoded) {
+		t.Errorf("expected Command.Arguments to be %v, got %v", expDecoded, actualDecoded)
+	}
+}
+
+// 0.06 milliseconds per operation, not bad at all!
+// 63243 ns/op	   59576 B/op	    1110 allocs/op
+// ...
+// "real world" usage shows a number somewhere between 0.1 - 0.5 ms
+// of which most of the cost is in JSON marshaling and unmarshaling.
+func BenchmarkHandleTextDocumentCodeAction(b *testing.B) {
+	l := &LanguageServer{
+		clientIdentifier: clients.IdentifierGeneric,
+		webServer:        &web.Server{},
+	}
+
+	params := types.CodeActionParams{
+		TextDocument: types.TextDocumentIdentifier{URI: "file:///example.rego"},
+		Context: types.CodeActionContext{
+			Diagnostics: []types.Diagnostic{
+				{
+					Code:    ruleNameUseAssignmentOperator,
+					Message: "foobar",
+					Range: types.Range{
+						Start: types.Position{Line: 2, Character: 4},
+						End:   types.Position{Line: 2, Character: 10},
+					},
+				},
+			},
+		},
+	}
+
+	for b.Loop() {
+		res, err := l.handleTextDocumentCodeAction(b.Context(), params)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		if len(res.([]types.CodeAction)) != 1 {
+			b.Fatalf("expected 1 code action, got %d", len(res.([]types.CodeAction)))
+		}
+	}
+}
+
+func toAnySlice(a ...string) *[]any {
+	b := make([]any, len(a))
+	for i := range a {
+		b[i] = a[i]
+	}
+
+	return &b
 }

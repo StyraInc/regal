@@ -73,11 +73,7 @@ as it is important to understand why the were flagged.`, "\n", " ")
 		Use:   "fix <path> [path [...]]",
 		Short: "Fix Rego source files",
 		Long: func() string {
-			var fixableRules []string
-			for _, f := range fixes.NewDefaultFixes() {
-				fixableRules = append(fixableRules, f.Name())
-			}
-
+			fixableRules := util.Map(fixes.NewDefaultFixes(), fixes.Fix.Name)
 			if len(fixableRules) == 0 {
 				return intro
 			}

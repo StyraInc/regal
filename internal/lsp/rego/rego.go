@@ -21,6 +21,14 @@ import (
 	"github.com/styrainc/roast/pkg/transform"
 )
 
+var (
+	emptyResult = rego.Result{}
+
+	errNoResults          = errors.New("no results returned from evaluation")
+	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
+	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
+)
+
 type BuiltInCall struct {
 	Builtin  *ast.Builtin
 	Location *ast.Location
@@ -37,6 +45,20 @@ type RuleHeads map[string][]*ast.Location
 type KeywordUseLocation struct {
 	Row uint `json:"row"`
 	Col uint `json:"col"`
+}
+
+type CodeActionContext struct {
+	client           clients.Identifier
+	webServerBaseURI string
+	workspaceRootURI string
+}
+
+func NewCodeActionContext(client clients.Identifier, webServerBaseURI, workspaceRootURI string) CodeActionContext {
+	return CodeActionContext{
+		client:           client,
+		webServerBaseURI: webServerBaseURI,
+		workspaceRootURI: workspaceRootURI,
+	}
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
@@ -102,6 +124,7 @@ var (
 	keywordsPreparedQuery          *rego.PreparedEvalQuery
 	ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
 	codeLensPreparedQuery          *rego.PreparedEvalQuery
+	codeActionPreparedQuery        *rego.PreparedEvalQuery
 )
 
 var preparedQueriesInitOnce sync.Once
@@ -113,41 +136,10 @@ type policy struct {
 }
 
 func initialize() {
-	createArgs := func(args ...func(*rego.Rego)) []func(*rego.Rego) {
-		always := append([]func(*rego.Rego){
-			rego.ParsedBundle("regal", &rbundle.LoadedBundle),
-			rego.StoreReadAST(true),
-		}, builtins.RegalBuiltinRegoFuncs...)
-
-		return append(always, args...)
-	}
-
-	keywordRegoArgs := createArgs(rego.Query("data.regal.ast.keywords"))
-
-	kwpq, err := rego.New(keywordRegoArgs...).PrepareForEval(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	keywordsPreparedQuery = &kwpq
-
-	ruleHeadLocationsRegoArgs := createArgs(rego.Query("data.regal.ast.rule_head_locations"))
-
-	rhlpq, err := rego.New(ruleHeadLocationsRegoArgs...).PrepareForEval(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	ruleHeadLocationsPreparedQuery = &rhlpq
-
-	codeLensRegoArgs := createArgs(rego.Query("data.regal.lsp.codelens.lenses"))
-
-	clpq, err := rego.New(codeLensRegoArgs...).PrepareForEval(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	codeLensPreparedQuery = &clpq
+	keywordsPreparedQuery = createPreparedQuery("data.regal.ast.keywords")
+	codeLensPreparedQuery = createPreparedQuery("data.regal.lsp.codelens.lenses")
+	codeActionPreparedQuery = createPreparedQuery("data.regal.lsp.codeaction.actions")
+	ruleHeadLocationsPreparedQuery = createPreparedQuery("data.regal.ast.rule_head_locations")
 }
 
 // AllKeywords returns all keywords in the module.
@@ -192,12 +184,46 @@ func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (
 	return value, nil
 }
 
+// CodeActions returns all code actions in the module.
+// Note that at least as of now, no code actions depend on the data in the module, so
+// it is not passed as part of the input. This could change in the future.
+func CodeActions(
+	ctx context.Context,
+	context CodeActionContext,
+	params types.CodeActionParams,
+) ([]types.CodeAction, error) {
+	preparedQueriesInitOnce.Do(initialize)
+
+	var codeActions []types.CodeAction
+
+	input, err := prepareCodeActionInput(context, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed preparing code action input: %w", err)
+	}
+
+	value, err := queryToValueWithInput(ctx, codeActionPreparedQuery, input, codeActions)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying code lenses: %w", err)
+	}
+
+	return value, nil
+}
+
 func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy policy, toValue T) (T, error) {
 	input, err := parse.PrepareAST(policy.fileName, policy.contents, policy.module)
 	if err != nil {
 		return toValue, fmt.Errorf("failed to prepare input: %w", err)
 	}
 
+	return queryToValueWithInput(ctx, pq, input, toValue)
+}
+
+func queryToValueWithInput[T any](
+	ctx context.Context,
+	pq *rego.PreparedEvalQuery,
+	input map[string]any,
+	toValue T,
+) (T, error) {
 	inputValue, err := transform.ToOPAInputValue(input)
 	if err != nil {
 		return toValue, fmt.Errorf("failed converting input to value: %w", err)
@@ -216,20 +242,15 @@ func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy
 }
 
 func toValidResult(rs rego.ResultSet, err error) (rego.Result, error) {
-	if err != nil {
-		return rego.Result{}, fmt.Errorf("evaluation failed: %w", err)
-	}
-
-	if len(rs) == 0 {
-		return rego.Result{}, errors.New("no results returned from evaluation")
-	}
-
-	if len(rs) != 1 {
-		return rego.Result{}, errors.New("expected exactly one result from evaluation")
-	}
-
-	if len(rs[0].Expressions) != 1 {
-		return rego.Result{}, errors.New("expected exactly one expression in result")
+	switch {
+	case err != nil:
+		return emptyResult, fmt.Errorf("evaluation failed: %w", err)
+	case len(rs) == 0:
+		return emptyResult, errNoResults
+	case len(rs) != 1:
+		return emptyResult, errExcpectedOneResult
+	case len(rs[0].Expressions) != 1:
+		return emptyResult, errExcpectedOneExpr
 	}
 
 	return rs[0], nil
@@ -286,8 +307,47 @@ func QueryRegalBundle(ctx context.Context, input map[string]any, pq rego.Prepare
 	}
 
 	if len(result) == 0 {
-		return nil, errors.New("expected result from evaluation, didn't get it")
+		return nil, errNoResults
 	}
 
 	return result[0].Bindings, nil
+}
+
+func prepareCodeActionInput(context CodeActionContext, params types.CodeActionParams) (map[string]any, error) {
+	var preparedParams map[string]any
+
+	if err := encoding.JSONRoundTrip(params, &preparedParams); err != nil {
+		return nil, fmt.Errorf("JSON rountrip failed for code action params: %w", err)
+	}
+
+	return map[string]any{
+		"params": preparedParams,
+		"regal": map[string]any{
+			"client": map[string]any{
+				"identifier": int(context.client),
+			},
+			"environment": map[string]any{
+				"web_server_base_uri": context.webServerBaseURI,
+				"workspace_root_uri":  context.workspaceRootURI,
+			},
+		},
+	}, nil
+}
+
+func createArgs(args ...func(*rego.Rego)) []func(*rego.Rego) {
+	always := append([]func(*rego.Rego){
+		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
+		rego.StoreReadAST(true),
+	}, builtins.RegalBuiltinRegoFuncs...)
+
+	return append(always, args...)
+}
+
+func createPreparedQuery(query string) *rego.PreparedEvalQuery {
+	pq, err := rego.New(createArgs(rego.Query(query))...).PrepareForEval(context.Background())
+	if err != nil {
+		panic(fmt.Sprintf("failed to prepare query %s: %v", query, err))
+	}
+
+	return &pq
 }

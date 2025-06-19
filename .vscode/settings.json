@@ -7,6 +7,7 @@
     "${workspaceFolder}/bundle"
   ],
   "opa.strictMode": true,
+  "opa.schema": "${workspaceFolder}/internal/embeds/schemas",
   "go.lintTool": "golangci-lint",
   "go.buildFlags": [
     "-tags",

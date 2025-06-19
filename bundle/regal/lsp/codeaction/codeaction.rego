@@ -59,7 +59,6 @@ actions contains action if {
 		"title": title,
 		"kind": "quickfix",
 		"diagnostics": [diag],
-		"isPreferred": true,
 		"command": {
 			"title": title,
 			"command": "vscode.open",

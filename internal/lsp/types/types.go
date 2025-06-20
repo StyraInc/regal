@@ -435,10 +435,10 @@ type TextDocumentContentChangeEvent struct {
 type Diagnostic struct {
 	CodeDescription *CodeDescription `json:"codeDescription,omitempty"`
 	Message         string           `json:"message"`
-	Source          string           `json:"source"`
-	Code            string           `json:"code"`
+	Source          *string          `json:"source,omitempty"`
+	Code            string           `json:"code"` // spec says optional integer or string
 	Range           Range            `json:"range"`
-	Severity        uint             `json:"severity"`
+	Severity        *uint            `json:"severity,omitempty"`
 }
 
 type CodeDescription struct {

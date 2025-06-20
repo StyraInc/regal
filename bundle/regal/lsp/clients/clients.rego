@@ -1,3 +1,5 @@
+# METADATA
+# description: Client identifiers known by the Regal LSP server
 package regal.lsp.clients
 
 # METADATA

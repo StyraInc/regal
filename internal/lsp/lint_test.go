@@ -9,6 +9,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
 )
@@ -168,10 +169,10 @@ func TestConvertReportToDiagnostics(t *testing.T) {
 	expectedFileDiags := map[string][]types.Diagnostic{
 		"file1": {
 			{
-				Severity: 2,
+				Severity: util.Pointer(uint(2)),
 				Range:    getRangeForViolation(violation1),
 				Message:  "Mock Error",
-				Source:   "regal/mock_category",
+				Source:   util.Pointer("regal/mock_category"),
 				Code:     "mock_title",
 				CodeDescription: &types.CodeDescription{
 					Href: "https://docs.styra.com/regal/rules/mock_category/mock_title",
@@ -180,10 +181,10 @@ func TestConvertReportToDiagnostics(t *testing.T) {
 		},
 		"workspaceRootURI": {
 			{
-				Severity: 3,
+				Severity: util.Pointer(uint(3)),
 				Range:    getRangeForViolation(violation2),
 				Message:  "Mock Warning",
-				Source:   "regal/mock_category",
+				Source:   util.Pointer("regal/mock_category"),
 				Code:     "mock_title",
 				CodeDescription: &types.CodeDescription{
 					Href: "https://docs.styra.com/regal/rules/mock_category/mock_title",

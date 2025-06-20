@@ -16,7 +16,7 @@ items contains item if {
 	startswith(line, "package ")
 	position.character > 7
 
-	ps := input.regal.context.path_separator
+	ps := input.regal.environment.path_separator
 
 	abs_dir := _base(input.regal.file.name)
 	rel_dir := trim_prefix(abs_dir, input.regal.context.workspace_root)

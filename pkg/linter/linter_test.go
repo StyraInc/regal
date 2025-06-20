@@ -728,7 +728,9 @@ import data.unresolved`,
 }
 
 // 930767688 ns/op	2765064504 B/op	50859905 allocs/op    OPA v1.5.0
-// 948058583 ns/op	2826178208 B/op	51937635 allocs/op´   OPA v1.5.1
+// 948058583 ns/op	2826178208 B/op	51937635 allocs/op    OPA v1.5.1
+// 952606688 ns/op	2808314460 B/op	51658499 allocs/op
+// 892354312 ns/op	2669512068 B/op	48780541 allocs/op
 // ...
 func BenchmarkRegalLintingItself(b *testing.B) {
 	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
@@ -785,6 +787,7 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 }
 
 // 6	 168875708 ns/op	455586606 B/op	 8537889 allocs/op
+// 8	 139592615 ns/op	326694376 B/op	 5996314 allocs/op
 // ...
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	linter := NewLinter().
@@ -836,8 +839,6 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 // Runs a separate benchmark for each rule in the bundle. Note that this will take *several* minutes to run,
 // meaning you do NOT want to do this more than occasionally. You may however find it helpful to use this with
 // a single, or handful of rules to get a better idea of how long they take to run, and relative to each other.
-// The reason why this is currently so slow is that we parse + compile everything for each rule, which is really
-// something we should fix: https://github.com/StyraInc/regal/issues/1394
 func BenchmarkEachRule(b *testing.B) {
 	conf, err := config.LoadConfigWithDefaultsFromBundle(&bundle.LoadedBundle, nil)
 	if err != nil {

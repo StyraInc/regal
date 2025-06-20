@@ -14,6 +14,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/completions/refs"
 	"github.com/styrainc/regal/internal/lsp/types"
 	rparse "github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/hints"
 	"github.com/styrainc/regal/pkg/linter"
@@ -123,7 +124,7 @@ func updateParse(
 
 		//nolint:gosec
 		diags = append(diags, types.Diagnostic{
-			Severity: 1, // parse errors are the only error Diagnostic the server sends
+			Severity: util.Pointer(uint(1)), // parse errors are the only error Diagnostic the server sends
 			Range: types.Range{
 				Start: types.Position{
 					Line: uint(line),
@@ -136,7 +137,7 @@ func updateParse(
 				},
 			},
 			Message: astError.Message,
-			Source:  key,
+			Source:  &key,
 			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
 			CodeDescription: &types.CodeDescription{
 				Href: link,
@@ -299,12 +300,13 @@ func convertReportToDiagnostics(rpt *report.Report, workspaceRootURI string) map
 		}
 
 		file := cmp.Or(item.Location.File, workspaceRootURI)
+		source := "regal/" + item.Category
 
 		fileDiags[file] = append(fileDiags[file], types.Diagnostic{
-			Severity: severity,
+			Severity: &severity,
 			Range:    getRangeForViolation(item),
 			Message:  item.Description,
-			Source:   "regal/" + item.Category,
+			Source:   &source,
 			Code:     item.Title,
 			CodeDescription: &types.CodeDescription{
 				Href: fmt.Sprintf(

@@ -260,3 +260,7 @@ func FreePort(preferred ...int) (port int, err error) {
 
 	return 0, fmt.Errorf("failed to find free port: %w", err)
 }
+
+func Pointer[T any](v T) *T {
+	return &v
+}

@@ -35,9 +35,7 @@ input_with_location_and_version(policy, location, rego_version) := {"regal": {
 	"file": {
 		"name": "p.rego",
 		"lines": split(policy, "\n"),
-	},
-	"context": {
-		"location": location,
 		"rego_version": rego_version,
 	},
+	"context": {"location": location},
 }}

@@ -22,7 +22,7 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.2.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/styrainc/roast v0.12.0
+	github.com/styrainc/roast v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -14,9 +14,15 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 
+	"github.com/styrainc/roast/pkg/rast"
 	"github.com/styrainc/roast/pkg/transform"
 
 	_ "embed"
+)
+
+var (
+	refNamesQuery = rast.RefStringToBody(`data.regal.lsp.completion.ref_names`)
+	pqOnce        = sync.OnceValues(prepareQuery)
 )
 
 // initialize prepares the rego query for finding ref names used in a module.
@@ -41,7 +47,7 @@ func prepareQuery() (*rego.PreparedEvalQuery, error) {
 	regoArgs := append([]func(*rego.Rego){
 		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
 		rego.ParsedBundle("internal", &dataBundle),
-		rego.Query(`data.regal.lsp.completion.ref_names`),
+		rego.ParsedQuery(refNamesQuery),
 	}, builtins.RegalBuiltinRegoFuncs...)
 
 	preparedQuery, err := rego.New(regoArgs...).PrepareForEval(context.Background())
@@ -52,14 +58,12 @@ func prepareQuery() (*rego.PreparedEvalQuery, error) {
 	return &preparedQuery, nil
 }
 
-var pqOnce = sync.OnceValues(prepareQuery)
-
 // UsedInModule returns a list of ref names suitable for completion that are
 // used in the module's code.
 // See the rego above for more details on what's included and excluded.
 // This function is run when the parse completes for a module.
 func UsedInModule(ctx context.Context, module *ast.Module) ([]string, error) {
-	inputValue, err := transform.ToOPAInputValue(module)
+	inputValue, err := transform.ModuleToValue(module)
 	if err != nil {
 		return nil, fmt.Errorf("failed converting input to value: %w", err)
 	}

@@ -58,15 +58,22 @@ func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *a
 	return transact(ctx, store, true, func(txn storage.Transaction) error {
 		var stErr *storage.Error
 
+		var contents any
+
+		contents = mod
+
 		var modMap map[string]any
 
+		// in extremely rare cases, this will fail:
+		// https://github.com/StyraInc/regal/issues/1446
+		// When it does, we let the store handle the conversion to a map.
 		if err := encoding.JSONRoundTrip(mod, &modMap); err != nil {
-			return fmt.Errorf("failed to marshal module to JSON: %w", err)
+			contents = modMap
 		}
 
-		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, modMap)
+		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "parsed", fileURI}, contents)
 		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
-			if err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, modMap); err != nil {
+			if err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "parsed", fileURI}, contents); err != nil {
 				return fmt.Errorf("failed to init module in store: %w", err)
 			}
 		}

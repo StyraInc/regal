@@ -170,7 +170,7 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 
 	value, err := queryToValue(ctx, keywordsPreparedQuery, policy{module, fileName, contents}, keywords)
 	if err != nil {
-		return nil, fmt.Errorf("failed querying code lenses: %w", err)
+		return nil, fmt.Errorf("failed querying keywords: %w", err)
 	}
 
 	return value, nil
@@ -184,7 +184,7 @@ func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module
 
 	value, err := queryToValue(ctx, ruleHeadLocationsPreparedQuery, policy{module, fileName, contents}, ruleHeads)
 	if err != nil {
-		return nil, fmt.Errorf("failed querying code lenses: %w", err)
+		return nil, fmt.Errorf("failed querying rule head locations: %w", err)
 	}
 
 	return value, nil
@@ -214,7 +214,7 @@ func CodeActions(ctx context.Context, input CodeActionInput) ([]types.CodeAction
 
 	value, err := queryToValueWithParsedInput(ctx, codeActionPreparedQuery, rast.StructToValue(input), codeActions)
 	if err != nil {
-		return nil, fmt.Errorf("failed querying code lenses: %w", err)
+		return nil, fmt.Errorf("failed querying code actions: %w", err)
 	}
 
 	return value, nil

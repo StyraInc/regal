@@ -165,14 +165,9 @@ func UpdateBuiltinPositions(cache *cache.Cache, uri string, builtins map[string]
 }
 
 func UpdateKeywordLocations(ctx context.Context, cache *cache.Cache, uri string) error {
-	module, ok := cache.GetModule(uri)
+	fileContents, module, ok := cache.GetContentAndModule(uri)
 	if !ok {
-		return fmt.Errorf("failed to update builtin positions: no parsed module for uri %q", uri)
-	}
-
-	fileContents, ok := cache.GetFileContents(uri)
-	if !ok {
-		return fmt.Errorf("failed to determine keyword locations: no file contents for uri %q", uri)
+		return fmt.Errorf("failed to determine keyword locations: missing file contents for uri %q", uri)
 	}
 
 	keywords, err := rego.AllKeywords(ctx, filepath.Base(uri), fileContents, module)

@@ -1,34 +1,29 @@
 package version
 
 import (
+	"cmp"
 	"runtime"
 	"strings"
 )
 
-// Version stores the version of Regal and is injected at build time.
-var Version = ""
+const platform = runtime.GOOS + "/" + runtime.GOARCH
 
-// Additional Regal metadata to be injected at build time.
 var (
+	// Values injected at build time using -ldflags.
+	Version   = ""
 	Commit    = ""
 	Timestamp = ""
 	Hostname  = ""
+
+	// The version of Go Regal was built with.
+	goVersion = runtime.Version()
 )
-
-// goVersion is the version of Go this was built with.
-var goVersion = runtime.Version()
-
-// platform is the runtime OS and architecture of this OPA binary.
-const platform = runtime.GOOS + "/" + runtime.GOARCH
 
 // Info wraps the various version metadata values and provides a means of marshalling as JSON or pretty string.
 type Info struct {
-	Version string `json:"version"`
-
+	Version   string `json:"version"`
 	GoVersion string `json:"go_version"`
-
-	Platform string `json:"platform"`
-
+	Platform  string `json:"platform"`
 	Commit    string `json:"commit"`
 	Timestamp string `json:"timestamp"`
 	Hostname  string `json:"hostname"`
@@ -50,19 +45,11 @@ func (vi Info) String() string {
 
 func New() Info {
 	return Info{
-		Version:   unknownString(Version),
+		Version:   cmp.Or(Version, "unknown"),
 		GoVersion: goVersion,
 		Platform:  platform,
-		Commit:    unknownString(Commit),
-		Timestamp: unknownString(Timestamp),
-		Hostname:  unknownString(Hostname),
+		Commit:    cmp.Or(Commit, "unknown"),
+		Timestamp: cmp.Or(Timestamp, "unknown"),
+		Hostname:  cmp.Or(Hostname, "unknown"),
 	}
-}
-
-func unknownString(s string) string {
-	if s == "" {
-		return "unknown"
-	}
-
-	return s
 }

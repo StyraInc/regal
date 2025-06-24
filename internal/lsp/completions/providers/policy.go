@@ -18,6 +18,7 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 
 	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/transform"
 )
 
 // Policy provides suggestions that have been determined by Rego policy.
@@ -58,39 +59,41 @@ func (p *Policy) Run(
 		return nil, fmt.Errorf("could not get file contents for: %s", params.TextDocument.URI)
 	}
 
+	// input.regal.context
 	location := rego2.LocationFromPosition(params.Position)
-	inputContext := make(map[string]any)
-	inputContext["location"] = map[string]any{
-		"row": location.Row,
-		"col": location.Col,
-	}
-	inputContext["client_identifier"] = opts.ClientIdentifier
-	inputContext["workspace_root"] = uri.ToPath(opts.ClientIdentifier, opts.RootURI)
-	inputContext["path_separator"] = rio.PathSeparator
-	inputContext["rego_version"] = opts.RegoVersion
-
-	workspacePath := uri.ToPath(opts.ClientIdentifier, opts.RootURI)
-
-	inputDotJSONPath, inputDotJSONContent := rio.FindInput(
-		uri.ToPath(opts.ClientIdentifier, params.TextDocument.URI),
-		workspacePath,
+	regalContext := ast.NewObject(
+		ast.Item(ast.InternedStringTerm("location"), ast.ObjectTerm(
+			ast.Item(ast.InternedStringTerm("row"), ast.InternedIntNumberTerm(location.Row)),
+			ast.Item(ast.InternedStringTerm("col"), ast.InternedIntNumberTerm(location.Col)),
+		)),
+		ast.Item(ast.InternedStringTerm("client_identifier"), ast.InternedIntNumberTerm(int(opts.ClientIdentifier))),
+		ast.Item(ast.InternedStringTerm("workspace_root"), ast.InternedStringTerm(opts.RootURI)),
 	)
 
+	path := uri.ToPath(opts.ClientIdentifier, params.TextDocument.URI)
+
+	// TODO: Avoid the intermediate map[string]any step and unmarshal directly into ast.Value.
+	inputDotJSONPath, inputDotJSONContent := rio.FindInput(path, uri.ToPath(opts.ClientIdentifier, opts.RootURI))
 	if inputDotJSONPath != "" && inputDotJSONContent != nil {
-		inputContext["input_dot_json_path"] = inputDotJSONPath
-		inputContext["input_dot_json"] = inputDotJSONContent
+		inputDotJSONValue, err := transform.ToOPAInputValue(inputDotJSONContent)
+		if err != nil {
+			return nil, fmt.Errorf("failed converting input dot JSON content to value: %w", err)
+		}
+
+		regalContext.Insert(ast.InternedStringTerm("input_dot_json_path"), ast.InternedStringTerm(inputDotJSONPath))
+		regalContext.Insert(ast.InternedStringTerm("input_dot_json"), ast.NewTerm(inputDotJSONValue))
 	}
 
-	input, err := rego2.ToInput(
-		params.TextDocument.URI,
-		opts.ClientIdentifier,
-		content,
-		inputContext,
-	)
-	if err != nil {
-		// parser error could be due to work in progress, so just return an empty list here
-		return []types.CompletionItem{}, nil //nolint: nilerr
-	}
+	// input.regal
+	regalObj := transform.RegalContext(path, content, opts.RegoVersion.String())
+	regalObj.Insert(ast.InternedStringTerm("context"), ast.NewTerm(regalContext))
+
+	fileRef := ast.Ref{ast.InternedStringTerm("file")}
+	fileObj, _ := regalObj.Find(fileRef)
+	//nolint:forcetypeassert
+	fileObj.(ast.Object).Insert(ast.InternedStringTerm("uri"), ast.InternedStringTerm(params.TextDocument.URI))
+
+	input := ast.NewObject(ast.Item(ast.InternedStringTerm("regal"), ast.NewTerm(regalObj)))
 
 	result, err := rego2.QueryRegalBundle(ctx, input, p.pq)
 	if err != nil {

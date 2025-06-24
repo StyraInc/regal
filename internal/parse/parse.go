@@ -32,25 +32,18 @@ var attemptVersionOrder = [2]ast.RegoVersion{ast.RegoV1, ast.RegoV0}
 // ModuleWithOpts parses a module with the given options. If the Rego version is unknown, the function
 // may attempt to run several parser versions to determine the correct version. Setting the Rego version
 // in the parser options will skip this step, and is recommended whenever possible.
-func ModuleWithOpts(path, policy string, opts ast.ParserOptions) (*ast.Module, error) {
-	var (
-		module *ast.Module
-		err    error
-	)
-
+func ModuleWithOpts(path, policy string, opts ast.ParserOptions) (module *ast.Module, err error) {
 	if opts.RegoVersion == ast.RegoUndefined && strings.HasSuffix(path, "_v0.rego") {
 		opts.RegoVersion = ast.RegoV0
 	}
 
 	if opts.RegoVersion != ast.RegoUndefined {
-		module, err = ast.ParseModuleWithOpts(path, policy, opts)
-		if err != nil {
+		if module, err = ast.ParseModuleWithOpts(path, policy, opts); err != nil {
 			return nil, err //nolint:wrapcheck
 		}
 	} else {
 		// We are parsing for an unknown Rego version
-		module, err = ModuleUnknownVersionWithOpts(path, policy, opts)
-		if err != nil {
+		if module, err = ModuleUnknownVersionWithOpts(path, policy, opts); err != nil {
 			return nil, err
 		}
 	}
@@ -63,11 +56,7 @@ func ModuleWithOpts(path, policy string, opts ast.ParserOptions) (*ast.Module, e
 // which parser was successful. Note that this is not 100% accurate, and the conditions for determining the
 // version may change over time. If the version is known beforehand, use ModuleWithOpts instead, and provide
 // the target Rego version in the parser options.
-func ModuleUnknownVersionWithOpts(
-	filename string,
-	policy string,
-	opts ast.ParserOptions,
-) (*ast.Module, error) {
+func ModuleUnknownVersionWithOpts(filename, policy string, opts ast.ParserOptions) (*ast.Module, error) {
 	var (
 		err error
 		mod *ast.Module
@@ -124,6 +113,8 @@ func Module(filename, policy string) (*ast.Module, error) {
 }
 
 // PrepareAST prepares the AST to be used as linter input.
+// Deprecated: New code should use the `transform` package from roast, as this avoids an
+// expensive intermediate step in module -> ast.Value conversions.
 func PrepareAST(name string, content string, module *ast.Module) (map[string]any, error) {
 	var preparedAST map[string]any
 

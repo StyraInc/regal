@@ -2,8 +2,9 @@ package providers
 
 import (
 	"regexp"
-	"slices"
 	"strings"
+
+	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -47,15 +48,8 @@ func groupKeyedRefsByDepth(refs map[string]types.Ref) ([]int, map[int]map[string
 		byDepth[depth][key] = item
 	}
 
-	depths := make([]int, 0)
-	for k := range byDepth {
-		depths = append(depths, k)
-	}
-
 	// items from higher depths should be shown first
-	slices.Sort(depths)
-
-	return depths, byDepth
+	return util.KeysSorted(byDepth), byDepth
 }
 
 // inRuleBody is a best-effort helper to determine if the current line is in a rule body.

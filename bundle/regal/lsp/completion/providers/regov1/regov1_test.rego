@@ -8,7 +8,7 @@ test_regov1_completion_on_typing if {
 	policy := `package policy
 
 import r`
-	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 3, "col": 9}, 0)
+	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 3, "col": 9}, "v0")
 	items == {{
 		"label": "rego.v1",
 		"kind": 9,
@@ -33,7 +33,7 @@ test_regov1_completion_on_invoked if {
 	policy := `package policy
 
 import `
-	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 3, "col": 8}, 0)
+	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 3, "col": 8}, "v0")
 	items == {{
 		"label": "rego.v1",
 		"kind": 9,
@@ -60,7 +60,7 @@ test_no_regov1_completion_if_already_imported if {
 import rego.v1
 
 import r`
-	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 5, "col": 9}, 0)
+	items := provider.items with input as util.input_with_location_and_version(policy, {"row": 5, "col": 9}, "v0")
 	items == set()
 }
 
@@ -71,7 +71,7 @@ import r`
 	items := provider.items with input as util.input_with_location_and_version(
 		policy,
 		{"row": 3, "col": 9},
-		3, # RegoV1
+		"v1", # RegoV1
 	)
 	items == set()
 }

@@ -2,7 +2,7 @@ package clients
 
 // Identifier represent different supported clients and can be used to toggle or change
 // server behavior based on the client.
-type Identifier int
+type Identifier uint8
 
 const (
 	IdentifierGeneric Identifier = iota

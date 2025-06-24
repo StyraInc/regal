@@ -16,7 +16,7 @@ import (
 
 	"github.com/styrainc/regal/internal/parse"
 
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/transform"
 )
 
 // RegalParseModuleMeta metadata for regal.parse_module.
@@ -86,27 +86,17 @@ func RegalParseModule(_ rego.BuiltinContext, filename *ast.Term, policy *ast.Ter
 		opts.RegoVersion = ast.RegoV0
 	}
 
-	module, err := ast.ParseModuleWithOpts(filenameStr, policyStr, opts)
+	mod, err := ast.ParseModuleWithOpts(filenameStr, policyStr, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	enhancedAST, err := parse.PrepareAST(filenameStr, policyStr, module)
+	roast, err := transform.ToAST(filenameStr, policyStr, mod, false)
 	if err != nil {
 		return nil, err
 	}
 
-	roast, err := encoding.JSON().MarshalToString(enhancedAST)
-	if err != nil {
-		return nil, err
-	}
-
-	term, err := ast.ParseTerm(roast)
-	if err != nil {
-		return nil, err
-	}
-
-	return term, nil
+	return ast.NewTerm(roast), nil
 }
 
 // RegalLast regal.last returns the last element of an array.

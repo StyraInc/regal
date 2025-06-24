@@ -10,13 +10,13 @@ test_package_name_completion_on_typing if {
 			"lines": split(policy, "\n"),
 		},
 		"context": {
-			"path_separator": "/",
 			"workspace_root": "/Users/joe/policy",
 			"location": {
 				"row": 1,
 				"col": 10,
 			},
 		},
+		"environment": {"path_separator": "/"},
 	}}
 	items := provider.items with input as provider_input
 	items == {{
@@ -41,13 +41,13 @@ test_package_name_completion_on_typing_multiple_suggestions if {
 			"lines": split(policy, "\n"),
 		},
 		"context": {
-			"path_separator": "/",
 			"workspace_root": "/Users/joe/policy",
 			"location": {
 				"row": 1,
 				"col": 10,
 			},
 		},
+		"environment": {"path_separator": "/"},
 	}}
 	items := provider.items with input as provider_input
 	items == {
@@ -86,13 +86,13 @@ test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 			"lines": split(policy, "\n"),
 		},
 		"context": {
-			"path_separator": "/",
 			"workspace_root": "/Users/joe/policy",
 			"location": {
 				"row": 1,
 				"col": 9,
 			},
 		},
+		"environment": {"path_separator": "/"},
 	}}
 	items := provider.items with input as provider_input
 	items == {

@@ -44,28 +44,18 @@ allow if {
 	}, inmem.OptRoundTripOnWrite(false))
 
 	locals := NewPolicy(t.Context(), store)
-
 	params := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      5,
-			Character: 11,
-		},
+		TextDocument: types.TextDocumentIdentifier{URI: testCaseFileURI},
+		Position:     types.Position{Line: 5, Character: 11},
 	}
+	opts := &Options{ClientIdentifier: clients.IdentifierGeneric}
 
-	result, err := locals.Run(
-		t.Context(),
-		c,
-		params,
-		&Options{ClientIdentifier: clients.IdentifierGeneric},
-	)
+	result, err := locals.Run(t.Context(), c, params, opts)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	labels := []string{}
+	labels := make([]string, 0, len(result))
 	for _, item := range result {
 		labels = append(labels, item.Label)
 	}

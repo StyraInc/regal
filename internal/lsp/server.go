@@ -1429,8 +1429,13 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 				// this is an approximation, if there are multiple violations on the same line
 				// where hover loc is in their range, then they all just share a range as a
 				// single range is needed in the hover response.
+				source := ""
+				if v.Source != nil {
+					source = *v.Source
+				}
+
 				sharedRange = v.Range
-				docSnippets = append(docSnippets, fmt.Sprintf("[%s/%s](%s)", v.Source, v.Code, v.CodeDescription.Href))
+				docSnippets = append(docSnippets, fmt.Sprintf("[%s/%s](%s)", source, v.Code, v.CodeDescription.Href))
 			}
 		}
 
@@ -1521,9 +1526,17 @@ func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, param
 		return noCodeActions, nil
 	}
 
-	codeActionContext := rego.NewCodeActionContext(l.clientIdentifier, l.webServer.GetBaseURL(), l.workspaceRootURI)
-
-	return rego.CodeActions(ctx, codeActionContext, params) //nolint:wrapcheck
+	return rego.CodeActions(ctx, rego.CodeActionInput{ //nolint:wrapcheck
+		Regal: rego.RegalContext{
+			Client: rego.Client{
+				Identifier:            l.clientIdentifier,
+				InitializationOptions: &l.clientInitializationOptions,
+			},
+			WebServerBaseURI: l.webServer.GetBaseURL(),
+			WorkspaceRootURI: l.workspaceRootURI,
+		},
+		Params: params,
+	})
 }
 
 func (l *LanguageServer) handleWorkspaceExecuteCommand(params types.ExecuteCommandParams) (any, error) {
@@ -1557,8 +1570,6 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 		return partialInlayHints(parseErrors, contents, params.TextDocument.URI, bis), nil
 	}
 
-	// TODO: use GetContentAndModule here, or do we need to handle the cases separately?
-	// file is blank, nothing to do
 	if contents, ok := l.cache.GetFileContents(params.TextDocument.URI); ok && contents == "" {
 		return []types.InlayHint{}, nil
 	}
@@ -1570,9 +1581,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.TextDocumentIn
 		return []types.InlayHint{}, nil
 	}
 
-	inlayHints := getInlayHints(module, bis)
-
-	return inlayHints, nil
+	return getInlayHints(module, bis), nil
 }
 
 func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
@@ -1609,12 +1618,11 @@ func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params 
 		return nil, fmt.Errorf("failed to get code lenses: %w", err)
 	}
 
-	if l.clientInitializationOptions.EnableDebugCodelens != nil &&
-		*l.clientInitializationOptions.EnableDebugCodelens {
+	if l.clientInitializationOptions.EnableDebugCodelens != nil && *l.clientInitializationOptions.EnableDebugCodelens {
 		return lenses, nil
 	}
 
-	// filter out `regal.debug` codelens
+	// remove `regal.debug` codelens, as it's not enabled here
 	filteredLenses := make([]types.CodeLens, 0, len(lenses))
 
 	for _, lens := range lenses {
@@ -2104,10 +2112,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.cache.SetFileContents(renameOp.NewURI, content)
 
-		job := lintFileJob{
-			Reason: "textDocument/didRename",
-			URI:    renameOp.NewURI,
-		}
+		job := lintFileJob{Reason: "textDocument/didRename", URI: renameOp.NewURI}
 
 		l.lintFileJobs <- job
 		l.builtinsPositionJobs <- job
@@ -2201,21 +2206,15 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		l.clientInitializationOptions = *params.InitializationOptions
 	}
 
-	regoFilter := types.FileOperationFilter{
-		Scheme: "file",
-		Pattern: types.FileOperationPattern{
-			Glob: "**/*.rego",
-		},
-	}
+	regoFilter := types.FileOperationFilter{Scheme: "file", Pattern: types.FileOperationPattern{Glob: "**/*.rego"}}
+	fileOpOpts := types.FileOperationRegistrationOptions{Filters: []types.FileOperationFilter{regoFilter}}
 
 	initializeResult := types.InitializeResult{
 		Capabilities: types.ServerCapabilities{
 			TextDocumentSyncOptions: types.TextDocumentSyncOptions{
 				OpenClose: true,
 				Change:    1, // TODO: write logic to use 2, for incremental updates
-				Save: types.TextDocumentSaveOptions{
-					IncludeText: true,
-				},
+				Save:      types.TextDocumentSaveOptions{IncludeText: true},
 			},
 			DiagnosticProvider: types.DiagnosticOptions{
 				Identifier:            "rego",
@@ -2224,15 +2223,9 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 			},
 			Workspace: types.WorkspaceOptions{
 				FileOperations: types.FileOperationsServerCapabilities{
-					DidCreate: types.FileOperationRegistrationOptions{
-						Filters: []types.FileOperationFilter{regoFilter},
-					},
-					DidRename: types.FileOperationRegistrationOptions{
-						Filters: []types.FileOperationFilter{regoFilter},
-					},
-					DidDelete: types.FileOperationRegistrationOptions{
-						Filters: []types.FileOperationFilter{regoFilter},
-					},
+					DidCreate: fileOpOpts,
+					DidRename: fileOpOpts,
+					DidDelete: fileOpOpts,
 				},
 				WorkspaceFolders: types.WorkspaceFoldersServerCapabilities{
 					// NOTE(anders): The language server protocol doesn't go into detail about what this is meant to
@@ -2247,16 +2240,9 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 					Supported: true,
 				},
 			},
-			InlayHintProvider: types.InlayHintOptions{
-				ResolveProvider: false,
-			},
-			HoverProvider: true,
-			CodeActionProvider: types.CodeActionOptions{
-				CodeActionKinds: []string{
-					"quickfix",
-					"source.explore",
-				},
-			},
+			InlayHintProvider:  types.InlayHintOptions{ResolveProvider: false},
+			HoverProvider:      true,
+			CodeActionProvider: types.CodeActionOptions{CodeActionKinds: []string{"quickfix", "source.explore"}},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
 					"regal.debug",

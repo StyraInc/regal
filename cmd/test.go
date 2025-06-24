@@ -397,7 +397,7 @@ func Runtime() *ast.Term {
 	for _, s := range os.Environ() {
 		parts := strings.SplitN(s, "=", 2)
 		if len(parts) == 1 {
-			env.Insert(ast.StringTerm(parts[0]), ast.NullTerm())
+			env.Insert(ast.StringTerm(parts[0]), ast.InternedNullTerm)
 		} else if len(parts) > 1 {
 			env.Insert(ast.StringTerm(parts[0]), ast.StringTerm(parts[1]))
 		}

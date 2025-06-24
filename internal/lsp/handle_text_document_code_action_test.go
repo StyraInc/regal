@@ -37,6 +37,10 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 	params := types.CodeActionParams{
 		TextDocument: types.TextDocumentIdentifier{URI: uri},
 		Context:      types.CodeActionContext{Diagnostics: []types.Diagnostic{diag}},
+		Range: types.Range{
+			Start: types.Position{Line: 2, Character: 4},
+			End:   types.Position{Line: 2, Character: 10},
+		},
 	}
 
 	expectedAction := types.CodeAction{
@@ -115,8 +119,10 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 	}
 }
 
-// 0.06 milliseconds per operation, not bad at all!
-// 63243 ns/op	   59576 B/op	    1110 allocs/op
+// 63243 ns/op	   59576 B/op	    1110 allocs/op - the OPA JSON roundtrip method
+// 42402 ns/op	   37822 B/op	     738 allocs/op - build input Value by hand
+// 45049 ns/op	   39731 B/op	     790 allocs/op - build input Value using reflection
+// 44024 ns/op	   38040 B/op	     749 allocs/op - build input Value using reflection + interning
 // ...
 // "real world" usage shows a number somewhere between 0.1 - 0.5 ms
 // of which most of the cost is in JSON marshaling and unmarshaling.

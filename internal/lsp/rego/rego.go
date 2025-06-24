@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -13,11 +12,10 @@ import (
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/builtins"
 
 	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/rast"
 	"github.com/styrainc/roast/pkg/transform"
 )
 
@@ -28,6 +26,15 @@ var (
 	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
 	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
 )
+
+func init() {
+	ast.InternStringTerm(
+		// All keys from Code Actions
+		"identifier", "workspace_root_uri", "web_server_base_uri", "client", "params", "start", "end",
+		"textDocument", "context", "range", "uri", "diagnostics", "only", "triggerKind", "codeDescription",
+		"message", "severity", "source", "code", "data", "title", "command", "kind", "isPreferred",
+	)
+}
 
 type BuiltInCall struct {
 	Builtin  *ast.Builtin
@@ -47,18 +54,31 @@ type KeywordUseLocation struct {
 	Col uint `json:"col"`
 }
 
-type CodeActionContext struct {
-	client           clients.Identifier
-	webServerBaseURI string
-	workspaceRootURI string
+type Client struct {
+	Identifier            clients.Identifier           `json:"identifier"`
+	InitializationOptions *types.InitializationOptions `json:"init_options,omitempty"`
 }
 
-func NewCodeActionContext(client clients.Identifier, webServerBaseURI, workspaceRootURI string) CodeActionContext {
-	return CodeActionContext{
-		client:           client,
-		webServerBaseURI: webServerBaseURI,
-		workspaceRootURI: workspaceRootURI,
-	}
+type Environment struct {
+	WorkspaceRootURI string `json:"workspace_root_uri"`
+	WebServerBaseURI string `json:"web_server_base_uri"`
+}
+
+type RegalContext struct {
+	Client           Client `json:"client"`
+	WebServerBaseURI string `json:"web_server_base_uri"`
+	WorkspaceRootURI string `json:"workspace_root_uri"`
+}
+
+type CodeActionInput struct {
+	Regal  RegalContext           `json:"regal"`
+	Params types.CodeActionParams `json:"params"`
+}
+
+type CodeActionContext struct {
+	Client           clients.Identifier `json:"client"`
+	WebServerBaseURI string             `json:"web_server_base_uri"`
+	WorkspaceRootURI string             `json:"workspace_root_uri"`
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
@@ -187,21 +207,12 @@ func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (
 // CodeActions returns all code actions in the module.
 // Note that at least as of now, no code actions depend on the data in the module, so
 // it is not passed as part of the input. This could change in the future.
-func CodeActions(
-	ctx context.Context,
-	context CodeActionContext,
-	params types.CodeActionParams,
-) ([]types.CodeAction, error) {
+func CodeActions(ctx context.Context, input CodeActionInput) ([]types.CodeAction, error) {
 	preparedQueriesInitOnce.Do(initialize)
 
 	var codeActions []types.CodeAction
 
-	input, err := prepareCodeActionInput(context, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed preparing code action input: %w", err)
-	}
-
-	value, err := queryToValueWithInput(ctx, codeActionPreparedQuery, input, codeActions)
+	value, err := queryToValueWithParsedInput(ctx, codeActionPreparedQuery, rast.StructToValue(input), codeActions)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
@@ -210,26 +221,21 @@ func CodeActions(
 }
 
 func queryToValue[T any](ctx context.Context, pq *rego.PreparedEvalQuery, policy policy, toValue T) (T, error) {
-	input, err := parse.PrepareAST(policy.fileName, policy.contents, policy.module)
+	input, err := transform.ToAST(policy.fileName, policy.contents, policy.module, false)
 	if err != nil {
 		return toValue, fmt.Errorf("failed to prepare input: %w", err)
 	}
 
-	return queryToValueWithInput(ctx, pq, input, toValue)
+	return queryToValueWithParsedInput(ctx, pq, input, toValue)
 }
 
-func queryToValueWithInput[T any](
+func queryToValueWithParsedInput[T any](
 	ctx context.Context,
 	pq *rego.PreparedEvalQuery,
-	input map[string]any,
+	input ast.Value,
 	toValue T,
 ) (T, error) {
-	inputValue, err := transform.ToOPAInputValue(input)
-	if err != nil {
-		return toValue, fmt.Errorf("failed converting input to value: %w", err)
-	}
-
-	result, err := toValidResult(pq.Eval(ctx, rego.EvalParsedInput(inputValue)))
+	result, err := toValidResult(pq.Eval(ctx, rego.EvalParsedInput(input)))
 	if err != nil {
 		return toValue, err
 	}
@@ -256,52 +262,8 @@ func toValidResult(rs rego.ResultSet, err error) (rego.Result, error) {
 	return rs[0], nil
 }
 
-// ToInput prepares a module with Regal additions to be used as input for evaluation.
-func ToInput(
-	fileURI string,
-	cid clients.Identifier,
-	content string,
-	context map[string]any,
-) (map[string]any, error) {
-	path := uri.ToPath(cid, fileURI)
-
-	input := map[string]any{
-		"regal": map[string]any{
-			"file": map[string]any{
-				"name":  path,
-				"uri":   fileURI,
-				"lines": strings.Split(content, "\n"),
-			},
-			"context": context,
-		},
-	}
-
-	if regal, ok := input["regal"].(map[string]any); ok {
-		if f, ok := regal["file"].(map[string]any); ok {
-			f["uri"] = fileURI
-		}
-
-		regal["client_id"] = cid
-	}
-
-	return SetInputContext(input, context), nil
-}
-
-func SetInputContext(input map[string]any, context map[string]any) map[string]any {
-	if regal, ok := input["regal"].(map[string]any); ok {
-		regal["context"] = context
-	}
-
-	return input
-}
-
-func QueryRegalBundle(ctx context.Context, input map[string]any, pq rego.PreparedEvalQuery) (map[string]any, error) {
-	inputValue, err := transform.ToOPAInputValue(input)
-	if err != nil {
-		return nil, fmt.Errorf("failed converting input map to value: %w", err)
-	}
-
-	result, err := pq.Eval(ctx, rego.EvalParsedInput(inputValue))
+func QueryRegalBundle(ctx context.Context, input ast.Value, pq rego.PreparedEvalQuery) (map[string]any, error) {
+	result, err := pq.Eval(ctx, rego.EvalParsedInput(input))
 	if err != nil {
 		return nil, fmt.Errorf("failed evaluating query: %w", err)
 	}
@@ -311,27 +273,6 @@ func QueryRegalBundle(ctx context.Context, input map[string]any, pq rego.Prepare
 	}
 
 	return result[0].Bindings, nil
-}
-
-func prepareCodeActionInput(context CodeActionContext, params types.CodeActionParams) (map[string]any, error) {
-	var preparedParams map[string]any
-
-	if err := encoding.JSONRoundTrip(params, &preparedParams); err != nil {
-		return nil, fmt.Errorf("JSON rountrip failed for code action params: %w", err)
-	}
-
-	return map[string]any{
-		"params": preparedParams,
-		"regal": map[string]any{
-			"client": map[string]any{
-				"identifier": int(context.client),
-			},
-			"environment": map[string]any{
-				"web_server_base_uri": context.webServerBaseURI,
-				"workspace_root_uri":  context.workspaceRootURI,
-			},
-		},
-	}, nil
 }
 
 func createArgs(args ...func(*rego.Rego)) []func(*rego.Rego) {
@@ -344,7 +285,9 @@ func createArgs(args ...func(*rego.Rego)) []func(*rego.Rego) {
 }
 
 func createPreparedQuery(query string) *rego.PreparedEvalQuery {
-	pq, err := rego.New(createArgs(rego.Query(query))...).PrepareForEval(context.Background())
+	args := createArgs(rego.ParsedQuery(rast.RefStringToBody(query)))
+
+	pq, err := rego.New(args...).PrepareForEval(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to prepare query %s: %v", query, err))
 	}

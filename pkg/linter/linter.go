@@ -35,6 +35,7 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 
 	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/roast/pkg/rast"
 	"github.com/styrainc/roast/pkg/transform"
 	rutil "github.com/styrainc/roast/pkg/util"
 )
@@ -618,7 +619,7 @@ func (l Linter) validate(conf *config.Config) error {
 	// Add all built-in rules
 	for _, b := range l.ruleBundles {
 		for _, module := range b.Modules {
-			parts := util.UnquotedPath(module.Parsed.Package.Path)
+			parts := rast.UnquotedPath(module.Parsed.Package.Path)
 			// 1     2     3   4
 			// regal.rules.cat.rule
 			if len(parts) != 4 {
@@ -632,7 +633,7 @@ func (l Linter) validate(conf *config.Config) error {
 
 	// Add any custom rules
 	for _, module := range l.customRuleModules {
-		parts := util.UnquotedPath(module.Package.Path)
+		parts := rast.UnquotedPath(module.Package.Path)
 		// 1      2     3     4   5
 		// custom.regal.rules.cat.rule
 		if len(parts) != 5 {
@@ -746,10 +747,7 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	}
 
 	if l.printHook != nil {
-		regoArgs = append(regoArgs,
-			rego.EnablePrintStatements(true),
-			rego.PrintHook(l.printHook),
-		)
+		regoArgs = append(regoArgs, rego.EnablePrintStatements(true), rego.PrintHook(l.printHook))
 	}
 
 	if l.instrumentation {
@@ -826,9 +824,7 @@ func (l Linter) lintWithRegoRules(
 				return
 			}
 
-			evalArgs := []rego.EvalOption{
-				rego.EvalParsedInput(inputValue),
-			}
+			evalArgs := []rego.EvalOption{rego.EvalParsedInput(inputValue)}
 
 			if l.baseCache != nil {
 				evalArgs = append(evalArgs, rego.EvalBaseCache(l.baseCache))
@@ -838,14 +834,14 @@ func (l Linter) lintWithRegoRules(
 				evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
 			}
 
+			if l.instrumentation {
+				evalArgs = append(evalArgs, rego.EvalInstrument(true))
+			}
+
 			var prof *profiler.Profiler
 			if l.profiling {
 				prof = profiler.New()
 				evalArgs = append(evalArgs, rego.EvalQueryTracer(prof))
-			}
-
-			if l.instrumentation {
-				evalArgs = append(evalArgs, rego.EvalInstrument(true))
 			}
 
 			resultSet, err := l.preparedQuery.Eval(ctx, evalArgs...)

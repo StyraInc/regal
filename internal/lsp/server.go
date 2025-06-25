@@ -930,7 +930,11 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 			// next, check if there are any new files that are not ignored and
 			// need to be loaded. We get new only so that files being worked
 			// on are not loaded from disk during editing.
-			newURIs, err := l.loadWorkspaceContents(ctx, true)
+			newURIs, failed, err := l.loadWorkspaceContents(ctx, true)
+			for _, f := range failed {
+				l.logf(log.LevelMessage, "failed to load file %s: %s", f.URI, f.Error)
+			}
+
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to refresh workspace contents: %s", err)
 
@@ -2312,8 +2316,13 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 			l.logf(log.LevelMessage, "no config file found for workspace: %s", err)
 		}
 
-		if _, err = l.loadWorkspaceContents(ctx, false); err != nil {
-			return nil, fmt.Errorf("failed to load workspace contents: %w", err)
+		_, failed, err := l.loadWorkspaceContents(ctx, false)
+		for _, f := range failed {
+			l.logf(log.LevelMessage, "failed to load file %s: %s", f.URI, f.Error)
+		}
+
+		if err != nil {
+			l.logf(log.LevelMessage, "failed to load workspace contents: %s", err)
 		}
 
 		l.webServer.SetWorkspaceURI(l.workspaceRootURI)
@@ -2330,10 +2339,18 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 	return initializeResult, nil
 }
 
-func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) ([]string, error) {
+type loadWorkspaceContentsFailedFile struct {
+	URI   string
+	Error error
+}
+
+func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) (
+	[]string, []loadWorkspaceContentsFailedFile, error,
+) {
 	workspaceRootPath := l.workspacePath()
 
 	changedOrNewURIs := make([]string, 0)
+	failed := make([]loadWorkspaceContentsFailedFile, 0)
 
 	if err := rio.WalkFiles(workspaceRootPath, func(path string) error {
 		fileURI := uri.FromPath(l.clientIdentifier, path)
@@ -2360,7 +2377,13 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 
 		changed, _, err := cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
 		if err != nil {
-			return fmt.Errorf("failed to update cache for uri %q: %w", path, err)
+			failed = append(failed, loadWorkspaceContentsFailedFile{
+				URI:   fileURI,
+				Error: fmt.Errorf("failed to update cache for uri %q: %w", path, err),
+			})
+
+			// continue processing other files
+			return nil
 		}
 
 		// there is no need to update the parse if the file contents
@@ -2372,23 +2395,29 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 		bis := l.builtinsForCurrentCapabilities()
 
 		if _, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI)); err != nil {
-			return fmt.Errorf("failed to update parse: %w", err)
+			failed = append(failed, loadWorkspaceContentsFailedFile{
+				URI:   fileURI,
+				Error: fmt.Errorf("failed to update parse: %w", err),
+			})
+
+			// continue processing other files
+			return nil
 		}
 
 		changedOrNewURIs = append(changedOrNewURIs, fileURI)
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+		return nil, nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
 	}
 
 	if l.bundleCache != nil {
 		if _, err := l.bundleCache.Refresh(); err != nil {
-			return nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
+			return nil, nil, fmt.Errorf("failed to refresh the bundle cache: %w", err)
 		}
 	}
 
-	return changedOrNewURIs, nil
+	return changedOrNewURIs, failed, nil
 }
 
 func (l *LanguageServer) handleInitialized() (any, error) {

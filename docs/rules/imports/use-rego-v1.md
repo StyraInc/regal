@@ -6,7 +6,7 @@
 
 **Automatically fixable**: [Yes](/regal/fixing)
 
-## Notice: Rule made obsolete by OPA 1.0
+## Notice: Rule disabled by default since OPA 1.0
 
 Since Regal v0.30.0, this rule is only enabled for projects that have either been explicitly configured to target
 versions of OPA before 1.0, or if no configuration is provided — where Regal is able to determine that an older version
@@ -14,8 +14,10 @@ of OPA/Rego is being targeted. Consult the documentation on Regal's
 [configuration](https://docs.styra.com/regal#configuration) for information on how to best work with older versions of
 OPA and Rego.
 
-Since OPA v1.0, this rule is no longer needed simply because the Rego v1 syntax is made mandatory, and no additional
-imports are required.
+Since OPA v1.0, the `rego.v1` import is effectively a no-op. Developers working on a **policy library**, or other
+Rego polices that are expected to be used with many different OPA versions, may however benefit from enabling this rule,
+as having an `import rego.v1` in the policy ensures that v1 keywords will work correctly with OPA versions both
+before and after OPA v1.0.
 
 **Avoid**
 ```rego

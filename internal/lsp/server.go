@@ -519,10 +519,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			l.loadedConfigLock.Unlock()
 
 			// Rego versions may have changed, so reload them.
-			allRegoVersions, err := config.AllRegoVersions(
-				uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
-				l.getLoadedConfig(),
-			)
+			allRegoVersions, err := config.AllRegoVersions(l.workspacePath(), l.getLoadedConfig())
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to reload rego versions: %s", err)
 			}
@@ -956,8 +953,7 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			return
 		case job := <-l.templateFileJobs:
 			// disable the templating feature for files in the workspace root.
-			if filepath.Dir(uri.ToPath(l.clientIdentifier, job.URI)) ==
-				uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+			if filepath.Dir(uri.ToPath(l.clientIdentifier, job.URI)) == l.workspacePath() {
 				continue
 			}
 
@@ -974,46 +970,31 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 			// to work
 			l.cache.SetFileContents(job.URI, newContents)
 
-			var edits []any
-
-			edits = append(edits, types.TextDocumentEdit{
-				TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
-				Edits:        ComputeEdits("", newContents),
-			})
-
-			// set the cache contents so that the fix can access this content
-			// when renaming the file if required.
-			l.cache.SetFileContents(job.URI, newContents)
-
 			// determine if a rename is needed based on the new file contents.
 			// renameParams will be empty if there are no renames needed
-			renameParams, err := l.fixRenameParams(
-				"Template new Rego file",
-				&fixes.DirectoryPackageMismatch{},
-				job.URI,
-			)
+			renameParams, err := l.fixRenameParams("Template new Rego file", &fixes.DirectoryPackageMismatch{}, job.URI)
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to get rename params: %s", err)
 
 				continue
 			}
 
-			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, types.ApplyWorkspaceAnyEditParams{
+			editParams := types.ApplyWorkspaceAnyEditParams{
 				Label: renameParams.Label,
 				Edit: types.WorkspaceAnyEdit{
-					DocumentChanges: append(edits, renameParams.Edit.DocumentChanges...),
+					DocumentChanges: append([]any{types.TextDocumentEdit{
+						TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
+						Edits:        ComputeEdits("", newContents),
+					}}, renameParams.Edit.DocumentChanges...),
 				},
-			}, nil); err != nil {
+			}
+
+			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, editParams, nil); err != nil {
 				l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
 			}
 
 			// finally, trigger a diagnostics run for the new file
-			updateEvent := lintFileJob{
-				Reason: "internal/templateNewFile",
-				URI:    job.URI,
-			}
-
-			l.lintFileJobs <- updateEvent
+			l.lintFileJobs <- lintFileJob{Reason: "internal/templateNewFile", URI: job.URI}
 		}
 	}
 }
@@ -1078,14 +1059,13 @@ func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg con
 func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
 	// this function should not be called with files in the root, but if it is,
 	// then it is an error to prevent unwanted behavior.
-	if filepath.Dir(uri.ToPath(l.clientIdentifier, fileURI)) ==
-		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+	if filepath.Dir(uri.ToPath(l.clientIdentifier, fileURI)) == l.workspacePath() {
 		return "", errors.New("this function does not template files in the workspace root")
 	}
 
 	content, ok := l.cache.GetFileContents(fileURI)
 	if !ok {
-		return "", fmt.Errorf("failed to get file contents for URI %q", fileURI)
+		return "", fmt.Errorf("templateContentsForFile: failed to get file contents for URI %q", fileURI)
 	}
 
 	if content != "" {
@@ -1113,10 +1093,10 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	// known root, but the package could be determined based on the file path
 	// relative to the server's workspace root
 	if len(roots) == 1 && roots[0] == dir {
-		roots = []string{uri.ToPath(l.clientIdentifier, l.workspaceRootURI)}
+		roots = []string{l.workspacePath()}
+	} else {
+		roots = append(roots, l.workspacePath())
 	}
-
-	roots = append(roots, uri.ToPath(l.clientIdentifier, l.workspaceRootURI))
 
 	longestPrefixRoot := ""
 
@@ -1162,9 +1142,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		pkg += "_test"
 	}
 
-	version := l.regoVersionForURI(fileURI)
-
-	if version == ast.RegoV0 {
+	if l.regoVersionForURI(fileURI) == ast.RegoV0 {
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
 	}
 
@@ -1181,9 +1159,7 @@ func (l *LanguageServer) fixEditParams(
 		return false, nil, fmt.Errorf("could not get file contents for uri %q", args.Target)
 	}
 
-	rto := &fixes.RuntimeOptions{
-		BaseDir: uri.ToPath(l.clientIdentifier, l.workspaceRootURI),
-	}
+	rto := &fixes.RuntimeOptions{BaseDir: l.workspacePath()}
 	if args.Diagnostic != nil {
 		rto.Locations = []report.Location{
 			{
@@ -1245,14 +1221,10 @@ func (l *LanguageServer) fixRenameParams(
 	// the default for the LSP is to rename on conflict
 	f.SetOnConflictOperation(fixer.OnConflictRename)
 
-	violations := []report.Violation{
-		{
-			Title: fix.Name(),
-			Location: report.Location{
-				File: uri.ToPath(l.clientIdentifier, fileURI),
-			},
-		},
-	}
+	violations := []report.Violation{{
+		Title:    fix.Name(),
+		Location: report.Location{File: uri.ToPath(l.clientIdentifier, fileURI)},
+	}}
 
 	cfp := fileprovider.NewCacheFileProvider(l.cache, l.clientIdentifier)
 
@@ -1262,18 +1234,15 @@ func (l *LanguageServer) fixRenameParams(
 	}
 
 	ff := fixReport.FixedFiles()
-
 	if len(ff) == 0 {
-		return types.ApplyWorkspaceAnyEditParams{
-			Label: label,
-			Edit:  types.WorkspaceAnyEdit{},
-		}, nil
+		return types.ApplyWorkspaceAnyEditParams{Label: label, Edit: types.WorkspaceAnyEdit{}}, nil
 	}
 
 	// find the new file and the old location
-	var fixedFile, oldFile string
-
-	var found bool
+	var (
+		fixedFile, oldFile string
+		found              bool
+	)
 
 	for _, f := range ff {
 		var ok bool
@@ -1346,8 +1315,7 @@ func (l *LanguageServer) fixRenameParams(
 
 	l.cache.Delete(oldURI)
 
-	return types.ApplyWorkspaceAnyEditParams{
-		Label: label,
+	return types.ApplyWorkspaceAnyEditParams{Label: label,
 		Edit: types.WorkspaceAnyEdit{
 			DocumentChanges: changes,
 		},
@@ -1728,7 +1696,7 @@ func (l *LanguageServer) handleTextDocumentDefinition(params types.DefinitionPar
 
 	contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
 	if !ok {
-		return nil, fmt.Errorf("failed to get file contents for uri %q", params.TextDocument.URI)
+		return nil, fmt.Errorf("definition: failed to get file contents for uri %q", params.TextDocument.URI)
 	}
 
 	modules, err := l.getFilteredModules()
@@ -1774,23 +1742,19 @@ func (l *LanguageServer) handleTextDocumentDidOpen(params types.TextDocumentDidO
 	// if the opened file is ignored in config, then we only store the
 	// contents for file level operations like formatting.
 	if l.ignoreURI(params.TextDocument.URI) {
-		l.cache.SetIgnoredFileContents(
-			params.TextDocument.URI,
-			params.TextDocument.Text,
-		)
+		l.cache.SetIgnoredFileContents(params.TextDocument.URI, params.TextDocument.Text)
 
 		return struct{}{}, nil
 	}
 
-	l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
+	if params.TextDocument.Text != "" {
+		l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
 
-	job := lintFileJob{
-		Reason: "textDocument/didOpen",
-		URI:    params.TextDocument.URI,
+		job := lintFileJob{Reason: "textDocument/didOpen", URI: params.TextDocument.URI}
+
+		l.lintFileJobs <- job
+		l.builtinsPositionJobs <- job
 	}
-
-	l.lintFileJobs <- job
-	l.builtinsPositionJobs <- job
 
 	return struct{}{}, nil
 }
@@ -1813,20 +1777,14 @@ func (l *LanguageServer) handleTextDocumentDidChange(params types.TextDocumentDi
 	// if the changed file is ignored in config, then we only store the
 	// contents for file level operations like formatting.
 	if l.ignoreURI(params.TextDocument.URI) {
-		l.cache.SetIgnoredFileContents(
-			params.TextDocument.URI,
-			params.ContentChanges[0].Text,
-		)
+		l.cache.SetIgnoredFileContents(params.TextDocument.URI, params.ContentChanges[0].Text)
 
 		return struct{}{}, nil
 	}
 
 	l.cache.SetFileContents(params.TextDocument.URI, params.ContentChanges[0].Text)
 
-	job := lintFileJob{
-		Reason: "textDocument/didChange",
-		URI:    params.TextDocument.URI,
-	}
+	job := lintFileJob{Reason: "textDocument/didChange", URI: params.TextDocument.URI}
 
 	l.lintFileJobs <- job
 	l.builtinsPositionJobs <- job
@@ -1880,7 +1838,7 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(params types.DocumentS
 
 	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)
 	if !ok {
-		l.logf(log.LevelMessage, "failed to get file contents for uri %q", params.TextDocument.URI)
+		l.logf(log.LevelDebug, "documentSymbol: failed to get file contents for uri %q", params.TextDocument.URI)
 
 		return noDocumentSymbols, nil
 	}
@@ -1915,8 +1873,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	// if the file is empty, then the formatters will fail, so we template instead
 	if oldContent == "" {
 		// disable the templating feature for files in the workspace root.
-		if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) ==
-			uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+		if filepath.Dir(uri.ToPath(l.clientIdentifier, params.TextDocument.URI)) == l.workspacePath() {
 			return []types.TextEdit{}, nil
 		}
 
@@ -2042,10 +1999,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(params types.WorkspaceDid
 			return nil, fmt.Errorf("failed to update cache for uri %q: %w", createOp.URI, err)
 		}
 
-		job := lintFileJob{
-			Reason: "textDocument/didCreate",
-			URI:    createOp.URI,
-		}
+		job := lintFileJob{Reason: "textDocument/didCreate", URI: createOp.URI}
 
 		l.lintFileJobs <- job
 		l.builtinsPositionJobs <- job
@@ -2116,8 +2070,10 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 
 		l.lintFileJobs <- job
 		l.builtinsPositionJobs <- job
-		// if the file being moved is empty, we template it too (if empty)
-		l.templateFileJobs <- job
+
+		if content == "" {
+			l.templateFileJobs <- job
+		}
 	}
 
 	return struct{}{}, nil
@@ -2515,7 +2471,7 @@ func (l *LanguageServer) regoVersionForURI(fileURI string) ast.RegoVersion {
 	if l.loadedConfigAllRegoVersions != nil {
 		version = rules.RegoVersionFromVersionsMap(
 			l.loadedConfigAllRegoVersions.Clone(),
-			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), uri.ToPath(l.clientIdentifier, l.workspaceRootURI)),
+			strings.TrimPrefix(uri.ToPath(l.clientIdentifier, fileURI), l.workspacePath()),
 			ast.RegoUndefined,
 		)
 	}

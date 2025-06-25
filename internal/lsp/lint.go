@@ -35,7 +35,7 @@ func updateParse(
 ) (bool, error) {
 	content, ok := cache.GetFileContents(fileURI)
 	if !ok {
-		return false, fmt.Errorf("failed to get file contents for uri %q", fileURI)
+		return false, fmt.Errorf("updateParse: failed to get file contents for uri %q", fileURI)
 	}
 
 	lines := strings.Split(content, "\n")
@@ -170,7 +170,7 @@ func updateFileDiagnostics(
 
 	contents, ok := cache.GetFileContents(fileURI)
 	if !ok {
-		return fmt.Errorf("failed to get file contents for uri %q", fileURI)
+		return fmt.Errorf("updateFileDiagnostics: failed to get file contents for uri %q", fileURI)
 	}
 
 	input := rules.NewInput(

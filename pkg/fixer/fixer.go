@@ -110,8 +110,7 @@ func (f *Fixer) FixViolations(
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
-	// rangeValCopy may be expensive, but this is not critical enough
-	// to motivate cluttering the code
+	// rangeValCopy may be expensive, but not critical enough to motivate cluttering the code
 	//nolint:gocritic
 	for _, violation := range violations {
 		file := violation.Location.File
@@ -126,23 +125,19 @@ func (f *Fixer) FixViolations(
 			return nil, fmt.Errorf("failed to get file %s: %w", file, err)
 		}
 
-		fixCandidate := fixes.FixCandidate{
-			Filename: file,
-			Contents: fc,
-		}
-
 		abs, err := filepath.Abs(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get absolute path for %s: %w", file, err)
 		}
 
-		fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
-			BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
-			Config:  config,
-			Locations: []report.Location{
-				violation.Location,
+		fixResults, err := fixInstance.Fix(
+			&fixes.FixCandidate{Filename: file, Contents: fc},
+			&fixes.RuntimeOptions{
+				BaseDir:   util.FindClosestMatchingRoot(abs, f.registeredRoots),
+				Config:    config,
+				Locations: []report.Location{violation.Location},
 			},
-		})
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fix %s: %w", file, err)
 		}

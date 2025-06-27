@@ -146,7 +146,7 @@ func RegalIsFormatted(_ rego.BuiltinContext, input *ast.Term, options *ast.Term)
 		return nil, err
 	}
 
-	return ast.InternedBooleanTerm(bytes.Equal(source, result)), nil
+	return ast.InternedTerm(bytes.Equal(source, result)), nil
 }
 
 func formatRego(source []byte, opts format.Opts) (result []byte, err error) {

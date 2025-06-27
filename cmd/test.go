@@ -403,9 +403,9 @@ func Runtime() *ast.Term {
 		}
 	}
 
-	obj.Insert(ast.InternedStringTerm("env"), ast.NewTerm(env))
-	obj.Insert(ast.InternedStringTerm("version"), ast.StringTerm(version.Version))
-	obj.Insert(ast.InternedStringTerm("commit"), ast.StringTerm(version.Vcs))
+	obj.Insert(ast.InternedTerm("env"), ast.NewTerm(env))
+	obj.Insert(ast.InternedTerm("version"), ast.StringTerm(version.Version))
+	obj.Insert(ast.InternedTerm("commit"), ast.StringTerm(version.Vcs))
 
 	return ast.NewTerm(obj)
 }

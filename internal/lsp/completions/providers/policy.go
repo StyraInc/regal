@@ -62,12 +62,12 @@ func (p *Policy) Run(
 	// input.regal.context
 	location := rego2.LocationFromPosition(params.Position)
 	regalContext := ast.NewObject(
-		ast.Item(ast.InternedStringTerm("location"), ast.ObjectTerm(
-			ast.Item(ast.InternedStringTerm("row"), ast.InternedIntNumberTerm(location.Row)),
-			ast.Item(ast.InternedStringTerm("col"), ast.InternedIntNumberTerm(location.Col)),
+		ast.Item(ast.InternedTerm("location"), ast.ObjectTerm(
+			ast.Item(ast.InternedTerm("row"), ast.InternedTerm(location.Row)),
+			ast.Item(ast.InternedTerm("col"), ast.InternedTerm(location.Col)),
 		)),
-		ast.Item(ast.InternedStringTerm("client_identifier"), ast.InternedIntNumberTerm(int(opts.ClientIdentifier))),
-		ast.Item(ast.InternedStringTerm("workspace_root"), ast.InternedStringTerm(opts.RootURI)),
+		ast.Item(ast.InternedTerm("client_identifier"), ast.InternedTerm(int(opts.ClientIdentifier))),
+		ast.Item(ast.InternedTerm("workspace_root"), ast.InternedTerm(opts.RootURI)),
 	)
 
 	path := uri.ToPath(opts.ClientIdentifier, params.TextDocument.URI)
@@ -80,20 +80,20 @@ func (p *Policy) Run(
 			return nil, fmt.Errorf("failed converting input dot JSON content to value: %w", err)
 		}
 
-		regalContext.Insert(ast.InternedStringTerm("input_dot_json_path"), ast.InternedStringTerm(inputDotJSONPath))
-		regalContext.Insert(ast.InternedStringTerm("input_dot_json"), ast.NewTerm(inputDotJSONValue))
+		regalContext.Insert(ast.InternedTerm("input_dot_json_path"), ast.InternedTerm(inputDotJSONPath))
+		regalContext.Insert(ast.InternedTerm("input_dot_json"), ast.NewTerm(inputDotJSONValue))
 	}
 
 	// input.regal
 	regalObj := transform.RegalContext(path, content, opts.RegoVersion.String())
-	regalObj.Insert(ast.InternedStringTerm("context"), ast.NewTerm(regalContext))
+	regalObj.Insert(ast.InternedTerm("context"), ast.NewTerm(regalContext))
 
-	fileRef := ast.Ref{ast.InternedStringTerm("file")}
+	fileRef := ast.Ref{ast.InternedTerm("file")}
 	fileObj, _ := regalObj.Find(fileRef)
 	//nolint:forcetypeassert
-	fileObj.(ast.Object).Insert(ast.InternedStringTerm("uri"), ast.InternedStringTerm(params.TextDocument.URI))
+	fileObj.(ast.Object).Insert(ast.InternedTerm("uri"), ast.InternedTerm(params.TextDocument.URI))
 
-	input := ast.NewObject(ast.Item(ast.InternedStringTerm("regal"), ast.NewTerm(regalObj)))
+	input := ast.NewObject(ast.Item(ast.InternedTerm("regal"), ast.NewTerm(regalObj)))
 
 	result, err := rego2.QueryRegalBundle(ctx, input, p.pq)
 	if err != nil {

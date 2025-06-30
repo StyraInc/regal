@@ -20,7 +20,7 @@ report contains violation if {
 	# one-liners, but they'll often be longer than the preferred line length
 	# We can come back to this later, but for now let's just make this an
 	# exception documented for this rule
-	not rule["else"]
+	not rule.else
 
 	# Single expression in body required for one-liner
 	count(rule.body) == 1

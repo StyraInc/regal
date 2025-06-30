@@ -11,7 +11,7 @@ report contains violation if {
 
 	some rule in input.rules
 
-	not rule["default"]
+	not rule.default
 
 	ref := ast.ref_to_string(rule.head.ref)
 
@@ -22,7 +22,7 @@ report contains violation if {
 
 _default_rule_values[ref] := rule.head.value.value if {
 	some rule in input.rules
-	rule["default"]
+	rule.default
 
 	ref := ast.ref_to_string(rule.head.ref)
 }

@@ -67,7 +67,7 @@ report contains violation if {
 	# we should consider having a helper function to return
 	# all else clauses, for a given rule, as potentially that
 	# would be cached on the second invocation of the function
-	walk(rule["else"], [_, value])
+	walk(rule.else, [_, value])
 
 	loc := result.location(value.head)
 

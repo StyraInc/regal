@@ -38,7 +38,7 @@ comments["annotation_match"](str) if regex.match(
 # METADATA
 # description: array containing all annotations from the module
 annotations := array.concat(
-	[annotation | some annotation in input["package"].annotations],
+	[annotation | some annotation in input.package.annotations],
 	[annotation | annotation := input.rules[_].annotations[_]],
 )
 

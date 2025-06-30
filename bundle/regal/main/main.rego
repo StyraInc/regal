@@ -69,7 +69,7 @@ report contains violation if {
 }
 
 report contains violation if {
-	not input["package"]
+	not input.package
 
 	violation := {
 		"category": "error",

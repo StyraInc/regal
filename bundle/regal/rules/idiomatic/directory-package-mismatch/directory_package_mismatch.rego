@@ -27,7 +27,7 @@ report contains violation if {
 	file_path_length_matched != _pkg_path_values
 
 	# skip the "data" part of the path, as it has no location
-	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(util.rest(input["package"].path)))
+	violation := result.fail(rego.metadata.chain(), result.ranged_from_ref(util.rest(input.package.path)))
 }
 
 _pkg_path_values := without_test_suffix if {

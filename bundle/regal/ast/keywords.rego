@@ -30,7 +30,7 @@ keywords[row] contains keyword if {
 # METADATA
 # description: collects the `package` keyword
 keywords[loc.row] contains keyword if {
-	loc := util.to_location_object(input["package"].location)
+	loc := util.to_location_object(input.package.location)
 
 	keyword := {
 		"name": "package",

@@ -11,15 +11,15 @@ report contains violation if {
 	not acme_corp_package
 	not system_log_package
 
-	violation := result.fail(rego.metadata.chain(), result.location(input["package"].path[1]))
+	violation := result.fail(rego.metadata.chain(), result.location(input.package.path[1]))
 }
 
 acme_corp_package if {
-	input["package"].path[1].value == "acme"
-	input["package"].path[2].value == "corp"
+	input.package.path[1].value == "acme"
+	input.package.path[2].value == "corp"
 }
 
 system_log_package if {
-	input["package"].path[1].value == "system"
-	input["package"].path[2].value == "log"
+	input.package.path[1].value == "system"
+	input.package.path[2].value == "log"
 }

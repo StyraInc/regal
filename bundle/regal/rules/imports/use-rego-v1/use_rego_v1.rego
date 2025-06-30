@@ -27,5 +27,5 @@ notices contains result.notice(rego.metadata.chain()) if {
 report contains violation if {
 	not ast.imports_has_path(ast.imports, ["rego", "v1"])
 
-	violation := result.fail(rego.metadata.chain(), result.location(input["package"]))
+	violation := result.fail(rego.metadata.chain(), result.location(input.package))
 }

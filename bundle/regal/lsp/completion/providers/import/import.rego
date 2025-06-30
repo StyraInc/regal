@@ -1,6 +1,6 @@
 # METADATA
 # description: provides completion suggestions for the `import` keyword where applicable
-package regal.lsp.completion.providers["import"]
+package regal.lsp.completion.providers.import
 
 import data.regal.lsp.completion.kind
 import data.regal.lsp.completion.location

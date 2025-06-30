@@ -12,7 +12,7 @@ report contains violation if {
 	# walking is expensive but necessary here, since there could be
 	# any number of `else` clauses nested below. no need to traverse
 	# the rule if there isn't a single `else` present though!
-	walk(rule["else"], [_, value])
+	walk(rule.else, [_, value])
 
 	not value.body
 

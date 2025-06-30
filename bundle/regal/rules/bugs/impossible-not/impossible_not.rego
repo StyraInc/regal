@@ -7,7 +7,7 @@ import data.regal.result
 import data.regal.util
 
 # note: not ast.package_path as we want the "data" component here
-_package_path := [part.value | some part in input["package"].path]
+_package_path := [part.value | some part in input.package.path]
 
 _multivalue_rules contains path if {
 	some rule in ast.rules

@@ -13,7 +13,7 @@ report contains violation if {
 
 	expr.terms.type == "ref"
 
-	not expr["with"]
+	not expr.with
 
 	ast.static_ref(expr.terms)
 

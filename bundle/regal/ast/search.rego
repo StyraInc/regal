@@ -329,6 +329,6 @@ find_names_in_scope(rule, location) := names if {
 #   find all variables declared via `some` declarations (and *not* `some .. in`)
 #   in the scope of the given location
 find_some_decl_names_in_scope(rule, location) := {some_var.value |
-	some some_var in found.vars[_rule_index(rule)]["some"]
+	some some_var in found.vars[_rule_index(rule)].some
 	_before_location(rule.head, some_var, util.to_location_object(location))
 }

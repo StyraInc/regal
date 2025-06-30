@@ -21,14 +21,14 @@ lenses := array.concat(
 )
 
 _eval_lenses contains {
-	"range": location.to_range(result.location(input["package"]).location),
+	"range": location.to_range(result.location(input.package).location),
 	"command": {
 		"title": "Evaluate",
 		"command": "regal.eval",
 		"arguments": [json.marshal({
 			"target": input.regal.file.name,
-			"path": ast.ref_to_string(input["package"].path),
-			"row": util.to_location_object(input["package"].location).row,
+			"path": ast.ref_to_string(input.package.path),
+			"row": util.to_location_object(input.package.location).row,
 		})],
 	},
 }
@@ -36,14 +36,14 @@ _eval_lenses contains {
 _eval_lenses contains _rule_lens(input.regal.file.name, rule, "regal.eval", "Evaluate") if some rule in ast.rules
 
 _debug_lenses contains {
-	"range": location.to_range(result.location(input["package"]).location),
+	"range": location.to_range(result.location(input.package).location),
 	"command": {
 		"title": "Debug",
 		"command": "regal.debug",
 		"arguments": [json.marshal({
 			"target": input.regal.file.name,
-			"path": ast.ref_to_string(input["package"].path),
-			"row": util.to_location_object(input["package"].location).row,
+			"path": ast.ref_to_string(input.package.path),
+			"row": util.to_location_object(input.package.location).row,
 		})],
 	},
 }
@@ -63,7 +63,7 @@ _rule_lens(filename, rule, command, title) := {
 		"arguments": [json.marshal({
 			"target": filename,
 			"path": concat(".", [
-				ast.ref_to_string(input["package"].path),
+				ast.ref_to_string(input.package.path),
 				ast.ref_static_to_string(rule.head.ref),
 			]),
 			"row": util.to_location_object(rule.head.location).row,

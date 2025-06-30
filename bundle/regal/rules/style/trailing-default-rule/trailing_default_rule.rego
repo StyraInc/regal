@@ -8,7 +8,7 @@ import data.regal.result
 report contains violation if {
 	some i, rule in input.rules
 
-	rule["default"] == true
+	rule.default == true
 
 	name := ast.ref_to_string(rule.head.ref)
 	name in _all_names(array.slice(input.rules, 0, i))

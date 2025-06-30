@@ -39,7 +39,7 @@ parsed_modules[file_uri] := regal.parse_module(file_uri, contents) if some file_
 defined_refs[file_uri] contains concat(".", [package_name, ast.ref_to_string(rule.head.ref)]) if {
 	some file_uri, parsed_module in parsed_modules
 
-	package_name := ast.ref_to_string(parsed_module["package"].path)
+	package_name := ast.ref_to_string(parsed_module.package.path)
 
 	some rule in parsed_module.rules
 }

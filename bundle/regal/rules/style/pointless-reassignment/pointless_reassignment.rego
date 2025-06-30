@@ -21,7 +21,7 @@ report contains violation if {
 report contains violation if {
 	expr := input.rules[_].body[_]
 
-	not expr["with"]
+	not expr.with
 
 	[lhs, rhs] := ast.assignment_terms(expr.terms)
 

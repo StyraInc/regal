@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/open-policy-agent/opa/cmd"
+
 	regal_cmd "github.com/styrainc/regal/cmd"
 )
 

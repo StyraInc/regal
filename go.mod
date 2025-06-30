@@ -15,14 +15,14 @@ require (
 	github.com/google/go-dap v0.12.0
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-policy-agent/opa v1.5.1-0.20250627085034-d3e83fbd7735
+	github.com/open-policy-agent/opa v1.6.0
 	github.com/owenrumney/go-sarif/v2 v2.3.3
 	github.com/pdevine/go-asciisprite v0.1.6
 	github.com/pkg/profile v1.7.0
 	github.com/sourcegraph/jsonrpc2 v0.2.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/styrainc/roast v0.14.1-0.20250627114319-677c9037669a
+	github.com/styrainc/roast v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

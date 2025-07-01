@@ -15,6 +15,9 @@ updates:
     ignore:
       # update OPA manually to bump version in README too
       - dependency-name: "github.com/open-policy-agent/opa/v1"
+      # the v1 of this is breaking and we plan to use a rego impl eventually
+      - dependency-name: "github.com/olekukonko/tablewriter"
+        versions: [">= 0.0.6"]
     groups:
       dependencies:
         patterns:

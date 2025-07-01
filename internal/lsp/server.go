@@ -1,4 +1,4 @@
-//nolint:nilerr,nilnil
+//nolint:nilnil
 package lsp
 
 import (
@@ -2360,18 +2360,8 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 		}
 
 		// if the caller has requested only new files, then we can exit early
-		if contents, ok := l.cache.GetFileContents(fileURI); newOnly && ok {
-			diskContents, err := os.ReadFile(fileURI)
-			if err != nil {
-				// then there is nothing we can do here
-				return nil
-			}
-
-			if len(diskContents) == 0 && contents == "" {
-				// then there is nothing to be gained from loading from disk
-				return nil
-			}
-
+		// if the file is already in the cache.
+		if _, ok := l.cache.GetFileContents(fileURI); newOnly && ok {
 			return nil
 		}
 

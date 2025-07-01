@@ -1,6 +1,6 @@
 # METADATA
 # description: provides completion suggestions for the `default` keyword where applicable
-package regal.lsp.completion.providers["default"]
+package regal.lsp.completion.providers.default
 
 import data.regal.ast
 

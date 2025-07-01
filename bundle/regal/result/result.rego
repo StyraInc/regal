@@ -47,7 +47,7 @@ aggregate(chain, aggregate_data) := entry if {
 		"aggregate_source": {
 			"file": input.regal.file.name,
 			"package_path": [part.value |
-				some i, part in input["package"].path
+				some i, part in input.package.path
 				i > 0
 			],
 		},

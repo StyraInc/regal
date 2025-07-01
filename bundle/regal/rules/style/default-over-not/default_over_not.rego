@@ -11,7 +11,7 @@ report contains violation if {
 	# part 1 — find unconditional static ref assignment
 	# example: `rule := input.foo`
 
-	not rule["default"]
+	not rule.default
 	not rule.body
 
 	ast.static_ref(rule.head.value)

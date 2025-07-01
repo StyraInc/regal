@@ -69,7 +69,7 @@ builtin_namespaces contains regex.replace(name, `\..*`, "") if some name in buil
 #   provides the package path values (strings) as an array starting _from_ "data":
 #   package foo.bar -> ["foo", "bar"]
 package_path := [path.value |
-	some i, path in input["package"].path
+	some i, path in input.package.path
 	i > 0
 ]
 

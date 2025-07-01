@@ -9,8 +9,8 @@ report contains violation if {
 	some i, rule in input.rules
 	some expr in ast.found.expressions[ast.rule_index_strings[i]]
 
-	expr["with"]
+	expr.with
 	not strings.any_prefix_match(ast.ref_to_string(rule.head.ref), {"test_", "todo_test"})
 
-	violation := result.fail(rego.metadata.chain(), result.location(expr["with"][0]))
+	violation := result.fail(rego.metadata.chain(), result.location(expr.with[0]))
 }

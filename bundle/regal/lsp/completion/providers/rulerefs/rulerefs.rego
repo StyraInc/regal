@@ -22,7 +22,7 @@ _workspace_rule_refs contains ref if {
 
 _parsed_current_file := data.workspace.parsed[input.regal.file.uri]
 
-_current_file_package := ast.ref_to_string(_parsed_current_file["package"].path)
+_current_file_package := ast.ref_to_string(_parsed_current_file.package.path)
 
 _current_file_imports contains ref if {
 	some imp in _parsed_current_file.imports

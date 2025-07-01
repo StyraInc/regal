@@ -20,13 +20,13 @@ report contains violation if {
 	# Remove this and consider proper handling of else once
 	# https://github.com/open-policy-agent/opa/issues/5777
 	# is resolved
-	not rule["else"]
+	not rule.else
 
 	# Var assignment in rule head
 	rule.head.value.type == "var"
 
 	# `with` statements can't be moved to the rule head
-	not rule.body[0]["with"]
+	not rule.body[0].with
 
 	_assignment_expr(rule.body[0].terms)
 
@@ -49,7 +49,7 @@ report contains violation if {
 
 	expr := rule.body[0]
 
-	not expr["with"]
+	not expr.with
 
 	_assignment_expr(expr.terms)
 

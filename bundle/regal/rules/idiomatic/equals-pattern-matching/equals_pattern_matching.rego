@@ -15,7 +15,7 @@ report contains violation if {
 	some fn in ast.functions
 
 	not fn.body
-	not fn["else"]
+	not fn.else
 
 	arg_var_names := {arg.value |
 		some arg in fn.head.args
@@ -41,7 +41,7 @@ report contains violation if {
 	some fn in ast.functions
 
 	fn.body
-	not fn["else"]
+	not fn.else
 
 	# FOR NOW: Limit to a lone comparison
 	# More elaborate cases are certainly doable,

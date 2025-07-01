@@ -8,5 +8,5 @@ import data.regal.result
 report contains violation if {
 	count(input.regal.file.lines) > config.rules.style["file-length"]["max-file-length"]
 
-	violation := result.fail(rego.metadata.chain(), result.location(input["package"]))
+	violation := result.fail(rego.metadata.chain(), result.location(input.package))
 }

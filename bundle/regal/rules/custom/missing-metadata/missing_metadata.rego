@@ -11,14 +11,14 @@ import data.regal.util
 # description: aggregates annotations on package declarations and rules
 aggregate contains result.aggregate(rego.metadata.chain(), {
 	"package_annotated": _package_annotated,
-	"package_location": util.to_location_object(input["package"].location),
+	"package_location": util.to_location_object(input.package.location),
 	"rule_annotations": _rule_annotations,
 	"rule_locations": _rule_locations,
 })
 
 default _package_annotated := false
 
-_package_annotated if input["package"].annotations
+_package_annotated if input.package.annotations
 
 _rule_annotations[rule_path] contains annotated if {
 	some rule in ast.public_rules_and_functions

@@ -6,4 +6,4 @@ import rego.v1
 
 import data.regal.result
 
-report contains result.fail(rego.metadata.chain(), result.location(input["package"].path[1]))
+report contains result.fail(rego.metadata.chain(), result.location(input.package.path[1]))

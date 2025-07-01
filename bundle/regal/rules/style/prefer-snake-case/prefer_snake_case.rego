@@ -7,7 +7,7 @@ import data.regal.result
 import data.regal.util
 
 report contains violation if {
-	some part in input["package"].path
+	some part in input.package.path
 
 	not util.is_snake_case(part.value)
 

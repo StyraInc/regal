@@ -14,7 +14,7 @@ report contains violation if {
 	not regex.match(convention.pattern, ast.package_name)
 
 	violation := _with_description(
-		result.fail(rego.metadata.chain(), result.location(input["package"])),
+		result.fail(rego.metadata.chain(), result.location(input.package)),
 		sprintf(
 			"Naming convention violation: package name %q does not match pattern '%s'",
 			[ast.package_name, convention.pattern],

@@ -6,7 +6,7 @@ import data.regal.ast
 import data.regal.result
 
 report contains violation if {
-	plen := count(input["package"].path)
+	plen := count(input.package.path)
 	path := input.imports[_].path
 	ilen := count(path.value)
 
@@ -15,7 +15,7 @@ report contains violation if {
 
 	same := array.slice(path.value, 0, plen)
 
-	ast.ref_value_equal(input["package"].path, same)
+	ast.ref_value_equal(input.package.path, same)
 
 	violation := result.fail(rego.metadata.chain(), result.location(path))
 }

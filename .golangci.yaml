@@ -80,6 +80,7 @@ linters:
       - path: '(.+)_test\.go'
         linters:
           - forcetypeassert
+          - godot
     generated: lax
     presets:
       - comments

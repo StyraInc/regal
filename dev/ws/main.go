@@ -11,13 +11,13 @@ import (
 	"github.com/styrainc/regal/pkg/lsp"
 )
 
-//go:embed *.html
+//go:embed *.html *.css
 var root embed.FS
 
 func main() {
 	http.Handle("/regal", http.HandlerFunc(handleWS))
 	http.Handle("/", http.FileServerFS(root))
-	panic(http.ListenAndServe(":8765", nil))
+	panic(http.ListenAndServe(":8787", nil))
 }
 
 var upgrader = websocket.Upgrader{

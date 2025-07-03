@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DEMO</title>
+  <style>
+    body { font-family: sans-serif; }
+    #editor { border: 1px solid #ddd; max-width: 700px; margin: 2em auto; }
+    .cm-editor { min-height: 250px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "style-mod": "https://esm.sh/style-mod",
+        "w3c-keyname": "https://esm.sh/w3c-keyname",
+        "crelt": "https://esm.sh/crelt",
+        "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
+        "@lezer/": "https://esm.sh/*@lezer/",
+        "@codemirror/": "https://esm.sh/*@codemirror/",
+        "codemirror": "https://esm.sh/*codemirror"
+      }
+    }
+  </script>
+</head>
+<body>
+  <h2>demo</h2>
+  <div id="editor"></div>
+  <script type="module">
+    import { basicSetup, EditorView } from "codemirror";
+
+    const startDoc = `package authz
+
+allow if {
+  some x in input.xs
+  input.what != "ever"
+}`;
+
+    new EditorView({
+      doc: startDoc,
+      extensions: [basicSetup],
+      parent: document.getElementById("editor")
+    });
+  </script>
+</body>
+</html>

@@ -1,3 +1,6 @@
+// Package lsp exposes certain internals of the lsp server for use with web-based clients to the Regal LSP.
+//
+// Use with care, interfaces may change. This package is considered experimental!
 package lsp
 
 import (
@@ -13,11 +16,14 @@ import (
 	"github.com/styrainc/regal/pkg/config"
 )
 
+// Handle represents a single active LSP session.
 type Handle struct {
 	conn *jsonrpc2.Conn
 	ls   *lsp.LanguageServer
 }
 
+// New opens a new language server session on the provided websocket connection `ws`.
+// Use the `*config.Config` argument to control the LSP session's config.
 func New(ctx context.Context, ws *websocket.Conn, c *config.Config) (*Handle, error) {
 	opts := lsp.LanguageServerOptions{
 		LogWriter: os.Stderr,
@@ -45,6 +51,7 @@ func New(ctx context.Context, ws *websocket.Conn, c *config.Config) (*Handle, er
 	}, nil
 }
 
+// Wait waits for the client to finish its exchange. It aborts if ctx is done.
 func (h *Handle) Wait(ctx context.Context) error {
 	select {
 	case <-h.conn.DisconnectNotify():
@@ -54,6 +61,7 @@ func (h *Handle) Wait(ctx context.Context) error {
 	}
 }
 
+// Close closes the underlying connection.
 func (h *Handle) Close() error {
 	return h.conn.Close() //nolint:wrapcheck
 }

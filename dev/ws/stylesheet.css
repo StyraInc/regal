@@ -81,11 +81,14 @@ main {
 	height:auto!important;
 }
 
-pre.code {
-	font-family:'Courier New', Courier, monospace;
-	background-color: #444440;
-	color: #0f0;
-	padding:30px 5px 30px 15px;
-	overflow-y:scroll;
-	display:block;
+.codejar {
+  width: 100%;
+  min-height: 150px;
+  max-height: 500px;
+  border: 1px solid #bbb;
+  font-family: monospace;
+  padding: 6px;
+  background: #fafafa;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }

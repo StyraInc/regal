@@ -3,9 +3,128 @@
 <head>
     <title>&lt;/&gt; htmx Realtime Test Server</title>
     <link rel="stylesheet" href="/stylesheet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.2" integrity="sha384-932iIqjARv+Gy0+r6RTGrfCkCKS5MsF539Iqf6Vt8L4YmbnnWI2DSFoMD90bvXd0" crossorigin="anonymous"></script>
-    <script defer>
+    <script type="module" defer>
+    import { CodeJar } from "https://esm.sh/codejar@4";
+    import hljs from "https://esm.sh/highlight.js@11.9.0/lib/core";
+    import json from "https://esm.sh/highlight.js@11.9.0/lib/languages/json";
+
+    hljs.registerLanguage('json', json);
+
+    function highlighter(editor) {
+        const code = editor.textContent;
+        editor.innerHTML = hljs.highlight(code, { language: 'json' }).value;
+    }
+
+    const initialInitialize = `{
+      "capabilities": {
+        "textDocument": {
+          "hover": {
+            "dynamicRegistration": true,
+            "contentFormat": [
+              "markdown",
+              "plaintext"
+            ]
+          },
+          "moniker": {},
+          "synchronization": {
+            "dynamicRegistration": true,
+            "willSave": false,
+            "didSave": false,
+            "willSaveWaitUntil": false
+          },
+          "codeAction": {
+            "dynamicRegistration": true,
+            "codeActionLiteralSupport": {
+              "codeActionKind": {
+                "valueSet": [
+                  "",
+                  "quickfix",
+                  "source",
+                  "source.organizeImports"
+                ]
+              }
+            },
+            "resolveSupport": {
+              "properties": [
+                "edit"
+              ]
+            }
+          },
+          "completion": {
+            "dynamicRegistration": true,
+            "completionItem": {
+              "snippetSupport": true,
+              "commitCharactersSupport": true,
+              "documentationFormat": [
+                "markdown",
+                "plaintext"
+              ],
+              "deprecatedSupport": false,
+              "preselectSupport": false
+            },
+            "contextSupport": false
+          },
+          "signatureHelp": {
+            "dynamicRegistration": true,
+            "signatureInformation": {
+              "documentationFormat": [
+                "markdown",
+                "plaintext"
+              ]
+            }
+          },
+          "declaration": {
+            "dynamicRegistration": true,
+            "linkSupport": true
+          },
+          "definition": {
+            "dynamicRegistration": true,
+            "linkSupport": true
+          },
+          "typeDefinition": {
+            "dynamicRegistration": true,
+            "linkSupport": true
+          },
+          "implementation": {
+            "dynamicRegistration": true,
+            "linkSupport": true
+          },
+          "rename": {
+            "dynamicRegistration": true,
+            "prepareSupport": true
+          }
+        },
+        "workspace": {
+          "didChangeConfiguration": {
+            "dynamicRegistration": true
+          }
+        }
+      },
+      "processId": null,
+      "rootUri": "file://.",
+      "workspaceFolders": null
+    }`;
+    const initialDidOpen = `{
+      "textDocument": {
+        "uri": "file://t/policy.rego",
+        "languageId": "rego",
+        "text": "package auth\\n\\ndefault allow := false\\nallow if input.foo\\n",
+        "version": 0
+      }
+    }`;
+
+    const jarInit = CodeJar(document.getElementById('jar-initialize'), highlighter);
+    const jarDidOpen = CodeJar(document.getElementById('jar-didopen'), highlighter);
+
+    // Sync to hidden input fields so forms submit correctly
+    jarInit.onUpdate(code => { document.getElementById('params-initialize').value = code; });
+    jarDidOpen.onUpdate(code => { document.getElementById('params-didopen').value = code; });
+    jarInit.updateCode(initialInitialize);
+    jarDidOpen.updateCode(initialDidOpen);
+
     window.addEventListener('DOMContentLoaded', (event) => {
         document.body.addEventListener('htmx:wsConfigSend', (evt) => {
             evt.detail.parameters['params'] = JSON.parse(evt.detail.parameters['params']);
@@ -15,14 +134,15 @@
             const details = document.createElement("details");
             const summary = document.createElement("summary");
             summary.textContent = "Received at " + new Date().toLocaleTimeString();
-            const pre = document.createElement("pre");
-            const code = document.createElement("code");
-            pre.className = "code";
-            pre.textContent = out;
+
+            const codeDiv = document.createElement("div");
+            codeDiv.className = "codejar";
+            codeDiv.setAttribute("tabindex", "-1"); // allow focus for accessibility
+            const jar = CodeJar(codeDiv, highlighter, { readonly: true });
+            jar.updateCode(out);
 
             details.appendChild(summary);
-            details.appendChild(pre);
-
+            details.appendChild(codeDiv);
             document.getElementById("ws-output").appendChild(details);
             evt.preventDefault();
         });
@@ -34,121 +154,28 @@
 <h1 id="header">Regal LSP Websocket connectivity test</h1>
 
 <div class="elastic container" hx-ext="ws" ws-connect="/regal" ws-target="#ws-output">
+    <div id="editor"/>
 
     <form ws-send="">
         <h3>initialize</h3>
         <div>
-            <input name="jsonrpc" type="hidden" style="width:500px;" value="2.0"/>
-            <input name="id" type="hidden" style="width:500px;" value="0"/>
-            <input name="method" type="hidden" style="width:500px;" value="initialize"/>
-            <textarea name="params" style="width:500px;">{
-  "capabilities": {
-    "textDocument": {
-      "hover": {
-        "dynamicRegistration": true,
-        "contentFormat": [
-          "markdown",
-          "plaintext"
-        ]
-      },
-      "moniker": {},
-      "synchronization": {
-        "dynamicRegistration": true,
-        "willSave": false,
-        "didSave": false,
-        "willSaveWaitUntil": false
-      },
-      "codeAction": {
-        "dynamicRegistration": true,
-        "codeActionLiteralSupport": {
-          "codeActionKind": {
-            "valueSet": [
-              "",
-              "quickfix",
-              "source",
-              "source.organizeImports"
-            ]
-          }
-        },
-        "resolveSupport": {
-          "properties": [
-            "edit"
-          ]
-        }
-      },
-      "completion": {
-        "dynamicRegistration": true,
-        "completionItem": {
-          "snippetSupport": true,
-          "commitCharactersSupport": true,
-          "documentationFormat": [
-            "markdown",
-            "plaintext"
-          ],
-          "deprecatedSupport": false,
-          "preselectSupport": false
-        },
-        "contextSupport": false
-      },
-      "signatureHelp": {
-        "dynamicRegistration": true,
-        "signatureInformation": {
-          "documentationFormat": [
-            "markdown",
-            "plaintext"
-          ]
-        }
-      },
-      "declaration": {
-        "dynamicRegistration": true,
-        "linkSupport": true
-      },
-      "definition": {
-        "dynamicRegistration": true,
-        "linkSupport": true
-      },
-      "typeDefinition": {
-        "dynamicRegistration": true,
-        "linkSupport": true
-      },
-      "implementation": {
-        "dynamicRegistration": true,
-        "linkSupport": true
-      },
-      "rename": {
-        "dynamicRegistration": true,
-        "prepareSupport": true
-      }
-    },
-    "workspace": {
-      "didChangeConfiguration": {
-        "dynamicRegistration": true
-      }
-    }
-  },
-  "processId": null,
-  "rootUri": "file://.",
-  "workspaceFolders": null
-}</textarea>
+            <input name="jsonrpc" type="hidden" value="2.0"/>
+            <input name="id" type="hidden" value="0"/>
+            <input name="method" type="hidden" value="initialize"/>
+            <div class="codejar" id="jar-initialize"></div>
+            <input type="hidden" name="params" id="params-initialize"/>
             <input type="submit" value="Send" class="btn primary"/>
         </div>
     </form>
     <br/>
     <form ws-send="">
         <h3>textDocument/didOpen</h3>
-        <!-- {"jsonrpc":"2.0","method":"","params":{}}	-->
         <div>
-            <input name="jsonrpc" type="hidden" style="width:500px;" value="2.0"/>
-            <input name="id" type="hidden" style="width:500px;" value="0"/>
-            <input name="method" type="hidden" style="width:500px;" value="textDocument/didOpen"/>
-            <textarea name="params" style="width:500px;">{
-  "textDocument": {
-    "uri": "file://t/policy.rego",
-    "languageId": "rego",
-    "text": "package auth\n\ndefault allow := false\nallow if input.foo\n",
-    "version": 0
-  }
-}</textarea>
+            <input name="jsonrpc" type="hidden" value="2.0"/>
+            <input name="id" type="hidden" value="0"/>
+            <input name="method" type="hidden" value="textDocument/didOpen"/>
+            <div class="codejar" id="jar-didopen"></div>
+            <input type="hidden" name="params" id="params-didopen"/>
             <input type="submit" value="Send" class="btn primary"/>
         </div>
     </form>

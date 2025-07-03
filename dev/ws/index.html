@@ -11,13 +11,16 @@
   <script type="importmap">
     {
       "imports": {
-        "style-mod": "https://esm.sh/style-mod",
-        "w3c-keyname": "https://esm.sh/w3c-keyname",
-        "crelt": "https://esm.sh/crelt",
-        "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
-        "@lezer/": "https://esm.sh/*@lezer/",
         "@codemirror/": "https://esm.sh/*@codemirror/",
-        "codemirror": "https://esm.sh/*codemirror"
+        "codemirror": "https://esm.sh/*codemirror",
+        "crelt": "https://esm.sh/crelt",
+        "isomorphic-fetch": "https://esm.sh/isomorphic-fetch",
+        "isomorphic-ws": "https://esm.sh/isomorphic-ws",
+        "@lezer/": "https://esm.sh/*@lezer/",
+        "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
+        "@open-rpc/": "https://esm.sh/*@open-rpc/",
+        "style-mod": "https://esm.sh/style-mod",
+        "w3c-keyname": "https://esm.sh/w3c-keyname"
       }
     }
   </script>
@@ -26,6 +29,7 @@
   <h2>demo</h2>
   <div id="editor"></div>
   <script type="module">
+    import { WebSocketTransport } from "@open-rpc/client-js";
     import { basicSetup, EditorView } from "codemirror";
 
     const startDoc = `package authz

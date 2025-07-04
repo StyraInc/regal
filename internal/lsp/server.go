@@ -182,6 +182,33 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	return ls
 }
 
+// NewLanguageServerMinimal starts a language server that doesn't assume a shared filesystem with the editor
+// instance. It's used from pkg/lsp for Websocket connectivity from web editors (playground, build/ws).
+func NewLanguageServerMinimal(ctx context.Context, opts *LanguageServerOptions, cfg *config.Config) *LanguageServer {
+	c := cache.NewCache()
+	store := NewRegalStore()
+
+	ls := &LanguageServer{
+		cache:                       c,
+		loadedConfig:                cfg,
+		regoStore:                   store,
+		logWriter:                   opts.LogWriter,
+		logLevel:                    opts.LogLevel,
+		lintFileJobs:                make(chan lintFileJob, 10),
+		lintWorkspaceJobs:           make(chan lintWorkspaceJob, 10),
+		builtinsPositionJobs:        make(chan lintFileJob, 10),
+		commandRequest:              make(chan types.ExecuteCommandParams, 10),
+		templateFileJobs:            make(chan lintFileJob, 10),
+		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
+		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
+		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
+		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
+	}
+
+	return ls
+}
+
 //nolint:wrapcheck
 func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (any, error) {
 	l.logf(log.LevelDebug, "received request: %s", req.Method)
@@ -2274,7 +2301,7 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		},
 	}
 
-	defaultConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, nil)
+	defaultConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, l.loadedConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default config: %w", err)
 	}

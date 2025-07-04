@@ -1,0 +1,153 @@
+{
+  "initialize": {
+    "processId": null,
+    "rootUri": "file://.",
+    "capabilities": {
+      "textDocument": {
+        "hover": {
+          "dynamicRegistration": true,
+          "contentFormat": [
+            "markdown",
+            "plaintext"
+          ]
+        },
+        "moniker": {},
+        "synchronization": {
+          "dynamicRegistration": true,
+          "willSave": false,
+          "didSave": false,
+          "willSaveWaitUntil": false
+        },
+        "codeAction": {
+          "dynamicRegistration": true,
+          "codeActionLiteralSupport": {
+            "codeActionKind": {
+              "valueSet": [
+                "",
+                "quickfix",
+                "source",
+                "source.organizeImports"
+              ]
+            }
+          },
+          "resolveSupport": {
+            "properties": [
+              "edit"
+            ]
+          }
+        },
+        "completion": {
+          "dynamicRegistration": true,
+          "completionItem": {
+            "snippetSupport": true,
+            "commitCharactersSupport": true,
+            "documentationFormat": [
+              "markdown",
+              "plaintext"
+            ],
+            "deprecatedSupport": false,
+            "preselectSupport": false
+          },
+          "contextSupport": false
+        },
+        "signatureHelp": {
+          "dynamicRegistration": true,
+          "signatureInformation": {
+            "documentationFormat": [
+              "markdown",
+              "plaintext"
+            ]
+          }
+        },
+        "declaration": {
+          "dynamicRegistration": true,
+          "linkSupport": true
+        },
+        "definition": {
+          "dynamicRegistration": true,
+          "linkSupport": true
+        },
+        "typeDefinition": {
+          "dynamicRegistration": true,
+          "linkSupport": true
+        },
+        "implementation": {
+          "dynamicRegistration": true,
+          "linkSupport": true
+        },
+        "rename": {
+          "dynamicRegistration": true,
+          "prepareSupport": true
+        }
+      },
+      "workspace": {
+        "didChangeConfiguration": {
+          "dynamicRegistration": true
+        }
+      }
+    },
+    "workspaceFolders": null
+  },
+  "initialized": {},
+  "shutdown": null,
+  "exit": null,
+  "textDocument/didOpen": {
+    "textDocument": {
+      "uri": "file://t/policy.rego",
+      "languageId": "rego",
+      "version": 0,
+      "text": "package auth\n\ndefault allow := false\nallow if input.foo\n"
+    }
+  },
+  "textDocument/didChange": {
+    "textDocument": {
+      "uri": "file://t/policy.rego",
+      "version": 1
+    },
+    "contentChanges": [
+      {
+        "text": "package auth\n\ndefault allow := true\nallow if input.foo\n"
+      }
+    ]
+  },
+  "textDocument/didSave": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    }
+  },
+  "textDocument/didClose": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    }
+  },
+  "textDocument/completion": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "textDocument/hover": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "textDocument/definition": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "workspace/didChangeConfiguration": {
+    "settings": {}
+  }
+}

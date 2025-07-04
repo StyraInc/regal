@@ -81,6 +81,10 @@ func (w *Watcher) Stop() error {
 }
 
 func (w *Watcher) IsWatching() bool {
+	if w == nil {
+		return false
+	}
+
 	w.fsWatcherLock.Lock()
 	defer w.fsWatcherLock.Unlock()
 

@@ -182,6 +182,8 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	return ls
 }
 
+// NewLanguageServerMinimal starts a language server that doesn't assume a shared filesystem with the editor
+// instance. It's used from pkg/lsp for Websocket connectivity from web editors (playground, build/ws).
 func NewLanguageServerMinimal(ctx context.Context, opts *LanguageServerOptions, cfg *config.Config) *LanguageServer {
 	c := cache.NewCache()
 	store := NewRegalStore()

@@ -132,6 +132,7 @@
         document.body.addEventListener('htmx:wsAfterMessage', (evt) => {
             const out = JSON.stringify(JSON.parse(evt.detail.message), null, 2);
             const details = document.createElement("details");
+            details.open = true;
             const summary = document.createElement("summary");
             summary.textContent = "Received at " + new Date().toLocaleTimeString();
 
@@ -143,7 +144,8 @@
 
             details.appendChild(summary);
             details.appendChild(codeDiv);
-            document.getElementById("ws-output").appendChild(details);
+            const container = document.getElementById("ws-output");
+            container.insertBefore(details, container.firstChild);
             evt.preventDefault();
         });
     });

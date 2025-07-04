@@ -5,6 +5,8 @@
     <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3">
     <link rel="stylesheet" href="/stylesheet.css" />
     <link rel="stylesheet" href="https://unpkg.com/highlight.js@11.9.0/styles/github.min.css">
+    <script type="module" src="https://unpkg.com/missing.css@1.1.3/dist/js/tabs.js"></script>
+
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.2" integrity="sha384-932iIqjARv+Gy0+r6RTGrfCkCKS5MsF539Iqf6Vt8L4YmbnnWI2DSFoMD90bvXd0" crossorigin="anonymous"></script>
     <script type="module" defer>
@@ -116,15 +118,55 @@
         "version": 0
       }
     }`;
+    const initialRego = `package authz
+
+default allow := false
+allow if input.foo
+`;
+
+    let lspExamples = {};
+    fetch('/examples.json')
+      .then(response => response.json())
+      .then(json => {
+        lspExamples = json;
+      });
 
     const jarInit = CodeJar(document.getElementById('jar-initialize'), highlighter);
     const jarDidOpen = CodeJar(document.getElementById('jar-didopen'), highlighter);
+    const jarRego = CodeJar(document.getElementById('jar-rego'), highlighter);
+    const jarMessageParams = CodeJar(document.getElementById('jar-message-params'), highlighter);
+
+    const methodSelect = document.getElementById('lsp-method-select');
+    methodSelect.addEventListener('change', (e) => {
+      const example = lspExamples[e.target.value];
+      if (example !== undefined) {
+        const formatted = (example === null) ? 'null' : JSON.stringify(example, null, 2);
+        jarMessageParams.updateCode(formatted);
+      }
+    });
+
+    // Keep params-rego in sync with CodeJar editor
+    function updateRegoParams() {
+        const text = jarRego.toString();
+        const params = {
+            textDocument: {
+                uri: "file://t/policy.rego",
+                languageId: "rego",
+                text,
+                version: 0
+            }
+        };
+        document.getElementById('params-rego').value = JSON.stringify(params);
+    }
 
     // Sync to hidden input fields so forms submit correctly
     jarInit.onUpdate(code => { document.getElementById('params-initialize').value = code; });
     jarDidOpen.onUpdate(code => { document.getElementById('params-didopen').value = code; });
+    jarMessageParams.onUpdate(code => { document.getElementById('params-message').value = code; });
+    jarRego.onUpdate(updateRegoParams);
     jarInit.updateCode(initialInitialize);
     jarDidOpen.updateCode(initialDidOpen);
+    jarRego.updateCode(initialRego);
 
     window.addEventListener('DOMContentLoaded', (event) => {
         document.body.addEventListener('htmx:wsConfigSend', (evt) => {
@@ -135,7 +177,7 @@
             const details = document.createElement("details");
             details.open = true;
             const summary = document.createElement("summary");
-            summary.textContent = "Received at " + new Date().toLocaleTimeString();
+            summary.textContent = new Date().toLocaleTimeString();
 
             const codeDiv = document.createElement("div");
             codeDiv.className = "codejar";
@@ -157,33 +199,84 @@
 <h1 id="header">Regal LSP Websocket connectivity test</h1>
 
 <div class="elastic container" hx-ext="ws" ws-connect="/regal" ws-target="#ws-output">
-    <div id="editor"/>
+    <div role="tablist" aria-label="message types">
+      <button role="tab" aria-controls="canned" aria-selected="true"
+        >Canned Messages</button>
+      <button role="tab" aria-controls="editor"
+        >Rego Editor</button>
+      <button role="tab" aria-controls="message"
+        >Custom Message</button>
+    </div>
 
-    <form ws-send="">
-        <h3>initialize</h3>
-        <div>
-            <input name="jsonrpc" type="hidden" value="2.0"/>
-            <input name="id" type="hidden" value="0"/>
-            <input name="method" type="hidden" value="initialize"/>
-            <div class="codejar" id="jar-initialize"></div>
-            <input type="hidden" name="params" id="params-initialize"/>
-            <input type="submit" value="Send" class="btn primary"/>
-        </div>
-    </form>
-    <br/>
-    <form ws-send="">
-        <h3>textDocument/didOpen</h3>
-        <div>
+    <div id="canned"         role="tabpanel">
+        <form ws-send="">
+            <h3>initialize</h3>
+            <div>
+                <input name="jsonrpc" type="hidden" value="2.0"/>
+                <input name="id" type="hidden" value="0"/>
+                <input name="method" type="hidden" value="initialize"/>
+                <div class="codejar" id="jar-initialize"></div>
+                <input type="hidden" name="params" id="params-initialize"/>
+                <input type="submit" value="Send" class="btn primary"/>
+            </div>
+        </form>
+        <br/>
+        <form ws-send="">
+            <h3>textDocument/didOpen</h3>
+            <div>
+                <input name="jsonrpc" type="hidden" value="2.0"/>
+                <input name="id" type="hidden" value="0"/>
+                <input name="method" type="hidden" value="textDocument/didOpen"/>
+                <div class="codejar" id="jar-didopen"></div>
+                <input type="hidden" name="params" id="params-didopen"/>
+                <input type="submit" value="Send" class="btn primary"/>
+            </div>
+        </form>
+    </div>
+
+    <div id="editor" hidden role="tabpanel">
+        <form id="rego-editor-form" ws-send="">
             <input name="jsonrpc" type="hidden" value="2.0"/>
             <input name="id" type="hidden" value="0"/>
             <input name="method" type="hidden" value="textDocument/didOpen"/>
-            <div class="codejar" id="jar-didopen"></div>
-            <input type="hidden" name="params" id="params-didopen"/>
-            <input type="submit" value="Send" class="btn primary"/>
-        </div>
-    </form>
-    <br/>
-    <h3>Receive a Message</h3>
+            <div class="codejar" id="jar-rego"></div>
+            <input type="hidden" name="params" id="params-rego"/>
+            <input type="submit" value="send as textDocument/didOpen" class="btn primary"/>
+        </form>
+    </div>
+    <div id="message" hidden role="tabpanel">
+        <form id="custom-message-form" class="table rows" ws-send="">
+            <input name="jsonrpc" type="hidden" value="2.0" required>
+            <input name="id" type="hidden" value="0" required>
+            <input type="hidden" name="params" id="params-message"/>
+            <p>
+                <label for="lsp-method-select">method:</label>
+                <select name="method" id="lsp-method-select" required>
+                    <option value="initialize">initialize</option>
+                    <option value="initialized">initialized</option>
+                    <option value="shutdown">shutdown</option>
+                    <option value="exit">exit</option>
+                    <option value="textDocument/didOpen">textDocument/didOpen</option>
+                    <option value="textDocument/didChange">textDocument/didChange</option>
+                    <option value="textDocument/didSave">textDocument/didSave</option>
+                    <option value="textDocument/didClose">textDocument/didClose</option>
+                    <option value="textDocument/completion">textDocument/completion</option>
+                    <option value="textDocument/hover">textDocument/hover</option>
+                    <option value="textDocument/definition">textDocument/definition</option>
+                    <option value="workspace/didChangeConfiguration">workspace/didChangeConfiguration</option>
+                </select>
+            </p>
+            <p>
+                <label>params:</label>
+                <div class="codejar" id="jar-message-params"></div>
+            </p>
+            <p>
+                <input type="submit" value="Send custom message" class="btn primary"/>
+            </p>
+          </form>
+      </div>
+
+    <h3>Received Messages</h3>
     <div id="ws-output"/>
 </div>
 </main>

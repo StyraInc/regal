@@ -1,0 +1,70 @@
+{
+  "initialize": {
+    "processId": null,
+    "rootUri": "file://.",
+    "capabilities": {},
+    "workspaceFolders": null
+  },
+  "initialized": {},
+  "shutdown": null,
+  "exit": null,
+  "textDocument/didOpen": {
+    "textDocument": {
+      "uri": "file://t/policy.rego",
+      "languageId": "rego",
+      "version": 0,
+      "text": "package auth\n\ndefault allow := false\nallow if input.foo\n"
+    }
+  },
+  "textDocument/didChange": {
+    "textDocument": {
+      "uri": "file://t/policy.rego",
+      "version": 1
+    },
+    "contentChanges": [
+      {
+        "text": "package auth\n\ndefault allow := true\nallow if input.foo\n"
+      }
+    ]
+  },
+  "textDocument/didSave": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    }
+  },
+  "textDocument/didClose": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    }
+  },
+  "textDocument/completion": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "textDocument/hover": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "textDocument/definition": {
+    "textDocument": {
+      "uri": "file://t/policy.rego"
+    },
+    "position": {
+      "line": 1,
+      "character": 5
+    }
+  },
+  "workspace/didChangeConfiguration": {
+    "settings": {}
+  }
+}

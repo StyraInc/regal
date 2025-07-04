@@ -1,11 +1,21 @@
 .codejar {
-  width: 100%;
-  min-height: 150px;
-  max-height: 500px;
-  border: 1px solid #bbb;
-  font-family: monospace;
-  padding: 6px;
-  background: #fafafa;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  font-family: "JetBrains Mono", "Fira Mono", "Menlo", "monospace";
+  background: #f6f8fa; /* matches GitHub code block background */
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 120px;
+  white-space: pre;
+  tab-size: 2;
+  outline: none;
+  color: #24292f;
+  /* Prevent weird font-inheritance from missing.css */
+  line-height: 1.5;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+.codejar:focus {
+  border-color: #0969da;
+  box-shadow: 0 0 0 2px #0969da33;
 }

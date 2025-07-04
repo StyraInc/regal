@@ -11,7 +11,7 @@ import (
 	"github.com/styrainc/regal/pkg/lsp"
 )
 
-//go:embed *.html *.css
+//go:embed *.html *.css *.json
 var root embed.FS
 
 func main() {

@@ -99,6 +99,49 @@ func TestEvalWorkspacePathInternalData(t *testing.T) {
 	}
 }
 
+func TestFindInputPath(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		fileType    string
+		fileContent string
+	}{
+		{"json", `{"x": true}`},
+		{"yaml", "x: true"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.fileType, func(t *testing.T) {
+			t.Parallel()
+
+			tmpDir := t.TempDir()
+
+			workspacePath := filepath.Join(tmpDir, "workspace")
+			file := filepath.Join(tmpDir, "workspace", "foo", "bar", "baz.rego")
+
+			testutil.MustMkdirAll(t, workspacePath, "foo", "bar")
+
+			if path := rio.FindInputPath(file, workspacePath); path != "" {
+				t.Fatalf("did not expect to find input.%s", tc.fileType)
+			}
+
+			createWithContent(t, tmpDir+"/workspace/foo/bar/input."+tc.fileType, tc.fileContent)
+
+			if path, exp := rio.FindInputPath(file, workspacePath), workspacePath+"/foo/bar/input."+tc.fileType; path != exp {
+				t.Errorf(`expected input at %s, got %s`, exp, path)
+			}
+
+			testutil.MustRemove(t, tmpDir+"/workspace/foo/bar/input."+tc.fileType)
+
+			createWithContent(t, tmpDir+"/workspace/input."+tc.fileType, tc.fileContent)
+
+			if path, exp := rio.FindInputPath(file, workspacePath), workspacePath+"/input."+tc.fileType; path != exp {
+				t.Errorf(`expected input at %s, got %s`, exp, path)
+			}
+		})
+	}
+}
+
 func TestFindInput(t *testing.T) {
 	t.Parallel()
 

@@ -1,17 +1,10 @@
 .codejar {
   font-family: "JetBrains Mono", "Fira Mono", "Menlo", "monospace";
-  background: #f6f8fa; /* matches GitHub code block background */
-  border: 1px solid #d0d7de;
+  border: 2px solid #d0d7de;
   border-radius: 6px;
   padding: 10px 12px;
   min-height: 120px;
-  white-space: pre;
-  tab-size: 2;
-  outline: none;
-  color: #24292f;
-  /* Prevent weird font-inheritance from missing.css */
-  line-height: 1.5;
-  overflow-x: auto;
+  max-height: 480px;
   box-sizing: border-box;
 }
 

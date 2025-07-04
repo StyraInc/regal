@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>&lt;/&gt; htmx Realtime Test Server</title>
+    <title>Regal LSP WS connectivity tool</title>
     <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3">
     <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.3/dist/missing-prism.min.css">
     <link rel="stylesheet" href="/stylesheet.css" />
@@ -108,14 +108,6 @@
       "rootUri": "file://.",
       "workspaceFolders": null
     }`;
-    const initialDidOpen = `{
-      "textDocument": {
-        "uri": "file://t/policy.rego",
-        "languageId": "rego",
-        "text": "package auth\\n\\ndefault allow := false\\nallow if input.foo\\n",
-        "version": 0
-      }
-    }`;
     const initialRego = `package authz
 
 default allow := false
@@ -130,7 +122,6 @@ allow if input.foo
       });
 
     const jarInit = CodeJar(document.getElementById('jar-initialize'), highlighter);
-    const jarDidOpen = CodeJar(document.getElementById('jar-didopen'), highlighter);
     const jarRego = CodeJar(document.getElementById('jar-rego'), highlighter);
     const jarMessageParams = CodeJar(document.getElementById('jar-message-params'), highlighter);
 
@@ -139,6 +130,7 @@ allow if input.foo
       const example = lspExamples[e.target.value];
       if (example !== undefined) {
         const formatted = (example === null) ? 'null' : JSON.stringify(example, null, 2);
+        console.log({example, formatted});
         jarMessageParams.updateCode(formatted);
       }
     });
@@ -159,11 +151,9 @@ allow if input.foo
 
     // Sync to hidden input fields so forms submit correctly
     jarInit.onUpdate(code => { document.getElementById('params-initialize').value = code; });
-    jarDidOpen.onUpdate(code => { document.getElementById('params-didopen').value = code; });
     jarMessageParams.onUpdate(code => { document.getElementById('params-message').value = code; });
     jarRego.onUpdate(updateRegoParams);
     jarInit.updateCode(initialInitialize);
-    jarDidOpen.updateCode(initialDidOpen);
     jarRego.updateCode(initialRego);
 
     window.addEventListener('DOMContentLoaded', (event) => {
@@ -218,18 +208,6 @@ allow if input.foo
                 <input type="submit" value="Send" class="btn primary"/>
             </div>
         </form>
-        <br/>
-        <form ws-send="">
-            <h3>textDocument/didOpen</h3>
-            <div>
-                <input name="jsonrpc" type="hidden" value="2.0"/>
-                <input name="id" type="hidden" value="0"/>
-                <input name="method" type="hidden" value="textDocument/didOpen"/>
-                <div class="codejar" id="jar-didopen"></div>
-                <input type="hidden" name="params" id="params-didopen"/>
-                <input type="submit" value="Send" class="btn primary"/>
-            </div>
-        </form>
     </div>
 
     <div id="editor" hidden role="tabpanel">
@@ -243,10 +221,11 @@ allow if input.foo
         </form>
     </div>
     <div id="message" hidden role="tabpanel">
-        <form id="custom-message-form" class="table rows" ws-send="">
+        <form id="custom-message-form" ws-send="">
             <input name="jsonrpc" type="hidden" value="2.0" required>
             <input name="id" type="hidden" value="0" required>
             <input type="hidden" name="params" id="params-message"/>
+            <div class="table rows">
             <p>
                 <label for="lsp-method-select">method:</label>
                 <select name="method" id="lsp-method-select" required>
@@ -264,13 +243,9 @@ allow if input.foo
                     <option value="workspace/didChangeConfiguration">workspace/didChangeConfiguration</option>
                 </select>
             </p>
-            <p>
-                <label>params:</label>
-                <div class="codejar" id="jar-message-params"></div>
-            </p>
-            <p>
-                <input type="submit" value="Send custom message" class="btn primary"/>
-            </p>
+            </div>
+            <div class="codejar" id="jar-message-params"></div>
+            <input type="submit" value="Send custom message" class="btn primary"/>
           </form>
       </div>
 

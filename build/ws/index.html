@@ -19,111 +19,22 @@
         editor.innerHTML = Prism.highlight(code, Prism.languages.json, 'json');
     }
 
-    const initialInitialize = `{
-      "capabilities": {
-        "textDocument": {
-          "hover": {
-            "dynamicRegistration": true,
-            "contentFormat": [
-              "markdown",
-              "plaintext"
-            ]
-          },
-          "moniker": {},
-          "synchronization": {
-            "dynamicRegistration": true,
-            "willSave": false,
-            "didSave": false,
-            "willSaveWaitUntil": false
-          },
-          "codeAction": {
-            "dynamicRegistration": true,
-            "codeActionLiteralSupport": {
-              "codeActionKind": {
-                "valueSet": [
-                  "",
-                  "quickfix",
-                  "source",
-                  "source.organizeImports"
-                ]
-              }
-            },
-            "resolveSupport": {
-              "properties": [
-                "edit"
-              ]
-            }
-          },
-          "completion": {
-            "dynamicRegistration": true,
-            "completionItem": {
-              "snippetSupport": true,
-              "commitCharactersSupport": true,
-              "documentationFormat": [
-                "markdown",
-                "plaintext"
-              ],
-              "deprecatedSupport": false,
-              "preselectSupport": false
-            },
-            "contextSupport": false
-          },
-          "signatureHelp": {
-            "dynamicRegistration": true,
-            "signatureInformation": {
-              "documentationFormat": [
-                "markdown",
-                "plaintext"
-              ]
-            }
-          },
-          "declaration": {
-            "dynamicRegistration": true,
-            "linkSupport": true
-          },
-          "definition": {
-            "dynamicRegistration": true,
-            "linkSupport": true
-          },
-          "typeDefinition": {
-            "dynamicRegistration": true,
-            "linkSupport": true
-          },
-          "implementation": {
-            "dynamicRegistration": true,
-            "linkSupport": true
-          },
-          "rename": {
-            "dynamicRegistration": true,
-            "prepareSupport": true
-          }
-        },
-        "workspace": {
-          "didChangeConfiguration": {
-            "dynamicRegistration": true
-          }
-        }
-      },
-      "processId": null,
-      "rootUri": "file://.",
-      "workspaceFolders": null
-    }`;
     const initialRego = `package authz
 
 default allow := false
 allow if input.foo
 `;
 
+    const jarRego = CodeJar(document.getElementById('jar-rego'), highlighter);
+    const jarMessageParams = CodeJar(document.getElementById('jar-message-params'), highlighter);
+
     let lspExamples = {};
     fetch('/examples.json')
       .then(response => response.json())
       .then(json => {
         lspExamples = json;
+        jarMessageParams.updateCode(JSON.stringify(lspExamples['initialize'], null, 2));
       });
-
-    const jarInit = CodeJar(document.getElementById('jar-initialize'), highlighter);
-    const jarRego = CodeJar(document.getElementById('jar-rego'), highlighter);
-    const jarMessageParams = CodeJar(document.getElementById('jar-message-params'), highlighter);
 
     const methodSelect = document.getElementById('lsp-method-select');
     methodSelect.addEventListener('change', (e) => {
@@ -150,10 +61,8 @@ allow if input.foo
     }
 
     // Sync to hidden input fields so forms submit correctly
-    jarInit.onUpdate(code => { document.getElementById('params-initialize').value = code; });
     jarMessageParams.onUpdate(code => { document.getElementById('params-message').value = code; });
     jarRego.onUpdate(updateRegoParams);
-    jarInit.updateCode(initialInitialize);
     jarRego.updateCode(initialRego);
 
     window.addEventListener('DOMContentLoaded', (event) => {
@@ -188,26 +97,10 @@ allow if input.foo
 
 <div class="elastic container" hx-ext="ws" ws-connect="/regal" ws-target="#ws-output">
     <div role="tablist" aria-label="message types">
-      <button role="tab" aria-controls="canned" aria-selected="true"
-        >Canned Messages</button>
+      <button role="tab" aria-controls="message" aria-selected="true"
+        >Custom Message</button>
       <button role="tab" aria-controls="editor"
         >Rego Editor</button>
-      <button role="tab" aria-controls="message"
-        >Custom Message</button>
-    </div>
-
-    <div id="canned"         role="tabpanel">
-        <form ws-send="">
-            <h3>initialize</h3>
-            <div>
-                <input name="jsonrpc" type="hidden" value="2.0"/>
-                <input name="id" type="hidden" value="0"/>
-                <input name="method" type="hidden" value="initialize"/>
-                <div class="codejar" id="jar-initialize"></div>
-                <input type="hidden" name="params" id="params-initialize"/>
-                <input type="submit" value="Send" class="btn primary"/>
-            </div>
-        </form>
     </div>
 
     <div id="editor" hidden role="tabpanel">

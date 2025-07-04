@@ -1,14 +1,14 @@
 .codejar {
-  font-family: "JetBrains Mono", "Fira Mono", "Menlo", "monospace";
-  border: 2px solid #d0d7de;
-  border-radius: 6px;
-  padding: 10px 12px;
-  min-height: 120px;
-  max-height: 480px;
-  box-sizing: border-box;
+	font-family: "JetBrains Mono", "Fira Mono", "Menlo", "monospace";
+	border: 2px solid #d0d7de;
+	border-radius: 6px;
+	padding: 10px 12px;
+	min-height: 120px;
+	max-height: 480px;
+	box-sizing: border-box;
 }
 
 .codejar:focus {
-  border-color: #0969da;
-  box-shadow: 0 0 0 2px #0969da33;
+	border-color: #0969da;
+	box-shadow: 0 0 0 2px #0969da33;
 }

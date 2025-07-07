@@ -92,14 +92,16 @@ func FindInputPath(file string, workspacePath string) string {
 
 	for i := range components {
 		current := components[:len(components)-i]
-		for _, ext := range []string{"json", "yaml"} { // NB(sr): "yml"?
-			inputPath := filepath.Join(workspacePath, filepath.Join(current...), "input."+ext)
+		prefix := filepath.Join(append([]string{workspacePath}, current...)...)
+
+		for _, ext := range []string{"json", "yaml", "yml"} {
+			inputPath := filepath.Join(prefix, "input."+ext)
+
 			_, err := os.Stat(inputPath)
 			if err == nil {
 				return inputPath
 			}
 		}
-
 	}
 
 	return ""

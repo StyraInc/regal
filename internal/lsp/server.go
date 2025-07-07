@@ -756,7 +756,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					break
 				}
 
-				inputPath, _ := rio.FindInput(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
+				inputPath := rio.FindInputPath(uri.ToPath(l.clientIdentifier, file), l.workspacePath())
 
 				responseParams := map[string]any{
 					"type":        "opa-debug",

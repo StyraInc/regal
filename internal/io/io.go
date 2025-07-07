@@ -84,11 +84,34 @@ func ExcludeTestFilter() filter.LoaderFilter {
 	}
 }
 
+// FindInputPath consults the filesystem and returns the input.json or input.yaml closes to the
+// file provided as arguments.
+func FindInputPath(file string, workspacePath string) string {
+	relative := strings.TrimPrefix(file, workspacePath)
+	components := strings.Split(filepath.Dir(relative), PathSeparator)
+
+	for i := range components {
+		current := components[:len(components)-i]
+		prefix := filepath.Join(append([]string{workspacePath}, current...)...)
+
+		for _, ext := range []string{"json", "yaml", "yml"} {
+			inputPath := filepath.Join(prefix, "input."+ext)
+
+			_, err := os.Stat(inputPath)
+			if err == nil {
+				return inputPath
+			}
+		}
+	}
+
+	return ""
+}
+
 // FindInput finds input.json or input.yaml file in workspace closest to the file, and returns
 // both the location and the contents of the file (as map), or an empty string and nil if not found.
 // Note that:
 // - This function doesn't do error handling. If the file can't be read, nothing is returned.
-// - While the input data theoritcally could be anything JSON/YAML value, we only support an object.
+// - While the input data theoretically could be anything JSON/YAML value, we only support an object.
 func FindInput(file string, workspacePath string) (string, map[string]any) {
 	relative := strings.TrimPrefix(file, workspacePath)
 	components := strings.Split(filepath.Dir(relative), PathSeparator)

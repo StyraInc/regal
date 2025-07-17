@@ -42,10 +42,39 @@ _base(path) := substring(path, 0, regal.last(indexof_n(path, "/")))
 _suggestions(dir, text) := [path |
 	parts := split(dir, ".")
 	len_p := count(parts)
+
 	some n in numbers.range(0, len_p)
 
-	path := concat(".", array.slice(parts, n, len_p))
+	formatted_parts := [p |
+		some index, part in array.slice(parts, n, len_p)
+		p := _format_part(part, contains(part, "-"))
+	]
+
+	path := concat("", [p |
+		some index, part in formatted_parts
+		p := _delimit_part(part, array.slice(formatted_parts, index + 1, index + 2))
+	])
+
 	path != ""
+
+	# it's not valid Rego to have a hypenated first part
+	not startswith(path, `[""`)
 
 	startswith(path, text)
 ]
+
+_format_part(part, false) := part
+_format_part(part, true) := sprintf(`["%s"]`, [part])
+
+_delimit_part(part, next_part) := delimited_part if {
+	next_part != []
+	not startswith(next_part[0], "[")
+	delimited_part := sprintf("%s.", [part])
+}
+
+_delimit_part(part, next_part) := part if {
+	next_part != []
+	startswith(next_part[0], "[")
+}
+
+_delimit_part(part, next_part) := part if next_part == []

@@ -135,6 +135,64 @@ test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 	}
 }
 
+test_package_name_quoted if {
+	policy := `package f`
+	provider_input := {"regal": {
+		"file": {
+			"name": "/Users/joe/foo/bar/baz-are/foo/baz-are/foo/p.rego",
+			"lines": split(policy, "\n"),
+		},
+		"context": {
+			"workspace_root": "/Users/joe/policy",
+			"location": {
+				"row": 1,
+				"col": 10,
+			},
+		},
+		"environment": {"path_separator": "/"},
+	}}
+
+	items := provider.items with input as provider_input
+	items == {
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo.bar[\"baz-are\"].foo[\"baz-are\"].foo",
+			"textEdit": {
+				"newText": "foo.bar[\"baz-are\"].foo[\"baz-are\"].foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo",
+			"textEdit": {
+				"newText": "foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo[\"baz-are\"].foo",
+			"textEdit": {
+				"newText": "foo[\"baz-are\"].foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+	}
+}
+
 test_build_suggestions if {
 	provider._suggestions("foo.bar.baz", "foo") == ["foo.bar.baz"]
 	provider._suggestions("foo.bar.baz", "bar") == ["bar.baz"]

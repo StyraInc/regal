@@ -47,7 +47,7 @@ _suggestions(dir, text) := [path |
 
 	formatted_parts := [p |
 		some index, part in array.slice(parts, n, len_p)
-		p := _format_part(part, contains(part, "-"))
+		p := _format_part(part, _needs_quoting(part))
 	]
 
 	path := concat("", [p |
@@ -58,10 +58,14 @@ _suggestions(dir, text) := [path |
 	path != ""
 
 	# it's not valid Rego to have a hypenated first part
-	not startswith(path, `[""`)
+	not startswith(path, `["`)
 
 	startswith(path, text)
 ]
+
+# matches anything with a non alphanumeric character or underscore anywhere in
+# the part. E.g. "foo@bar", "@foo-bar" etc.
+_needs_quoting(part) := regex.match(`[^a-zA-Z0-9_]`, part)
 
 _format_part(part, false) := part
 _format_part(part, true) := sprintf(`["%s"]`, [part])

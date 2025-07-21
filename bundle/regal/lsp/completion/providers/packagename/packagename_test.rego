@@ -193,9 +193,41 @@ test_package_name_quoted if {
 	}
 }
 
-test_build_suggestions if {
+test_suggestions if {
 	provider._suggestions("foo.bar.baz", "foo") == ["foo.bar.baz"]
 	provider._suggestions("foo.bar.baz", "bar") == ["bar.baz"]
 	provider._suggestions("foo.bar.baz", "ba") == ["bar.baz", "baz"]
 	provider._suggestions("foo.bar.baz", "") == ["foo.bar.baz", "bar.baz", "baz"]
+
+	# Special character package names filtered at start
+	provider._suggestions("foo-bar.baz", "") == ["baz"]
+	provider._suggestions("foo@bar.baz", "") == ["baz"]
+
+	# Special characters are quoted
+	provider._suggestions("foo.bar-baz.qux", "") == [
+		`foo["bar-baz"].qux`,
+		"qux",
+	]
+
+	provider._suggestions("foo.bar baz.qux", "") == [
+		`foo["bar baz"].qux`,
+		"qux",
+	]
+
+	provider._suggestions("foo.bar@baz.qux", "") == [
+		`foo["bar@baz"].qux`,
+		"qux",
+	]
+}
+
+test_needs_quoting if {
+	special_chars := ["foo-bar", "foo bar", "foo@bar", "foo.bar", "foo+bar", "föö"]
+	every char in special_chars {
+		provider._needs_quoting(char) == true
+	}
+
+	valid_identifiers := ["foo", "foo_bar", "foo123", "FOO", "foo_123_BAR"]
+	every identifier in valid_identifiers {
+		provider._needs_quoting(identifier) == false
+	}
 }

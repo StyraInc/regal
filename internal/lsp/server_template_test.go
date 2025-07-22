@@ -214,18 +214,14 @@ func TestNewFileTemplating(t *testing.T) {
 	defer cancel()
 
 	receivedMessages := make(chan []byte, 10)
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		bs, err := json.MarshalIndent(req.Params, "", "  ")
-		if err != nil {
-			t.Fatalf("failed to marshal params: %s", err)
-		}
 
-		receivedMessages <- bs
-
-		return struct{}{}, nil
-	}
-
-	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	ls, connClient := createAndInitServer(
+		t,
+		ctx,
+		newTestLogger(t),
+		tempDir,
+		createTemplateTestClientHandler(t, receivedMessages),
+	)
 
 	go ls.StartTemplateWorker(ctx)
 
@@ -363,18 +359,14 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	defer cancel()
 
 	receivedMessages := make(chan []byte, 10)
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		bs, err := json.MarshalIndent(req.Params, "", "  ")
-		if err != nil {
-			t.Fatalf("failed to marshal params: %s", err)
-		}
 
-		receivedMessages <- bs
-
-		return struct{}{}, nil
-	}
-
-	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	ls, connClient := createAndInitServer(
+		t,
+		ctx,
+		newTestLogger(t),
+		tempDir,
+		createTemplateTestClientHandler(t, receivedMessages),
+	)
 
 	newFilePath := filepath.Join(tempDir, "foo", "bar", "policy.rego")
 	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
@@ -495,5 +487,23 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 
 			t.Logf("expected cache to be updated to %q, got %q", expectedFinalContent, finalContent)
 		}
+	}
+}
+
+func createTemplateTestClientHandler(
+	t *testing.T,
+	receivedMessages chan []byte,
+) func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+	t.Helper()
+
+	return func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+		bs, err := json.MarshalIndent(req.Params, "", "  ")
+		if err != nil {
+			t.Fatalf("failed to marshal params: %s", err)
+		}
+
+		receivedMessages <- bs
+
+		return struct{}{}, nil
 	}
 }

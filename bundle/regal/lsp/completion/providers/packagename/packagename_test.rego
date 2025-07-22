@@ -135,9 +135,99 @@ test_package_name_completion_on_typing_multiple_suggestions_when_invoked if {
 	}
 }
 
-test_build_suggestions if {
+test_package_name_quoted if {
+	policy := `package f`
+	provider_input := {"regal": {
+		"file": {
+			"name": "/Users/joe/foo/bar/baz-are/foo/baz-are/foo/p.rego",
+			"lines": split(policy, "\n"),
+		},
+		"context": {
+			"workspace_root": "/Users/joe/policy",
+			"location": {
+				"row": 1,
+				"col": 10,
+			},
+		},
+		"environment": {"path_separator": "/"},
+	}}
+
+	items := provider.items with input as provider_input
+	items == {
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo.bar[\"baz-are\"].foo[\"baz-are\"].foo",
+			"textEdit": {
+				"newText": "foo.bar[\"baz-are\"].foo[\"baz-are\"].foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo",
+			"textEdit": {
+				"newText": "foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+		{
+			"detail": "suggested package name based on directory structure",
+			"kind": 19,
+			"label": "foo[\"baz-are\"].foo",
+			"textEdit": {
+				"newText": "foo[\"baz-are\"].foo\n\n",
+				"range": {
+					"end": {"character": 9, "line": 0},
+					"start": {"character": 8, "line": 0},
+				},
+			},
+		},
+	}
+}
+
+test_suggestions if {
 	provider._suggestions("foo.bar.baz", "foo") == ["foo.bar.baz"]
 	provider._suggestions("foo.bar.baz", "bar") == ["bar.baz"]
 	provider._suggestions("foo.bar.baz", "ba") == ["bar.baz", "baz"]
 	provider._suggestions("foo.bar.baz", "") == ["foo.bar.baz", "bar.baz", "baz"]
+
+	# Special character package names filtered at start
+	provider._suggestions("foo-bar.baz", "") == ["baz"]
+	provider._suggestions("foo@bar.baz", "") == ["baz"]
+
+	# Special characters are quoted
+	provider._suggestions("foo.bar-baz.qux", "") == [
+		`foo["bar-baz"].qux`,
+		"qux",
+	]
+
+	provider._suggestions("foo.bar baz.qux", "") == [
+		`foo["bar baz"].qux`,
+		"qux",
+	]
+
+	provider._suggestions("foo.bar@baz.qux", "") == [
+		`foo["bar@baz"].qux`,
+		"qux",
+	]
+}
+
+test_needs_quoting if {
+	special_chars := ["foo-bar", "foo bar", "foo@bar", "foo.bar", "foo+bar", "föö"]
+	every char in special_chars {
+		provider._needs_quoting(char) == true
+	}
+
+	valid_identifiers := ["foo", "foo_bar", "foo123", "FOO", "foo_123_BAR"]
+	every identifier in valid_identifiers {
+		provider._needs_quoting(identifier) == false
+	}
 }

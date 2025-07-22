@@ -1091,10 +1091,12 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob
 		Edits:        ComputeEdits("", newContents),
 	})
 
-	// determine if a rename is needed based on the new file contents.
-	// renameParams will be empty if there are no renames needed
-	renameParams, err := l.fixRenameParams(
-		"Template new Rego file",
+	label := "Template new Rego file"
+
+	// determine if a rename is needed based on the new file package.
+	// edits will be empty if no file rename is needed.
+	additionalRenameEdits, err := l.fixRenameParams(
+		label,
 		&fixes.DirectoryPackageMismatch{},
 		job.URI,
 	)
@@ -1104,12 +1106,13 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob
 		return nil
 	}
 
+	// combine content edits with any additional rename edits
+	edits = append(edits, additionalRenameEdits.Edit.DocumentChanges...)
+
 	// send the edit back to the editor so it appears in the open buffer.
 	if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, types.ApplyWorkspaceAnyEditParams{
-		Label: renameParams.Label,
-		Edit: types.WorkspaceAnyEdit{
-			DocumentChanges: append(edits, renameParams.Edit.DocumentChanges...),
-		},
+		Label: label,
+		Edit:  types.WorkspaceAnyEdit{DocumentChanges: edits},
 	}, nil); err != nil {
 		l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
 	}

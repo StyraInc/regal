@@ -131,6 +131,10 @@ type LanguageServer struct {
 	builtinsPositionJobs chan lintFileJob
 	templateFileJobs     chan lintFileJob
 
+	// templatingFiles tracks files currently being templated to ensure
+	// other updates are not processed while the file is being updated.
+	templatingFiles *concurrent.Map[string, bool]
+
 	webServer *web.Server
 
 	workspaceRootURI string
@@ -170,6 +174,7 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		builtinsPositionJobs:        make(chan lintFileJob, 10),
 		commandRequest:              make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:            make(chan lintFileJob, 10),
+		templatingFiles:             concurrent.MapOf(make(map[string]bool)),
 		completionsManager:          completions.NewDefaultManager(ctx, c, store),
 		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
@@ -199,6 +204,7 @@ func NewLanguageServerMinimal(ctx context.Context, opts *LanguageServerOptions, 
 		builtinsPositionJobs:        make(chan lintFileJob, 10),
 		commandRequest:              make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:            make(chan lintFileJob, 10),
+		templatingFiles:             concurrent.MapOf(make(map[string]bool)),
 		completionsManager:          completions.NewDefaultManager(ctx, c, store),
 		webServer:                   web.NewServer(c, opts.LogWriter, opts.LogLevel),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
@@ -978,6 +984,11 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 	}
 }
 
+// StartWebServer starts the web server that serves explorer
+func (l *LanguageServer) StartWebServer(ctx context.Context) {
+	l.webServer.Start(ctx)
+}
+
 // StartTemplateWorker runs the process of the server that templates newly
 // created Rego files.
 func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
@@ -986,71 +997,11 @@ func (l *LanguageServer) StartTemplateWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case job := <-l.templateFileJobs:
-			// disable the templating feature for files in the workspace root.
-			if filepath.Dir(uri.ToPath(l.clientIdentifier, job.URI)) ==
-				uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
-				continue
+			if err := l.processTemplateJob(ctx, job); err != nil {
+				l.logf(log.LevelMessage, "template job failed: %s", err)
 			}
-
-			// determine the new contents for the file, if permitted
-			newContents, err := l.templateContentsForFile(job.URI)
-			if err != nil {
-				l.logf(log.LevelMessage, "failed to template new file: %s", err)
-
-				continue
-			}
-
-			// set the contents of the new file in the cache immediately as
-			// these must be update to date in order for fixRenameParams
-			// to work
-			l.cache.SetFileContents(job.URI, newContents)
-
-			var edits []any
-
-			edits = append(edits, types.TextDocumentEdit{
-				TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
-				Edits:        ComputeEdits("", newContents),
-			})
-
-			// set the cache contents so that the fix can access this content
-			// when renaming the file if required.
-			l.cache.SetFileContents(job.URI, newContents)
-
-			// determine if a rename is needed based on the new file contents.
-			// renameParams will be empty if there are no renames needed
-			renameParams, err := l.fixRenameParams(
-				"Template new Rego file",
-				&fixes.DirectoryPackageMismatch{},
-				job.URI,
-			)
-			if err != nil {
-				l.logf(log.LevelMessage, "failed to get rename params: %s", err)
-
-				continue
-			}
-
-			if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, types.ApplyWorkspaceAnyEditParams{
-				Label: renameParams.Label,
-				Edit: types.WorkspaceAnyEdit{
-					DocumentChanges: append(edits, renameParams.Edit.DocumentChanges...),
-				},
-			}, nil); err != nil {
-				l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
-			}
-
-			// finally, trigger a diagnostics run for the new file
-			updateEvent := lintFileJob{
-				Reason: "internal/templateNewFile",
-				URI:    job.URI,
-			}
-
-			l.lintFileJobs <- updateEvent
 		}
 	}
-}
-
-func (l *LanguageServer) StartWebServer(ctx context.Context) {
-	l.webServer.Start(ctx)
 }
 
 func (l *LanguageServer) getLoadedConfig() *config.Config {
@@ -1102,6 +1053,78 @@ func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg con
 	}
 
 	l.loadedConfigEnabledAggregateRules = enabledAggregateRules
+
+	return nil
+}
+
+// processTemplateJob handles the templating of a newly created Rego file.
+func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob) error {
+	l.logf(log.LevelMessage, "Template worker received job: %s (reason: %s)", job.URI, job.Reason)
+
+	// mark file as being templated to prevent race conditions
+	l.templatingFiles.Set(job.URI, true)
+	defer l.templatingFiles.Delete(job.URI)
+
+	// disable the templating feature for files in the workspace root.
+	if filepath.Dir(uri.ToPath(l.clientIdentifier, job.URI)) ==
+		uri.ToPath(l.clientIdentifier, l.workspaceRootURI) {
+		return nil
+	}
+
+	// determine the new contents for the file, if permitted
+	newContents, err := l.templateContentsForFile(job.URI)
+	if err != nil {
+		l.logf(log.LevelMessage, "failed to template new file: %s", err)
+
+		return nil
+	}
+
+	// set the contents of the new file in the cache immediately as
+	// these must be update to date in order for fixRenameParams
+	// to work
+	l.cache.SetFileContents(job.URI, newContents)
+
+	var edits []any
+
+	edits = append(edits, types.TextDocumentEdit{
+		TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
+		Edits:        ComputeEdits("", newContents),
+	})
+
+	// set the cache contents so that the fix can access this content
+	// when renaming the file if required.
+	l.cache.SetFileContents(job.URI, newContents)
+
+	// determine if a rename is needed based on the new file contents.
+	// renameParams will be empty if there are no renames needed
+	renameParams, err := l.fixRenameParams(
+		"Template new Rego file",
+		&fixes.DirectoryPackageMismatch{},
+		job.URI,
+	)
+	if err != nil {
+		l.logf(log.LevelMessage, "failed to get rename params: %s", err)
+
+		return nil
+	}
+
+	// send the edit back to the editor so it appears in the open buffer.
+	if err = l.conn.Call(ctx, methodWorkspaceApplyEdit, types.ApplyWorkspaceAnyEditParams{
+		Label: renameParams.Label,
+		Edit: types.WorkspaceAnyEdit{
+			DocumentChanges: append(edits, renameParams.Edit.DocumentChanges...),
+		},
+	}, nil); err != nil {
+		l.logf(log.LevelMessage, "failed %s notify: %v", methodWorkspaceApplyEdit, err.Error())
+	}
+
+	// finally, trigger a diagnostics run for the new contents
+	updateEvent := lintFileJob{
+		Reason: "internal/templateNewFile",
+		URI:    job.URI,
+	}
+
+	l.lintFileJobs <- updateEvent
 
 	return nil
 }
@@ -1813,7 +1836,12 @@ func (l *LanguageServer) handleTextDocumentDidOpen(params types.TextDocumentDidO
 		return struct{}{}, nil
 	}
 
-	l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
+	// check if file is currently being templated
+	if _, isTemplating := l.templatingFiles.Get(params.TextDocument.URI); isTemplating {
+		l.logf(log.LevelMessage, "%s is being templated, skipping didOpen update", params.TextDocument.URI)
+	} else {
+		l.cache.SetFileContents(params.TextDocument.URI, params.TextDocument.Text)
+	}
 
 	job := lintFileJob{
 		Reason: "textDocument/didOpen",

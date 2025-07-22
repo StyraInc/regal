@@ -344,3 +344,156 @@ func TestNewFileTemplating(t *testing.T) {
 		}
 	}
 }
+
+// TestTemplateWorkerRaceConditionWithDidOpen tests the race condition fix for
+// https://github.com/StyraInc/regal/issues/1608 where didOpen would overwrite
+// templated content in cache (with "") before the template worker could
+// complete.
+func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
+	t.Parallel()
+
+	files := map[string]string{
+		".regal/config.yaml": `{}`,
+	}
+
+	tempDir := testutil.TempDirectoryOf(t, files)
+
+	// set up the server and client connections
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	receivedMessages := make(chan []byte, 10)
+	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+		bs, err := json.MarshalIndent(req.Params, "", "  ")
+		if err != nil {
+			t.Fatalf("failed to marshal params: %s", err)
+		}
+
+		receivedMessages <- bs
+
+		return struct{}{}, nil
+	}
+
+	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+
+	newFilePath := filepath.Join(tempDir, "foo", "bar", "policy.rego")
+	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
+
+	testutil.MustMkdirAll(t, filepath.Dir(newFilePath))
+	testutil.MustWriteFile(t, newFilePath, []byte(""))
+
+	// create a 'manual' worker so we can time events to recreated the race.
+	templateCompleted := make(chan bool, 1)
+	proceedWithTemplating := make(chan bool, 1)
+
+	go func() {
+		job := <-ls.templateFileJobs
+		t.Log("controlled template worker received job:", job.URI)
+
+		ls.templatingFiles.Set(job.URI, true)
+		t.Log("marked file as being templated")
+
+		<-proceedWithTemplating
+		t.Log("proceeding with templating...")
+
+		templateContent := "package foo.bar\n\n"
+		ls.cache.SetFileContents(job.URI, templateContent)
+		t.Log("set templated content in cache")
+
+		ls.templatingFiles.Delete(job.URI)
+		t.Log("template worker completed - cleared templating flag")
+
+		templateCompleted <- true
+	}()
+
+	// 1: send didCreateFiles to trigger templating
+	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
+		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
+			{URI: newFileURI},
+		},
+	}, nil); err != nil {
+		t.Fatalf("failed to send didCreateFiles notification: %s", err)
+	}
+
+	// wait for lock to be set, the lock is set quickly, but we want reliable tests
+	// so we make sure that the lock is set before proceeding
+	timeout := time.NewTimer(determineTimeout())
+	select {
+	case <-timeout.C:
+		t.Fatalf("timed out waiting for lock to  be set")
+	default:
+		for {
+			isLocked, ok := ls.templatingFiles.Get(newFileURI)
+			if !ok {
+				t.Log("expected file to be locked for templating")
+			}
+
+			if isLocked {
+				break
+			}
+		}
+	}
+
+	// 2: send the didOpen notification while templating is in progress
+	if err := connClient.Notify(ctx, "textDocument/didOpen", types.TextDocumentDidOpenParams{
+		TextDocument: types.TextDocumentItem{
+			URI:        newFileURI,
+			LanguageID: "rego",
+			Version:    1,
+			Text:       "", // the file is empty in the editor
+		},
+	}, nil); err != nil {
+		t.Fatalf("failed to send didOpen notification: %s", err)
+	}
+
+	// 3: allow templating to continue.
+	proceedWithTemplating <- true
+
+	<-templateCompleted
+
+	cacheContent, ok := ls.cache.GetFileContents(newFileURI)
+	if !ok {
+		t.Fatalf("expected file to be in cache")
+	}
+
+	expectedTemplateContent := "package foo.bar\n\n"
+	if cacheContent != expectedTemplateContent {
+		t.Fatalf("race condition occurred! Expected cache to contain %q, got %q. "+
+			"didOpen overwrote templated content.", expectedTemplateContent, cacheContent)
+	}
+
+	// 4: check that the didOpen now works again after the lock is off
+	if err := connClient.Notify(ctx, "textDocument/didOpen", types.TextDocumentDidOpenParams{
+		TextDocument: types.TextDocumentItem{
+			URI:        newFileURI,
+			LanguageID: "rego",
+			Version:    2,
+			Text:       "package foo.bar\n\nimport rego.v1\n", // file has some content now
+		},
+	}, nil); err != nil {
+		t.Fatalf("failed to send second didOpen notification: %s", err)
+	}
+
+	// wait for contents to be set
+	expectedFinalContent := "package foo.bar\n\nimport rego.v1\n"
+	timeout = time.NewTimer(determineTimeout())
+	select {
+	case <-timeout.C:
+		t.Fatalf("timed out waiting for did open content to be set")
+	default:
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			finalContent, ok := ls.cache.GetFileContents(newFileURI)
+			if !ok {
+				t.Log("expected file to be in cache after second didOpen")
+			}
+
+			if finalContent == expectedFinalContent {
+				break
+			}
+
+			t.Logf("expected cache to be updated to %q, got %q", expectedFinalContent, finalContent)
+		}
+	}
+}

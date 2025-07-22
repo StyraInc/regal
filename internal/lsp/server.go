@@ -984,7 +984,7 @@ func (l *LanguageServer) StartWorkspaceStateWorker(ctx context.Context) {
 	}
 }
 
-// StartWebServer starts the web server that serves explorer
+// StartWebServer starts the web server that serves explorer.
 func (l *LanguageServer) StartWebServer(ctx context.Context) {
 	l.webServer.Start(ctx)
 }

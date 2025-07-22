@@ -1059,7 +1059,7 @@ func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg con
 
 // processTemplateJob handles the templating of a newly created Rego file.
 func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob) error {
-	l.logf(log.LevelMessage, "Template worker received job: %s (reason: %s)", job.URI, job.Reason)
+	l.logf(log.LevelDebug, "template worker received job: %s (reason: %s)", job.URI, job.Reason)
 
 	// mark file as being templated to prevent race conditions
 	l.templatingFiles.Set(job.URI, true)
@@ -1090,10 +1090,6 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob
 		TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: job.URI},
 		Edits:        ComputeEdits("", newContents),
 	})
-
-	// set the cache contents so that the fix can access this content
-	// when renaming the file if required.
-	l.cache.SetFileContents(job.URI, newContents)
 
 	// determine if a rename is needed based on the new file contents.
 	// renameParams will be empty if there are no renames needed

@@ -46,7 +46,7 @@ Projects and products that integrate Regal into their offerings.
 
 The following package managers include Regal in their repositories, either natively or via plugins.
 
-- [Homebrew](https://brew.sh/) via Styra's [homebrew-packages](https://github.com/StyraInc/homebrew-packages)
+- [Homebrew](https://brew.sh/) via the [regal](https://formulae.brew.sh/formula/regal) formula
 - [asdf](https://asdf-vm.com/) via [asdf-regal](https://github.com/asdf-community/asdf-regal)
 - [mise](https://mise.jdx.dev/) via its [aqua](https://aquaproj.github.io/) backend and [aqua's regal definition](https://github.com/aquaproj/aqua-registry/tree/main/pkgs/StyraInc/regal)
 - [pkgsrc](https://www.pkgsrc.se/) and the [regal](https://pkgsrc.se/devel/regal) package
@@ -55,12 +55,22 @@ The following package managers include Regal in their repositories, either nativ
 
 ## Companies and Organizations
 
-Companies and organizations using Regal (not counting organizations behind the open source projects listed above).
+Some companies and organizations using Regal.
 
 <!-- cspell:disable -->
+- [ARMO](https://www.armosec.io)
+- [Aqua Security](https://www.aquasec.com)
 - [Atlassian](https://www.atlassian.com)
 - [Bankdata](https://www.bankdata.dk)
+- [CISA](https://www.cisa.gov)
+- [Elastic](https://www.elastic.co)
+- [Google](https://www.google.com)
+- [Microsoft](https://www.microsoft.com)
+- [Ministry of Justice](https://www.gov.uk/government/organisations/ministry-of-justice)
 - [Miro](https://miro.com)
+- [OpenCV](https://opencv.org)
+- [Red Hat](https://www.redhat.com)
+- [Spacelift](https://www.spacelift.io)
 - [Stacklok](https://stacklok.com)
 - [Styra](https://www.styra.com)
 - [UNIwise](https://uniwise.eu/)

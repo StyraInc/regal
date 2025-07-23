@@ -1,6 +1,6 @@
 module github.com/styrainc/regal/dev/ws
 
-go 1.24.4
+go 1.24.5
 
 replace github.com/styrainc/regal => ../..
 

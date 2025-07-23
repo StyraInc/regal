@@ -1,6 +1,6 @@
 module github.com/styrainc/regal
 
-go 1.24.3
+go 1.24.5
 
 require (
 	dario.cat/mergo v1.0.2
@@ -13,6 +13,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-dap v0.12.0
+	github.com/gorilla/websocket v1.5.0
 	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v1.6.0
@@ -58,7 +59,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/pprof v0.0.0-20250422154841-e1f9c1950416 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gowebpki/jcs v1.0.1 // indirect
 	github.com/hashicorp/hcl/v2 v2.23.0 // indirect
 	github.com/hjson/hjson-go v3.3.0+incompatible // indirect

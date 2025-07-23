@@ -15,8 +15,8 @@
 
 <!-- markdownlint-disable MD041 -->
 
-Regal is a linter and language server for [Rego](https://www.openpolicyagent.org/docs/policy-language/), making
-your Rego magnificent, and you the ruler of rules!
+Regal is a linter, debugger and language server for [Rego](https://www.openpolicyagent.org/docs/policy-language/),
+making your Rego magnificent, and you the ruler of rules!
 
 With its extensive set of linter rules, documentation and editor integrations, Regal is the perfect companion for policy
 development, whether you're an experienced Rego developer or just starting out.
@@ -80,7 +80,7 @@ See the [adopters](https://docs.styra.com/regal/adopters) file for more Regal us
 **MacOS and Linux**
 
 ```shell
-brew install styrainc/packages/regal
+brew install regal
 ```
 
 <details>
@@ -291,8 +291,8 @@ The current Roadmap items are all related to the preparation for
 - [ ] [Rego API: Provide a stable and well-documented Rego API (#1555)](https://github.com/StyraInc/regal/issues/1555)
 - [ ] [Go API: Audit and reduce the public Go API surface (#1556)](https://github.com/StyraInc/regal/issues/1556)
 - [ ] [Custom Rules: Tighten up Authoring experience (#1559)](https://github.com/StyraInc/regal/issues/1559)
-- [ ] [docs: Improve automated documentation generation (#1557)](https://github.com/StyraInc/regal/issues/1557)
-- [ ] [docs: Break down README into smaller units (#1558)](https://github.com/StyraInc/regal/issues/1558)
+- [x] [docs: Improve automated documentation generation (#1557)](https://github.com/StyraInc/regal/issues/1557)
+- [x] [docs: Break down README into smaller units (#1558)](https://github.com/StyraInc/regal/issues/1558)
 - [ ] [lsp: Support a JetBrains LSP client (#1560)](https://github.com/StyraInc/regal/issues/1560)
 
 If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!

@@ -4,7 +4,6 @@ package lsp
 import (
 	"cmp"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -689,7 +688,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 
 			var args commandArgs
 
-			err = json.Unmarshal([]byte(jsonData), &args)
+			err = encoding.JSON().Unmarshal([]byte(jsonData), &args)
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to unmarshal command arguments: %s", err)
 
@@ -890,9 +889,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 							value = make(map[string]any)
 						}
 
-						json := encoding.JSON()
-
-						jsonVal, err = json.MarshalIndent(value, "", "  ")
+						jsonVal, err = encoding.JSON().MarshalIndent(value, "", "  ")
 						if err == nil {
 							_, err = f.Write(jsonVal)
 						}
@@ -2521,6 +2518,12 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string
 	// if there are no parse errors, then we can check for lint errors
 	if len(fileDiags) == 0 {
 		fileDiags, _ = l.cache.GetFileDiagnostics(fileURI)
+	}
+
+	// diagnostics must be a non-nil slice, otherwise diagnostics may not be
+	// cleared by the client.
+	if fileDiags == nil {
+		fileDiags = noDiagnostics
 	}
 
 	resp := types.FileDiagnostics{

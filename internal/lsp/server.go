@@ -332,6 +332,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					// updateFileDiagnostics only ever updates the diagnostics
 					// of non aggregate rules
 					l.getEnabledNonAggregateRules(),
+					l.getCustomRulesPaths(),
 				); err != nil {
 					l.logf(log.LevelMessage, "failed to update file diagnostics: %s", err)
 
@@ -444,6 +445,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					job.OverwriteAggregates,
 					job.AggregateReportOnly,
 					targetRules,
+					l.getCustomRulesPaths(),
 				)
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to update all diagnostics: %s", err)
@@ -1022,11 +1024,30 @@ func (l *LanguageServer) getEnabledAggregateRules() []string {
 	return l.loadedConfigEnabledAggregateRules
 }
 
+func (l *LanguageServer) getCustomRulesPaths() []string {
+	if l.workspaceRootURI == "" {
+		return nil
+	}
+
+	workspaceRoot := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+	customRulesPath := filepath.Join(workspaceRoot, ".regal", "rules")
+
+	if _, err := os.Stat(customRulesPath); err == nil {
+		return []string{customRulesPath}
+	}
+
+	return nil
+}
+
 // loadEnabledRulesFromConfig is used to cache the enabled rules for the current
 // config. These take some time to compute and only change when config changes,
 // so we can store them on the server to speed up diagnostic runs.
 func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
 	lint := linter.NewLinter().WithUserConfig(cfg)
+
+	if customRulesPaths := l.getCustomRulesPaths(); len(customRulesPaths) > 0 {
+		lint = lint.WithCustomRules(customRulesPaths)
+	}
 
 	enabledRules, err := lint.DetermineEnabledRules(ctx)
 	if err != nil {

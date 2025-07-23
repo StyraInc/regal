@@ -161,6 +161,7 @@ func updateFileDiagnostics(
 	fileURI string,
 	workspaceRootURI string,
 	updateDiagnosticsForRules []string,
+	customRulesPaths []string,
 ) error {
 	module, ok := cache.GetModule(fileURI)
 	if !ok {
@@ -188,6 +189,10 @@ func updateFileDiagnostics(
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
+	}
+
+	if len(customRulesPaths) > 0 {
+		regalInstance = regalInstance.WithCustomRules(customRulesPaths)
 	}
 
 	rpt, err := regalInstance.Lint(ctx)
@@ -228,6 +233,7 @@ func updateAllDiagnostics(
 	overwriteAggregates bool,
 	aggregatesReportOnly bool,
 	updateDiagnosticsForRules []string,
+	customRulesPaths []string,
 ) error {
 	var err error
 
@@ -241,6 +247,10 @@ func updateAllDiagnostics(
 
 	if regalConfig != nil {
 		regalInstance = regalInstance.WithUserConfig(*regalConfig)
+	}
+
+	if len(customRulesPaths) > 0 {
+		regalInstance = regalInstance.WithCustomRules(customRulesPaths)
 	}
 
 	if aggregatesReportOnly {

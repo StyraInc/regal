@@ -230,6 +230,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		fileURI,
 		workspaceRootURI,
 		[]string{"prefer-snake-case"},
+		nil,
 	); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -264,6 +265,7 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		fileURI,
 		workspaceRootURI,
 		[]string{"prefer-snake-case"},
+		nil,
 	); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

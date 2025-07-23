@@ -2523,7 +2523,7 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string
 	// diagnostics must be a non-nil slice, otherwise diagnostics may not be
 	// cleared by the client.
 	if fileDiags == nil {
-		fileDiags = make([]types.Diagnostic, 0)
+		fileDiags = noDiagnostics
 	}
 
 	resp := types.FileDiagnostics{

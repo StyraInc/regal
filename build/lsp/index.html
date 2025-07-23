@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Regal LSP web demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #editor { height: 80vh; max-width: 900px; margin: 2em auto; border: 1px solid #444; }
+    .cm-editor { height: 100%; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "@codemirror/lsp-client": "https://esm.sh/@codemirror/lsp-client@6.0.0",
+      "codemirror": "https://esm.sh/codemirror@6.0.2"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="editor"></div>
+  <script type="module">
+    import { LSPClient, languageServerSupport } from "@codemirror/lsp-client";
+    import { basicSetup, EditorView } from "codemirror";
+
+    function simpleWebSocketTransport(uri) {
+      let handlers = [];
+      let sock = new WebSocket(uri);
+      sock.onmessage = e => { for (let h of handlers) h(e.data.toString()); };
+      return new Promise(resolve => {
+        sock.onopen = () => resolve({
+          send(message) { sock.send(message); },
+          subscribe(handler) { handlers.push(handler); },
+          unsubscribe(handler) { handlers = handlers.filter(h => h != handler); }
+        });
+      });
+    }
+
+    const LSP_WS = "ws://127.0.0.1:8787/regal";
+
+    // Transport and LSP setup
+    const transport = await simpleWebSocketTransport(LSP_WS);
+    const client = new LSPClient({rootUri: "file://./"}).connect(transport);
+
+    const initialCode = `package authz
+
+default allow := false
+allow if input.foo
+`;
+    // EditorView with languageServerSupport
+    new EditorView({
+      doc: initialCode,
+      extensions: [
+        basicSetup,
+        languageServerSupport(client, "file:///t/demo.rego"),
+        EditorView.updateListener.of(update => {
+          // Set doc if not already set (for first load)
+          if (update.startState.doc.length === 0 && update.transactions.some(tr => tr.isUserEvent("init"))) {
+            update.view.dispatch({
+              changes: { from: 0, insert: initialCode }
+            });
+          }
+        })
+      ],
+      parent: document.getElementById("editor")
+    });
+  </script>
+</body>
+</html>

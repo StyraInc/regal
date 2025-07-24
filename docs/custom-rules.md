@@ -370,7 +370,7 @@ depend on, and we'll try to take it into account, or at least help you find ways
 ## Language server
 
 When using custom rules with the Regal language server, rules will be loaded
-from the `.regal/rules` relative to the selected workspace root.
+from the `.regal/rules` directory relative to the selected workspace root.
 
 Custom rules will be loaded each time a lint is run for a file or the workspace.
 If your custom rules are broken, fixes will be used on the next linting run.

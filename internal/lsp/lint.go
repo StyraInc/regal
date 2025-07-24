@@ -28,7 +28,7 @@ type diagnosticsRunOpts struct {
 	RegalConfig      *config.Config
 	WorkspaceRootURI string
 	UpdateForRules   []string
-	CustomRulesPaths []string
+	CustomRulesPath  string
 
 	// File-specific
 	FileURI string
@@ -207,8 +207,8 @@ func updateFileDiagnostics(ctx context.Context, opts diagnosticsRunOpts) error {
 		regalInstance = regalInstance.WithUserConfig(*opts.RegalConfig)
 	}
 
-	if len(opts.CustomRulesPaths) > 0 {
-		regalInstance = regalInstance.WithCustomRules(opts.CustomRulesPaths)
+	if opts.CustomRulesPath != "" {
+		regalInstance = regalInstance.WithCustomRules([]string{opts.CustomRulesPath})
 	}
 
 	rpt, err := regalInstance.Lint(ctx)
@@ -260,8 +260,8 @@ func updateWorkspaceDiagnostics(ctx context.Context, opts diagnosticsRunOpts) er
 		regalInstance = regalInstance.WithUserConfig(*opts.RegalConfig)
 	}
 
-	if len(opts.CustomRulesPaths) > 0 {
-		regalInstance = regalInstance.WithCustomRules(opts.CustomRulesPaths)
+	if opts.CustomRulesPath != "" {
+		regalInstance = regalInstance.WithCustomRules([]string{opts.CustomRulesPath})
 	}
 
 	if opts.AggregateReportOnly {

@@ -330,8 +330,8 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					WorkspaceRootURI: l.workspaceRootURI,
 					// updateFileDiagnostics only ever updates the diagnostics
 					// of non aggregate rules
-					UpdateForRules:   l.getEnabledNonAggregateRules(),
-					CustomRulesPaths: l.getCustomRulesPaths(),
+					UpdateForRules:  l.getEnabledNonAggregateRules(),
+					CustomRulesPath: l.getCustomRulesPath(),
 				}); err != nil {
 					l.logf(log.LevelMessage, "failed to update file diagnostics: %s", err)
 
@@ -443,7 +443,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					OverwriteAggregates: job.OverwriteAggregates,
 					AggregateReportOnly: job.AggregateReportOnly,
 					UpdateForRules:      targetRules,
-					CustomRulesPaths:    l.getCustomRulesPaths(),
+					CustomRulesPath:     l.getCustomRulesPath(),
 				})
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to update all diagnostics: %s", err)
@@ -1022,19 +1022,19 @@ func (l *LanguageServer) getEnabledAggregateRules() []string {
 	return l.loadedConfigEnabledAggregateRules
 }
 
-func (l *LanguageServer) getCustomRulesPaths() []string {
+func (l *LanguageServer) getCustomRulesPath() string {
 	if l.workspaceRootURI == "" {
-		return nil
+		return ""
 	}
 
 	workspaceRoot := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
 	customRulesPath := filepath.Join(workspaceRoot, ".regal", "rules")
 
 	if _, err := os.Stat(customRulesPath); err == nil {
-		return []string{customRulesPath}
+		return customRulesPath
 	}
 
-	return nil
+	return ""
 }
 
 // loadEnabledRulesFromConfig is used to cache the enabled rules for the current
@@ -1043,8 +1043,8 @@ func (l *LanguageServer) getCustomRulesPaths() []string {
 func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
 	lint := linter.NewLinter().WithUserConfig(cfg)
 
-	if customRulesPaths := l.getCustomRulesPaths(); len(customRulesPaths) > 0 {
-		lint = lint.WithCustomRules(customRulesPaths)
+	if customRulesPath := l.getCustomRulesPath(); customRulesPath != "" {
+		lint = lint.WithCustomRules([]string{customRulesPath})
 	}
 
 	enabledRules, err := lint.DetermineEnabledRules(ctx)

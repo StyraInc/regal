@@ -20,7 +20,7 @@ func TestLanguageServerCustomRule(t *testing.T) {
 # description: No var named "custom"
 # schemas:
 # - input: schema.regal.ast
-package custom.regal.rules.naming["custom"]
+package custom.regal.rules.naming.custom
 
 import data.regal.ast
 import data.regal.result

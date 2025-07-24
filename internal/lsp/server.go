@@ -323,17 +323,16 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				}
 
 				// lint the file and send the diagnostics
-				if err := updateFileDiagnostics(
-					ctx,
-					l.cache,
-					l.getLoadedConfig(),
-					job.URI,
-					l.workspaceRootURI,
+				if err := updateFileDiagnostics(ctx, diagnosticsRunOpts{
+					Cache:            l.cache,
+					RegalConfig:      l.getLoadedConfig(),
+					FileURI:          job.URI,
+					WorkspaceRootURI: l.workspaceRootURI,
 					// updateFileDiagnostics only ever updates the diagnostics
 					// of non aggregate rules
-					l.getEnabledNonAggregateRules(),
-					l.getCustomRulesPaths(),
-				); err != nil {
+					UpdateForRules:   l.getEnabledNonAggregateRules(),
+					CustomRulesPaths: l.getCustomRulesPaths(),
+				}); err != nil {
 					l.logf(log.LevelMessage, "failed to update file diagnostics: %s", err)
 
 					continue
@@ -435,18 +434,17 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					targetRules = append(targetRules, l.getEnabledNonAggregateRules()...)
 				}
 
-				err := updateAllDiagnostics(
-					ctx,
-					l.cache,
-					l.getLoadedConfig(),
-					l.workspaceRootURI,
+				err := updateWorkspaceDiagnostics(ctx, diagnosticsRunOpts{
+					Cache:            l.cache,
+					RegalConfig:      l.getLoadedConfig(),
+					WorkspaceRootURI: l.workspaceRootURI,
 					// this is intended to only be set to true once at start up,
 					// on following runs, cached aggregate data is used.
-					job.OverwriteAggregates,
-					job.AggregateReportOnly,
-					targetRules,
-					l.getCustomRulesPaths(),
-				)
+					OverwriteAggregates: job.OverwriteAggregates,
+					AggregateReportOnly: job.AggregateReportOnly,
+					UpdateForRules:      targetRules,
+					CustomRulesPaths:    l.getCustomRulesPaths(),
+				})
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to update all diagnostics: %s", err)
 				}

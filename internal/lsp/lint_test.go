@@ -223,15 +223,14 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 	state.SetModule(fileURI, module)
 	state.SetFileDiagnostics(fileURI, []types.Diagnostic{})
 
-	if err := updateFileDiagnostics(
-		t.Context(),
-		state,
-		conf,
-		fileURI,
-		workspaceRootURI,
-		[]string{"prefer-snake-case"},
-		nil,
-	); err != nil {
+	if err := updateFileDiagnostics(t.Context(), diagnosticsRunOpts{
+		Cache:            state,
+		RegalConfig:      conf,
+		FileURI:          fileURI,
+		WorkspaceRootURI: workspaceRootURI,
+		UpdateForRules:   []string{"prefer-snake-case"},
+		CustomRulesPaths: nil,
+	}); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
@@ -258,15 +257,14 @@ func TestLintWithConfigIgnoreWildcards(t *testing.T) {
 		},
 	}
 
-	if err := updateFileDiagnostics(
-		t.Context(),
-		state,
-		conf,
-		fileURI,
-		workspaceRootURI,
-		[]string{"prefer-snake-case"},
-		nil,
-	); err != nil {
+	if err := updateFileDiagnostics(t.Context(), diagnosticsRunOpts{
+		Cache:            state,
+		RegalConfig:      conf,
+		FileURI:          fileURI,
+		WorkspaceRootURI: workspaceRootURI,
+		UpdateForRules:   []string{"prefer-snake-case"},
+		CustomRulesPaths: nil,
+	}); err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 

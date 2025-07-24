@@ -367,6 +367,14 @@ occur between versions. If you need stable versions of rules and functions found
 library of your own, and use in your custom rules. Or engage with the Regal community and tell us what you need and
 depend on, and we'll try to take it into account, or at least help you find ways to make it work!
 
+## Language server
+
+When using custom rules with the Regal language server, rules will be loaded
+from the `.regal/rules` relative to the selected workspace root.
+
+Custom rules will be loaded each time a lint is run for a file or the workspace.
+If your custom rules are broken, fixes will be used on the next linting run.
+
 ## Community
 
 If you'd like to discuss custom rules development or just talk about Regal in general, please join us in the `#regal`

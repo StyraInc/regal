@@ -323,16 +323,16 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				}
 
 				// lint the file and send the diagnostics
-				if err := updateFileDiagnostics(
-					ctx,
-					l.cache,
-					l.getLoadedConfig(),
-					job.URI,
-					l.workspaceRootURI,
+				if err := updateFileDiagnostics(ctx, diagnosticsRunOpts{
+					Cache:            l.cache,
+					RegalConfig:      l.getLoadedConfig(),
+					FileURI:          job.URI,
+					WorkspaceRootURI: l.workspaceRootURI,
 					// updateFileDiagnostics only ever updates the diagnostics
 					// of non aggregate rules
-					l.getEnabledNonAggregateRules(),
-				); err != nil {
+					UpdateForRules:  l.getEnabledNonAggregateRules(),
+					CustomRulesPath: l.getCustomRulesPath(),
+				}); err != nil {
 					l.logf(log.LevelMessage, "failed to update file diagnostics: %s", err)
 
 					continue
@@ -434,17 +434,17 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 					targetRules = append(targetRules, l.getEnabledNonAggregateRules()...)
 				}
 
-				err := updateAllDiagnostics(
-					ctx,
-					l.cache,
-					l.getLoadedConfig(),
-					l.workspaceRootURI,
+				err := updateWorkspaceDiagnostics(ctx, diagnosticsRunOpts{
+					Cache:            l.cache,
+					RegalConfig:      l.getLoadedConfig(),
+					WorkspaceRootURI: l.workspaceRootURI,
 					// this is intended to only be set to true once at start up,
 					// on following runs, cached aggregate data is used.
-					job.OverwriteAggregates,
-					job.AggregateReportOnly,
-					targetRules,
-				)
+					OverwriteAggregates: job.OverwriteAggregates,
+					AggregateReportOnly: job.AggregateReportOnly,
+					UpdateForRules:      targetRules,
+					CustomRulesPath:     l.getCustomRulesPath(),
+				})
 				if err != nil {
 					l.logf(log.LevelMessage, "failed to update all diagnostics: %s", err)
 				}
@@ -1022,11 +1022,30 @@ func (l *LanguageServer) getEnabledAggregateRules() []string {
 	return l.loadedConfigEnabledAggregateRules
 }
 
+func (l *LanguageServer) getCustomRulesPath() string {
+	if l.workspaceRootURI == "" {
+		return ""
+	}
+
+	workspaceRoot := uri.ToPath(l.clientIdentifier, l.workspaceRootURI)
+	customRulesPath := filepath.Join(workspaceRoot, ".regal", "rules")
+
+	if _, err := os.Stat(customRulesPath); err == nil {
+		return customRulesPath
+	}
+
+	return ""
+}
+
 // loadEnabledRulesFromConfig is used to cache the enabled rules for the current
 // config. These take some time to compute and only change when config changes,
 // so we can store them on the server to speed up diagnostic runs.
 func (l *LanguageServer) loadEnabledRulesFromConfig(ctx context.Context, cfg config.Config) error {
 	lint := linter.NewLinter().WithUserConfig(cfg)
+
+	if customRulesPath := l.getCustomRulesPath(); customRulesPath != "" {
+		lint = lint.WithCustomRules([]string{customRulesPath})
+	}
 
 	enabledRules, err := lint.DetermineEnabledRules(ctx)
 	if err != nil {

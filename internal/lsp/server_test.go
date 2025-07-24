@@ -203,7 +203,7 @@ func createClientHandler(
 func createMessageChannels(files map[string]string) map[string]chan []string {
 	messages := make(map[string]chan []string)
 	for _, file := range util.Keys(files) {
-		messages[file] = make(chan []string, 10)
+		messages[filepath.Base(file)] = make(chan []string, 10)
 	}
 
 	return messages

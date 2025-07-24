@@ -22,6 +22,22 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 )
 
+// diagnosticsRunOpts contains options for file and workspace linting.
+type diagnosticsRunOpts struct {
+	Cache            *cache.Cache
+	RegalConfig      *config.Config
+	WorkspaceRootURI string
+	UpdateForRules   []string
+	CustomRulesPath  string
+
+	// File-specific
+	FileURI string
+
+	// Workspace-specific
+	OverwriteAggregates bool
+	AggregateReportOnly bool
+}
+
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
 // URI instead.
@@ -154,28 +170,29 @@ func updateParse(
 	return false, nil
 }
 
-func updateFileDiagnostics(
-	ctx context.Context,
-	cache *cache.Cache,
-	regalConfig *config.Config,
-	fileURI string,
-	workspaceRootURI string,
-	updateDiagnosticsForRules []string,
-) error {
-	module, ok := cache.GetModule(fileURI)
+func updateFileDiagnostics(ctx context.Context, opts diagnosticsRunOpts) error {
+	if opts.OverwriteAggregates {
+		return errors.New("OverwriteAggregates should not be set for updateFileDiagnostics")
+	}
+
+	if opts.AggregateReportOnly {
+		return errors.New("AggregateReportOnly should not be set for updateFileDiagnostics")
+	}
+
+	module, ok := opts.Cache.GetModule(opts.FileURI)
 	if !ok {
 		// then there must have been a parse error
 		return nil
 	}
 
-	contents, ok := cache.GetFileContents(fileURI)
+	contents, ok := opts.Cache.GetFileContents(opts.FileURI)
 	if !ok {
-		return fmt.Errorf("failed to get file contents for uri %q", fileURI)
+		return fmt.Errorf("failed to get file contents for uri %q", opts.FileURI)
 	}
 
 	input := rules.NewInput(
-		map[string]string{fileURI: contents},
-		map[string]*ast.Module{fileURI: module},
+		map[string]string{opts.FileURI: contents},
+		map[string]*ast.Module{opts.FileURI: module},
 	)
 
 	regalInstance := linter.NewLinter().
@@ -184,10 +201,14 @@ func updateFileDiagnostics(
 		// needed to get the aggregateData out so we can update the cache
 		WithExportAggregates(true).
 		WithInputModules(&input).
-		WithPathPrefix(workspaceRootURI)
+		WithPathPrefix(opts.WorkspaceRootURI)
 
-	if regalConfig != nil {
-		regalInstance = regalInstance.WithUserConfig(*regalConfig)
+	if opts.RegalConfig != nil {
+		regalInstance = regalInstance.WithUserConfig(*opts.RegalConfig)
+	}
+
+	if opts.CustomRulesPath != "" {
+		regalInstance = regalInstance.WithCustomRules([]string{opts.CustomRulesPath})
 	}
 
 	rpt, err := regalInstance.Lint(ctx)
@@ -195,56 +216,56 @@ func updateFileDiagnostics(
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootURI)
+	fileDiags := convertReportToDiagnostics(&rpt, opts.WorkspaceRootURI)
 
-	for uri := range cache.GetAllFiles() {
+	for uri := range opts.Cache.GetAllFiles() {
 		// if a file has parse errors, continue to show these until they're addressed
-		parseErrs, ok := cache.GetParseErrors(uri)
+		parseErrs, ok := opts.Cache.GetParseErrors(uri)
 		if ok && len(parseErrs) > 0 {
 			continue
 		}
 
 		// For updateFileDiagnostics, we only update the file in question.
-		if uri == fileURI {
+		if uri == opts.FileURI {
 			fd, ok := fileDiags[uri]
 			if !ok {
 				fd = []types.Diagnostic{}
 			}
 
-			cache.SetFileDiagnosticsForRules(uri, updateDiagnosticsForRules, fd)
+			opts.Cache.SetFileDiagnosticsForRules(uri, opts.UpdateForRules, fd)
 		}
 	}
 
-	cache.SetFileAggregates(fileURI, rpt.Aggregates)
+	opts.Cache.SetFileAggregates(opts.FileURI, rpt.Aggregates)
 
 	return nil
 }
 
-func updateAllDiagnostics(
-	ctx context.Context,
-	cache *cache.Cache,
-	regalConfig *config.Config,
-	workspaceRootURI string,
-	overwriteAggregates bool,
-	aggregatesReportOnly bool,
-	updateDiagnosticsForRules []string,
-) error {
-	var err error
-
-	modules := cache.GetAllModules()
-	files := cache.GetAllFiles()
-
-	regalInstance := linter.NewLinter().
-		WithPathPrefix(workspaceRootURI).
-		// aggregates need only be exported if they're to be used to overwrite.
-		WithExportAggregates(overwriteAggregates)
-
-	if regalConfig != nil {
-		regalInstance = regalInstance.WithUserConfig(*regalConfig)
+func updateWorkspaceDiagnostics(ctx context.Context, opts diagnosticsRunOpts) error {
+	if opts.FileURI != "" {
+		return errors.New("FileURI should not be set for updateAllDiagnostics")
 	}
 
-	if aggregatesReportOnly {
-		regalInstance = regalInstance.WithAggregates(cache.GetFileAggregates())
+	var err error
+
+	modules := opts.Cache.GetAllModules()
+	files := opts.Cache.GetAllFiles()
+
+	regalInstance := linter.NewLinter().
+		WithPathPrefix(opts.WorkspaceRootURI).
+		// aggregates need only be exported if they're to be used to overwrite.
+		WithExportAggregates(opts.OverwriteAggregates)
+
+	if opts.RegalConfig != nil {
+		regalInstance = regalInstance.WithUserConfig(*opts.RegalConfig)
+	}
+
+	if opts.CustomRulesPath != "" {
+		regalInstance = regalInstance.WithCustomRules([]string{opts.CustomRulesPath})
+	}
+
+	if opts.AggregateReportOnly {
+		regalInstance = regalInstance.WithAggregates(opts.Cache.GetFileAggregates())
 	} else {
 		input := rules.NewInput(files, modules)
 		regalInstance = regalInstance.WithInputModules(&input)
@@ -255,10 +276,10 @@ func updateAllDiagnostics(
 		return fmt.Errorf("failed to lint: %w", err)
 	}
 
-	fileDiags := convertReportToDiagnostics(&rpt, workspaceRootURI)
+	fileDiags := convertReportToDiagnostics(&rpt, opts.WorkspaceRootURI)
 
 	for uri := range files {
-		parseErrs, ok := cache.GetParseErrors(uri)
+		parseErrs, ok := opts.Cache.GetParseErrors(uri)
 		if ok && len(parseErrs) > 0 {
 			continue
 		}
@@ -271,16 +292,16 @@ func updateAllDiagnostics(
 		// when only an aggregate report was run, then we must make sure to
 		// only update diagnostics from these rules. So the report is
 		// authoratative, but for those rules only.
-		if aggregatesReportOnly {
-			cache.SetFileDiagnosticsForRules(uri, updateDiagnosticsForRules, fd)
+		if opts.AggregateReportOnly {
+			opts.Cache.SetFileDiagnosticsForRules(uri, opts.UpdateForRules, fd)
 		} else {
-			cache.SetFileDiagnostics(uri, fd)
+			opts.Cache.SetFileDiagnostics(uri, fd)
 		}
 	}
 
-	if overwriteAggregates {
+	if opts.OverwriteAggregates {
 		// clear all aggregates, and use these ones
-		cache.SetAggregates(rpt.Aggregates)
+		opts.Cache.SetAggregates(rpt.Aggregates)
 	}
 
 	return nil

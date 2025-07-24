@@ -82,7 +82,9 @@ func startCmd(ctx context.Context, logger *dap.DebugLogger) error {
 }
 
 func startServer(ctx context.Context, address string, logger *dap.DebugLogger) error {
-	l, err := net.Listen("tcp", address)
+	var lc net.ListenConfig
+
+	l, err := lc.Listen(ctx, "tcp", address)
 	if err != nil {
 		return fmt.Errorf("could not listen: %w", err)
 	}
@@ -327,6 +329,7 @@ func (s *state) stackTrace(r *godap.StackTraceRequest) (*godap.StackTraceRespons
 	if err == nil {
 		for _, f := range fs {
 			var source *godap.Source
+
 			source, line, col, endLine, endCol := pos(f.Location())
 			stackFrames = append(stackFrames, godap.StackFrame{
 				Id:               int(f.ID()),

@@ -7,7 +7,7 @@ import (
 
 	"github.com/styrainc/regal/cmd"
 
-	_ "github.com/styrainc/roast/pkg/intern"
+	_ "github.com/styrainc/regal/pkg/roast/intern"
 )
 
 func main() {

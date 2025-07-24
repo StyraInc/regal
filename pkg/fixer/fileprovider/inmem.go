@@ -6,9 +6,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
+	"github.com/styrainc/regal/pkg/roast/util"
 	"github.com/styrainc/regal/pkg/rules"
-
-	"github.com/styrainc/roast/pkg/util"
 )
 
 type InMemoryFileProvider struct {

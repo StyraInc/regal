@@ -24,8 +24,7 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fileprovider"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
-
-	rutil "github.com/styrainc/roast/pkg/util"
+	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
 // fixCommandParams is similar to the lint params, but with some fields such as profiling removed.

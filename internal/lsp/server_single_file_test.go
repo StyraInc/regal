@@ -10,8 +10,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/testutil"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the

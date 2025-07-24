@@ -19,7 +19,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/types"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 const PathSeparator = string(os.PathSeparator)

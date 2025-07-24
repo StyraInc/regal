@@ -18,8 +18,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/testutil"
-
-	"github.com/styrainc/roast/pkg/util/concurrent"
+	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 )
 
 func TestTemplateContentsForFile(t *testing.T) {
@@ -468,6 +467,7 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 
 	// wait for contents to be set
 	expectedFinalContent := "package foo.bar\n\nimport rego.v1\n"
+
 	timeout = time.NewTimer(determineTimeout())
 	select {
 	case <-timeout.C:

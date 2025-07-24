@@ -21,9 +21,8 @@ import (
 	"github.com/styrainc/regal/pkg/fixer"
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/report"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/util"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/util"
 )
 
 // Reporter releases linter reports in a format decided by the implementation.

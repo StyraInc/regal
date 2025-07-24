@@ -169,7 +169,10 @@ func (s *Server) Start(_ context.Context) {
 		freePort = 0
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", freePort))
+	var lc net.ListenConfig
+
+	//nolint:contextcheck
+	listener, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("localhost:%d", freePort))
 	if err != nil {
 		s.log(log.LevelMessage, fmt.Sprintf("failed to start web server: %v", err))
 

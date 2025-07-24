@@ -11,8 +11,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 func TestPolicyProvider_Example1(t *testing.T) {

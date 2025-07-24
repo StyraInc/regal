@@ -16,9 +16,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/transform"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/transform"
 )
 
 // Policy provides suggestions that have been determined by Rego policy.

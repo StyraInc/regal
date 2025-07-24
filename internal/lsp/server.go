@@ -51,11 +51,10 @@ import (
 	"github.com/styrainc/regal/pkg/fixer/fixes"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 	"github.com/styrainc/regal/pkg/rules"
 	"github.com/styrainc/regal/pkg/version"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/util/concurrent"
 )
 
 const (
@@ -839,7 +838,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 
 					cleanedMessage := strings.Replace(err.Error(), l.workspaceRootURI+"/", "", 1)
-
 					if err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
 						Type:    1, // error
 						Message: cleanedMessage,
@@ -878,7 +876,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					var f *os.File
 
 					f, err = os.OpenFile(output, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-
 					if err == nil {
 						var jsonVal []byte
 
@@ -1864,6 +1861,7 @@ func (l *LanguageServer) handleTextDocumentDidOpen(params types.TextDocumentDidO
 	}
 
 	l.lintFileJobs <- job
+
 	l.builtinsPositionJobs <- job
 
 	return struct{}{}, nil
@@ -1903,6 +1901,7 @@ func (l *LanguageServer) handleTextDocumentDidChange(params types.TextDocumentDi
 	}
 
 	l.lintFileJobs <- job
+
 	l.builtinsPositionJobs <- job
 
 	return struct{}{}, nil
@@ -2122,7 +2121,9 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(params types.WorkspaceDid
 		}
 
 		l.lintFileJobs <- job
+
 		l.builtinsPositionJobs <- job
+
 		l.templateFileJobs <- job
 	}
 
@@ -2189,6 +2190,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		job := lintFileJob{Reason: "textDocument/didRename", URI: renameOp.NewURI}
 
 		l.lintFileJobs <- job
+
 		l.builtinsPositionJobs <- job
 		// if the file being moved is empty, we template it too (if empty)
 		l.templateFileJobs <- job

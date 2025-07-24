@@ -11,8 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/util"
 
 	rp "github.com/styrainc/regal/internal/parse"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 func init() {

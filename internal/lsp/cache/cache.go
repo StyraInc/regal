@@ -9,9 +9,8 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/report"
-
-	"github.com/styrainc/roast/pkg/util"
-	"github.com/styrainc/roast/pkg/util/concurrent"
+	"github.com/styrainc/regal/pkg/roast/util"
+	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and

@@ -32,8 +32,7 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
-
-	rutil "github.com/styrainc/roast/pkg/util"
+	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
 const benchmarkGoBenchOutput = "gobench"

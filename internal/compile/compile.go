@@ -10,8 +10,7 @@ import (
 	"github.com/styrainc/regal/internal/embeds"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 func Capabilities() *ast.Capabilities {

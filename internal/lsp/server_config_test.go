@@ -12,8 +12,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/testutil"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestLanguageServerParentDirConfig tests that regal config is loaded as it is for the

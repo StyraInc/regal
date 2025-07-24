@@ -16,8 +16,18 @@ import (
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
+	"github.com/styrainc/regal/pkg/roast/transform"
+)
 
-	"github.com/styrainc/roast/pkg/transform"
+var (
+	emptyStringAnyMap = make(map[string]any, 0)
+
+	workspaceBundleManifest = bundle.Manifest{
+		// there is no data in this bundle so the roots are not used,
+		// however, roots must be set.
+		Roots:    &[]string{"workspace"},
+		Metadata: map[string]any{"name": "workspace"},
+	}
 )
 
 func (l *LanguageServer) Eval(
@@ -39,9 +49,7 @@ func (l *LanguageServer) Eval(
 			Path:   uri.ToPath(l.clientIdentifier, fileURI),
 		})
 
-		if strings.Contains(module.Package.Path.String(), "custom.regal.rules") {
-			hasCustomRules = true
-		}
+		hasCustomRules = hasCustomRules || strings.Contains(module.Package.Path.String(), "custom.regal.rules")
 	}
 
 	allBundles := make(map[string]bundle.Bundle, len(dataBundles)+2)
@@ -57,15 +65,9 @@ func (l *LanguageServer) Eval(
 	}
 
 	allBundles["workspace"] = bundle.Bundle{
-		Manifest: bundle.Manifest{
-			// there is no data in this bundle so the roots are not used,
-			// however, roots must be set.
-			Roots:    &[]string{"workspace"},
-			Metadata: map[string]any{"name": "workspace"},
-		},
-		Modules: moduleFiles,
-		// Data is all sourced from the dataBundles instead
-		Data: make(map[string]any),
+		Manifest: workspaceBundleManifest,
+		Modules:  moduleFiles,
+		Data:     emptyStringAnyMap, // Data is sourced from the dataBundles instead
 	}
 
 	if hasCustomRules {
@@ -74,12 +76,7 @@ func (l *LanguageServer) Eval(
 		allBundles["regal"] = rbundle.LoadedBundle
 	}
 
-	regoArgs := prepareRegoArgs(
-		ast.MustParseBody(query),
-		allBundles,
-		printHook,
-		l.getLoadedConfig(),
-	)
+	regoArgs := prepareRegoArgs(ast.MustParseBody(query), allBundles, printHook, l.getLoadedConfig())
 
 	// TODO: Let's try to avoid preparing on each eval, but only when the
 	// contents of the workspace modules change, and before the user requests

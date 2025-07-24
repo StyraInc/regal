@@ -32,12 +32,11 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/rast"
+	"github.com/styrainc/regal/pkg/roast/transform"
+	rutil "github.com/styrainc/regal/pkg/roast/util"
 	"github.com/styrainc/regal/pkg/rules"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/rast"
-	"github.com/styrainc/roast/pkg/transform"
-	rutil "github.com/styrainc/roast/pkg/util"
 )
 
 // Linter stores data to use for linting.
@@ -905,6 +904,7 @@ func (l Linter) lintWithRegoRules(
 
 	go func() {
 		wg.Wait()
+
 		doneCh <- true
 	}()
 

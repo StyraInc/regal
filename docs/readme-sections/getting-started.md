@@ -7,7 +7,7 @@
 **MacOS and Linux**
 
 ```shell
-brew install styrainc/packages/regal
+brew install regal
 ```
 
 <details>

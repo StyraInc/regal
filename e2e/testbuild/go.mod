@@ -1,10 +1,12 @@
 module github.com/styrainc/regal/e2e/testbuild
 
-go 1.24.3
+go 1.24.5
+
+replace github.com/styrainc/regal => ../../
 
 require (
-	github.com/open-policy-agent/opa v1.5.1-0.20250627085034-d3e83fbd7735
-	github.com/styrainc/regal v0.34.1
+	github.com/open-policy-agent/opa v1.6.0
+	github.com/styrainc/regal v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -36,7 +38,7 @@ require (
 	github.com/gdamore/tcell v1.1.4 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
-	github.com/go-git/go-git/v5 v5.16.0 // indirect
+	github.com/go-git/go-git/v5 v5.16.2 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -89,7 +91,7 @@ require (
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
-	github.com/styrainc/roast v0.14.1-0.20250627114319-677c9037669a // indirect
+	github.com/styrainc/roast v0.15.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.28 // indirect
@@ -125,5 +127,3 @@ require (
 	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/styrainc/regal => ../../

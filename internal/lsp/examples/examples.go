@@ -3,7 +3,7 @@ package examples
 import (
 	"sync"
 
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 
 	_ "embed"
 )

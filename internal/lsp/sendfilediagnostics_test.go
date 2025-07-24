@@ -8,8 +8,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/types"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestSendFileDiagnosticsEmptyArrays replicates the scenario from

@@ -9,7 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 func NewRegalStore() storage.Store {
@@ -35,6 +35,7 @@ func transact(ctx context.Context, store storage.Store, writeMode bool, op func(
 	}
 
 	success := false
+
 	defer func() {
 		if !success {
 			store.Abort(ctx, txn)

@@ -17,9 +17,8 @@ import (
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/util"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	rutil "github.com/styrainc/roast/pkg/util"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
 const (

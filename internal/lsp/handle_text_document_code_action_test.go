@@ -8,8 +8,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/internal/web"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 func TestHandleTextDocumentCodeAction(t *testing.T) {

@@ -110,7 +110,6 @@ func (pm *ProtocolManager) SendResponse(resp godap.ResponseMessage, req godap.Me
 
 	if r := resp.GetResponse(); r != nil {
 		r.Success = err == nil
-
 		if err != nil {
 			r.Message = err.Error()
 		}
@@ -120,6 +119,7 @@ func (pm *ProtocolManager) SendResponse(resp godap.ResponseMessage, req godap.Me
 			r.RequestSeq = req.GetSeq()
 		}
 	}
+
 	pm.outChan <- resp
 }
 

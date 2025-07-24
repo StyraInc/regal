@@ -13,10 +13,9 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/builtins"
-
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/rast"
-	"github.com/styrainc/roast/pkg/transform"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/rast"
+	"github.com/styrainc/regal/pkg/roast/transform"
 )
 
 var (

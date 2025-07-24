@@ -10,8 +10,7 @@ import (
 	"strings"
 
 	rio "github.com/styrainc/regal/internal/io"
-
-	rutil "github.com/styrainc/roast/pkg/util"
+	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
 // NullToEmpty returns empty slice if provided slice is nil.

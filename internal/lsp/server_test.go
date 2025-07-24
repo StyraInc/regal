@@ -19,8 +19,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 const mainRegoFileName = "/main.rego"
@@ -61,6 +60,7 @@ func newTestLogger(t *testing.T) io.Writer {
 	t.Cleanup(func() {
 		tl.mu.Lock()
 		defer tl.mu.Unlock()
+
 		tl.open = false
 	})
 

@@ -13,9 +13,8 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
-
-	"github.com/styrainc/roast/pkg/rast"
-	"github.com/styrainc/roast/pkg/transform"
+	"github.com/styrainc/regal/pkg/roast/rast"
+	"github.com/styrainc/regal/pkg/roast/transform"
 
 	_ "embed"
 )

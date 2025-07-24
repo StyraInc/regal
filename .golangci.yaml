@@ -5,6 +5,7 @@ linters:
     # these linters are disabled either because they
     # are annoying or because they are deprecated
     - cyclop
+    - dupword
     - err113
     - exhaustive
     - exhaustruct
@@ -20,10 +21,13 @@ linters:
     - ireturn
     - mnd
     - nestif
+    - noinlineerr
     - nonamedreturns
     - tagliatelle
     - testpackage
     - varnamelen
+    - wrapcheck
+    - wsl # replaced by wsl_v5
   settings:
     depguard:
       rules:

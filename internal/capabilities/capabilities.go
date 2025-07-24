@@ -254,8 +254,8 @@ func semverSort(stringVersions []string) {
 		iVers, ok := vCache[iStr]
 		if !ok {
 			var err error
-			iVers, err = semver.NewVersion(iStr)
 
+			iVers, err = semver.NewVersion(iStr)
 			if err != nil {
 				iValid = false
 			} else {
@@ -266,8 +266,8 @@ func semverSort(stringVersions []string) {
 		jVers, ok := vCache[jStr]
 		if !ok {
 			var err error
-			jVers, err = semver.NewVersion(jStr)
 
+			jVers, err = semver.NewVersion(jStr)
 			if err != nil {
 				jValid = false
 			} else {

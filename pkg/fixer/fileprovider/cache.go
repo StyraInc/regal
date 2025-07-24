@@ -9,9 +9,8 @@ import (
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/uri"
+	"github.com/styrainc/regal/pkg/roast/util"
 	"github.com/styrainc/regal/pkg/rules"
-
-	"github.com/styrainc/roast/pkg/util"
 )
 
 type CacheFileProvider struct {

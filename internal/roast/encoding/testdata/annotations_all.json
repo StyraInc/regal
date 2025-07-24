@@ -1,0 +1,117 @@
+{
+  "location": "1:2:1:2",
+  "scope": "document",
+  "title": "this is a title",
+  "description": "this is a description",
+  "entrypoint": true,
+  "organizations": [
+    "org1",
+    "org2"
+  ],
+  "related_resources": [
+    {"description":"documentation","ref":"https://example.com"},
+    {"description":"other","ref":"https://example.com/other"}
+  ],
+  "authors": [
+    {
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    {
+      "name": "Jane Doe",
+      "email": "jane@example.com"
+    }
+  ],
+  "schemas": [
+    {
+      "path": [
+        {
+          "location": "1:1:1:6",
+          "type": "var",
+          "value": "input"
+        }
+      ],
+      "schema": [
+        {
+          "location": "1:1:1:7",
+          "type": "var",
+          "value": "schema"
+        },
+        {
+          "location": "1:8:1:13",
+          "type": "string",
+          "value": "input"
+        }
+      ]
+    },
+    {
+      "path": [
+        {
+          "location": "1:1:1:5",
+          "type": "var",
+          "value": "data"
+        },
+        {
+          "location": "1:6:1:9",
+          "type": "string",
+          "value": "foo"
+        },
+        {
+          "location": "1:10:1:13",
+          "type": "string",
+          "value": "bar"
+        }
+      ],
+      "schema": [
+        {
+          "location": "1:1:1:7",
+          "type": "var",
+          "value": "schema"
+        },
+        {
+          "location": "1:8:1:11",
+          "type": "string",
+          "value": "foo"
+        },
+        {
+          "location": "1:12:1:15",
+          "type": "string",
+          "value": "bar"
+        }
+      ]
+    },
+    {
+      "path": [
+        {
+          "location": "1:1:1:5",
+          "type": "var",
+          "value": "data"
+        },
+        {
+          "location": "1:6:1:9",
+          "type": "string",
+          "value": "foo"
+        },
+        {
+          "location": "1:10:1:13",
+          "type": "string",
+          "value": "baz"
+        }
+      ],
+      "definition": {
+        "type": "boolean"
+      }
+    }
+  ],
+  "custom": {
+    "key": "value",
+    "object": {
+      "nested": "value"
+    },
+    "list": [
+      "value1",
+      2,
+      true
+    ]
+  }
+}

@@ -12,8 +12,7 @@ import (
 
 	compile2 "github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/parse"
-
-	"github.com/styrainc/roast/pkg/encoding"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 type CompileResult struct {

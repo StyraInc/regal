@@ -30,8 +30,8 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/roast/pkg/encoding"
-	"github.com/styrainc/roast/pkg/util/concurrent"
+	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 )
 
 type ConnectionOptions struct {

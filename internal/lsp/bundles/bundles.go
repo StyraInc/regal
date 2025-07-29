@@ -25,11 +25,6 @@ func LoadDataBundle(path string) (bundle.Bundle, error) {
 }
 
 func dataFileLoaderFilter(abspath string, info os.FileInfo, _ int) bool {
-	if info.IsDir() {
-		return false
-	}
-
-	basename := filepath.Base(abspath)
-
-	return !slices.Contains([]string{".manifest", "data.json", "data.yml", "data.yaml"}, basename)
+	return !info.IsDir() &&
+		!slices.Contains([]string{".manifest", "data.json", "data.yml", "data.yaml"}, filepath.Base(abspath))
 }

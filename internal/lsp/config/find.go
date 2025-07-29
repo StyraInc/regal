@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
+
+	rio "github.com/styrainc/regal/internal/io"
 )
 
 // FindConfigRoots will search for all config roots in the given path. A config
@@ -14,27 +14,19 @@ import (
 func FindConfigRoots(path string) ([]string, error) {
 	var foundRoots []string
 
-	err := filepath.WalkDir(path, func(path string, info os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
+	return rio.NewFileWalkReducer(path, foundRoots).
+		WithFilters(rio.DirectoryFilter, rio.NegateFilter(rio.SuffixesFilter(".yaml"))).
+		WithSkipFunc(rio.DefaultSkipDirectories).
+		Reduce(configRootsReducer)
+}
 
-		if info.IsDir() || !strings.HasSuffix(path, ".yaml") {
-			return nil
-		}
+func configRootsReducer(path string, foundRoots []string) ([]string, error) {
+	if filepath.Base(path) == ".regal.yaml" {
+		foundRoots = append(foundRoots, filepath.Dir(path))
+	}
 
-		if filepath.Base(path) == ".regal.yaml" {
-			foundRoots = append(foundRoots, filepath.Dir(path))
-		}
-
-		if strings.HasSuffix(path, ".regal/config.yaml") {
-			foundRoots = append(foundRoots, filepath.Dir(filepath.Dir(path)))
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to walk directory: %w", err)
+	if strings.HasSuffix(path, ".regal/config.yaml") {
+		foundRoots = append(foundRoots, filepath.Dir(filepath.Dir(path)))
 	}
 
 	return foundRoots, nil

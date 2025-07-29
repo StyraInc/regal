@@ -1,6 +1,7 @@
 package fixes
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 
@@ -22,11 +23,7 @@ type Fmt struct {
 func (f *Fmt) Name() string {
 	// this allows this fix config to also be registered under another name so that different
 	// configurations can be registered under other linter rule names.
-	if f.NameOverride != "" {
-		return f.NameOverride
-	}
-
-	return "opa-fmt"
+	return cmp.Or(f.NameOverride, "opa-fmt")
 }
 
 func (f *Fmt) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixResult, error) {

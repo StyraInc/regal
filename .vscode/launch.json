@@ -35,6 +35,23 @@
         "test",
         "bundle"
       ]
+    },
+    {
+      "name": "regal new rule --type builtin --category custom --name bar",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}",
+      "args": [
+        "new",
+        "rule",
+        "--type",
+        "builtin",
+        "--category",
+        "custom",
+        "--name",
+        "bar"
+      ]
     }
   ]
 }

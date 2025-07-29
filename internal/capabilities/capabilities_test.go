@@ -73,10 +73,7 @@ func TestSemverSort(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		t.Logf("----- TestSemverSort[%d]", i)
-		t.Logf("// %s\n", c.note)
-
+	for _, c := range cases {
 		// Note that this actually sorts the input in-place, which is
 		// fine since we won't re-visit the same test case twice.
 		semverSort(c.input)

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/styrainc/regal/internal/embeds"
+	"github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/pkg/config"
 )
 
@@ -84,6 +86,10 @@ regal new rule --type custom --category naming --name camel-case`,
 				return errors.New("name must consist only of lowercase letters, numbers, underscores and dashes")
 			}
 
+			if params.output == "" {
+				params.output = mustGetWd()
+			}
+
 			return nil
 		},
 
@@ -106,26 +112,18 @@ regal new rule --type custom --category naming --name camel-case`,
 }
 
 func scaffoldRule(params newRuleCommandParams) error {
-	if params.output == "" {
-		params.output = mustGetWd()
-	}
-
-	if params.type_ == "custom" {
+	switch params.type_ {
+	case "custom":
 		return scaffoldCustomRule(params)
-	}
-
-	if params.type_ == "builtin" {
-		if err := scaffoldBuiltinRule(params); err != nil {
-			return err
+	case "builtin":
+		steps := []func(params newRuleCommandParams) error{scaffoldBuiltinRule, createBuiltinDocs, addToDataYAML}
+		for _, f := range steps {
+			if err := f(params); err != nil {
+				return err
+			}
 		}
 
-		if err := createBuiltinDocs(params); err != nil {
-			return err
-		}
-
-		if err := addToDataYAML(params); err != nil {
-			return err
-		}
+		return nil
 	}
 
 	return fmt.Errorf("unsupported type %v", params.type_)
@@ -136,10 +134,7 @@ func addToDataYAML(params newRuleCommandParams) error {
 
 	yamlContent, err := os.ReadFile(dataFilePath)
 	if err != nil {
-		// Check if the error is of type *os.PathError
-		var pathErr *os.PathError
-		if errors.As(err, &pathErr) && os.IsNotExist(pathErr.Err) {
-			// Handle the case where the file does not exist
+		if errors.Is(err, fs.ErrNotExist) {
 			return errors.New("data.yaml file not found. " +
 				"Please run this command from the top-level directory of the Regal repository")
 		}
@@ -148,8 +143,6 @@ func addToDataYAML(params newRuleCommandParams) error {
 	}
 
 	var existingConfig config.Config
-
-	// Unmarshal the YAML content into a map
 	if err := yaml.Unmarshal(yamlContent, &existingConfig); err != nil {
 		return err
 	}
@@ -165,13 +158,11 @@ func addToDataYAML(params newRuleCommandParams) error {
 	existingConfig.Rules[params.category][params.name] = config.Rule{Level: "error"}
 
 	// Sort the map keys alphabetically (categories)
-	sortedCategories := util.KeysSorted(existingConfig.Rules)
-
-	// Sort rule names within each category alphabetically
-	for _, cat := range sortedCategories {
+	for _, cat := range util.KeysSorted(existingConfig.Rules) {
+		// Sort rule names within each category alphabetically
 		sortedRuleNames := util.KeysSorted(existingConfig.Rules[cat])
 
-		sortedCategory := make(config.Category)
+		sortedCategory := make(config.Category, len(sortedRuleNames))
 		for _, ruleName := range sortedRuleNames {
 			sortedCategory[ruleName] = existingConfig.Rules[cat][ruleName]
 		}
@@ -188,159 +179,95 @@ func addToDataYAML(params newRuleCommandParams) error {
 		return err
 	}
 
-	// Write the YAML content to the file
-	dataYamlDir := filepath.Join(params.output, "bundle", "regal", "config", "provided")
-	if err := os.MkdirAll(dataYamlDir, 0o770); err != nil {
-		return err
-	}
+	// Write the YAML content to file. If the output flag is set, this is not
+	// necessarily the same file as the one we read from.
+	out := filepath.Join(params.output, "bundle", "regal", "config", "provided", "data.yaml")
 
-	return os.WriteFile(filepath.Join(dataYamlDir, "data.yaml"), b.Bytes(), 0o600)
+	return io.WithCreateRecursive(out, func(file *os.File) error {
+		if _, err := file.Write(b.Bytes()); err == nil {
+			log.Printf("Wrote configuration update to %s\n", out)
+		}
+
+		return err
+	})
 }
 
 func scaffoldCustomRule(params newRuleCommandParams) error {
-	rulesDir := filepath.Join(
+	return renderTemplates(params, filepath.Join(
 		params.output, ".regal", "rules", "custom", "regal", "rules", params.category, params.name,
-	)
-
-	if err := os.MkdirAll(rulesDir, 0o770); err != nil {
-		return err
-	}
-
-	ruleTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/custom/custom.rego.tpl")
-	if err != nil {
-		return err
-	}
-
-	ruleFileName := strings.ToLower(strings.ReplaceAll(params.name, "-", "_")) + ".rego"
-
-	ruleFile, err := os.Create(filepath.Join(rulesDir, ruleFileName))
-	if err != nil {
-		return err
-	}
-
-	if err = ruleTmpl.Execute(ruleFile, templateValues(params)); err != nil {
-		return err
-	}
-
-	testTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/custom/custom_test.rego.tpl")
-	if err != nil {
-		return err
-	}
-
-	testFileName := strings.ToLower(strings.ReplaceAll(params.name, "-", "_")) + "_test.rego"
-
-	testFile, err := os.Create(filepath.Join(rulesDir, testFileName))
-	if err != nil {
-		return err
-	}
-
-	if err = testTmpl.Execute(testFile, templateValues(params)); err != nil {
-		return err
-	}
-
-	log.Printf("Created custom rule %q in %s\n", params.name, rulesDir)
-
-	return nil
+	))
 }
 
 func scaffoldBuiltinRule(params newRuleCommandParams) error {
-	rulesDir := filepath.Join(params.output, "bundle", "regal", "rules", params.category, params.name)
+	return renderTemplates(params, filepath.Join(
+		params.output, "bundle", "regal", "rules", params.category, params.name,
+	))
+}
 
-	if err := os.MkdirAll(rulesDir, 0o770); err != nil {
-		return err
+func renderTemplates(params newRuleCommandParams, dir string) error {
+	templates := []string{
+		fmt.Sprintf("templates/%[1]s/%[1]s.rego.tpl", params.type_),
+		fmt.Sprintf("templates/%[1]s/%[1]s_test.rego.tpl", params.type_),
+	}
+	for _, name := range templates {
+		tpl := filepath.Join(dir, templateFilename(params.name, name))
+
+		err := io.WithCreateRecursive(tpl, func(file *os.File) error {
+			return template.Must(template.ParseFS(embeds.EmbedTemplatesFS, name)).Execute(file, templateValues(params))
+		})
+		if err != nil {
+			return fmt.Errorf("failed to render template %s: %w", name, err)
+		}
 	}
 
-	ruleTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.rego.tpl")
-	if err != nil {
-		return err
-	}
-
-	ruleFileName := strings.ToLower(strings.ReplaceAll(params.name, "-", "_")) + ".rego"
-
-	ruleFile, err := os.Create(filepath.Join(rulesDir, ruleFileName))
-	if err != nil {
-		return err
-	}
-
-	if err = ruleTmpl.Execute(ruleFile, templateValues(params)); err != nil {
-		return err
-	}
-
-	testTmpl, err := template.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin_test.rego.tpl")
-	if err != nil {
-		return err
-	}
-
-	testFileName := strings.ToLower(strings.ReplaceAll(params.name, "-", "_")) + "_test.rego"
-
-	testFile, err := os.Create(filepath.Join(rulesDir, testFileName))
-	if err != nil {
-		return err
-	}
-
-	if err = testTmpl.Execute(testFile, templateValues(params)); err != nil {
-		return err
-	}
-
-	log.Printf("Created builtin rule %q in %s\n", params.name, rulesDir)
+	log.Printf("Created %s rule %q in %s\n", params.type_, params.name, dir)
 
 	return nil
+}
+
+func templateFilename(name, template string) string {
+	if strings.Contains(template, "_test.rego") {
+		return strings.ToLower(strings.ReplaceAll(name, "-", "_")) + "_test.rego"
+	}
+
+	return strings.ToLower(strings.ReplaceAll(name, "-", "_")) + ".rego"
 }
 
 func createBuiltinDocs(params newRuleCommandParams) error {
-	docsDir := filepath.Join(params.output, "docs", "rules", params.category)
-	docTmpl := template.New("builtin.md.tpl")
+	out := filepath.Join(params.output, "docs", "rules", params.category, strings.ToLower(params.name)+".md")
+	if err := os.MkdirAll(filepath.Dir(out), 0o770); err != nil {
+		return err
+	}
 
-	docTmpl = docTmpl.Funcs(template.FuncMap{
-		"ToUpper": strings.ToUpper,
+	tpl := template.New("builtin.md.tpl").Funcs(template.FuncMap{"ToUpper": strings.ToUpper})
+	res := template.Must(tpl.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.md.tpl"))
+
+	err := io.WithCreateRecursive(out, func(docFile *os.File) error {
+		return res.Execute(docFile, templateValues(params))
 	})
-
-	docTmpl, err := docTmpl.ParseFS(embeds.EmbedTemplatesFS, "templates/builtin/builtin.md.tpl")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to render builtin rule doc template: %w", err)
 	}
 
-	docFileName := strings.ToLower(params.name) + ".md"
-
-	docFile, err := os.Create(filepath.Join(docsDir, docFileName))
-	if err != nil {
-		return err
-	}
-
-	if err = docTmpl.Execute(docFile, templateValues(params)); err != nil {
-		return err
-	}
-
-	log.Printf("Created doc template for builtin rule %q in %s\n", params.name, docsDir)
+	log.Printf("Created doc template for builtin rule %q at %s\n", params.name, out)
 
 	return nil
 }
 
-func templateValues(params newRuleCommandParams) TemplateValues {
-	var tmplNameValue string
+func templateValues(params newRuleCommandParams) (tvs TemplateValues) {
+	tvs.Category = params.category
+	tvs.NameOriginal = params.name
 
-	var tmplNameTestValue string
-
-	dashedNameValue := strings.ReplaceAll(params.name, "_", "-")
-
-	switch {
-	case strings.Contains(params.name, "-"):
-		tmplNameValue = `["` + dashedNameValue + `"]`
-		tmplNameTestValue = `["` + dashedNameValue + `_test"]`
-	case strings.Contains(params.name, "_"):
-		tmplNameValue = `["` + dashedNameValue + `"]`
-		tmplNameTestValue = `["` + dashedNameValue + `_test"]`
-	default:
-		tmplNameValue = "." + params.name
-		tmplNameTestValue = "." + params.name + "_test"
+	if strings.Contains(params.name, "-") || strings.Contains(params.name, "_") {
+		dashedNameValue := strings.ReplaceAll(params.name, "_", "-")
+		tvs.Name = `["` + dashedNameValue + `"]`
+		tvs.NameTest = `["` + dashedNameValue + `_test"]`
+	} else {
+		tvs.Name = "." + params.name
+		tvs.NameTest = "." + params.name + "_test"
 	}
 
-	return TemplateValues{
-		Category:     params.category,
-		NameOriginal: params.name,
-		Name:         tmplNameValue,
-		NameTest:     tmplNameTestValue,
-	}
+	return tvs
 }
 
 func mustGetWd() string {

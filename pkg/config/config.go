@@ -188,13 +188,8 @@ func FindConfig(path string) (*os.File, error) {
 // findUpwards searches for a file or directory matching the given name,
 // starting from the provided path and moving upwards.
 func findUpwards(path, name string, expectDir bool) (*os.File, error) {
-	finfo, err := os.Stat(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat path %v: %w", path, err)
-	}
-
 	dir := path
-	if !finfo.IsDir() {
+	if !rio.IsDir(path) {
 		dir = filepath.Dir(path)
 	}
 
@@ -209,17 +204,15 @@ func findUpwards(path, name string, expectDir bool) (*os.File, error) {
 			searchPath = filepath.Join(dir, name)
 		}
 
-		file, err := os.Open(searchPath)
-		if err == nil {
-			fileInfo, err := file.Stat()
-			if err == nil && fileInfo.IsDir() == expectDir {
+		if file, err := os.Open(searchPath); err == nil {
+			if fileInfo, err := file.Stat(); err == nil && fileInfo.IsDir() == expectDir {
 				return file, nil
 			}
 		}
 
 		if searchPath == volume+rio.PathSeparator+name {
 			// Stop traversing at the root path
-			return nil, fmt.Errorf("can't traverse past root directory %w", err)
+			return nil, errors.New("can't traverse past root directory")
 		}
 
 		// Move up one level in the directory tree
@@ -330,46 +323,31 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 		return nil, fmt.Errorf("failed to stat file: %w", err)
 	}
 
-	if (fileInfo.IsDir() && filepath.Base(file.Name()) != ".regal") ||
-		(!fileInfo.IsDir() && filepath.Base(file.Name()) != ".regal.yaml") {
+	filename := filepath.Base(file.Name())
+	if (fileInfo.IsDir() && filename != ".regal") || (!fileInfo.IsDir() && filename != ".regal.yaml") {
 		return nil, fmt.Errorf(
-			"expected a directory named '.regal' or a file named '.regal.yaml', got '%s'",
-			filepath.Base(file.Name()),
+			"expected a directory named '.regal' or a file named '.regal.yaml', got '%s'", filename,
 		)
 	}
 
 	parent := filepath.Dir(file.Name())
-
 	foundBundleRoots := []string{parent}
 
-	var configFilePath string
-
+	configFilePath := file.Name()
 	if fileInfo.IsDir() {
-		configFilePath = filepath.Join(file.Name(), "config.yaml")
-	} else {
-		configFilePath = file.Name()
+		configFilePath = filepath.Join(configFilePath, "config.yaml")
 	}
 
-	fileContent, err := os.ReadFile(configFilePath)
-	if err == nil {
-		var conf Config
-		if err = yaml.Unmarshal(fileContent, &conf); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
-		}
-
-		if conf.Project != nil && conf.Project.Roots != nil {
-			for _, root := range *conf.Project.Roots {
-				foundBundleRoots = append(foundBundleRoots, filepath.Join(parent, root.Path))
-			}
+	if conf, err := FromPath(configFilePath); err == nil && conf.Project != nil && conf.Project.Roots != nil {
+		for _, root := range *conf.Project.Roots {
+			foundBundleRoots = append(foundBundleRoots, filepath.Join(parent, root.Path))
 		}
 	}
 
 	// Include the "rules" directory when loading from a .regal dir
 	if fileInfo.IsDir() {
 		customDir := filepath.Join(file.Name(), "rules")
-
-		info, err := os.Stat(customDir)
-		if err == nil && info.IsDir() {
+		if rio.IsDir(customDir) {
 			foundBundleRoots = append(foundBundleRoots, customDir)
 		}
 	}
@@ -501,6 +479,10 @@ func (config Config) MarshalYAML() (any, error) {
 		delete(unstructuredConfig, keyIgnore)
 	}
 
+	if config.CapabilitiesURL == "" || config.CapabilitiesURL == "regal:///capabilities/default" {
+		delete(unstructuredConfig, "capabilities_url")
+	}
+
 	return unstructuredConfig, nil
 }
 
@@ -530,7 +512,7 @@ type marshallingIntermediary struct {
 	Ignore   Ignore `yaml:"ignore"`
 	Features struct {
 		RemoteFeatures struct {
-			CheckVersion bool `yaml:"check_version"`
+			CheckVersion bool `yaml:"check-version"`
 		} `yaml:"remote"`
 	} `yaml:"features"`
 }
@@ -647,13 +629,11 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("failed to load capabilities: %w", err)
 	}
 
-	config.Capabilities = fromOPACapabilities(opaCaps)
-
 	// This is used in the LSP to load the OPA capabilities, since the
 	// capabilities version in the user-facing config does not contain all
 	// of the information that the LSP needs.
 	config.CapabilitiesURL = capabilitiesURL
-
+	config.Capabilities = fromOPACapabilities(opaCaps)
 	config.Project = result.Project
 
 	// remove any builtins referenced in the minus config
@@ -668,11 +648,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 
 	// feature defaults
 	if result.Features.RemoteFeatures.CheckVersion {
-		config.Features = &Features{
-			Remote: &RemoteFeatures{
-				CheckVersion: true,
-			},
-		}
+		config.Features = &Features{Remote: &RemoteFeatures{CheckVersion: true}}
 	}
 
 	return nil
@@ -893,13 +869,12 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 		abs := path
 
 		if !filepath.IsAbs(abs) {
-			abs, err = filepath.Abs(path)
-			if err != nil {
+			if abs, err = filepath.Abs(path); err != nil {
 				return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
 			}
 		}
 
-		if isDir(abs) {
+		if rio.IsDir(abs) {
 			absDirPaths[i] = abs
 		} else {
 			absDirPaths[i] = filepath.Dir(abs)
@@ -922,13 +897,4 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 	}
 
 	return dirMap.Items(), nil
-}
-
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return info.IsDir()
 }

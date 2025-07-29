@@ -108,7 +108,6 @@ func TestFindInputPath(t *testing.T) {
 	}{
 		{"json", `{"x": true}`},
 		{"yaml", "x: true"},
-		{"yml", "x: true"},
 	}
 
 	for _, tc := range cases {

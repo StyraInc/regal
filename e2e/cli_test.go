@@ -681,6 +681,13 @@ func TestCreateNewCustomRuleFromTemplate(t *testing.T) {
 		"new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir,
 	), 0, &stdout, &stderr)
 
+	outDir := filepath.Join(tmpDir, ".regal", "rules", "custom", "regal", "rules", "naming", "foo-bar-baz")
+
+	expectFilesExist(t,
+		filepath.Join(outDir, "foo_bar_baz.rego"),
+		filepath.Join(outDir, "foo_bar_baz_test.rego"),
+	)
+
 	stdout.Reset()
 	stderr.Reset()
 
@@ -701,9 +708,24 @@ func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
 	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	tmpDir := t.TempDir()
 
-	expectExitCode(t, regal(&stdout, &stderr)(
-		"new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir,
-	), 0, &stdout, &stderr)
+	// Manually set up the command here as we need to control the working directory
+	// as the config file is relative to the Regal root / binary directory, and *not*
+	// the --output directory (which is the only directory custom rules need to care about).
+	c := exec.Command(
+		"./regal", "new", "rule", "--type", "builtin", "--category", "naming",
+		"--name", "foo-bar-baz", "--output", tmpDir,
+	)
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	c.Dir = filepath.Dir(testutil.Must(os.Getwd())(t))
+
+	expectExitCode(t, c.Run(), 0, &stdout, &stderr)
+	expectFilesExist(t,
+		filepath.Join(tmpDir, "bundle", "regal", "rules", "naming", "foo-bar-baz", "foo_bar_baz.rego"),
+		filepath.Join(tmpDir, "bundle", "regal", "rules", "naming", "foo-bar-baz", "foo_bar_baz_test.rego"),
+		filepath.Join(tmpDir, "bundle", "regal", "config", "provided", "data.yaml"),
+		filepath.Join(tmpDir, "docs", "rules", "naming", "foo-bar-baz.md"),
+	)
 
 	stdout.Reset()
 	stderr.Reset()
@@ -1369,14 +1391,33 @@ func ExitStatus(err error) int {
 		}
 	}
 
-	panic("unreachable")
+	panic(err)
 }
 
-func expectExitCode(t *testing.T, err error, exp int, stdout *bytes.Buffer, stderr *bytes.Buffer) {
+func expectFilesExist(t *testing.T, paths ...string) {
+	t.Helper()
+
+	for _, path := range paths {
+		expectFileExists(t, path)
+	}
+}
+
+func expectFileExists(t *testing.T, path string) {
+	t.Helper()
+
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			t.Errorf("expected file %q to exist, but it does not", path)
+		} else {
+			t.Fatalf("unexpected error checking file %q: %v", path, err)
+		}
+	}
+}
+
+func expectExitCode(t *testing.T, err error, exp int, stdout, stderr *bytes.Buffer) {
 	t.Helper()
 
 	if act := ExitStatus(err); exp != act {
-		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s",
-			exp, act, stdout.String(), stderr.String())
+		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s", exp, act, stdout, stderr)
 	}
 }

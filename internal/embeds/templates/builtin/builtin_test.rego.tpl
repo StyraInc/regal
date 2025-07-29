@@ -19,10 +19,10 @@ test_rule_named_foo_not_allowed if {
 		"level": "error",
 		"location": {
 			"file": "policy.rego",
-			"row": 1,
+			"row": 3,
 			"col": 1,
 			"end": {
-				"row": 1,
+				"row": 3,
 				"col": 12,
 			},
 			"text": "foo := true",

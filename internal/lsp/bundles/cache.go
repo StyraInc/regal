@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -135,33 +136,21 @@ type cacheBundle struct {
 // Refresh loads the bundle from disk and updates the cache if any of the
 // source files have changed since the last refresh.
 func (c *cacheBundle) Refresh(path string) (bool, error) {
-	onDiskSourceDigests := make(map[string][]byte)
+	// walk the bundle path and calculate the current MD5 hash of each file on disk
+	walker := rio.NewFileWalkReducer(path, make(map[string][]byte)).
+		WithSkipFunc(rio.DefaultSkipDirectories).
+		WithFilters(
+			rio.DirectoryFilter,
+			rio.NegateFilter(rio.FileNameFilter(".manifest", "data.json", "data.yml", "data.yaml")),
+		)
 
-	filter := []string{".manifest", "data.json", "data.yml", "data.yaml"}
-
-	// walk the bundle path and calculate the MD5 hash of each file on disk
-	// at the moment
-	err := filepath.WalkDir(path, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
+	onDiskDigests, err := walker.Reduce(func(p string, curr map[string][]byte) (map[string][]byte, error) {
+		hash, err := calculateMD5(p)
+		if err == nil {
+			curr[p] = hash
 		}
 
-		if rio.IsSkipWalkDirectory(entry) {
-			return filepath.SkipDir
-		}
-
-		if entry.IsDir() || !slices.Contains(filter, entry.Name()) {
-			return nil
-		}
-
-		hash, err := calculateMD5(path)
-		if err != nil {
-			return err
-		}
-
-		onDiskSourceDigests[path] = hash
-
-		return nil
+		return curr, err
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to walk bundle path %q: %w", path, err)
@@ -169,32 +158,19 @@ func (c *cacheBundle) Refresh(path string) (bool, error) {
 
 	// compare the files on disk with the files that have been seen before
 	// and return without reloading the bundle if there have been no changes
-	if len(onDiskSourceDigests) == len(c.sourceDigests) {
-		changed := false
-
-		for path, hash := range onDiskSourceDigests {
-			if !bytes.Equal(hash, c.sourceDigests[path]) {
-				changed = true
-
-				break
-			}
-		}
-
-		if !changed {
-			return false, nil
-		}
-	}
-
-	// if there has been any change in any of the source files, then
-	// reload the bundle
-	c.bundle, err = LoadDataBundle(path)
-	if err != nil {
-		return false, fmt.Errorf("failed to load bundle %q: %w", path, err)
+	if maps.EqualFunc(c.sourceDigests, onDiskDigests, bytes.Equal) {
+		return false, nil
 	}
 
 	// update the bundle's sourceDigests to the new on-disk state after a
 	// successful refresh
-	c.sourceDigests = onDiskSourceDigests
+	c.sourceDigests = onDiskDigests
+
+	// if there has been any change in any of the source files, then
+	// reload the bundle
+	if c.bundle, err = LoadDataBundle(path); err != nil {
+		return false, fmt.Errorf("failed to load bundle %q: %w", path, err)
+	}
 
 	return true, nil
 }

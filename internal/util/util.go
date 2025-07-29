@@ -120,9 +120,7 @@ func DeleteEmptyDirs(dir string) error {
 		if err := os.Remove(dir); err != nil {
 			if os.IsExist(err) {
 				break
-			}
-
-			if !os.IsNotExist(err) && !os.IsPermission(err) {
+			} else if !os.IsPermission(err) {
 				return fmt.Errorf("failed to clean directory %s: %w", dir, err)
 			}
 		}
@@ -142,7 +140,6 @@ func DeleteEmptyDirs(dir string) error {
 // be empty if the target file was deleted.
 func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dirs := make([]string, 0)
-
 	preserveDirs := rutil.NewSet[string]()
 
 	for _, p := range preserve {
@@ -150,12 +147,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 			preserveDirs.Add(p)
 
 			p = filepath.Dir(p)
-
-			if p == "." || p == "/" {
-				break
-			}
-
-			if preserveDirs.Contains(p) {
+			if p == "." || p == "/" || preserveDirs.Contains(p) {
 				break
 			}
 		}
@@ -164,17 +156,11 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dir := filepath.Dir(target)
 
 	for !preserveDirs.Contains(dir) {
-		parts := strings.Split(dir, rio.PathSeparator)
-		if len(parts) == 1 {
+		if !strings.Contains(dir, rio.PathSeparator) {
 			break
 		}
 
-		info, err := os.Stat(dir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to stat directory %s: %w", dir, err)
-		}
-
-		if !info.IsDir() {
+		if !rio.IsDir(dir) {
 			return nil, fmt.Errorf("expected directory, got file %s", dir)
 		}
 

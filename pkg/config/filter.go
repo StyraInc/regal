@@ -1,10 +1,7 @@
 package config
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -26,20 +23,20 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, pathPrefix
 	}
 
 	if checkFileExists {
-		filtered := make([]string, 0, len(paths))
+		var (
+			filtered []string
+			err      error
+		)
 
-		if err := walkPaths(paths, func(path string, info os.DirEntry, err error) error {
-			if rio.IsSkipWalkDirectory(info) {
-				return filepath.SkipDir
+		for _, path := range paths {
+			filtered, err = rio.NewFileWalkReducer(path, filtered).
+				WithSkipFunc(rio.DefaultSkipDirectories).
+				WithFilters(rio.DirectoryFilter, rio.NegateFilter(rio.SuffixesFilter(bundle.RegoExt))).
+				WithStatBeforeWalk(true).
+				Reduce(rio.PathAppendReducer)
+			if err != nil {
+				return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 			}
-
-			if !info.IsDir() && strings.HasSuffix(path, bundle.RegoExt) {
-				filtered = append(filtered, path)
-			}
-
-			return err
-		}); err != nil {
-			return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 		}
 
 		return filterPaths(filtered, ignore, pathPrefix)
@@ -50,26 +47,6 @@ func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, pathPrefix
 	}
 
 	return filterPaths(paths, ignore, pathPrefix)
-}
-
-func walkPaths(paths []string, filter func(path string, info os.DirEntry, err error) error) error {
-	var errs error
-
-	for _, path := range paths {
-		// We need to stat the initial set of paths, as filepath.WalkDir
-		// will panic on non-existent paths.
-		if _, err := os.Stat(path); err != nil {
-			errs = errors.Join(errs, err)
-
-			continue
-		}
-
-		if err := filepath.WalkDir(path, filter); err != nil {
-			errs = errors.Join(errs, err)
-		}
-	}
-
-	return errs
 }
 
 func filterPaths(policyPaths []string, ignore []string, pathPrefix string) ([]string, error) {

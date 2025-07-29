@@ -1278,13 +1278,42 @@ func (l *LanguageServer) fixEditParams(
 		return false, &types.ApplyWorkspaceEditParams{}, nil
 	}
 
+	var edits []types.TextEdit
+
+	if l.clientIdentifier == clients.IdentifierIntelliJ {
+		// IntelliJ clients need a single edit that replaces the entire file
+		lines := strings.Split(oldContent, "\n")
+		endLine := len(lines) - 1
+		endChar := 0
+
+		if endLine >= 0 {
+			endChar = len(lines[endLine])
+		}
+
+		edits = []types.TextEdit{
+			{
+				Range: types.Range{
+					Start: types.Position{Line: 0, Character: 0},
+					End: types.Position{
+						Line:      util.SafeIntToUint(endLine),
+						Character: util.SafeIntToUint(endChar),
+					},
+				},
+				NewText: fixResults[0].Contents,
+			},
+		}
+	} else {
+		// Other clients use the standard diff-based edits
+		edits = ComputeEdits(oldContent, fixResults[0].Contents)
+	}
+
 	editParams := &types.ApplyWorkspaceEditParams{
 		Label: label,
 		Edit: types.WorkspaceEdit{
 			DocumentChanges: []types.TextDocumentEdit{
 				{
 					TextDocument: types.OptionalVersionedTextDocumentIdentifier{URI: args.Target},
-					Edits:        ComputeEdits(oldContent, fixResults[0].Contents),
+					Edits:        edits,
 				},
 			},
 		},

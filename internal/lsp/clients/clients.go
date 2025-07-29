@@ -1,5 +1,7 @@
 package clients
 
+import "strings"
+
 // Identifier represent different supported clients and can be used to toggle or change
 // server behavior based on the client.
 type Identifier uint8
@@ -10,6 +12,7 @@ const (
 	IdentifierGoTest
 	IdentifierZed
 	IdentifierNeovim
+	IdentifierIntelliJ
 )
 
 // DetermineClientIdentifier is used to determine the Regal client identifier
@@ -28,6 +31,11 @@ func DetermineClientIdentifier(clientName string) Identifier {
 		// 'Neovim' is sent as the client identifier when using the
 		// nvim-lspconfig plugin.
 		return IdentifierNeovim
+	}
+
+	// check for IntelliJ using contains since version is also set in the name
+	if strings.Contains(clientName, "IntelliJ") {
+		return IdentifierIntelliJ
 	}
 
 	return IdentifierGeneric

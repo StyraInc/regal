@@ -212,6 +212,15 @@ func SafeUintToInt(u uint) int {
 	return int(u)
 }
 
+// SafeIntToUint will convert an int to a uint, clamping negative values to 0.
+func SafeIntToUint(i int) uint {
+	if i < 0 {
+		return 0 // Clamp negative values to 0
+	}
+
+	return uint(i)
+}
+
 // FreePort returns a free port to listen on, if none of the preferred ports
 // are available then a random free port is returned.
 func FreePort(preferred ...int) (port int, err error) {

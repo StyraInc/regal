@@ -105,7 +105,14 @@ allow[msg] { 1 == 1; msg := "hello" }
 
 			s := NewRegalStore()
 
-			success, err := updateParse(ctx, c, s, testData.fileURI, ast.BuiltinMap, testData.regoVersion)
+			success, err := updateParse(ctx, updateParseOpts{
+				Cache:            c,
+				Store:            s,
+				FileURI:          testData.fileURI,
+				Builtins:         ast.BuiltinMap,
+				RegoVersion:      testData.regoVersion,
+				WorkspaceRootURI: "",
+			})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

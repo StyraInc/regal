@@ -315,7 +315,14 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 
 				// updateParse will not return an error when the parsing failed,
 				// but only when it was impossible
-				if _, err := updateParse(ctx, l.cache, l.regoStore, job.URI, bis, l.regoVersionForURI(job.URI)); err != nil {
+				if _, err := updateParse(ctx, updateParseOpts{
+					Cache:            l.cache,
+					Store:            l.regoStore,
+					FileURI:          job.URI,
+					Builtins:         bis,
+					RegoVersion:      l.regoVersionForURI(job.URI),
+					WorkspaceRootURI: l.workspaceRootURI,
+				}); err != nil {
 					l.logf(log.LevelMessage, "failed to update module for %s: %s", job.URI, err)
 
 					continue
@@ -484,7 +491,14 @@ func (l *LanguageServer) StartHoverWorker(ctx context.Context) {
 
 			bis := l.builtinsForCurrentCapabilities()
 
-			success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI))
+			success, err := updateParse(ctx, updateParseOpts{
+				Cache:            l.cache,
+				Store:            l.regoStore,
+				FileURI:          fileURI,
+				Builtins:         bis,
+				RegoVersion:      l.regoVersionForURI(fileURI),
+				WorkspaceRootURI: l.workspaceRootURI,
+			})
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to update parse: %s", err)
 
@@ -624,7 +638,14 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 					// updating the parse here will enable things like go-to definition
 					// to start working right away without the need for a file content
 					// update to run updateParse.
-					if _, err = updateParse(ctx, l.cache, l.regoStore, k, bis, l.regoVersionForURI(k)); err != nil {
+					if _, err = updateParse(ctx, updateParseOpts{
+						Cache:            l.cache,
+						Store:            l.regoStore,
+						FileURI:          k,
+						Builtins:         bis,
+						RegoVersion:      l.regoVersionForURI(k),
+						WorkspaceRootURI: l.workspaceRootURI,
+					}); err != nil {
 						l.logf(log.LevelMessage, "failed to update parse for previously ignored file %q: %s", k, err)
 					}
 				}
@@ -836,14 +857,6 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 				result, err = l.EvalWorkspacePath(ctx, path, inputMap)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
-
-					cleanedMessage := strings.Replace(err.Error(), l.workspaceRootURI+"/", "", 1)
-					if err := l.conn.Notify(ctx, "window/showMessage", types.ShowMessageParams{
-						Type:    1, // error
-						Message: cleanedMessage,
-					}); err != nil {
-						l.logf(log.LevelMessage, "failed to notify client of eval error: %s", err)
-					}
 
 					break
 				}
@@ -1467,7 +1480,14 @@ func (l *LanguageServer) processHoverContentUpdate(ctx context.Context, fileURI 
 
 	bis := l.builtinsForCurrentCapabilities()
 
-	if success, err := updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI)); err != nil {
+	if success, err := updateParse(ctx, updateParseOpts{
+		Cache:            l.cache,
+		Store:            l.regoStore,
+		FileURI:          fileURI,
+		Builtins:         bis,
+		RegoVersion:      l.regoVersionForURI(fileURI),
+		WorkspaceRootURI: l.workspaceRootURI,
+	}); err != nil {
 		return fmt.Errorf("failed to update parse: %w", err)
 	} else if !success {
 		return nil
@@ -2490,7 +2510,14 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 
 		bis := l.builtinsForCurrentCapabilities()
 
-		if _, err = updateParse(ctx, l.cache, l.regoStore, fileURI, bis, l.regoVersionForURI(fileURI)); err != nil {
+		if _, err = updateParse(ctx, updateParseOpts{
+			Cache:            l.cache,
+			Store:            l.regoStore,
+			FileURI:          fileURI,
+			Builtins:         bis,
+			RegoVersion:      l.regoVersionForURI(fileURI),
+			WorkspaceRootURI: l.workspaceRootURI,
+		}); err != nil {
 			failed = append(failed, loadWorkspaceContentsFailedFile{
 				URI:   fileURI,
 				Error: fmt.Errorf("failed to update parse: %w", err),

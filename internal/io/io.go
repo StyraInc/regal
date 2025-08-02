@@ -231,6 +231,13 @@ func PathAppendReducer(path string, curr []string) ([]string, error) {
 
 const PathSeparator = string(os.PathSeparator)
 
+// Getwd returns the current working directory, or an empty string if it cannot be determined.
+func Getwd() string {
+	wd, _ := os.Getwd()
+
+	return wd
+}
+
 // LoadRegalBundleFS loads bundle embedded from policy and data directory.
 func LoadRegalBundleFS(fs files.FS) (bundle.Bundle, error) {
 	embedLoader, err := bundle.NewFSLoader(fs)

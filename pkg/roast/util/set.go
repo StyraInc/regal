@@ -1,5 +1,10 @@
 package util
 
+import (
+	"iter"
+	"maps"
+)
+
 // Set is a generic set implementation.
 type Set[T comparable] struct {
 	elements map[T]struct{}
@@ -65,4 +70,9 @@ func (s *Set[T]) Diff(b *Set[T]) *Set[T] {
 	}
 
 	return diffSet
+}
+
+// Values returns an iterator of all items in the set.
+func (s *Set[T]) Values() iter.Seq[T] {
+	return maps.Keys(s.elements)
 }

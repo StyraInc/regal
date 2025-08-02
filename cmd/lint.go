@@ -9,20 +9,17 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/jstemmer/go-junit-report/v2/junit"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/metrics"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/cache"
 	rio "github.com/styrainc/regal/internal/io"
 	regalmetrics "github.com/styrainc/regal/internal/metrics"
 	"github.com/styrainc/regal/internal/update"
@@ -33,11 +30,10 @@ import (
 	"github.com/styrainc/regal/pkg/version"
 )
 
-type lintCommandParams struct {
+type lintAndFixParams struct {
 	configFile      string
 	format          string
 	outputFile      string
-	failLevel       string
 	rules           repeatedStringFlag
 	disable         repeatedStringFlag
 	disableCategory repeatedStringFlag
@@ -45,48 +41,65 @@ type lintCommandParams struct {
 	enableCategory  repeatedStringFlag
 	ignoreFiles     repeatedStringFlag
 	timeout         time.Duration
-	noColor         bool
 	debug           bool
-	enablePrint     bool
-	metrics         bool
-	profile         bool
-	instrument      bool
 	disableAll      bool
 	enableAll       bool
 }
 
-func (p *lintCommandParams) getConfigFile() string {
-	return p.configFile
+type lintParams struct {
+	lintAndFixParams
+
+	failLevel   string
+	enablePrint bool
+	metrics     bool
+	profile     bool
+	instrument  bool
 }
 
-func (p *lintCommandParams) getTimeout() time.Duration {
-	return p.timeout
+func (params *lintAndFixParams) outputWriter() (io.Writer, error) {
+	if params.outputFile == "" {
+		return os.Stdout, nil
+	}
+
+	f, err := os.OpenFile(params.outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create or open output file %w", err)
+	}
+
+	return f, nil
 }
 
-const stringType = "string"
+func setCommonFlags(cmd *cobra.Command, params *lintAndFixParams) {
+	flags := cmd.Flags()
+	flags.StringVarP(&params.configFile, "config-file", "c", "", "set path of configuration file")
+	flags.StringVarP(&params.format, "format", "f", formatPretty,
+		"set output format (pretty, compact, json, github, sarif)")
+	flags.StringVarP(&params.outputFile, "output-file", "o", "",
+		"set file to use for linting output, defaults to stdout")
+	flags.BoolVar(&color.NoColor, "no-color", false, "disable color output")
+	flags.VarP(&params.rules, "rules", "r", "set custom rules file(s). This flag can be repeated.")
+	flags.DurationVar(&params.timeout, "timeout", 0, "set timeout for linting (default no timeout)")
+	flags.BoolVar(&params.debug, "debug", false,
+		"enable debug logging (including print output from custom policy)")
+	flags.VarP(&params.disable, "disable", "d", "disable specific rule(s). This flag can be repeated.")
+	flags.BoolVarP(&params.disableAll, "disable-all", "D", false, "disable all rules")
+	flags.VarP(&params.disableCategory, "disable-category", "",
+		"disable all rules in a category. This flag can be repeated.")
+	flags.VarP(&params.enable, "enable", "e", "enable specific rule(s). This flag can be repeated.")
+	flags.BoolVarP(&params.enableAll, "enable-all", "E", false, "enable all rules")
+	flags.VarP(&params.enableCategory, "enable-category", "",
+		"enable all rules in a category. This flag can be repeated.")
+	flags.VarP(&params.ignoreFiles, "ignore-files", "",
+		"ignore all files matching a glob-pattern. This flag can be repeated.")
 
-type repeatedStringFlag struct {
-	v     []string
-	isSet bool
-}
-
-func (*repeatedStringFlag) Type() string {
-	return stringType
-}
-
-func (f *repeatedStringFlag) String() string {
-	return strings.Join(f.v, ",")
-}
-
-func (f *repeatedStringFlag) Set(s string) error {
-	f.v = append(f.v, s)
-	f.isSet = true
-
-	return nil
+	// Allow setting debug mode via GitHub UI for failing actions
+	if os.Getenv("RUNNER_DEBUG") != "" {
+		params.debug = true
+	}
 }
 
 func init() {
-	params := &lintCommandParams{}
+	params := &lintParams{}
 
 	lintCommand := &cobra.Command{
 		Use:   "lint <path> [path [...]]",
@@ -102,11 +115,6 @@ func init() {
 		},
 
 		RunE: wrapProfiling(func(args []string) error {
-			// Allow setting debug mode via GitHub UI for failing actions
-			if os.Getenv("RUNNER_DEBUG") != "" {
-				params.debug = true
-			}
-
 			rep, err := lint(args, params)
 			if err != nil {
 				log.SetOutput(os.Stderr)
@@ -128,7 +136,6 @@ func init() {
 			}
 
 			exitCode := 0
-
 			if params.failLevel == "error" && errorsFound > 0 {
 				exitCode = 3
 			}
@@ -148,24 +155,11 @@ func init() {
 		}),
 	}
 
-	lintCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
-		"set path of configuration file")
-	lintCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
-		"set output format (pretty, compact, json, github, sarif)")
-	lintCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
-		"set file to use for linting output, defaults to stdout")
+	setCommonFlags(lintCommand, &params.lintAndFixParams)
+
 	lintCommand.Flags().StringVarP(&params.failLevel, "fail-level", "l", "error",
 		"set level at which to fail with a non-zero exit code (error, warning)")
-	lintCommand.Flags().BoolVar(&params.noColor, "no-color", false,
-		"Disable color output")
-	lintCommand.Flags().VarP(&params.rules, "rules", "r",
-		"set custom rules file(s). This flag can be repeated.")
-	lintCommand.Flags().DurationVar(&params.timeout, "timeout", 0,
-		"set timeout for linting (default unlimited)")
-	lintCommand.Flags().BoolVar(&params.debug, "debug", false,
-		"enable debug logging (including print output from custom policy)")
-	lintCommand.Flags().BoolVar(&params.enablePrint, "enable-print", false,
-		"enable print output from policy")
+	lintCommand.Flags().BoolVar(&params.enablePrint, "enable-print", false, "enable print output from policy")
 	lintCommand.Flags().BoolVar(&params.metrics, "metrics", false,
 		"enable metrics reporting (currently supported only for JSON output format)")
 	lintCommand.Flags().BoolVar(&params.profile, "profile", false,
@@ -173,80 +167,18 @@ func init() {
 	lintCommand.Flags().BoolVar(&params.instrument, "instrument", false,
 		"enable instrumentation metrics to be added to reporting (currently supported only for JSON output format)")
 
-	lintCommand.Flags().VarP(&params.disable, "disable", "d",
-		"disable specific rule(s). This flag can be repeated.")
-	lintCommand.Flags().BoolVarP(&params.disableAll, "disable-all", "D", false,
-		"disable all rules")
-	lintCommand.Flags().VarP(&params.disableCategory, "disable-category", "",
-		"disable all rules in a category. This flag can be repeated.")
-
-	lintCommand.Flags().VarP(&params.enable, "enable", "e",
-		"enable specific rule(s). This flag can be repeated.")
-	lintCommand.Flags().BoolVarP(&params.enableAll, "enable-all", "E", false,
-		"enable all rules")
-	lintCommand.Flags().VarP(&params.enableCategory, "enable-category", "",
-		"enable all rules in a category. This flag can be repeated.")
-
-	lintCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
-		"ignore all files matching a glob-pattern. This flag can be repeated.")
-
 	addPprofFlag(lintCommand.Flags())
 
 	RootCommand.AddCommand(lintCommand)
 }
 
-func lint(args []string, params *lintCommandParams) (report.Report, error) {
-	var err error
-
-	ctx, cancel := getLinterContext(params)
+func lint(args []string, params *lintParams) (result report.Report, err error) {
+	ctx, cancel := getLinterContext(params.lintAndFixParams)
 	defer cancel()
 
-	if params.noColor {
-		color.NoColor = true
-	}
-
-	// if an outputFile has been set, open it for writing or create it
-	var outputWriter io.Writer
-
-	outputWriter = os.Stdout
-	if params.outputFile != "" {
-		outputWriter, err = getWriterForOutputFile(params.outputFile)
-		if err != nil {
-			return report.Report{}, fmt.Errorf("failed to open output file before use %w", err)
-		}
-	}
-
-	var (
-		regalDir         *os.File
-		customRulesDir   string
-		configSearchPath string
-	)
-
-	m := metrics.New()
-	if params.metrics {
-		m.Timer(regalmetrics.RegalConfigSearch).Start()
-	}
-
-	if len(args) == 1 {
-		configSearchPath, _ = filepath.Abs(args[0])
-	} else {
-		configSearchPath, _ = os.Getwd()
-	}
-
-	if configSearchPath == "" {
-		log.Println("failed to determine relevant directory for config file search - won't search for custom config or rules")
-	} else {
-		regalDir, err = config.FindRegalDirectory(configSearchPath)
-		if err == nil {
-			customRulesPath := filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
-			if _, err = os.Stat(customRulesPath); err == nil {
-				customRulesDir = customRulesPath
-			}
-		}
-	}
-
-	if params.metrics {
-		m.Timer(regalmetrics.RegalConfigSearch).Stop()
+	outputWriter, err := params.outputWriter()
+	if err != nil {
+		return report.Report{}, err
 	}
 
 	regal := linter.NewLinter().
@@ -257,15 +189,12 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		WithEnabledCategories(params.enableCategory.v...).
 		WithEnabledRules(params.enable.v...).
 		WithDebugMode(params.debug).
-		WithInputPaths(args).
-		WithBaseCache(cache.NewBaseCache())
+		WithProfiling(params.profile).
+		WithInstrumentation(params.instrument).
+		WithInputPaths(args)
 
 	if params.enablePrint {
 		regal = regal.WithPrintHook(topdown.NewPrintHook(os.Stderr))
-	}
-
-	if customRulesDir != "" {
-		regal = regal.WithCustomRules([]string{customRulesDir})
 	}
 
 	if params.rules.isSet {
@@ -276,56 +205,48 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		regal = regal.WithIgnore(params.ignoreFiles.v)
 	}
 
+	m := metrics.New()
 	if params.metrics {
 		regal = regal.WithMetrics(m)
+		m.Timer(regalmetrics.RegalConfigSearch).Start()
+	}
+
+	var regalPath string
+
+	searchPath := getSearchPath(args)
+	if searchPath != "" {
+		if regalPath, err = config.FindRegalDirectoryPath(searchPath); err == nil {
+			regal = regal.WithPathPrefix(regalPath)
+
+			if params.configFile == "" {
+				if regalConf := filepath.Join(regalPath, "config.yaml"); rio.IsFile(regalConf) {
+					// override param in case it's unset, so that the readUserConfig function
+					// called below can skip searching for the config file
+					params.configFile = regalConf
+				}
+			}
+
+			if rulesDir := filepath.Join(regalPath, "rules"); !params.rules.isSet && rio.IsDir(rulesDir) {
+				regal = regal.WithCustomRules([]string{rulesDir})
+			}
+		}
+	}
+
+	if params.metrics {
+		m.Timer(regalmetrics.RegalConfigSearch).Stop()
 		m.Timer(regalmetrics.RegalConfigParse).Start()
 	}
 
-	if params.profile {
-		regal = regal.WithProfiling(true)
-	}
-
-	if params.instrument {
-		regal = regal.WithInstrumentation(true)
-	}
-
-	if regalDir != nil {
-		regal = regal.WithPathPrefix(filepath.Dir(regalDir.Name()))
-	}
-
-	var userConfig config.Config
-
-	userConfigFile, err := readUserConfig(params, configSearchPath)
-
-	switch {
-	case err == nil:
-		defer rio.CloseFileIgnore(userConfigFile)
-
-		if params.debug {
-			log.Printf("found user config file: %s", userConfigFile.Name())
-		}
-
-		err := yaml.NewDecoder(userConfigFile).Decode(&userConfig)
-		if errors.Is(err, io.EOF) {
-			log.Printf("user config file %q is empty, will use the default config", userConfigFile.Name())
-		} else if err != nil {
-			if regalDir != nil {
-				return report.Report{}, fmt.Errorf("failed to decode user config from %s: %w", regalDir.Name(), err)
-			}
-
-			return report.Report{}, fmt.Errorf("failed to decode user config: %w", err)
-		}
-
-		regal = regal.WithUserConfig(userConfig)
-	case params.configFile != "":
-		return report.Report{}, fmt.Errorf("user-provided config file not found: %w", err)
-	case params.debug:
-		log.Println("no user-provided config file found, will use the default config")
+	userConfig, path, err := loadUserConfig(params.lintAndFixParams, searchPath)
+	if err != nil {
+		return report.Report{}, fmt.Errorf("failed to read user-provided config in %s: %w", path, err)
 	}
 
 	if params.metrics {
 		m.Timer(regalmetrics.RegalConfigParse).Stop()
 	}
+
+	regal = regal.WithUserConfig(userConfig)
 
 	go updateCheckAndWarn(params, &rbundle.LoadedBundle, &userConfig)
 
@@ -334,7 +255,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 		return report.Report{}, fmt.Errorf("failed to prepare for linting: %w", err)
 	}
 
-	result, err := regal.Lint(ctx)
+	result, err = regal.Lint(ctx)
 	if err != nil {
 		return report.Report{}, formatError(params.format, fmt.Errorf("error(s) encountered while linting: %w", err))
 	}
@@ -347,7 +268,7 @@ func lint(args []string, params *lintCommandParams) (report.Report, error) {
 	return result, rep.Publish(ctx, result) //nolint:wrapcheck
 }
 
-func updateCheckAndWarn(params *lintCommandParams, regalRules *bundle.Bundle, userConfig *config.Config) {
+func updateCheckAndWarn(params *lintParams, regalRules *bundle.Bundle, userConfig *config.Config) {
 	mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(regalRules, userConfig)
 	if err != nil {
 		if params.debug {
@@ -387,24 +308,6 @@ func getReporter(format string, outputWriter io.Writer) (reporter.Reporter, erro
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}
-}
-
-func getWriterForOutputFile(filename string) (io.Writer, error) {
-	if _, err := os.Stat(filename); err == nil {
-		f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
-		if err != nil {
-			return nil, fmt.Errorf("failed to open output file %w", err)
-		}
-
-		return f, nil
-	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create output file %w", err)
-	}
-
-	return f, nil
 }
 
 func formatError(format string, err error) error {

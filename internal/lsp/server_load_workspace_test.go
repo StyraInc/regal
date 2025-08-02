@@ -3,6 +3,7 @@ package lsp
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
@@ -190,15 +191,9 @@ func TestLoadWorkspaceContents(t *testing.T) {
 				}
 
 				for _, expectedFile := range tc.expectChangedFiles {
-					found := false
-
-					for _, changedURI := range changedURIs {
-						if filepath.Base(changedURI) == expectedFile {
-							found = true
-
-							break
-						}
-					}
+					found := slices.ContainsFunc(changedURIs, func(changedURI string) bool {
+						return filepath.Base(changedURI) == expectedFile
+					})
 
 					if !found {
 						t.Errorf("expected file %s to be in changed files list", expectedFile)

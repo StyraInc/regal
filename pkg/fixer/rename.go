@@ -8,29 +8,25 @@ import (
 	"strings"
 )
 
+var re = regexp.MustCompile(`^(.*)_(\d+)$`)
+
 // renameCandidate takes a filename and produces a new name with an incremented
 // numeric suffix. It correctly handles test files by inserting the increment
 // before the "_test" suffix and preserves the original directory.
 func renameCandidate(oldName string) string {
-	dir := filepath.Dir(oldName)
-	baseWithExt := filepath.Base(oldName)
-
+	dir, baseWithExt := filepath.Split(oldName)
 	ext := filepath.Ext(baseWithExt)
-	base := strings.TrimSuffix(baseWithExt, ext)
+	base, isTest := strings.CutSuffix(strings.TrimSuffix(baseWithExt, ext), "_test")
 
-	suffix := ""
-	if strings.HasSuffix(base, "_test") {
+	var suffix string
+	if isTest {
 		suffix = "_test"
-		base = strings.TrimSuffix(base, "_test")
 	}
 
-	re := regexp.MustCompile(`^(.*)_(\d+)$`)
 	matches := re.FindStringSubmatch(base)
-
 	if len(matches) == 3 {
 		baseName := matches[1]
-		numStr := matches[2]
-		num, _ := strconv.Atoi(numStr)
+		num, _ := strconv.Atoi(matches[2])
 		num++
 		base = fmt.Sprintf("%s_%d", baseName, num)
 	} else {
@@ -38,7 +34,6 @@ func renameCandidate(oldName string) string {
 	}
 
 	newBase := base + suffix + ext
-	newName := filepath.Join(dir, newBase)
 
-	return newName
+	return filepath.Join(dir, newBase)
 }

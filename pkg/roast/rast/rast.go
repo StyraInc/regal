@@ -121,11 +121,17 @@ func RefStringToRef(path string) ast.Ref {
 
 // LinesArrayTerm converts a string with newlines into an ast.Term array holding each line.
 func LinesArrayTerm(content string) *ast.Term {
-	parts := strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
-	terms := make([]*ast.Term, len(parts))
+	return ArrayTerm(strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n"))
+}
 
-	for i := range parts {
-		terms[i] = ast.InternedTerm(parts[i])
+func ArrayTerm(a []string) *ast.Term {
+	if len(a) == 0 {
+		return ast.InternedEmptyArray
+	}
+
+	terms := make([]*ast.Term, 0, len(a))
+	for _, item := range a {
+		terms = append(terms, ast.InternedTerm(item))
 	}
 
 	return ast.ArrayTerm(terms...)

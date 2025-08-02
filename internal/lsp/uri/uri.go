@@ -56,12 +56,10 @@ func FromPath(client clients.Identifier, path string) string {
 // client URIs into a standard file paths.
 func ToPath(client clients.Identifier, uri string) string {
 	// if the uri appears to be a URI with a file prefix, then remove the prefix
-	path := strings.TrimPrefix(uri, "file://")
-
-	// if it looks like a URI, then try and decode it
-	if strings.HasPrefix(uri, "file://") {
-		decodedPath, err := url.QueryUnescape(path)
-		if err == nil {
+	path, hadPrefix := strings.CutPrefix(uri, "file://")
+	if hadPrefix {
+		// if it looks like a URI, then try and decode it
+		if decodedPath, err := url.QueryUnescape(path); err == nil {
 			path = decodedPath
 		}
 	}
@@ -70,6 +68,7 @@ func ToPath(client clients.Identifier, uri string) string {
 		path = strings.TrimPrefix(path, "/")
 		// handling case for windows when the drive letter is set
 
+		// TODO; never set?
 		var driveLetter string
 
 		if matches := drivePatternMaybeEncoded.FindStringSubmatch(path); len(matches) > 1 {
@@ -81,7 +80,5 @@ func ToPath(client clients.Identifier, uri string) string {
 	}
 
 	// Convert path to use system separators
-	path = filepath.FromSlash(path)
-
-	return path
+	return filepath.FromSlash(path)
 }

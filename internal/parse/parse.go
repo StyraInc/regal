@@ -2,6 +2,7 @@ package parse
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -131,7 +132,7 @@ func PrepareAST(name string, content string, module *ast.Module) (map[string]any
 			"rego_version": module.RegoVersion().String(),
 		},
 		"environment": map[string]any{
-			"path_separator": rio.PathSeparator,
+			"path_separator": string(os.PathSeparator),
 		},
 	}
 

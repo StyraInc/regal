@@ -26,6 +26,8 @@ const (
 	engineEOPA = "eopa"
 )
 
+var driveLetterPattern = regexp.MustCompile(`^\/[a-zA-Z]:`)
+
 // Lookup attempts to retrieve capabilities from the requested RFC3986
 // compliant URL.
 //
@@ -77,10 +79,8 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	// would arguably be more elegant to do this with regex and named
 	// capture groups, but I trust the stdlib URL and path splitting
 	// implementations more.
-	urlPath := parsedURL.Path
-	urlPath = path.Clean(urlPath)
 	elems := make([]string, 0)
-	dir := urlPath
+	dir := path.Clean(parsedURL.Path)
 
 	var file string
 
@@ -194,8 +194,6 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 func lookupFileURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 	// the provided URL's path could be either a windows path or a unix one
 	// we must account for both cases by stripping the leading / if found
-	driveLetterPattern := regexp.MustCompile(`^\/[a-zA-Z]:`)
-
 	path := parsedURL.Path
 	if driveLetterPattern.MatchString(path) {
 		path = path[1:]

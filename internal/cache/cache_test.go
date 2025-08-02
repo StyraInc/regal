@@ -7,7 +7,7 @@ import (
 )
 
 // 2 allocs.
-func BenchmarkPut(b *testing.B) {
+func BenchmarkPutNew(b *testing.B) {
 	cache := NewBaseCache()
 	ref := ast.MustParseRef("data.foo.bar.baz")
 	value := ast.String("qux")

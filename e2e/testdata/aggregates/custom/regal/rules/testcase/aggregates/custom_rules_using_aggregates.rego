@@ -4,12 +4,16 @@ package custom.regal.rules.testcase.aggregates
 
 import data.regal.result
 
+# METADATA
+# description: Collect aggregates
 aggregate contains result.aggregate(rego.metadata.chain(), {})
 
+# METADATA
+# description: Validate that two files were processed
 aggregate_report contains violation if {
-	not two_files_processed
+	not _two_files_processed
 
 	violation := result.fail(rego.metadata.chain(), {})
 }
 
-two_files_processed if count(input.aggregate) == 2
+_two_files_processed if count(input.aggregate) == 2

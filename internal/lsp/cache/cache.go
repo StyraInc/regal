@@ -319,7 +319,7 @@ func (c *Cache) Delete(fileURI string) {
 	c.successfulParseLineCounts.Delete(fileURI)
 }
 
-func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string, error) {
+func (c *Cache) UpdateCacheForURIFromDisk(fileURI, path string) (bool, string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to read file: %w", err)
@@ -327,12 +327,12 @@ func UpdateCacheForURIFromDisk(cache *Cache, fileURI, path string) (bool, string
 
 	currentContent := outil.ByteSliceToString(content)
 
-	cachedContent, ok := cache.GetFileContents(fileURI)
+	cachedContent, ok := c.GetFileContents(fileURI)
 	if ok && cachedContent == currentContent {
 		return false, cachedContent, nil
 	}
 
-	cache.SetFileContents(fileURI, currentContent)
+	c.SetFileContents(fileURI, currentContent)
 
 	return true, currentContent, nil
 }

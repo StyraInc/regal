@@ -66,6 +66,8 @@ Example:
 regal new rule --type custom --category naming --name camel-case`,
 
 		PreRunE: func(*cobra.Command, []string) error {
+			log.SetOutput(os.Stdout)
+
 			if params.type_ != "custom" && params.type_ != "builtin" {
 				return fmt.Errorf("type must be 'custom' or 'builtin', got %v", params.type_)
 			}

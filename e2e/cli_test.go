@@ -3,25 +3,17 @@
 package e2e
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"os/exec"
+	"maps"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"gopkg.in/yaml.v3"
-
 	"github.com/open-policy-agent/opa/v1/tester"
 
+	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
@@ -30,217 +22,82 @@ import (
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
-func readProvidedConfig(t *testing.T) config.Config {
-	t.Helper()
-
-	cwd := testutil.Must(os.Getwd())(t)
-	bs := testutil.MustReadFile(t, filepath.Join(cwd, "..", "bundle", "regal", "config", "provided", "data.yaml"))
-
-	var cfg config.Config
-	if err := yaml.Unmarshal(bs, &cfg); err != nil {
-		t.Fatalf("failed to unmarshal config: %v", err)
-	}
-
-	return cfg
-}
-
 func TestCLIUsage(t *testing.T) {
-	t.Parallel()
-
-	if err := regal()(); err != nil {
-		t.Fatal(err)
-	}
+	regal().expectStdout(contains("Available Commands:")).verify(t)
 }
 
 func TestLintEmptyDir(t *testing.T) {
-	t.Parallel()
-
 	for _, tc := range []struct {
 		format string
-		check  func(*testing.T, *bytes.Buffer)
+		check  verifier
 	}{
 		{
 			format: "pretty",
-			check: func(t *testing.T, out *bytes.Buffer) {
-				t.Helper()
-				if exp, act := "0 files linted. No violations found.\n", out.String(); exp != act {
-					t.Errorf("output: expected %q, got %q", exp, act)
-				}
-			},
+			check:  equals("0 files linted. No violations found.\n"),
 		},
 		{
 			format: "compact",
-			check: func(t *testing.T, out *bytes.Buffer) {
-				t.Helper()
-				if exp, act := "\n", out.String(); exp != act {
-					t.Errorf("output: expected %q, got %q", exp, act)
-				}
-			},
+			check:  equals("\n"),
 		},
 		{
 			format: "json",
-			check: func(t *testing.T, out *bytes.Buffer) {
-				t.Helper()
-				s := struct {
-					Violations []string       `json:"violations"`
-					Summary    map[string]any `json:"summary"`
-				}{}
-				if err := json.NewDecoder(out).Decode(&s); err != nil {
-					t.Fatal(err)
-				}
-				if exp, act := 0, len(s.Violations); exp != act {
-					t.Errorf("violations: expected %d, got %d", exp, act)
-				}
-				zero := float64(0)
-				exp := map[string]any{"files_scanned": zero, "files_failed": zero, "rules_skipped": zero, "num_violations": zero}
-				if diff := cmp.Diff(exp, s.Summary); diff != "" {
-					t.Errorf("unexpected summary (-want, +got):\n%s", diff)
-				}
-			},
+			check: all(
+				contains(`"violations": []`),
+				contains(`"files_scanned": 0`),
+				contains(`"files_failed": 0`),
+				contains(`"rules_skipped": 0`),
+				contains(`"num_violations": 0`),
+			),
 		},
 	} {
-		t.Run(tc.format, func(t *testing.T) {
-			t.Parallel()
-
-			out := bytes.Buffer{}
-			if err := regal(&out)("lint", "--format", tc.format, t.TempDir()); err != nil {
-				t.Fatalf("%v %[1]T", err)
-			}
-
-			tc.check(t, &out)
-		})
+		t.Run(tc.format, regal("lint", "--format", tc.format, t.TempDir()).expectStdout(tc.check).test)
 	}
 }
 
 func TestLintFileFromStdin(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	cmd := exec.Command(binary(), "lint", "-f", "json", "-")
-	cmd.Stdin = strings.NewReader("package p\n\nallow =  true")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
-	if err := json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
 
-	if rep.Summary.NumViolations != 2 {
-		t.Errorf("epected 2 violations, got %d", rep.Summary.NumViolations)
-	}
+	regal("lint", "-f", "json", "-").
+		stdinFrom(strings.NewReader("package p\n\nallow = true")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
-	violations := make([]string, 0, len(rep.Violations))
-	for _, violation := range rep.Violations {
-		violations = append(violations, violation.Title)
-	}
-
-	slices.Sort(violations)
-
-	expected := []string{"opa-fmt", "use-assignment-operator"}
-
-	if !slices.Equal(violations, expected) {
-		t.Errorf("expected violations %v, got %v", expected, violations)
-	}
-
-	if exp, act := 3, cmd.ProcessState.ExitCode(); exp != act {
-		t.Errorf("expected exit code %d, got %d", exp, act)
-	}
+	testutil.AssertOnlyViolations(t, rep, "opa-fmt", "use-assignment-operator")
 }
 
 func TestLintNonExistentDir(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("skipping on Windows as the error message is different")
-	}
+	nonexistent := filepath.Join(t.TempDir(), "what", "ever")
 
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	td := t.TempDir()
-
-	err := regal(&stdout, &stderr)("lint", td+filepath.FromSlash("/what/ever"))
-
-	expectExitCode(t, err, 1, &stdout, &stderr)
-
-	if exp, act := "", stdout.String(); exp != act {
-		t.Errorf("expected stdout %q, got %q", exp, act)
-	}
-
-	if exp, act := "error(s) encountered while linting: errors encountered when reading files to lint: "+
-		"failed to filter paths:\nstat "+td+filepath.FromSlash("/what/ever")+": no such file or directory\n",
-		stderr.String(); exp != act {
-		t.Errorf("expected stderr\n%q,\ngot\n%q", exp, act)
-	}
+	regal("lint", nonexistent).
+		skip(onCondition(runtime.GOOS == "windows", "skipping on Windows as the error message is different")).
+		expectExitCode(1).
+		expectStderr(equals(
+			"error(s) encountered while linting: errors encountered when reading files to lint: "+
+				"failed to filter paths:\nstat %s: no such file or directory\n", nonexistent,
+		)).
+		verify(t)
 }
 
 func TestLintProposeToRunFix(t *testing.T) {
-	if !mode.Standalone {
-		t.Skip("test requires regal to be built with the 'regal_standalone' build tag")
-	}
-
-	t.Parallel()
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	cwd := testutil.Must(os.Getwd())(t)
-
-	// using a test rego file that only yields a few violations
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-		cwd+filepath.FromSlash("/testdata/v0/rule_named_if.rego"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Fatalf("expected stderr %q, got %q", exp, act)
-	}
-
-	act := strings.Split(stdout.String(), "\n")
-	act = act[len(act)-5:]
-	exp := []string{
-		"1 file linted. 2 violations found.",
-		"",
-		"Hint: 2/2 violations can be automatically fixed (directory-package-mismatch, opa-fmt)",
-		"      Run regal fix --help for more details.",
-		"",
-	}
-	if diff := cmp.Diff(act, exp); diff != "" {
-		t.Errorf("unexpected stdout trailer: (-want, +got):\n%s", diff)
-	}
+	regal("lint", "--config-file", cwd("e2e_conf.yaml"), cwd("testdata/v0/rule_named_if.rego")).
+		skip(onCondition(!mode.Standalone, "test requires regal to be built with the 'regal_standalone' build ta")).
+		expectExitCode(3).
+		expectStdout(equals(
+			"1 file linted. 2 violations found.\n\n" +
+				"Hint: 2/2 violations can be automatically fixed (directory-package-mismatch, opa-fmt)\n" +
+				"      Run regal fix --help for more details.\n\n",
+		)).
+		verify(t)
 }
 
 func TestLintV1Violations(t *testing.T) {
-	t.Parallel()
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--format", "json",
-		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-		cwd+filepath.FromSlash("/testdata/violations"),
-	)
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
+
+	regal("lint", "--format", "json", "--config-file", cwd("e2e_conf.yaml"), cwd("testdata/violations")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
 	ruleNames := rutil.NewSet[string]()
 	excludedRules := rutil.NewSet(
@@ -256,7 +113,6 @@ func TestLintV1Violations(t *testing.T) {
 	)
 
 	cfg := readProvidedConfig(t)
-
 	for _, category := range cfg.Rules {
 		for ruleName, rule := range category {
 			if !excludedRules.Contains(ruleName) && rule.Level != "ignore" {
@@ -265,192 +121,79 @@ func TestLintV1Violations(t *testing.T) {
 		}
 	}
 
-	// Note that some violations occur more than one time.
-	violationNames := rutil.NewSet[string]()
-	for _, violation := range rep.Violations {
-		violationNames.Add(violation.Title)
-	}
-
-	if ruleNames.Size() != violationNames.Size() {
-		for _, ruleName := range ruleNames.Items() {
-			if !violationNames.Contains(ruleName) {
-				t.Errorf("expected violation for rule %q", ruleName)
-			}
-		}
+	violationNames := testutil.ViolationTitles(rep)
+	for ruleName := range ruleNames.Diff(violationNames).Values() {
+		t.Errorf("expected violation for rule %q", ruleName)
 	}
 }
 
 func TestLintV0NoRegoV1ImportViolations(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/v0.yaml"),
-		cwd+filepath.FromSlash("/testdata/v0/"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
 
-	// Note that some violations occur more than one time.
-	violationNames := rutil.NewSet[string]()
-	expected := rutil.NewSet("implicit-future-keywords", "use-if", "use-contains")
+	regal("lint", "--format", "json", "--config-file", cwd("testdata/configs/v0.yaml"), cwd("testdata/v0/")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
-	for _, violation := range rep.Violations {
-		violationNames.Add(violation.Title)
-	}
-
-	if diff := expected.Diff(violationNames); diff.Size() > 0 {
-		t.Errorf("expected violations for rules %v, got %v", expected.Items(), violationNames.Items())
-	}
+	testutil.AssertContainsViolations(t, rep, "implicit-future-keywords", "use-if", "use-contains")
 }
 
 func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint", "--format", "json",
-		"--config-file", cwd+filepath.FromSlash("/testdata/configs/v0-with-import-rego-v1.yaml"),
-		cwd+filepath.FromSlash("/testdata/v0/"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr:\n%s\ngot\n%s", exp, act)
-	}
-
 	var rep report.Report
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
 
-	// Note that some violations occur more than one time.
-	violationNames := rutil.NewSet[string]()
-	expected := rutil.NewSet("use-if", "use-contains", "use-rego-v1", "rule-named-if")
+	regal("lint",
+		"--format", "json",
+		"--config-file", cwd("testdata/configs/v0-with-import-rego-v1.yaml"), cwd("testdata/v0/")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
-	for _, violation := range rep.Violations {
-		violationNames.Add(violation.Title)
-	}
-
-	if diff := expected.Diff(violationNames); diff.Size() > 0 {
-		t.Errorf("expected violations for rules %v, got %v", expected.Items(), violationNames.Items())
-	}
+	testutil.AssertContainsViolations(t, rep, "use-if", "use-contains", "use-rego-v1", "rule-named-if")
 }
 
 func TestLintFailsNonExistentConfigFile(t *testing.T) {
-	t.Parallel()
-
-	var expected string
-	switch runtime.GOOS {
-	case "windows":
+	expected := "no such file or directory"
+	if runtime.GOOS == "windows" {
 		expected = "The system cannot find the file specified"
-	default:
-		expected = "no such file or directory"
 	}
 
-	cwd := testutil.Must(os.Getwd())(t)
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	err := regal(&stdout, &stderr)("lint", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/non_existent_test_file.yaml"),
-		cwd+filepath.FromSlash("/testdata/violations"))
-
-	expectExitCode(t, err, 1, &stdout, &stderr)
-
-	if !strings.Contains(stderr.String(), expected) {
-		t.Errorf("expected stderr to print, got %q", stderr.String())
-	}
+	regal("lint", "--config-file", cwd("testdata/configs/non_existent_test_file.yaml"), cwd("testdata/violations")).
+		expectExitCode(1).
+		expectStderr(contains(expected)).
+		verify(t)
 }
 
 func TestLintRuleIgnoreFiles(t *testing.T) {
-	t.Parallel()
-
-	cwd := testutil.Must(os.Getwd())(t)
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
-		cwd+filepath.FromSlash("/testdata/violations"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
 
-	violationNames := rutil.NewSet[string]()
+	regal("lint", "--format", "json", "--config-file", cwd("testdata/configs/ignore_files_prefer_snake_case.yaml"),
+		cwd("testdata/violations")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
-	for _, violation := range rep.Violations {
-		violationNames.Add(violation.Title)
-	}
-
-	if violationNames.Contains("prefer-snake-case") {
-		t.Errorf("did not expect violation for rule %q as it is ignored", "prefer-snake-case")
-	}
+	testutil.AssertNotContainsViolations(t, rep, "prefer-snake-case")
 }
 
 func TestLintWithDebugOption(t *testing.T) {
-	t.Parallel()
-
-	cwd := testutil.Must(os.Getwd())(t)
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	err := regal(&stdout, &stderr)("lint", "--debug", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/ignore_files_prefer_snake_case.yaml"),
-		cwd+filepath.FromSlash("/testdata/violations"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if !strings.Contains(stderr.String(), "rules:") {
-		t.Errorf("expected stderr to print configuration, got %q", stderr.String())
-	}
+	regal("lint", "--debug", "--config-file", cwd("testdata/configs/ignore_files_prefer_snake_case.yaml"),
+		cwd("testdata/violations")).
+		expectExitCode(3).
+		expectStdout(notEmpty()).
+		expectStderr(contains("rules:")).
+		verify(t)
 }
 
 func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
-	t.Parallel()
-
-	cwd := testutil.Must(os.Getwd())(t)
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-	err := regal(&stdout, &stderr)("lint", "--format", "json", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/custom_naming_convention.yaml"),
-		cwd+filepath.FromSlash("/testdata/custom_naming_convention"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
 
-	if rep.Summary.NumViolations != 2 {
-		t.Errorf("expected 2 violations, got %d", rep.Summary.NumViolations)
-	}
+	regal("lint", "--format", "json", "--config-file", cwd("testdata/configs/custom_naming_convention.yaml"),
+		cwd("testdata/custom_naming_convention")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
+
+	testutil.AssertNumViolations(t, 2, rep)
 
 	expectedViolations := []string{
 		`Naming convention violation: package name "custom_naming_convention" does not match pattern '^acmecorp\.[a-z_\.]+$'`,
@@ -465,132 +208,59 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 }
 
 func TestAggregatesAreCollectedAndUsed(t *testing.T) {
-	t.Parallel()
-	cwd := testutil.Must(os.Getwd())(t)
-	basedir := cwd + filepath.FromSlash("/testdata/aggregates")
-
 	t.Run("two policies — no violations expected", func(t *testing.T) {
-		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-		err := regal(&stdout, &stderr)("lint", "--format", "json",
-			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
-			basedir+filepath.FromSlash("/two_policies"))
-
-		expectExitCode(t, err, 0, &stdout, &stderr)
-
-		if exp, act := "", stderr.String(); exp != act {
-			t.Errorf("expected stderr %q, got %q", exp, act)
-		}
+		regal("lint", "--format", "json", "--config-file", cwd("e2e_conf.yaml"), "--disable=unresolved-reference",
+			cwd("testdata/aggregates/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
+			cwd("testdata/aggregates/two_policies")).
+			expectStdout(notEmpty()). // JSON output is never empty
+			verify(t)
 	})
 
 	t.Run("single policy — no aggregate violations expected", func(t *testing.T) {
-		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-		err := regal(&stdout, &stderr)("lint", "--format", "json", "--rules",
-			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
-			basedir+filepath.FromSlash("/two_policies/policy_1.rego"))
-
-		expectExitCode(t, err, 0, &stdout, &stderr)
-
-		if exp, act := "", stderr.String(); exp != act {
-			t.Errorf("expected stderr %q, got %q", exp, act)
-		}
+		regal("lint", "--format", "json", "--rules",
+			cwd("testdata/aggregates/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
+			cwd("testdata/aggregates/two_policies/policy_1.rego")).
+			expectStdout(notEmpty()). // JSON output is never empty
+			verify(t)
 	})
 
 	t.Run("three policies - violation expected", func(t *testing.T) {
-		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-		err := regal(&stdout, &stderr)("lint", "--format", "json",
-			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-			"--rules",
-			basedir+filepath.FromSlash("/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
-			basedir+filepath.FromSlash("/three_policies"))
-
-		expectExitCode(t, err, 3, &stdout, &stderr)
-
-		if exp, act := "", stderr.String(); exp != act {
-			t.Errorf("expected stderr %q, got %q", exp, act)
-		}
-
 		var rep report.Report
 
-		if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-			t.Fatalf("expected JSON response, got %v", stdout.String())
-		}
+		regal("lint", "--format", "json", "--config-file", cwd("e2e_conf.yaml"), "--rules",
+			cwd("testdata/aggregates/custom/regal/rules/testcase/aggregates/custom_rules_using_aggregates.rego"),
+			cwd("testdata/aggregates/three_policies")).
+			expectExitCode(3).
+			expectStdout(unmarshalsTo(&rep)).
+			verify(t)
 
-		if rep.Summary.NumViolations != 1 {
-			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
-		}
+		testutil.AssertNumViolations(t, 1, rep)
 	})
 
 	t.Run("custom policy where nothing aggregate is a violation", func(t *testing.T) {
-		stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
-		err := regal(&stdout, &stderr)("lint", "--format", "json",
-			"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-			"--rules",
-			basedir+filepath.FromSlash("/custom/regal/rules/testcase/empty_aggregate/"),
-			basedir+filepath.FromSlash("/two_policies"))
-
-		expectExitCode(t, err, 3, &stdout, &stderr)
-
-		if exp, act := "", stderr.String(); exp != act {
-			t.Errorf("expected stderr %q, got %q", exp, act)
-		}
-
 		var rep report.Report
 
-		if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-			t.Fatalf("expected JSON response, got %v", stdout.String())
-		}
+		regal("lint", "--format", "json", "--config-file", cwd("e2e_conf.yaml"), "--rules",
+			cwd("testdata/aggregates/custom/regal/rules/testcase/empty_aggregate/"),
+			cwd("testdata/aggregates/two_policies")).
+			expectExitCode(3).
+			expectStdout(unmarshalsTo(&rep)).
+			verify(t)
 
-		if rep.Summary.NumViolations != 1 {
-			t.Errorf("expected 1 violation, got %d", rep.Summary.NumViolations)
-		}
+		testutil.AssertNumViolations(t, 1, rep)
 	})
 }
 
 func TestLintAggregateIgnoreDirective(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-		"--format",
-		"json",
-		cwd+filepath.FromSlash("/testdata/aggregates/ignore_directive"),
-	)
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var rep report.Report
 
-	if err = json.Unmarshal(stdout.Bytes(), &rep); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
+	regal("lint", "--format", "json", "--config-file", cwd("e2e_conf.yaml"), cwd("testdata/aggregates/ignore_directive")).
+		expectExitCode(3).
+		expectStdout(unmarshalsTo(&rep)).
+		verify(t)
 
-	if rep.Summary.NumViolations != 2 {
-		t.Fatalf("expected 2 violations, got %d", rep.Summary.NumViolations)
-	}
-
-	if rep.Summary.NumViolations == 0 {
-		t.Fatal("expected violations, got none")
-	}
-
-	if rep.Violations[0].Title != "no-defined-entrypoint" {
-		t.Errorf("expected violation 'no-defined-entrypoint', got %q", rep.Violations[0].Title)
-	}
-
-	if rep.Violations[1].Title != "unresolved-import" {
-		t.Errorf("expected violation 'unresolved-import', got %q", rep.Violations[1].Title)
-	}
+	testutil.AssertNumViolations(t, 2, rep)
+	testutil.AssertOnlyViolations(t, rep, "no-defined-entrypoint", "unresolved-import")
 
 	// ensure that it's the file without the ignore directive that has the violation
 	if !strings.HasSuffix(rep.Violations[1].Location.File, "second.rego") {
@@ -599,67 +269,28 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 }
 
 func TestTestRegalBundledBundle(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+filepath.FromSlash("/../bundle"))
-
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var res []tester.Result
 
-	if err = json.Unmarshal(stdout.Bytes(), &res); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
+	regal("test", "--format", "json", cwd("../bundle")).expectStdout(unmarshalsTo(&res)).verify(t)
 }
 
 func TestTestRegalBundledRules(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)("test", "--format", "json", cwd+filepath.FromSlash("/testdata/custom_rules"))
-
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
 	var res []tester.Result
-	if err = json.Unmarshal(stdout.Bytes(), &res); err != nil {
-		t.Fatalf("expected JSON response, got %v", stdout.String())
-	}
+
+	regal("test", "--format", "json", cwd("testdata/custom_rules")).expectStdout(unmarshalsTo(&res)).verify(t)
 }
 
 func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)("test", cwd+filepath.FromSlash("/testdata/ast_type_failure"))
-
-	expectExitCode(t, err, 1, &stdout, &stderr)
-
-	expStart := "1 error occurred: "
-	expEnd := "rego_type_error: undefined ref: input.foo\n\tinput.foo\n\t      ^\n\t      " +
-		"have: \"foo\"\n\t      want (one of): [\"comments\" \"imports\" \"package\" \"regal\" \"rules\"]\n"
-
-	if !strings.HasPrefix(stderr.String(), expStart) {
-		t.Errorf("expected stdout error message starting with %q, got %q", expStart, stderr.String())
-	}
-
-	if !strings.HasSuffix(stderr.String(), expEnd) {
-		t.Errorf("expected stdout error message ending with %q, got %q", expEnd, stderr.String())
-	}
+	regal("test", cwd("testdata/ast_type_failure")).
+		expectExitCode(1).
+		expectStderr(
+			hasPrefix("1 error occurred: "),
+			hasSuffix(
+				"rego_type_error: undefined ref: input.foo\n\tinput.foo\n\t      ^\n\t      "+
+					"have: \"foo\"\n\t      want (one of): [\"comments\" \"imports\" \"package\" \"regal\" \"rules\"]\n",
+			),
+		).
+		verify(t)
 }
 
 // Both of the template creating tests are skipped on Windows for the time being,
@@ -668,242 +299,113 @@ func TestTestRegalTestWithExtendedASTTypeChecking(t *testing.T) {
 // tests are not critical.
 
 func TestCreateNewCustomRuleFromTemplate(t *testing.T) {
-	t.Parallel()
-
-	if runtime.GOOS == "windows" {
-		t.Skip("temporarily skipping this test on Windows")
-	}
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	tmpDir := t.TempDir()
+	outDir := join(tmpDir, ".regal/rules/custom/regal/rules/naming/foo-bar-baz")
 
-	expectExitCode(t, regal(&stdout, &stderr)(
-		"new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir,
-	), 0, &stdout, &stderr)
+	r := regal("new", "rule", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir).
+		skip(onCondition(runtime.GOOS == "windows", "temporarily skipping this test on Windows")).
+		expectStdout(hasPrefix(`Created custom rule "foo-bar-baz" in %s`, outDir)).
+		expectFiles(
+			exists(outDir, "foo_bar_baz.rego"),
+			exists(outDir, "foo_bar_baz_test.rego"),
+		).
+		verify(t)
 
-	outDir := filepath.Join(tmpDir, ".regal", "rules", "custom", "regal", "rules", "naming", "foo-bar-baz")
-
-	expectFilesExist(t,
-		filepath.Join(outDir, "foo_bar_baz.rego"),
-		filepath.Join(outDir, "foo_bar_baz_test.rego"),
-	)
-
-	stdout.Reset()
-	stderr.Reset()
-
-	expectExitCode(t, regal(&stdout, &stderr)("test", tmpDir), 0, &stdout, &stderr)
-
-	if strings.HasPrefix(stdout.String(), "PASS 1/1") {
-		t.Errorf("expected stdout to contain PASS 1/1, got %q", stdout.String())
-	}
+	r.regal("test", tmpDir).expectStdout(hasPrefix("PASS: 1/1")).verify(t)
 }
 
 func TestCreateNewBuiltinRuleFromTemplate(t *testing.T) {
-	t.Parallel()
-
-	if runtime.GOOS == "windows" {
-		t.Skip("temporarily skipping this test on Windows")
-	}
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
 	tmpDir := t.TempDir()
 
-	// Manually set up the command here as we need to control the working directory
-	// as the config file is relative to the Regal root / binary directory, and *not*
-	// the --output directory (which is the only directory custom rules need to care about).
-	c := exec.Command(
-		"./regal", "new", "rule", "--type", "builtin", "--category", "naming",
-		"--name", "foo-bar-baz", "--output", tmpDir,
-	)
-	c.Stdout = &stdout
-	c.Stderr = &stderr
-	c.Dir = filepath.Dir(testutil.Must(os.Getwd())(t))
+	r := regal("new", "rule", "--type", "builtin", "--category", "naming", "--name", "foo-bar-baz", "--output", tmpDir).
+		skip(onCondition(runtime.GOOS == "windows", "temporarily skipping this test on Windows")).
+		inDirectory(filepath.Dir(cwd(""))).
+		expectStdout(
+			contains(`Created builtin rule "foo-bar-baz"`),
+			contains(`Created doc template for builtin rule "foo-bar-baz"`),
+			contains(`Wrote configuration update`),
+		).
+		expectFiles(
+			exists(tmpDir, "bundle/regal/rules/naming/foo-bar-baz/foo_bar_baz.rego"),
+			exists(tmpDir, "bundle/regal/rules/naming/foo-bar-baz/foo_bar_baz.rego"),
+			exists(tmpDir, "bundle/regal/rules/naming/foo-bar-baz/foo_bar_baz_test.rego"),
+			exists(tmpDir, "bundle/regal/config/provided/data.yaml"),
+			exists(tmpDir, "docs/rules/naming/foo-bar-baz.md"),
+		).
+		verify(t)
 
-	expectExitCode(t, c.Run(), 0, &stdout, &stderr)
-	expectFilesExist(t,
-		filepath.Join(tmpDir, "bundle", "regal", "rules", "naming", "foo-bar-baz", "foo_bar_baz.rego"),
-		filepath.Join(tmpDir, "bundle", "regal", "rules", "naming", "foo-bar-baz", "foo_bar_baz_test.rego"),
-		filepath.Join(tmpDir, "bundle", "regal", "config", "provided", "data.yaml"),
-		filepath.Join(tmpDir, "docs", "rules", "naming", "foo-bar-baz.md"),
-	)
-
-	stdout.Reset()
-	stderr.Reset()
-
-	expectExitCode(t, regal(&stdout, &stderr)("test", tmpDir), 0, &stdout, &stderr)
-
-	if strings.HasPrefix(stdout.String(), "PASS 1/1") {
-		t.Errorf("expected stdout to contain PASS 1/1, got %q", stdout.String())
-	}
+	r.regal("test", tmpDir).expectStdout(hasPrefix("PASS: 1/1")).verify(t)
 }
 
 func TestMergeRuleConfigWithoutLevel(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
 	// No violations from the built-in configuration in the policy provided, but
 	// the user --config-file changes the max-file-length to 1, so this should fail
-	err := regal(&stdout, &stderr)("lint", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/rule_without_level.yaml"),
-		cwd+filepath.FromSlash("/testdata/custom_naming_convention"))
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
+	regal("lint", "--config-file", cwd("testdata/configs/rule_without_level.yaml"),
+		cwd("testdata/custom_naming_convention")).
+		expectExitCode(3).
+		expectStdout(notEmpty()).
+		verify(t)
 }
 
 func TestConfigDefaultingWithDisableDirective(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--disable-category=testing",
-		"--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/defaulting.yaml"),
-		cwd+filepath.FromSlash("/testdata/defaulting"),
-	)
-
-	// ignored by flag ignore directive
-	if strings.Contains(stdout.String(), "print-or-trace-call") {
-		t.Errorf("expected stdout to not contain print-or-trace-call")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	// ignored by config
-	if strings.Contains(stdout.String(), "opa-fmt") {
-		t.Errorf("expected stdout to not contain print-or-trace-call")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	// this error should not be ignored
-	if !strings.Contains(stdout.String(), "top-level-iteration") {
-		t.Errorf("expected stdout to contain top-level-iteration")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
+	regal("lint", "--disable-category=testing", "--config-file", cwd("testdata/configs/defaulting.yaml"),
+		cwd("testdata/defaulting")).
+		expectExitCode(3).
+		expectStdout(
+			notContains("print-or-trace-call"), // ignored by flag ignore directive
+			notContains("opa-fmt"),             // ignored by config
+			contains("top-level-iteration"),    // this error should not be ignored
+		).
+		verify(t)
 }
 
 func TestConfigDefaultingWithEnableDirective(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--enable-all",
-		"--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/defaulting.yaml"),
-		cwd+filepath.FromSlash("/testdata/defaulting"),
-	)
-
-	// re-enabled by flag enable directive
-	if !strings.Contains(stdout.String(), "print-or-trace-call") {
-		t.Errorf("expected stdout to contain print-or-trace-call")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	// re-enabled by flag enable directive
-	if !strings.Contains(stdout.String(), "opa-fmt") {
-		t.Errorf("expected stdout to contain opa-fmt")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	// this error should not be ignored
-	if !strings.Contains(stdout.String(), "top-level-iteration") {
-		t.Errorf("expected stdout to contain top-level-iteration")
-		t.Log("stdout:\n", stdout.String())
-	}
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
+	regal("lint", "--enable-all", "--config-file", cwd("testdata/configs/defaulting.yaml"), cwd("testdata/defaulting")).
+		expectExitCode(3).
+		expectStdout(
+			contains("print-or-trace-call"), // re-enabled by flag enable directive
+			contains("opa-fmt"),             // re-enabled by flag enable directive
+			contains("top-level-iteration"), // this error should not be ignored
+		).
+		verify(t)
 }
 
+// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
+// use OPA v0.46.0 as a target (the `object.keys` built-in function was introduced in v0.47.0)
 func TestLintWithCustomCapabilitiesAndUnmetRequirement(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
-	// use OPA v0.46.0 as a target (the `object.keys` built-in function was introduced in v0.47.0)
-	err := regal(&stdout, &stderr)("lint", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/opa_v46_capabilities.yaml"),
-		cwd+filepath.FromSlash("/testdata/capabilities/custom_has_key.rego"))
-
-	// This is only an informative warning — command should not fail
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	expectOut := "1 file linted. No violations found. 3 rules skipped:\n" +
-		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
-		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
-		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
-
-	if stdout.String() != expectOut {
-		t.Errorf("expected %q, got %q", expectOut, stdout.String())
-	}
+	regal("lint", "--config-file", cwd("testdata/configs/opa_v46_capabilities.yaml"),
+		cwd("testdata/capabilities/custom_has_key.rego")).
+		expectStdout(equals(
+			"1 file linted. No violations found. 3 rules skipped:\n" +
+				"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+				"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
+				"- use-rego-v1: Missing capability for `import rego.v1`\n\n",
+		)).
+		verify(t)
 }
 
 func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	// Test that the custom-has-key rule is skipped due to the custom capabilities provided where we
-	// use OPA v0.46.0 as a target (the `object.keys` built-in function was introduced in v0.47.0)
-	err := regal(&stdout, &stderr)("lint", "--config-file",
-		cwd+filepath.FromSlash("/testdata/configs/opa_v46_capabilities.yaml"),
-		cwd+filepath.FromSlash("/testdata/capabilities/"))
-
-	// This is only an informative warning — command should not fail
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	expectOut := "2 files linted. No violations found. 3 rules skipped:\n" +
-		"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
-		"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
-		"- use-rego-v1: Missing capability for `import rego.v1`\n\n"
-
-	if stdout.String() != expectOut {
-		t.Errorf("expected %q, got %q", expectOut, stdout.String())
-	}
+	regal("lint", "--config-file", cwd("testdata/configs/opa_v46_capabilities.yaml"), cwd("testdata/capabilities/")).
+		expectStdout(equals(
+			"2 files linted. No violations found. 3 rules skipped:\n" +
+				"- custom-has-key-construct: Missing capability for built-in function `object.keys`\n" +
+				"- use-strings-count: Missing capability for built-in function `strings.count`\n" +
+				"- use-rego-v1: Missing capability for `import rego.v1`\n\n",
+		)).
+		verify(t)
 }
 
 func TestLintPprof(t *testing.T) {
-	t.Parallel()
-
-	const pprofFile = "clock.pprof"
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	t.Cleanup(func() {
-		_ = os.Remove(pprofFile)
-	})
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		// this overrides the ignore directives for e2e loaded from the config file
-		"--ignore-files=none",
-		"--pprof", "clock",
-		cwd+filepath.FromSlash("/testdata/violations"),
-	)
-
-	expectExitCode(t, err, 3, &stdout, &stderr)
-
-	if _, err = os.Stat(pprofFile); err != nil {
-		t.Fatalf("expected to find %s, got error: %v", pprofFile, err)
-	}
+	// this overrides the ignore directives for e2e loaded from the config file
+	regal("lint", "--ignore-files=none", "--pprof", "clock", cwd("testdata/violations")).
+		cleanup(testutil.RemoveIgnoreErr("clock.pprof")).
+		expectExitCode(3).
+		expectStdout(notEmpty()).
+		expectFiles(exists("clock.pprof")).
+		verify(t)
 }
 
 func TestFix(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
 	initialState := map[string]string{
 		".regal/config.yaml": `
 project:
@@ -957,20 +459,6 @@ allow if { true }
 	}
 
 	td := testutil.TempDirectoryOf(t, initialState)
-
-	// --force is required to make the changes when there is no git repo
-	err := regal(&stdout, &stderr)(
-		"fix",
-		"--force",
-		filepath.Join(td, "foo"),
-		filepath.Join(td, "bar"),
-		filepath.Join(td, "v0"),
-		filepath.Join(td, "v1"),
-	)
-
-	// 0 exit status is expected as all violations should have been fixed
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
 	exp := fmt.Sprintf(`12 fixes applied:
 In project root: %[1]s
 bar/main.rego -> wow/foo-bar/baz/main.rego:
@@ -1000,14 +488,6 @@ main.rego:
 - no-whitespace-comment
 - opa-fmt
 `, td)
-
-	if act := stdout.String(); exp != act {
-		t.Errorf("expected stdout:\n%s\ngot:\n%s", exp, act)
-	}
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
 
 	expectedState := map[string]string{
 		"foo/foo.rego": `package foo
@@ -1049,200 +529,86 @@ allow := true
 		"unrelated.txt": `foobar`,
 	}
 
-	for file, expectedContent := range expectedState {
-		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
-
-		if act := string(bs); expectedContent != act {
-			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
-		}
-	}
-
-	// foo is not removed as it contains a correct file
-	expectedMissingDirs := []string{"bar"}
-	for _, dir := range expectedMissingDirs {
-		if _, err := os.Stat(filepath.Join(td, dir)); err == nil {
-			t.Errorf("expected directory %q to have been removed", dir)
-		}
-	}
+	// --force is required to make the changes when there is no git repo
+	regal("fix", "--force", join(td, "foo"), join(td, "bar"), join(td, "v0"), join(td, "v1")).
+		expectStdout(equals(exp)).
+		expectFiles(
+			notExists(td, "bar"),
+			contentMatchesMap(td, expectedState),
+		).
+		verify(t)
 }
 
 func TestFixWithConflicts(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
 	initialState := map[string]string{
-		".regal/config.yaml": "", // needed to find the root in the right place
-		// this file is in the correct location
-		"foo/foo.rego": `package foo
-
-import rego.v1
-`,
-		// this file should be at foo/foo.rego, but that file already exists
-		"quz/foo.rego": `package foo
-
-import rego.v1
-`,
-		// these three files should all be at bar/bar.rego, but they cannot all be moved there
-		"foo/bar.rego": `package bar
-
-import rego.v1
-`,
-		"baz/bar.rego": `package bar
-
-import rego.v1
-`,
-		"bax/foo/wow/bar.rego": `package bar
-
-import rego.v1
-`,
+		".regal/config.yaml":   "",              // needed to find the root in the right place
+		"foo/foo.rego":         "package foo\n", // this file is in the correct location
+		"quz/foo.rego":         "package foo\n", // should be at foo/foo.rego, but that file already exists
+		"foo/bar.rego":         "package bar\n", // should be at bar/bar.rego, but they cannot all be moved there
+		"baz/bar.rego":         "package bar\n", // should be at bar/bar.rego, but they cannot all be moved there
+		"bax/foo/wow/bar.rego": "package bar\n", // should be at bar/bar.rego, but they cannot all be moved there
 	}
 
 	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
-	err := regal(&stdout, &stderr)("fix", "--force", td)
-
-	// 0 exit status is expected as all violations should have been fixed
-	expectExitCode(t, err, 1, &stdout, &stderr)
-
-	expStdout := fmt.Sprintf(`Source file conflicts:
-In project root: %[1]s
-Cannot overwrite existing file: foo/foo.rego
-- quz/foo.rego
-
-Many to one conflicts:
-In project root: %[1]s
-Cannot move multiple files to: bar/bar.rego
-- bax/foo/wow/bar.rego
-- baz/bar.rego
-- foo/bar.rego
-`, td)
-
-	if act := stdout.String(); expStdout != act {
-		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
-	}
-
-	for file, expectedContent := range initialState {
-		bs := testutil.MustReadFile(t, filepath.Join(td, file))
-
-		if act := string(bs); expectedContent != act {
-			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
-		}
-	}
+	regal("fix", "--force", td).
+		expectExitCode(1).
+		expectStdout(equals(
+			"Source file conflicts:\n"+
+				"In project root: %[1]s\n"+
+				"Cannot overwrite existing file: foo/foo.rego\n"+
+				"- quz/foo.rego\n\n"+
+				"Many to one conflicts:\n"+
+				"In project root: %[1]s\n"+
+				"Cannot move multiple files to: bar/bar.rego\n"+
+				"- bax/foo/wow/bar.rego\n"+
+				"- baz/bar.rego\n"+
+				"- foo/bar.rego\n", td,
+		)).
+		expectStderr(notEmpty()). // ignore empty config file warning
+		expectFiles(contentMatchesMap(td, initialState)).
+		verify(t)
 }
 
 func TestFixWithConflictRenaming(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
 	initialState := map[string]string{
-		".regal/config.yaml": "", // needed to find the root in the right place
-		// this file is in the correct location
-		"foo/foo.rego": `package foo
-
-import rego.v1
-`,
-		// this file is in the correct location
-		"foo/foo_test.rego": `package foo_test
-
-import rego.v1
-`,
-		// this file should be at foo/foo.rego, but that file already exists
-		"quz/foo.rego": `package foo
-
-import rego.v1
-`,
-		// this file should be at foo/foo_test.rego, but that file already exists
-		"quz/foo_test.rego": `package foo_test
-
-import rego.v1
-`,
-		// this file should be at bar/bar.rego and is not a conflict
-		"foo/bar.rego": `package bar
-
-import rego.v1
-`,
+		".regal/config.yaml": "",                   // needed to find the root in the right place
+		"foo/foo.rego":       "package foo\n",      // this file is in the correct location
+		"foo/foo_test.rego":  "package foo_test\n", // this file is in the correct location
+		"quz/foo.rego":       "package foo\n",      // should be at foo/foo.rego, but that file already exists
+		"quz/foo_test.rego":  "package foo_test\n", // should be at foo/foo_test.rego, but that file already exists
+		"foo/bar.rego":       "package bar\n",      // this file should be at bar/bar.rego and is not a conflict
 	}
 
 	td := testutil.TempDirectoryOf(t, initialState)
 
 	// --force is required to make the changes when there is no git repo
 	// --conflict=rename will rename inbound files when there is a conflict
-	err := regal(&stdout, &stderr)("fix", "--force", "--on-conflict=rename", td)
-
-	// 0 exit status is expected as all violations should have been fixed
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	expStdout := fmt.Sprintf(`3 fixes applied:
-In project root: %[1]s
-foo/bar.rego -> bar/bar.rego:
-- directory-package-mismatch
-quz/foo.rego -> foo/foo_1.rego:
-- directory-package-mismatch
-quz/foo_test.rego -> foo/foo_1_test.rego:
-- directory-package-mismatch
-`, td)
-
-	if act := stdout.String(); expStdout != act {
-		t.Errorf("expected stdout:\n%s\ngot\n%s", expStdout, act)
-	}
-
-	expectedState := map[string]string{
-		".regal/config.yaml": "", // needed to find the root in the right place
-		// unchanged
-		"foo/foo.rego": `package foo
-
-import rego.v1
-`,
-		// renamed to permit its new location
-		"foo/foo_1.rego": `package foo
-
-import rego.v1
-`,
-		// renamed to permit its new location
-		"foo/foo_1_test.rego": `package foo_test
-
-import rego.v1
-`,
-		// unchanged
-		"bar/bar.rego": `package bar
-
-import rego.v1
-`,
-	}
-
-	for file, expectedContent := range expectedState {
-		bs, err := os.ReadFile(filepath.Join(td, file))
-		if err != nil {
-			t.Errorf("failed to read %s: %v", file, err)
-
-			continue
-		}
-
-		if act := string(bs); expectedContent != act {
-			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
-		}
-	}
-
-	expectedMissing := []string{
-		"quz/foo.rego",
-		"quz/foo_test.rego",
-	}
-
-	for _, file := range expectedMissing {
-		if _, err := os.Stat(filepath.Join(td, file)); err == nil {
-			t.Errorf("expected %s to have been removed", file)
-		}
-	}
+	regal("fix", "--force", "--on-conflict=rename", td).
+		expectStdout(equals("3 fixes applied:\n"+
+			"In project root: %[1]s\n"+
+			"foo/bar.rego -> bar/bar.rego:\n"+
+			"- directory-package-mismatch\n"+
+			"quz/foo.rego -> foo/foo_1.rego:\n"+
+			"- directory-package-mismatch\n"+
+			"quz/foo_test.rego -> foo/foo_1_test.rego:\n"+
+			"- directory-package-mismatch\n", td,
+		)).
+		expectStderr(notEmpty()). // ignore empty config file warning
+		expectFiles(
+			notExists(td, "quz/foo.rego"),
+			notExists(td, "quz/foo_test.rego"),
+			hasContent(join(td, ".regal/config.yaml"), initialState[".regal/config.yaml"]),
+			hasContent(join(td, "foo/foo.rego"), initialState["foo/foo.rego"]),
+			hasContent(join(td, "bar/bar.rego"), initialState["foo/bar.rego"]),
+			hasContent(join(td, "foo/foo_1.rego"), "package foo\n"),           // renamed to permit its new location
+			hasContent(join(td, "foo/foo_1_test.rego"), "package foo_test\n"), // renamed to permit its new location
+		).
+		verify(t)
 }
 
 func TestFixSingleFileNested(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-
 	initialState := map[string]string{
 		".regal/config.yaml": `
 project:
@@ -1251,173 +617,56 @@ project:
 		"foo/.regal.yaml": `
 project:
   rego-version: 1
-rules:
-  style:
-    opa-fmt:
-      level: ignore
 `,
-		"foo/foo.rego": `package wow`,
+		"foo/foo.rego": "package wow\n",
 	}
-
 	td := testutil.TempDirectoryOf(t, initialState)
 
+	expectedState := maps.Clone(initialState)
+	expectedState["foo/wow/foo.rego"] = initialState["foo/foo.rego"]
+	delete(expectedState, "foo/foo.rego")
+
 	// --force is required to make the changes when there is no git repo
-	err := regal(&stdout, &stderr)(
-		"fix",
-		"--force",
-		filepath.Join(td, "foo", "foo.rego"),
-	)
-
-	// 0 exit status is expected as all violations should have been fixed
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	exp := fmt.Sprintf(`1 fix applied:
-In project root: %[1]s
-foo.rego -> wow/foo.rego:
-- directory-package-mismatch
-`, filepath.Join(td, "foo"))
-
-	if act := stdout.String(); exp != act {
-		t.Fatalf("expected stdout:\n%s\ngot:\n%s", exp, act)
-	}
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Fatalf("expected stderr %q, got %q", exp, act)
-	}
-
-	expectedState := map[string]string{
-		".regal/config.yaml": `
-project:
-  rego-version: 1
-`,
-		"foo/.regal.yaml": `
-project:
-  rego-version: 1
-rules:
-  style:
-    opa-fmt:
-      level: ignore
-`,
-		"foo/wow/foo.rego": `package wow`,
-	}
-
-	for file, expectedContent := range expectedState {
-		bs := testutil.Must(os.ReadFile(filepath.Join(td, file)))(t)
-
-		if act := string(bs); expectedContent != act {
-			t.Errorf("expected %s contents:\n%s\ngot\n%s", file, expectedContent, act)
-		}
-	}
+	regal("fix", "--force", join(td, "foo/foo.rego")).
+		expectStdout(equals(
+			"1 fix applied:\n"+
+				"In project root: %[1]s\n"+
+				"foo.rego -> wow/foo.rego:\n"+
+				"- directory-package-mismatch\n", join(td, "foo"),
+		)).
+		expectFiles(contentMatchesMap(td, expectedState)).
+		verify(t)
 }
 
 // verify fix for https://github.com/StyraInc/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
-	t.Parallel()
-
-	stdout, stderr := bytes.Buffer{}, bytes.Buffer{}
-	cwd := testutil.Must(os.Getwd())(t)
-
-	err := regal(&stdout, &stderr)(
-		"lint",
-		"--config-file", filepath.Join(cwd, "e2e_conf.yaml"),
-		"--disable=directory-package-mismatch",
-		filepath.Join(cwd, "testdata", "bugs", "issue_1082.rego"),
-	)
-
-	expectExitCode(t, err, 0, &stdout, &stderr)
-
-	if exp, act := "", stderr.String(); exp != act {
-		t.Errorf("expected stderr %q, got %q", exp, act)
-	}
-
-	if exp, act := "1 file linted. No violations found.\n", stdout.String(); exp != act {
-		t.Errorf("expected stdout %q, got %q", exp, act)
-	}
+	regal("lint", "--config-file", cwd("e2e_conf.yaml"), "--disable=directory-package-mismatch",
+		cwd("testdata/bugs/issue_1082.rego")).
+		expectStdout(equals("1 file linted. No violations found.\n")).
+		verify(t)
 }
 
-func binary() string {
-	var location string
-	if runtime.GOOS == "windows" {
-		location = "../regal.exe"
-	} else {
-		location = "../regal"
-	}
+var _cwd = rio.Getwd()
 
-	if b := os.Getenv("REGAL_BIN"); b != "" {
-		location = b
-	}
-
-	if _, err := os.Stat(location); errors.Is(err, os.ErrNotExist) {
-		log.Fatal("regal binary not found — make sure to run go build before running the e2e tests")
-	} else if err != nil {
-		log.Fatal(err)
-	}
-
-	return location
+func join(root, rel string) string {
+	return filepath.Join(root, filepath.FromSlash(rel))
 }
 
-func regal(outs ...io.Writer) func(...string) error {
-	return func(args ...string) error {
-		c := exec.Command(binary(), args...)
-
-		if len(outs) > 0 {
-			c.Stdout = outs[0]
-		}
-
-		if len(outs) > 1 {
-			c.Stderr = outs[1]
-		}
-
-		return c.Run() //nolint:wrapcheck // We're in tests. This is fine.
-	}
+func cwd(rel string) string {
+	return join(_cwd, rel)
 }
 
-type exitStatus interface {
-	ExitStatus() int
-}
-
-// ExitStatus returns the exit status of the error if it is an exec.ExitError
-// or if it implements ExitStatus() int.
-// 0 if it is nil or panics if it is a different error.
-func ExitStatus(err error) int {
-	switch e := err.(type) { //nolint:errorlint // We know the errors that can happen here, the switch is enough.
-	case nil:
-		return 0
-	case exitStatus:
-		return e.ExitStatus()
-	case *exec.ExitError:
-		if ex, ok := e.Sys().(exitStatus); ok {
-			return ex.ExitStatus()
-		}
-	}
-
-	panic(err)
-}
-
-func expectFilesExist(t *testing.T, paths ...string) {
+func readProvidedConfig(t *testing.T) config.Config {
 	t.Helper()
-
-	for _, path := range paths {
-		expectFileExists(t, path)
-	}
+	return testutil.Must(config.FromPath(cwd("../bundle/regal/config/provided/data.yaml")))(t)
 }
 
-func expectFileExists(t *testing.T, path string) {
-	t.Helper()
-
-	if _, err := os.Stat(path); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			t.Errorf("expected file %q to exist, but it does not", path)
-		} else {
-			t.Fatalf("unexpected error checking file %q: %v", path, err)
+// use for skipping tests on simple conditions, such as OS or build mode.
+func onCondition(cond bool, msg string) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Helper()
+		if cond {
+			t.Skip(msg)
 		}
-	}
-}
-
-func expectExitCode(t *testing.T, err error, exp int, stdout, stderr *bytes.Buffer) {
-	t.Helper()
-
-	if act := ExitStatus(err); exp != act {
-		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s", exp, act, stdout, stderr)
 	}
 }

@@ -1627,8 +1627,10 @@ func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, param
 				Identifier:            l.clientIdentifier,
 				InitializationOptions: &l.clientInitializationOptions,
 			},
-			WebServerBaseURI: l.webServer.GetBaseURL(),
-			WorkspaceRootURI: l.workspaceRootURI,
+			Environment: rego.Environment{
+				WebServerBaseURI: l.webServer.GetBaseURL(),
+				WorkspaceRootURI: l.workspaceRootURI,
+			},
 		},
 		Params: params,
 	})

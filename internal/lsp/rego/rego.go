@@ -64,20 +64,13 @@ type Environment struct {
 }
 
 type RegalContext struct {
-	Client           Client `json:"client"`
-	WebServerBaseURI string `json:"web_server_base_uri"`
-	WorkspaceRootURI string `json:"workspace_root_uri"`
+	Client      Client      `json:"client"`
+	Environment Environment `json:"environment"`
 }
 
 type CodeActionInput struct {
 	Regal  RegalContext           `json:"regal"`
 	Params types.CodeActionParams `json:"params"`
-}
-
-type CodeActionContext struct {
-	Client           clients.Identifier `json:"client"`
-	WebServerBaseURI string             `json:"web_server_base_uri"`
-	WorkspaceRootURI string             `json:"workspace_root_uri"`
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
@@ -292,4 +285,13 @@ func createPreparedQuery(query string) *rego.PreparedEvalQuery {
 	}
 
 	return &pq
+}
+
+func (c CodeActionInput) String() string { // For debugging only
+	s, err := encoding.JSON().MarshalToString(&c)
+	if err != nil {
+		return fmt.Sprintf("CodeActionInput marshalling error: %v", err)
+	}
+
+	return s
 }

@@ -139,6 +139,10 @@ func TestURIToPath_VSCode(t *testing.T) {
 			uri:  "file:///c%3A/foo/bar",
 			want: filepath.FromSlash("c:/foo/bar"),
 		},
+		"windows encoded uppercase drive": {
+			uri:  "file:///C%3A/foo/bar",
+			want: filepath.FromSlash("C:/foo/bar"),
+		},
 		"unix encoded with space in path": {
 			uri:  "file:///Users/foo/bar%20baz",
 			want: filepath.FromSlash("/Users/foo/bar baz"),

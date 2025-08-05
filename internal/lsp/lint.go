@@ -38,40 +38,45 @@ type diagnosticsRunOpts struct {
 	AggregateReportOnly bool
 }
 
+// updateParseOpts contains options for updateParse function.
+type updateParseOpts struct {
+	Cache            *cache.Cache
+	Store            storage.Store
+	FileURI          string
+	Builtins         map[string]*ast.Builtin
+	RegoVersion      ast.RegoVersion
+	WorkspaceRootURI string
+}
+
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the
 // URI instead.
-func updateParse(
-	ctx context.Context,
-	cache *cache.Cache,
-	store storage.Store,
-	fileURI string,
-	builtins map[string]*ast.Builtin,
-	version ast.RegoVersion,
-) (bool, error) {
-	content, ok := cache.GetFileContents(fileURI)
+func updateParse(ctx context.Context, opts updateParseOpts) (bool, error) {
+	content, ok := opts.Cache.GetFileContents(opts.FileURI)
 	if !ok {
-		return false, fmt.Errorf("failed to get file contents for uri %q", fileURI)
+		return false, fmt.Errorf("failed to get file contents for uri %q", opts.FileURI)
 	}
 
 	lines := strings.Split(content, "\n")
 	options := rparse.ParserOptions()
-	options.RegoVersion = version
+	options.RegoVersion = opts.RegoVersion
 
-	module, err := rparse.ModuleWithOpts(fileURI, content, options)
+	presentedFileName := strings.TrimPrefix(opts.FileURI, opts.WorkspaceRootURI+"/")
+
+	module, err := rparse.ModuleWithOpts(presentedFileName, content, options)
 	if err == nil {
 		// if the parse was ok, clear the parse errors
-		cache.SetParseErrors(fileURI, []types.Diagnostic{})
-		cache.SetModule(fileURI, module)
-		cache.SetSuccessfulParseLineCount(fileURI, len(lines))
+		opts.Cache.SetParseErrors(opts.FileURI, []types.Diagnostic{})
+		opts.Cache.SetModule(opts.FileURI, module)
+		opts.Cache.SetSuccessfulParseLineCount(opts.FileURI, len(lines))
 
-		if err := PutFileMod(ctx, store, fileURI, module); err != nil {
+		if err := PutFileMod(ctx, opts.Store, opts.FileURI, module); err != nil {
 			return false, fmt.Errorf("failed to update rego store with parsed module: %w", err)
 		}
 
-		definedRefs := refs.DefinedInModule(module, builtins)
+		definedRefs := refs.DefinedInModule(module, opts.Builtins)
 
-		cache.SetFileRefs(fileURI, definedRefs)
+		opts.Cache.SetFileRefs(opts.FileURI, definedRefs)
 
 		// TODO: consider how we use and generate these to avoid needing to have in the cache and the store
 		var ruleRefs []string
@@ -84,7 +89,7 @@ func updateParse(
 			ruleRefs = append(ruleRefs, ref.Label)
 		}
 
-		if err = PutFileRefs(ctx, store, fileURI, ruleRefs); err != nil {
+		if err = PutFileRefs(ctx, opts.Store, opts.FileURI, ruleRefs); err != nil {
 			return false, fmt.Errorf("failed to update rego store with defined refs: %w", err)
 		}
 
@@ -161,7 +166,7 @@ func updateParse(
 		})
 	}
 
-	cache.SetParseErrors(fileURI, diags)
+	opts.Cache.SetParseErrors(opts.FileURI, diags)
 
 	if len(diags) == 0 {
 		return false, errors.New("failed to parse module, but no errors were set as diagnostics")

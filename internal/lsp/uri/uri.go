@@ -9,10 +9,7 @@ import (
 	"github.com/styrainc/regal/internal/lsp/clients"
 )
 
-var (
-	drivePattern             = regexp.MustCompile(`^([A-Za-z]):`)
-	drivePatternMaybeEncoded = regexp.MustCompile(`^([A-Za-z])(%3[aA]|:)`)
-)
+var drivePattern = regexp.MustCompile(`^\/?([A-Za-z]):`)
 
 // FromPath converts a file path to a URI for a given client.
 // Since clients expect URIs to be in a specific format, this function
@@ -55,28 +52,20 @@ func FromPath(client clients.Identifier, path string) string {
 // Some clients represent URIs differently, and so this function exists to convert
 // client URIs into a standard file paths.
 func ToPath(client clients.Identifier, uri string) string {
-	// if the uri appears to be a URI with a file prefix, then remove the prefix
+	// if it looks like uri was a file URI, then there might be encoded characters in the path
 	path, hadPrefix := strings.CutPrefix(uri, "file://")
 	if hadPrefix {
-		// if it looks like a URI, then try and decode it
-		if decodedPath, err := url.QueryUnescape(path); err == nil {
+		// if it looks like a URI, then try and decode the path
+		decodedPath, err := url.QueryUnescape(path)
+		if err == nil {
 			path = decodedPath
 		}
 	}
 
-	if client == clients.IdentifierVSCode {
+	// handling case for windows when the drive letter is set
+	if client == clients.IdentifierVSCode &&
+		drivePattern.MatchString(path) {
 		path = strings.TrimPrefix(path, "/")
-		// handling case for windows when the drive letter is set
-
-		// TODO; never set?
-		var driveLetter string
-
-		if matches := drivePatternMaybeEncoded.FindStringSubmatch(path); len(matches) > 1 {
-			path = strings.TrimPrefix(path, matches[0])
-			path = matches[1] + ":" + strings.TrimPrefix(path, driveLetter)
-		} else {
-			path = "/" + path
-		}
 	}
 
 	// Convert path to use system separators

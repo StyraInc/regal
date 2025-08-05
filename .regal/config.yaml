@@ -2,6 +2,7 @@ ignore:
   files:
     - e2e/*
     - pkg/*
+    - "**/testdata/**"
 
 rules:
   custom:

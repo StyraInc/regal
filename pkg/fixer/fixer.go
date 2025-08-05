@@ -42,30 +42,38 @@ func NewFixer() *Fixer {
 }
 
 // SetOnConflictOperation sets the fixer's behavior when a conflict occurs.
-func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) {
+func (f *Fixer) SetOnConflictOperation(operation OnConflictOperation) *Fixer {
 	f.onConflictOperation = operation
+
+	return f
 }
 
 // SetRegoVersionsMap sets the mapping of path prefixes to versions for the
 // fixer to use when creating input for fixer runs.
-func (f *Fixer) SetRegoVersionsMap(versionsMap map[string]ast.RegoVersion) {
+func (f *Fixer) SetRegoVersionsMap(versionsMap map[string]ast.RegoVersion) *Fixer {
 	f.versionsMap = versionsMap
+
+	return f
 }
 
 // RegisterFixes sets the fixes that will be fixed if there are related linter
 // violations that can be fixed by fixes.
-func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) {
+func (f *Fixer) RegisterFixes(fixes ...fixes.Fix) *Fixer {
 	for _, fix := range fixes {
 		f.registeredFixes[fix.Name()] = fix
 	}
+
+	return f
 }
 
 // RegisterRoots sets the roots of the files that will be fixed.
 // Certain fixes may require the nearest root of the file to be known,
 // as fix operations could involve things like moving files, which
 // will be moved relative to their nearest root.
-func (f *Fixer) RegisterRoots(roots ...string) {
+func (f *Fixer) RegisterRoots(roots ...string) *Fixer {
 	f.registeredRoots = append(f.registeredRoots, roots...)
+
+	return f
 }
 
 func (f *Fixer) GetFixForName(name string) (fixes.Fix, bool) {
@@ -209,11 +217,7 @@ func (f *Fixer) applyLinterFixes(
 			return fmt.Errorf("failed to create linter input: %w", err)
 		}
 
-		fixLinter := l.WithDisableAll(true).
-			WithEnabledRules(fixableEnabledRules...).
-			WithInputModules(&in)
-
-		rep, err := fixLinter.Lint(ctx)
+		rep, err := l.WithDisableAll(true).WithEnabledRules(fixableEnabledRules...).WithInputModules(&in).Lint(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to lint before fixing: %w", err)
 		}
@@ -224,21 +228,9 @@ func (f *Fixer) applyLinterFixes(
 
 		//nolint:gocritic
 		for _, violation := range rep.Violations {
-			file := violation.Location.File
-
 			fixInstance, ok := f.GetFixForName(violation.Title)
 			if !ok {
 				return fmt.Errorf("no fix for violation %s", violation.Title)
-			}
-
-			fc, err := fp.Get(file)
-			if err != nil {
-				return fmt.Errorf("failed to get file %s: %w", file, err)
-			}
-
-			fixCandidate := fixes.FixCandidate{
-				Filename: file,
-				Contents: fc,
 			}
 
 			config, err := l.GetConfig()
@@ -246,17 +238,24 @@ func (f *Fixer) applyLinterFixes(
 				return fmt.Errorf("failed to get config: %w", err)
 			}
 
+			file := violation.Location.File
+
 			abs, err := filepath.Abs(file)
 			if err != nil {
 				return fmt.Errorf("failed to get absolute path for %s: %w", file, err)
 			}
 
+			fc, err := fp.Get(file)
+			if err != nil {
+				return fmt.Errorf("failed to get file %s: %w", file, err)
+			}
+
+			fixCandidate := fixes.FixCandidate{Filename: file, Contents: fc}
+
 			fixResults, err := fixInstance.Fix(&fixCandidate, &fixes.RuntimeOptions{
-				BaseDir: util.FindClosestMatchingRoot(abs, f.registeredRoots),
-				Config:  config,
-				Locations: []report.Location{
-					violation.Location,
-				},
+				BaseDir:   util.FindClosestMatchingRoot(abs, f.registeredRoots),
+				Config:    config,
+				Locations: []report.Location{violation.Location},
 			})
 			if err != nil {
 				return fmt.Errorf("failed to fix %s: %w", file, err)
@@ -314,44 +313,39 @@ func (f *Fixer) handleRename(
 			break
 		}
 
-		var isConflict bool
-		if errors.As(err, &fileprovider.RenameConflictError{}) {
-			isConflict = true
-		} else {
+		if !errors.As(err, &fileprovider.RenameConflictError{}) {
 			return fmt.Errorf("failed to rename file: %w", err)
 		}
 
-		if isConflict {
-			switch f.onConflictOperation {
-			case OnConflictError:
-				// OnConflictError is the default, these operations are taken to
-				// ensure the correct state in the report for outputting the
-				// verbose conflict report.
-				// clean the old file to prevent repeated fixes
-				if err := fp.Delete(from); err != nil {
-					return fmt.Errorf("failed to delete file %s: %w", from, err)
-				}
-
-				if slices.Contains(startingFiles, to) {
-					fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
-				} else {
-					fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
-				}
-
-				fixReport.AddFileFix(to, fixResult)
-				fixReport.MergeFixes(to, from)
-				fixReport.RegisterOldPathForFile(to, from)
-
-				return nil
-			case OnConflictRename:
-				// OnConflictRename will select a new filename until there is no
-				// conflict.
-				to = renameCandidate(to)
-
-				continue
-			default:
-				return fmt.Errorf("unsupported conflict operation: %v", f.onConflictOperation)
+		switch f.onConflictOperation {
+		case OnConflictError:
+			// OnConflictError is the default, these operations are taken to
+			// ensure the correct state in the report for outputting the
+			// verbose conflict report.
+			// clean the old file to prevent repeated fixes
+			if err := fp.Delete(from); err != nil {
+				return fmt.Errorf("failed to delete file %s: %w", from, err)
 			}
+
+			if slices.Contains(startingFiles, to) {
+				fixReport.RegisterConflictSourceFile(fixResult.Root, to, from)
+			} else {
+				fixReport.RegisterConflictManyToOne(fixResult.Root, to, from)
+			}
+
+			fixReport.AddFileFix(to, fixResult)
+			fixReport.MergeFixes(to, from)
+			fixReport.RegisterOldPathForFile(to, from)
+
+			return nil
+		case OnConflictRename:
+			// OnConflictRename will select a new filename until there is no
+			// conflict.
+			to = renameCandidate(to)
+
+			continue
+		default:
+			return fmt.Errorf("unsupported conflict operation: %v", f.onConflictOperation)
 		}
 	}
 

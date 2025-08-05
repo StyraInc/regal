@@ -162,8 +162,7 @@ func (tr PrettyReporter) Publish(_ context.Context, r report.Report) error {
 		return nil
 	}
 
-	f := fixer.NewFixer()
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f := fixer.NewFixer().RegisterFixes(fixes.NewDefaultFixes()...)
 
 	fixableViolations := util.NewSet[string]()
 

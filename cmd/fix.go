@@ -196,9 +196,7 @@ func fix(args []string, params *fixParams) (err error) {
 		return fmt.Errorf("could not find potential roots: %w", err)
 	}
 
-	f := fixer.NewFixer()
-	f.RegisterRoots(roots...)
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f := fixer.NewFixer().RegisterRoots(roots...).RegisterFixes(fixes.NewDefaultFixes()...)
 
 	if userConfigFile != nil {
 		versionsMap, err := config.AllRegoVersions(filepath.Dir(userConfigFile.Name()), &userConfig)

@@ -35,16 +35,10 @@ deny = true
 		t.Fatalf("failed to create input: %v", err)
 	}
 
-	l := linter.NewLinter().
-		WithEnableAll(true).
-		WithInputModules(&input)
+	l := linter.NewLinter().WithEnableAll(true).WithInputModules(&input)
 
-	f := NewFixer()
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
-	f.RegisterRoots("/root")
-	f.SetRegoVersionsMap(map[string]ast.RegoVersion{
-		"/root/main": ast.RegoV1,
-	})
+	f := NewFixer().RegisterFixes(fixes.NewDefaultFixes()...).RegisterRoots("/root").SetRegoVersionsMap(
+		map[string]ast.RegoVersion{"/root/main": ast.RegoV1})
 
 	fixReport, err := f.Fix(t.Context(), &l, memfp)
 	if err != nil {
@@ -124,30 +118,17 @@ func TestFixViolations(t *testing.T) {
 	t.Parallel()
 
 	// targeted specific fix for a given violation
-	violations := []report.Violation{
-		{
-			Title:    "directory-package-mismatch",
-			Location: report.Location{File: "root/main.rego"},
-		},
-	}
+	violations := []report.Violation{{
+		Title:    "directory-package-mismatch",
+		Location: report.Location{File: "root/main.rego"},
+	}}
 
-	policies := map[string]string{
-		"root/main.rego": `package foo.bar
+	memfp := fileprovider.NewInMemoryFileProvider(map[string]string{
+		"root/main.rego":         "package foo.bar\n\nallow := true\n",
+		"root/foo/bar/main.rego": "package foo.bar\n\nallow := true\n", // file in correct place
+	})
 
-allow := true
-`,
-		// file in correct place
-		"root/foo/bar/main.rego": `package foo.bar
-
-allow := true
-`,
-	}
-
-	memfp := fileprovider.NewInMemoryFileProvider(policies)
-
-	f := NewFixer()
-	f.SetOnConflictOperation(OnConflictRename)
-	f.RegisterFixes(fixes.NewDefaultFixes()...)
+	f := NewFixer().SetOnConflictOperation(OnConflictRename).RegisterFixes(fixes.NewDefaultFixes()...)
 
 	fixReport, err := f.FixViolations(violations, memfp, &config.Config{})
 	if err != nil {
@@ -160,20 +141,9 @@ allow := true
 		"root/foo/bar/main.rego":   {}, // no fixes
 	}
 	expectedFileContents := map[string]string{
-		// old file yet to be deleted
-		"root/main.rego": `package foo.bar
-
-allow := true
-`,
-		"root/foo/bar/main_1.rego": `package foo.bar
-
-allow := true
-`,
-		// file in correct place
-		"root/foo/bar/main.rego": `package foo.bar
-
-allow := true
-`,
+		"root/main.rego":           "package foo.bar\n\nallow := true\n", // old file yet to be deleted
+		"root/foo/bar/main_1.rego": "package foo.bar\n\nallow := true\n",
+		"root/foo/bar/main.rego":   "package foo.bar\n\nallow := true\n", // file in correct place
 	}
 
 	if got, exp := fixReport.TotalFixes(), uint(2); got != exp {
@@ -198,17 +168,12 @@ allow := true
 		}
 
 		if content != expectedContent {
-			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---",
-				file,
-				content,
-				expectedContent)
+			t.Fatalf("unexpected content for %s:\ngot:\n%s---\nexpected:\n%s---", file, content, expectedContent)
 		}
-
-		fxs := fixReport.FixesForFile(file)
 
 		// check that the fixed violations are correct
 		var fixes []string
-		for _, fx := range fxs {
+		for _, fx := range fixReport.FixesForFile(file) {
 			fixes = append(fixes, fx.Title)
 		}
 

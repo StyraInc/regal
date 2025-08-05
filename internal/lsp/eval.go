@@ -13,7 +13,6 @@ import (
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/roast/transform"
@@ -43,12 +42,7 @@ func (l *LanguageServer) Eval(
 	var hasCustomRules bool
 
 	for fileURI, module := range modules {
-		moduleFiles = append(moduleFiles, bundle.ModuleFile{
-			URL:    fileURI,
-			Parsed: module,
-			Path:   uri.ToPath(l.clientIdentifier, fileURI),
-		})
-
+		moduleFiles = append(moduleFiles, bundle.ModuleFile{URL: fileURI, Parsed: module, Path: l.toPath(fileURI)})
 		hasCustomRules = hasCustomRules || strings.Contains(module.Package.Path.String(), "custom.regal.rules")
 	}
 

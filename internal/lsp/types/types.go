@@ -495,6 +495,11 @@ type TextDocumentHoverParams struct {
 	Position     Position               `json:"position"`
 }
 
+type Hover struct {
+	Contents MarkupContent `json:"contents"`
+	Range    Range         `json:"range"`
+}
+
 type WorkspaceDidCreateFilesParams struct {
 	Files []WorkspaceDidCreateFilesParamsCreatedFile `json:"files"`
 }

@@ -32,7 +32,6 @@ func (d *DirectoryPackageMismatch) Fix(fc *FixCandidate, opts *RuntimeOptions) (
 	}
 
 	rootPath := filepath.Clean(cmp.Or(opts.BaseDir, filepath.Dir(fc.Filename)))
-
 	newPath := filepath.Join(rootPath, pkgPath, filepath.Base(fc.Filename))
 
 	if newPath == fc.Filename {

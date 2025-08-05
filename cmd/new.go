@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -88,9 +89,7 @@ regal new rule --type custom --category naming --name camel-case`,
 				return errors.New("name must consist only of lowercase letters, numbers, underscores and dashes")
 			}
 
-			if params.output == "" {
-				params.output = mustGetWd()
-			}
+			params.output = cmp.Or(params.output, io.Getwd())
 
 			return nil
 		},
@@ -270,13 +269,4 @@ func templateValues(params newRuleCommandParams) (tvs TemplateValues) {
 	}
 
 	return tvs
-}
-
-func mustGetWd() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return wd
 }

@@ -13,7 +13,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/tester"
 
-	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/mode"
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
@@ -21,6 +21,8 @@ import (
 
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
+
+var _cwd = io.Getwd()
 
 func TestCLIUsage(t *testing.T) {
 	regal().expectStdout(contains("Available Commands:")).verify(t)
@@ -645,8 +647,6 @@ func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 		expectStdout(equals("1 file linted. No violations found.\n")).
 		verify(t)
 }
-
-var _cwd = rio.Getwd()
 
 func join(root, rel string) string {
 	return filepath.Join(root, filepath.FromSlash(rel))

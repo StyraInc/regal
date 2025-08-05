@@ -2,51 +2,39 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gobwas/glob"
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 
-	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io/files"
+	"github.com/styrainc/regal/internal/io/files/filter"
+	"github.com/styrainc/regal/internal/util"
 )
 
-func FilterIgnoredPaths(paths, ignore []string, checkFileExists bool, pathPrefix string) ([]string, error) {
+func FilterIgnoredPaths(paths, ignore []string, checkExists bool, pathPrefix string) (filtered []string, err error) {
 	// - special case for stdin, return as is
-	if len(paths) == 1 && paths[0] == "-" {
+	if len(paths) == 1 && paths[0] == "-" || !checkExists && len(ignore) == 0 {
 		return paths, nil
 	}
 
-	// if set, pathPrefix is normalized to end with a platform appropriate separator
-	if pathPrefix != "" && !strings.HasSuffix(pathPrefix, rio.PathSeparator) {
-		pathPrefix += rio.PathSeparator
-	}
-
-	if checkFileExists {
-		var (
-			filtered []string
-			err      error
-		)
-
+	if checkExists {
 		for _, path := range paths {
-			filtered, err = rio.NewFileWalkReducer(path, filtered).
-				WithSkipFunc(rio.DefaultSkipDirectories).
-				WithFilters(rio.DirectoryFilter, rio.NegateFilter(rio.SuffixesFilter(bundle.RegoExt))).
+			filtered, err = files.DefaultWalkReducer(path, filtered).
+				WithFilters(filter.Not(filter.Suffixes(bundle.RegoExt))).
 				WithStatBeforeWalk(true).
-				Reduce(rio.PathAppendReducer)
+				Reduce(files.PathAppendReducer)
 			if err != nil {
 				return nil, fmt.Errorf("failed to filter paths:\n%w", err)
 			}
 		}
 
-		return filterPaths(filtered, ignore, pathPrefix)
+		return filterPaths(filtered, ignore, util.EnsureSuffix(pathPrefix, string(os.PathSeparator)))
 	}
 
-	if len(ignore) == 0 {
-		return paths, nil
-	}
-
-	return filterPaths(paths, ignore, pathPrefix)
+	return filterPaths(paths, ignore, util.EnsureSuffix(pathPrefix, string(os.PathSeparator)))
 }
 
 func filterPaths(policyPaths []string, ignore []string, pathPrefix string) ([]string, error) {
@@ -106,7 +94,7 @@ func excludeFile(pattern, filename, pathPrefix string) (bool, error) {
 		switch {
 		case strings.HasSuffix(p, "/"):
 			ps1 = append(ps1, p+"**")
-		case !strings.HasSuffix(p, "/") && !strings.HasSuffix(p, "**"):
+		case !strings.HasSuffix(p, "**"):
 			ps1 = append(ps1, p, p+"/**")
 		default:
 			ps1 = append(ps1, p)

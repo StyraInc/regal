@@ -247,7 +247,7 @@ func (r runner) verify(t *testing.T) runner {
 	res := result{exitCode: exitCode(c.Run()), stdout: r.stdout.String(), stderr: r.stderr.String()}
 
 	if res.exitCode != r.exp.exitCode {
-		t.Errorf("expected exit status %d, got %d\nstdout: %s\nstderr: %s",
+		t.Errorf("expected exit status %d, got %d\nstdout:\n%s\nstderr:\n%s",
 			r.exp.exitCode, res.exitCode, r.stdout, r.stderr,
 		)
 	}

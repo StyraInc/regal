@@ -10,9 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
@@ -27,40 +25,20 @@ import (
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
-// fixCommandParams is similar to the lint params, but with some fields such as profiling removed.
+// fixParams is similar to the lint params, but with some fields such as profiling removed.
 // It is intended that it is compatible with the same command line flags as the lint command to
 // control the behavior of lint rules used.
-type fixCommandParams struct {
-	configFile      string
-	format          string
-	outputFile      string
-	conflictMode    string
-	disable         repeatedStringFlag
-	disableCategory repeatedStringFlag
-	enable          repeatedStringFlag
-	enableCategory  repeatedStringFlag
-	ignoreFiles     repeatedStringFlag
-	rules           repeatedStringFlag
-	timeout         time.Duration
-	debug           bool
-	disableAll      bool
-	enableAll       bool
-	noColor         bool
-	dryRun          bool
-	verbose         bool
-	force           bool
-}
+type fixParams struct {
+	lintAndFixParams
 
-func (p *fixCommandParams) getConfigFile() string {
-	return p.configFile
-}
-
-func (p *fixCommandParams) getTimeout() time.Duration {
-	return p.timeout
+	conflictMode string
+	dryRun       bool
+	verbose      bool
+	force        bool
 }
 
 func init() {
-	params := &fixCommandParams{}
+	params := &fixParams{}
 
 	intro := strings.ReplaceAll(`Fix Rego source files with linter violations.
 Note that this command is intended to help fix style-related issues,
@@ -103,47 +81,13 @@ The linter rules with automatic fixes available are currently:
 		}),
 	}
 
-	fixCommand.Flags().StringVarP(&params.configFile, "config-file", "c", "",
-		"set path of configuration file")
-	fixCommand.Flags().StringVarP(&params.format, "format", "f", formatPretty,
-		"set output format (pretty is the only supported format)")
-	fixCommand.Flags().StringVarP(&params.outputFile, "output-file", "o", "",
-		"set file to use for fixing output, defaults to stdout")
-	fixCommand.Flags().BoolVar(&params.noColor, "no-color", false,
-		"Disable color output")
-	fixCommand.Flags().VarP(&params.rules, "rules", "r",
-		"set custom rules file(s). This flag can be repeated.")
-	fixCommand.Flags().DurationVar(&params.timeout, "timeout", 0,
-		"set timeout for fixing (default unlimited)")
-	fixCommand.Flags().BoolVar(&params.debug, "debug", false,
-		"enable debug logging (including print output from custom policy)")
-
-	fixCommand.Flags().VarP(&params.disable, "disable", "d",
-		"disable specific rule(s). This flag can be repeated.")
-	fixCommand.Flags().BoolVarP(&params.disableAll, "disable-all", "D", false,
-		"disable all rules")
-	fixCommand.Flags().VarP(&params.disableCategory, "disable-category", "",
-		"disable all rules in a category. This flag can be repeated.")
-
-	fixCommand.Flags().VarP(&params.enable, "enable", "e",
-		"enable specific rule(s). This flag can be repeated.")
-	fixCommand.Flags().BoolVarP(&params.enableAll, "enable-all", "E", false,
-		"enable all rules")
-	fixCommand.Flags().VarP(&params.enableCategory, "enable-category", "",
-		"enable all rules in a category. This flag can be repeated.")
-
-	fixCommand.Flags().VarP(&params.ignoreFiles, "ignore-files", "",
-		"ignore all files matching a glob-pattern. This flag can be repeated.")
+	setCommonFlags(fixCommand, &params.lintAndFixParams)
 
 	fixCommand.Flags().BoolVarP(&params.dryRun, "dry-run", "", false,
 		"run the fixer in dry-run mode, use with --verbose to see changes")
-
-	fixCommand.Flags().BoolVarP(&params.verbose, "verbose", "", false,
-		"show the full changes applied in the console")
-
+	fixCommand.Flags().BoolVarP(&params.verbose, "verbose", "", false, "show the full changes applied in the console")
 	fixCommand.Flags().BoolVarP(&params.force, "force", "", false,
 		"allow fixing of files that have uncommitted changes in git or when git is not being used")
-
 	fixCommand.Flags().StringVarP(&params.conflictMode, "on-conflict", "", "error",
 		"configure behavior when filename conflicts are detected. Options are 'error' (default) or 'rename'")
 
@@ -155,42 +99,28 @@ The linter rules with automatic fixes available are currently:
 // TODO: This function is too long and should be broken down
 //
 //nolint:maintidx
-func fix(args []string, params *fixCommandParams) error {
-	var err error
-
-	ctx, cancel := getLinterContext(params)
+func fix(args []string, params *fixParams) (err error) {
+	ctx, cancel := getLinterContext(params.lintAndFixParams)
 	defer cancel()
 
-	if params.noColor {
-		color.NoColor = true
+	outputWriter, err := params.outputWriter()
+	if err != nil {
+		return err
 	}
 
-	// if an outputFile has been set, open it for writing or create it
-	var outputWriter io.Writer
-
-	outputWriter = os.Stdout
-	if params.outputFile != "" {
-		outputWriter, err = getWriterForOutputFile(params.outputFile)
-		if err != nil {
-			return fmt.Errorf("failed to open output file before use %w", err)
-		}
-	}
-
-	var regalDir *os.File
-
-	var customRulesDir string
-
-	var configSearchPath string
-
-	cwd, _ := os.Getwd()
+	var (
+		regalDir         *os.File
+		customRulesDir   string
+		configSearchPath string
+	)
 
 	if len(args) == 1 {
 		configSearchPath = args[0]
 		if !strings.HasPrefix(args[0], "/") {
-			configSearchPath = filepath.Join(cwd, args[0])
+			configSearchPath = filepath.Join(rio.Getwd(), args[0])
 		}
 	} else {
-		configSearchPath, _ = os.Getwd()
+		configSearchPath = rio.Getwd()
 	}
 
 	if configSearchPath == "" {
@@ -200,7 +130,7 @@ func fix(args []string, params *fixCommandParams) error {
 		if err == nil {
 			defer regalDir.Close()
 
-			customRulesPath := filepath.Join(regalDir.Name(), rio.PathSeparator, "rules")
+			customRulesPath := filepath.Join(regalDir.Name(), "rules")
 			if _, err = os.Stat(customRulesPath); err == nil {
 				customRulesDir = customRulesPath
 			}
@@ -234,8 +164,7 @@ func fix(args []string, params *fixCommandParams) error {
 
 	var userConfig config.Config
 
-	userConfigFile, err := readUserConfig(params, configSearchPath)
-
+	userConfigFile, err := readUserConfig(params.lintAndFixParams, configSearchPath)
 	switch {
 	case err == nil:
 		defer rio.CloseFileIgnore(userConfigFile)
@@ -290,7 +219,6 @@ func fix(args []string, params *fixCommandParams) error {
 	}
 
 	ignore := userConfig.Ignore.Files
-
 	if len(params.ignoreFiles.v) > 0 {
 		ignore = params.ignoreFiles.v
 	}

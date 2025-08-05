@@ -3,6 +3,10 @@ package report
 import (
 	"fmt"
 	"sort"
+
+	"github.com/open-policy-agent/opa/v1/rego"
+
+	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // RelatedResource provides documentation on a violation.
@@ -49,11 +53,68 @@ type Notice struct {
 	Severity    string `json:"severity"`
 }
 
+type Summary struct {
+	FilesScanned  int `json:"files_scanned"`
+	FilesFailed   int `json:"files_failed"`
+	RulesSkipped  int `json:"rules_skipped"`
+	NumViolations int `json:"num_violations"`
+}
+
+// Report aggregate of Violation as returned by a linter run.
+type Report struct {
+	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
+	// to avoid surfacing a null/empty field.
+	Aggregates       map[string][]Aggregate         `json:"aggregates,omitempty"`
+	Metrics          map[string]any                 `json:"metrics,omitempty"`
+	AggregateProfile map[string]ProfileEntry        `json:"-"`
+	IgnoreDirectives map[string]map[string][]string `json:"ignore_directives,omitempty"`
+	Violations       []Violation                    `json:"violations"`
+	Notices          []Notice                       `json:"notices,omitempty"`
+	Profile          []ProfileEntry                 `json:"profile,omitempty"`
+	Summary          Summary                        `json:"summary"`
+}
+
+// ProfileEntry is a single entry of profiling information, keyed by location.
+// This data may have been aggregated across multiple runs.
+type ProfileEntry struct {
+	Location    string `json:"location"`
+	TotalTimeNs int64  `json:"total_time_ns"`
+	NumEval     int    `json:"num_eval"`
+	NumRedo     int    `json:"num_redo"`
+	NumGenExpr  int    `json:"num_gen_expr"`
+}
+
 // An Aggregate is data collected by some rule while processing a file AST, to be used later by other rules needing a
 // global context (i.e. broader than per-file)
 // Rule authors are expected to collect the minimum needed data, to avoid performance problems
 // while working with large Rego code repositories.
 type Aggregate map[string]any
+
+func FromResultSet(resultSet rego.ResultSet, aggregate bool) (Report, error) {
+	if len(resultSet) != 1 {
+		return Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
+	}
+
+	r := Report{}
+
+	if aggregate {
+		if binding, ok := resultSet[0].Bindings["lint"].(map[string]any); ok {
+			if aggregateBinding, ok := binding["aggregate"]; ok {
+				if err := encoding.JSONRoundTrip(aggregateBinding, &r); err != nil {
+					return r, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+				}
+			}
+		}
+	} else {
+		if binding, ok := resultSet[0].Bindings["lint"]; ok {
+			if err := encoding.JSONRoundTrip(binding, &r); err != nil {
+				return r, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
+			}
+		}
+	}
+
+	return r, nil
+}
 
 func (a Aggregate) SourceFile() string {
 	source, ok := a["aggregate_source"].(map[string]any)
@@ -89,37 +150,6 @@ func (a Aggregate) IndexKey() string {
 	}
 
 	return fmt.Sprintf("%s/%s", cat, title)
-}
-
-type Summary struct {
-	FilesScanned  int `json:"files_scanned"`
-	FilesFailed   int `json:"files_failed"`
-	RulesSkipped  int `json:"rules_skipped"`
-	NumViolations int `json:"num_violations"`
-}
-
-// Report aggregate of Violation as returned by a linter run.
-type Report struct {
-	// We don't have aggregates when publishing the final report (see JSONReporter), so omitempty is needed here
-	// to avoid surfacing a null/empty field.
-	Aggregates       map[string][]Aggregate         `json:"aggregates,omitempty"`
-	Metrics          map[string]any                 `json:"metrics,omitempty"`
-	AggregateProfile map[string]ProfileEntry        `json:"-"`
-	IgnoreDirectives map[string]map[string][]string `json:"ignore_directives,omitempty"`
-	Violations       []Violation                    `json:"violations"`
-	Notices          []Notice                       `json:"notices,omitempty"`
-	Profile          []ProfileEntry                 `json:"profile,omitempty"`
-	Summary          Summary                        `json:"summary"`
-}
-
-// ProfileEntry is a single entry of profiling information, keyed by location.
-// This data may have been aggregated across multiple runs.
-type ProfileEntry struct {
-	Location    string `json:"location"`
-	TotalTimeNs int64  `json:"total_time_ns"`
-	NumEval     int    `json:"num_eval"`
-	NumRedo     int    `json:"num_redo"`
-	NumGenExpr  int    `json:"num_gen_expr"`
 }
 
 func (r *Report) AddProfileEntries(prof map[string]ProfileEntry) {

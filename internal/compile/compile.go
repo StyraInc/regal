@@ -7,7 +7,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/styrainc/regal/internal/embeds"
-	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io/files"
+	"github.com/styrainc/regal/internal/io/files/filter"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/roast/encoding"
@@ -37,14 +38,9 @@ func Capabilities() *ast.Capabilities {
 // Currently only used by the test command. Should we want to expand the use of this later,
 // we'll probably want to only read the schemas relevant to the context.
 func RegalSchemaSet() *ast.SchemaSet {
-	schemaSet := ast.NewSchemaSet()
-
-	_ = rio.NewFileWalker("schemas").
-		WithFilters(
-			rio.DirectoryFilter,
-			rio.NegateFilter(rio.SuffixesFilter(".json")),
-		).
-		WalkFS(embeds.SchemasFS, func(path string) error {
+	schemaSet, _ := files.DefaultWalkReducer("schemas", ast.NewSchemaSet()).
+		WithFilters(filter.Not(filter.Suffixes(".json"))).
+		ReduceFS(embeds.SchemasFS, func(path string, schemaSet *ast.SchemaSet) (*ast.SchemaSet, error) {
 			var schemaAny any
 
 			util.Must0(encoding.JSON().Unmarshal(util.Must(embeds.SchemasFS.ReadFile(path)), &schemaAny))
@@ -54,7 +50,7 @@ func RegalSchemaSet() *ast.SchemaSet {
 
 			schemaSet.Put(ref, schemaAny)
 
-			return nil
+			return schemaSet, nil
 		})
 
 	return schemaSet

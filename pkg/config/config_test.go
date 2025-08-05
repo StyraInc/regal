@@ -13,7 +13,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util/test"
 
-	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/internal/util"
 )
@@ -26,7 +25,7 @@ func TestFindRegalDirectory(t *testing.T) {
 	fs := map[string]string{"/foo/bar/baz/p.rego": ""}
 
 	test.WithTempFS(fs, func(root string) {
-		if err := os.Mkdir(filepath.Join(root, rio.PathSeparator, ".regal"), os.ModePerm); err != nil {
+		if err := os.Mkdir(filepath.Join(root, ".regal"), os.ModePerm); err != nil {
 			t.Fatal(err)
 		}
 
@@ -119,9 +118,7 @@ func TestFindConfig(t *testing.T) {
 			t.Parallel()
 
 			test.WithTempFS(testData.FS, func(root string) {
-				path := filepath.Join(root, "foo", "bar", "baz")
-
-				configFile, err := FindConfig(path)
+				configFile, err := FindConfig(filepath.Join(root, "foo", "bar", "baz"))
 				if testData.Error != "" {
 					if err == nil {
 						t.Fatalf("expected error %s, got nil", testData.Error)

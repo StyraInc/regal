@@ -16,16 +16,21 @@ import (
 
 	"github.com/styrainc/regal/internal/capabilities"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io/files"
+	"github.com/styrainc/regal/internal/io/files/filter"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/roast/encoding"
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
 const (
-	capabilitiesEngineOPA  = "opa"
-	capabilitiesEngineEOPA = "eopa"
-	keyIgnore              = "ignore"
-	keyLevel               = "level"
+	capabilitiesEngineOPA    = "opa"
+	capabilitiesEngineEOPA   = "eopa"
+	keyIgnore                = "ignore"
+	keyLevel                 = "level"
+	regalDirName             = ".regal"
+	configFileName           = "config.yaml"
+	standaloneConfigFileName = ".regal.yaml"
 )
 
 type Config struct {
@@ -77,20 +82,6 @@ type RemoteFeatures struct {
 	CheckVersion bool `json:"check-version,omitempty" yaml:"check-version,omitempty"`
 }
 
-func (d *Default) mapToConfig(result any) error {
-	resultMap, ok := result.(map[string]any)
-	if !ok {
-		return errors.New("result was not a map")
-	}
-
-	level, ok := resultMap[keyLevel].(string)
-	if ok {
-		d.Level = level
-	}
-
-	return nil
-}
-
 type Ignore struct {
 	Files []string `json:"files,omitempty" yaml:"files,omitempty"`
 }
@@ -118,11 +109,19 @@ type Builtin struct {
 	Decl Decl `json:"decl" yaml:"decl"`
 }
 
-const (
-	regalDirName             = ".regal"
-	configFileName           = "config.yaml"
-	standaloneConfigFileName = ".regal.yaml"
-)
+func (d *Default) mapToConfig(result any) error {
+	resultMap, ok := result.(map[string]any)
+	if !ok {
+		return errors.New("result was not a map")
+	}
+
+	level, ok := resultMap[keyLevel].(string)
+	if ok {
+		d.Level = level
+	}
+
+	return nil
+}
 
 func FromPath(path string) (Config, error) {
 	file, err := os.Open(path)
@@ -132,11 +131,14 @@ func FromPath(path string) (Config, error) {
 
 	defer file.Close()
 
+	return FromFile(file)
+}
+
+func FromFile(file *os.File) (Config, error) {
 	conf := Config{}
+	err := yaml.NewDecoder(file).Decode(&conf)
 
-	err = yaml.NewDecoder(file).Decode(&conf)
-
-	return conf, err //nolint:wrapcheck
+	return conf, err
 }
 
 // FindConfig attempts to find either the .regal directory or .regal.yaml
@@ -166,10 +168,9 @@ func FindConfig(path string) (*os.File, error) {
 		return regalConfigFile, nil
 	}
 
-	// if there is a .regal directory, when a config file is expected to be
-	// found inside.
+	// if there is a .regal directory, a config file is expected to be found inside.
 	if regalDirError == nil {
-		expectedConfigFilePath := filepath.Join(regalDir.Name(), rio.PathSeparator, configFileName)
+		expectedConfigFilePath := filepath.Join(regalDir.Name(), configFileName)
 
 		_, err := os.Stat(expectedConfigFilePath)
 		if err != nil && os.IsNotExist(err) {
@@ -187,7 +188,7 @@ func FindConfig(path string) (*os.File, error) {
 
 // findUpwards searches for a file or directory matching the given name,
 // starting from the provided path and moving upwards.
-func findUpwards(path, name string, expectDir bool) (*os.File, error) {
+func findUpwards(path, name string, expectDir bool) (string, error) {
 	dir := path
 	if !rio.IsDir(path) {
 		dir = filepath.Dir(path)
@@ -199,45 +200,61 @@ func findUpwards(path, name string, expectDir bool) (*os.File, error) {
 	for {
 		var searchPath string
 		if volume == "" {
-			searchPath = filepath.Join(rio.PathSeparator, dir, name)
+			searchPath = filepath.Join(string(os.PathSeparator), dir, name)
 		} else {
 			searchPath = filepath.Join(dir, name)
 		}
 
-		if file, err := os.Open(searchPath); err == nil {
-			if fileInfo, err := file.Stat(); err == nil && fileInfo.IsDir() == expectDir {
-				return file, nil
-			}
+		if fileInfo, err := os.Stat(searchPath); err == nil && fileInfo.IsDir() == expectDir {
+			return searchPath, nil
 		}
 
-		if searchPath == volume+rio.PathSeparator+name {
-			// Stop traversing at the root path
-			return nil, errors.New("can't traverse past root directory")
+		if searchPath == volume+string(os.PathSeparator)+name {
+			return "", errors.New("can't traverse past root directory")
 		}
 
 		// Move up one level in the directory tree
-		parts := strings.Split(dir, rio.PathSeparator)
+		parts := strings.Split(dir, string(os.PathSeparator))
 		if len(parts) < 2 {
-			return nil, errors.New("stopping as dir is root directory")
+			return "", errors.New("stopping as dir is root directory")
 		}
 
 		parts = parts[:len(parts)-1]
 		if parts[0] == volume {
-			parts[0] = volume + rio.PathSeparator
+			parts[0] = volume + string(os.PathSeparator)
 		}
 
 		dir = filepath.Join(parts...)
 	}
 }
 
+func findFileUpwards(path, name string, expectDir bool) (*os.File, error) {
+	dir, err := findUpwards(path, name, expectDir)
+	if err == nil {
+		file, err := os.Open(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open .regal directory: %w", err)
+		}
+
+		return file, nil
+	}
+
+	return nil, fmt.Errorf("failed to find .regal directory: %w", err)
+}
+
+// FindRegalDirectoryPath searches for a .regal directory upwards from the provided path.
+func FindRegalDirectoryPath(path string) (string, error) {
+	return findUpwards(path, regalDirName, true)
+}
+
 // FindRegalDirectory searches for a .regal directory upwards from the provided path.
 func FindRegalDirectory(path string) (*os.File, error) {
-	return findUpwards(path, regalDirName, true)
+	return findFileUpwards(path, regalDirName, true)
 }
 
 // FindRegalConfigFile searches for a .regal.yaml config file upwards from the provided path.
 func FindRegalConfigFile(path string) (*os.File, error) {
-	return findUpwards(path, standaloneConfigFileName, false)
+	return findFileUpwards(path, standaloneConfigFileName, false)
 }
 
 // FindBundleRootDirectories finds all bundle root directories from the provided path,
@@ -275,13 +292,8 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 	}
 
 	// This will traverse the tree **downwards** searching for .regal directories
-	// Not using rio.WalkFiles here as we're specifically looking for directories
-	if err := filepath.WalkDir(path, func(path string, info os.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("failed to walk path: %w", err)
-		}
-
-		if info.IsDir() && info.Name() == regalDirName {
+	if err := files.NewWalker(path).WithSkipFunc(filter.DefaultSkipDirectories).Walk(func(path string) error {
+		if filepath.Dir(path) == regalDirName {
 			// Opening files as part of walking is generally not a good idea...
 			// but I think we can assume the number of .regal directories in a project
 			// is limited to a reasonable number.
@@ -301,7 +313,7 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 		}
 
 		// check for .manifest directories as part of the same walk
-		if !info.IsDir() && info.Name() == ".manifest" {
+		if filepath.Base(path) == ".manifest" {
 			foundBundleRoots = append(foundBundleRoots, filepath.Dir(path))
 		}
 
@@ -315,6 +327,7 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 	return slices.Compact(foundBundleRoots), nil
 }
 
+// TODO: this doesn't properly handle .regal.yaml??
 func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 	defer file.Close()
 
@@ -323,20 +336,20 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 		return nil, fmt.Errorf("failed to stat file: %w", err)
 	}
 
-	filename := filepath.Base(file.Name())
-	if (fileInfo.IsDir() && filename != ".regal") || (!fileInfo.IsDir() && filename != ".regal.yaml") {
-		return nil, fmt.Errorf(
-			"expected a directory named '.regal' or a file named '.regal.yaml', got '%s'", filename,
-		)
+	parent, filename := filepath.Split(file.Name())
+	if (fileInfo.IsDir() && filename != ".regal") ||
+		(!fileInfo.IsDir() && filename != ".regal.yaml") {
+		return nil, fmt.Errorf("expected a directory named '.regal' or a file named '.regal.yaml', got '%s'", filename)
 	}
 
-	parent := filepath.Dir(file.Name())
-	foundBundleRoots := []string{parent}
+	parent = filepath.Clean(parent)
 
 	configFilePath := file.Name()
 	if fileInfo.IsDir() {
 		configFilePath = filepath.Join(configFilePath, "config.yaml")
 	}
+
+	foundBundleRoots := []string{parent}
 
 	if conf, err := FromPath(configFilePath); err == nil && conf.Project != nil && conf.Project.Roots != nil {
 		for _, root := range *conf.Project.Roots {
@@ -346,8 +359,7 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 
 	// Include the "rules" directory when loading from a .regal dir
 	if fileInfo.IsDir() {
-		customDir := filepath.Join(file.Name(), "rules")
-		if rio.IsDir(customDir) {
+		if customDir := filepath.Join(file.Name(), "rules"); rio.IsDir(customDir) {
 			foundBundleRoots = append(foundBundleRoots, customDir)
 		}
 	}
@@ -358,9 +370,7 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
 	}
 
-	foundBundleRoots = append(foundBundleRoots, util.Map(manifestRoots, util.FilepathJoiner(parent))...)
-
-	return foundBundleRoots, nil
+	return append(foundBundleRoots, util.Map(manifestRoots, util.FilepathJoiner(parent))...), nil
 }
 
 func FromMap(confMap map[string]any) (Config, error) {
@@ -389,17 +399,14 @@ func AllRegoVersions(root string, conf *Config) (map[string]ast.RegoVersion, err
 	}
 
 	for _, dir := range manifestLocations {
-		manifestPath := filepath.Join(root, dir, ".manifest")
-
-		f, err := os.ReadFile(manifestPath)
+		f, err := os.ReadFile(filepath.Join(root, dir, ".manifest"))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read manifest file: %w", err)
 		}
 
 		var manifest bundle.Manifest
 
-		err = encoding.JSON().Unmarshal(f, &manifest)
-		if err != nil {
+		if err = encoding.JSON().Unmarshal(f, &manifest); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal manifest file: %w", err)
 		}
 

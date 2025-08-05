@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
-	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/ast/oracle"
@@ -28,6 +27,7 @@ import (
 	"github.com/styrainc/regal/internal/capabilities"
 	"github.com/styrainc/regal/internal/compile"
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io/files"
 	"github.com/styrainc/regal/internal/lsp/bundles"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
@@ -81,6 +81,9 @@ var (
 	truePtr   = &trueValue
 
 	orc = oracle.New()
+
+	regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
+	validPathComponentPattern  = regexp.MustCompile(`^\w+[\w\-]*\w+$`)
 )
 
 type LanguageServerOptions struct {
@@ -536,17 +539,8 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case path := <-l.configWatcher.Reload:
-			configFileBs, err := os.ReadFile(path)
-			if err != nil {
-				l.logf(log.LevelMessage, "failed to open config file: %s", err)
-
-				continue
-			}
-
-			var userConfig config.Config
-
-			// EOF errors are ignored here as then we just use the default config
-			if err = yaml.Unmarshal(configFileBs, &userConfig); err != nil && !errors.Is(err, io.EOF) {
+			userConfig, err := config.FromPath(path)
+			if err != nil && !errors.Is(err, io.EOF) {
 				l.logf(log.LevelMessage, "failed to reload config: %s", err)
 
 				continue
@@ -676,8 +670,6 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 		}
 	}
 }
-
-var regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
 
 func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:maintidx
 	// note, in this function conn.Call is used as the workspace/applyEdit message is a request, not a notification
@@ -1209,11 +1201,9 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		return "", fmt.Errorf("failed to find longest prefix root for templating of new file: %s", path)
 	}
 
-	parts := slices.Compact(strings.Split(strings.TrimPrefix(dir, longestPrefixRoot), rio.PathSeparator))
+	parts := slices.Compact(strings.Split(strings.TrimPrefix(dir, longestPrefixRoot), string(os.PathSeparator)))
 
 	var pkg string
-
-	validPathComponentPattern := regexp.MustCompile(`^\w+[\w\-]*\w+$`)
 
 	for _, part := range parts {
 		if part == "" {
@@ -2076,10 +2066,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
-		opts := format.Opts{
-			RegoVersion: l.regoVersionForURI(params.TextDocument.URI),
-		}
-
+		opts := format.Opts{RegoVersion: l.regoVersionForURI(params.TextDocument.URI)}
 		if formatter == "opa-fmt-rego-v1" {
 			opts.RegoVersion = ast.RegoV0CompatV1
 		}
@@ -2089,9 +2076,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 
 		fixResults, err := f.Fix(
 			&fixes.FixCandidate{Filename: filepath.Base(p), Contents: oldContent},
-			&fixes.RuntimeOptions{
-				BaseDir: l.workspacePath(),
-			},
+			&fixes.RuntimeOptions{BaseDir: l.workspacePath()},
 		)
 		if err != nil {
 			l.logf(log.LevelMessage, "failed to format file: %s", err)
@@ -2107,9 +2092,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		newContent = fixResults[0].Contents
 	case "regal-fix":
 		// set up an in-memory file provider to pass to the fixer for this one file
-		memfp := fileprovider.NewInMemoryFileProvider(map[string]string{
-			params.TextDocument.URI: oldContent,
-		})
+		memfp := fileprovider.NewInMemoryFileProvider(map[string]string{params.TextDocument.URI: oldContent})
 
 		input, err := memfp.ToInput(l.loadedConfigAllRegoVersions.Clone())
 		if err != nil {
@@ -2128,8 +2111,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return nil, fmt.Errorf("could not find potential roots: %w", err)
 		}
 
-		li := linter.NewLinter().
-			WithInputModules(&input)
+		li := linter.NewLinter().WithInputModules(&input)
 
 		if cfg := l.getLoadedConfig(); cfg != nil {
 			li = li.WithUserConfig(*cfg)
@@ -2161,8 +2143,7 @@ func (l *LanguageServer) handleWorkspaceDidCreateFiles(params types.WorkspaceDid
 	}
 
 	for _, createOp := range params.Files {
-		if _, _, err := cache.UpdateCacheForURIFromDisk(
-			l.cache,
+		if _, _, err := l.cache.UpdateCacheForURIFromDisk(
 			uri.FromPath(l.clientIdentifier, createOp.URI),
 			uri.ToPath(l.clientIdentifier, createOp.URI),
 		); err != nil {
@@ -2218,8 +2199,7 @@ func (l *LanguageServer) handleWorkspaceDidRenameFiles(
 		// if the content is not in the cache then we can attempt to load from
 		// the disk instead.
 		if !ok || content == "" {
-			_, content, err = cache.UpdateCacheForURIFromDisk(
-				l.cache,
+			_, content, err = l.cache.UpdateCacheForURIFromDisk(
 				uri.FromPath(l.clientIdentifier, renameOp.NewURI),
 				uri.ToPath(l.clientIdentifier, renameOp.NewURI),
 			)
@@ -2285,7 +2265,7 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 
 	// params.RootURI is not expected to have a trailing slash, but if one is
 	// present it will be removed for consistency.
-	rootURI := strings.TrimSuffix(params.RootURI, rio.PathSeparator)
+	rootURI := strings.TrimSuffix(params.RootURI, string(os.PathSeparator))
 
 	if rootURI == "" {
 		return nil, errors.New("rootURI was not set by the client but is required")
@@ -2473,14 +2453,11 @@ type loadWorkspaceContentsFailedFile struct {
 func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool) (
 	[]string, []loadWorkspaceContentsFailedFile, error,
 ) {
-	workspaceRootPath := l.workspacePath()
-
 	changedOrNewURIs := make([]string, 0)
 	failed := make([]loadWorkspaceContentsFailedFile, 0)
 
-	if err := rio.WalkFiles(workspaceRootPath, func(path string) error {
+	if err := files.DefaultWalker(l.workspacePath()).Walk(func(path string) error {
 		fileURI := uri.FromPath(l.clientIdentifier, path)
-
 		if l.ignoreURI(fileURI) {
 			return nil
 		}
@@ -2491,15 +2468,14 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 			return nil
 		}
 
-		changed, _, err := cache.UpdateCacheForURIFromDisk(l.cache, fileURI, path)
+		changed, _, err := l.cache.UpdateCacheForURIFromDisk(fileURI, path)
 		if err != nil {
 			failed = append(failed, loadWorkspaceContentsFailedFile{
 				URI:   fileURI,
 				Error: fmt.Errorf("failed to update cache for uri %q: %w", path, err),
 			})
 
-			// continue processing other files
-			return nil
+			return nil // continue processing other files
 		}
 
 		// there is no need to update the parse if the file contents
@@ -2523,15 +2499,14 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 				Error: fmt.Errorf("failed to update parse: %w", err),
 			})
 
-			// continue processing other files
-			return nil
+			return nil // continue processing other files
 		}
 
 		changedOrNewURIs = append(changedOrNewURIs, fileURI)
 
 		return nil
 	}); err != nil {
-		return nil, nil, fmt.Errorf("failed to walk workspace dir %q: %w", workspaceRootPath, err)
+		return nil, nil, fmt.Errorf("failed to walk workspace dir %q: %w", l.workspacePath(), err)
 	}
 
 	if l.bundleCache != nil {
@@ -2565,8 +2540,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 ) (any, error) {
 	// this handles the case of a new config file being created when one did
 	// not exist before
-	if len(params.Changes) > 0 && (strings.HasSuffix(params.Changes[0].URI, ".regal/config.yaml") ||
-		strings.HasSuffix(params.Changes[0].URI, ".regal.yaml")) {
+	if len(params.Changes) > 0 && util.HasAnySuffix(params.Changes[0].URI, ".regal/config.yaml", ".regal.yaml") {
 		configFile, err := config.FindConfig(l.workspacePath())
 		if err == nil {
 			l.configWatcher.Watch(configFile.Name())
@@ -2628,9 +2602,8 @@ func (l *LanguageServer) getFilteredModules() (map[string]*ast.Module, error) {
 	}
 
 	allModules := l.cache.GetAllModules()
-	paths := outil.Keys(allModules)
 
-	filtered, err := config.FilterIgnoredPaths(paths, ignore, false, l.workspaceRootURI)
+	filtered, err := config.FilterIgnoredPaths(outil.Keys(allModules), ignore, false, l.workspaceRootURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter ignored paths: %w", err)
 	}

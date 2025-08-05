@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	rio "github.com/styrainc/regal/internal/io"
@@ -156,7 +157,7 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 	dir := filepath.Dir(target)
 
 	for !preserveDirs.Contains(dir) {
-		if !strings.Contains(dir, rio.PathSeparator) {
+		if !strings.Contains(dir, string(os.PathSeparator)) {
 			break
 		}
 
@@ -195,7 +196,6 @@ func DirCleanUpPaths(target string, preserve []string) ([]string, error) {
 		}
 
 		dirs = append(dirs, dir)
-
 		dir = filepath.Dir(dir)
 	}
 
@@ -210,6 +210,24 @@ func SafeUintToInt(u uint) int {
 	}
 
 	return int(u)
+}
+
+// EnsureSuffix ensures that the given string ends with the specified suffix.
+// If the string already ends with suf, it is returned unchanged.
+// Note that an empty string s is returned unchanged — *not* turned into "/".
+func EnsureSuffix(s, suf string) string {
+	if s != "" && !strings.HasSuffix(s, suf) {
+		s += suf
+	}
+
+	return s
+}
+
+// HasAnySuffix checks if the string s has any of the provided suffixes.
+func HasAnySuffix(s string, suffixes ...string) bool {
+	return slices.ContainsFunc(suffixes, func(suffix string) bool {
+		return strings.HasSuffix(s, suffix)
+	})
 }
 
 // SafeIntToUint will convert an int to a uint, clamping negative values to 0.

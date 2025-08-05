@@ -11,12 +11,14 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/util"
 
 	rio "github.com/styrainc/regal/internal/io"
+	"github.com/styrainc/regal/internal/io/files"
+	"github.com/styrainc/regal/internal/io/files/filter"
+	rutil "github.com/styrainc/regal/internal/util"
 )
 
 // Cache is a struct that maintains a number of bundles in memory and
@@ -33,27 +35,20 @@ type CacheOptions struct {
 }
 
 func NewCache(opts *CacheOptions) *Cache {
-	workspacePath := opts.WorkspacePath
-
-	if !strings.HasSuffix(workspacePath, rio.PathSeparator) {
-		workspacePath += rio.PathSeparator
-	}
-
-	c := &Cache{
-		workspacePath: workspacePath,
+	return &Cache{
+		workspacePath: rutil.EnsureSuffix(opts.WorkspacePath, string(os.PathSeparator)),
 		bundles:       make(map[string]*cacheBundle),
+		errorLog:      opts.ErrorLog,
 	}
-
-	if opts.ErrorLog != nil {
-		c.errorLog = opts.ErrorLog
-	}
-
-	return c
 }
 
 // Refresh walks the workspace path and loads or refreshes any bundles that
 // have changed since the last refresh.
 func (c *Cache) Refresh() ([]string, error) {
+	if c == nil {
+		return nil, nil // TODO: is this really needed?
+	}
+
 	if c.workspacePath == "" {
 		return nil, errors.New("workspace path is empty")
 	}
@@ -137,21 +132,9 @@ type cacheBundle struct {
 // source files have changed since the last refresh.
 func (c *cacheBundle) Refresh(path string) (bool, error) {
 	// walk the bundle path and calculate the current MD5 hash of each file on disk
-	walker := rio.NewFileWalkReducer(path, make(map[string][]byte)).
-		WithSkipFunc(rio.DefaultSkipDirectories).
-		WithFilters(
-			rio.DirectoryFilter,
-			rio.NegateFilter(rio.FileNameFilter(".manifest", "data.json", "data.yml", "data.yaml")),
-		)
-
-	onDiskDigests, err := walker.Reduce(func(p string, curr map[string][]byte) (map[string][]byte, error) {
-		hash, err := calculateMD5(p)
-		if err == nil {
-			curr[p] = hash
-		}
-
-		return curr, err
-	})
+	onDiskDigests, err := files.DefaultWalkReducer(path, make(map[string][]byte)).
+		WithFilters(filter.Not(filter.Filenames(".manifest", "data.json", "data.yml", "data.yaml"))).
+		Reduce(hasher)
 	if err != nil {
 		return false, fmt.Errorf("failed to walk bundle path %q: %w", path, err)
 	}
@@ -175,18 +158,20 @@ func (c *cacheBundle) Refresh(path string) (bool, error) {
 	return true, nil
 }
 
-func calculateMD5(filePath string) ([]byte, error) {
-	file, err := os.Open(filePath)
+func hasher(path string, curr map[string][]byte) (map[string][]byte, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file %q: %w", filePath, err)
+		return nil, fmt.Errorf("failed to open file %q: %w", path, err)
 	}
 	defer file.Close()
 
 	//nolint:gosec
 	hash := md5.New()
 	if _, err := io.Copy(hash, file); err != nil {
-		return nil, fmt.Errorf("failed to calculate MD5 hash for file %q: %w", filePath, err)
+		return nil, fmt.Errorf("failed to calculate MD5 hash for file %q: %w", path, err)
 	}
 
-	return hash.Sum(nil), nil
+	curr[path] = hash.Sum(nil)
+
+	return curr, err
 }

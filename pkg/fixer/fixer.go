@@ -206,7 +206,7 @@ func (f *Fixer) applyLinterFixes(
 
 		in, err := fp.ToInput(versionsMap)
 		if err != nil {
-			return fmt.Errorf("failed to generate linter input: %w", err)
+			return fmt.Errorf("failed to create linter input: %w", err)
 		}
 
 		fixLinter := l.WithDisableAll(true).

@@ -32,7 +32,6 @@ import (
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/roast/encoding"
 	"github.com/styrainc/regal/pkg/roast/rast"
 	"github.com/styrainc/regal/pkg/roast/transform"
 	rutil "github.com/styrainc/regal/pkg/roast/util"
@@ -88,6 +87,12 @@ var (
 	enabledRulesQuery          = ast.MustParseBody(enabledRulesQueryStr)
 	enabledAggregateRulesQuery = ast.MustParseBody(enabledAggregateRulesQueryStr)
 )
+
+func init() {
+	ast.InternStringTerm(
+		"eval", "disable_all", "disable_category", "disable", "enable_all", "enable_category", "enable", "ignore_files",
+	)
+}
 
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
@@ -566,12 +571,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 		return l.combinedCfg, nil
 	}
 
-	regalBundle, err := l.getBundleByName("regal")
-	if err != nil {
-		return &config.Config{}, fmt.Errorf("failed to get regal bundle: %w", err)
-	}
-
-	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(regalBundle, l.userConfig)
+	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, l.userConfig)
 	if err != nil {
 		return &config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
@@ -739,6 +739,7 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 		rego.StoreReadAST(true),
 		rego.Metrics(l.metrics),
 		rego.ParsedQuery(query),
+		rego.Instrument(l.instrumentation),
 	}, builtins.RegalBuiltinRegoFuncs...)
 
 	if l.debugMode && l.printHook == nil {
@@ -747,10 +748,6 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 
 	if l.printHook != nil {
 		regoArgs = append(regoArgs, rego.EnablePrintStatements(true), rego.PrintHook(l.printHook))
-	}
-
-	if l.instrumentation {
-		regoArgs = append(regoArgs, rego.Instrument(true))
 	}
 
 	if l.dataBundle != nil {
@@ -781,10 +778,7 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	return regoArgs, nil
 }
 
-func (l Linter) lintWithRegoRules(
-	ctx context.Context,
-	input rules.Input,
-) (report.Report, error) {
+func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)
 
@@ -792,13 +786,10 @@ func (l Linter) lintWithRegoRules(
 	defer cancel()
 
 	regoReport := report.Report{}
-	regoReport.Aggregates = make(map[string][]report.Aggregate)
-	regoReport.IgnoreDirectives = make(map[string]map[string][]string)
+	regoReport.Aggregates = make(map[string][]report.Aggregate, len(input.FileNames))
+	regoReport.IgnoreDirectives = make(map[string]map[string][]string, len(input.FileNames))
 
-	var operationCollect bool
-	if len(input.FileNames) > 1 || l.useCollectQuery {
-		operationCollect = true
-	}
+	operationCollect := len(input.FileNames) > 1 || l.useCollectQuery
 
 	var wg sync.WaitGroup
 
@@ -823,7 +814,10 @@ func (l Linter) lintWithRegoRules(
 				return
 			}
 
-			evalArgs := []rego.EvalOption{rego.EvalParsedInput(inputValue)}
+			evalArgs := []rego.EvalOption{
+				rego.EvalParsedInput(inputValue),
+				rego.EvalInstrument(l.instrumentation),
+			}
 
 			if l.baseCache != nil {
 				evalArgs = append(evalArgs, rego.EvalBaseCache(l.baseCache))
@@ -831,10 +825,6 @@ func (l Linter) lintWithRegoRules(
 
 			if l.metrics != nil {
 				evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
-			}
-
-			if l.instrumentation {
-				evalArgs = append(evalArgs, rego.EvalInstrument(true))
 			}
 
 			var prof *profiler.Profiler
@@ -850,7 +840,7 @@ func (l Linter) lintWithRegoRules(
 				return
 			}
 
-			result, err := resultSetToReport(resultSet, false)
+			result, err := report.FromResultSet(resultSet, false)
 			if err != nil {
 				errCh <- fmt.Errorf("failed to convert result set to report: %w", err)
 
@@ -951,7 +941,10 @@ func (l Linter) lintWithRegoAggregateRules(
 		return report.Report{}, fmt.Errorf("failed to transform input value: %w", err)
 	}
 
-	evalArgs := []rego.EvalOption{rego.EvalParsedInput(inputValue)}
+	evalArgs := []rego.EvalOption{
+		rego.EvalParsedInput(inputValue),
+		rego.EvalInstrument(l.instrumentation),
+	}
 
 	if l.metrics != nil {
 		evalArgs = append(evalArgs, rego.EvalMetrics(l.metrics))
@@ -968,7 +961,7 @@ func (l Linter) lintWithRegoAggregateRules(
 		return report.Report{}, fmt.Errorf("error encountered in query evaluation %w", err)
 	}
 
-	result, err := resultSetToReport(resultSet, true)
+	result, err := report.FromResultSet(resultSet, true)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to convert result set to report: %w", err)
 	}
@@ -988,48 +981,6 @@ func (l Linter) lintWithRegoAggregateRules(
 	}
 
 	return result, nil
-}
-
-func resultSetToReport(resultSet rego.ResultSet, aggregate bool) (report.Report, error) {
-	if len(resultSet) != 1 {
-		return report.Report{}, fmt.Errorf("expected 1 item in resultset, got %d", len(resultSet))
-	}
-
-	r := report.Report{}
-
-	if aggregate {
-		if binding, ok := resultSet[0].Bindings["lint"].(map[string]any); ok {
-			if aggregateBinding, ok := binding["aggregate"]; ok {
-				if err := encoding.JSONRoundTrip(aggregateBinding, &r); err != nil {
-					return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
-				}
-			}
-		}
-	} else {
-		if binding, ok := resultSet[0].Bindings["lint"]; ok {
-			if err := encoding.JSONRoundTrip(binding, &r); err != nil {
-				return report.Report{}, fmt.Errorf("JSON rountrip failed for bindings: %v %w", binding, err)
-			}
-		}
-	}
-
-	return r, nil
-}
-
-func (l Linter) getBundleByName(name string) (*bundle.Bundle, error) {
-	if l.ruleBundles == nil {
-		return nil, errors.New("no bundles loaded")
-	}
-
-	for _, ruleBundle := range l.ruleBundles {
-		if metadataName, ok := ruleBundle.Manifest.Metadata["name"].(string); ok {
-			if metadataName == name {
-				return ruleBundle, nil
-			}
-		}
-	}
-
-	return nil, errors.New("no regal bundle found")
 }
 
 func (l Linter) startTimer(name string) {

@@ -24,6 +24,13 @@ var (
 	errNoResults          = errors.New("no results returned from evaluation")
 	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
 	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
+
+	keywordsPreparedQuery          *rego.PreparedEvalQuery
+	ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
+	codeLensPreparedQuery          *rego.PreparedEvalQuery
+	codeActionPreparedQuery        *rego.PreparedEvalQuery
+
+	preparedQueriesInitOnce sync.Once
 )
 
 func init() {
@@ -131,15 +138,6 @@ func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []Bui
 
 	return builtinCalls
 }
-
-var (
-	keywordsPreparedQuery          *rego.PreparedEvalQuery
-	ruleHeadLocationsPreparedQuery *rego.PreparedEvalQuery
-	codeLensPreparedQuery          *rego.PreparedEvalQuery
-	codeActionPreparedQuery        *rego.PreparedEvalQuery
-)
-
-var preparedQueriesInitOnce sync.Once
 
 type policy struct {
 	module   *ast.Module

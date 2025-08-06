@@ -44,7 +44,7 @@ func prepareQuery() (*rego.PreparedEvalQuery, error) {
 	}
 
 	regoArgs := append([]func(*rego.Rego){
-		rego.ParsedBundle("regal", &rbundle.LoadedBundle),
+		rego.ParsedBundle("regal", rbundle.LoadedBundle()),
 		rego.ParsedBundle("internal", &dataBundle),
 		rego.ParsedQuery(refNamesQuery),
 	}, builtins.RegalBuiltinRegoFuncs...)

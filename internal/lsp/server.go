@@ -546,7 +546,7 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 				continue
 			}
 
-			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, &userConfig)
+			mergedConfig, err := config.LoadConfigWithDefaultsFromBundle(rbundle.LoadedBundle(), &userConfig)
 			if err != nil {
 				l.logf(log.LevelMessage, "failed to load config: %s", err)
 
@@ -2156,7 +2156,6 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 	// params.RootURI is not expected to have a trailing slash, but if one is
 	// present it will be removed for consistency.
 	rootURI := strings.TrimSuffix(params.RootURI, string(os.PathSeparator))
-
 	if rootURI == "" {
 		return nil, errors.New("rootURI was not set by the client but is required")
 	}
@@ -2270,7 +2269,7 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		},
 	}
 
-	defaultConfig, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, l.loadedConfig)
+	defaultConfig, err := config.LoadConfigWithDefaultsFromBundle(rbundle.LoadedBundle(), l.loadedConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default config: %w", err)
 	}
@@ -2279,21 +2278,16 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 	l.loadedConfig = &defaultConfig
 	l.loadedConfigLock.Unlock()
 
-	err = l.loadEnabledRulesFromConfig(ctx, defaultConfig)
-	if err != nil {
+	if err = l.loadEnabledRulesFromConfig(ctx, defaultConfig); err != nil {
 		l.logf(log.LevelMessage, "failed to cache enabled rules: %s", err)
 	}
 
 	if l.workspaceRootURI != "" {
 		workspaceRootPath := l.workspacePath()
 
-		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{
-			WorkspacePath: workspaceRootPath,
-			ErrorLog:      l.logWriter,
-		})
+		l.bundleCache = bundles.NewCache(&bundles.CacheOptions{WorkspacePath: workspaceRootPath, ErrorLog: l.logWriter})
 
 		configFile, err := config.FindConfig(workspaceRootPath)
-
 		globalConfigDir := config.GlobalConfigDir(false)
 
 		switch {
@@ -2301,10 +2295,9 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 			l.logf(log.LevelMessage, "using config file: %s", configFile.Name())
 			l.configWatcher.Watch(configFile.Name())
 		case globalConfigDir != "":
-			globalConfigFile := filepath.Join(globalConfigDir, "config.yaml")
 			// the file might not exist and we only want to log we're using the
 			// global file if it does.
-			if _, err = os.Stat(globalConfigFile); err == nil {
+			if globalConfigFile := filepath.Join(globalConfigDir, "config.yaml"); rio.IsFile(globalConfigFile) {
 				l.logf(log.LevelMessage, "using global config file: %s", globalConfigFile)
 				l.configWatcher.Watch(globalConfigFile)
 			}
@@ -2323,13 +2316,9 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 
 		l.webServer.SetWorkspaceURI(l.workspaceRootURI)
 
-		l.lintWorkspaceJobs <- lintWorkspaceJob{
-			Reason: "server initialize",
-			// 'OverwriteAggregates' is set to populate the cache's
-			// initial aggregate state. Subsequent runs of lintWorkspaceJobs
-			// will not set this and use the cached state.
-			OverwriteAggregates: true,
-		}
+		// 'OverwriteAggregates' is set to populate the cache's initial aggregate state.
+		// Subsequent runs of lintWorkspaceJobs will not set this and use the cached state.
+		l.lintWorkspaceJobs <- lintWorkspaceJob{Reason: "server initialize", OverwriteAggregates: true}
 	}
 
 	return initializeResult, nil
@@ -2374,13 +2363,11 @@ func (l *LanguageServer) loadWorkspaceContents(ctx context.Context, newOnly bool
 			return nil
 		}
 
-		bis := l.builtinsForCurrentCapabilities()
-
 		if _, err = updateParse(ctx, updateParseOpts{
 			Cache:            l.cache,
 			Store:            l.regoStore,
 			FileURI:          fileURI,
-			Builtins:         bis,
+			Builtins:         l.builtinsForCurrentCapabilities(),
 			RegoVersion:      l.regoVersionForURI(fileURI),
 			WorkspaceRootURI: l.workspaceRootURI,
 		}); err != nil {
@@ -2431,8 +2418,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	// this handles the case of a new config file being created when one did
 	// not exist before
 	if len(params.Changes) > 0 && util.HasAnySuffix(params.Changes[0].URI, ".regal/config.yaml", ".regal.yaml") {
-		configFile, err := config.FindConfig(l.workspacePath())
-		if err == nil {
+		if configFile, err := config.FindConfig(l.workspacePath()); err == nil {
 			l.configWatcher.Watch(configFile.Name())
 		}
 	}
@@ -2472,10 +2458,7 @@ func (l *LanguageServer) sendFileDiagnostics(ctx context.Context, fileURI string
 		fileDiags = noDiagnostics
 	}
 
-	resp := types.FileDiagnostics{
-		URI:   fileURI,
-		Items: fileDiags,
-	}
+	resp := types.FileDiagnostics{URI: fileURI, Items: fileDiags}
 
 	if err := l.conn.Notify(ctx, methodTextDocumentPublishDiagnostics, resp); err != nil {
 		return fmt.Errorf("failed to notify: %w", err)
@@ -2550,17 +2533,13 @@ func (l *LanguageServer) regoVersionForURI(fileURI string) ast.RegoVersion {
 // in the server based on the currently loaded capabilities. If there is no
 // config, then the default for the Regal OPA version is used.
 func (l *LanguageServer) builtinsForCurrentCapabilities() map[string]*ast.Builtin {
-	cfg := l.getLoadedConfig()
-	if cfg == nil {
-		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+	if cfg := l.getLoadedConfig(); cfg != nil {
+		if bis, ok := l.loadedBuiltins.Get(cfg.CapabilitiesURL); ok {
+			return bis
+		}
 	}
 
-	bis, ok := l.loadedBuiltins.Get(cfg.CapabilitiesURL)
-	if !ok {
-		return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
-	}
-
-	return bis
+	return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
 }
 
 func positionToOffset(text string, p types.Position) int {

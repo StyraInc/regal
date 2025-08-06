@@ -29,6 +29,16 @@ var (
 	}
 )
 
+type EvalPathResult struct {
+	Value       any                         `json:"value"`
+	PrintOutput map[string]map[int][]string `json:"printOutput"`
+	IsUndefined bool                        `json:"isUndefined"`
+}
+
+type PrintHook struct {
+	Output map[string]map[int][]string
+}
+
 func (l *LanguageServer) Eval(
 	ctx context.Context,
 	query string,
@@ -67,7 +77,7 @@ func (l *LanguageServer) Eval(
 	if hasCustomRules {
 		// If someone evaluates a custom Regal rule, provide them the Regal bundle
 		// in order to make all Regal functions available
-		allBundles["regal"] = rbundle.LoadedBundle
+		allBundles["regal"] = *rbundle.LoadedBundle()
 	}
 
 	regoArgs := prepareRegoArgs(ast.MustParseBody(query), allBundles, printHook, l.getLoadedConfig())
@@ -81,21 +91,14 @@ func (l *LanguageServer) Eval(
 	}
 
 	if input != nil {
-		inputValue, err := transform.ToOPAInputValue(input)
-		if err != nil {
+		if inputValue, err := transform.ToOPAInputValue(input); err != nil {
 			return nil, fmt.Errorf("failed converting input to value: %w", err)
+		} else {
+			return pq.Eval(ctx, rego.EvalParsedInput(inputValue)) //nolint:wrapcheck
 		}
-
-		return pq.Eval(ctx, rego.EvalParsedInput(inputValue)) //nolint:wrapcheck
 	}
 
 	return pq.Eval(ctx) //nolint:wrapcheck
-}
-
-type EvalPathResult struct {
-	Value       any                         `json:"value"`
-	PrintOutput map[string]map[int][]string `json:"printOutput"`
-	IsUndefined bool                        `json:"isUndefined"`
 }
 
 func (l *LanguageServer) EvalWorkspacePath(
@@ -171,13 +174,7 @@ func prepareRegoArgs(
 		},
 	}
 
-	args = append(args, rego.ParsedBundle("internal", internalBundle))
-
-	return args
-}
-
-type PrintHook struct {
-	Output map[string]map[int][]string
+	return append(args, rego.ParsedBundle("internal", internalBundle))
 }
 
 func (h PrintHook) Print(ctx print.Context, msg string) error {

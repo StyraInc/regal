@@ -97,7 +97,7 @@ func init() {
 // NewLinter creates a new Regal linter.
 func NewLinter() Linter {
 	return Linter{
-		ruleBundles: []*bundle.Bundle{&rbundle.LoadedBundle},
+		ruleBundles: []*bundle.Bundle{rbundle.LoadedBundle()},
 	}
 }
 
@@ -438,7 +438,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		l.stopTimer(regalmetrics.RegalFilterIgnoredModules)
 	}
 
-	regoReport, err := l.lintWithRegoRules(ctx, input)
+	regoReport, err := l.lint(ctx, input)
 	if err != nil {
 		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
@@ -470,7 +470,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if len(allAggregates) > 0 {
-		aggregateReport, err := l.lintWithRegoAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
+		aggregateReport, err := l.lintWithAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
 		if err != nil {
 			return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 		}
@@ -571,7 +571,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 		return l.combinedCfg, nil
 	}
 
-	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(&rbundle.LoadedBundle, l.userConfig)
+	mergedConf, err := config.LoadConfigWithDefaultsFromBundle(rbundle.LoadedBundle(), l.userConfig)
 	if err != nil {
 		return &config.Config{}, fmt.Errorf("failed to read provided config: %w", err)
 	}
@@ -778,7 +778,7 @@ func (l Linter) prepareRegoArgs(query ast.Body) ([]func(*rego.Rego), error) {
 	return regoArgs, nil
 }
 
-func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (report.Report, error) {
+func (l Linter) lint(ctx context.Context, input rules.Input) (report.Report, error) {
 	l.startTimer(regalmetrics.RegalLintRego)
 	defer l.stopTimer(regalmetrics.RegalLintRego)
 
@@ -908,7 +908,7 @@ func (l Linter) lintWithRegoRules(ctx context.Context, input rules.Input) (repor
 	}
 }
 
-func (l Linter) lintWithRegoAggregateRules(
+func (l Linter) lintWithAggregateRules(
 	ctx context.Context,
 	aggregates map[string][]report.Aggregate,
 	ignoreDirectives map[string]map[string][]string,

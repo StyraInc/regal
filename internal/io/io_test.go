@@ -35,3 +35,15 @@ func TestFindManifestLocations(t *testing.T) {
 		}
 	})
 }
+
+func BenchmarkLoadRegalBundlePath(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for b.Loop() {
+		_, err := LoadRegalBundlePath("../../bundle")
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

@@ -31,34 +31,37 @@ func Getwd() string {
 }
 
 // LoadRegalBundleFS loads bundle embedded from policy and data directory.
-func LoadRegalBundleFS(fs fs.FS) (bundle.Bundle, error) {
+func LoadRegalBundleFS(fs fs.FS) (*bundle.Bundle, error) {
 	embedLoader, err := bundle.NewFSLoader(fs)
 	if err != nil {
-		return bundle.Bundle{}, fmt.Errorf("failed to load bundle from filesystem: %w", err)
+		return nil, fmt.Errorf("failed to load bundle from filesystem: %w", err)
 	}
 
-	//nolint:wrapcheck
-	return bundle.NewCustomReader(embedLoader.WithFilter(ExcludeTestLegacyFilter())).
+	b, err := bundle.NewCustomReader(embedLoader.WithFilter(ExcludeTestLegacyFilter())).
 		WithCapabilities(Capabilities()).
 		WithSkipBundleVerification(true).
 		WithProcessAnnotations(true).
 		WithBundleName("regal").
 		Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read bundle from filesystem: %w", err)
+	}
+
+	return &b, nil
 }
 
 // LoadRegalBundlePath loads bundle from path.
-func LoadRegalBundlePath(path string) (bundle.Bundle, error) {
-	//nolint:wrapcheck
-	return bundle.NewCustomReader(bundle.NewDirectoryLoader(path).WithFilter(ExcludeTestLegacyFilter())).
-		WithCapabilities(Capabilities()).
-		WithSkipBundleVerification(true).
-		WithProcessAnnotations(true).
-		WithBundleName("regal").
-		Read()
+func LoadRegalBundlePath(path string) (*bundle.Bundle, error) {
+	root, err := os.OpenRoot(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open root: %w", err)
+	}
+
+	return LoadRegalBundleFS(root.FS())
 }
 
 // MustLoadRegalBundleFS loads bundle embedded from policy and data directory, exit on failure.
-func MustLoadRegalBundleFS(fs fs.FS) bundle.Bundle {
+func MustLoadRegalBundleFS(fs fs.FS) *bundle.Bundle {
 	regalBundle, err := LoadRegalBundleFS(fs)
 	if err != nil {
 		log.Fatal(err)

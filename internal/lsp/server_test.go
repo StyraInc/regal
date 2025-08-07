@@ -129,13 +129,12 @@ func createAndInitServer(
 		jsonrpc2.HandlerWithError(clientHandler),
 	)
 
-	go func() {
-		<-ctx.Done()
-		// we need only close the pipe connections as the jsonrpc2.Conn accept
-		// the ctx
-		_ = netConnClient.Close()
-		_ = netConnServer.Close()
-	}()
+	t.Cleanup(func() {
+		connClient.Close()
+		connServer.Close()
+		netConnClient.Close()
+		netConnServer.Close()
+	})
 
 	ls.SetConn(connServer)
 

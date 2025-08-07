@@ -5,11 +5,14 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/parse"
+	rparse "github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/internal/testutil"
 )
 
@@ -23,6 +26,8 @@ func TestEvalWorkspacePath(t *testing.T) {
 		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
 	)
 
+	ls.workspaceRootURI = "file:///workspace"
+
 	policy1 := `package policy1
 
 	import data.policy2
@@ -34,16 +39,32 @@ func TestEvalWorkspacePath(t *testing.T) {
 
 	policy2 := `package policy2
 
-	allow if input.exists
+	allow if {
+		print(1)
+		input.exists
+	}
 	`
 
-	module1 := parse.MustParseModule(policy1)
-	module2 := parse.MustParseModule(policy2)
+	policy1URI := ls.workspaceRootURI + "/policy1.rego"
+	policy1RelativeFileName := strings.TrimPrefix(policy1URI, ls.workspaceRootURI+"/")
 
-	ls.cache.SetFileContents("file://policy1.rego", policy1)
-	ls.cache.SetFileContents("file://policy2.rego", policy2)
-	ls.cache.SetModule("file://policy1.rego", module1)
-	ls.cache.SetModule("file://policy2.rego", module2)
+	module1, err := rparse.ModuleWithOpts(policy1RelativeFileName, policy1, rparse.ParserOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	policy2URI := ls.workspaceRootURI + "/policy2.rego"
+	policy2RelativeFileName := strings.TrimPrefix(policy2URI, ls.workspaceRootURI+"/")
+
+	module2, err := rparse.ModuleWithOpts(policy2RelativeFileName, policy2, rparse.ParserOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ls.cache.SetFileContents(policy1URI, policy1)
+	ls.cache.SetFileContents(policy2URI, policy2)
+	ls.cache.SetModule(policy1URI, module1)
+	ls.cache.SetModule(policy2URI, module2)
 
 	input := map[string]any{
 		"exists": true,
@@ -56,6 +77,14 @@ func TestEvalWorkspacePath(t *testing.T) {
 
 	if val, ok := res.Value.(bool); !ok || val != true {
 		t.Fatalf("expected true, got false")
+	}
+
+	expectedPrintOutput := map[string]map[int][]string{
+		policy2URI: {4: {"1"}},
+	}
+
+	if diff := cmp.Diff(expectedPrintOutput, res.PrintOutput); diff != "" {
+		t.Fatalf("unexpected print output (-want +got):\n%s", diff)
 	}
 }
 

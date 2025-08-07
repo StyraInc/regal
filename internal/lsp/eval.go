@@ -13,6 +13,7 @@ import (
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/roast/transform"
@@ -37,6 +38,10 @@ type EvalPathResult struct {
 
 type PrintHook struct {
 	Output map[string]map[int][]string
+	// FileNameBase if set, is prepended to filenames in print output. Needed
+	// because rego files are evaluated with relative paths (so errors match
+	// OPA CLI format) but print hook output consumers need full URIs.
+	FileNameBase string
 }
 
 func (l *LanguageServer) Eval(
@@ -108,7 +113,10 @@ func (l *LanguageServer) EvalWorkspacePath(
 ) (EvalPathResult, error) {
 	resultQuery := "result := " + query
 
-	hook := PrintHook{Output: make(map[string]map[int][]string)}
+	hook := PrintHook{
+		Output:       make(map[string]map[int][]string),
+		FileNameBase: l.workspaceRootURI,
+	}
 
 	var bs map[string]bundle.Bundle
 	if l.bundleCache != nil {
@@ -178,11 +186,16 @@ func prepareRegoArgs(
 }
 
 func (h PrintHook) Print(ctx print.Context, msg string) error {
-	if _, ok := h.Output[ctx.Location.File]; !ok {
-		h.Output[ctx.Location.File] = make(map[int][]string)
+	filename := ctx.Location.File
+	if h.FileNameBase != "" {
+		filename = util.EnsureSuffix(h.FileNameBase, "/") + ctx.Location.File
 	}
 
-	h.Output[ctx.Location.File][ctx.Location.Row] = append(h.Output[ctx.Location.File][ctx.Location.Row], msg)
+	if _, ok := h.Output[filename]; !ok {
+		h.Output[filename] = make(map[int][]string)
+	}
+
+	h.Output[filename][ctx.Location.Row] = append(h.Output[filename][ctx.Location.Row], msg)
 
 	return nil
 }

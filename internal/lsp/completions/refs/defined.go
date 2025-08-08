@@ -3,7 +3,6 @@ package refs
 import (
 	"bytes"
 	"fmt"
-	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -85,9 +84,7 @@ func DefinedInModule(module *ast.Module, builtins map[string]*ast.Builtin) map[s
 		}
 
 		ruleDescription := defaultDescription(g)
-
-		ruleAnnotation, ok := findAnnotationForRuleGroup(module, rs)
-		if ok {
+		if ruleAnnotation, ok := findAnnotationForRuleGroup(rs); ok {
 			ruleDescription = documentAnnotatedRef(ruleAnnotation)
 		}
 
@@ -132,24 +129,13 @@ func findAnnotationForPackage(m *ast.Module) (*ast.Annotations, bool) {
 }
 
 // findAnnotationForRuleGroup looks for an annotation on any of the rules in the group,
-// if one is found, the first one is returned. Annotations are filtered based on the rule
-// locations and the line on which the annotation ends.
-func findAnnotationForRuleGroup(m *ast.Module, rs []*ast.Rule) (*ast.Annotations, bool) {
-	// find all the starting locations of all the rules in the group
-	ruleLocations := make([]int, len(rs))
-	for i, r := range rs {
-		ruleLocations[i] = r.Location.Row
-	}
-
-	// find any annotations that end on the line before any of the rules
-	// and select the first one that matches
-	for _, a := range m.Annotations {
-		if a.Scope != "rule" {
-			continue
-		}
-
-		if slices.Contains(ruleLocations, a.EndLoc().Row+1) {
-			return a, true
+// if one is found, the first one is returned.
+func findAnnotationForRuleGroup(rs []*ast.Rule) (*ast.Annotations, bool) {
+	for _, r := range rs {
+		for _, a := range r.Annotations {
+			if a.Scope == "rule" {
+				return a, true
+			}
 		}
 	}
 

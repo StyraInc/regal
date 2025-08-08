@@ -143,23 +143,12 @@ func updateParse(ctx context.Context, opts updateParseOpts) (bool, error) {
 			link = "https://docs.styra.com/opa/errors/" + hints[0]
 		}
 
-		//nolint:gosec
-		diags = append(diags, types.Diagnostic{
-			Severity: util.Pointer(uint(1)), // parse errors are the only error Diagnostic the server sends
-			Range: types.Range{
-				Start: types.Position{
-					Line: uint(line),
-					// we always highlight the whole line for parse errors to make them more visible
-					Character: 0,
-				},
-				End: types.Position{
-					Line:      uint(line),
-					Character: uint(lineLength),
-				},
-			},
-			Message: astError.Message,
-			Source:  &key,
-			Code:    strings.ReplaceAll(astError.Code, "_", "-"),
+		diags = append(diags, types.Diagnostic{ /////////////////////// parse errors:
+			Severity: util.Pointer(uint(1)),                         // - the only error Diagnostic the server sends
+			Range:    types.RangeBetween(line, 0, line, lineLength), // - always highlights the whole line
+			Message:  astError.Message,
+			Source:   &key,
+			Code:     strings.ReplaceAll(astError.Code, "_", "-"),
 			CodeDescription: &types.CodeDescription{
 				Href: link,
 			},
@@ -347,26 +336,20 @@ func convertReportToDiagnostics(rpt *report.Report, workspaceRootURI string) map
 	return fileDiags
 }
 
-//nolint:gosec
 func getRangeForViolation(item report.Violation) types.Range {
-	start := types.Position{
-		Line:      uint(max(item.Location.Row-1, 0)),
-		Character: uint(max(item.Location.Column-1, 0)),
-	}
+	startLine, startChar := max(item.Location.Row-1, 0), max(item.Location.Column-1, 0)
 
-	end := types.Position{}
 	if item.Location.End != nil {
-		end.Line = uint(max(item.Location.End.Row-1, 0))
-		end.Character = uint(max(item.Location.End.Column-1, 0))
-	} else {
-		itemLen := 0
-		if item.Location.Text != nil {
-			itemLen = len(*item.Location.Text)
-		}
-
-		end.Line = start.Line
-		end.Character = start.Character + uint(itemLen)
+		return types.RangeBetween(
+			startLine, startChar,
+			max(item.Location.End.Row-1, 0), max(item.Location.End.Column-1, 0),
+		)
 	}
 
-	return types.Range{Start: start, End: end}
+	itemLen := 0
+	if item.Location.Text != nil {
+		itemLen = len(*item.Location.Text)
+	}
+
+	return types.RangeBetween(startLine, startChar, startLine, startChar+itemLen)
 }

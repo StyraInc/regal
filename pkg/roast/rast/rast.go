@@ -176,8 +176,7 @@ func StructToValue(input any) ast.Value {
 			parts := strings.Split(tag, ",")
 			tag = parts[0]
 
-			omitempty := slices.Contains(parts[1:], "omitempty")
-			if omitempty && isZeroValue(value) {
+			if omitempty := slices.Contains(parts[1:], "omitempty"); omitempty && isZeroValue(value) {
 				continue
 			}
 		}

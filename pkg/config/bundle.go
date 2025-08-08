@@ -1,9 +1,7 @@
 package config
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"dario.cat/mergo"
 
@@ -13,21 +11,19 @@ import (
 )
 
 func LoadConfigWithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Config) (Config, error) {
-	path := []string{"regal", "config", "provided"}
-
-	bundled, err := util.SearchMap(regalBundle.Data, path)
+	bundled, err := util.SearchMap(regalBundle.Data, "regal", "config", "provided")
 	if err != nil {
-		return Config{}, fmt.Errorf("config path not found %s: %w", strings.Join(path, "."), err)
+		panic(err)
 	}
 
 	bundledConf, ok := bundled.(map[string]any)
 	if !ok {
-		return Config{}, errors.New("expected 'rules' of object type")
+		panic("expected 'rules' of object type in default configuration")
 	}
 
 	defaultConfig, err := FromMap(bundledConf)
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to convert config from map: %w", err)
+		panic("failed to parse default conf")
 	}
 
 	if userConfig == nil {

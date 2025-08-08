@@ -9,30 +9,23 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/rego"
+	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
 )
 
 func TestBuiltIns_if(t *testing.T) {
 	t.Parallel()
 
+	fileContents := "package foo\n\nallow if c"
+
 	c := cache.NewCache()
-
-	fileContents := `package foo
-
-allow if c`
-
 	c.SetFileContents(testCaseFileURI, fileContents)
 
 	p := &BuiltIns{}
 
 	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 10, // is the c char that triggered the request
-		},
+		TextDocument: types.TextDocumentIdentifier{URI: testCaseFileURI},
+		Position:     types.Position{Line: 2, Character: 10}, // the c char that triggered the request
 	}
 
 	completions, err := p.Run(t.Context(), c, completionParams, &Options{
@@ -42,7 +35,7 @@ allow if c`
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	labels := completionLabels(completions)
+	labels := test.Labels(completions)
 
 	if !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
@@ -79,8 +72,7 @@ allow := c`
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	labels := completionLabels(completions)
-
+	labels := test.Labels(completions)
 	if !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
@@ -118,8 +110,7 @@ allow if {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	labels := completionLabels(completions)
-
+	labels := test.Labels(completions)
 	if !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
@@ -190,8 +181,7 @@ allow if c`
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	labels := completionLabels(completions)
-
+	labels := test.Labels(completions)
 	if slices.Contains(labels, "cast_set") {
 		t.Fatalf("Expected no deprecated completions, got: %s", strings.Join(labels, ", "))
 	}
@@ -230,13 +220,4 @@ default allow := f`
 	if len(completions) != 0 {
 		t.Fatalf("Expected no completions, got: %d", len(completions))
 	}
-}
-
-func completionLabels(completions []types.CompletionItem) []string {
-	labels := make([]string, len(completions))
-	for i, c := range completions {
-		labels[i] = c.Label
-	}
-
-	return labels
 }

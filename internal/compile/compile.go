@@ -3,6 +3,7 @@ package compile
 import (
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
@@ -34,10 +35,14 @@ func Capabilities() *ast.Capabilities {
 	return caps
 }
 
+func NewCompilerWithRegalBuiltins() *ast.Compiler {
+	return ast.NewCompiler().WithCapabilities(Capabilities())
+}
+
 // RegalSchemaSet returns a SchemaSet containing the Regal schemas embedded in the binary.
 // Currently only used by the test command. Should we want to expand the use of this later,
 // we'll probably want to only read the schemas relevant to the context.
-func RegalSchemaSet() *ast.SchemaSet {
+var RegalSchemaSet = sync.OnceValue(func() *ast.SchemaSet {
 	schemaSet, _ := files.DefaultWalkReducer("schemas", ast.NewSchemaSet()).
 		WithFilters(filter.Not(filter.Suffixes(".json"))).
 		ReduceFS(embeds.SchemasFS, func(path string, schemaSet *ast.SchemaSet) (*ast.SchemaSet, error) {
@@ -54,8 +59,4 @@ func RegalSchemaSet() *ast.SchemaSet {
 		})
 
 	return schemaSet
-}
-
-func NewCompilerWithRegalBuiltins() *ast.Compiler {
-	return ast.NewCompiler().WithCapabilities(Capabilities())
-}
+})

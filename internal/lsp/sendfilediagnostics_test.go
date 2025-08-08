@@ -1,14 +1,11 @@
 package lsp
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/sourcegraph/jsonrpc2"
-
+	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestSendFileDiagnosticsEmptyArrays replicates the scenario from
@@ -52,34 +49,18 @@ func TestSendFileDiagnosticsEmptyArrays(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := t.Context()
+			receivedDiagnostics := make(chan types.FileDiagnostics, 1)
+			clientHandler := test.HandlerFor(methodTdPublishDiagnostics, test.SendsToChannel(receivedDiagnostics))
 
 			fileURI := "file:///test.rego"
-			receivedDiagnostics := make(chan types.FileDiagnostics, 1)
-
-			clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-				if req.Method != methodTextDocumentPublishDiagnostics {
-					t.Fatalf("expected method %s, got %s", methodTextDocumentPublishDiagnostics, req.Method)
-				}
-
-				var requestData types.FileDiagnostics
-				if err := encoding.JSON().Unmarshal(*req.Params, &requestData); err != nil {
-					t.Fatalf("failed to unmarshal diagnostics: %s", err)
-				}
-
-				receivedDiagnostics <- requestData
-
-				return struct{}{}, nil
-			}
-
-			ls, _ := createAndInitServer(t, ctx, newTestLogger(t), t.TempDir(), clientHandler)
+			ls, _ := createAndInitServer(t, t.Context(), newTestLogger(t), t.TempDir(), clientHandler)
 
 			if tc.fileInCache {
 				ls.cache.SetParseErrors(fileURI, tc.parseErrors)
 				ls.cache.SetFileDiagnostics(fileURI, tc.lintErrors)
 			}
 
-			if err := ls.sendFileDiagnostics(ctx, fileURI); err != nil {
+			if err := ls.sendFileDiagnostics(t.Context(), fileURI); err != nil {
 				t.Fatalf("sendFileDiagnostics failed: %v", err)
 			}
 

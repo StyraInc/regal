@@ -4,24 +4,17 @@ import (
 	"testing"
 
 	"github.com/styrainc/regal/internal/parse"
+	"github.com/styrainc/regal/internal/testutil"
 )
 
 func TestCodeLenses(t *testing.T) {
 	t.Parallel()
 
-	contents := `package p
+	policy := "package p\n\nallow if \"foo\" in input.bar"
+	module := parse.MustParseModule(policy)
+	lenses := testutil.Must(CodeLenses(t.Context(), "p.rego", policy, module))(t)
 
-	allow if "foo" in input.bar`
-
-	module := parse.MustParseModule(contents)
-
-	lenses, er := CodeLenses(t.Context(), "p.rego", contents, module)
-	if er != nil {
-		t.Fatalf("unexpected error: %v", er)
-	}
-
-	// 2 for the package, 2 for the rule
-	// the contents of the lenses are tested in Rego
+	// 2 for the package, 2 for the rule, the contents of the lenses are tested in Rego
 	if len(lenses) != 4 {
 		t.Fatalf("expected 4 code lenses, got %d", len(lenses))
 	}
@@ -41,11 +34,7 @@ func TestAllRuleHeadLocations(t *testing.T) {
 	foo.bar[x] if x := 2`
 
 	module := parse.MustParseModule(contents)
-
-	ruleHeads, er := AllRuleHeadLocations(t.Context(), "p.rego", contents, module)
-	if er != nil {
-		t.Fatalf("unexpected error: %v", er)
-	}
+	ruleHeads := testutil.Must(AllRuleHeadLocations(t.Context(), "p.rego", contents, module))(t)
 
 	if len(ruleHeads) != 2 {
 		t.Fatalf("expected 2 code lenses, got %d", len(ruleHeads))
@@ -71,11 +60,7 @@ func TestAllKeywords(t *testing.T) {
 	`
 
 	module := parse.MustParseModule(contents)
-
-	keywords, er := AllKeywords(t.Context(), "p.rego", contents, module)
-	if er != nil {
-		t.Fatalf("unexpected error: %v", er)
-	}
+	keywords := testutil.Must(AllKeywords(t.Context(), "p.rego", contents, module))(t)
 
 	// this is "lines with keywords", not number of keywords
 	if len(keywords) != 3 {

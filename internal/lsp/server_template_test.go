@@ -21,6 +21,11 @@ import (
 	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 )
 
+type message struct {
+	method string
+	bytes  []byte
+}
+
 func TestTemplateContentsForFile(t *testing.T) {
 	t.Parallel()
 
@@ -105,15 +110,13 @@ func TestTemplateContentsForFile(t *testing.T) {
 			t.Parallel()
 
 			td := testutil.TempDirectoryOf(t, tc.DiskContents)
-			logger := newTestLogger(t)
 
 			ls := NewLanguageServer(
 				t.Context(),
-				&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+				&LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug},
 			)
 
 			ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
-
 			ls.loadedConfigAllRegoVersions = tc.ServerAllRegoVersions
 
 			fileURI := uri.FromPath(clients.IdentifierGeneric, filepath.Join(td, tc.FileKey))
@@ -212,15 +215,9 @@ func TestNewFileTemplating(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	receivedMessages := make(chan []byte, 10)
-
-	ls, connClient := createAndInitServer(
-		t,
-		ctx,
-		newTestLogger(t),
-		tempDir,
-		createTemplateTestClientHandler(t, receivedMessages),
-	)
+	receivedMessages := make(chan message, 10)
+	handler := createTemplateTestClientHandler(t, receivedMessages)
+	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, handler)
 
 	go ls.StartTemplateWorker(ctx)
 
@@ -310,10 +307,16 @@ func TestNewFileTemplating(t *testing.T) {
 	for success := false; !success; {
 		select {
 		case msg := <-receivedMessages:
-			t.Log("received message:", string(msg))
+			if msg.method != "workspace/applyEdit" {
+				t.Logf("waiting for 'workspace/applyEdit' message, got %s, keep waiting", msg.method)
+
+				continue
+			}
+
+			t.Log("received message:", string(msg.bytes))
 
 			expectedLines := strings.Split(expectedMessage, "\n")
-			gotLines := strings.Split(string(msg), "\n")
+			gotLines := strings.Split(string(msg.bytes), "\n")
 
 			if len(gotLines) != len(expectedLines) {
 				t.Logf("expected message to have %d lines, got %d", len(expectedLines), len(gotLines))
@@ -357,7 +360,7 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	receivedMessages := make(chan []byte, 10)
+	receivedMessages := make(chan message, 10)
 
 	ls, connClient := createAndInitServer(
 		t,
@@ -492,7 +495,7 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 
 func createTemplateTestClientHandler(
 	t *testing.T,
-	receivedMessages chan []byte,
+	receivedMessages chan message,
 ) func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	t.Helper()
 
@@ -502,7 +505,10 @@ func createTemplateTestClientHandler(
 			t.Fatalf("failed to marshal params: %s", err)
 		}
 
-		receivedMessages <- bs
+		receivedMessages <- message{
+			method: req.Method,
+			bytes:  bs,
+		}
 
 		return struct{}{}, nil
 	}

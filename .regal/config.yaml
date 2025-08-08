@@ -35,6 +35,7 @@ rules:
       except-paths:
         - data.eval.**
         - data.internal**
+        - data.schema.**
         - data.workspace.**
         - data.regal.config.provided**
         - data.custom.regal**

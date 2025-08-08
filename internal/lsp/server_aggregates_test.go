@@ -40,7 +40,7 @@ import rego.v1
 	logger := newTestLogger(t)
 	tempDir := testutil.TempDirectoryOf(t, files)
 	messages := createMessageChannels(files)
-	clientHandler := createClientHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -167,7 +167,7 @@ package bar
 
 	messages := createMessageChannels(files)
 	logger := newTestLogger(t)
-	clientHandler := createClientHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -352,7 +352,7 @@ import rego.v1
 	logger := newTestLogger(t)
 	tempDir := testutil.TempDirectoryOf(t, files)
 	messages := createMessageChannels(files)
-	clientHandler := createClientHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())

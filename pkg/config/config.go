@@ -486,7 +486,7 @@ func (config Config) MarshalYAML() (any, error) {
 		delete(unstructuredConfig, keyIgnore)
 	}
 
-	if config.CapabilitiesURL == "" || config.CapabilitiesURL == "regal:///capabilities/default" {
+	if config.CapabilitiesURL == "" || config.CapabilitiesURL == capabilities.DefaultURL {
 		delete(unstructuredConfig, "capabilities_url")
 	}
 
@@ -628,7 +628,7 @@ func (config *Config) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	if capabilitiesEngine == "" && capabilitiesFile == "" && capabilitiesURL == "" {
-		capabilitiesURL = "regal:///capabilities/default"
+		capabilitiesURL = capabilities.DefaultURL
 	}
 
 	opaCaps, err := capabilities.Lookup(context.Background(), capabilitiesURL)
@@ -705,8 +705,7 @@ func extractRules(config *Config, result *marshallingIntermediary) error {
 func extractDefaults(c *Config, result *marshallingIntermediary) error {
 	c.Defaults.Categories = make(map[string]Default)
 
-	rawGlobalDefault, ok := result.Rules["default"]
-	if ok {
+	if rawGlobalDefault, ok := result.Rules["default"]; ok {
 		if err := c.Defaults.Global.mapToConfig(rawGlobalDefault); err != nil {
 			return fmt.Errorf("unmarshalling global defaults failed: %w", err)
 		}

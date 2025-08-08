@@ -12,30 +12,15 @@ import (
 	"github.com/styrainc/regal/internal/lsp/types/symbols"
 )
 
-func documentSymbols(
-	contents string,
-	module *ast.Module,
-	builtins map[string]*ast.Builtin,
-) []types.DocumentSymbol {
+func documentSymbols(contents string, module *ast.Module, builtins map[string]*ast.Builtin) []types.DocumentSymbol {
 	// Only pkgSymbols would likely suffice, but we're keeping docSymbols around in case
 	// we ever want to add more top-level symbols than the package.
 	docSymbols := make([]types.DocumentSymbol, 0)
 	pkgSymbols := make([]types.DocumentSymbol, 0)
 
 	lines := strings.Split(contents, "\n")
-
-	//nolint:gosec
-	pkgRange := types.Range{
-		Start: types.Position{Line: 0, Character: 0},
-		End:   types.Position{Line: uint(len(lines) - 1), Character: uint(len(lines[len(lines)-1]))},
-	}
-
-	pkg := types.DocumentSymbol{
-		Name:           module.Package.Path.String(),
-		Kind:           symbols.Package,
-		Range:          pkgRange,
-		SelectionRange: pkgRange,
-	}
+	pkgRange := types.RangeBetween(0, 0, len(lines)-1, len(lines[len(lines)-1]))
+	pkg := documentSymbol(module.Package.Path.String(), symbols.Package, pkgRange)
 
 	// Create groups of rules and functions sharing the same name
 	ruleGroups := make(map[string][]*ast.Rule, len(module.Rules))
@@ -56,13 +41,7 @@ func documentSymbols(
 				kind = symbols.Function
 			}
 
-			ruleRange := locationToRange(rule.Location)
-			ruleSymbol := types.DocumentSymbol{
-				Name:           rule.Head.Ref().String(),
-				Kind:           kind,
-				Range:          ruleRange,
-				SelectionRange: ruleRange,
-			}
+			ruleSymbol := documentSymbol(rule.Head.Ref().String(), kind, locationToRange(rule.Location))
 
 			if detail := rast.GetRuleDetail(rule, builtins); detail != "" {
 				ruleSymbol.Detail = &detail
@@ -72,42 +51,25 @@ func documentSymbols(
 		} else {
 			groupFirstRange := locationToRange(rules[0].Location)
 			groupLastRange := locationToRange(rules[len(rules)-1].Location)
-
-			groupRange := types.Range{
-				Start: groupFirstRange.Start,
-				End:   groupLastRange.End,
-			}
+			groupRange := types.Range{Start: groupFirstRange.Start, End: groupLastRange.End}
 
 			kind := symbols.Variable
 			if rules[0].Head.Args != nil {
 				kind = symbols.Function
 			}
 
-			groupSymbol := types.DocumentSymbol{
-				Name:           rules[0].Head.Ref().String(),
-				Kind:           kind,
-				Range:          groupRange,
-				SelectionRange: groupRange,
-			}
+			groupSymbol := documentSymbol(rules[0].Head.Ref().String(), kind, groupRange)
 
-			detail := rast.GetRuleDetail(rules[0], builtins)
-			if detail != "" {
+			if detail := rast.GetRuleDetail(rules[0], builtins); detail != "" {
 				groupSymbol.Detail = &detail
 			}
 
 			children := make([]types.DocumentSymbol, 0, len(rules))
 
 			for i, rule := range rules {
-				childRange := locationToRange(rule.Location)
-				childRule := types.DocumentSymbol{
-					Name:           fmt.Sprintf("#%d", i+1),
-					Kind:           kind,
-					Range:          childRange,
-					SelectionRange: childRange,
-				}
+				childRule := documentSymbol(fmt.Sprintf("#%d", i+1), kind, locationToRange(rule.Location))
 
-				childDetail := rast.GetRuleDetail(rule, builtins)
-				if childDetail != "" {
+				if childDetail := rast.GetRuleDetail(rule, builtins); childDetail != "" {
 					childRule.Detail = &childDetail
 				}
 
@@ -138,16 +100,7 @@ func locationToRange(location *ast.Location) types.Range {
 		endLine += uint(len(lines) - 1)
 	}
 
-	return types.Range{
-		Start: types.Position{
-			Line:      uint(location.Row - 1),
-			Character: uint(location.Col - 1),
-		},
-		End: types.Position{
-			Line:      endLine,
-			Character: uint(len(lines[len(lines)-1])),
-		},
-	}
+	return types.RangeBetween(location.Row-1, location.Col-1, endLine, len(lines[len(lines)-1]))
 }
 
 func toWorkspaceSymbol(docSym types.DocumentSymbol, docURL string) types.WorkspaceSymbol {
@@ -172,5 +125,14 @@ func toWorkspaceSymbols(docSym []types.DocumentSymbol, docURL string, symbols *[
 				toWorkspaceSymbols(*sym.Children, docURL, symbols)
 			}
 		}
+	}
+}
+
+func documentSymbol(name string, kind symbols.SymbolKind, rang types.Range) types.DocumentSymbol {
+	return types.DocumentSymbol{
+		Name:           name,
+		Kind:           kind,
+		Range:          rang,
+		SelectionRange: rang,
 	}
 }

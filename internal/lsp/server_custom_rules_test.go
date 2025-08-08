@@ -50,7 +50,7 @@ allow if {
 
 	logger := newTestLogger(t)
 	messages := createMessageChannels(files)
-	clientHandler := createClientHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()

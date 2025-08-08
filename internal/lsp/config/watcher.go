@@ -73,8 +73,6 @@ func (w *Watcher) Stop() error {
 		if err := w.fsWatcher.Close(); err != nil {
 			return fmt.Errorf("failed to close fsnotify watcher: %w", err)
 		}
-
-		return nil
 	}
 
 	return nil

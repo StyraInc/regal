@@ -3,12 +3,18 @@ package providers
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
+)
+
+var (
+	patternWhiteSpace = regexp.MustCompile(`\s+`)
+	patternRuleBody   = regexp.MustCompile(`^\s+`)
 )
 
 type BuiltIns struct{}
@@ -31,11 +37,7 @@ func (*BuiltIns) Run(
 
 	lines, currentLine := completionLineHelper(c, fileURI, params.Position.Line)
 
-	if len(lines) < 1 || currentLine == "" {
-		return []types.CompletionItem{}, nil
-	}
-
-	if !inRuleBody(currentLine) {
+	if len(lines) < 1 || currentLine == "" || !inRuleBody(currentLine) {
 		return []types.CompletionItem{}, nil
 	}
 
@@ -46,21 +48,12 @@ func (*BuiltIns) Run(
 
 	words := patternWhiteSpace.Split(strings.TrimSpace(currentLine), -1)
 	lastWord := words[len(words)-1]
-
-	items := []types.CompletionItem{}
+	items := make([]types.CompletionItem, 0, len(opts.Builtins))
 
 	for _, builtIn := range opts.Builtins {
 		key := builtIn.Name
 
-		if builtIn.Infix != "" {
-			continue
-		}
-
-		if builtIn.IsDeprecated() {
-			continue
-		}
-
-		if !strings.HasPrefix(key, lastWord) {
+		if builtIn.Infix != "" || builtIn.IsDeprecated() || !strings.HasPrefix(key, lastWord) {
 			continue
 		}
 
@@ -73,20 +66,34 @@ func (*BuiltIns) Run(
 				Value: hover.CreateHoverContent(builtIn),
 			},
 			TextEdit: &types.TextEdit{
-				Range: types.Range{
-					Start: types.Position{
-						Line:      params.Position.Line,
-						Character: params.Position.Character - uint(len(lastWord)),
-					},
-					End: types.Position{
-						Line:      params.Position.Line,
-						Character: params.Position.Character,
-					},
-				},
+				Range: types.RangeBetween(
+					params.Position.Line,
+					params.Position.Character-uint(len(lastWord)),
+					params.Position.Line,
+					params.Position.Character,
+				),
 				NewText: key,
 			},
 		})
 	}
 
 	return items, nil
+}
+
+// inRuleBody is a best-effort helper to determine if the current line is in a rule body.
+func inRuleBody(currentLine string) bool {
+	switch {
+	case strings.Contains(currentLine, " if "):
+		return true
+	case strings.Contains(currentLine, " contains "):
+		return true
+	case strings.Contains(currentLine, " else "):
+		return true
+	case strings.Contains(currentLine, "= "):
+		return true
+	case patternRuleBody.MatchString(currentLine):
+		return true
+	}
+
+	return false
 }

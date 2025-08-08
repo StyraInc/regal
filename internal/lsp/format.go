@@ -39,18 +39,12 @@ func ComputeEdits(before, after string) []types.TextEdit {
 		switch op.Kind {
 		case Delete:
 			// Delete: unformatted[i1:i2] is deleted.
-			edits = append(edits, types.TextEdit{Range: types.Range{
-				Start: types.Position{Line: op.I1, Character: 0},
-				End:   types.Position{Line: op.I2, Character: 0},
-			}})
+			edits = append(edits, types.TextEdit{Range: types.RangeBetween(op.I1, 0, op.I2, 0)})
 		case Insert:
 			// Insert: formatted[j1:j2] is inserted at unformatted[i1:i1].
 			if content := strings.Join(op.Content, ""); content != "" {
 				edits = append(edits, types.TextEdit{
-					Range: types.Range{
-						Start: types.Position{Line: op.I1, Character: 0},
-						End:   types.Position{Line: op.I2, Character: 0},
-					},
+					Range:   types.RangeBetween(op.I1, 0, op.I1, 0),
 					NewText: content,
 				})
 			}

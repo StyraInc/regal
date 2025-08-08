@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/open-policy-agent/opa/v1/util"
+
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/types/completion"
@@ -108,24 +110,12 @@ func (*PackageRefs) Run(
 
 		for _, item := range itemsForDepth {
 			items = append(items, types.CompletionItem{
-				Label:  item.Label,
-				Kind:   completion.Module, // for now, only modules are returned
-				Detail: "Rego package",
-				Documentation: &types.MarkupContent{
-					Kind:  "markdown",
-					Value: item.Description,
-				},
+				Label:         item.Label,
+				Kind:          completion.Module, // for now, only modules are returned
+				Detail:        "Rego package",
+				Documentation: &types.MarkupContent{Kind: "markdown", Value: item.Description},
 				TextEdit: &types.TextEdit{
-					Range: types.Range{
-						Start: types.Position{
-							Line:      params.Position.Line,
-							Character: 7,
-						},
-						End: types.Position{
-							Line:      params.Position.Line,
-							Character: uint(len(currentLine)),
-						},
-					},
+					Range:   types.RangeBetween(params.Position.Line, 7, params.Position.Line, len(currentLine)),
 					NewText: item.Label,
 				},
 			})
@@ -133,4 +123,23 @@ func (*PackageRefs) Run(
 	}
 
 	return items, nil
+}
+
+// groupKeyedRefsByDepth groups refs by their 'depth', where depth is the number of dots in the key.
+// This is helpful when attempting to show shorter, higher level keys before longer, lower level keys.
+func groupKeyedRefsByDepth(refs map[string]types.Ref) ([]int, map[int]map[string]types.Ref) {
+	byDepth := make(map[int]map[string]types.Ref)
+
+	for key, item := range refs {
+		depth := strings.Count(key, ".")
+
+		if _, ok := byDepth[depth]; !ok {
+			byDepth[depth] = make(map[string]types.Ref)
+		}
+
+		byDepth[depth][key] = item
+	}
+
+	// items from higher depths should be shown first
+	return util.KeysSorted(byDepth), byDepth
 }

@@ -76,3 +76,16 @@ another if {
 
 	r == want
 }
+
+test_word_at if {
+	line := "foo bar here baz qux"
+	word := location.word_at(line, 12) # col after 'r' in 'here'
+
+	word == {
+		"text_before": "foo bar ",
+		"text_after": " baz qux",
+		"offset_before": 3,
+		"offset_after": 1,
+		"text": "here",
+	}
+}

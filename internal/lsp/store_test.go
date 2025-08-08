@@ -21,15 +21,14 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	t.Parallel()
 
 	store := NewRegalStore()
-	ctx := t.Context()
 	fileURI := "file:///example.rego"
 	module := parse.MustParseModule("package example\n\nrule := true")
 
-	if err := PutFileMod(ctx, store, fileURI, module); err != nil {
+	if err := PutFileMod(t.Context(), store, fileURI, module); err != nil {
 		t.Fatalf("PutFileMod failed: %v", err)
 	}
 
-	parsed, err := storage.ReadOne(ctx, store, storage.Path{"workspace", "parsed", fileURI})
+	parsed, err := storage.ReadOne(t.Context(), store, storage.Path{"workspace", "parsed", fileURI})
 	if err != nil {
 		t.Fatalf("store.Read failed: %v", err)
 	}
@@ -99,14 +98,13 @@ func TestPutFileRefs(t *testing.T) {
 	t.Parallel()
 
 	store := NewRegalStore()
-	ctx := t.Context()
 	fileURI := "file:///example.rego"
 
-	if err := PutFileRefs(ctx, store, fileURI, []string{"foo", "bar"}); err != nil {
+	if err := PutFileRefs(t.Context(), store, fileURI, []string{"foo", "bar"}); err != nil {
 		t.Fatalf("PutFileRefs failed: %v", err)
 	}
 
-	value, err := storage.ReadOne(ctx, store, storage.Path{"workspace", "defined_refs", fileURI})
+	value, err := storage.ReadOne(t.Context(), store, storage.Path{"workspace", "defined_refs", fileURI})
 	if err != nil {
 		t.Fatalf("store.Read failed: %v", err)
 	}
@@ -117,7 +115,6 @@ func TestPutFileRefs(t *testing.T) {
 	}
 
 	expected := ast.NewArray(ast.StringTerm("foo"), ast.StringTerm("bar"))
-
 	if !expected.Equal(arr) {
 		t.Errorf("expected %v, got %v", expected, arr)
 	}

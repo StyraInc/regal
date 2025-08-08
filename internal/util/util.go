@@ -24,7 +24,7 @@ func NullToEmpty[T any](a []T) []T {
 }
 
 // SearchMap searches map for value at provided path.
-func SearchMap(object map[string]any, path []string) (any, error) {
+func SearchMap(object map[string]any, path ...string) (any, error) {
 	current := object
 	traversed := make([]string, 0, len(path))
 
@@ -223,11 +223,37 @@ func EnsureSuffix(s, suf string) string {
 	return s
 }
 
+// IsAnyError checks if the provided error "Is" any of the provided errors.
+func IsAnyError(err error, errs ...error) bool {
+	if err != nil {
+		for _, e := range errs {
+			if errors.Is(err, e) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // HasAnySuffix checks if the string s has any of the provided suffixes.
 func HasAnySuffix(s string, suffixes ...string) bool {
-	return slices.ContainsFunc(suffixes, func(suffix string) bool {
-		return strings.HasSuffix(s, suffix)
-	})
+	return slices.ContainsFunc(suffixes, Partial2(strings.HasSuffix, s))
+}
+
+// Partial2 is a helper function that partially applies the first argument
+// of a two-argument function, returning a new function taking the second argument.
+func Partial2[T, U, R any](f func(a T, b U) R, a T) func(b U) R {
+	return func(b U) R {
+		return f(a, b)
+	}
+}
+
+// EqualsAny checks if the provided value is equal to any of the values in the slice.
+func EqualsAny[T comparable](a ...T) func(T) bool {
+	return func(b T) bool {
+		return slices.Contains(a, b)
+	}
 }
 
 // SafeIntToUint will convert an int to a uint, clamping negative values to 0.

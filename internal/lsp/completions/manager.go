@@ -34,8 +34,6 @@ func NewDefaultManager(ctx context.Context, c *cache.Cache, store storage.Store)
 
 	m.RegisterProvider(&providers.BuiltIns{})
 	m.RegisterProvider(&providers.PackageRefs{})
-	m.RegisterProvider(&providers.RuleHead{})
-	m.RegisterProvider(&providers.RuleHeadKeyword{})
 
 	m.RegisterProvider(providers.NewPolicy(ctx, store))
 

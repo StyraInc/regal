@@ -18,9 +18,10 @@ items contains item if {
 	not _excluded(line, position)
 
 	word := location.word_at(line, input.regal.context.location.col)
-	parsed_current_file := data.workspace.parsed[input.regal.file.uri]
 
-	some local in location.find_locals(parsed_current_file.rules, input.regal.context.location)
+	not endswith(word.text_before, ".")
+
+	some local in location.find_locals(data.workspace.parsed[input.regal.file.uri].rules, input.regal.context.location)
 
 	startswith(local, word.text)
 

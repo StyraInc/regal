@@ -21,7 +21,6 @@ func (u *NonRawRegexPattern) Fix(fc *FixCandidate, opts *RuntimeOptions) ([]FixR
 	}
 
 	lines := strings.Split(fc.Contents, "\n")
-
 	fileChanged := false
 
 	for _, loc := range opts.Locations {

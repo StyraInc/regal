@@ -9,10 +9,10 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
+	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestLanguageServerParentDirConfig tests that regal config is loaded as it is for the
@@ -54,23 +54,7 @@ allow := true
 	defer cancel()
 
 	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method == methodTextDocumentPublishDiagnostics {
-			var requestData types.FileDiagnostics
-
-			if err2 := encoding.JSON().Unmarshal(*req.Params, &requestData); err2 != nil {
-				t.Fatalf("failed to unmarshal diagnostics: %s", err2)
-			}
-
-			receivedMessages <- requestData
-
-			return struct{}{}, nil
-		}
-
-		t.Logf("unexpected request from server: %v", req)
-
-		return struct{}{}, nil
-	}
+	clientHandler := test.HandlerFor(methodTdPublishDiagnostics, test.SendsToChannel(receivedMessages))
 
 	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 
@@ -174,12 +158,10 @@ rules:
 
 	// this event is sent to allow the server to detect the new config
 	if err := connClient.Notify(ctx, "workspace/didChangeWatchedFiles", types.WorkspaceDidChangeWatchedFilesParams{
-		Changes: []types.FileEvent{
-			{
-				URI:  fileURIScheme + filepath.Join(tempDir, ".regal", "config.yaml"),
-				Type: 1, // created
-			},
-		},
+		Changes: []types.FileEvent{{
+			URI:  fileURIScheme + filepath.Join(tempDir, ".regal", "config.yaml"),
+			Type: 1, // created
+		}},
 	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}

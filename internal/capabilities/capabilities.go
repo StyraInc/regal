@@ -24,6 +24,8 @@ import (
 const (
 	engineOPA  = "opa"
 	engineEOPA = "eopa"
+
+	DefaultURL = "regal:///capabilities/default"
 )
 
 var driveLetterPattern = regexp.MustCompile(`^\/[a-zA-Z]:`)

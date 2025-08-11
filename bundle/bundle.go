@@ -17,7 +17,6 @@ import (
 var (
 	//go:embed *
 	regalBundle    embed.FS
-	devPath        = os.Getenv("REGAL_BUNDLE_PATH")
 	lastErrMsg     = atomic.Pointer[string]{}
 	EmbeddedBundle = sync.OnceValue(func() *bundle.Bundle {
 		return rio.MustLoadRegalBundleFS(regalBundle)
@@ -25,12 +24,25 @@ var (
 	successLogOnce = sync.OnceFunc(func() {
 		fmt.Fprintln(os.Stderr, "Successfully loaded development bundle")
 	})
+	Dev = &DevSettings{}
 )
 
-func init() {
-	if devPath != "" {
-		fmt.Fprintln(os.Stderr, "REGAL_BUNDLE_PATH set. Will attempt using development bundle from:", devPath)
-	}
+type DevSettings struct {
+	bundlePath string
+	mux        sync.RWMutex
+}
+
+func (ds *DevSettings) SetBundlePath(path string) {
+	ds.mux.Lock()
+	ds.bundlePath = path
+	ds.mux.Unlock()
+}
+
+func (ds *DevSettings) BundlePath() string {
+	ds.mux.RLock()
+	defer ds.mux.RUnlock()
+
+	return ds.bundlePath
 }
 
 // LoadedBundle contains the Regal bundle.
@@ -39,7 +51,7 @@ func LoadedBundle() *bundle.Bundle {
 	// of the normal one embedded in the compiled binary. This allows editing e.g.
 	// LSP policies while the language server is running. This should be considered
 	// *very* experimental at this point.
-	if devPath != "" {
+	if devPath := Dev.BundlePath(); devPath != "" {
 		b, err := rio.LoadRegalBundlePath(devPath)
 		if err == nil {
 			if last := lastErrMsg.Load(); last != nil {

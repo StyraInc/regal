@@ -176,6 +176,32 @@ allow if {
 	util.single_set_item(items).label == "xyz"
 }
 
+test_no_locals_in_completion_items_following_period if {
+	workspace := {"file:///p.rego": `package policy
+
+no_completion if {
+	variable := "foo"
+	input
+}
+`}
+
+	regal_module := {"regal": {
+		"file": {
+			"name": "p.rego",
+			"uri": "file:///p.rego",
+			"lines": split(replace(workspace["file:///p.rego"], "input", "input."), "\n"),
+		},
+		"context": {"location": {
+			"row": 5,
+			"col": 8,
+		}},
+	}}
+
+	items := provider.items with input as regal_module with data.workspace.parsed as utils.parsed_modules(workspace)
+
+	count(items) == 0
+}
+
 _expect_item(items, label, range) if {
 	expected := {"detail": "local variable", "kind": 6}
 

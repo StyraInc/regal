@@ -13,8 +13,6 @@ import (
 func TestFormatting(t *testing.T) {
 	t.Parallel()
 
-	tempDir := t.TempDir()
-
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -25,14 +23,12 @@ func TestFormatting(t *testing.T) {
 		return struct{}{}, nil
 	}
 
+	tempDir := t.TempDir()
 	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
 	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main", "main.rego")
 
 	// Simple as possible — opa fmt should just remove a newline
-	content := `package main
-
-`
-	ls.cache.SetFileContents(mainRegoURI, content)
+	ls.cache.SetFileContents(mainRegoURI, "package main\n\n")
 
 	params := types.DocumentFormattingParams{
 		TextDocument: types.TextDocumentIdentifier{URI: mainRegoURI},
@@ -49,10 +45,7 @@ func TestFormatting(t *testing.T) {
 			t.Fatalf("expected 1 edit, got %d", len(edits))
 		}
 
-		expectRange := types.Range{
-			Start: types.Position{Line: 1, Character: 0},
-			End:   types.Position{Line: 2, Character: 0},
-		}
+		expectRange := types.RangeBetween(1, 0, 2, 0)
 
 		if edits[0].Range != expectRange {
 			t.Fatalf("expected range to be %v, got %v", expectRange, edits[0].Range)

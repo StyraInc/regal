@@ -17,19 +17,20 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/styrainc/regal/internal/lsp/handler"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
-const mainRegoFileName = "/main.rego"
-
-// defaultTimeout is set based on the investigation done as part of
-// https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
-// maximum time observed for an operation to complete.
-const defaultTimeout = 20 * time.Second
-
-const defaultBufferedChannelSize = 5
+const (
+	mainRegoFileName = "/main.rego"
+	fileURIScheme    = "file://"
+	// defaultTimeout is set based on the investigation done as part of
+	// https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
+	// maximum time observed for an operation to complete.
+	defaultTimeout             = 20 * time.Second
+	defaultBufferedChannelSize = 5
+)
 
 // determineTimeout returns a timeout duration based on whether
 // the test suite is running with race detection, if so, a more permissive
@@ -43,8 +44,6 @@ func determineTimeout() time.Duration {
 
 	return defaultTimeout
 }
-
-const fileURIScheme = "file://"
 
 // NewTestLogger returns an io.Writer that logs to the given testing.T.
 // This is helpful as it can be used to have the server log to the test logger
@@ -159,7 +158,7 @@ func createAndInitServer(
 	return ls, connClient
 }
 
-func createClientHandler(
+func createPublishDiagnosticsHandler(
 	t *testing.T,
 	logger io.Writer,
 	messages map[string]chan []string,
@@ -167,36 +166,31 @@ func createClientHandler(
 	t.Helper()
 
 	return func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method != "textDocument/publishDiagnostics" {
+		if req.Method != methodTdPublishDiagnostics {
 			fmt.Fprintln(logger, "createClientHandler: unexpected request method:", req.Method)
 
 			return struct{}{}, nil
 		}
 
-		var requestData types.FileDiagnostics
+		return handler.WithParams(req, func(params types.FileDiagnostics) (any, error) {
+			violations := make([]string, len(params.Items))
+			for i, item := range params.Items {
+				violations[i] = item.Code
+			}
 
-		err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-		if err != nil {
-			t.Fatalf("failed to unmarshal diagnostics: %s", err)
-		}
+			slices.Sort(violations)
 
-		violations := make([]string, len(requestData.Items))
-		for i, item := range requestData.Items {
-			violations[i] = item.Code
-		}
+			fileBase := filepath.Base(params.URI)
+			fmt.Fprintln(logger, "createPublishDiagnosticsHandler: queue", fileBase, len(messages[fileBase]))
 
-		slices.Sort(violations)
+			select {
+			case messages[fileBase] <- violations:
+			case <-time.After(1 * time.Second):
+				t.Fatalf("timeout writing to messages channel for %s", fileBase)
+			}
 
-		fileBase := filepath.Base(requestData.URI)
-		fmt.Fprintln(logger, "createClientHandler: queue", fileBase, len(messages[fileBase]))
-
-		select {
-		case messages[fileBase] <- violations:
-		case <-time.After(1 * time.Second):
-			t.Fatalf("timeout writing to messages channel for %s", fileBase)
-		}
-
-		return struct{}{}, nil
+			return struct{}{}, nil
+		})
 	}
 }
 

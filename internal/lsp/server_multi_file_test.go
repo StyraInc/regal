@@ -57,7 +57,7 @@ ignore:
 
 	logger := newTestLogger(t)
 	messages := createMessageChannels(files)
-	clientHandler := createClientHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())

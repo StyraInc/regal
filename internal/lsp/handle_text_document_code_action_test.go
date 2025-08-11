@@ -17,29 +17,18 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 	webServer := &web.Server{}
 	webServer.SetBaseURL("http://foo.bar")
 
-	l := &LanguageServer{
-		clientIdentifier: clients.IdentifierGeneric,
-		webServer:        webServer,
-	}
-
-	uri := "file:///example.rego"
+	l := &LanguageServer{clientIdentifier: clients.IdentifierGeneric, webServer: webServer}
 
 	diag := types.Diagnostic{
 		Code:    ruleNameUseAssignmentOperator,
 		Message: "foobar",
-		Range: types.Range{
-			Start: types.Position{Line: 2, Character: 4},
-			End:   types.Position{Line: 2, Character: 10},
-		},
+		Range:   types.RangeBetween(2, 4, 2, 10),
 	}
 
 	params := types.CodeActionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: uri},
+		TextDocument: types.TextDocumentIdentifier{URI: "file:///example.rego"},
 		Context:      types.CodeActionContext{Diagnostics: []types.Diagnostic{diag}},
-		Range: types.Range{
-			Start: types.Position{Line: 2, Character: 4},
-			End:   types.Position{Line: 2, Character: 10},
-		},
+		Range:        types.RangeBetween(2, 4, 2, 10),
 	}
 
 	expectedAction := types.CodeAction{
@@ -52,13 +41,13 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 			Command: "regal.fix.use-assignment-operator",
 			Tooltip: "Replace = with := in assignment",
 			Arguments: toAnySlice(string(util.Must(encoding.JSON().Marshal(commandArgs{
-				Target:     uri,
+				Target:     params.TextDocument.URI,
 				Diagnostic: &diag,
 			})))),
 		},
 	}
 
-	actualAction := invokeHandleTextDocumentCodeAction(t, l, params)
+	actualAction := invokeCodeActionHandler(t, l, params)
 
 	assertExpectedCodeAction(t, expectedAction, actualAction)
 
@@ -95,15 +84,10 @@ func TestHandleTextDocumentCodeActionSourceExplorer(t *testing.T) {
 		workspaceRootURI:            "file:///foo",
 	}
 
-	uri := "file:///foo/example.rego"
-
 	params := types.CodeActionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: uri},
+		TextDocument: types.TextDocumentIdentifier{URI: "file:///foo/example.rego"},
 		Context:      types.CodeActionContext{},
-		Range: types.Range{
-			Start: types.Position{Line: 2, Character: 4},
-			End:   types.Position{Line: 2, Character: 10},
-		},
+		Range:        types.RangeBetween(2, 4, 2, 10),
 	}
 
 	expectedAction := types.CodeAction{
@@ -117,7 +101,7 @@ func TestHandleTextDocumentCodeActionSourceExplorer(t *testing.T) {
 		},
 	}
 
-	actualAction := invokeHandleTextDocumentCodeAction(t, l, params)
+	actualAction := invokeCodeActionHandler(t, l, params)
 
 	assertExpectedCodeAction(t, expectedAction, actualAction)
 
@@ -170,9 +154,7 @@ func assertExpectedCodeAction(t *testing.T, expected, actual types.CodeAction) {
 	}
 }
 
-func invokeHandleTextDocumentCodeAction(
-	t *testing.T, l *LanguageServer, params types.CodeActionParams,
-) types.CodeAction {
+func invokeCodeActionHandler(t *testing.T, l *LanguageServer, params types.CodeActionParams) types.CodeAction {
 	t.Helper()
 
 	result, err := l.handleTextDocumentCodeAction(t.Context(), params)
@@ -208,16 +190,11 @@ func BenchmarkHandleTextDocumentCodeAction(b *testing.B) {
 	params := types.CodeActionParams{
 		TextDocument: types.TextDocumentIdentifier{URI: "file:///example.rego"},
 		Context: types.CodeActionContext{
-			Diagnostics: []types.Diagnostic{
-				{
-					Code:    ruleNameUseAssignmentOperator,
-					Message: "foobar",
-					Range: types.Range{
-						Start: types.Position{Line: 2, Character: 4},
-						End:   types.Position{Line: 2, Character: 10},
-					},
-				},
-			},
+			Diagnostics: []types.Diagnostic{{
+				Code:    ruleNameUseAssignmentOperator,
+				Message: "foobar",
+				Range:   types.RangeBetween(2, 4, 2, 10),
+			}},
 		},
 	}
 

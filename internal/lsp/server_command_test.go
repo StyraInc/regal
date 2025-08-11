@@ -50,15 +50,10 @@ allow if {
 		},
 		"IntelliJ client": {
 			clientName: "IntelliJ IDEA 2024.2.5",
-			expectedEdits: []types.TextEdit{
-				{
-					Range: types.Range{
-						Start: types.Position{Line: 0, Character: 0},
-						End:   types.Position{Line: 11, Character: 0},
-					},
-					NewText: expectedFormattedContent,
-				},
-			},
+			expectedEdits: []types.TextEdit{{
+				Range:   types.RangeBetween(0, 0, 11, 0),
+				NewText: expectedFormattedContent,
+			}},
 		},
 	}
 
@@ -83,8 +78,7 @@ allow if {
 					if req.Method == "workspace/applyEdit" {
 						var requestData types.ApplyWorkspaceEditParams
 
-						err = encoding.JSON().Unmarshal(*req.Params, &requestData)
-						if err != nil {
+						if err = encoding.JSON().Unmarshal(*req.Params, &requestData); err != nil {
 							t.Fatalf("failed to unmarshal applyEdit params: %s", err)
 						}
 
@@ -119,8 +113,7 @@ allow if {
 			var executeResponse any
 
 			// simulates a manual fmt request from the client
-			err := connClient.Call(ctx, "workspace/executeCommand", executeParams, &executeResponse)
-			if err != nil {
+			if err := connClient.Call(ctx, "workspace/executeCommand", executeParams, &executeResponse); err != nil {
 				t.Fatalf("failed to execute command: %s", err)
 			}
 

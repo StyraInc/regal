@@ -17,7 +17,7 @@ import (
 	"github.com/styrainc/regal/pkg/roast/transform"
 )
 
-const completionsQuery = "completions := data.regal.lsp.completion.items"
+const completionsQuery = "data.regal.lsp.completion.items"
 
 // Policy provides suggestions that have been determined by Rego policy.
 type Policy struct{}
@@ -77,6 +77,8 @@ func (*Policy) Run(
 		regalContext.Insert(ast.InternedTerm("input_dot_json_path"), ast.InternedTerm(inputDotJSONPath))
 		regalContext.Insert(ast.InternedTerm("input_dot_json"), ast.NewTerm(inputDotJSONValue))
 	}
+
+	// TODO: Schemas from annotations to be used for completions on types, etc.
 
 	// input.regal
 	regalObj := transform.RegalContext(path, content, opts.RegoVersion.String())

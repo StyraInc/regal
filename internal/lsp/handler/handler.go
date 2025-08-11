@@ -8,7 +8,7 @@ import (
 	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
-type handlerFunc[T any] func(T) (any, error)
+type Func[T any] func(T) (any, error)
 
 type handlerContextFunc[T any] func(context.Context, T) (any, error)
 
@@ -26,7 +26,7 @@ func Decode[T any](req *jsonrpc2.Request, params *T) error {
 	return nil
 }
 
-func WithParams[T any](req *jsonrpc2.Request, h handlerFunc[T]) (any, error) {
+func WithParams[T any](req *jsonrpc2.Request, h Func[T]) (any, error) {
 	var params T
 	if err := Decode(req, &params); err != nil {
 		return nil, err

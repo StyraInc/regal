@@ -45,7 +45,7 @@ p = true { 1 == }
 			regoVersion: ast.RegoV1,
 			expectedParseErrors: []types.Diagnostic{{
 				Code:  "rego-parse-error",
-				Range: types.Range{Start: types.Position{Line: 2, Character: 13}, End: types.Position{Line: 2, Character: 13}},
+				Range: types.RangeBetween(2, 13, 2, 13),
 			}},
 			expectModule:  false,
 			expectSuccess: false,
@@ -56,7 +56,7 @@ p = true { 1 == }
 			regoVersion: ast.RegoV1,
 			expectedParseErrors: []types.Diagnostic{{
 				Code:  "rego-parse-error",
-				Range: types.Range{Start: types.Position{Line: 0, Character: 0}, End: types.Position{Line: 0, Character: 0}},
+				Range: types.RangeBetween(0, 0, 0, 0),
 			}},
 			expectModule:  false,
 			expectSuccess: false,
@@ -70,7 +70,7 @@ allow if { 1 == 1 }
 			expectSuccess: false,
 			expectedParseErrors: []types.Diagnostic{{
 				Code:  "rego-parse-error",
-				Range: types.Range{Start: types.Position{Line: 1, Character: 0}, End: types.Position{Line: 1, Character: 0}},
+				Range: types.RangeBetween(1, 0, 1, 0),
 			}},
 			regoVersion: ast.RegoV0,
 		},

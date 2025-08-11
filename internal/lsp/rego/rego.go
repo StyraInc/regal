@@ -6,20 +6,23 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
+	"sync"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/resolver"
 	"github.com/open-policy-agent/opa/v1/storage"
 
 	rbundle "github.com/styrainc/regal/bundle"
+	"github.com/styrainc/regal/internal/compile"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/roast/encoding"
 	"github.com/styrainc/regal/pkg/roast/rast"
 	"github.com/styrainc/regal/pkg/roast/transform"
+	"github.com/styrainc/regal/pkg/roast/util"
 	"github.com/styrainc/regal/pkg/roast/util/concurrent"
 )
 
@@ -36,14 +39,6 @@ var (
 	simpleRefPattern       = regexp.MustCompile(`^[a-zA-Z\.]$`)
 )
 
-type regoOptions = []func(*rego.Rego)
-
-type cachedQuery struct {
-	body     ast.Body
-	prepared *rego.PreparedEvalQuery
-	store    storage.Store
-}
-
 func init() {
 	ast.InternStringTerm(
 		// All keys from Code Actions
@@ -51,6 +46,14 @@ func init() {
 		"textDocument", "context", "range", "uri", "diagnostics", "only", "triggerKind", "codeDescription",
 		"message", "severity", "source", "code", "data", "title", "command", "kind", "isPreferred",
 	)
+}
+
+type regoOptions = []func(*rego.Rego)
+
+type cachedQuery struct {
+	body     ast.Body
+	prepared *rego.PreparedEvalQuery
+	store    storage.Store
 }
 
 type policy struct {
@@ -97,6 +100,11 @@ type CodeActionInput struct {
 	Params types.CodeActionParams `json:"params"`
 }
 
+type CompletionInput struct {
+	Regal  RegalContext           `json:"regal"`
+	Params types.CompletionParams `json:"params"`
+}
+
 func (c CodeActionInput) String() string { // For debugging only
 	s, err := encoding.JSON().MarshalToString(&c)
 	if err != nil {
@@ -104,6 +112,14 @@ func (c CodeActionInput) String() string { // For debugging only
 	}
 
 	return s
+}
+
+type schemaResolver struct {
+	value ast.Value
+}
+
+func SchemaResolvers() []func(*rego.Rego) {
+	return schemaResolvers()
 }
 
 func PositionFromLocation(loc *ast.Location) types.Position {
@@ -119,6 +135,14 @@ func LocationFromPosition(pos types.Position) *ast.Location {
 		Row: int(pos.Line + 1),      //nolint: gosec
 		Col: int(pos.Character + 1), //nolint: gosec
 	}
+}
+
+func ParseQuery(query string) ast.Body {
+	if simpleRefPattern.MatchString(query) { // Try cheap parsing if possible
+		return rast.RefStringToBody(query)
+	}
+
+	return ast.MustParseBody(query)
 }
 
 // AllBuiltinCalls returns all built-in calls in the module, excluding operators
@@ -165,8 +189,7 @@ func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []Bui
 func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
 	var keywords map[string][]KeywordUse
 
-	err := policyToValue(ctx, keywordsQuery, policy{module, fileName, contents}, &keywords)
-	if err != nil {
+	if err := policyToValue(ctx, keywordsQuery, policy{module, fileName, contents}, &keywords); err != nil {
 		return nil, fmt.Errorf("failed querying for all keywords: %w", err)
 	}
 
@@ -177,8 +200,7 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
 	var ruleHeads RuleHeads
 
-	err := policyToValue(ctx, ruleHeadLocationsQuery, policy{module, fileName, contents}, &ruleHeads)
-	if err != nil {
+	if err := policyToValue(ctx, ruleHeadLocationsQuery, policy{module, fileName, contents}, &ruleHeads); err != nil {
 		return nil, fmt.Errorf("failed querying for rule head locations: %w", err)
 	}
 
@@ -189,8 +211,7 @@ func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module
 func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) ([]types.CodeLens, error) {
 	var codeLenses []types.CodeLens
 
-	err := policyToValue(ctx, codeLensQuery, policy{module, uri, contents}, &codeLenses)
-	if err != nil {
+	if err := policyToValue(ctx, codeLensQuery, policy{module, uri, contents}, &codeLenses); err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
 
@@ -203,21 +224,11 @@ func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (
 func CodeActions(ctx context.Context, input CodeActionInput) ([]types.CodeAction, error) {
 	var codeActions []types.CodeAction
 
-	err := CachedQueryEval(ctx, codeActionQuery, rast.StructToValue(input), &codeActions)
-	if err != nil {
+	if err := CachedQueryEval(ctx, codeActionQuery, rast.StructToValue(input), &codeActions); err != nil {
 		return nil, fmt.Errorf("failed querying code actions: %w", err)
 	}
 
 	return codeActions, nil
-}
-
-func policyToValue[T any](ctx context.Context, query string, policy policy, toValue *T) error {
-	input, err := transform.ToAST(policy.fileName, policy.contents, policy.module, false)
-	if err != nil {
-		return fmt.Errorf("failed to prepare input: %w", err)
-	}
-
-	return CachedQueryEval(ctx, query, input, toValue)
 }
 
 func CachedQueryEval[T any](ctx context.Context, query string, input ast.Value, toValue *T) error {
@@ -231,22 +242,33 @@ func CachedQueryEval[T any](ctx context.Context, query string, input ast.Value, 
 		return err
 	}
 
-	// TODO: let's do something more roubust than this. but fine for now
-	fromValue := result.Expressions[0].Value
-	if strings.Contains(query, "=") {
-		// We don't know the name of the binding here, so just assume there's only one
-		for _, v := range result.Bindings {
-			fromValue = v
-
-			break
-		}
-	}
-
-	if err := encoding.JSONRoundTrip(fromValue, toValue); err != nil {
+	if err := encoding.JSONRoundTrip(result.Expressions[0].Value, toValue); err != nil {
 		return fmt.Errorf("failed unmarshaling value: %w", err)
 	}
 
 	return nil
+}
+
+func StoreCachedQuery(ctx context.Context, query string, store storage.Store) error {
+	parsedQuery := ParseQuery(query)
+
+	pq, err := prepareQuery(ctx, parsedQuery, store)
+	if err != nil {
+		return fmt.Errorf("failed preparing query %q: %w", query, err)
+	}
+
+	prepared.Set(query, &cachedQuery{body: parsedQuery, prepared: pq, store: store})
+
+	return nil
+}
+
+func policyToValue[T any](ctx context.Context, query string, policy policy, toValue *T) error {
+	input, err := transform.ToAST(policy.fileName, policy.contents, policy.module, false)
+	if err != nil {
+		return fmt.Errorf("failed to prepare input: %w", err)
+	}
+
+	return CachedQueryEval(ctx, query, input, toValue)
 }
 
 func toValidResult(rs rego.ResultSet, err error) (rego.Result, error) {
@@ -270,13 +292,16 @@ func prepareQueryArgs(
 	store storage.Store,
 	regalBundle *bundle.Bundle,
 ) (regoOptions, storage.Transaction) {
+	args := make([]func(*rego.Rego), 0, 5+len(builtins.RegalBuiltinRegoFuncs))
+	args = append(args, rego.ParsedQuery(query), rego.ParsedBundle("regal", regalBundle))
+	args = append(args, builtins.RegalBuiltinRegoFuncs...)
+
+	// For debugging
+	// args = append(args, rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stderr)))
+
+	args = append(args, SchemaResolvers()...)
+
 	var txn storage.Transaction
-
-	args := append([]func(*rego.Rego){
-		rego.ParsedQuery(query),
-		rego.ParsedBundle("regal", regalBundle),
-	}, builtins.RegalBuiltinRegoFuncs...)
-
 	if store != nil {
 		txn, _ = store.NewTransaction(ctx, storage.WriteParams)
 		args = append(args, rego.Store(store), rego.Transaction(txn))
@@ -316,19 +341,6 @@ func getOrSetCachedQuery(ctx context.Context, query string, store storage.Store)
 	}
 
 	return cq, nil
-}
-
-func StoreCachedQuery(ctx context.Context, query string, store storage.Store) error {
-	parsedQuery := ParseQuery(query)
-
-	pq, err := prepareQuery(ctx, parsedQuery, store)
-	if err != nil {
-		return fmt.Errorf("failed preparing query %q: %w", query, err)
-	}
-
-	prepared.Set(query, &cachedQuery{body: parsedQuery, prepared: pq, store: store})
-
-	return nil
 }
 
 func prepareQuery(ctx context.Context, query ast.Body, store storage.Store) (*rego.PreparedEvalQuery, error) {
@@ -375,15 +387,34 @@ func prepareQuery(ctx context.Context, query ast.Body, store storage.Store) (*re
 	return &pq, nil
 }
 
-func ParseQuery(query string) ast.Body {
-	// Try cheap parsing if possible
-	if simpleRefPattern.MatchString(query) {
-		return rast.RefStringToBody(query)
-	}
-
-	return ast.MustParseBody(query)
-}
-
 func isBundleDevelopmentMode() bool {
 	return os.Getenv("REGAL_BUNDLE_PATH") != ""
+}
+
+var schemaResolvers = sync.OnceValue(func() (resolvers []func(*rego.Rego)) {
+	ss := compile.RegalSchemaSet()
+	added := util.NewSet[string]()
+
+	// Find all schema references in the bundle and add the schemas to the base cache.
+	for _, module := range rbundle.LoadedBundle().Modules {
+		for _, annos := range module.Parsed.Annotations {
+			for _, s := range annos.Schemas {
+				if added.Contains(s.Schema.String()) {
+					continue
+				}
+				resolvers = append(resolvers, rego.Resolver(
+					ast.DefaultRootRef.Extend(s.Schema),
+					schemaResolver{value: ast.MustInterfaceToValue(ss.Get(s.Schema))},
+				))
+				added.Add(s.Schema.String())
+			}
+		}
+	}
+
+	return resolvers
+})
+
+// Eval implements the resolver.Resolver interface to resolve schemas from annotations at runtime.
+func (sr schemaResolver) Eval(_ context.Context, _ resolver.Input) (resolver.Result, error) {
+	return resolver.Result{Value: sr.value}, nil
 }

@@ -49,7 +49,6 @@ import
 	for uri, contents := range regoFiles {
 		mod := parse.MustParseModule(contents)
 		c.SetModule(uri, mod)
-
 		c.SetFileRefs(uri, refs.DefinedInModule(mod, builtins))
 	}
 

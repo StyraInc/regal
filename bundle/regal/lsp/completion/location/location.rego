@@ -80,17 +80,22 @@ word_range(word, position) := {
 # METADATA
 # description: |
 #   find word at column in line, and return its text, and the offset
-#   from the position (before and after)
+#   and text from the position (before and after)
 word_at(line, col) := word if {
 	text_before := substring(line, 0, col - 1)
-	word_before := _to_string(regex.find_n(`[a-zA-Z_]+$`, text_before, 1))
+	word_before := _to_string(regex.find_n(`[a-zA-Z_]+$|:{1}$`, text_before, 1))
 
-	text_after := substring(line, col - 1, count(line))
-	word_after := _to_string(regex.find_n(`^[a-zA-Z_]+`, text_after, 1))
+	text_after := trim_prefix(line, text_before)
+	word_after := _to_string(regex.find_n(`^[a-zA-Z_]+|^:{1}`, text_after, 1))
+
+	offset_before := count(word_before)
+	offset_after := count(word_after)
 
 	word := {
-		"offset_before": count(word_before),
-		"offset_after": count(word_after),
+		"text_before": substring(text_before, 0, count(text_before) - offset_before),
+		"text_after": substring(text_after, offset_after, count(text_after)),
+		"offset_before": offset_before,
+		"offset_after": offset_after,
 		"text": concat("", [word_before, word_after]),
 	}
 }

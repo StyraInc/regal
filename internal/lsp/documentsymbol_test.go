@@ -26,12 +26,9 @@ func TestDocumentSymbols(t *testing.T) {
 			"only package",
 			`package foo`,
 			types.DocumentSymbol{
-				Name: "data.foo",
-				Kind: symbols.Package,
-				Range: types.Range{
-					Start: types.Position{Line: 0, Character: 0},
-					End:   types.Position{Line: 0, Character: 11},
-				},
+				Name:  "data.foo",
+				Kind:  symbols.Package,
+				Range: types.RangeBetween(0, 0, 0, 11),
 			},
 		},
 		{
@@ -40,23 +37,15 @@ func TestDocumentSymbols(t *testing.T) {
 
 			i := indexof("a", "a")`,
 			types.DocumentSymbol{
-				Name: "data.p",
-				Kind: symbols.Package,
-				Range: types.Range{
-					Start: types.Position{Line: 0, Character: 0},
-					End:   types.Position{Line: 2, Character: 25},
-				},
-				Children: &[]types.DocumentSymbol{
-					{
-						Name:   "i",
-						Kind:   symbols.Variable,
-						Detail: toStrPtr("single-value rule (number)"),
-						Range: types.Range{
-							Start: types.Position{Line: 2, Character: 3},
-							End:   types.Position{Line: 2, Character: 22},
-						},
-					},
-				},
+				Name:  "data.p",
+				Kind:  symbols.Package,
+				Range: types.RangeBetween(0, 0, 2, 25),
+				Children: &[]types.DocumentSymbol{{
+					Name:   "i",
+					Kind:   symbols.Variable,
+					Detail: toStrPtr("single-value rule (number)"),
+					Range:  types.RangeBetween(2, 3, 2, 22),
+				}},
 			},
 		},
 	}

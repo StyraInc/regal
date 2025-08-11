@@ -119,8 +119,9 @@ type ServerCapabilities struct {
 }
 
 type CompletionOptions struct {
-	CompletionItem  CompletionItemOptions `json:"completionItem"`
-	ResolveProvider bool                  `json:"resolveProvider"`
+	CompletionItem    CompletionItemOptions `json:"completionItem"`
+	ResolveProvider   bool                  `json:"resolveProvider"`
+	TriggerCharacters []string              `json:"triggerCharacters,omitempty"`
 }
 
 type CompletionItemOptions struct {
@@ -534,4 +535,13 @@ type WorkspaceFullDocumentDiagnosticReport struct {
 	Version *uint        `json:"version"`
 	Kind    string       `json:"kind"` // full, or incremental. We always use full
 	Items   []Diagnostic `json:"items"`
+}
+
+type iuint interface{ ~int | ~uint }
+
+func RangeBetween[T1, T2, T3, T4 iuint](startLine T1, startCharacter T2, endLine T3, endCharacter T4) Range {
+	return Range{
+		Start: Position{Line: uint(startLine), Character: uint(startCharacter)},
+		End:   Position{Line: uint(endLine), Character: uint(endCharacter)},
+	}
 }

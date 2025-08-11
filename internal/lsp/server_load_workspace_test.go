@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/testutil"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 func TestLoadWorkspaceContents(t *testing.T) {
@@ -118,7 +118,6 @@ func TestLoadWorkspaceContents(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := t.Context()
 			tempDir := testutil.TempDirectoryOf(t, tc.files)
 
 			for _, fileName := range tc.unreadableFiles {
@@ -128,12 +127,10 @@ func TestLoadWorkspaceContents(t *testing.T) {
 				}
 			}
 
-			server := &LanguageServer{
-				workspaceRootURI: "file://" + tempDir,
-				clientIdentifier: clients.IdentifierGeneric,
-				cache:            cache.NewCache(),
-				regoStore:        NewRegalStore(),
-			}
+			server := NewLanguageServer(t.Context(), &LanguageServerOptions{})
+			server.workspaceRootURI = "file://" + tempDir
+			server.clientIdentifier = clients.IdentifierGeneric
+			server.loadedConfig = &config.Config{}
 
 			for _, fileName := range tc.cachedFiles {
 				var (
@@ -156,7 +153,7 @@ func TestLoadWorkspaceContents(t *testing.T) {
 				server.cache.SetFileContents(fileURI, content)
 			}
 
-			changedURIs, failedFiles, err := server.loadWorkspaceContents(ctx, tc.newOnly)
+			changedURIs, failedFiles, err := server.loadWorkspaceContents(t.Context(), tc.newOnly)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -204,8 +201,7 @@ func TestLoadWorkspaceContents(t *testing.T) {
 			for _, expectedFile := range tc.expectChangedFiles {
 				for _, changedURI := range changedURIs {
 					if filepath.Base(changedURI) == expectedFile {
-						_, found := server.cache.GetFileContents(changedURI)
-						if !found {
+						if _, found := server.cache.GetFileContents(changedURI); !found {
 							t.Errorf("expected file %s to be cached", expectedFile)
 						}
 

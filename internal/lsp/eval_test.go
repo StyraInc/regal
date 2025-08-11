@@ -19,12 +19,7 @@ import (
 func TestEvalWorkspacePath(t *testing.T) {
 	t.Parallel()
 
-	logger := newTestLogger(t)
-
-	ls := NewLanguageServer(
-		t.Context(),
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
 
 	ls.workspaceRootURI = "file:///workspace"
 
@@ -66,11 +61,9 @@ func TestEvalWorkspacePath(t *testing.T) {
 	ls.cache.SetModule(policy1URI, module1)
 	ls.cache.SetModule(policy2URI, module2)
 
-	input := map[string]any{
-		"exists": true,
-	}
+	input := map[string]any{"exists": true}
 
-	res, err := ls.EvalWorkspacePath(t.Context(), "data.policy1.allow", input)
+	res, err := ls.EvalInWorkspace(t.Context(), "data.policy1.allow", input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,14 +84,9 @@ func TestEvalWorkspacePath(t *testing.T) {
 func TestEvalWorkspacePathInternalData(t *testing.T) {
 	t.Parallel()
 
-	logger := newTestLogger(t)
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
 
-	ls := NewLanguageServer(
-		t.Context(),
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
-
-	res, err := ls.EvalWorkspacePath(t.Context(), "object.keys(data.internal)", map[string]any{})
+	res, err := ls.EvalInWorkspace(t.Context(), "object.keys(data.internal)", map[string]any{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,23 +96,20 @@ func TestEvalWorkspacePathInternalData(t *testing.T) {
 		t.Fatalf("expected []any, got %T", res.Value)
 	}
 
-	valStr := make([]string, 0, len(val))
-
+	act := make([]string, 0, len(val))
 	for _, v := range val {
-		str, ok := v.(string)
-		if !ok {
+		if str, ok := v.(string); !ok {
 			t.Fatalf("expected string, got %T", v)
+		} else {
+			act = append(act, str)
 		}
-
-		valStr = append(valStr, str)
 	}
 
-	slices.Sort(valStr)
+	slices.Sort(act)
 
 	exp := []string{"capabilities", "combined_config"}
-
-	if !slices.Equal(valStr, exp) {
-		t.Fatalf("expected %v, got %v", exp, valStr)
+	if !slices.Equal(exp, act) {
+		t.Fatalf("expected %v, got %v", exp, act)
 	}
 }
 

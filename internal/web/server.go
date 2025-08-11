@@ -192,11 +192,7 @@ func (s *Server) Start(_ context.Context) {
 
 //nolint:unparam
 func (s *Server) log(level log.Level, message string) {
-	if !s.logLevel.ShouldLog(level) {
-		return
-	}
-
-	if s.logWriter != nil {
+	if s.logWriter != nil && s.logLevel.ShouldLog(level) {
 		fmt.Fprintln(s.logWriter, message)
 	}
 }

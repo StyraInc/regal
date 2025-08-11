@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/roast/encoding"
@@ -26,12 +26,11 @@ allow if {
 }
 `
 	module := parse.MustParseModule(policy)
-	c := cache.NewCache()
-
 	moduleMap := make(map[string]any)
 
 	encoding.MustJSONRoundTrip(module, &moduleMap)
 
+	c := cache.NewCache()
 	c.SetFileContents(testCaseFileURI, policy)
 
 	store := inmem.NewFromObjectWithOpts(map[string]any{
@@ -42,40 +41,25 @@ allow if {
 		},
 	}, inmem.OptRoundTripOnWrite(false))
 
-	locals := NewPolicy(t.Context(), store)
 	params := types.CompletionParams{
 		TextDocument: types.TextDocumentIdentifier{URI: testCaseFileURI},
 		Position:     types.Position{Line: 5, Character: 11},
 	}
 	opts := &Options{ClientIdentifier: clients.IdentifierGeneric}
 
-	result, err := locals.Run(t.Context(), c, params, opts)
+	result, err := NewPolicy(t.Context(), store).Run(t.Context(), c, params, opts)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	labels := make([]string, 0, len(result))
-	for _, item := range result {
-		labels = append(labels, item.Label)
-	}
-
-	expected := []string{"user"}
-	if !slices.Equal(expected, labels) {
-		t.Fatalf("expected %v, got %v", expected, labels)
-	}
+	test.AssertLabels(t, result, []string{"user"})
 }
 
 func TestPolicyProvider_Example2(t *testing.T) {
 	t.Parallel()
 
-	file1 := ast.MustParseModule(`package example
-
-foo := true
-`)
-	file2 := ast.MustParseModule(`package example2
-
-import data.example
-`)
+	file1 := ast.MustParseModule("package example\n\nfoo := true\n")
+	file2 := ast.MustParseModule("package example2\n\nimport data.example\n")
 
 	store := inmem.NewFromObject(map[string]any{
 		"workspace": map[string]any{
@@ -90,46 +74,21 @@ import data.example
 		},
 	})
 
-	locals := NewPolicy(t.Context(), store)
-	fileEdited := `package example2
+	fileEdited := "package example2\n\nimport data.example\n\nallow if {\n\tfoo :=\n}\n"
 
-import data.example
-
-allow if {
-	foo :=
-}
-`
 	c := cache.NewCache()
-
 	c.SetFileContents("file:///file2.rego", fileEdited)
 
 	params := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: "file:///file2.rego",
-		},
-		Position: types.Position{
-			Line:      5,
-			Character: 11,
-		},
+		TextDocument: types.TextDocumentIdentifier{URI: "file:///file2.rego"},
+		Position:     types.Position{Line: 5, Character: 11},
 	}
+	opts := &Options{ClientIdentifier: clients.IdentifierGeneric}
 
-	result, err := locals.Run(
-		t.Context(),
-		c,
-		params,
-		&Options{ClientIdentifier: clients.IdentifierGeneric},
-	)
+	result, err := NewPolicy(t.Context(), store).Run(t.Context(), c, params, opts)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	labels := []string{}
-	for _, item := range result {
-		labels = append(labels, item.Label)
-	}
-
-	expected := []string{"input", "example", "example.foo"}
-	if !slices.Equal(expected, labels) {
-		t.Fatalf("expected %v, got %v", expected, labels)
-	}
+	test.AssertLabels(t, result, []string{"input", "example", "example.foo"})
 }

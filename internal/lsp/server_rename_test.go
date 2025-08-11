@@ -2,12 +2,10 @@ package lsp
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
@@ -20,29 +18,12 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
-	ctx := t.Context()
-
-	logger := newTestLogger(t)
-
-	ls := NewLanguageServer(
-		ctx,
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
-
-	c := cache.NewCache()
-	f := &fixes.DirectoryPackageMismatch{}
-
-	rootURI := fmt.Sprintf("file://%s/workspace", tmpDir)
-	fileURI := rootURI + "/foo/bar/policy.rego"
-
-	c.SetFileContents(fileURI, "package authz.main.rules")
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
 
 	ls.clientIdentifier = clients.IdentifierVSCode
-	ls.workspaceRootURI = rootURI
-	ls.cache = c
+	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
 	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
 			"idiomatic": {
@@ -56,7 +37,10 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 		},
 	}
 
-	params, err := ls.fixRenameParams("fix my file!", f, fileURI)
+	fileURI := ls.workspaceRootURI + "/foo/bar/policy.rego"
+	ls.cache.SetFileContents(fileURI, "package authz.main.rules")
+
+	params, err := ls.fixRenameParams("fix my file!", &fixes.DirectoryPackageMismatch{}, fileURI)
 	if err != nil {
 		t.Fatalf("failed to fix rename params: %s", err)
 	}
@@ -86,33 +70,16 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 	t.Parallel()
 
-	ctx := t.Context()
-	logger := newTestLogger(t)
 	tmpDir := t.TempDir()
-
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
 	ls := NewLanguageServer(
-		ctx,
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
+		t.Context(),
+		&LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug},
 	)
 
-	c := cache.NewCache()
-	f := &fixes.DirectoryPackageMismatch{}
-
-	rootURI := fmt.Sprintf("file://%s/workspace", tmpDir)
-	fileURI := rootURI + "/foo/bar/policy.rego"
-
-	c.SetFileContents(fileURI, "package authz.main.rules")
-
-	conflictingFileURI := fmt.Sprintf("file://%s/workspace/authz/main/rules/policy.rego", tmpDir)
-
-	// content of the existing file is irrelevant for this test
-	c.SetFileContents(conflictingFileURI, "package authz.main.rules")
-
 	ls.clientIdentifier = clients.IdentifierVSCode
-	ls.workspaceRootURI = rootURI
-	ls.cache = c
+	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
 	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
 			"idiomatic": {
@@ -126,7 +93,13 @@ func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 		},
 	}
 
-	params, err := ls.fixRenameParams("fix my file!", f, fileURI)
+	fileURI := ls.workspaceRootURI + "/foo/bar/policy.rego"
+	conflictingFileURI := fmt.Sprintf("file://%s/workspace/authz/main/rules/policy.rego", tmpDir)
+
+	ls.cache.SetFileContents(fileURI, "package authz.main.rules")
+	ls.cache.SetFileContents(conflictingFileURI, "package authz.main.rules") // existing content irrelevant here
+
+	params, err := ls.fixRenameParams("fix my file!", &fixes.DirectoryPackageMismatch{}, fileURI)
 	if err != nil {
 		t.Fatalf("failed to fix rename params: %s", err)
 	}
@@ -184,37 +157,19 @@ func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 func TestLanguageServerFixRenameParamsWhenTargetOutsideRoot(t *testing.T) {
 	t.Parallel()
 
-	ctx := t.Context()
-	logger := newTestLogger(t)
 	tmpDir := t.TempDir()
-
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
 	// this will have regal find a root in the parent dir, which means the file
 	// is moved relative to a dir above the workspace.
-	err := os.WriteFile(filepath.Join(tmpDir, ".regal.yaml"), []byte{}, 0o600)
-	if err != nil {
-		t.Fatalf("failed to write config file: %s", err)
-	}
+	testutil.MustWriteFile(t, filepath.Join(tmpDir, ".regal.yaml"), []byte{})
 
-	ls := NewLanguageServer(
-		ctx,
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
-
-	c := cache.NewCache()
-	f := &fixes.DirectoryPackageMismatch{}
-
-	// the root where the client stated the workspace is
-	rootURI := fmt.Sprintf("file://%s/workspace/", tmpDir)
-	fileURI := rootURI + "foo/bar/policy.rego"
-
-	c.SetFileContents(fileURI, "package authz.main.rules")
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
 
 	ls.clientIdentifier = clients.IdentifierVSCode
+	// the root where the client stated the workspace is
 	// this is what would be set if a config file were in the parent instead
-	ls.workspaceRootURI = rootURI
-	ls.cache = c
+	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace/", tmpDir)
 	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
 			"idiomatic": {
@@ -228,12 +183,12 @@ func TestLanguageServerFixRenameParamsWhenTargetOutsideRoot(t *testing.T) {
 		},
 	}
 
-	_, err = ls.fixRenameParams("fix my file!", f, fileURI)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
-	}
+	fileURI := ls.workspaceRootURI + "foo/bar/policy.rego"
+	ls.cache.SetFileContents(fileURI, "package authz.main.rules")
 
-	if !strings.Contains(err.Error(), "cannot move file out of workspace root") {
+	if _, err := ls.fixRenameParams("fix my file!", &fixes.DirectoryPackageMismatch{}, fileURI); err == nil {
+		t.Fatalf("expected error, got nil")
+	} else if !strings.Contains(err.Error(), "cannot move file out of workspace root") {
 		t.Fatalf("expected error to contain 'cannot move file out of workspace root', got %s", err)
 	}
 }

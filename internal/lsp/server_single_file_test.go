@@ -6,11 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sourcegraph/jsonrpc2"
-
+	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the
@@ -43,23 +41,7 @@ rules:
 	mainRegoURI := fileURIScheme + tempDir + mainRegoFileName
 
 	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
-	clientHandler := func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-		if req.Method == methodTextDocumentPublishDiagnostics {
-			var requestData types.FileDiagnostics
-
-			if err := encoding.JSON().Unmarshal(*req.Params, &requestData); err != nil {
-				t.Fatalf("failed to unmarshal diagnostics: %s", err)
-			}
-
-			receivedMessages <- requestData
-
-			return struct{}{}, nil
-		}
-
-		t.Fatalf("unexpected request: %v", req)
-
-		return struct{}{}, nil
-	}
+	clientHandler := test.HandlerFor(methodTdPublishDiagnostics, test.SendsToChannel(receivedMessages))
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())

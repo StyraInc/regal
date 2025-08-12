@@ -15,6 +15,7 @@ import data.regal.lsp.util.location
 # array, and 'evaluate' somehow feels better to the left of 'debug'
 # METADATA
 # description: contains code lenses determined for module
+# entrypoint: true
 lenses := array.concat(
 	[l | some l in _eval_lenses],
 	[l | some l in _debug_lenses],

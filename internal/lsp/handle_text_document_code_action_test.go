@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/internal/web"
+	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
@@ -17,7 +19,7 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 	webServer := &web.Server{}
 	webServer.SetBaseURL("http://foo.bar")
 
-	l := &LanguageServer{clientIdentifier: clients.IdentifierGeneric, webServer: webServer}
+	l := &LanguageServer{client: types.NewGenericClient(), webServer: webServer, loadedConfig: &config.Config{}}
 
 	diag := types.Diagnostic{
 		Code:    ruleNameUseAssignmentOperator,
@@ -74,14 +76,14 @@ func TestHandleTextDocumentCodeAction(t *testing.T) {
 func TestHandleTextDocumentCodeActionSourceExplorer(t *testing.T) {
 	t.Parallel()
 
-	webServer := &web.Server{}
+	webServer := web.NewServer(nil, log.NewLogger(log.LevelDebug, t.Output()))
 	webServer.SetBaseURL("http://foo.bar")
 
 	l := &LanguageServer{
-		clientIdentifier:            clients.IdentifierVSCode,
-		clientInitializationOptions: types.InitializationOptions{},
-		webServer:                   webServer,
-		workspaceRootURI:            "file:///foo",
+		client:           types.Client{Identifier: clients.IdentifierVSCode},
+		webServer:        webServer,
+		workspaceRootURI: "file:///foo",
+		loadedConfig:     &config.Config{},
 	}
 
 	params := types.CodeActionParams{
@@ -182,10 +184,7 @@ func invokeCodeActionHandler(t *testing.T, l *LanguageServer, params types.CodeA
 // "real world" usage shows a number somewhere between 0.1 - 0.5 ms
 // of which most of the cost is in JSON marshaling and unmarshaling.
 func BenchmarkHandleTextDocumentCodeAction(b *testing.B) {
-	l := &LanguageServer{
-		clientIdentifier: clients.IdentifierGeneric,
-		webServer:        &web.Server{},
-	}
+	l := &LanguageServer{client: types.NewGenericClient(), webServer: &web.Server{}}
 
 	params := types.CodeActionParams{
 		TextDocument: types.TextDocumentIdentifier{URI: "file:///example.rego"},

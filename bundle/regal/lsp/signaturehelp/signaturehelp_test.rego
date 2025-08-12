@@ -1,17 +1,16 @@
-package regal.lsp["signature-help_test"]
+package regal.lsp.signaturehelp_test
 
 import rego.v1
 
-import data.regal.lsp["signature-help"] as sh
+import data.regal.lsp.signaturehelp as sh
 
 test_result if {
 	r := sh.result with input as {
-		"content": `package test
-
-import rego.v1
-
-allow if count(`,
-		"position": {"line": 4, "character": 15},
+		"params": {"position": {
+			"line": 2,
+			"character": 15,
+		}},
+		"regal": {"file": {"lines": ["package test", "", "allow if count("]}},
 	}
 		with data.workspace.builtins.count as {
 			"name": "count",
@@ -56,7 +55,7 @@ allow if func(`
 		"active_param": 1,
 	}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_function_at_position_two_on_one_line if {
@@ -73,7 +72,7 @@ allow if {
 		"active_param": 2,
 	}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_function_at_position_after_function if {
@@ -85,7 +84,7 @@ allow if func(1) ==`
 	position := {"line": 4, "character": 19}
 	expected := {}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_function_at_position_multi_line if {
@@ -103,7 +102,7 @@ allow if func(
 		"active_param": 2,
 	}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_function_at_position_cursor_in_middle_of_function if {
@@ -118,7 +117,7 @@ allow if func(arg1, arg2, arg3)`
 		"active_param": 2,
 	}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_function_at_position_cursor_in_middle_multi_line if {
@@ -137,7 +136,7 @@ allow if func(
 		"active_param": 2,
 	}
 
-	sh._function_at_position(content, position) == expected
+	sh._function_at_position(split(content, "\n"), position) == expected
 }
 
 test_text_up_to_position[name] if {

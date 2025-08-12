@@ -47,7 +47,7 @@ rules:
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	_, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	_, connClient := createAndInitServer(t, ctx, tempDir, clientHandler)
 
 	// validate that the client received a diagnostics notification for the file
 	timeout := time.NewTimer(determineTimeout())
@@ -64,7 +64,7 @@ rules:
 
 	// Client sends textDocument/didChange notification with new contents for main.rego
 	// no response to the call is expected
-	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.DidChangeTextDocumentParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -185,7 +185,7 @@ capabilities:
 	// the start of an EOPA-specific call, so if the capabilities were
 	// loaded correctly, we should see a completion later after we ask for
 	// it.
-	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.DidChangeTextDocumentParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: mainRegoURI,
 		},
@@ -251,15 +251,9 @@ allow := neo4j.q
 			reqCtx, reqCtxCancel := context.WithTimeout(ctx, determineTimeout())
 
 			resp := make(map[string]any)
-			err := connClient.Call(reqCtx, "textDocument/completion", types.CompletionParams{
-				TextDocument: types.TextDocumentIdentifier{
-					URI: mainRegoURI,
-				},
-				Position: types.Position{
-					Line:      5,
-					Character: 16,
-				},
-			}, &resp)
+			err := connClient.Call(
+				reqCtx, "textDocument/completion", types.NewCompletionParams(mainRegoURI, 5, 16, nil), &resp,
+			)
 
 			reqCtxCancel()
 

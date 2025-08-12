@@ -57,21 +57,15 @@ func (*BuiltIns) Run(
 			continue
 		}
 
+		p := params.Position
+
 		items = append(items, types.CompletionItem{
-			Label:  key,
-			Kind:   completion.Function,
-			Detail: "built-in function",
-			Documentation: &types.MarkupContent{
-				Kind:  "markdown",
-				Value: hover.CreateHoverContent(builtIn),
-			},
+			Label:         key,
+			Kind:          completion.Function,
+			Detail:        "built-in function",
+			Documentation: types.Markdown(hover.CreateHoverContent(builtIn)),
 			TextEdit: &types.TextEdit{
-				Range: types.RangeBetween(
-					params.Position.Line,
-					params.Position.Character-uint(len(lastWord)),
-					params.Position.Line,
-					params.Position.Character,
-				),
+				Range:   types.RangeBetween(p.Line, p.Character-uint(len(lastWord)), p.Line, p.Character),
 				NewText: key,
 			},
 		})

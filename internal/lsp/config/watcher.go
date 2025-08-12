@@ -11,9 +11,9 @@ import (
 )
 
 type Watcher struct {
-	logFunc func(log.Level, string, ...any)
-	Reload  chan string
-	Drop    chan struct{}
+	log    *log.Logger
+	Reload chan string
+	Drop   chan struct{}
 
 	pathUpdates chan string
 
@@ -24,8 +24,8 @@ type Watcher struct {
 }
 
 type WatcherOpts struct {
-	LogFunc func(log.Level, string, ...any)
-	Path    string
+	Logger *log.Logger
+	Path   string
 }
 
 func NewWatcher(opts *WatcherOpts) *Watcher {
@@ -36,7 +36,7 @@ func NewWatcher(opts *WatcherOpts) *Watcher {
 	}
 
 	if opts != nil {
-		w.logFunc = opts.LogFunc
+		w.log = opts.Logger
 		w.path = opts.Path
 	}
 
@@ -100,12 +100,12 @@ func (w *Watcher) loop(ctx context.Context) {
 			if w.path != "" {
 				err := w.fsWatcher.Remove(w.path)
 				if err != nil {
-					w.logFunc(log.LevelMessage, "failed to remove existing watch: %v\n", err)
+					w.log.Message("failed to remove existing watch: %v\n", err)
 				}
 			}
 
 			if err := w.fsWatcher.Add(path); err != nil {
-				w.logFunc(log.LevelDebug, "failed to add watch: %v\n", err)
+				w.log.Debug("failed to add watch: %v\n", err)
 			}
 
 			w.path = path
@@ -114,7 +114,7 @@ func (w *Watcher) loop(ctx context.Context) {
 			w.Reload <- path
 		case event, ok := <-w.fsWatcher.Events:
 			if !ok {
-				w.logFunc(log.LevelMessage, "config watcher event channel closed\n")
+				w.log.Message("config watcher event channel closed\n")
 
 				return
 			}
@@ -128,10 +128,10 @@ func (w *Watcher) loop(ctx context.Context) {
 				w.Drop <- struct{}{}
 			}
 		case err := <-w.fsWatcher.Errors:
-			w.logFunc(log.LevelMessage, "config watcher error: %v\n", err)
+			w.log.Message("config watcher error: %v\n", err)
 		case <-ctx.Done():
 			if err := w.Stop(); err != nil {
-				w.logFunc(log.LevelMessage, "failed to stop watcher: %v\n", err)
+				w.log.Message("failed to stop watcher: %v\n", err)
 			}
 
 			return

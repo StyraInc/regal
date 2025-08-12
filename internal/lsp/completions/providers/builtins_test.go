@@ -11,33 +11,18 @@ import (
 	"github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 )
+
+var opts = &Options{Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())}
 
 func TestBuiltIns_if(t *testing.T) {
 	t.Parallel()
 
-	fileContents := "package foo\n\nallow if c"
+	c, p := setupCacheAndProvider(t, "package foo\n\nallow if c")
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 2, 10, nil), opts))(t)
 
-	c := cache.NewCache()
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: testCaseFileURI},
-		Position:     types.Position{Line: 2, Character: 10}, // the c char that triggered the request
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	labels := test.Labels(completions)
-
-	if !slices.Contains(labels, "count") {
+	if labels := test.Labels(completions); !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
 }
@@ -45,35 +30,10 @@ func TestBuiltIns_if(t *testing.T) {
 func TestBuiltIns_afterAssignment(t *testing.T) {
 	t.Parallel()
 
-	c := cache.NewCache()
+	c, p := setupCacheAndProvider(t, "package foo\n\nallow := c")
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 2, 10, nil), opts))(t)
 
-	fileContents := `package foo
-
-allow := c`
-
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 10, // is the c char that triggered the request
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	labels := test.Labels(completions)
-	if !slices.Contains(labels, "count") {
+	if labels := test.Labels(completions); !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
 }
@@ -81,37 +41,10 @@ allow := c`
 func TestBuiltIns_inRuleBody(t *testing.T) {
 	t.Parallel()
 
-	c := cache.NewCache()
+	c, p := setupCacheAndProvider(t, "package foo\n\nallow if {\n  c\n}")
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 3, 3, nil), opts))(t)
 
-	fileContents := `package foo
-
-allow if {
-  c
-}`
-
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      3,
-			Character: 3, // is the c char that triggered the request
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	labels := test.Labels(completions)
-	if !slices.Contains(labels, "count") {
+	if labels := test.Labels(completions); !slices.Contains(labels, "count") {
 		t.Fatalf("Expected to find 'count' in completions, got: %s", strings.Join(labels, ", "))
 	}
 }
@@ -119,33 +52,9 @@ allow if {
 func TestBuiltIns_noInfix(t *testing.T) {
 	t.Parallel()
 
-	c := cache.NewCache()
+	c, p := setupCacheAndProvider(t, "package foo\n\nallow if gt")
 
-	fileContents := `package foo
-
-allow if gt`
-
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 10, // is the c char that triggered the request
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 2, 10, nil), opts))(t)
 	if len(completions) != 0 {
 		t.Fatalf("Expected no completions, got: %v", completions)
 	}
@@ -154,35 +63,10 @@ allow if gt`
 func TestBuiltIns_noDeprecated(t *testing.T) {
 	t.Parallel()
 
-	c := cache.NewCache()
+	c, p := setupCacheAndProvider(t, "package foo\n\nallow if c")
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 2, 10, nil), opts))(t)
 
-	fileContents := `package foo
-
-allow if c`
-
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 10, // is the c char that triggered the request
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	labels := test.Labels(completions)
-	if slices.Contains(labels, "cast_set") {
+	if labels := test.Labels(completions); slices.Contains(labels, "cast_set") {
 		t.Fatalf("Expected no deprecated completions, got: %s", strings.Join(labels, ", "))
 	}
 }
@@ -190,34 +74,19 @@ allow if c`
 func TestBuiltIns_noDefaultRule(t *testing.T) {
 	t.Parallel()
 
-	c := cache.NewCache()
+	c, p := setupCacheAndProvider(t, "package foo\n\ndefault allow := f")
 
-	fileContents := `package foo
-
-default allow := f`
-
-	c.SetFileContents(testCaseFileURI, fileContents)
-
-	p := &BuiltIns{}
-
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: testCaseFileURI,
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 18, // is the c char that triggered the request
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, &Options{
-		Builtins: rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion()),
-	})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
+	completions := testutil.Must(p.Run(t.Context(), c, types.NewCompletionParams(testCaseFileURI, 2, 18, nil), opts))(t)
 	if len(completions) != 0 {
 		t.Fatalf("Expected no completions, got: %d", len(completions))
 	}
+}
+
+func setupCacheAndProvider(t *testing.T, contents string) (*cache.Cache, *BuiltIns) {
+	t.Helper()
+
+	c := cache.NewCache()
+	c.SetFileContents(testCaseFileURI, contents)
+
+	return c, &BuiltIns{}
 }

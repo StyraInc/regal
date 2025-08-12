@@ -18,27 +18,23 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/io/files"
 	"github.com/styrainc/regal/internal/io/files/filter"
+	"github.com/styrainc/regal/internal/lsp/log"
 	rutil "github.com/styrainc/regal/internal/util"
 )
 
 // Cache is a struct that maintains a number of bundles in memory and
 // provides a way to refresh them when the source files change.
 type Cache struct {
-	errorLog      io.Writer
+	log           *log.Logger
 	bundles       map[string]*cacheBundle
 	workspacePath string
 }
 
-type CacheOptions struct {
-	ErrorLog      io.Writer
-	WorkspacePath string
-}
-
-func NewCache(opts *CacheOptions) *Cache {
+func NewCache(workspacePath string, logger *log.Logger) *Cache {
 	return &Cache{
-		workspacePath: rutil.EnsureSuffix(opts.WorkspacePath, string(os.PathSeparator)),
+		workspacePath: rutil.EnsureSuffix(workspacePath, string(os.PathSeparator)),
 		bundles:       make(map[string]*cacheBundle),
-		errorLog:      opts.ErrorLog,
+		log:           logger,
 	}
 }
 
@@ -69,9 +65,7 @@ func (c *Cache) Refresh() ([]string, error) {
 
 		refreshed, err := c.bundles[root].Refresh(filepath.Join(c.workspacePath, root))
 		if err != nil {
-			if c.errorLog != nil {
-				fmt.Fprintf(c.errorLog, "failed to refresh bundle %q: %v\n", root, err)
-			}
+			c.log.Message("failed to refresh bundle %q: %v\n", root, err)
 
 			continue
 		}

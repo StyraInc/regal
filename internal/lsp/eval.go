@@ -12,7 +12,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/topdown/print"
 
 	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/lsp/log"
 	rrego "github.com/styrainc/regal/internal/lsp/rego"
 	"github.com/styrainc/regal/internal/util"
 	"github.com/styrainc/regal/pkg/builtins"
@@ -158,7 +157,7 @@ func (l *LanguageServer) assembleEvalBundles() map[string]bundle.Bundle {
 		if dataBundles[k].Manifest.Roots != nil {
 			allBundles[k] = dataBundles[k]
 		} else {
-			l.logf(log.LevelMessage, "bundle %s has no roots and will be skipped", k)
+			l.log.Message("bundle %s has no roots and will be skipped", k)
 		}
 	}
 

@@ -56,9 +56,9 @@ allow := true
 	receivedMessages := make(chan types.FileDiagnostics, defaultBufferedChannelSize)
 	clientHandler := test.HandlerFor(methodTdPublishDiagnostics, test.SendsToChannel(receivedMessages))
 
-	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	ls, _ := createAndInitServer(t, ctx, tempDir, clientHandler)
 
-	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.clientIdentifier, tempDir); exp != got {
+	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.client.Identifier, tempDir); exp != got {
 		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
 	}
 
@@ -115,9 +115,9 @@ func TestLanguageServerCachesEnabledRulesAndUsesDefaultConfig(t *testing.T) {
 		return struct{}{}, nil
 	}
 
-	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	ls, connClient := createAndInitServer(t, ctx, tempDir, clientHandler)
 
-	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.clientIdentifier, tempDir); exp != got {
+	if got, exp := ls.workspaceRootURI, uri.FromPath(ls.client.Identifier, tempDir); exp != got {
 		t.Fatalf("expected client root URI to be %s, got %s", exp, got)
 	}
 

@@ -1,19 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "regal.lsp.codeaction",
-  "$ref": "#/$defs/input",
+  "$ref": "#/$defs/params",
   "$defs": {
-    "input": {
-      "properties": {
-        "params": {
-          "$ref": "#/$defs/params"
-        },
-        "regal": {
-          "$ref": "#/$defs/regal"
-        }
-      },
-      "type": "object"
-    },
     "params": {
       "properties": {
         "textDocument": {
@@ -55,43 +44,6 @@
         "textDocument",
         "range",
         "context"
-      ]
-    },
-    "regal": {
-      "properties": {
-        "client": {
-          "type": "object",
-          "description": "LSP client properties",
-          "properties": {
-            "identifier": {
-              "type": "integer",
-              "description": "Numeric identifier for the LSP client"
-            }
-          }
-        },
-        "environment": {
-          "type": "object",
-          "description": "Environment properties for the LSP client",
-          "properties": {
-            "workspace_root_uri": {
-              "type": "string",
-              "description": "URI of the workspace root"
-            },
-            "web_server_base_uri": {
-              "type": "string",
-              "description": "Base URI for Regal's local web server server"
-            }
-          },
-          "required": [
-            "workspace_root_uri",
-            "web_server_base_uri"
-          ]
-        }
-      },
-      "type": "object",
-      "required": [
-        "client",
-        "environment"
       ]
     },
     "diagnostic": {

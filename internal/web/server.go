@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -30,15 +29,14 @@ var tpl = template.Must(template.New("main.tpl").ParseFS(assets, "assets/main.tp
 
 type Server struct {
 	cache        *cache.Cache
-	logWriter    io.Writer
-	logLevel     log.Level
+	log          *log.Logger
 	workspaceURI string
 	baseURL      string
 	client       clients.Identifier
 }
 
-func NewServer(cache *cache.Cache, logWriter io.Writer, level log.Level) *Server {
-	return &Server{cache: cache, logWriter: logWriter, logLevel: level}
+func NewServer(cache *cache.Cache, logger *log.Logger) *Server {
+	return &Server{cache: cache, log: logger}
 }
 
 func (s *Server) SetWorkspaceURI(uri string) {
@@ -76,7 +74,7 @@ func (s *Server) Start(_ context.Context) {
 
 	err := statsviz.Register(mux)
 	if err != nil {
-		s.log(log.LevelMessage, fmt.Sprintf("failed to register statsviz handler: %v", err))
+		s.log.Message("failed to register statsviz handler: %v", err)
 	}
 
 	mux.HandleFunc("GET /explorer/", func(w http.ResponseWriter, r *http.Request) {
@@ -158,13 +156,13 @@ func (s *Server) Start(_ context.Context) {
 <li><a href="/debug/statsviz">statsviz</a></li>
 </ul>`))
 		if err != nil {
-			s.log(log.LevelMessage, fmt.Sprintf("failed to write response: %v", err))
+			s.log.Message("failed to write response: %v", err)
 		}
 	})
 
 	freePort, err := util.FreePort(5052, 5053, 5054)
 	if err != nil {
-		s.log(log.LevelMessage, "preferred web server ports are not available, using random port")
+		s.log.Message("preferred web server ports are not available, using random port")
 
 		freePort = 0
 	}
@@ -174,25 +172,18 @@ func (s *Server) Start(_ context.Context) {
 	//nolint:contextcheck
 	listener, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("localhost:%d", freePort))
 	if err != nil {
-		s.log(log.LevelMessage, fmt.Sprintf("failed to start web server: %v", err))
+		s.log.Message("failed to start web server: %v", err)
 
 		return
 	}
 
 	s.baseURL = "http://" + listener.Addr().String()
 
-	s.log(log.LevelMessage, "starting web server for docs on "+s.baseURL)
+	s.log.Message("starting web server for docs on %s", s.baseURL)
 
 	//nolint:gosec // this is a local server, no timeouts needed
 	err = http.Serve(listener, mux)
 	if err != nil {
-		s.log(log.LevelMessage, fmt.Sprintf("failed to serve web server: %v", err))
-	}
-}
-
-//nolint:unparam
-func (s *Server) log(level log.Level, message string) {
-	if s.logWriter != nil && s.logLevel.ShouldLog(level) {
-		fmt.Fprintln(s.logWriter, message)
+		s.log.Message("failed to serve web server: %v", err)
 	}
 }

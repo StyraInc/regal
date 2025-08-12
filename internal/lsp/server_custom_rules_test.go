@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/testutil"
 )
@@ -48,17 +49,17 @@ allow if {
 
 	tempDir := testutil.TempDirectoryOf(t, files)
 
-	logger := newTestLogger(t)
+	logger := log.NewLogger(log.LevelDebug, t.Output())
 	messages := createMessageChannels(files)
 	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	_, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
+	_, connClient := createAndInitServer(t, ctx, tempDir, clientHandler)
 
 	// send textDocument/didOpen notification to trigger diagnostics
-	if err := connClient.Notify(ctx, "textDocument/didOpen", types.TextDocumentDidOpenParams{
+	if err := connClient.Notify(ctx, "textDocument/didOpen", types.DidOpenTextDocumentParams{
 		TextDocument: types.TextDocumentItem{
 			URI:  fileURIScheme + filepath.Join(tempDir, "example", "foo.rego"),
 			Text: files["example/foo.rego"],

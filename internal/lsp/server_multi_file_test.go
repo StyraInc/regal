@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/testutil"
 )
@@ -54,16 +55,14 @@ ignore:
 
 	// set up the workspace content with some example rego and regal config
 	tempDir := testutil.TempDirectoryOf(t, files)
-
-	logger := newTestLogger(t)
 	messages := createMessageChannels(files)
-	clientHandler := createPublishDiagnosticsHandler(t, logger, messages)
+	clientHandler := createPublishDiagnosticsHandler(t, log.NewLogger(log.LevelDebug, t.Output()), messages)
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	ls, connClient := createAndInitServer(t, ctx, logger, tempDir, clientHandler)
+	ls, connClient := createAndInitServer(t, ctx, tempDir, clientHandler)
 
 	timeout := time.NewTimer(determineTimeout())
 	defer timeout.Stop()
@@ -126,7 +125,7 @@ ignore:
 
 	// 3. Client sends textDocument/didChange notification with new contents
 	// for authz.rego no response to the call is expected
-	if err := connClient.Notify(ctx, "textDocument/didChange", types.TextDocumentDidChangeParams{
+	if err := connClient.Notify(ctx, "textDocument/didChange", types.DidChangeTextDocumentParams{
 		TextDocument: types.TextDocumentIdentifier{
 			URI: fileURIScheme + filepath.Join(tempDir, "authz.rego"),
 		},

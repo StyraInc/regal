@@ -8,9 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
-
-	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
 	"github.com/styrainc/regal/bundle"
@@ -20,6 +17,7 @@ import (
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/roast/util"
 	"github.com/styrainc/regal/pkg/rules"
 )
 
@@ -35,13 +33,10 @@ camelCase if {
 }
 `)
 
-	linter := NewLinter().WithEnableAll(true).WithInputModules(&input)
-
+	linter := NewLinter().WithEnableAll(true).WithInputModules(input)
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 2 {
-		t.Fatalf("expected 2 violations, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 2, result)
 
 	if result.Violations[0].Title != "todo-comment" {
 		t.Errorf("expected first violation to be 'todo-comments', got %s", result.Violations[0].Title)
@@ -93,13 +88,10 @@ r := input.foo[_]
 		},
 	}
 
-	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(&input)
-
+	linter := NewLinter().WithUserConfig(userConfig).WithInputModules(input)
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d - violations: %v", len(result.Violations), result.Violations)
-	}
+	testutil.AssertNumViolations(t, 1, result)
 
 	if result.Violations[0].Title != "top-level-iteration" {
 		t.Errorf("expected first violation to be 'top-level-iteration', got %s", result.Violations[0].Title)
@@ -270,11 +262,10 @@ or := 1
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			input := test.InputPolicy(tc.filename, policy)
 			linter := NewLinter().
 				WithPathPrefix(tc.rootDir).
 				WithIgnore(tc.ignoreFilesFlag).
-				WithInputModules(&input)
+				WithInputModules(test.InputPolicy(tc.filename, policy))
 
 			if tc.userConfig != nil {
 				linter = linter.WithUserConfig(*tc.userConfig)
@@ -282,13 +273,7 @@ or := 1
 
 			result := testutil.Must(linter.Lint(t.Context()))(t)
 
-			if len(result.Violations) != len(tc.expViolations) {
-				t.Fatalf("expected %d violation, got %d: %v",
-					len(tc.expViolations),
-					len(result.Violations),
-					result.Violations,
-				)
-			}
+			testutil.AssertNumViolations(t, len(tc.expViolations), result)
 
 			for idx, violation := range result.Violations {
 				if violation.Title != tc.expViolations[idx] {
@@ -310,17 +295,13 @@ or := 1
 func TestLintWithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
-
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n"))
 
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 1, result)
 
 	if result.Violations[0].Title != "acme-corp-package" {
 		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
@@ -330,12 +311,10 @@ func TestLintWithCustomRule(t *testing.T) {
 func TestLintWithErrorInEnable(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p/p.rego", "package p")
-
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
 		WithEnabledRules("foo").
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p/p.rego", "package p"))
 
 	_, err := linter.Lint(t.Context())
 	if err == nil {
@@ -353,17 +332,13 @@ var testLintWithCustomEmbeddedRulesFS embed.FS
 func TestLintWithCustomEmbeddedRules(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
-
 	linter := NewLinter().
 		WithCustomRulesFromFS(testLintWithCustomEmbeddedRulesFS, "testdata").
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n"))
 
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 1, result)
 
 	if result.Violations[0].Title != "acme-corp-package" {
 		t.Errorf("expected first violation to be 'acme-corp-package', got %s", result.Violations[0].Title)
@@ -373,51 +348,34 @@ func TestLintWithCustomEmbeddedRules(t *testing.T) {
 func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")
-
-	userConfig := config.Config{Rules: map[string]config.Category{
-		"naming": {"acme-corp-package": config.Rule{Level: "ignore"}},
-	}}
-
 	linter := NewLinter().
-		WithUserConfig(userConfig).
+		WithUserConfig(config.Config{Rules: map[string]config.Category{
+			"naming": {"acme-corp-package": config.Rule{Level: "ignore"}},
+		}}).
 		WithCustomRules([]string{filepath.Join("testdata", "custom.rego")}).
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n"))
 
-	result := testutil.Must(linter.Lint(t.Context()))(t)
-
-	if len(result.Violations) != 0 {
-		t.Fatalf("expected no violation, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 0, testutil.Must(linter.Lint(t.Context()))(t))
 }
 
 func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
 	t.Parallel()
 
 	// Note that the user configuration does not provide a level
-	userConfig := config.Config{Rules: map[string]config.Category{
-		"style": {"file-length": config.Rule{Extra: config.ExtraAttributes{"max-file-length": 1}}},
-	}}
-
-	input := test.InputPolicy("p.rego", `package p
-
-	x := 1
-	`)
-
 	linter := NewLinter().
-		WithUserConfig(userConfig).
-		WithInputModules(&input)
-
-	mergedConfig := testutil.Must(linter.GetConfig())(t)
+		WithUserConfig(config.Config{Rules: map[string]config.Category{
+			"style": {"file-length": config.Rule{Extra: config.ExtraAttributes{"max-file-length": 1}}},
+		}}).
+		WithInputModules(test.InputPolicy("p.rego", "package p\n\nx := 1\n"))
 
 	// Since no level was provided, "error" should be inherited from the provided configuration for the rule
-	if mergedConfig.Rules["style"]["file-length"].Level != "error" {
-		t.Errorf("expected level to be 'error', got %q", mergedConfig.Rules["style"]["file-length"].Level)
+	mergedRules := testutil.Must(linter.GetConfig())(t).Rules
+	if mergedRules["style"]["file-length"].Level != "error" {
+		t.Errorf("expected level to be 'error', got %q", mergedRules["style"]["file-length"].Level)
 	}
 
-	fileLength := mergedConfig.Rules["style"]["file-length"].Extra["max-file-length"]
-
 	// Ensure the extra attributes are still there.
+	fileLength := mergedRules["style"]["file-length"].Extra["max-file-length"]
 	if fileLength.(int) != 1 {
 		t.Errorf("expected max-file-length to be 1, got %d %T", fileLength, fileLength)
 	}
@@ -441,11 +399,9 @@ func TestLintMergedConfigUsesProvidedDefaults(t *testing.T) {
 		},
 	}
 
-	input := test.InputPolicy("p.rego", `package p`)
-
 	linter := NewLinter().
 		WithUserConfig(userConfig).
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p.rego", `package p`))
 
 	mergedConfig := testutil.Must(linter.GetConfig())(t)
 
@@ -473,18 +429,14 @@ func TestLintMergedConfigUsesProvidedDefaults(t *testing.T) {
 func TestLintWithPrintHook(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", `package p`)
-
 	var bb bytes.Buffer
 
 	linter := NewLinter().
 		WithCustomRules([]string{filepath.Join("testdata", "printer.rego")}).
 		WithPrintHook(topdown.NewPrintHook(&bb)).
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p.rego", `package p`))
 
-	if _, err := linter.Lint(t.Context()); err != nil {
-		t.Fatal(err)
-	}
+	testutil.Must(linter.Lint(t.Context()))(t)
 
 	if bb.String() != "p.rego\n" {
 		t.Errorf("expected print hook to print file name 'p.rego' and newline, got %q", bb.String())
@@ -504,13 +456,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 		import data.foo.allow
 	`
 
-	modules := make(map[string]*ast.Module)
-
-	for filename, content := range policies {
-		modules[filename] = parse.MustParseModule(content)
-	}
-
-	input := rules.NewInput(policies, modules)
+	input := rules.NewInput(policies, util.MapValues(policies, parse.MustParseModule))
 
 	linter := NewLinter().
 		WithDisableAll(true).
@@ -519,9 +465,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 1 {
-		t.Fatalf("expected one violation, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 1, result)
 
 	violation := result.Violations[0]
 
@@ -545,9 +489,7 @@ func TestLintWithAggregateRule(t *testing.T) {
 func TestEnabledRules(t *testing.T) {
 	t.Parallel()
 
-	linter := NewLinter().
-		WithDisableAll(true).
-		WithEnabledRules("opa-fmt", "no-whitespace-comment")
+	linter := NewLinter().WithDisableAll(true).WithEnabledRules("opa-fmt", "no-whitespace-comment")
 
 	enabledRules, err := linter.DetermineEnabledRules(t.Context())
 	if err != nil {
@@ -570,7 +512,7 @@ func TestEnabledRules(t *testing.T) {
 func TestEnabledRulesWithConfig(t *testing.T) {
 	t.Parallel()
 
-	configFileBs := []byte(`
+	config := testutil.MustUnmarshalYAML[config.Config](t, []byte(`
 rules:
   style:
     opa-fmt:
@@ -581,15 +523,9 @@ rules:
   idiomatic:
     directory-package-mismatch: # non agg rule
       level: ignore
-`)
+`))
 
-	var userConfig config.Config
-
-	if err := yaml.Unmarshal(configFileBs, &userConfig); err != nil {
-		t.Fatalf("failed to load config: %s", err)
-	}
-
-	linter := NewLinter().WithUserConfig(userConfig)
+	linter := NewLinter().WithUserConfig(config)
 
 	enabledRules, err := linter.DetermineEnabledRules(t.Context())
 	if err != nil {
@@ -625,34 +561,22 @@ func TestEnabledAggregateRules(t *testing.T) {
 		WithDisableAll(true).
 		WithEnabledRules("opa-fmt", "unresolved-import", "use-assignment-operator")
 
-	enabledRules, err := linter.DetermineEnabledAggregateRules(t.Context())
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	enabledRules := testutil.Must(linter.DetermineEnabledAggregateRules(t.Context()))(t)
 
-	if len(enabledRules) != 1 {
-		t.Fatalf("expected 1 enabled rules, got %d", len(enabledRules))
-	}
-
-	if enabledRules[0] != "unresolved-import" {
-		t.Errorf("expected first enabled rule to be 'unresolved-import', got %q", enabledRules[0])
+	if !slices.Equal(enabledRules, []string{"unresolved-import"}) {
+		t.Errorf("expected enabled aggregate rules to be 'unresolved-import', got %v", enabledRules)
 	}
 }
 
 func TestLintWithCollectQuery(t *testing.T) {
 	t.Parallel()
 
-	input := test.InputPolicy("p.rego", `package p
-
-import data.foo.bar.unresolved
-`)
-
 	linter := NewLinter().
 		WithDisableAll(true).
 		WithEnabledRules("unresolved-import").
 		WithCollectQuery(true).     // needed since we have a single file input
 		WithExportAggregates(true). // needed to be able to test the aggregates are set
-		WithInputModules(&input)
+		WithInputModules(test.InputPolicy("p.rego", "package p\n\nimport data.foo.bar.unresolved\n"))
 
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
@@ -683,32 +607,22 @@ import data.unresolved`,
 	allAggregates := make(map[string][]report.Aggregate)
 
 	for file, content := range files {
-		input := test.InputPolicy(file, content)
-
 		linter := NewLinter().
 			WithDisableAll(true).
 			WithEnabledRules("unresolved-import").
 			WithCollectQuery(true). // runs collect for a single file input
 			WithExportAggregates(true).
-			WithInputModules(&input)
+			WithInputModules(test.InputPolicy(file, content))
 
-		result := testutil.Must(linter.Lint(t.Context()))(t)
-
-		for k, aggs := range result.Aggregates {
+		for k, aggs := range testutil.Must(linter.Lint(t.Context()))(t).Aggregates {
 			allAggregates[k] = append(allAggregates[k], aggs...)
 		}
 	}
 
-	linter := NewLinter().
-		WithDisableAll(true).
-		WithEnabledRules("unresolved-import").
-		WithAggregates(allAggregates)
-
+	linter := NewLinter().WithDisableAll(true).WithEnabledRules("unresolved-import").WithAggregates(allAggregates)
 	result := testutil.Must(linter.Lint(t.Context()))(t)
 
-	if len(result.Violations) != 3 {
-		t.Fatalf("expected one violation, got %d", len(result.Violations))
-	}
+	testutil.AssertNumViolations(t, 3, result)
 
 	foundFiles := []string{}
 
@@ -732,11 +646,9 @@ import data.unresolved`,
 // 952606688 ns/op	2808314460 B/op	51658499 allocs/op
 // 892354312 ns/op	2669512068 B/op	48780541 allocs/op
 // ...
+// 884346375 ns/op	2419933936 B/op	50442824 allocs/op
 func BenchmarkRegalLintingItself(b *testing.B) {
-	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
-	if err != nil {
-		b.Fatal(err)
-	}
+	conf := testutil.Must(config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml")))(b)
 
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
@@ -746,44 +658,30 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 	var rep report.Report
 
 	for b.Loop() {
-		rep, err = linter.Lint(b.Context())
-		if err != nil {
-			b.Fatal(err)
-		}
+		rep = testutil.Must(linter.Lint(b.Context()))(b)
 	}
 
-	if len(rep.Violations) != 0 {
-		b.Fatalf("expected no violations, got %v", rep.Violations)
-	}
+	testutil.AssertNumViolations(b, 0, rep)
 }
 
 // 955670792 ns/op	3004937416 B/op	57408554 allocs/op
 // ...
 func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
-	conf, err := config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml"))
-	if err != nil {
-		b.Fatal(err)
-	}
+	conf := testutil.Must(config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml")))(b)
 
-	ctx := b.Context()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithUserConfig(conf).
-		MustPrepare(ctx)
+		MustPrepare(b.Context())
 
 	var rep report.Report
 
 	for b.Loop() {
-		rep, err = linter.Lint(ctx)
-		if err != nil {
-			b.Fatal(err)
-		}
+		rep = testutil.Must(linter.Lint(b.Context()))(b)
 	}
 
-	if len(rep.Violations) != 0 {
-		b.Fatalf("expected no violations, got %v", rep.Violations)
-	}
+	testutil.AssertNumViolations(b, 0, rep)
 }
 
 // 6	 168875708 ns/op	455586606 B/op	 8537889 allocs/op
@@ -795,20 +693,13 @@ func BenchmarkRegalNoEnabledRules(b *testing.B) {
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true)
 
-	var err error
-
 	var rep report.Report
 
 	for b.Loop() {
-		rep, err = linter.Lint(b.Context())
-		if err != nil {
-			b.Fatal(err)
-		}
+		rep = testutil.Must(linter.Lint(b.Context()))(b)
 	}
 
-	if len(rep.Violations) != 0 {
-		b.Fatalf("expected no violations, got %v", rep.Violations)
-	}
+	testutil.AssertNumViolations(b, 0, rep)
 }
 
 // 97546746 ns/op	401323023 B/op	 7427903 allocs/op
@@ -820,37 +711,26 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 		WithDisableAll(true).
 		MustPrepare(b.Context())
 
-	var err error
-
 	var rep report.Report
 
 	for b.Loop() {
-		rep, err = linter.Lint(b.Context())
-		if err != nil {
-			b.Fatal(err)
-		}
+		rep = testutil.Must(linter.Lint(b.Context()))(b)
 	}
 
-	if len(rep.Violations) != 0 {
-		_ = rep.Violations
-	}
+	testutil.AssertNumViolations(b, 0, rep)
 }
 
 // Runs a separate benchmark for each rule in the bundle. Note that this will take *several* minutes to run,
 // meaning you do NOT want to do this more than occasionally. You may however find it helpful to use this with
 // a single, or handful of rules to get a better idea of how long they take to run, and relative to each other.
 func BenchmarkEachRule(b *testing.B) {
-	conf, err := config.LoadConfigWithDefaultsFromBundle(bundle.LoadedBundle(), nil)
-	if err != nil {
-		b.Fatal(err)
-	}
+	conf := testutil.Must(config.LoadConfigWithDefaultsFromBundle(bundle.LoadedBundle(), nil))(b)
 
-	ctx := b.Context()
 	linter := NewLinter().
 		WithInputPaths([]string{"../../bundle"}).
 		WithBaseCache(cache.NewBaseCache()).
 		WithDisableAll(true).
-		MustPrepare(ctx)
+		MustPrepare(b.Context())
 
 	for _, category := range conf.Rules {
 		for ruleName := range category {
@@ -863,20 +743,13 @@ func BenchmarkEachRule(b *testing.B) {
 				b.ResetTimer()
 				b.ReportAllocs()
 
-				var err error
-
 				var rep report.Report
 
 				for b.Loop() {
-					rep, err = linter.WithEnabledRules(ruleName).Lint(ctx)
-					if err != nil {
-						b.Fatal(err)
-					}
+					rep = testutil.Must(linter.WithEnabledRules(ruleName).Lint(b.Context()))(b)
 				}
 
-				if len(rep.Violations) != 0 {
-					_ = rep.Violations
-				}
+				testutil.AssertNumViolations(b, 0, rep)
 			})
 		}
 	}

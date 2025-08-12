@@ -25,30 +25,20 @@ type Handle struct {
 // New opens a new language server session on the provided websocket connection `ws`.
 // Use the `*config.Config` argument to control the LSP session's config.
 func New(ctx context.Context, ws *websocket.Conn, c *config.Config) (*Handle, error) {
-	opts := lsp.LanguageServerOptions{
-		LogWriter: os.Stderr,
-		LogLevel:  log.LevelOff,
-	}
+	opts := lsp.LanguageServerOptions{Logger: log.NewLogger(log.LevelOff, os.Stderr)}
 	if os.Getenv("REGAL_DEBUG") != "" {
-		opts.LogLevel = log.LevelDebug
+		opts.Logger.SetLevel(log.LevelDebug)
 	}
 
 	ls := lsp.NewLanguageServerMinimal(ctx, &opts, c)
-	jconn := jsonrpc2.NewConn(
-		ctx,
-		jsonrpc2_ws.NewObjectStream(ws),
-		jsonrpc2.HandlerWithError(ls.Handle),
-	)
+	jconn := jsonrpc2.NewConn(ctx, jsonrpc2_ws.NewObjectStream(ws), jsonrpc2.HandlerWithError(ls.Handle))
 	ls.SetConn(jconn)
 
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartHoverWorker(ctx)
 	go ls.StartCommandWorker(ctx)
 
-	return &Handle{
-		conn: jconn,
-		ls:   ls,
-	}, nil
+	return &Handle{conn: jconn, ls: ls}, nil
 }
 
 // Wait waits for the client to finish its exchange. It aborts if ctx is done.

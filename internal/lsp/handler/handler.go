@@ -10,7 +10,7 @@ import (
 
 type Func[T any] func(T) (any, error)
 
-type handlerContextFunc[T any] func(context.Context, T) (any, error)
+type ContextFunc[T any] func(context.Context, T) (any, error)
 
 var ErrInvalidParams = &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 
@@ -35,7 +35,7 @@ func WithParams[T any](req *jsonrpc2.Request, h Func[T]) (any, error) {
 	return h(params)
 }
 
-func WithContextAndParams[T any](ctx context.Context, req *jsonrpc2.Request, h handlerContextFunc[T]) (any, error) {
+func WithContextAndParams[T any](ctx context.Context, req *jsonrpc2.Request, h ContextFunc[T]) (any, error) {
 	var params T
 	if err := Decode(req, &params); err != nil {
 		return nil, err

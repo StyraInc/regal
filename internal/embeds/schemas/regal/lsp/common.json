@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "regal.lsp.common",
+  "$ref": "#/$defs/input",
+  "$defs": {
+    "input": {
+      "properties": {
+        "regal": {
+          "$ref": "#/$defs/regal"
+        }
+      },
+      "type": "object"
+    },
+    "regal": {
+      "properties": {
+        "client": {
+          "type": "object",
+          "description": "LSP client properties",
+          "properties": {
+            "identifier": {
+              "type": "integer",
+              "description": "Numeric identifier for the LSP client"
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "description": "Environment properties for the LSP client",
+          "properties": {
+            "workspace_root_uri": {
+              "type": "string",
+              "description": "URI of the workspace root"
+            },
+            "web_server_base_uri": {
+              "type": "string",
+              "description": "Base URI for Regal's local web server server"
+            }
+          },
+          "required": [
+            "workspace_root_uri",
+            "web_server_base_uri"
+          ]
+        },
+        "file": {
+          "properties": {
+            "abs": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rego_version": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [
+            "abs",
+            "name",
+            "uri",
+            "lines",
+            "rego_version"
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "client",
+        "environment",
+        "file"
+      ]
+    }
+  }
+}

@@ -54,17 +54,7 @@ import
 
 	p := &PackageRefs{}
 
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: "file:///bar/file2.rego",
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 8,
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, nil)
+	completions, err := p.Run(t.Context(), c, types.NewCompletionParams("file:///bar/file2.rego", 2, 8, nil), nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -130,17 +120,7 @@ import
 
 	p := &PackageRefs{}
 
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{
-			URI: "file:///file.rego",
-		},
-		Position: types.Position{
-			Line:      2,
-			Character: 8,
-		},
-	}
-
-	completions, err := p.Run(t.Context(), c, completionParams, nil)
+	completions, err := p.Run(t.Context(), c, types.NewCompletionParams("file:///file.rego", 2, 8, nil), nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

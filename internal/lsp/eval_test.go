@@ -19,7 +19,7 @@ import (
 func TestEvalWorkspacePath(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
 	ls.workspaceRootURI = "file:///workspace"
 
@@ -84,7 +84,7 @@ func TestEvalWorkspacePath(t *testing.T) {
 func TestEvalWorkspacePathInternalData(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
 	res, err := ls.EvalInWorkspace(t.Context(), "object.keys(data.internal)", map[string]any{})
 	if err != nil {

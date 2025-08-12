@@ -109,12 +109,9 @@ func TestTemplateContentsForFile(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			lg := log.NewLogger(log.LevelDebug, t.Output())
 			td := testutil.TempDirectoryOf(t, tc.DiskContents)
-
-			ls := NewLanguageServer(
-				t.Context(),
-				&LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug},
-			)
+			ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: lg})
 
 			ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 			ls.loadedConfigAllRegoVersions = tc.ServerAllRegoVersions
@@ -143,15 +140,11 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 	t.Parallel()
 
 	td := t.TempDir()
-	logger := newTestLogger(t)
 
 	testutil.MustMkdirAll(t, td, ".regal")
 	testutil.MustWriteFile(t, filepath.Join(td, ".regal", "config.yaml"), []byte{})
 
-	ls := NewLanguageServer(
-		t.Context(),
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
 	ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
@@ -170,12 +163,7 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 	t.Parallel()
 
 	td := t.TempDir()
-	logger := newTestLogger(t)
-
-	ls := NewLanguageServer(
-		t.Context(),
-		&LanguageServerOptions{LogWriter: logger, LogLevel: log.LevelDebug},
-	)
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
 	ls.workspaceRootURI = uri.FromPath(clients.IdentifierGeneric, td)
 
@@ -216,8 +204,7 @@ func TestNewFileTemplating(t *testing.T) {
 	defer cancel()
 
 	receivedMessages := make(chan message, 10)
-	handler := createTemplateTestClientHandler(t, receivedMessages)
-	ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, handler)
+	ls, connClient := createAndInitServer(t, ctx, tempDir, createTemplateTestClientHandler(t, receivedMessages))
 
 	go ls.StartTemplateWorker(ctx)
 
@@ -247,10 +234,8 @@ func TestNewFileTemplating(t *testing.T) {
 	testutil.MustWriteFile(t, newFilePath, []byte(""))
 
 	// Client sends workspace/didCreateFiles notification
-	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
-		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
-			{URI: newFileURI},
-		},
+	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.CreateFilesParams{
+		Files: []types.File{{URI: newFileURI}},
 	}, nil); err != nil {
 		t.Fatalf("failed to send didChange notification: %s", err)
 	}
@@ -350,25 +335,15 @@ func TestNewFileTemplating(t *testing.T) {
 func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	t.Parallel()
 
-	files := map[string]string{
-		".regal/config.yaml": `{}`,
-	}
-
-	tempDir := testutil.TempDirectoryOf(t, files)
+	files := map[string]string{".regal/config.yaml": `{}`}
 
 	// set up the server and client connections
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	receivedMessages := make(chan message, 10)
-
-	ls, connClient := createAndInitServer(
-		t,
-		ctx,
-		newTestLogger(t),
-		tempDir,
-		createTemplateTestClientHandler(t, receivedMessages),
-	)
+	tempDir := testutil.TempDirectoryOf(t, files)
+	ls, connClient := createAndInitServer(t, ctx, tempDir, createTemplateTestClientHandler(t, receivedMessages))
 
 	newFilePath := filepath.Join(tempDir, "foo", "bar", "policy.rego")
 	newFileURI := uri.FromPath(clients.IdentifierGeneric, newFilePath)
@@ -401,10 +376,8 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	}()
 
 	// 1: send didCreateFiles to trigger templating
-	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.WorkspaceDidCreateFilesParams{
-		Files: []types.WorkspaceDidCreateFilesParamsCreatedFile{
-			{URI: newFileURI},
-		},
+	if err := connClient.Notify(ctx, "workspace/didCreateFiles", types.CreateFilesParams{
+		Files: []types.File{{URI: newFileURI}},
 	}, nil); err != nil {
 		t.Fatalf("failed to send didCreateFiles notification: %s", err)
 	}
@@ -429,7 +402,7 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	}
 
 	// 2: send the didOpen notification while templating is in progress
-	if err := connClient.Notify(ctx, "textDocument/didOpen", types.TextDocumentDidOpenParams{
+	if err := connClient.Notify(ctx, "textDocument/didOpen", types.DidOpenTextDocumentParams{
 		TextDocument: types.TextDocumentItem{
 			URI:        newFileURI,
 			LanguageID: "rego",
@@ -457,7 +430,7 @@ func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {
 	}
 
 	// 4: check that the didOpen now works again after the lock is off
-	if err := connClient.Notify(ctx, "textDocument/didOpen", types.TextDocumentDidOpenParams{
+	if err := connClient.Notify(ctx, "textDocument/didOpen", types.DidOpenTextDocumentParams{
 		TextDocument: types.TextDocumentItem{
 			URI:        newFileURI,
 			LanguageID: "rego",

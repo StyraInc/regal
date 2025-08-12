@@ -39,3 +39,13 @@ func Map[T, R any](s []T, f func(T) R) []R {
 
 	return r
 }
+
+// MapValues applies the function f to each value in the map m and returns a new map with the same keys.
+func MapValues[K comparable, V, R any](m map[K]V, f func(V) R) map[K]R {
+	mapped := make(map[K]R, len(m))
+	for k, v := range m {
+		mapped[k] = f(v)
+	}
+
+	return mapped
+}

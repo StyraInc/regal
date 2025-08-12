@@ -13,10 +13,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/resolver"
 	"github.com/open-policy-agent/opa/v1/storage"
+	"github.com/open-policy-agent/opa/v1/topdown"
 
 	rbundle "github.com/styrainc/regal/bundle"
 	"github.com/styrainc/regal/internal/compile"
-	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/styrainc/regal/internal/lsp/rego/query"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/pkg/builtins"
 	"github.com/styrainc/regal/pkg/roast/encoding"
@@ -27,18 +28,15 @@ import (
 )
 
 var (
-	emptyResult            = rego.Result{}
-	errNoResults           = errors.New("no results returned from evaluation")
-	errExcpectedOneResult  = errors.New("expected exactly one result from evaluation")
-	errExcpectedOneExpr    = errors.New("expected exactly one expression in result")
-	keywordsQuery          = "data.regal.ast.keywords"
-	codeLensQuery          = "data.regal.lsp.codelens.lenses"
-	codeActionQuery        = "data.regal.lsp.codeaction.actions"
-	ruleHeadLocationsQuery = "data.regal.ast.rule_head_locations"
-	prepared               = concurrent.MapOf(make(map[string]*cachedQuery, 5))
-	simpleRefPattern       = regexp.MustCompile(`^[a-zA-Z\.]$`)
+	emptyResult           = rego.Result{}
+	errNoResults          = errors.New("no results returned from evaluation")
+	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
+	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
+	prepared              = concurrent.MapOf(make(map[string]*cachedQuery, 5))
+	simpleRefPattern      = regexp.MustCompile(`^[a-zA-Z\.]$`)
 )
 
+// init [storage.Store] initializes the storage store with the built-in queries.
 func init() {
 	ast.InternStringTerm(
 		// All keys from Code Actions
@@ -48,64 +46,88 @@ func init() {
 	)
 }
 
-type regoOptions = []func(*rego.Rego)
+type (
+	Query[T, R any] struct {
+		Query  string `json:"query"`
+		Input  T      `json:"input"`
+		Output R      `json:"output"`
+		Store  storage.Store
+	}
 
-type cachedQuery struct {
-	body     ast.Body
-	prepared *rego.PreparedEvalQuery
-	store    storage.Store
+	BuiltInCall struct {
+		Builtin  *ast.Builtin
+		Location *ast.Location
+		Args     []*ast.Term
+	}
+
+	KeywordUse struct {
+		Name     string             `json:"name"`
+		Location KeywordUseLocation `json:"location"`
+	}
+
+	RuleHeads map[string][]*ast.Location
+
+	KeywordUseLocation struct {
+		Row uint `json:"row"`
+		Col uint `json:"col"`
+	}
+
+	File struct {
+		Name        string   `json:"name"`
+		Lines       []string `json:"lines"`
+		Abs         string   `json:"abs"`
+		RegoVersion string   `json:"rego_version"`
+	}
+
+	Environment struct {
+		PathSeparator    string `json:"path_separator"`
+		WorkspaceRootURI string `json:"workspace_root_uri"`
+		WebServerBaseURI string `json:"web_server_base_uri"`
+	}
+
+	RegalContext struct {
+		Client      types.Client `json:"client"`
+		File        File         `json:"file"`
+		Environment Environment  `json:"environment"`
+	}
+
+	Requirements struct {
+		File FileRequirements `json:"file"`
+	}
+
+	FileRequirements struct {
+		Lines bool `json:"lines"`
+	}
+
+	Input[T any] struct {
+		Regal  RegalContext `json:"regal"`
+		Params T            `json:"params"`
+	}
+
+	regoOptions        = []func(*rego.Rego)
+	codeActions        = []types.CodeAction
+	codeLenses         = []types.CodeLens
+	documentLinks      = []types.DocumentLink
+	documentHighlights = []types.DocumentHighlight
+
+	cachedQuery struct {
+		body     ast.Body
+		prepared *rego.PreparedEvalQuery
+		store    storage.Store
+	}
+
+	policy struct {
+		module   *ast.Module
+		fileName string
+		contents string
+	}
+)
+
+func NewInput[T any](regal RegalContext, params T) Input[T] {
+	return Input[T]{Regal: regal, Params: params}
 }
 
-type policy struct {
-	module   *ast.Module
-	fileName string
-	contents string
-}
-
-type BuiltInCall struct {
-	Builtin  *ast.Builtin
-	Location *ast.Location
-	Args     []*ast.Term
-}
-
-type KeywordUse struct {
-	Name     string             `json:"name"`
-	Location KeywordUseLocation `json:"location"`
-}
-
-type RuleHeads map[string][]*ast.Location
-
-type KeywordUseLocation struct {
-	Row uint `json:"row"`
-	Col uint `json:"col"`
-}
-
-type Client struct {
-	Identifier            clients.Identifier           `json:"identifier"`
-	InitializationOptions *types.InitializationOptions `json:"init_options,omitempty"`
-}
-
-type Environment struct {
-	WorkspaceRootURI string `json:"workspace_root_uri"`
-	WebServerBaseURI string `json:"web_server_base_uri"`
-}
-
-type RegalContext struct {
-	Client      Client      `json:"client"`
-	Environment Environment `json:"environment"`
-}
-
-type CodeActionInput struct {
-	Regal  RegalContext           `json:"regal"`
-	Params types.CodeActionParams `json:"params"`
-}
-
-type CompletionInput struct {
-	Regal  RegalContext           `json:"regal"`
-	Params types.CompletionParams `json:"params"`
-}
-
-func (c CodeActionInput) String() string { // For debugging only
+func (c Input[T]) String() string { // For debugging only
 	s, err := encoding.JSON().MarshalToString(&c)
 	if err != nil {
 		return fmt.Sprintf("CodeActionInput marshalling error: %v", err)
@@ -124,17 +146,12 @@ func SchemaResolvers() []func(*rego.Rego) {
 
 func PositionFromLocation(loc *ast.Location) types.Position {
 	//nolint:gosec
-	return types.Position{
-		Line:      uint(loc.Row - 1),
-		Character: uint(loc.Col - 1),
-	}
+	return types.Position{Line: uint(loc.Row - 1), Character: uint(loc.Col - 1)}
 }
 
 func LocationFromPosition(pos types.Position) *ast.Location {
-	return &ast.Location{
-		Row: int(pos.Line + 1),      //nolint: gosec
-		Col: int(pos.Character + 1), //nolint: gosec
-	}
+	//nolint: gosec
+	return &ast.Location{Row: int(pos.Line + 1), Col: int(pos.Character + 1)}
 }
 
 func ParseQuery(query string) ast.Body {
@@ -189,7 +206,7 @@ func AllBuiltinCalls(module *ast.Module, builtins map[string]*ast.Builtin) []Bui
 func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Module) (map[string][]KeywordUse, error) {
 	var keywords map[string][]KeywordUse
 
-	if err := policyToValue(ctx, keywordsQuery, policy{module, fileName, contents}, &keywords); err != nil {
+	if err := policyToValue(ctx, query.Keywords, policy{module, fileName, contents}, &keywords); err != nil {
 		return nil, fmt.Errorf("failed querying for all keywords: %w", err)
 	}
 
@@ -198,37 +215,80 @@ func AllKeywords(ctx context.Context, fileName, contents string, module *ast.Mod
 
 // AllRuleHeadLocations returns mapping of rules names to the head locations.
 func AllRuleHeadLocations(ctx context.Context, fileName, contents string, module *ast.Module) (RuleHeads, error) {
-	var ruleHeads RuleHeads
+	var locations RuleHeads
 
-	if err := policyToValue(ctx, ruleHeadLocationsQuery, policy{module, fileName, contents}, &ruleHeads); err != nil {
+	err := policyToValue(ctx, string(query.RuleHeadLocations), policy{module, fileName, contents}, &locations)
+	if err != nil {
 		return nil, fmt.Errorf("failed querying for rule head locations: %w", err)
 	}
 
-	return ruleHeads, nil
+	return locations, nil
 }
 
 // CodeLenses returns all code lenses in the module.
-func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) ([]types.CodeLens, error) {
-	var codeLenses []types.CodeLens
+func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (codeLenses, error) {
+	var lenses codeLenses
 
-	if err := policyToValue(ctx, codeLensQuery, policy{module, uri, contents}, &codeLenses); err != nil {
+	if err := policyToValue(ctx, query.CodeLens, policy{module, uri, contents}, &lenses); err != nil {
 		return nil, fmt.Errorf("failed querying code lenses: %w", err)
 	}
 
-	return codeLenses, nil
+	return lenses, nil
+}
+
+func QueryEval[P any, R any](ctx context.Context, query string, input Input[P]) (R, error) {
+	var result R
+
+	if err := CachedQueryEval(ctx, query, rast.StructToValue(input), &result); err != nil {
+		return result, fmt.Errorf("failed querying %q: %w", query, err)
+	}
+
+	return result, nil
 }
 
 // CodeActions returns all code actions in the module.
 // Note that at least as of now, no code actions depend on the data in the module, so
 // it is not passed as part of the input. This could change in the future.
-func CodeActions(ctx context.Context, input CodeActionInput) ([]types.CodeAction, error) {
-	var codeActions []types.CodeAction
+func CodeActions(ctx context.Context, input Input[types.CodeActionParams]) (codeActions, error) {
+	var actions codeActions
 
-	if err := CachedQueryEval(ctx, codeActionQuery, rast.StructToValue(input), &codeActions); err != nil {
+	if err := CachedQueryEval(ctx, string(query.CodeAction), rast.StructToValue(input), &actions); err != nil {
 		return nil, fmt.Errorf("failed querying code actions: %w", err)
 	}
 
-	return codeActions, nil
+	return actions, nil
+}
+
+func DocumentLinks(ctx context.Context, input Input[types.DocumentLinkParams]) (documentLinks, error) {
+	var links documentLinks
+
+	err := CachedQueryEval(ctx, query.DocumentLink, rast.StructToValue(input), &links)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying document links: %w", err)
+	}
+
+	return links, nil
+}
+
+func DocumentHighlight(ctx context.Context, input Input[types.DocumentHighlightParams]) (documentHighlights, error) {
+	var highlights documentHighlights
+
+	err := CachedQueryEval(ctx, query.DocumentHighlight, rast.StructToValue(input), &highlights)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying document highlights: %w", err)
+	}
+
+	return highlights, nil
+}
+
+func SignatureHelp(ctx context.Context, input Input[types.SignatureHelpParams]) (types.SignatureHelp, error) {
+	var signatureHelp types.SignatureHelp
+
+	if err := CachedQueryEval(ctx, query.SignatureHelp, rast.StructToValue(input), &signatureHelp); err != nil {
+		return types.SignatureHelp{}, fmt.Errorf("failed querying signature help: %w", err)
+	}
+
+	return signatureHelp, nil
 }
 
 func CachedQueryEval[T any](ctx context.Context, query string, input ast.Value, toValue *T) error {
@@ -244,6 +304,16 @@ func CachedQueryEval[T any](ctx context.Context, query string, input ast.Value, 
 
 	if err := encoding.JSONRoundTrip(result.Expressions[0].Value, toValue); err != nil {
 		return fmt.Errorf("failed unmarshaling value: %w", err)
+	}
+
+	return nil
+}
+
+func StoreAllCachedQueries(ctx context.Context, store storage.Store) error {
+	for _, q := range query.AllQueries() {
+		if err := StoreCachedQuery(ctx, q, store); err != nil {
+			return fmt.Errorf("failed storing cached query %q: %w", q, err)
+		}
 	}
 
 	return nil
@@ -297,8 +367,7 @@ func prepareQueryArgs(
 	args = append(args, builtins.RegalBuiltinRegoFuncs...)
 
 	// For debugging
-	// args = append(args, rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stderr)))
-
+	args = append(args, rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stderr)))
 	args = append(args, SchemaResolvers()...)
 
 	var txn storage.Transaction

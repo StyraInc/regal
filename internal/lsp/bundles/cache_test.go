@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/testutil"
 )
 
@@ -18,7 +19,7 @@ func TestRefresh(t *testing.T) {
 		"foo/data.json": `{"foo": "bar"}`,
 	})
 
-	c := NewCache(&CacheOptions{WorkspacePath: workspacePath})
+	c := NewCache(workspacePath, log.NoOpLogger())
 
 	// perform the first load of the bundles
 	refreshedBundles, err := c.Refresh()

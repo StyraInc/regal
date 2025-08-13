@@ -119,3 +119,23 @@ func TestPutFileRefs(t *testing.T) {
 		t.Errorf("expected %v, got %v", expected, arr)
 	}
 }
+
+func TestPutBuiltins(t *testing.T) {
+	t.Parallel()
+
+	store := NewRegalStore()
+	builtins := map[string]*ast.Builtin{"count": ast.Count}
+
+	if err := PutBuiltins(t.Context(), store, builtins); err != nil {
+		t.Fatalf("PutBuiltins failed: %v", err)
+	}
+
+	value, err := storage.ReadOne(t.Context(), store, storage.Path{"workspace", "builtins", "count"})
+	if err != nil {
+		t.Fatalf("store.Read failed: %v", err)
+	}
+
+	if value == nil {
+		t.Errorf("expected count builtin to exist in store")
+	}
+}

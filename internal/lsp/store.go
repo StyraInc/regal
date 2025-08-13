@@ -23,11 +23,8 @@ func NewRegalStore() storage.Store {
 	}, inmem.OptRoundTripOnWrite(false), inmem.OptReturnASTValuesOnRead(true))
 }
 
-func transact(ctx context.Context, store storage.Store, writeMode bool, op func(txn storage.Transaction) error) error {
-	var params storage.TransactionParams
-	if writeMode {
-		params = storage.WriteParams
-	}
+func transact(ctx context.Context, store storage.Store, op func(txn storage.Transaction) error) error {
+	params := storage.WriteParams
 
 	txn, err := store.NewTransaction(ctx, params)
 	if err != nil {
@@ -56,7 +53,7 @@ func transact(ctx context.Context, store storage.Store, writeMode bool, op func(
 }
 
 func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *ast.Module) error {
-	return transact(ctx, store, true, func(txn storage.Transaction) error {
+	return transact(ctx, store, func(txn storage.Transaction) error {
 		var stErr *storage.Error
 
 		var modMap map[string]any
@@ -81,7 +78,7 @@ func PutFileMod(ctx context.Context, store storage.Store, fileURI string, mod *a
 }
 
 func RemoveFileMod(ctx context.Context, store storage.Store, fileURI string) error {
-	return transact(ctx, store, true, func(txn storage.Transaction) error {
+	return transact(ctx, store, func(txn storage.Transaction) error {
 		var stErr *storage.Error
 
 		_, err := store.Read(ctx, txn, storage.Path{"workspace", "parsed", fileURI})
@@ -103,7 +100,7 @@ func RemoveFileMod(ctx context.Context, store storage.Store, fileURI string) err
 }
 
 func PutFileRefs(ctx context.Context, store storage.Store, fileURI string, refs []string) error {
-	return transact(ctx, store, true, func(txn storage.Transaction) error {
+	return transact(ctx, store, func(txn storage.Transaction) error {
 		var stErr *storage.Error
 
 		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "defined_refs", fileURI}, refs)
@@ -116,6 +113,32 @@ func PutFileRefs(ctx context.Context, store storage.Store, fileURI string, refs 
 
 		if err != nil {
 			return fmt.Errorf("failed to replace refs in store: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func PutBuiltins(ctx context.Context, store storage.Store, builtins map[string]*ast.Builtin) error {
+	return transact(ctx, store, func(txn storage.Transaction) error {
+		var (
+			stErr       *storage.Error
+			builtinsMap map[string]any
+		)
+
+		if err := encoding.JSONRoundTrip(builtins, &builtinsMap); err != nil {
+			return fmt.Errorf("failed to marshal builtins to JSON: %w", err)
+		}
+
+		err := store.Write(ctx, txn, storage.ReplaceOp, storage.Path{"workspace", "builtins"}, builtinsMap)
+		if errors.As(err, &stErr) && stErr.Code == storage.NotFoundErr {
+			if err = store.Write(ctx, txn, storage.AddOp, storage.Path{"workspace", "builtins"}, builtinsMap); err != nil {
+				return fmt.Errorf("failed to init builtins in store: %w", err)
+			}
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to replace builtins in store: %w", err)
 		}
 
 		return nil

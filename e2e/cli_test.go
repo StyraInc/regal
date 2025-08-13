@@ -18,7 +18,6 @@ import (
 	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 	"github.com/styrainc/regal/pkg/report"
-
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 

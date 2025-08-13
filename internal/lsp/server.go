@@ -259,6 +259,8 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeLens)
 	case "textDocument/completion":
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCompletion)
+	case "textDocument/signatureHelp":
+		return handler.WithParams(req, l.handleTextDocumentSignatureHelp)
 	case "workspace/didChangeWatchedFiles":
 		return handler.WithParams(req, l.handleWorkspaceDidChangeWatchedFiles)
 	case "workspace/diagnostic":
@@ -536,6 +538,11 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			bis := rego.BuiltinsForCapabilities(caps)
 
 			l.loadedBuiltins.Set(capsURL, bis)
+
+			// Store builtins and cache signature help query
+			if err := l.storeBuiltinsAndCacheSignatureHelp(ctx, bis); err != nil {
+				l.logf(log.LevelMessage, "failed to store builtins and cache signature help: %v", err)
+			}
 
 			// the config may now ignore files that existed in the cache before,
 			// in which case we need to remove them to stop their contents being
@@ -1442,6 +1449,39 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 	return nil, nil
 }
 
+func (l *LanguageServer) handleTextDocumentSignatureHelp(params types.SignatureHelpParams) (any, error) {
+	if l.ignoreURI(params.TextDocument.URI) {
+		return nil, nil
+	}
+
+	content, ok := l.cache.GetFileContents(params.TextDocument.URI)
+	if !ok {
+		return nil, nil
+	}
+
+	inputData := map[string]any{
+		"content":  content,
+		"position": params.Position,
+	}
+	input := ast.MustInterfaceToValue(inputData)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	var queryResult map[string]any
+
+	if err := rego.CachedQueryEval(ctx, `data.regal.lsp["signature-help"]`, input, &queryResult); err != nil {
+		return nil, fmt.Errorf("failed querying signature help: %w", err)
+	}
+
+	result, ok := queryResult["result"]
+	if !ok || result == nil {
+		return nil, nil
+	}
+
+	return result, nil
+}
+
 func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, params types.CodeActionParams) (any, error) {
 	if l.ignoreURI(params.TextDocument.URI) {
 		return noCodeActions, nil
@@ -2121,8 +2161,11 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 					Supported: true,
 				},
 			},
-			InlayHintProvider:  types.InlayHintOptions{ResolveProvider: false},
-			HoverProvider:      true,
+			InlayHintProvider: types.InlayHintOptions{ResolveProvider: false},
+			HoverProvider:     true,
+			SignatureHelpProvider: types.SignatureHelpOptions{
+				TriggerCharacters: []string{"(", ","},
+			},
 			CodeActionProvider: types.CodeActionOptions{CodeActionKinds: []string{"quickfix", "source.explore"}},
 			ExecuteCommandProvider: types.ExecuteCommandOptions{
 				Commands: []string{
@@ -2410,6 +2453,22 @@ func (l *LanguageServer) builtinsForCurrentCapabilities() map[string]*ast.Builti
 	}
 
 	return rego.BuiltinsForCapabilities(ast.CapabilitiesForThisVersion())
+}
+
+// storeBuiltinsAndCacheSignatureHelp stores builtins in the rego store and caches
+// the signature help query. This should be called whenever builtins are loaded/updated.
+func (l *LanguageServer) storeBuiltinsAndCacheSignatureHelp(
+	ctx context.Context, builtins map[string]*ast.Builtin,
+) error {
+	if err := PutBuiltins(ctx, l.regoStore, builtins); err != nil {
+		return fmt.Errorf("failed to store builtins: %w", err)
+	}
+
+	if err := rego.StoreCachedQuery(ctx, `data.regal.lsp["signature-help"]`, l.regoStore); err != nil {
+		return fmt.Errorf("failed to cache signature help query: %w", err)
+	}
+
+	return nil
 }
 
 func (l *LanguageServer) parseOpts(fileURI string, bis map[string]*ast.Builtin) updateParseOpts {

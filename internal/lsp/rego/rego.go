@@ -399,7 +399,7 @@ var schemaResolvers = sync.OnceValue(func() (resolvers []func(*rego.Rego)) {
 	for _, module := range rbundle.LoadedBundle().Modules {
 		for _, annos := range module.Parsed.Annotations {
 			for _, s := range annos.Schemas {
-				if added.Contains(s.Schema.String()) {
+				if len(s.Schema) == 0 || added.Contains(s.Schema.String()) {
 					continue
 				}
 				resolvers = append(resolvers, rego.Resolver(

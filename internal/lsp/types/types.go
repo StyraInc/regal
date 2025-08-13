@@ -111,6 +111,7 @@ type ServerCapabilities struct {
 	CompletionProvider         CompletionOptions       `json:"completionProvider"`
 	InlayHintProvider          InlayHintOptions        `json:"inlayHintProvider"`
 	HoverProvider              bool                    `json:"hoverProvider"`
+	SignatureHelpProvider      SignatureHelpOptions    `json:"signatureHelpProvider"`
 	DocumentFormattingProvider bool                    `json:"documentFormattingProvider"`
 	FoldingRangeProvider       bool                    `json:"foldingRangeProvider"`
 	DocumentSymbolProvider     bool                    `json:"documentSymbolProvider"`
@@ -124,8 +125,17 @@ type CompletionOptions struct {
 	TriggerCharacters []string              `json:"triggerCharacters,omitempty"`
 }
 
+type SignatureHelpOptions struct {
+	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
+}
+
 type CompletionItemOptions struct {
 	LabelDetailsSupport bool `json:"labelDetailsSupport"`
+}
+
+type TextDocumentPositionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
 }
 
 type CompletionParams struct {
@@ -346,6 +356,37 @@ type FoldingRange struct {
 	Kind           string `json:"kind"`
 	StartLine      uint   `json:"startLine"`
 	EndLine        uint   `json:"endLine"`
+}
+
+type SignatureHelpParams struct {
+	TextDocumentPositionParams
+
+	Context *SignatureHelpContext `json:"context,omitempty"`
+}
+
+type SignatureHelpContext struct {
+	TriggerKind         uint           `json:"triggerKind"`
+	TriggerCharacter    *string        `json:"triggerCharacter,omitempty"`
+	IsRetrigger         bool           `json:"isRetrigger"`
+	ActiveSignatureHelp *SignatureHelp `json:"activeSignatureHelp,omitempty"`
+}
+
+type SignatureHelp struct {
+	Signatures      []SignatureInformation `json:"signatures"`
+	ActiveSignature *uint                  `json:"activeSignature,omitempty"`
+	ActiveParameter *uint                  `json:"activeParameter,omitempty"`
+}
+
+type SignatureInformation struct {
+	Label           string                 `json:"label"`
+	Documentation   string                 `json:"documentation,omitempty"`
+	Parameters      []ParameterInformation `json:"parameters,omitempty"`
+	ActiveParameter *uint                  `json:"activeParameter,omitempty"`
+}
+
+type ParameterInformation struct {
+	Label         string  `json:"label"`
+	Documentation *string `json:"documentation,omitempty"`
 }
 
 type FormattingOptions struct {

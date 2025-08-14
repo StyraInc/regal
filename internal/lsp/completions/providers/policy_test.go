@@ -7,16 +7,14 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
 	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/clients"
 	"github.com/styrainc/regal/internal/lsp/test"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/parse"
 	"github.com/styrainc/regal/pkg/roast/encoding"
 )
 
+//nolint:paralleltest
 func TestPolicyProvider_Example1(t *testing.T) {
-	t.Parallel()
-
 	policy := `package p
 
 allow if {
@@ -41,11 +39,8 @@ allow if {
 		},
 	}, inmem.OptRoundTripOnWrite(false))
 
-	params := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: testCaseFileURI},
-		Position:     types.Position{Line: 5, Character: 11},
-	}
-	opts := &Options{ClientIdentifier: clients.IdentifierGeneric}
+	params := types.NewCompletionParams(testCaseFileURI, 5, 11, nil)
+	opts := &Options{Client: types.NewGenericClient()}
 
 	result, err := NewPolicy(t.Context(), store).Run(t.Context(), c, params, opts)
 	if err != nil {
@@ -55,9 +50,8 @@ allow if {
 	test.AssertLabels(t, result, []string{"user"})
 }
 
+//nolint:paralleltest
 func TestPolicyProvider_Example2(t *testing.T) {
-	t.Parallel()
-
 	file1 := ast.MustParseModule("package example\n\nfoo := true\n")
 	file2 := ast.MustParseModule("package example2\n\nimport data.example\n")
 
@@ -79,11 +73,8 @@ func TestPolicyProvider_Example2(t *testing.T) {
 	c := cache.NewCache()
 	c.SetFileContents("file:///file2.rego", fileEdited)
 
-	params := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: "file:///file2.rego"},
-		Position:     types.Position{Line: 5, Character: 11},
-	}
-	opts := &Options{ClientIdentifier: clients.IdentifierGeneric}
+	params := types.NewCompletionParams("file:///file2.rego", 5, 11, nil)
+	opts := &Options{Client: types.NewGenericClient()}
 
 	result, err := NewPolicy(t.Context(), store).Run(t.Context(), c, params, opts)
 	if err != nil {

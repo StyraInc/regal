@@ -62,12 +62,6 @@ func (m *Manager) Run(
 		}
 
 		for _, completion := range providerCompletions {
-			// If a provider returns a mandatory completion, return it immediately
-			// as it is the only completion that should be shown.
-			if completion.Mandatory {
-				return []types.CompletionItem{completion}, nil
-			}
-
 			completion.Regal = nil
 			completionsList = append(completionsList, completion)
 		}

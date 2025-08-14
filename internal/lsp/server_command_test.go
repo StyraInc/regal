@@ -94,10 +94,10 @@ allow if {
 			}
 
 			clientHandler := createWorkspaceApplyEditTestHandler(t, receivedMessages)
-			ls, connClient := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+			ls, connClient := createAndInitServer(t, ctx, tempDir, clientHandler)
 
 			// set client identifier for this test since we are testing that behavior
-			ls.clientIdentifier = clients.DetermineClientIdentifier(tc.clientName)
+			ls.client.Identifier = clients.DetermineIdentifier(tc.clientName)
 
 			// edits are sent to the clinet by the command worker
 			go ls.StartCommandWorker(ctx)

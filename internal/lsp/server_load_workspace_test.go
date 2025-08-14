@@ -129,7 +129,7 @@ func TestLoadWorkspaceContents(t *testing.T) {
 
 			server := NewLanguageServer(t.Context(), &LanguageServerOptions{})
 			server.workspaceRootURI = "file://" + tempDir
-			server.clientIdentifier = clients.IdentifierGeneric
+			server.client.Identifier = clients.IdentifierGeneric
 			server.loadedConfig = &config.Config{}
 
 			for _, fileName := range tc.cachedFiles {

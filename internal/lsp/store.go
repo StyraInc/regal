@@ -19,14 +19,13 @@ func NewRegalStore() storage.Store {
 			// should map[string][]string{}, but since we don't round trip on write,
 			// we'll need to conform to the most basic "JSON" format understood by the store
 			"defined_refs": map[string]any{},
+			"builtins":     map[string]any{},
 		},
 	}, inmem.OptRoundTripOnWrite(false), inmem.OptReturnASTValuesOnRead(true))
 }
 
 func transact(ctx context.Context, store storage.Store, op func(txn storage.Transaction) error) error {
-	params := storage.WriteParams
-
-	txn, err := store.NewTransaction(ctx, params)
+	txn, err := store.NewTransaction(ctx, storage.WriteParams)
 	if err != nil {
 		return fmt.Errorf("failed to create transaction: %w", err)
 	}

@@ -15,11 +15,11 @@ const (
 	IdentifierIntelliJ
 )
 
-// DetermineClientIdentifier is used to determine the Regal client identifier
+// DetermineIdentifier is used to determine the Regal client identifier
 // based on the client name.
 // Clients with identifiers here should be featured on the 'Editor Support'
 // page in the documentation (https://docs.styra.com/regal/editor-support).
-func DetermineClientIdentifier(clientName string) Identifier {
+func DetermineIdentifier(clientName string) Identifier {
 	switch clientName {
 	case "go test":
 		return IdentifierGoTest

@@ -36,10 +36,7 @@ func getInlayHints(module *ast.Module, builtins map[string]*ast.Builtin) []types
 					Kind:         2,
 					PaddingLeft:  false,
 					PaddingRight: true,
-					Tooltip: types2.MarkupContent{
-						Kind:  "markdown",
-						Value: createInlayTooltip(named),
-					},
+					Tooltip:      *types2.Markdown(createInlayTooltip(named)),
 				})
 			}
 		}

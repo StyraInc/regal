@@ -23,12 +23,7 @@ func TestManagerEarlyExitInsideComment(t *testing.T) {
 	mgr := NewManager(c, &ManagerOptions{})
 	mgr.RegisterProvider(&providers.BuiltIns{})
 
-	completionParams := types.CompletionParams{
-		TextDocument: types.TextDocumentIdentifier{URI: fileURI},
-		Position:     types.Position{Line: 2, Character: 13},
-	}
-
-	completions, err := mgr.Run(t.Context(), completionParams, nil)
+	completions, err := mgr.Run(t.Context(), types.NewCompletionParams(fileURI, 2, 13, nil), nil)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

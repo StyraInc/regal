@@ -45,11 +45,7 @@ func init() {
 				}
 			}
 
-			opts := &lsp.LanguageServerOptions{
-				LogWriter: os.Stderr,
-				LogLevel:  log.LevelMessage,
-			}
-
+			opts := &lsp.LanguageServerOptions{Logger: log.NewLogger(log.LevelMessage, os.Stderr)}
 			ls := lsp.NewLanguageServer(ctx, opts)
 
 			conn := lsp.NewConnectionFromLanguageServer(ctx, ls.Handle, &lsp.ConnectionOptions{

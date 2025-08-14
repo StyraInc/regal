@@ -12,12 +12,11 @@ import (
 	rio "github.com/styrainc/regal/internal/io"
 	"github.com/styrainc/regal/internal/lsp/cache"
 	"github.com/styrainc/regal/internal/lsp/rego"
+	"github.com/styrainc/regal/internal/lsp/rego/query"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	"github.com/styrainc/regal/pkg/roast/transform"
 )
-
-const completionsQuery = "data.regal.lsp.completion.items"
 
 // Policy provides suggestions that have been determined by Rego policy.
 type Policy struct{}
@@ -26,7 +25,11 @@ type Policy struct{}
 // as it acts like the entrypoint for all Rego-based providers, and not a single provider "function" like
 // the Go providers do.
 func NewPolicy(ctx context.Context, store storage.Store) *Policy {
-	if err := rego.StoreCachedQuery(ctx, completionsQuery, store); err != nil {
+	// TODO(anders): Temporarily initialize *all* prepared queries here. Most are unrelated to completions,
+	// so this should happen elsewhere. Adding to that — preparing all queries at once is *slow* — like 1.5
+	// seconds slow on an M4 MacBook Pro. So we'll need to find a better way to do this before next release,
+	// and it's on top of my list to fix.
+	if err := rego.StoreAllCachedQueries(ctx, store); err != nil {
 		log.Fatalf("failed to start policy completions provider: %v", err)
 	}
 
@@ -60,14 +63,14 @@ func (*Policy) Run(
 			ast.Item(ast.InternedTerm("row"), ast.InternedTerm(location.Row)),
 			ast.Item(ast.InternedTerm("col"), ast.InternedTerm(location.Col)),
 		)),
-		ast.Item(ast.InternedTerm("client_identifier"), ast.InternedTerm(int(opts.ClientIdentifier))),
+		ast.Item(ast.InternedTerm("client_identifier"), ast.InternedTerm(int(opts.Client.Identifier))),
 		ast.Item(ast.InternedTerm("workspace_root"), ast.InternedTerm(opts.RootURI)),
 	)
 
-	path := uri.ToPath(opts.ClientIdentifier, params.TextDocument.URI)
+	path := uri.ToPath(opts.Client.Identifier, params.TextDocument.URI)
 
 	// TODO: Avoid the intermediate map[string]any step and unmarshal directly into ast.Value.
-	inputDotJSONPath, inputDotJSONContent := rio.FindInput(path, uri.ToPath(opts.ClientIdentifier, opts.RootURI))
+	inputDotJSONPath, inputDotJSONContent := rio.FindInput(path, uri.ToPath(opts.Client.Identifier, opts.RootURI))
 	if inputDotJSONPath != "" && inputDotJSONContent != nil {
 		inputDotJSONValue, err := transform.ToOPAInputValue(inputDotJSONContent)
 		if err != nil {
@@ -93,7 +96,7 @@ func (*Policy) Run(
 
 	var completions []types.CompletionItem
 
-	if err := rego.CachedQueryEval(ctx, completionsQuery, input, &completions); err != nil {
+	if err := rego.CachedQueryEval(ctx, query.Completion, input, &completions); err != nil {
 		return nil, fmt.Errorf("failed querying for completion suggestions: %w", err)
 	}
 

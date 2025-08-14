@@ -5,16 +5,18 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/styrainc/regal/pkg/report"
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
-func Must[T any](x T, err error) func(t *testing.T) T {
-	return func(t *testing.T) T {
-		t.Helper()
+func Must[T any](x T, err error) func(tb testing.TB) T {
+	return func(tb testing.TB) T {
+		tb.Helper()
 
 		if err != nil {
-			t.Fatal(err)
+			tb.Fatal(err)
 		}
 
 		return x
@@ -71,11 +73,11 @@ func MustRemove(t *testing.T, path string) {
 	}
 }
 
-func AssertNumViolations(t *testing.T, num int, rep report.Report) {
-	t.Helper()
+func AssertNumViolations(tb testing.TB, num int, rep report.Report) {
+	tb.Helper()
 
 	if rep.Summary.NumViolations != num {
-		t.Errorf("expected %d violations, got %d", num, rep.Summary.NumViolations)
+		tb.Errorf("expected %d violations, got %d", num, rep.Summary.NumViolations)
 	}
 }
 
@@ -131,4 +133,15 @@ func RemoveIgnoreErr(paths ...string) func() {
 			_ = os.Remove(path)
 		}
 	}
+}
+
+func MustUnmarshalYAML[T any](t *testing.T, data []byte) T {
+	t.Helper()
+
+	var result T
+	if err := yaml.Unmarshal(data, &result); err != nil {
+		t.Fatalf("failed to unmarshal YAML: %v", err)
+	}
+
+	return result
 }

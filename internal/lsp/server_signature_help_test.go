@@ -9,7 +9,7 @@ import (
 
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/styrainc/regal/pkg/config"
 )
 
 func TestTextDocumentSignatureHelp(t *testing.T) {
@@ -18,9 +18,7 @@ func TestTextDocumentSignatureHelp(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
-	tempDir := t.TempDir()
-
-	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main.rego")
+	mainRegoURI := fileURIScheme + filepath.Join(t.TempDir(), "main.rego")
 
 	content := `package example
 
@@ -64,24 +62,18 @@ allow if concat(",", "a", "b") == "b,a"`
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			ls := NewLanguageServer(ctx, &LanguageServerOptions{
-				LogWriter: newTestLogger(t),
-				LogLevel:  log.LevelDebug,
-			})
+			ls := NewLanguageServer(ctx, &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
+			ls.loadedConfig = &config.Config{}
 
 			ls.cache.SetFileContents(mainRegoURI, content)
 
-			// this is needed to prepare the server for signature help queries
-			err := ls.storeBuiltinsAndCacheSignatureHelp(ctx, builtins)
-			if err != nil {
-				t.Fatalf("failed to store builtins and cache signature help: %s", err)
+			if err := PutBuiltins(ctx, ls.regoStore, builtins); err != nil {
+				t.Fatalf("failed to store builtins: %s", err)
 			}
 
 			params := types.SignatureHelpParams{
-				TextDocumentPositionParams: types.TextDocumentPositionParams{
-					TextDocument: types.TextDocumentIdentifier{URI: mainRegoURI},
-					Position:     tc.position,
-				},
+				TextDocument: types.TextDocumentIdentifier{URI: mainRegoURI},
+				Position:     tc.position,
 			}
 
 			res, err := ls.handleTextDocumentSignatureHelp(ctx, params)
@@ -93,9 +85,9 @@ allow if concat(",", "a", "b") == "b,a"`
 				t.Errorf("no signature help found for position line=%d character=%d", tc.position.Line, tc.position.Character)
 			}
 
-			var signatureHelp types.SignatureHelp
-			if err := encoding.JSONRoundTrip(res, &signatureHelp); err != nil {
-				t.Fatalf("failed to decode signature help: %s", err)
+			signatureHelp, ok := res.(types.SignatureHelp)
+			if !ok {
+				t.Fatalf("expected SignatureHelp, got %T", res)
 			}
 
 			if len(signatureHelp.Signatures) == 0 {

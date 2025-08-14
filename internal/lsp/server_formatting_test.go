@@ -24,7 +24,7 @@ func TestFormatting(t *testing.T) {
 	}
 
 	tempDir := t.TempDir()
-	ls, _ := createAndInitServer(t, ctx, newTestLogger(t), tempDir, clientHandler)
+	ls, _ := createAndInitServer(t, ctx, tempDir, clientHandler)
 	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main", "main.rego")
 
 	// Simple as possible — opa fmt should just remove a newline

@@ -118,8 +118,8 @@ _cut_col(i, len, line, _, end_col) := substring(line, 0, end_col) if {
 }
 
 # METADATA
-# scope: document
 # description: returns true if point is within range of row,col range
+# scope: document
 default point_in_range(_, _) := false
 
 point_in_range(p, range) if {

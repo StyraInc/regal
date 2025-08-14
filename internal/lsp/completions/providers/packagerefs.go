@@ -113,7 +113,7 @@ func (*PackageRefs) Run(
 				Label:         item.Label,
 				Kind:          completion.Module, // for now, only modules are returned
 				Detail:        "Rego package",
-				Documentation: &types.MarkupContent{Kind: "markdown", Value: item.Description},
+				Documentation: types.Markdown(item.Description),
 				TextEdit: &types.TextEdit{
 					Range:   types.RangeBetween(params.Position.Line, 7, params.Position.Line, len(currentLine)),
 					NewText: item.Label,

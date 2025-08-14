@@ -1,6 +1,10 @@
 package types
 
-import "github.com/open-policy-agent/opa/v1/ast"
+import (
+	"github.com/open-policy-agent/opa/v1/ast"
+
+	"github.com/styrainc/regal/internal/lsp/clients"
+)
 
 // Ref is a generic construct for an object found in a Rego module.
 // Ref is designed to be used in completions and provides information
@@ -38,4 +42,13 @@ type KeywordLocation struct {
 	Line  uint
 	Start uint
 	End   uint
+}
+
+type Client struct {
+	Identifier  clients.Identifier     `json:"identifier"`
+	InitOptions *InitializationOptions `json:"init_options,omitempty"`
+}
+
+func NewGenericClient() Client {
+	return Client{Identifier: clients.IdentifierGeneric}
 }

@@ -20,9 +20,9 @@ func TestLanguageServerFixRenameParams(t *testing.T) {
 	tmpDir := t.TempDir()
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
-	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
-	ls.clientIdentifier = clients.IdentifierVSCode
+	ls.client.Identifier = clients.IdentifierVSCode
 	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
 	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
@@ -73,12 +73,9 @@ func TestLanguageServerFixRenameParamsWithConflict(t *testing.T) {
 	tmpDir := t.TempDir()
 	testutil.MustMkdirAll(t, tmpDir, "workspace", "foo", "bar")
 
-	ls := NewLanguageServer(
-		t.Context(),
-		&LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug},
-	)
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
-	ls.clientIdentifier = clients.IdentifierVSCode
+	ls.client.Identifier = clients.IdentifierVSCode
 	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace", tmpDir)
 	ls.loadedConfig = &config.Config{
 		Rules: map[string]config.Category{
@@ -164,9 +161,9 @@ func TestLanguageServerFixRenameParamsWhenTargetOutsideRoot(t *testing.T) {
 	// is moved relative to a dir above the workspace.
 	testutil.MustWriteFile(t, filepath.Join(tmpDir, ".regal.yaml"), []byte{})
 
-	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 
-	ls.clientIdentifier = clients.IdentifierVSCode
+	ls.client.Identifier = clients.IdentifierVSCode
 	// the root where the client stated the workspace is
 	// this is what would be set if a config file were in the parent instead
 	ls.workspaceRootURI = fmt.Sprintf("file://%s/workspace/", tmpDir)

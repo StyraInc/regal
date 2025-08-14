@@ -2,14 +2,11 @@ package lsp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
 	"path/filepath"
 	"slices"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -45,50 +42,9 @@ func determineTimeout() time.Duration {
 	return defaultTimeout
 }
 
-// NewTestLogger returns an io.Writer that logs to the given testing.T.
-// This is helpful as it can be used to have the server log to the test logger
-// in server tests. It is protected from being written to after the test is
-// over.
-func newTestLogger(t *testing.T) io.Writer {
-	t.Helper()
-
-	tl := &testLogger{t: t, open: true}
-
-	// using cleanup ensure that no goroutines attempt to write to the logger
-	// after the test has been cleaned up
-	t.Cleanup(func() {
-		tl.mu.Lock()
-		defer tl.mu.Unlock()
-
-		tl.open = false
-	})
-
-	return tl
-}
-
-type testLogger struct {
-	t    *testing.T
-	open bool
-	mu   sync.RWMutex
-}
-
-func (tl *testLogger) Write(p []byte) (n int, err error) {
-	tl.mu.RLock()
-	defer tl.mu.RUnlock()
-
-	if !tl.open {
-		return 0, errors.New("cannot log, test is over")
-	}
-
-	tl.t.Log(strings.TrimSpace(string(p)))
-
-	return len(p), nil
-}
-
 func createAndInitServer(
 	t *testing.T,
 	ctx context.Context,
-	logger io.Writer,
 	tempDir string,
 	clientHandler func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error),
 ) (
@@ -104,12 +60,10 @@ func createAndInitServer(
 		pollingInterval = 10 * time.Second
 	}
 
+	logger := log.NewLogger(log.LevelDebug, t.Output())
+
 	// set up the server and client connections
-	ls := NewLanguageServer(ctx, &LanguageServerOptions{
-		LogWriter:                logger,
-		LogLevel:                 log.LevelDebug,
-		WorkspaceDiagnosticsPoll: pollingInterval,
-	})
+	ls := NewLanguageServer(ctx, &LanguageServerOptions{Logger: logger, WorkspaceDiagnosticsPoll: pollingInterval})
 
 	go ls.StartDiagnosticsWorker(ctx)
 	go ls.StartConfigWorker(ctx)
@@ -140,7 +94,7 @@ func createAndInitServer(
 
 	request := types.InitializeParams{
 		RootURI:    fileURIScheme + tempDir,
-		ClientInfo: types.Client{Name: "go test"},
+		ClientInfo: types.ClientInfo{Name: "go test"},
 	}
 
 	var response types.InitializeResult

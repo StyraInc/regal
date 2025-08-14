@@ -11,7 +11,7 @@ import (
 func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 
-	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{LogWriter: newTestLogger(t), LogLevel: log.LevelDebug})
+	ls := NewLanguageServer(t.Context(), &LanguageServerOptions{Logger: log.NewLogger(log.LevelDebug, t.Output())})
 	ls.loadedConfig = &config.Config{}
 
 	if err := ls.processHoverContentUpdate(t.Context(), "file://missing.rego"); err != nil {

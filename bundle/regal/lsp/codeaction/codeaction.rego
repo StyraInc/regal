@@ -4,7 +4,8 @@
 #   - https://docs.styra.com/regal/language-server#code-actions
 #   - https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction
 # schemas:
-#   - input: schema.regal.lsp.codeaction
+#   - input:        schema.regal.lsp.common
+#   - input.params: schema.regal.lsp.codeaction
 package regal.lsp.codeaction
 
 import data.regal.lsp.clients

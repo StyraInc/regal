@@ -16,14 +16,9 @@ func TestTextDocumentSignatureHelp(t *testing.T) {
 	t.Parallel()
 
 	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
+	t.Cleanup(cancel)
 
 	tempDir := t.TempDir()
-
-	ls := NewLanguageServer(ctx, &LanguageServerOptions{
-		LogWriter: newTestLogger(t),
-		LogLevel:  log.LevelDebug,
-	})
 
 	mainRegoURI := fileURIScheme + filepath.Join(tempDir, "main.rego")
 
@@ -33,18 +28,10 @@ allow if regex.match(` + "`foo`" + `, "bar")
 allow if count([1,2,3]) == 2
 allow if concat(",", "a", "b") == "b,a"`
 
-	ls.cache.SetFileContents(mainRegoURI, content)
-
 	builtins := map[string]*ast.Builtin{
 		"count":       ast.Count,
 		"concat":      ast.Concat,
 		"regex.match": ast.RegexMatch,
-	}
-
-	// this is needed to prepare the server for signature help queries
-	err := ls.storeBuiltinsAndCacheSignatureHelp(ctx, builtins)
-	if err != nil {
-		t.Fatalf("failed to store builtins and cache signature help: %s", err)
 	}
 
 	testCases := map[string]struct {
@@ -77,6 +64,19 @@ allow if concat(",", "a", "b") == "b,a"`
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
+			ls := NewLanguageServer(ctx, &LanguageServerOptions{
+				LogWriter: newTestLogger(t),
+				LogLevel:  log.LevelDebug,
+			})
+
+			ls.cache.SetFileContents(mainRegoURI, content)
+
+			// this is needed to prepare the server for signature help queries
+			err := ls.storeBuiltinsAndCacheSignatureHelp(ctx, builtins)
+			if err != nil {
+				t.Fatalf("failed to store builtins and cache signature help: %s", err)
+			}
+
 			params := types.SignatureHelpParams{
 				TextDocumentPositionParams: types.TextDocumentPositionParams{
 					TextDocument: types.TextDocumentIdentifier{URI: mainRegoURI},
@@ -84,7 +84,7 @@ allow if concat(",", "a", "b") == "b,a"`
 				},
 			}
 
-			res, err := ls.handleTextDocumentSignatureHelp(params)
+			res, err := ls.handleTextDocumentSignatureHelp(ctx, params)
 			if err != nil {
 				t.Fatalf("signature help should work, got error: %s", err)
 			}

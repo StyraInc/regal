@@ -260,7 +260,7 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 	case "textDocument/completion":
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCompletion)
 	case "textDocument/signatureHelp":
-		return handler.WithParams(req, l.handleTextDocumentSignatureHelp)
+		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentSignatureHelp)
 	case "workspace/didChangeWatchedFiles":
 		return handler.WithParams(req, l.handleWorkspaceDidChangeWatchedFiles)
 	case "workspace/diagnostic":
@@ -1449,7 +1449,10 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 	return nil, nil
 }
 
-func (l *LanguageServer) handleTextDocumentSignatureHelp(params types.SignatureHelpParams) (any, error) {
+func (l *LanguageServer) handleTextDocumentSignatureHelp(
+	ctx context.Context,
+	params types.SignatureHelpParams,
+) (any, error) {
 	if l.ignoreURI(params.TextDocument.URI) {
 		return nil, nil
 	}
@@ -1464,9 +1467,6 @@ func (l *LanguageServer) handleTextDocumentSignatureHelp(params types.SignatureH
 		"position": params.Position,
 	}
 	input := ast.MustInterfaceToValue(inputData)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	var queryResult map[string]any
 

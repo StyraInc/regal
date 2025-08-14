@@ -49,8 +49,6 @@ directory structure.
 
 This behavior can be changed by setting the `exclude-test-suffix` configuration option to `false`, in which
 case package paths with a `_test` suffix also will be required to reside in a directory with a `_test` suffix.
-Notably, this directory structure is used (and enforced) by [Styra DAS](https://docs.styra.com/das) and projects
-that integrate with it.
 
 Setting the `exclude-test-suffix` option to `false` means the example from above would now look like this:
 
@@ -136,7 +134,6 @@ rules:
 - Rego Style Guide: [Package name should match file location](https://docs.styra.com/opa/rego-style-guide#package-name-should-match-file-location)
 - Regal Docs: [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package)
 - OPA Docs: [Bundles](https://www.openpolicyagent.org/docs/management-bundles/)
-- Styra Docs: [Styra DAS](https://docs.styra.com/das)
 - GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/directory-package-mismatch/directory_package_mismatch.rego)
 
 ## Community

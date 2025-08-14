@@ -14,4 +14,4 @@ report contains violation if {
 }
 
 _is_test_package(package_name) if endswith(package_name, "_test")
-_is_test_package("test") # Styra DAS convention considered OK
+_is_test_package("test")

@@ -33,7 +33,7 @@ _enabled(true, false) := false
 default _valid_test_file_name(_) := false
 
 _valid_test_file_name(filename) if endswith(filename, "_test.rego")
-_valid_test_file_name("test.rego") # Styra DAS convention considered OK
+_valid_test_file_name("test.rego")
 
 default _enable_for_test_files := false
 

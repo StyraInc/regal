@@ -513,6 +513,10 @@ func (l *LanguageServer) StartConfigWorker(ctx context.Context) {
 			l.loadedConfig = &mergedConfig
 			l.loadedConfigLock.Unlock()
 
+			if err := PutConfig(ctx, l.regoStore, &mergedConfig); err != nil {
+				l.log.Message("failed to update config in storage: %v", err)
+			}
+
 			// Rego versions may have changed, so reload them.
 			allRegoVersions, err := config.AllRegoVersions(l.workspacePath(), l.getLoadedConfig())
 			if err != nil {

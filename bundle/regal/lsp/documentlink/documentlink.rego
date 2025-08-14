@@ -17,7 +17,7 @@ package regal.lsp.documentlink
 import data.regal.util
 
 # METADATA
-# description: set of links in document
+# description: Set of links in document
 # entrypoint: true
 items contains item if {
 	module := data.workspace.parsed[input.params.textDocument.uri]
@@ -37,11 +37,16 @@ items contains item if {
 	col := loc.col + pos
 
 	item := {
-		"target": "https://docs.styra.com/regal",
+		"target": concat("/", ["https://docs.styra.com/regal/rules", _category_for[rule], rule]),
 		"range": {
 			"start": {"line": row, "character": col},
 			"end": {"line": row, "character": col + count(rule)},
 		},
-		"tooltip": concat(" ", ["See documentation for", rule, "rule"]),
+		"tooltip": concat(" ", ["See documentation for", rule]),
 	}
+}
+
+_category_for[rule] := category if {
+	some category, rules in data.workspace.config.rules
+	some rule, _ in rules
 }

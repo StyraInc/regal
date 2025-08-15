@@ -31,7 +31,11 @@ func New(ctx context.Context, ws *websocket.Conn, c *config.Config) (*Handle, er
 	}
 
 	ls := lsp.NewLanguageServerMinimal(ctx, &opts, c)
-	jconn := jsonrpc2.NewConn(ctx, jsonrpc2_ws.NewObjectStream(ws), jsonrpc2.HandlerWithError(ls.Handle))
+	jconn := jsonrpc2.NewConn(
+		ctx,
+		jsonrpc2_ws.NewObjectStream(ws),
+		jsonrpc2.AsyncHandler(jsonrpc2.HandlerWithError(ls.Handle)),
+	)
 	ls.SetConn(jconn)
 
 	go ls.StartDiagnosticsWorker(ctx)

@@ -78,7 +78,7 @@ func NewConnectionFromLanguageServer(
 	return jsonrpc2.NewConn(
 		ctx,
 		jsonrpc2.NewBufferedStream(StdOutReadWriteCloser{}, jsonrpc2.VSCodeObjectCodec{}),
-		jsonrpc2.HandlerWithError(handler),
+		jsonrpc2.AsyncHandler(jsonrpc2.HandlerWithError(handler)),
 		logMessages(opts.LoggingConfig),
 	)
 }

@@ -35,12 +35,14 @@ import (
 	"github.com/styrainc/regal/internal/lsp/completions"
 	"github.com/styrainc/regal/internal/lsp/completions/providers"
 	lsconfig "github.com/styrainc/regal/internal/lsp/config"
+	"github.com/styrainc/regal/internal/lsp/documentsymbol"
 	"github.com/styrainc/regal/internal/lsp/examples"
+	"github.com/styrainc/regal/internal/lsp/foldingrange"
 	"github.com/styrainc/regal/internal/lsp/handler"
 	"github.com/styrainc/regal/internal/lsp/hover"
+	"github.com/styrainc/regal/internal/lsp/inlayhint"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/rego/query"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
@@ -63,23 +65,16 @@ const (
 	methodTdPublishDiagnostics = "textDocument/publishDiagnostics"
 	methodWsApplyEdit          = "workspace/applyEdit"
 
-	ruleNameOPAFmt                   = "opa-fmt"
-	ruleNameUseRegoV1                = "use-rego-v1"
-	ruleNameUseAssignmentOperator    = "use-assignment-operator"
-	ruleNameNoWhitespaceComment      = "no-whitespace-comment"
-	ruleNameDirectoryPackageMismatch = "directory-package-mismatch"
-	ruleNameNonRawRegexPattern       = "non-raw-regex-pattern"
+	ruleNameOPAFmt                = "opa-fmt"
+	ruleNameUseRegoV1             = "use-rego-v1"
+	ruleNameUseAssignmentOperator = "use-assignment-operator"
 )
 
 var (
-	noCodeActions        = make([]types.CodeAction, 0)
-	noCodeLenses         = make([]types.CodeLens, 0)
-	noDocumentLinks      = make([]types.DocumentLink, 0)
-	noDocumentHighlights = make([]types.DocumentHighlight, 0)
-	noDocumentSymbols    = make([]types.DocumentSymbol, 0)
-	noCompletionItems    = make([]types.CompletionItem, 0)
-	noFoldingRanges      = make([]types.FoldingRange, 0)
-	noDiagnostics        = make([]types.Diagnostic, 0)
+	noDocumentSymbols = make([]types.DocumentSymbol, 0)
+	noCompletionItems = make([]types.CompletionItem, 0)
+	noFoldingRanges   = make([]types.FoldingRange, 0)
+	noDiagnostics     = make([]types.Diagnostic, 0)
 
 	trueValue = true
 	truePtr   = &trueValue
@@ -123,6 +118,7 @@ type LanguageServer struct {
 	bundleCache *bundles.Cache
 
 	completionsManager *completions.Manager
+	regoRouter         *rego.RegoRouter
 
 	commandRequest       chan types.ExecuteCommandParams
 	lintWorkspaceJobs    chan lintWorkspaceJob
@@ -161,6 +157,8 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	c := cache.NewCache()
 	store := NewRegalStore()
 
+	completionsManager := completions.NewDefaultManager(ctx, c, store)
+
 	ls := &LanguageServer{
 		cache:                       c,
 		regoStore:                   store,
@@ -171,12 +169,20 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		commandRequest:              make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:            make(chan lintFileJob, 10),
 		templatingFiles:             concurrent.MapOf(make(map[string]bool)),
-		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		completionsManager:          completionsManager,
 		webServer:                   web.NewServer(c, opts.Logger),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
 		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
 		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
 	}
+
+	ls.regoRouter = rego.NewRegoRouter(ctx, store, rego.Providers{
+		ContextProvider:              ls.regalContext,
+		IgnoredProvider:              ls.ignoreURI,
+		ContentProvider:              ls.cache.GetFileContents,
+		ParseErrorsProvider:          ls.cache.GetParseErrors,
+		SuccessfulParseCountProvider: ls.cache.GetSuccessfulParseLineCount,
+	})
 
 	ls.configWatcher = lsconfig.NewWatcher(&lsconfig.WatcherOpts{Logger: ls.log})
 
@@ -223,12 +229,6 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return handler.WithContextAndParams(ctx, req, l.handleInitialize)
 	case "initialized":
 		return l.handleInitialized()
-	case "textDocument/codeAction":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeAction)
-	case "textDocument/documentLink":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentDocumentLink)
-	case "textDocument/documentHighlight":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentDocumentHighlight)
 	case "textDocument/definition":
 		return handler.WithParams(req, l.handleTextDocumentDefinition)
 	case "textDocument/diagnostic":
@@ -251,12 +251,8 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return handler.WithParams(req, l.handleTextDocumentHover)
 	case "textDocument/inlayHint":
 		return handler.WithParams(req, l.handleTextDocumentInlayHint)
-	case "textDocument/codeLens":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeLens)
 	case "textDocument/completion":
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCompletion)
-	case "textDocument/signatureHelp":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentSignatureHelp)
 	case "workspace/didChangeWatchedFiles":
 		return handler.WithParams(req, l.handleWorkspaceDidChangeWatchedFiles)
 	case "workspace/diagnostic":
@@ -298,10 +294,15 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return struct{}{}, nil
 	}
 
-	return nil, &jsonrpc2.Error{
-		Code:    jsonrpc2.CodeMethodNotFound,
-		Message: "method not supported: " + req.Method,
-	}
+	// Handles:
+	// - textDocument/codeAction
+	// - textDocument/codeLens
+	// - textDocument/documentLink
+	// - textDocument/documentHighlight
+	// - textDocument/signatureHelp
+	//
+	// returns jsonrpc2.Error with code jsonrpc2.CodeMethodNotFound if provided unknown method.
+	return l.regoRouter.Handle(ctx, l.conn, req)
 }
 
 func (l *LanguageServer) SetConn(conn *jsonrpc2.Conn) {
@@ -633,7 +634,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 		case params := <-l.commandRequest:
 			var (
 				editParams *types.ApplyWorkspaceEditParams
-				args       commandArgs
+				args       types.CommandArgs
 				fixed      bool
 				err        error
 			)
@@ -689,11 +690,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					args,
 				)
 			case "regal.fix.directory-package-mismatch":
-				params, err := l.fixRenameParams(
-					"Rename file to match package path",
-					&fixes.DirectoryPackageMismatch{},
-					args.Target,
-				)
+				params, err := l.fixRenameParams("Rename file to match package path", args.Target)
 				if err != nil {
 					l.log.Message("failed to fix directory package mismatch: %s", err)
 
@@ -713,8 +710,8 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					break
 				}
 
-				if args.QueryPath == "" {
-					l.log.Message("expected command query path to be set, got %q", args.QueryPath)
+				if args.Query == "" {
+					l.log.Message("expected command query path to be set, got %q", args.Query)
 
 					break
 				}
@@ -723,10 +720,10 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 
 				responseParams := map[string]any{
 					"type":        "opa-debug",
-					"name":        args.QueryPath,
+					"name":        args.Query,
 					"request":     "launch",
 					"command":     "eval",
-					"query":       args.QueryPath,
+					"query":       args.Query,
 					"enablePrint": true,
 					"stopOnEntry": true,
 					"inputPath":   inputPath,
@@ -738,30 +735,30 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					l.log.Message("regal/startDebugging failed: %v", err.Error())
 				}
 			case "regal.eval":
-				file := args.Target
-				if file == "" {
-					l.log.Message("expected command target to be set, got %q", file)
+				fileURI := args.Target
+				if fileURI == "" {
+					l.log.Message("expected command target to be set, got %q", fileURI)
 
 					break
 				}
 
-				path := args.QueryPath
-				if path == "" {
-					l.log.Message("expected command query path to be set, got %q", path)
+				query := args.Query
+				if query == "" {
+					l.log.Message("expected command query to be set, got %q", query)
 
 					break
 				}
 
-				contents, module, ok := l.cache.GetContentAndModule(file)
+				contents, module, ok := l.cache.GetContentAndModule(fileURI)
 				if !ok {
-					l.log.Message("failed to get content or module for file %q", file)
+					l.log.Message("failed to get content or module for file %q", fileURI)
 
 					break
 				}
 
 				var allRuleHeadLocations rego.RuleHeads
 
-				allRuleHeadLocations, err = rego.AllRuleHeadLocations(ctx, filepath.Base(file), contents, module)
+				allRuleHeadLocations, err = rego.AllRuleHeadLocations(ctx, filepath.Base(l.toPath(fileURI)), contents, module)
 				if err != nil {
 					l.log.Message("failed to get rule head locations: %s", err)
 
@@ -769,7 +766,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 				}
 
 				// if there are none, then it's a package evaluation
-				ruleHeadLocations := allRuleHeadLocations[path]
+				ruleHeadLocations := allRuleHeadLocations[query]
 
 				var inputMap map[string]any
 
@@ -777,7 +774,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 				// used as the input rather than the contents of input.json/yaml. This is a development feature for
 				// working on rules (built-in or custom), allowing querying the AST of the module directly.
 				if len(module.Comments) > 0 && regalEvalUseAsInputComment.Match(module.Comments[0].Text) {
-					inputMap, err = rparse.PrepareAST(file, contents, module)
+					inputMap, err = rparse.PrepareAST(l.toRelativePath(fileURI), contents, module)
 					if err != nil {
 						l.log.Message("failed to prepare module: %s", err)
 
@@ -787,12 +784,12 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 					// Normal mode — try to find the input.json/yaml file in the workspace and use as input
 					// NOTE that we don't break on missing input, as some rules don't depend on that, and should
 					// still be evaluable. We may consider returning some notice to the user though.
-					_, inputMap = rio.FindInput(l.toPath(file), l.workspacePath())
+					_, inputMap = rio.FindInput(l.toPath(fileURI), l.workspacePath())
 				}
 
 				var result EvalResult
 
-				if result, err = l.EvalInWorkspace(ctx, path, inputMap); err != nil {
+				if result, err = l.EvalInWorkspace(ctx, query, inputMap); err != nil {
 					fmt.Fprintf(os.Stderr, "failed to evaluate workspace path: %v\n", err)
 
 					break
@@ -800,7 +797,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) { //nolint:main
 
 				target := "package"
 				if len(ruleHeadLocations) > 0 {
-					target = strings.TrimPrefix(path, module.Package.Path.String()+".")
+					target = strings.TrimPrefix(query, module.Package.Path.String()+".")
 				}
 
 				if l.client.InitOptions.EvalCodelensDisplayInline != nil &&
@@ -1038,11 +1035,9 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob
 		Edits:        ComputeEdits("", newContents),
 	}}
 
-	label := "Template new Rego file"
-
 	// determine if a rename is needed based on the new file package.
 	// edits will be empty if no file rename is needed.
-	additionalRenameEdits, err := l.fixRenameParams(label, &fixes.DirectoryPackageMismatch{}, job.URI)
+	additionalRenameEdits, err := l.fixRenameParams("Template new Rego file", job.URI)
 	if err != nil {
 		l.log.Message("failed to get rename params: %s", err)
 
@@ -1054,7 +1049,7 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job lintFileJob
 
 	// send the edit back to the editor so it appears in the open buffer.
 	if err = l.conn.Call(ctx, methodWsApplyEdit, types.ApplyWorkspaceAnyEditParams{
-		Label: label,
+		Label: "Template new Rego file",
 		Edit:  types.WorkspaceAnyEdit{DocumentChanges: edits},
 	}, nil); err != nil {
 		l.log.Message("failed %s notify: %v", methodWsApplyEdit, err.Error())
@@ -1158,7 +1153,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 func (l *LanguageServer) fixEditParams(
 	label string,
 	fix fixes.Fix,
-	args commandArgs,
+	args types.CommandArgs,
 ) (bool, *types.ApplyWorkspaceEditParams, error) {
 	oldContent, ok := l.cache.GetFileContents(args.Target)
 	if !ok {
@@ -1215,17 +1210,13 @@ func (l *LanguageServer) fixEditParams(
 	return true, editParams, nil
 }
 
-func (l *LanguageServer) fixRenameParams(
-	label string,
-	fix fixes.Fix,
-	fileURI string,
-) (types.ApplyWorkspaceAnyEditParams, error) {
-	var result types.ApplyWorkspaceAnyEditParams
-
+func (l *LanguageServer) fixRenameParams(label, fileURI string) (types.ApplyWorkspaceAnyEditParams, error) {
 	roots, err := config.GetPotentialRoots(l.workspacePath())
 	if err != nil {
 		return types.ApplyWorkspaceAnyEditParams{}, fmt.Errorf("failed to get potential roots: %w", err)
 	}
+
+	fix := &fixes.DirectoryPackageMismatch{}
 
 	// the default for the LSP is to rename on conflict
 	f := fixer.NewFixer().RegisterRoots(roots...).RegisterFixes(fix).SetOnConflictOperation(fixer.OnConflictRename)
@@ -1236,7 +1227,7 @@ func (l *LanguageServer) fixRenameParams(
 
 	fixReport, err := f.FixViolations(violations, cfp, l.getLoadedConfig())
 	if err != nil {
-		return result, fmt.Errorf("failed to fix violations: %w", err)
+		return types.ApplyWorkspaceAnyEditParams{}, fmt.Errorf("failed to fix violations: %w", err)
 	}
 
 	ff := fixReport.FixedFiles()
@@ -1284,19 +1275,14 @@ func (l *LanguageServer) fixRenameParams(
 		return types.ApplyWorkspaceAnyEditParams{}, fmt.Errorf("failed to determine empty directories post rename: %w", err)
 	}
 
-	changes := append(make([]any, 0, len(dirs)+1), types.RenameFile{
-		Kind:    "rename",
-		OldURI:  oldURI,
-		NewURI:  newURI,
-		Options: &types.RenameFileOptions{Overwrite: false, IgnoreIfExists: false},
-	})
+	renopts := &types.RenameFileOptions{Overwrite: false, IgnoreIfExists: false}
+	changes := append(make([]any, 0, len(dirs)+1),
+		types.RenameFile{Kind: "rename", OldURI: oldURI, NewURI: newURI, Options: renopts},
+	)
 
+	delopts := &types.DeleteFileOptions{Recursive: true, IgnoreIfNotExists: true}
 	for _, dir := range dirs {
-		changes = append(changes, types.DeleteFile{
-			Kind:    "delete",
-			URI:     l.fromPath(dir),
-			Options: &types.DeleteFileOptions{Recursive: true, IgnoreIfNotExists: true},
-		})
+		changes = append(changes, types.DeleteFile{Kind: "delete", URI: l.fromPath(dir), Options: delopts})
 	}
 
 	l.cache.Delete(oldURI)
@@ -1426,56 +1412,6 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 	return nil, nil
 }
 
-func (l *LanguageServer) handleTextDocumentSignatureHelp(
-	ctx context.Context,
-	params types.SignatureHelpParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return nil, nil
-	}
-
-	reqs := rego.Requirements{File: rego.FileRequirements{Lines: true}}
-	rctx := l.regalContextWithRequirements(params.TextDocument.URI, reqs)
-
-	return rego.SignatureHelp(ctx, rego.NewInput(rctx, params))
-}
-
-func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, params types.CodeActionParams) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noCodeActions, nil
-	}
-
-	input := rego.NewInput(l.regalContext(params.TextDocument.URI), params)
-
-	return rego.QueryEval[types.CodeActionParams, []types.CodeAction](ctx, query.CodeAction, input)
-}
-
-func (l *LanguageServer) handleTextDocumentDocumentLink(
-	ctx context.Context,
-	params types.DocumentLinkParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noDocumentLinks, nil
-	}
-
-	return rego.DocumentLinks(ctx, rego.NewInput(l.regalContext(params.TextDocument.URI), params))
-}
-
-func (l *LanguageServer) handleTextDocumentDocumentHighlight(
-	ctx context.Context,
-	params types.DocumentHighlightParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noDocumentHighlights, nil
-	}
-
-	rctx := l.regalContextWithRequirements(params.TextDocument.URI, rego.Requirements{
-		File: rego.FileRequirements{Lines: true},
-	})
-
-	return rego.DocumentHighlight(ctx, rego.NewInput(rctx, params))
-}
-
 func (l *LanguageServer) handleWorkspaceExecuteCommand(params types.ExecuteCommandParams) (any, error) {
 	// this must not block, so we send the request to the worker on a buffered channel.
 	// the response to the workspace/executeCommand request must be sent before the command is executed
@@ -1504,7 +1440,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.InlayHintParam
 			return []types.InlayHint{}, nil
 		}
 
-		return partialInlayHints(parseErrors, contents, params.TextDocument.URI, bis), nil
+		return inlayhint.Partial(parseErrors, contents, params.TextDocument.URI, bis), nil
 	}
 
 	if contents, ok := l.cache.GetFileContents(params.TextDocument.URI); ok && contents == "" {
@@ -1518,57 +1454,7 @@ func (l *LanguageServer) handleTextDocumentInlayHint(params types.InlayHintParam
 		return []types.InlayHint{}, nil
 	}
 
-	return getInlayHints(module, bis), nil
-}
-
-func (l *LanguageServer) handleTextDocumentCodeLens(ctx context.Context, params types.CodeLensParams) (any, error) {
-	lastSuccessfullyParsedLineCount, everParsed := l.cache.GetSuccessfulParseLineCount(params.TextDocument.URI)
-
-	// if the file has always been unparsable, we can return early
-	// as there is no value to be gained from showing code lenses.
-	if !everParsed {
-		return noCodeLenses, nil
-	}
-
-	parseErrors, ok := l.cache.GetParseErrors(params.TextDocument.URI)
-	if ok && len(parseErrors) > 0 {
-		// if there are parse errors, but the line count is the same, then we
-		// still show them based on the last parsed module.
-		contents, ok := l.cache.GetFileContents(params.TextDocument.URI)
-		if !ok {
-			// we have no contents for an unknown reason
-			return noCodeLenses, nil
-		}
-
-		if strings.Count(contents, "\n")+1 != lastSuccessfullyParsedLineCount {
-			return noCodeLenses, nil
-		}
-	}
-
-	contents, module, ok := l.cache.GetContentAndModule(params.TextDocument.URI)
-	if !ok {
-		return nil, nil // return a null response, as per the spec
-	}
-
-	lenses, err := rego.CodeLenses(ctx, params.TextDocument.URI, contents, module)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get code lenses: %w", err)
-	}
-
-	if l.client.InitOptions.EnableDebugCodelens != nil && *l.client.InitOptions.EnableDebugCodelens {
-		return lenses, nil
-	}
-
-	// remove `regal.debug` codelens, as it's not enabled here
-	filteredLenses := make([]types.CodeLens, 0, len(lenses))
-
-	for _, lens := range lenses {
-		if lens.Command.Command != "regal.debug" {
-			filteredLenses = append(filteredLenses, lens)
-		}
-	}
-
-	return filteredLenses, nil
+	return inlayhint.FromModule(module, bis), nil
 }
 
 func (l *LanguageServer) handleTextDocumentCompletion(ctx context.Context, params types.CompletionParams) (any, error) {
@@ -1596,57 +1482,21 @@ func (l *LanguageServer) handleTextDocumentCompletion(ctx context.Context, param
 	return types.CompletionList{IsIncomplete: items != nil, Items: items}, nil
 }
 
-var noInlayHints = make([]types.InlayHint, 0)
-
-func partialInlayHints(
-	parseErrors []types.Diagnostic,
-	contents,
-	fileURI string,
-	builtins map[string]*ast.Builtin,
-) []types.InlayHint {
-	firstErrorLine := uint(0)
-	for _, parseError := range parseErrors {
-		if parseError.Range.Start.Line > firstErrorLine {
-			firstErrorLine = parseError.Range.Start.Line
-		}
-	}
-
-	split := strings.Split(contents, "\n")
-
-	if firstErrorLine == 0 || firstErrorLine > uint(len(split)) {
-		// if there are parse errors from line 0, we skip doing anything
-		// if the last valid line is beyond the end of the file, we exit as something is up
-		return noInlayHints
-	}
-
-	// select the lines from the contents up to the first parse error
-	lines := strings.Join(split[:firstErrorLine], "\n")
-
-	// parse the part of the module that might work
-	module, err := rparse.Module(fileURI, lines)
-	if err != nil {
-		// if we still can't parse the bit we hoped was valid, we exit as this is 'too hard'
-		return noInlayHints
-	}
-
-	return getInlayHints(module, builtins)
-}
-
 // Note: currently ignoring params.Query, as the client seems to do a good
 // job of filtering anyway, and that would merely be an optimization here.
 // But perhaps a good one to do at some point, and I'm not sure all clients
 // do this filtering.
 func (l *LanguageServer) handleWorkspaceSymbol() (any, error) {
-	symbols := make([]types.WorkspaceSymbol, 0)
 	contents := l.cache.GetAllFiles()
+	symbols := make([]types.WorkspaceSymbol, 0, len(contents)*10)
 	bis := l.builtinsForCurrentCapabilities()
 
 	for moduleURL, module := range l.cache.GetAllModules() {
 		content := contents[moduleURL]
-		docSyms := documentSymbols(content, module, bis)
+		docSyms := documentsymbol.All(content, module, bis)
 		wrkSyms := make([]types.WorkspaceSymbol, 0)
 
-		toWorkspaceSymbols(docSyms, moduleURL, &wrkSyms)
+		documentsymbol.ToWorkspaceSymbols(docSyms, moduleURL, &wrkSyms)
 
 		symbols = append(symbols, wrkSyms...)
 	}
@@ -1845,7 +1695,7 @@ func (l *LanguageServer) handleTextDocumentDocumentSymbol(params types.DocumentS
 
 	bis := l.builtinsForCurrentCapabilities()
 
-	return documentSymbols(contents, module, bis), nil
+	return documentsymbol.All(contents, module, bis), nil
 }
 
 func (l *LanguageServer) handleTextDocumentFoldingRange(params types.FoldingRangeParams) (any, error) {
@@ -1854,7 +1704,7 @@ func (l *LanguageServer) handleTextDocumentFoldingRange(params types.FoldingRang
 		return noFoldingRanges, nil
 	}
 
-	return findFoldingRanges(text, module), nil
+	return foldingrange.FindAll(text, module), nil
 }
 
 func (l *LanguageServer) handleTextDocumentFormatting(
@@ -2080,9 +1930,15 @@ func (l *LanguageServer) handleInitialize(ctx context.Context, params types.Init
 		rbundle.Dev.SetBundlePath(devPath)
 	}
 
+	if os.Getenv("REGAL_DEBUG") != "" {
+		fmt.Fprintln(os.Stderr, "Debug mode enabled")
+		l.log.SetLevel(log.LevelDebug)
+	}
+
 	l.client = types.Client{
-		Identifier:  clients.DetermineIdentifier(params.ClientInfo.Name),
-		InitOptions: params.InitializationOptions,
+		Identifier:   clients.DetermineIdentifier(params.ClientInfo.Name),
+		InitOptions:  params.InitializationOptions,
+		Capabilities: params.Capabilities,
 	}
 
 	// params.RootURI is not expected to have a trailing slash, but if one is
@@ -2467,22 +2323,8 @@ func (l *LanguageServer) parseOpts(fileURI string, bis map[string]*ast.Builtin) 
 	}
 }
 
-func (l *LanguageServer) regalContextWithRequirements(uri string, req rego.Requirements) rego.RegalContext {
-	rctx := l.regalContext(uri)
-
-	if req.File.Lines {
-		if content, ok := l.cache.GetFileContents(uri); ok {
-			rctx.File.Lines = strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
-		} else {
-			l.log.Message("failed to get file contents for uri %q", uri)
-		}
-	}
-
-	return rctx
-}
-
-func (l *LanguageServer) regalContext(uri string) rego.RegalContext {
-	return rego.RegalContext{
+func (l *LanguageServer) regalContext(uri string, req *rego.Requirements) rego.RegalContext {
+	rctx := rego.RegalContext{
 		Client: l.client,
 		File: rego.File{
 			Name:        l.toRelativePath(uri),
@@ -2495,6 +2337,20 @@ func (l *LanguageServer) regalContext(uri string) rego.RegalContext {
 			WorkspaceRootURI: l.workspaceRootURI,
 		},
 	}
+
+	if req == nil {
+		return rctx
+	}
+
+	if req.File.Lines {
+		if content, ok := l.cache.GetFileContents(uri); ok {
+			rctx.File.Lines = strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
+		} else {
+			l.log.Message("failed to get file contents for uri %q", uri)
+		}
+	}
+
+	return rctx
 }
 
 func positionToOffset(text string, p types.Position) int {

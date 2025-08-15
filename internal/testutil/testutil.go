@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/styrainc/regal/pkg/report"
+	"github.com/styrainc/regal/pkg/roast/encoding"
 	rutil "github.com/styrainc/regal/pkg/roast/util"
 )
 
@@ -144,4 +146,17 @@ func MustUnmarshalYAML[T any](t *testing.T, data []byte) T {
 	}
 
 	return result
+}
+
+func ToJSONRawMessage(tb testing.TB, msg any) *json.RawMessage {
+	tb.Helper()
+
+	data, err := encoding.JSON().Marshal(msg)
+	if err != nil {
+		tb.Fatalf("failed to marshal message: %v", err)
+	}
+
+	jraw := json.RawMessage(data)
+
+	return &jraw
 }

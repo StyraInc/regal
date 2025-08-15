@@ -51,11 +51,11 @@ func TraceValueToLevel(value string) (Level, error) {
 }
 
 func NewLogger(level Level, writer io.Writer) *Logger {
-	return &Logger{Level: level, Writer: writer}
+	return &Logger{Level: level, Writer: writer, rwm: sync.RWMutex{}}
 }
 
 func NoOpLogger() *Logger {
-	return &Logger{Level: LevelOff, Writer: io.Discard}
+	return &Logger{Level: LevelOff, Writer: io.Discard, rwm: sync.RWMutex{}}
 }
 
 func (l *Logger) SetLevel(level Level) {

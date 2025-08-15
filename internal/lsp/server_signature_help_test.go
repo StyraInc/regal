@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/sourcegraph/jsonrpc2"
 
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/styrainc/regal/internal/testutil"
 	"github.com/styrainc/regal/pkg/config"
 )
 
@@ -76,18 +78,10 @@ allow if concat(",", "a", "b") == "b,a"`
 				Position:     tc.position,
 			}
 
-			res, err := ls.handleTextDocumentSignatureHelp(ctx, params)
-			if err != nil {
-				t.Fatalf("signature help should work, got error: %s", err)
-			}
+			signatureHelp := invokeSignatureHelpHandler(t, ls, params)
 
-			if res == nil {
+			if signatureHelp == nil {
 				t.Errorf("no signature help found for position line=%d character=%d", tc.position.Line, tc.position.Character)
-			}
-
-			signatureHelp, ok := res.(types.SignatureHelp)
-			if !ok {
-				t.Fatalf("expected SignatureHelp, got %T", res)
 			}
 
 			if len(signatureHelp.Signatures) == 0 {
@@ -133,4 +127,23 @@ allow if concat(",", "a", "b") == "b,a"`
 			}
 		})
 	}
+}
+
+func invokeSignatureHelpHandler(t *testing.T, l *LanguageServer, params types.SignatureHelpParams) *types.SignatureHelp {
+	t.Helper()
+
+	result, err := l.Handle(t.Context(), nil, &jsonrpc2.Request{
+		Method: "textDocument/signatureHelp",
+		Params: testutil.ToJsonRawMessage(t, params),
+	})
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	signatureHelp, ok := result.(*types.SignatureHelp)
+	if !ok {
+		t.Fatalf("Expected result to be of type []types.CodeAction, got %T", result)
+	}
+
+	return signatureHelp
 }

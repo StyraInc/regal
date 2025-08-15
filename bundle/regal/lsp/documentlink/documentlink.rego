@@ -17,6 +17,10 @@ package regal.lsp.documentlink
 import data.regal.util
 
 # METADATA
+# entrypoint: true 
+result.response := items
+
+# METADATA
 # description: Set of links in document
 # entrypoint: true
 items contains item if {

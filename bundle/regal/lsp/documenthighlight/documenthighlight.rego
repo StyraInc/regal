@@ -15,8 +15,8 @@ package regal.lsp.documenthighlight
 import data.regal.util
 
 # METADATA
-# entrypoint: true
-# scope: document
+# entrypoint: true 
+result.response := items
 
 # METADATA
 # description: Highlights METADATA itself when clicked

@@ -5,6 +5,10 @@
   "$defs": {
     "input": {
       "properties": {
+        "method": {
+          "type": "string",
+          "description": "The method name for the LSP request"
+        },
         "regal": {
           "$ref": "#/$defs/regal"
         }

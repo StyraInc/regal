@@ -100,15 +100,13 @@ type (
 	}
 
 	Input[T any] struct {
-		Regal  RegalContext `json:"regal"`
+		Method string       `json:"method"`
 		Params T            `json:"params"`
+		Regal  RegalContext `json:"regal"`
 	}
 
-	regoOptions        = []func(*rego.Rego)
-	codeActions        = []types.CodeAction
-	codeLenses         = []types.CodeLens
-	documentLinks      = []types.DocumentLink
-	documentHighlights = []types.DocumentHighlight
+	regoOptions = []func(*rego.Rego)
+	codeLenses  = []types.CodeLens
 
 	cachedQuery struct {
 		body     ast.Body
@@ -125,6 +123,10 @@ type (
 
 func NewInput[T any](regal RegalContext, params T) Input[T] {
 	return Input[T]{Regal: regal, Params: params}
+}
+
+func NewInputWithMethod[T any](method string, regal RegalContext, params T) Input[T] {
+	return Input[T]{Method: method, Regal: regal, Params: params}
 }
 
 func (c Input[T]) String() string { // For debugging only
@@ -236,59 +238,19 @@ func CodeLenses(ctx context.Context, uri, contents string, module *ast.Module) (
 	return lenses, nil
 }
 
-func QueryEval[P any, R any](ctx context.Context, query string, input Input[P]) (R, error) {
-	var result R
+type Result[R any] struct {
+	Response R   `json:"response"`
+	Regal    any `json:"regal"`
+}
+
+func QueryEval[P any, R any](ctx context.Context, query string, input Input[P]) (Result[R], error) {
+	var result Result[R]
 
 	if err := CachedQueryEval(ctx, query, rast.StructToValue(input), &result); err != nil {
 		return result, fmt.Errorf("failed querying %q: %w", query, err)
 	}
 
 	return result, nil
-}
-
-// CodeActions returns all code actions in the module.
-// Note that at least as of now, no code actions depend on the data in the module, so
-// it is not passed as part of the input. This could change in the future.
-func CodeActions(ctx context.Context, input Input[types.CodeActionParams]) (codeActions, error) {
-	var actions codeActions
-
-	if err := CachedQueryEval(ctx, string(query.CodeAction), rast.StructToValue(input), &actions); err != nil {
-		return nil, fmt.Errorf("failed querying code actions: %w", err)
-	}
-
-	return actions, nil
-}
-
-func DocumentLinks(ctx context.Context, input Input[types.DocumentLinkParams]) (documentLinks, error) {
-	var links documentLinks
-
-	err := CachedQueryEval(ctx, query.DocumentLink, rast.StructToValue(input), &links)
-	if err != nil {
-		return nil, fmt.Errorf("failed querying document links: %w", err)
-	}
-
-	return links, nil
-}
-
-func DocumentHighlight(ctx context.Context, input Input[types.DocumentHighlightParams]) (documentHighlights, error) {
-	var highlights documentHighlights
-
-	err := CachedQueryEval(ctx, query.DocumentHighlight, rast.StructToValue(input), &highlights)
-	if err != nil {
-		return nil, fmt.Errorf("failed querying document highlights: %w", err)
-	}
-
-	return highlights, nil
-}
-
-func SignatureHelp(ctx context.Context, input Input[types.SignatureHelpParams]) (types.SignatureHelp, error) {
-	var signatureHelp types.SignatureHelp
-
-	if err := CachedQueryEval(ctx, query.SignatureHelp, rast.StructToValue(input), &signatureHelp); err != nil {
-		return types.SignatureHelp{}, fmt.Errorf("failed querying signature help: %w", err)
-	}
-
-	return signatureHelp, nil
 }
 
 func CachedQueryEval[T any](ctx context.Context, query string, input ast.Value, toValue *T) error {
@@ -425,6 +387,7 @@ func prepareQuery(ctx context.Context, query ast.Body, store storage.Store) (*re
 		}
 
 		if isBundleDevelopmentMode() {
+			fmt.Println("DEVELOPMENT MODE")
 			// Try falling back to the embedded bundle, or else we'll
 			// easily have errors popping up as notifications, making it
 			// really hard to fix the issue that broke the query (like a parse error)

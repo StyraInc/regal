@@ -40,7 +40,6 @@ import (
 	"github.com/styrainc/regal/internal/lsp/hover"
 	"github.com/styrainc/regal/internal/lsp/log"
 	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/rego/query"
 	"github.com/styrainc/regal/internal/lsp/types"
 	"github.com/styrainc/regal/internal/lsp/uri"
 	rparse "github.com/styrainc/regal/internal/parse"
@@ -63,23 +62,17 @@ const (
 	methodTdPublishDiagnostics = "textDocument/publishDiagnostics"
 	methodWsApplyEdit          = "workspace/applyEdit"
 
-	ruleNameOPAFmt                   = "opa-fmt"
-	ruleNameUseRegoV1                = "use-rego-v1"
-	ruleNameUseAssignmentOperator    = "use-assignment-operator"
-	ruleNameNoWhitespaceComment      = "no-whitespace-comment"
-	ruleNameDirectoryPackageMismatch = "directory-package-mismatch"
-	ruleNameNonRawRegexPattern       = "non-raw-regex-pattern"
+	ruleNameOPAFmt                = "opa-fmt"
+	ruleNameUseRegoV1             = "use-rego-v1"
+	ruleNameUseAssignmentOperator = "use-assignment-operator"
 )
 
 var (
-	noCodeActions        = make([]types.CodeAction, 0)
-	noCodeLenses         = make([]types.CodeLens, 0)
-	noDocumentLinks      = make([]types.DocumentLink, 0)
-	noDocumentHighlights = make([]types.DocumentHighlight, 0)
-	noDocumentSymbols    = make([]types.DocumentSymbol, 0)
-	noCompletionItems    = make([]types.CompletionItem, 0)
-	noFoldingRanges      = make([]types.FoldingRange, 0)
-	noDiagnostics        = make([]types.Diagnostic, 0)
+	noCodeLenses      = make([]types.CodeLens, 0)
+	noDocumentSymbols = make([]types.DocumentSymbol, 0)
+	noCompletionItems = make([]types.CompletionItem, 0)
+	noFoldingRanges   = make([]types.FoldingRange, 0)
+	noDiagnostics     = make([]types.Diagnostic, 0)
 
 	trueValue = true
 	truePtr   = &trueValue
@@ -123,6 +116,7 @@ type LanguageServer struct {
 	bundleCache *bundles.Cache
 
 	completionsManager *completions.Manager
+	regoHandler        *rego.RegoManager
 
 	commandRequest       chan types.ExecuteCommandParams
 	lintWorkspaceJobs    chan lintWorkspaceJob
@@ -161,6 +155,8 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 	c := cache.NewCache()
 	store := NewRegalStore()
 
+	completionsManager := completions.NewDefaultManager(ctx, c, store)
+
 	ls := &LanguageServer{
 		cache:                       c,
 		regoStore:                   store,
@@ -171,12 +167,18 @@ func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *Langua
 		commandRequest:              make(chan types.ExecuteCommandParams, 10),
 		templateFileJobs:            make(chan lintFileJob, 10),
 		templatingFiles:             concurrent.MapOf(make(map[string]bool)),
-		completionsManager:          completions.NewDefaultManager(ctx, c, store),
+		completionsManager:          completionsManager,
 		webServer:                   web.NewServer(c, opts.Logger),
 		loadedBuiltins:              concurrent.MapOf(make(map[string]map[string]*ast.Builtin)),
 		workspaceDiagnosticsPoll:    opts.WorkspaceDiagnosticsPoll,
 		loadedConfigAllRegoVersions: concurrent.MapOf(make(map[string]ast.RegoVersion)),
 	}
+
+	ls.regoHandler = rego.NewRegoManager(ctx, store, rego.Providers{
+		ContextProvider: ls.regalContext,
+		IgnoredProvider: ls.ignoreURI,
+		ContentProvider: ls.cache.GetFileContents,
+	})
 
 	ls.configWatcher = lsconfig.NewWatcher(&lsconfig.WatcherOpts{Logger: ls.log})
 
@@ -223,12 +225,6 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return handler.WithContextAndParams(ctx, req, l.handleInitialize)
 	case "initialized":
 		return l.handleInitialized()
-	case "textDocument/codeAction":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeAction)
-	case "textDocument/documentLink":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentDocumentLink)
-	case "textDocument/documentHighlight":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentDocumentHighlight)
 	case "textDocument/definition":
 		return handler.WithParams(req, l.handleTextDocumentDefinition)
 	case "textDocument/diagnostic":
@@ -255,8 +251,6 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCodeLens)
 	case "textDocument/completion":
 		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentCompletion)
-	case "textDocument/signatureHelp":
-		return handler.WithContextAndParams(ctx, req, l.handleTextDocumentSignatureHelp)
 	case "workspace/didChangeWatchedFiles":
 		return handler.WithParams(req, l.handleWorkspaceDidChangeWatchedFiles)
 	case "workspace/diagnostic":
@@ -298,10 +292,14 @@ func (l *LanguageServer) Handle(ctx context.Context, _ *jsonrpc2.Conn, req *json
 		return struct{}{}, nil
 	}
 
-	return nil, &jsonrpc2.Error{
-		Code:    jsonrpc2.CodeMethodNotFound,
-		Message: "method not supported: " + req.Method,
-	}
+	// Handles:
+	// - textDocument/codeAction
+	// - textDocument/documentLink
+	// - textDocument/documentHighlight
+	// - textDocument/signatureHelp
+	//
+	// returns jsonrpc2.Error with code jsonrpc2.CodeMethodNotFound if provided unknown method.
+	return l.regoHandler.Handle(ctx, l.conn, req)
 }
 
 func (l *LanguageServer) SetConn(conn *jsonrpc2.Conn) {
@@ -1426,56 +1424,6 @@ func (l *LanguageServer) handleTextDocumentHover(params types.TextDocumentHoverP
 	return nil, nil
 }
 
-func (l *LanguageServer) handleTextDocumentSignatureHelp(
-	ctx context.Context,
-	params types.SignatureHelpParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return nil, nil
-	}
-
-	reqs := rego.Requirements{File: rego.FileRequirements{Lines: true}}
-	rctx := l.regalContextWithRequirements(params.TextDocument.URI, reqs)
-
-	return rego.SignatureHelp(ctx, rego.NewInput(rctx, params))
-}
-
-func (l *LanguageServer) handleTextDocumentCodeAction(ctx context.Context, params types.CodeActionParams) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noCodeActions, nil
-	}
-
-	input := rego.NewInput(l.regalContext(params.TextDocument.URI), params)
-
-	return rego.QueryEval[types.CodeActionParams, []types.CodeAction](ctx, query.CodeAction, input)
-}
-
-func (l *LanguageServer) handleTextDocumentDocumentLink(
-	ctx context.Context,
-	params types.DocumentLinkParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noDocumentLinks, nil
-	}
-
-	return rego.DocumentLinks(ctx, rego.NewInput(l.regalContext(params.TextDocument.URI), params))
-}
-
-func (l *LanguageServer) handleTextDocumentDocumentHighlight(
-	ctx context.Context,
-	params types.DocumentHighlightParams,
-) (any, error) {
-	if l.ignoreURI(params.TextDocument.URI) {
-		return noDocumentHighlights, nil
-	}
-
-	rctx := l.regalContextWithRequirements(params.TextDocument.URI, rego.Requirements{
-		File: rego.FileRequirements{Lines: true},
-	})
-
-	return rego.DocumentHighlight(ctx, rego.NewInput(rctx, params))
-}
-
 func (l *LanguageServer) handleWorkspaceExecuteCommand(params types.ExecuteCommandParams) (any, error) {
 	// this must not block, so we send the request to the worker on a buffered channel.
 	// the response to the workspace/executeCommand request must be sent before the command is executed
@@ -2467,22 +2415,8 @@ func (l *LanguageServer) parseOpts(fileURI string, bis map[string]*ast.Builtin) 
 	}
 }
 
-func (l *LanguageServer) regalContextWithRequirements(uri string, req rego.Requirements) rego.RegalContext {
-	rctx := l.regalContext(uri)
-
-	if req.File.Lines {
-		if content, ok := l.cache.GetFileContents(uri); ok {
-			rctx.File.Lines = strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
-		} else {
-			l.log.Message("failed to get file contents for uri %q", uri)
-		}
-	}
-
-	return rctx
-}
-
-func (l *LanguageServer) regalContext(uri string) rego.RegalContext {
-	return rego.RegalContext{
+func (l *LanguageServer) regalContext(uri string, req *rego.Requirements) rego.RegalContext {
+	rctx := rego.RegalContext{
 		Client: l.client,
 		File: rego.File{
 			Name:        l.toRelativePath(uri),
@@ -2495,6 +2429,20 @@ func (l *LanguageServer) regalContext(uri string) rego.RegalContext {
 			WorkspaceRootURI: l.workspaceRootURI,
 		},
 	}
+
+	if req == nil {
+		return rctx
+	}
+
+	if req.File.Lines {
+		if content, ok := l.cache.GetFileContents(uri); ok {
+			rctx.File.Lines = strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
+		} else {
+			l.log.Message("failed to get file contents for uri %q", uri)
+		}
+	}
+
+	return rctx
 }
 
 func positionToOffset(text string, p types.Position) int {

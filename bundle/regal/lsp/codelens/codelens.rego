@@ -11,6 +11,10 @@ import data.regal.util
 
 import data.regal.lsp.util.location
 
+# METADATA
+# entrypoint: true 
+result.response := lenses
+
 # code lenses are displayed in the order they come back in the returned
 # array, and 'evaluate' somehow feels better to the left of 'debug'
 # METADATA

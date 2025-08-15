@@ -11,8 +11,11 @@ package regal.lsp.codeaction
 import data.regal.lsp.clients
 
 # METADATA
+# entrypoint: true 
+result.response := actions
+
+# METADATA
 # description: A set of all code actions applicable in the current document
-# entrypoint: true
 # scope: document
 
 # METADATA

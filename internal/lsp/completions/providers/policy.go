@@ -9,13 +9,13 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage"
 
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/rego/query"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/pkg/roast/transform"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/uri"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
 // Policy provides suggestions that have been determined by Rego policy.

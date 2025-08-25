@@ -6,8 +6,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/roast/transforms"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/internal/roast/transforms"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 func TestModuleToValue(t *testing.T) {

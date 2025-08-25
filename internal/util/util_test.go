@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestFindClosestMatchingRoot(t *testing.T) {

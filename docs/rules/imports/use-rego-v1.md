@@ -111,7 +111,7 @@ capabilities:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/use-rego-v1/use_rego_v1.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/imports/use-rego-v1/use_rego_v1.rego)
 
 ## Community
 

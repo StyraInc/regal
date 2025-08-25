@@ -3,11 +3,11 @@ package lsp
 import (
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
-// https://github.com/StyraInc/regal/issues/679
+// https://github.com/open-policy-agent/regal/issues/679
 func TestProcessBuiltinUpdateExitsOnMissingFile(t *testing.T) {
 	t.Parallel()
 

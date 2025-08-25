@@ -5,12 +5,12 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	_ "github.com/styrainc/regal/internal/roast/encoding"
-	_ "github.com/styrainc/regal/pkg/roast/intern"
+	_ "github.com/open-policy-agent/regal/internal/roast/encoding"
+	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
 )
 
 // Fallback config in case the faster number handling fails.
-// See: https://github.com/StyraInc/regal/issues/1592
+// See: https://github.com/open-policy-agent/regal/issues/1592
 var SafeNumberConfig = jsoniter.Config{
 	UseNumber:                     true,
 	EscapeHTML:                    false,

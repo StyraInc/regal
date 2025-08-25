@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/styrainc/regal/cmd"
+	"github.com/open-policy-agent/regal/cmd"
 
-	_ "github.com/styrainc/regal/pkg/roast/intern"
+	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
 )
 
 func main() {

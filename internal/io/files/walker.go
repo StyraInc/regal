@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/styrainc/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
 )
 
 // Walker is a utility for walking directories and files, applying

@@ -3,7 +3,7 @@ package providers
 import (
 	"strings"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
 )
 
 // completionLineHelper returns the lines of a file and the current line for a given index. This

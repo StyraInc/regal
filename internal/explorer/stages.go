@@ -10,9 +10,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/ir"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	compile2 "github.com/styrainc/regal/internal/compile"
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	compile2 "github.com/open-policy-agent/regal/internal/compile"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 type CompileResult struct {

@@ -47,7 +47,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/trailing-default-rule/trailing_default_rule.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/trailing-default-rule/trailing_default_rule.rego)
 
 ## Community
 

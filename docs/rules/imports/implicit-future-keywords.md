@@ -53,7 +53,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Use explicit imports for future keywords](https://github.com/StyraInc/rego-style-guide#use-explicit-imports-for-future-keywords)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/implicit-future-keywords/implicit_future_keywords.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/imports/implicit-future-keywords/implicit_future_keywords.rego)
 
 ## Community
 

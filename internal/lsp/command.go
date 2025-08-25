@@ -1,7 +1,7 @@
 package lsp
 
 import (
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 type commandArgs struct {

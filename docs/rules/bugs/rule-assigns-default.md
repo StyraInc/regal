@@ -48,7 +48,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/rule-assigns-default/rule_assigns_default.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/rule-assigns-default/rule_assigns_default.rego)
 
 ## Community
 

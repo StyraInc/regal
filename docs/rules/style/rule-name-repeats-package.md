@@ -46,7 +46,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/rule-name-repeats-package/rule_name_repeats_package.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/rule-name-repeats-package/rule_name_repeats_package.rego)
 
 ## Community
 

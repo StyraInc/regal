@@ -86,7 +86,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [function-arg-return](https://docs.styra.com/regal/rules/style/function-arg-return)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/performance/walk-no-path/walk_no_path.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/performance/walk-no-path/walk_no_path.rego)
 
 ## Community
 

@@ -6,10 +6,10 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/storage"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/completions/providers"
-	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/completions/providers"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 type Manager struct {

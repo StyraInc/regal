@@ -108,7 +108,7 @@ rules:
 - Rego Style Guide: [Don't use undeclared variables](https://github.com/StyraInc/rego-style-guide#dont-use-undeclared-variables)
 - OPA Docs: [The `some` keyword](https://www.openpolicyagent.org/docs/policy-language/#some-keyword)
 - Wikipedia: [Unification](https://en.wikipedia.org/wiki/Unification_(computer_science))
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/use-some-for-output-vars/use_some_for_output_vars.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/use-some-for-output-vars/use_some_for_output_vars.rego)
 
 ## Community
 

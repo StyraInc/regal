@@ -14,13 +14,13 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 
-	"github.com/styrainc/regal/internal/capabilities"
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/io/files"
-	"github.com/styrainc/regal/internal/io/files/filter"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/roast/encoding"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/internal/capabilities"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/io/files"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 const (

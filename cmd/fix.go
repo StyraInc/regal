@@ -14,15 +14,15 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/styrainc/regal/internal/git"
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/fixer"
-	"github.com/styrainc/regal/pkg/fixer/fileprovider"
-	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/linter"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/internal/git"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/fixer"
+	"github.com/open-policy-agent/regal/pkg/fixer/fileprovider"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/linter"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 // fixParams is similar to the lint params, but with some fields such as profiling removed.

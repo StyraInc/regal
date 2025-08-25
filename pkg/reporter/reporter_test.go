@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func ptr(s string) *string {
@@ -259,7 +259,7 @@ func TestSarifReporterPublish(t *testing.T) {
 	}
 }
 
-// https://github.com/StyraInc/regal/issues/514
+// https://github.com/open-policy-agent/regal/issues/514
 func TestSarifReporterViolationWithoutRegion(t *testing.T) {
 	t.Parallel()
 

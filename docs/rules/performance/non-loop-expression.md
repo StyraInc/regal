@@ -90,7 +90,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [defer-assignment](https://docs.styra.com/regal/rules/performance/defer-assignment)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/performance/non-loop-expression/non_loop_expression.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/performance/non-loop-expression/non_loop_expression.rego)
 
 ## Community
 

@@ -9,9 +9,9 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 
-	"github.com/styrainc/regal/internal/io/files"
-	"github.com/styrainc/regal/internal/io/files/filter"
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/regal/internal/io/files"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/internal/util"
 )
 
 func FilterIgnoredPaths(paths, ignore []string, checkExists bool, pathPrefix string) (filtered []string, err error) {

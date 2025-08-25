@@ -11,12 +11,12 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/topdown/print"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	rrego "github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/builtins"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/roast/transform"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	rrego "github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
 var (

@@ -36,9 +36,9 @@ func TestCheckAndWarn(t *testing.T) {
 		StateDir:       tempStateDir,
 
 		ReleaseServerHost: localReleasesServer.URL,
-		ReleaseServerPath: "/repos/styrainc/regal/releases/latest",
+		ReleaseServerPath: "/repos/open-policy-agent/regal/releases/latest",
 
-		CTAURLPrefix: "https://github.com/StyraInc/regal/releases/tag/",
+		CTAURLPrefix: "https://github.com/open-policy-agent/regal/releases/tag/",
 
 		Debug: true,
 	}
@@ -52,7 +52,7 @@ func TestCheckAndWarn(t *testing.T) {
 	}
 
 	expectedOutput := `A new version of Regal is available (v0.2.0). You are running v0.1.0.
-See https://github.com/StyraInc/regal/releases/tag/v0.2.0 for the latest release.`
+See https://github.com/open-policy-agent/regal/releases/tag/v0.2.0 for the latest release.`
 
 	if !strings.Contains(output, expectedOutput) {
 		t.Fatalf("expected output to contain\n%s,\ngot\n%s", expectedOutput, output)

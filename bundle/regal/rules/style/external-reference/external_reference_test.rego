@@ -211,7 +211,7 @@ test_external_references_max_allowed_configuration if {
 	count(r2) == 4
 }
 
-# verify fix for https://github.com/StyraInc/regal/issues/1283
+# verify fix for https://github.com/open-policy-agent/regal/issues/1283
 test_success_variable_from_nested_arg_term if {
 	r := rule.report with input as ast.policy(`f([x]) := to_number(x)`)
 		with config.capabilities as capabilities.provided

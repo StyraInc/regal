@@ -9,7 +9,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 
-	rio "github.com/styrainc/regal/internal/io"
+	rio "github.com/open-policy-agent/regal/internal/io"
 )
 
 // Bundle FS will include the tests as well, but since that has negligible impact on the size of the binary,

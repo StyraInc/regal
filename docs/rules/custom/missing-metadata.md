@@ -74,7 +74,7 @@ rules:
 - OPA Docs: [Metadata](https://www.openpolicyagent.org/docs/policy-language/#metadata)
 - OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
 - Rego Style Guide: [Use Metadata Annotations](https://docs.styra.com/opa/rego-style-guide#use-metadata-annotations)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/custom/missing-metadata/missing_metadata.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/custom/missing-metadata/missing_metadata.rego)
 
 ## Community
 

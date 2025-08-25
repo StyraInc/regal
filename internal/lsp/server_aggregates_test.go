@@ -10,10 +10,10 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func TestLanguageServerLintsUsingAggregateState(t *testing.T) {

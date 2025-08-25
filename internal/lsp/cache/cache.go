@@ -7,10 +7,10 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/roast/util"
-	"github.com/styrainc/regal/pkg/roast/util/concurrent"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
 // Cache is used to store: current file contents (which includes unsaved changes), the latest parsed modules, and

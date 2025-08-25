@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestWatcher(t *testing.T) {

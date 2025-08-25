@@ -7,7 +7,7 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 func TestFormatting(t *testing.T) {

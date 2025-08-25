@@ -69,7 +69,7 @@ rules:
 ## Related Resources
 
 - Regal Docs: [equals-pattern-matching](https://docs.styra.com/regal/rules/idiomatic/equals-pattern-matching)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/inconsistent-args/inconsistent_args.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/inconsistent-args/inconsistent_args.rego)
 
 ## Community
 

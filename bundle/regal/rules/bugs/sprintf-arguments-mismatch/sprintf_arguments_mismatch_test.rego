@@ -158,7 +158,7 @@ test_success_escaped_verbs_are_ignored if {
 	r == set()
 }
 
-# verify fix for https://github.com/styrainc/regal/issues/1574
+# verify fix for https://github.com/open-policy-agent/regal/issues/1574
 test_fail_padding_not_accounted_for if {
 	r := rule.report with input as ast.policy(`x := sprintf("%-*s", ["foo"])`)
 
@@ -184,7 +184,7 @@ test_fail_padding_not_accounted_for if {
 	}}
 }
 
-# verify fix for https://github.com/styrainc/regal/issues/1574
+# verify fix for https://github.com/open-policy-agent/regal/issues/1574
 test_success_padding_accounted_for if {
 	r := rule.report with input as ast.policy(`x := sprintf("%-*s", [2, "foo"])`)
 

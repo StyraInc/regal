@@ -5,7 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/bundle"
+	"github.com/open-policy-agent/regal/bundle"
 )
 
 func TestSchemaSet(t *testing.T) {

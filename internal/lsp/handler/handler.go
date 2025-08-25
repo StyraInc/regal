@@ -5,7 +5,7 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 type Func[T any] func(T) (any, error)

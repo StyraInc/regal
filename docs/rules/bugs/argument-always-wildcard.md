@@ -85,7 +85,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/argument-always-wildcard/argument_always_wildcard.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/argument-always-wildcard/argument_always_wildcard.rego)
 
 ## Community
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
 )
 
 // Report contains updated file contents and summary information about the fixes that were applied

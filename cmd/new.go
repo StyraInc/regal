@@ -19,9 +19,9 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/embeds"
-	"github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/internal/embeds"
+	"github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 type newRuleCommandParams struct {

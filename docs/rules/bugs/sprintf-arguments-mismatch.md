@@ -61,7 +61,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Built-in Functions: `sprintf`](https://www.openpolicyagent.org/docs/policy-reference/#builtin-strings-sprintf)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/sprintf-arguments-mismatch/sprintf_arguments_mismatch.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/sprintf-arguments-mismatch/sprintf_arguments_mismatch.rego)
 
 ## Community
 

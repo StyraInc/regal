@@ -14,16 +14,16 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/lsp/handler"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/handler"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 const (
 	mainRegoFileName = "/main.rego"
 	fileURIScheme    = "file://"
 	// defaultTimeout is set based on the investigation done as part of
-	// https://github.com/StyraInc/regal/issues/931. 20 seconds is 10x the
+	// https://github.com/open-policy-agent/regal/issues/931. 20 seconds is 10x the
 	// maximum time observed for an operation to complete.
 	defaultTimeout             = 20 * time.Second
 	defaultBufferedChannelSize = 5

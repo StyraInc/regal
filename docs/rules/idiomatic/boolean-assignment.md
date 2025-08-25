@@ -51,7 +51,7 @@ rules:
 
 - Styra Blog: [How to express OR in Rego](https://www.styra.com/blog/how-to-express-or-in-rego/)
 - Regal Docs: [default-over-else](https://docs.styra.com/regal/rules/style/default-over-else)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/boolean-assignment/boolean_assignment.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/boolean-assignment/boolean_assignment.rego)
 
 ## Community
 

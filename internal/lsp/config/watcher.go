@@ -7,7 +7,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 
-	"github.com/styrainc/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
 )
 
 type Watcher struct {

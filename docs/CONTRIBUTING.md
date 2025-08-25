@@ -16,7 +16,7 @@ The following tools are required to build, test and lint Regal:
   - [dprint](https://github.com/dprint/dprint) for checking JSON, YAML, etc
 - The [rq](https://git.sr.ht/~charles/rq) tool. This is used for automating and simplifying many of the tasks outlined
   in this document, and is (ab)used as a Rego-based replacement for Make in this project. Check out the
-  [do.rq](https://github.com/StyraInc/regal/blob/main/build/do.rq) file to see what that looks like, and for
+  [do.rq](https://github.com/open-policy-agent/regal/blob/main/build/do.rq) file to see what that looks like, and for
   documentation on the available tasks. Note that this is a
   [tool dependency](https://www.jvt.me/posts/2025/01/27/go-tools-124/) of Regal and does not need to be installed
   separately.
@@ -145,7 +145,7 @@ anything you can't figure out, don't hesitate to ask for help in the `#regal` Sl
 
 The tables on the [rules pages](https://docs.styra.com/regal/rules) are
 generated from the individual
-[rule Markdown files](https://github.com/StyraInc/regal/tree/main/docs/rules)
+[rule Markdown files](https://github.com/open-policy-agent/regal/tree/main/docs/rules)
 under `docs/rules`.
 
 ## Wasm (Experimental)

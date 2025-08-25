@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
 )
 
 var drivePattern = regexp.MustCompile(`^\/?([A-Za-z]):`)

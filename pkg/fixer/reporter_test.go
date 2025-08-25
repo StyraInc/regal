@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/styrainc/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
 )
 
 func TestPrettyReporterOutput(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestLoadDataBundle(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestParseModule(t *testing.T) {

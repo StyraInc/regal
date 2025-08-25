@@ -3,7 +3,7 @@
 #   Test to ensure a custom rule that aggregated no data is still reported
 # related_resources:
 #   - description: issue
-#     ref: https://github.com/StyraInc/regal/issues/1259
+#     ref: https://github.com/open-policy-agent/regal/issues/1259
 package custom.regal.rules.testcase.empty_aggregates
 
 import data.regal.result

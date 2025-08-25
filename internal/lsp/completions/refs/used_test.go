@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	rparse "github.com/styrainc/regal/internal/parse"
+	rparse "github.com/open-policy-agent/regal/internal/parse"
 )
 
 func TestUsedInModule(t *testing.T) {

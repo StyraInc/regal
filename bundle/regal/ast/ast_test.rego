@@ -4,7 +4,7 @@ import data.regal.ast
 import data.regal.capabilities
 import data.regal.config
 
-# https://github.com/StyraInc/regal/issues/168
+# https://github.com/open-policy-agent/regal/issues/168
 test_function_decls_multiple_same_name if {
 	policy := `package p
 

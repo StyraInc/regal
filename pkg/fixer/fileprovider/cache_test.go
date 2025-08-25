@@ -3,8 +3,8 @@ package fileprovider
 import (
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
 )
 
 func TestCacheFileProvider(t *testing.T) {

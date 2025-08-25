@@ -3,7 +3,7 @@ package metrics
 import (
 	"github.com/open-policy-agent/opa/v1/profiler"
 
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 const (

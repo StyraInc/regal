@@ -7,9 +7,9 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	rast "github.com/styrainc/regal/internal/ast"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/types/symbols"
+	rast "github.com/open-policy-agent/regal/internal/ast"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types/symbols"
 )
 
 func documentSymbols(contents string, module *ast.Module, builtins map[string]*ast.Builtin) []types.DocumentSymbol {

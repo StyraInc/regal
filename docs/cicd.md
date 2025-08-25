@@ -7,8 +7,9 @@ This document will guide you on how to do so. Please also review the
 
 ## GitHub Actions
 
-If you'd like to run Regal in GitHub actions, please consider using [`setup-regal`](https://github.com/StyraInc/setup-regal).
-A simple `.github/workflows/lint.yml` to run regal on PRs could look like this, where `policy` contains Rego files:
+If you'd like to run Regal in GitHub actions, please consider using
+[`setup-regal`](https://github.com/open-policy-agent/setup-regal). A simple `.github/workflows/lint.yml` to run regal
+on PRs could look like this, where `policy` contains Rego files:
 
 ```yaml
 name: Regal Lint
@@ -19,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: StyraInc/setup-regal@v1
+    - uses: open-policy-agent/setup-regal@v1
       with:
         # For production workflows, use a specific version, like v0.22.0
         version: latest
@@ -28,7 +29,7 @@ jobs:
       run: regal lint --format=github ./policy
 ```
 
-Please see [`setup-regal`](https://github.com/StyraInc/setup-regal) for more information.
+Please see [`setup-regal`](https://github.com/open-policy-agent/setup-regal) for more information.
 
 ## GitLab CI/CD
 
@@ -39,7 +40,7 @@ regal_lint_policies:
   stage: regal-lint
   image:
     # For production workflows, use a specific version, like v0.22.0
-    name: ghcr.io/styrainc/regal:latest
+    name: ghcr.io/open-policy-agent/regal:latest
     entrypoint: ['/bin/sh', '-c']
   script:
     - regal lint ./policy --format junit > regal-results.xml

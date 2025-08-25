@@ -6,9 +6,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 func TestLoadWorkspaceContents(t *testing.T) {

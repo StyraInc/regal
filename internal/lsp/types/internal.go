@@ -3,7 +3,7 @@ package types
 import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
 )
 
 // Ref is a generic construct for an object found in a Rego module.

@@ -9,8 +9,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 var (

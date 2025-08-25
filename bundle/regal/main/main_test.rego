@@ -435,7 +435,7 @@ test_aggregate_report_custom_rule if {
 	violations == report
 }
 
-# verify fix for https://github.com/styrainc/regal/issues/1592
+# verify fix for https://github.com/open-policy-agent/regal/issues/1592
 test_big_number_causes_no_parser_error if {
 	policy := `package p
 

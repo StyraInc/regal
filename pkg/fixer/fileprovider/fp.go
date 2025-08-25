@@ -5,7 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/pkg/rules"
+	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
 type FileProvider interface {

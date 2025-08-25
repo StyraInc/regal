@@ -13,7 +13,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/parse"
 )
 
 // Input represents the input for a linter evaluation.

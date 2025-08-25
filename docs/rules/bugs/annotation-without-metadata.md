@@ -46,7 +46,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/annotation-without-metadata/annotation_without_metadata.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/annotation-without-metadata/annotation_without_metadata.rego)
 
 ## Community
 

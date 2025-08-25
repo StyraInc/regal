@@ -52,7 +52,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/messy-rule/messy_rule.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/messy-rule/messy_rule.rego)
 
 ## Community
 

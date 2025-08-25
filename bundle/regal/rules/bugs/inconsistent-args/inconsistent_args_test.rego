@@ -82,7 +82,7 @@ test_success_using_pattern_matching if {
 }
 
 # this is a compiler error, so let's not flag it here
-# see https://github.com/StyraInc/regal/issues/1250
+# see https://github.com/open-policy-agent/regal/issues/1250
 test_success_incorrect_arity if {
 	module := ast.policy(`
 	foo(a, b) if a == b

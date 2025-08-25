@@ -3,7 +3,7 @@ package encoding
 import (
 	jsoniter "github.com/json-iterator/go"
 
-	_ "github.com/styrainc/regal/pkg/roast/intern"
+	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
 )
 
 func init() {

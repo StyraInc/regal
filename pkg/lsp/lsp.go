@@ -11,9 +11,9 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	jsonrpc2_ws "github.com/sourcegraph/jsonrpc2/websocket"
 
-	"github.com/styrainc/regal/internal/lsp"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/internal/lsp"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 // Handle represents a single active LSP session.

@@ -56,7 +56,7 @@ rules:
 
 - Regal Docs: [file-length](https://docs.styra.com/regal/rules/style/file-length)
 - Regal Docs: [line-length](https://docs.styra.com/regal/rules/style/line-length)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/rule-length/rule_length.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/rule-length/rule_length.rego)
 
 ## Community
 

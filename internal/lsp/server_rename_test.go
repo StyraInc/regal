@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
 )
 
 func TestLanguageServerFixRenameParams(t *testing.T) {

@@ -10,7 +10,7 @@ If you'd like to integrate Regal into a Go application, this guide contains some
 Regal can be used from a Go application by importing the `linter` package:
 
 ```go
-import "github.com/styrainc/regal/pkg/linter"
+import "github.com/open-policy-agent/regal/pkg/linter"
 ```
 
 ### Input

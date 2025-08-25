@@ -9,7 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	_ "github.com/styrainc/regal/pkg/roast/intern"
+	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
 )
 
 // AnyToValue converts a native Go value x to a Value.

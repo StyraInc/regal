@@ -71,7 +71,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/policy-reference/#built-in-functions)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/import-shadows-builtin/import_shadows_builtin.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/imports/import-shadows-builtin/import_shadows_builtin.rego)
 
 ## Community
 

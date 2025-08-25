@@ -85,7 +85,7 @@ rules:
 
 - OPA Docs: [Metadata](https://www.openpolicyagent.org/docs/policy-language/#metadata)
 - OPA Docs: [Entrypoint](https://www.openpolicyagent.org/docs/policy-language/#entrypoint)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/no-defined-entrypoint/no_defined_entrypoint.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/no-defined-entrypoint/no_defined_entrypoint.rego)
 
 ## Community
 

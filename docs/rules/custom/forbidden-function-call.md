@@ -47,7 +47,7 @@ rules:
 
 - OPA Docs: [Capabilities](https://www.openpolicyagent.org/docs/deployments/#capabilities)
 - OPA Docs: [Built-in Functions](https://www.openpolicyagent.org/docs/policy-reference/#built-in-functions)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/custom/forbidden-function-call/forbidden_function_call.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/custom/forbidden-function-call/forbidden_function_call.rego)
 
 ## Community
 

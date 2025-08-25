@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/lsp"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/lsp"
 )
 
 //go:embed *.html

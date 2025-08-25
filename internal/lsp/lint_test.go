@@ -6,12 +6,12 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func TestUpdateParse(t *testing.T) {

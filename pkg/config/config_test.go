@@ -13,8 +13,8 @@ import (
 	outil "github.com/open-policy-agent/opa/v1/util"
 	"github.com/open-policy-agent/opa/v1/util/test"
 
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/util"
 )
 
 const levelError = "error"

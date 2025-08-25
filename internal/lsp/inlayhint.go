@@ -6,8 +6,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/types"
 
-	"github.com/styrainc/regal/internal/lsp/rego"
-	types2 "github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	types2 "github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 func createInlayTooltip(named *types.NamedType) string {

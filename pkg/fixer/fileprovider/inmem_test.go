@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestFromFS(t *testing.T) {

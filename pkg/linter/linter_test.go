@@ -10,15 +10,15 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/topdown"
 
-	"github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/cache"
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/internal/test"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/roast/util"
-	"github.com/styrainc/regal/pkg/rules"
+	"github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/cache"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/test"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
 func TestLintWithDefaultBundle(t *testing.T) {

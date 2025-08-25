@@ -13,12 +13,12 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/uri"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/roast/util/concurrent"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/uri"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
 type message struct {
@@ -329,7 +329,7 @@ func TestNewFileTemplating(t *testing.T) {
 }
 
 // TestTemplateWorkerRaceConditionWithDidOpen tests the race condition fix for
-// https://github.com/StyraInc/regal/issues/1608 where didOpen would overwrite
+// https://github.com/open-policy-agent/regal/issues/1608 where didOpen would overwrite
 // templated content in cache (with "") before the template worker could
 // complete.
 func TestTemplateWorkerRaceConditionWithDidOpen(t *testing.T) {

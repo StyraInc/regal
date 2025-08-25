@@ -51,7 +51,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/policy-testing/)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/test-outside-test-package/test_outside_test_package.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/testing/test-outside-test-package/test_outside_test_package.rego)
 
 ## Community
 

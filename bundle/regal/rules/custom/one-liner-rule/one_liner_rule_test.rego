@@ -153,7 +153,7 @@ test_has_notice_if_unmet_capability if {
 	}}
 }
 
-# verify fix for https://github.com/StyraInc/regal/issues/1527
+# verify fix for https://github.com/open-policy-agent/regal/issues/1527
 test_fail_single_expression_spanning_multiple_lines_already_a_one_liner if {
 	module := ast.policy(`
 

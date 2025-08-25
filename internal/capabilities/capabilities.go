@@ -18,7 +18,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/capabilities/embedded"
+	"github.com/open-policy-agent/regal/internal/capabilities/embedded"
 )
 
 const (

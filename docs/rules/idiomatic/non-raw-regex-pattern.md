@@ -58,7 +58,7 @@ rules:
 
 - Rego Style Guide: [Use raw strings for regex patterns](https://github.com/StyraInc/rego-style-guide#use-raw-strings-for-regex-patterns)
 - OPA Docs: [Regex Functions Reference](https://www.openpolicyagent.org/docs/policy-reference/#regex)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/non-raw-regex-pattern/non_raw_regex_pattern.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/non-raw-regex-pattern/non_raw_regex_pattern.rego)
 
 ## Community
 

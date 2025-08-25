@@ -63,14 +63,14 @@ test_success_top_level_known_var_ref if {
 	r == set()
 }
 
-# https://github.com/StyraInc/regal/issues/852
+# https://github.com/open-policy-agent/regal/issues/852
 test_success_top_level_ref_head_vars_assignment if {
 	r := rule.report with input as ast.policy(`foo[x] := input[x] if some x in [1, 2, 3]`)
 
 	r == set()
 }
 
-# https://github.com/StyraInc/regal/issues/401
+# https://github.com/open-policy-agent/regal/issues/401
 test_success_top_level_input_assignment if {
 	r := rule.report with input as ast.policy(`x := input`)
 
@@ -104,7 +104,7 @@ test_success_top_level_import if {
 	r == set()
 }
 
-# verify fix for https://github.com/StyraInc/regal/issues/1277
+# verify fix for https://github.com/open-policy-agent/regal/issues/1277
 test_success_vars_in_head_also_in_body if {
 	r := rule.report with input as ast.policy(`x := input.x[a][b] if [a, b] := [1, 2]`)
 

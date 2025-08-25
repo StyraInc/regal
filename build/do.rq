@@ -19,7 +19,7 @@
 #   build/do.rq test
 #
 # authors:
-#   - https://github.com/StyraInc/regal/graphs/contributors
+#   - https://github.com/open-policy-agent/regal/graphs/contributors
 # related_resources:
 #   - description: rq
 #     ref: https://git.sr.ht/~charles/rq

@@ -14,8 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/types"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/pkg/roast/transform"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
 // RegalParseModuleMeta metadata for regal.parse_module.

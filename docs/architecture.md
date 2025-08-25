@@ -32,8 +32,8 @@ When running Regal against a directory, like `regal lint my-policies/`, Regal do
 ## Rego Rules Evaluation
 
 The main entrypoint for Rego rule evaluation is unsurprisingly found in
-[main.rego](https://github.com/StyraInc/regal/blob/main/bundle/regal/main.rego), in which we query the `report` rule
-from the [Go](https://github.com/StyraInc/regal/blob/main/pkg/linter/linter.go) application.
+[main.rego](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/main.rego), in which we query the `report`
+rule from the [Go](https://github.com/open-policy-agent/regal/blob/main/pkg/linter/linter.go) application.
 
 The `report` rule in turn uses
 [dynamic policy composition](https://www.styra.com/blog/dynamic-policy-composition-for-opa/) to query all rules named

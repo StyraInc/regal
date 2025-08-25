@@ -39,7 +39,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/constant-condition/constant_condition.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/constant-condition/constant_condition.rego)
 
 ## Community
 

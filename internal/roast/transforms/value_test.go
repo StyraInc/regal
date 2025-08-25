@@ -6,7 +6,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 //go:embed testdata

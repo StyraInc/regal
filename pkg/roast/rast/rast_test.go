@@ -5,7 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
 )
 
 func TestStructToValue(t *testing.T) {

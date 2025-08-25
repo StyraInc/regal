@@ -134,7 +134,7 @@ rules:
 - Rego Style Guide: [Package name should match file location](https://docs.styra.com/opa/rego-style-guide#package-name-should-match-file-location)
 - Regal Docs: [test-outside-test-package](https://docs.styra.com/regal/rules/testing/test-outside-test-package)
 - OPA Docs: [Bundles](https://www.openpolicyagent.org/docs/management-bundles/)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/directory-package-mismatch/directory_package_mismatch.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/directory-package-mismatch/directory_package_mismatch.rego)
 
 ## Community
 

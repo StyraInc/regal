@@ -46,7 +46,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/custom-in-construct/custom_in_construct.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/custom-in-construct/custom_in_construct.rego)
 
 ## Community
 

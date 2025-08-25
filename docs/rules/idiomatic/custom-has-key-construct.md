@@ -43,7 +43,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/custom-has-key-construct/custom_has_key_construct.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/custom-has-key-construct/custom_has_key_construct.rego)
 
 ## Community
 

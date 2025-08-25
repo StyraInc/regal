@@ -10,8 +10,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	rp "github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	rp "github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 func init() {

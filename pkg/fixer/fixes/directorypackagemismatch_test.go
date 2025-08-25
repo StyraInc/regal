@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 func TestFixDirectoryPackageMismatch(t *testing.T) {

@@ -27,8 +27,8 @@ by the Regal linter.
   src={require('./assets/lsp/diagnostics.png').default}
   alt="Screenshot of diagnostics as displayed in Zed"/>
 
-Future versions of Regal may include also [compilation errors](https://github.com/StyraInc/regal/issues/745) as part of
-diagnostics messages.
+Future versions of Regal may include also [compilation errors](https://github.com/open-policy-agent/regal/issues/745)
+as part of diagnostics messages.
 
 ### Hover
 
@@ -119,7 +119,7 @@ be suggestions for:
 
 New completion providers are added continuously, so if you have a suggestion for
 a new completion, please
-[open an issue](https://github.com/StyraInc/regal/issues)!
+[open an issue](https://github.com/open-policy-agent/regal/issues)!
 
 ### Code actions
 
@@ -223,7 +223,7 @@ evaluation, so Regal will handle that on its own, and differently depending on w
 ## Unsupported features
 
 See the
-[open issues](https://github.com/StyraInc/regal/issues?q=is%3Aissue+is%3Aopen+label%3A%22language+server+protocol%22)
+[open issues](https://github.com/open-policy-agent/regal/issues?q=is%3Aissue+is%3Aopen+label%3A%22language+server+protocol%22)
 with the `language server protocol` label for a list of features that are not yet supported by the Regal language
 server, but that are planned for the future. If you have suggestions for anything else, please create a new issue!
 

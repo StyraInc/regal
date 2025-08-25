@@ -38,7 +38,7 @@ test_success_var_does_not_shadow_builtin if {
 	r == set()
 }
 
-# https://github.com/StyraInc/regal/issues/1163
+# https://github.com/open-policy-agent/regal/issues/1163
 test_success_print_excluded if {
 	r := rule.report with input as ast.policy(`x if print([y - 1])`) with config.capabilities as capabilities.provided
 

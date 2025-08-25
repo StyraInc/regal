@@ -10,12 +10,12 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/roast/transforms"
-	"github.com/styrainc/regal/internal/roast/transforms/module"
-	"github.com/styrainc/regal/pkg/roast/encoding"
-	"github.com/styrainc/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/internal/roast/transforms"
+	"github.com/open-policy-agent/regal/internal/roast/transforms/module"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
 
-	_ "github.com/styrainc/regal/internal/roast/encoding"
+	_ "github.com/open-policy-agent/regal/internal/roast/encoding"
 )
 
 var (

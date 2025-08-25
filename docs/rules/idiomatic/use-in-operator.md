@@ -43,7 +43,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Use `in` to check for membership](https://github.com/StyraInc/rego-style-guide#use-in-to-check-for-membership)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/use-in-operator/use_in_operator.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/use-in-operator/use_in_operator.rego)
 
 ## Community
 

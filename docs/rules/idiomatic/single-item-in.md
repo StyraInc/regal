@@ -39,7 +39,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Use indexed statements](https://www.openpolicyagent.org/docs/policy-performance/#use-indexed-statements)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/single-item-in/single_item_in.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/single-item-in/single_item_in.rego)
 
 ## Community
 

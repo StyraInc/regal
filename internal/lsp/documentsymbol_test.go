@@ -5,9 +5,9 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/lsp/types/symbols"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types/symbols"
 )
 
 func toStrPtr(s string) *string {

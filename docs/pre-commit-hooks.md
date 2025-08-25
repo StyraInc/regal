@@ -6,7 +6,7 @@ This allows running Regal automatically whenever (and as the name implied, befor
 To use Regal with pre-commit, add this to your `.pre-commit-config.yaml`
 
 ```yaml
-- repo: https://github.com/StyraInc/regal
+- repo: https://github.com/open-policy-agent/regal
   rev: v0.7.0 # Use the ref you want to point at
   hooks:
     - id: regal-lint

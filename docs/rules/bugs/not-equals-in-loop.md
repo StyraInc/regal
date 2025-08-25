@@ -63,7 +63,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/not-equals-in-loop/not_equals_in_loop.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/not-equals-in-loop/not_equals_in_loop.rego)
 
 ## Community
 

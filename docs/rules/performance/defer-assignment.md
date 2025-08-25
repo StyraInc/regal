@@ -66,7 +66,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/performance/defer-assignment/defer_assignment.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/performance/defer-assignment/defer_assignment.rego)
 
 ## Community
 

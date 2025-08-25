@@ -359,8 +359,8 @@ sometimes called thousands of times as part of traversing the input AST.
 ## Rego Library
 
 In addition to this, Regal provides many helpful functions, rules and utilities in Rego. Browsing the source code of the
-[regal.ast](https://github.com/StyraInc/regal/blob/main/bundle/regal/ast/ast.rego) package to see what's available is
-recommended!
+[regal.ast](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/ast/ast.rego) package to see what's
+available is recommended!
 
 Note however that at this point in time, the Rego API is not considered stable, and breaking changes are likely to
 occur between versions. If you need stable versions of rules and functions found here, consider copying them into a

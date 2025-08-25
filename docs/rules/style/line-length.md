@@ -42,7 +42,7 @@ rules:
 
 - Regal Docs: [file-length](https://docs.styra.com/regal/rules/style/file-length)
 - Regal Docs: [rule-length](https://docs.styra.com/regal/rules/style/rule-length)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/line-length/line_length.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/line-length/line_length.rego)
 
 ## Community
 

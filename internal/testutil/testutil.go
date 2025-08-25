@@ -7,8 +7,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/styrainc/regal/pkg/report"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/pkg/report"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 func Must[T any](x T, err error) func(tb testing.TB) T {

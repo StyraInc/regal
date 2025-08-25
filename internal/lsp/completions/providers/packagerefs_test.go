@@ -8,11 +8,11 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/completions/refs"
-	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/completions/refs"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/parse"
 )
 
 func TestPackageRefs(t *testing.T) {

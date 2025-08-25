@@ -82,7 +82,7 @@ test_success_aggregate_report_on_import_with_matching_package if {
 }
 
 # unresolved imports should be flagged by an `unresolved-import`
-# rule instead. see https://github.com/StyraInc/regal/issues/300
+# rule instead. see https://github.com/open-policy-agent/regal/issues/300
 test_success_aggregate_report_on_import_with_unresolved_path if {
 	r := rule.aggregate_report with input.aggregate as {
 		{"aggregate_data": {

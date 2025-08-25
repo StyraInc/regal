@@ -50,7 +50,7 @@ rules:
 
 - OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
 - OPA Docs: [Accessing Annotations](https://www.openpolicyagent.org/docs/policy-language/#accessing-annotations)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/invalid-metadata-attribute/invalid_metadata_attribute.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/invalid-metadata-attribute/invalid_metadata_attribute.rego)
 
 ## Community
 

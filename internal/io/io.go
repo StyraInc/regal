@@ -18,9 +18,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/types"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/io/files"
-	"github.com/styrainc/regal/internal/io/files/filter"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/internal/io/files"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 // Getwd returns the current working directory, or an empty string if it cannot be determined.

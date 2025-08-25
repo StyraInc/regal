@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/styrainc/regal/internal/compile"
+	"github.com/open-policy-agent/regal/internal/compile"
 )
 
 func init() {

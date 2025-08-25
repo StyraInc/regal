@@ -58,7 +58,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Avoid prefixing rules and functions with `get_` or `list_`](https://github.com/StyraInc/rego-style-guide#avoid-prefixing-rules-and-functions-with-get_-or-list_)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/avoid-get-and-list-prefix/avoid_get_and_list_prefix.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/avoid-get-and-list-prefix/avoid_get_and_list_prefix.rego)
 
 ## Community
 

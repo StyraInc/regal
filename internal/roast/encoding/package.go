@@ -32,7 +32,7 @@ func (*packageCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		stream.WriteObjectField(strPath)
 
 		// Make a copy to avoid data race
-		// https://github.com/StyraInc/regal/issues/1167
+		// https://github.com/open-policy-agent/regal/issues/1167
 		pathCopy := pkg.Path.Copy()
 
 		// Omit location of "data" part of path, at it isn't present in code

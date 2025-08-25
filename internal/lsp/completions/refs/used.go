@@ -9,12 +9,12 @@ import (
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/builtins"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/roast/rast"
-	"github.com/styrainc/regal/pkg/roast/transform"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
 
 	_ "embed"
 )

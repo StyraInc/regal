@@ -21,10 +21,10 @@ builds:
       - regal_enable_novelty
     ldflags:
       - -s -w
-      - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
-      - -X github.com/styrainc/regal/pkg/version.Commit={{ .Commit }}
-      - -X github.com/styrainc/regal/pkg/version.Timestamp={{ .Date }}
-      - -X github.com/styrainc/regal/pkg/version.Hostname=github.actions.local
+      - -X github.com/open-policy-agent/regal/pkg/version.Version={{ .Version }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Commit={{ .Commit }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Timestamp={{ .Date }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Hostname=github.actions.local
   - id: darwin-build
     goos:
       - darwin
@@ -36,16 +36,16 @@ builds:
       - regal_enable_novelty
     ldflags:
       - -s -w
-      - -X github.com/styrainc/regal/pkg/version.Version={{ .Version }}
-      - -X github.com/styrainc/regal/pkg/version.Commit={{ .Commit }}
-      - -X github.com/styrainc/regal/pkg/version.Timestamp={{ .Date }}
-      - -X github.com/styrainc/regal/pkg/version.Hostname=github.actions.local
+      - -X github.com/open-policy-agent/regal/pkg/version.Version={{ .Version }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Commit={{ .Commit }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Timestamp={{ .Date }}
+      - -X github.com/open-policy-agent/regal/pkg/version.Hostname=github.actions.local
 
 kos:
   - # build settings are imported from this build
     build: linux-windows-build
     repositories:
-      - ghcr.io/styrainc/regal
+      - ghcr.io/open-policy-agent/regal
     tags:
       - "{{.Version}}"
       - latest
@@ -83,26 +83,8 @@ changelog:
 
 release:
   github:
-    owner: StyraInc
+    owner: open-policy-agent
     name: regal
   # draft is used to give us time to set/correct
   # the release notes before publishing to watchers.
   draft: true
-
-brews:
-  - repository:
-      owner: StyraInc
-      name: homebrew-packages
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    url_template: >-
-      https://github.com/StyraInc/{{ .ProjectName }}/releases/download/{{ .Tag }}/{{ .ProjectName }}_{{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    commit_author:
-      name: Styra DevRel
-      email: devrel@styra.com
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-    homepage: "https://github.com/styrainc/regal"
-    description: "Regal is a linter for Rego, with the goal of making your Rego magnificent!"

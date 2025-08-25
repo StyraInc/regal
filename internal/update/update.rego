@@ -45,7 +45,7 @@ default _release_server_path := "/repos/styrainc/regal/releases/latest"
 
 _release_server_path := input.release_server_path if input.release_server_path != ""
 
-default _cta_url_prefix := "https://github.com/styrainc/regal/releases/tag/"
+default _cta_url_prefix := "https://github.com/open-policy-agent/regal/releases/tag/"
 
 _cta_url_prefix := input.cta_url_prefix if input.cta_url_prefix != ""
 

@@ -8,9 +8,9 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 func TestExecuteCommandOpaFmt(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/styrainc/regal/internal/lsp/handler"
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/handler"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 type rpcHandler func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) (any, error)

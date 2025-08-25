@@ -36,7 +36,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Policy Testing](https://www.openpolicyagent.org/docs/policy-testing/)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/testing/todo-test/todo_test.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/testing/todo-test/todo_test.rego)
 
 ## Community
 

@@ -27,12 +27,12 @@ import (
 	outil "github.com/open-policy-agent/opa/v1/util"
 	"github.com/open-policy-agent/opa/v1/version"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/compile"
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/builtins"
-	"github.com/styrainc/regal/pkg/config"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/compile"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/config"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 const benchmarkGoBenchOutput = "gobench"

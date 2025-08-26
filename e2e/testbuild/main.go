@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/open-policy-agent/opa/cmd"
 
-	regal_cmd "github.com/styrainc/regal/cmd"
+	regal_cmd "github.com/open-policy-agent/regal/cmd"
 )
 
 // Create a frankenstein binary: it'll combine all of OPA and Regal.

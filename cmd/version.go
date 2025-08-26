@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/styrainc/regal/pkg/roast/encoding"
-	"github.com/styrainc/regal/pkg/version"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/version"
 )
 
 type versionCommandParams struct {

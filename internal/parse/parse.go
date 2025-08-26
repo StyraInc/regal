@@ -9,8 +9,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/roast/encoding"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 // ParserOptions provides parser options with annotation processing. JSONOptions are not included,

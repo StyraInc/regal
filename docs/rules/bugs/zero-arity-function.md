@@ -51,7 +51,7 @@ rules:
 
 - OPA Docs: [The OPA Document Model](https://www.openpolicyagent.org/docs/philosophy/#the-opa-document-model)
 - OPA Issues: [Allow user-defined zero-argument functions in Rego](https://github.com/open-policy-agent/opa/issues/6315)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/zero-arity-function/zero_arity_function.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/zero-arity-function/zero_arity_function.rego)
 
 ## Community
 

@@ -94,7 +94,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Default Keyword](https://www.openpolicyagent.org/docs/policy-language/#default-keyword)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/default-over-else/default_over_else.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/default-over-else/default_over_else.rego)
 
 ## Community
 

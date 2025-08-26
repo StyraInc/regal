@@ -6,8 +6,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func TestManageAggregates(t *testing.T) {

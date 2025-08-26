@@ -5,7 +5,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
 )
 
 // A function call may either be represented as an ast.Call.

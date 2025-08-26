@@ -62,7 +62,7 @@ rules:
 ## Related Resources
 
 - Rego Style Guide: [Prefer importing packages over rules and functions](https://github.com/StyraInc/rego-style-guide#prefer-importing-packages-over-rules-and-functions)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/imports/prefer-package-imports/prefer_package_imports.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/imports/prefer-package-imports/prefer_package_imports.rego)
 
 ## Community
 

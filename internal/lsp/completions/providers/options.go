@@ -3,7 +3,7 @@ package providers
 import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 type Options struct {

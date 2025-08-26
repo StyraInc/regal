@@ -5,8 +5,8 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/rego"
-	"github.com/styrainc/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	"github.com/open-policy-agent/regal/internal/parse"
 )
 
 func TestGetRuleDetail(t *testing.T) {

@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/styrainc/regal/internal/lsp/test"
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/test"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 // TestSendFileDiagnosticsEmptyArrays replicates the scenario from
-// https://github.com/StyraInc/regal/issues/1609 where a file that's been
+// https://github.com/open-policy-agent/regal/issues/1609 where a file that's been
 // deleted from the cache has null rather than empty arrays as diagnostics.
 func TestSendFileDiagnosticsEmptyArrays(t *testing.T) {
 	t.Parallel()

@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/styrainc/regal/internal/lsp/types/completion"
-	"github.com/styrainc/regal/internal/lsp/types/symbols"
+	"github.com/open-policy-agent/regal/internal/lsp/types/completion"
+	"github.com/open-policy-agent/regal/internal/lsp/types/symbols"
 )
 
 type (

@@ -11,11 +11,11 @@ import (
 
 	"github.com/arl/statsviz"
 
-	"github.com/styrainc/regal/internal/explorer"
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/regal/internal/explorer"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/util"
 
 	_ "net/http/pprof" //nolint:gosec
 )

@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/pkg/config"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 type repeatedStringFlag struct {

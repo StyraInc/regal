@@ -38,7 +38,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [strings.count](https://www.openpolicyagent.org/docs/policy-reference/#builtin-strings-stringscount)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/use-strings-count/use_strings_count.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/use-strings-count/use_strings_count.rego)
 
 ## Community
 

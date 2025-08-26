@@ -6,7 +6,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	"github.com/styrainc/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/builtins"
 )
 
 // Can't be much faster than this..

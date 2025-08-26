@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/styrainc/regal/internal/io/files"
-	"github.com/styrainc/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/internal/io/files"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
 )
 
 // FindConfigRoots will search for all config roots in the given path. A config

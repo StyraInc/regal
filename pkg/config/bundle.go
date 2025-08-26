@@ -7,7 +7,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/bundle"
 
-	"github.com/styrainc/regal/internal/util"
+	"github.com/open-policy-agent/regal/internal/util"
 )
 
 func LoadConfigWithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Config) (Config, error) {

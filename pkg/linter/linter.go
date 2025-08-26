@@ -25,17 +25,17 @@ import (
 	"github.com/open-policy-agent/opa/v1/topdown/print"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	rio "github.com/styrainc/regal/internal/io"
-	regalmetrics "github.com/styrainc/regal/internal/metrics"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/builtins"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/roast/rast"
-	"github.com/styrainc/regal/pkg/roast/transform"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
-	"github.com/styrainc/regal/pkg/rules"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	regalmetrics "github.com/open-policy-agent/regal/internal/metrics"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
 // Linter stores data to use for linting.

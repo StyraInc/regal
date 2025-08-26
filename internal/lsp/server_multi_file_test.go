@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 // TestLanguageServerMultipleFiles tests that changes to multiple files are handled correctly. When there are multiple

@@ -60,7 +60,7 @@ test_foo if {
 	}
 }
 
-// https://github.com/StyraInc/regal/issues/1592
+// https://github.com/open-policy-agent/regal/issues/1592
 func TestJSONRoundTripBigNumber(t *testing.T) {
 	t.Parallel()
 

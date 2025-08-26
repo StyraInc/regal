@@ -11,9 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/styrainc/regal/internal/lsp"
-	"github.com/styrainc/regal/internal/lsp/log"
-	"github.com/styrainc/regal/pkg/version"
+	"github.com/open-policy-agent/regal/internal/lsp"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	"github.com/open-policy-agent/regal/pkg/version"
 )
 
 func init() {

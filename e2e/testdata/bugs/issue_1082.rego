@@ -2,7 +2,7 @@
 # description: ensure that multiple custom fields are handled correctly
 # related_resources:
 #   - description: issue
-#     ref: https://github.com/StyraInc/regal/issues/1082
+#     ref: https://github.com/open-policy-agent/regal/issues/1082
 # custom:
 #   x: 1
 #   y: 2

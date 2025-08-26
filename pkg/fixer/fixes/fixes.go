@@ -3,9 +3,9 @@ package fixes
 import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 // NewDefaultFixes returns a list of default fixes that are applied by the fix command.

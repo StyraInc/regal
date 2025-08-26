@@ -27,7 +27,7 @@ package lsp
 import (
 	"strings"
 
-	"github.com/styrainc/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 // ComputeEdits computes diff edits from 2 string inputs.

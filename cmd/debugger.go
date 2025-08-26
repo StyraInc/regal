@@ -17,9 +17,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/debug"
 	"github.com/open-policy-agent/opa/v1/logging"
 
-	"github.com/styrainc/regal/internal/dap"
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/internal/dap"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/builtins"
 )
 
 func init() {

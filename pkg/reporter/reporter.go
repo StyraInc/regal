@@ -16,13 +16,13 @@ import (
 
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/mode"
-	"github.com/styrainc/regal/internal/novelty"
-	"github.com/styrainc/regal/pkg/fixer"
-	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/roast/encoding"
-	"github.com/styrainc/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/internal/mode"
+	"github.com/open-policy-agent/regal/internal/novelty"
+	"github.com/open-policy-agent/regal/pkg/fixer"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 // Reporter releases linter reports in a format decided by the implementation.

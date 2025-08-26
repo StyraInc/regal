@@ -21,26 +21,26 @@ Manual installation commands:
 **MacOS (Apple Silicon)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_arm64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Darwin_arm64"
 ```
 
 **MacOS (x86_64)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_x86_64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Darwin_x86_64"
 ```
 
 **Linux (x86_64)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Linux_x86_64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Linux_x86_64"
 chmod +x regal
 ```
 
 **Windows**
 
 ```shell
-curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/download/regal_Windows_x86_64.exe"
+curl.exe -L -o regal.exe "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Windows_x86_64.exe"
 ```
 
 **Docker**
@@ -49,8 +49,9 @@ curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/down
 docker pull ghcr.io/styrainc/regal:latest
 ```
 
-See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
-published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
+See all versions, and checksum files, at the Regal [releases](https://github.com/open-policy-agent/regal/releases/)
+page, and published Docker images at the [packages](https://github.com/open-policy-agent/regal/pkgs/container/regal)
+page.
 
 </details>
 

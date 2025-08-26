@@ -138,7 +138,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Strict Mode](https://www.openpolicyagent.org/docs/policy-language/#strict-mode)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/deprecated-builtin/deprecated_builtin.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/deprecated-builtin/deprecated_builtin.rego)
 
 ## Community
 

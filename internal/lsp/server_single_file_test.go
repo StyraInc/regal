@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/styrainc/regal/internal/lsp/test"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/lsp/test"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 // TestLanguageServerSingleFile tests that changes to a single file and Regal config are handled correctly by the

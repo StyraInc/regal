@@ -318,7 +318,7 @@ allow if {
 	})
 }
 
-# https://github.com/StyraInc/regal/issues/1436
+# https://github.com/open-policy-agent/regal/issues/1436
 test_success_not_loop_unification if {
 	r := rule.report with input as ast.policy(`
 	allow if {

@@ -10,11 +10,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/types"
 
-	"github.com/styrainc/regal/internal/lsp/cache"
-	"github.com/styrainc/regal/internal/lsp/examples"
-	"github.com/styrainc/regal/internal/lsp/rego"
-	types2 "github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/roast/util/concurrent"
+	"github.com/open-policy-agent/regal/internal/lsp/cache"
+	"github.com/open-policy-agent/regal/internal/lsp/examples"
+	"github.com/open-policy-agent/regal/internal/lsp/rego"
+	types2 "github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
 var builtinCache = concurrent.MapOf(make(map[*ast.Builtin]string))
@@ -60,8 +60,7 @@ func CreateHoverContent(builtin *ast.Builtin) string {
 		strings.ReplaceAll(builtin.Name, ".", ""),
 	)
 
-	// Enterprise OPA supports custom links via categories from 1.29.1
-	// https://github.com/StyraInc/enterprise-opa/blob/v1.29.1/capabilities/v1.29.1.json#L5110
+	// EOPA supports custom links via categories from 1.29.1
 	for _, category := range builtin.Categories {
 		if strings.HasPrefix(category, "url=") {
 			link = category[4:]

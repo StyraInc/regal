@@ -14,7 +14,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/internal/lsp/opa/tokens"
+	"github.com/open-policy-agent/regal/internal/lsp/opa/tokens"
 )
 
 const bom = 0xFEFF

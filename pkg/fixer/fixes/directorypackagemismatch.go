@@ -9,7 +9,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/config"
 )
 
 type DirectoryPackageMismatch struct{}

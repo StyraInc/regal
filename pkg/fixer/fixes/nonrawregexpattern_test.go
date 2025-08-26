@@ -3,7 +3,7 @@ package fixes
 import (
 	"testing"
 
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func TestNonRawRegexPattern(t *testing.T) {

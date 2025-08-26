@@ -13,12 +13,12 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/tester"
 
-	"github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/mode"
-	"github.com/styrainc/regal/internal/testutil"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/report"
-	rutil "github.com/styrainc/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/mode"
+	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/report"
+	rutil "github.com/open-policy-agent/regal/pkg/roast/util"
 )
 
 var _cwd = io.Getwd()
@@ -639,7 +639,7 @@ project:
 		verify(t)
 }
 
-// verify fix for https://github.com/StyraInc/regal/issues/1082
+// verify fix for https://github.com/open-policy-agent/regal/issues/1082
 func TestLintAnnotationCustomAttributeMultipleItems(t *testing.T) {
 	regal("lint", "--config-file", cwd("e2e_conf.yaml"), "--disable=directory-package-mismatch",
 		cwd("testdata/bugs/issue_1082.rego")).

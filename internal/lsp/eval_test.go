@@ -10,10 +10,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/lsp/log"
-	rparse "github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/internal/testutil"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	rparse "github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestEvalWorkspacePath(t *testing.T) {

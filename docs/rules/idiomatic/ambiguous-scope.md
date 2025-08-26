@@ -83,7 +83,7 @@ rules:
 
 - OPA Docs: [Annotations](https://www.openpolicyagent.org/docs/policy-language/#annotations)
 - Regal Docs: [no-defined-entrypoint](https://docs.styra.com/regal/rules/idiomatic/no-defined-entrypoint)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/ambiguous-scope/ambiguous_scope.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/ambiguous-scope/ambiguous_scope.rego)
 
 ## Community
 

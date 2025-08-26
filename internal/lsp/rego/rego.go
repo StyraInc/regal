@@ -15,16 +15,16 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/compile"
-	"github.com/styrainc/regal/internal/lsp/rego/query"
-	"github.com/styrainc/regal/internal/lsp/types"
-	"github.com/styrainc/regal/pkg/builtins"
-	"github.com/styrainc/regal/pkg/roast/encoding"
-	"github.com/styrainc/regal/pkg/roast/rast"
-	"github.com/styrainc/regal/pkg/roast/transform"
-	"github.com/styrainc/regal/pkg/roast/util"
-	"github.com/styrainc/regal/pkg/roast/util/concurrent"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/compile"
+	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
+	"github.com/open-policy-agent/regal/pkg/builtins"
+	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/pkg/roast/transform"
+	"github.com/open-policy-agent/regal/pkg/roast/util"
+	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
 var (

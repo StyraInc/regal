@@ -57,7 +57,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/pointless-reassignment/pointless_reassignment.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/pointless-reassignment/pointless_reassignment.rego)
 
 ## Community
 

@@ -50,7 +50,7 @@ test_success_test_inside_test_package_named_just_test if {
 	result == set()
 }
 
-# https://github.com/StyraInc/regal/issues/176
+# https://github.com/open-policy-agent/regal/issues/176
 test_success_test_prefixed_function if {
 	ast := regal.parse_module("foo_test.rego", `
 	package foo

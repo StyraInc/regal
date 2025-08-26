@@ -14,7 +14,7 @@ _A debugging session in VS Code_
 
 :::info
 In order to use the Debug Adapter, you must be using
-[Regal v0.27.0](https://github.com/StyraInc/regal/releases/v0.27.0) or greater,
+[Regal v0.27.0](https://github.com/open-policy-agent/regal/releases/v0.27.0) or greater,
 as well as a compatible client. See [Editor Support](/regal/editor-support) for
 more details.
 :::

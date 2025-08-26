@@ -10,8 +10,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	rast "github.com/styrainc/regal/internal/ast"
-	"github.com/styrainc/regal/internal/lsp/types"
+	rast "github.com/open-policy-agent/regal/internal/ast"
+	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
 // DefinedInModule returns a map of refs and details about them to be used in completions that

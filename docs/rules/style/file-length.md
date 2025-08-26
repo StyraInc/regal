@@ -45,7 +45,7 @@ rules:
 - Styra Blog: [Dynamic Policy Composition](https://www.styra.com/blog/dynamic-policy-composition-for-opa/)
 - Regal Docs: [line-length](https://docs.styra.com/regal/rules/style/line-length)
 - Regal Docs: [rule-length](https://docs.styra.com/regal/rules/style/rule-length)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/file-length/file_length.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/file-length/file_length.rego)
 
 ## Community
 

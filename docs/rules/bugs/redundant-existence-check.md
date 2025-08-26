@@ -84,7 +84,7 @@ rules:
 
 ## Related Resources
 
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/bugs/redundant-existence-check/redundant_existence_check.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/bugs/redundant-existence-check/redundant_existence_check.rego)
 
 ## Community
 

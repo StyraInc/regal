@@ -15,11 +15,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/util"
 
-	rio "github.com/styrainc/regal/internal/io"
-	"github.com/styrainc/regal/internal/io/files"
-	"github.com/styrainc/regal/internal/io/files/filter"
-	"github.com/styrainc/regal/internal/lsp/log"
-	rutil "github.com/styrainc/regal/internal/util"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	"github.com/open-policy-agent/regal/internal/io/files"
+	"github.com/open-policy-agent/regal/internal/io/files/filter"
+	"github.com/open-policy-agent/regal/internal/lsp/log"
+	rutil "github.com/open-policy-agent/regal/internal/util"
 )
 
 // Cache is a struct that maintains a number of bundles in memory and

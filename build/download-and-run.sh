@@ -5,7 +5,7 @@
 
 set -e
 
-REPO=StyraInc/regal
+REPO=open-policy-agent/regal
 BASE_URL=https://github.com/${REPO}
 
 SCRIPT=$(readlink -f "$0")

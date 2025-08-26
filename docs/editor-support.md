@@ -108,7 +108,7 @@ To see live linting of Rego, your plugin must support
 messages.
 
 There are many language server integrations for Neovim, if you'd like to see
-another one listed, please [open an issue](https://github.com/StyraInc/regal/issues/new)
+another one listed, please [open an issue](https://github.com/open-policy-agent/regal/issues/new)
 or drop us a message in [Slack](http://communityinviter.com/apps/styracommunity/signup).
 
 ### Debug Adapter Protocol (DAP)

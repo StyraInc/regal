@@ -55,7 +55,7 @@ rules:
 ## Related Resources
 
 - OPA Docs: [Incremental Definitions](https://www.openpolicyagent.org/docs/policy-language/#incremental-definitions)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/chained-rule-body/chained_rule_body.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/chained-rule-body/chained_rule_body.rego)
 
 ## Community
 

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/styrainc/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/parse"
 )
 
 func TestHints(t *testing.T) {

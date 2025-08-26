@@ -19,16 +19,16 @@ import (
 	"github.com/open-policy-agent/opa/v1/metrics"
 	"github.com/open-policy-agent/opa/v1/topdown"
 
-	rbundle "github.com/styrainc/regal/bundle"
-	"github.com/styrainc/regal/internal/cache"
-	rio "github.com/styrainc/regal/internal/io"
-	regalmetrics "github.com/styrainc/regal/internal/metrics"
-	"github.com/styrainc/regal/internal/update"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/linter"
-	"github.com/styrainc/regal/pkg/report"
-	"github.com/styrainc/regal/pkg/reporter"
-	"github.com/styrainc/regal/pkg/version"
+	rbundle "github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/cache"
+	rio "github.com/open-policy-agent/regal/internal/io"
+	regalmetrics "github.com/open-policy-agent/regal/internal/metrics"
+	"github.com/open-policy-agent/regal/internal/update"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/linter"
+	"github.com/open-policy-agent/regal/pkg/report"
+	"github.com/open-policy-agent/regal/pkg/reporter"
+	"github.com/open-policy-agent/regal/pkg/version"
 )
 
 type lintAndFixParams struct {

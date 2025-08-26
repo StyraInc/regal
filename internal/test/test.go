@@ -3,8 +3,8 @@ package test
 import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/pkg/rules"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
 func InputPolicy(filename string, policy string) *rules.Input {

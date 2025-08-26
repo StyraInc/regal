@@ -9,7 +9,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/styrainc/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
 )
 
 // Reporter is responsible for outputting a fix report in a specific format.

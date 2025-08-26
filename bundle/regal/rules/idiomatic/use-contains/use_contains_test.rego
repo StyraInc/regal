@@ -50,7 +50,7 @@ test_success_object_rule if {
 	r == set()
 }
 
-# https://github.com/StyraInc/regal/issues/1212
+# https://github.com/open-policy-agent/regal/issues/1212
 test_success_contains_without_rule_body if {
 	r := rule.report with input as ast.policy(`mask contains "foo"`)
 

@@ -9,12 +9,12 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
-	"github.com/styrainc/regal/internal/util"
-	"github.com/styrainc/regal/pkg/config"
-	"github.com/styrainc/regal/pkg/fixer/fileprovider"
-	"github.com/styrainc/regal/pkg/fixer/fixes"
-	"github.com/styrainc/regal/pkg/linter"
-	"github.com/styrainc/regal/pkg/report"
+	"github.com/open-policy-agent/regal/internal/util"
+	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/fixer/fileprovider"
+	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
+	"github.com/open-policy-agent/regal/pkg/linter"
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 type OnConflictOperation string

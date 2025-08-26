@@ -1,4 +1,4 @@
-module github.com/styrainc/regal
+module github.com/open-policy-agent/regal
 
 go 1.25.0
 

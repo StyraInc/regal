@@ -73,7 +73,7 @@ rules:
 
 - Regal Docs: [use-contains](https://docs.styra.com/regal/rules/idiomatic/use-contains)
 - OPA Docs: [Future Keywords](https://www.openpolicyagent.org/docs/policy-language/#future-keywords)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/idiomatic/use-if/use_if.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/idiomatic/use-if/use_if.rego)
 
 ## Community
 

@@ -45,7 +45,7 @@ rules:
 ## Related Resources
 
 - Wikipedia: [Yoda conditions](https://en.wikipedia.org/wiki/Yoda_conditions)
-- GitHub: [Source Code](https://github.com/StyraInc/regal/blob/main/bundle/regal/rules/style/yoda-condition/yoda_condition.rego)
+- GitHub: [Source Code](https://github.com/open-policy-agent/regal/blob/main/bundle/regal/rules/style/yoda-condition/yoda_condition.rego)
 
 ## Community
 

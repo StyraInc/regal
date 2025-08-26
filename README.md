@@ -7,10 +7,10 @@
 
 <!-- markdownlint-disable MD041 -->
 
-[![Build Status](https://github.com/styrainc/regal/workflows/Build/badge.svg)](https://github.com/styrainc/regal/actions)
+[![Build Status](https://github.com/open-policy-agent/regal/workflows/Build/badge.svg)](https://github.com/open-policy-agent/regal/actions)
 ![OPA v1.7.1](https://openpolicyagent.org/badge/v1.7.1)
 [![codecov](https://codecov.io/github/StyraInc/regal/graph/badge.svg?token=EQK01YF3X3)](https://codecov.io/github/StyraInc/regal)
-[![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/StyraInc/regal/releases)
+[![Downloads](https://img.shields.io/github/downloads/styrainc/regal/total.svg)](https://github.com/open-policy-agent/regal/releases)
 
 
 <!-- markdownlint-disable MD041 -->
@@ -94,26 +94,26 @@ Manual installation commands:
 **MacOS (Apple Silicon)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_arm64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Darwin_arm64"
 ```
 
 **MacOS (x86_64)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Darwin_x86_64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Darwin_x86_64"
 ```
 
 **Linux (x86_64)**
 
 ```shell
-curl -L -o regal "https://github.com/StyraInc/regal/releases/latest/download/regal_Linux_x86_64"
+curl -L -o regal "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Linux_x86_64"
 chmod +x regal
 ```
 
 **Windows**
 
 ```shell
-curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/download/regal_Windows_x86_64.exe"
+curl.exe -L -o regal.exe "https://github.com/open-policy-agent/regal/releases/latest/download/regal_Windows_x86_64.exe"
 ```
 
 **Docker**
@@ -122,8 +122,9 @@ curl.exe -L -o regal.exe "https://github.com/StyraInc/regal/releases/latest/down
 docker pull ghcr.io/styrainc/regal:latest
 ```
 
-See all versions, and checksum files, at the Regal [releases](https://github.com/StyraInc/regal/releases/) page, and
-published Docker images at the [packages](https://github.com/StyraInc/regal/pkgs/container/regal) page.
+See all versions, and checksum files, at the Regal [releases](https://github.com/open-policy-agent/regal/releases/)
+page, and published Docker images at the [packages](https://github.com/open-policy-agent/regal/pkgs/container/regal)
+page.
 
 </details>
 
@@ -250,7 +251,7 @@ to get a feel for the different features and capabilities of Regal.
 Please see [Regal's Documentation Site](https://docs.styra.com/regal) for the
 canonical documentation of Regal.
 
-[Contributing](https://github.com/StyraInc/regal/blob/main/docs/CONTRIBUTING.md)
+[Contributing](https://github.com/open-policy-agent/regal/blob/main/docs/CONTRIBUTING.md)
 contains information about how to hack on Regal itself.
 
 ### Talks
@@ -285,15 +286,15 @@ If you want to embed Regal in another project or product, please reach out!
 ## Roadmap
 
 The current Roadmap items are all related to the preparation for
-[Regal 1.0](https://github.com/StyraInc/regal/issues/979):
+[Regal 1.0](https://github.com/open-policy-agent/regal/issues/979):
 
-- [ ] [Go API: Refactor the Location object in Violation (#1554)](https://github.com/StyraInc/regal/issues/1554)
-- [ ] [Rego API: Provide a stable and well-documented Rego API (#1555)](https://github.com/StyraInc/regal/issues/1555)
-- [ ] [Go API: Audit and reduce the public Go API surface (#1556)](https://github.com/StyraInc/regal/issues/1556)
-- [ ] [Custom Rules: Tighten up Authoring experience (#1559)](https://github.com/StyraInc/regal/issues/1559)
-- [x] [docs: Improve automated documentation generation (#1557)](https://github.com/StyraInc/regal/issues/1557)
-- [x] [docs: Break down README into smaller units (#1558)](https://github.com/StyraInc/regal/issues/1558)
-- [ ] [lsp: Support a JetBrains LSP client (#1560)](https://github.com/StyraInc/regal/issues/1560)
+- [ ] [Go API: Refactor the Location object in Violation (#1554)](https://github.com/open-policy-agent/regal/issues/1554)
+- [ ] [Rego API: Provide a stable and well-documented Rego API (#1555)](https://github.com/open-policy-agent/regal/issues/1555)
+- [ ] [Go API: Audit and reduce the public Go API surface (#1556)](https://github.com/open-policy-agent/regal/issues/1556)
+- [ ] [Custom Rules: Tighten up Authoring experience (#1559)](https://github.com/open-policy-agent/regal/issues/1559)
+- [x] [docs: Improve automated documentation generation (#1557)](https://github.com/open-policy-agent/regal/issues/1557)
+- [x] [docs: Break down README into smaller units (#1558)](https://github.com/open-policy-agent/regal/issues/1558)
+- [ ] [lsp: Support a JetBrains LSP client (#1560)](https://github.com/open-policy-agent/regal/issues/1560)
 
 If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!
 

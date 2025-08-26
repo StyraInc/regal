@@ -3,8 +3,8 @@ package rego
 import (
 	"testing"
 
-	"github.com/styrainc/regal/internal/parse"
-	"github.com/styrainc/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/parse"
+	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestCodeLenses(t *testing.T) {

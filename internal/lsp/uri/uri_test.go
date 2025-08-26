@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/styrainc/regal/internal/lsp/clients"
+	"github.com/open-policy-agent/regal/internal/lsp/clients"
 )
 
 func TestPathToURI(t *testing.T) {

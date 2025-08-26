@@ -8,7 +8,7 @@
 Please see [Regal's Documentation Site](https://docs.styra.com/regal) for the
 canonical documentation of Regal.
 
-[Contributing](https://github.com/StyraInc/regal/blob/main/docs/CONTRIBUTING.md)
+[Contributing](https://github.com/open-policy-agent/regal/blob/main/docs/CONTRIBUTING.md)
 contains information about how to hack on Regal itself.
 
 ### Talks

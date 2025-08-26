@@ -1,12 +1,12 @@
-module github.com/styrainc/regal/e2e/testbuild
+module github.com/open-policy-agent/regal/e2e/testbuild
 
 go 1.25.0
 
-replace github.com/styrainc/regal => ../../
+replace github.com/open-policy-agent/regal => ../../
 
 require (
 	github.com/open-policy-agent/opa v1.7.1
-	github.com/styrainc/regal v0.0.0-00010101000000-000000000000
+	github.com/open-policy-agent/regal v0.0.0-00010101000000-000000000000
 )
 
 require (

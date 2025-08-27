@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"net/http/pprof"
+	"os"
 	"strings"
 
 	"github.com/arl/statsviz"
@@ -16,16 +18,16 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/clients"
 	"github.com/open-policy-agent/regal/internal/lsp/log"
 	"github.com/open-policy-agent/regal/internal/util"
-
-	_ "net/http/pprof" //nolint:gosec
 )
 
 const mainTemplate = "main.tpl"
 
-//go:embed assets/*
-var assets embed.FS
-
-var tpl = template.Must(template.New("main.tpl").ParseFS(assets, "assets/main.tpl"))
+var (
+	//go:embed assets/*
+	assets         embed.FS
+	tpl            = template.Must(template.New(mainTemplate).ParseFS(assets, "assets/main.tpl"))
+	pprofEndpoints = os.Getenv("REGAL_DEBUG") != "" || os.Getenv("REGAL_DEBUG_PPROF") != ""
+)
 
 type Server struct {
 	cache        *cache.Cache
@@ -72,8 +74,7 @@ type stringResult struct {
 func (s *Server) Start(_ context.Context) {
 	mux := http.NewServeMux()
 
-	err := statsviz.Register(mux)
-	if err != nil {
+	if err := statsviz.Register(mux); err != nil {
 		s.log.Message("failed to register statsviz handler: %v", err)
 	}
 
@@ -98,9 +99,9 @@ func (s *Server) Start(_ context.Context) {
 
 		cs := explorer.CompilerStages(path, policy, enableStrict, enableAnnotationProcessing, enablePrint)
 		st := state{
-			Code: policy,
+			Code:   policy,
+			Result: make([]stringResult, len(cs)+1),
 		}
-		st.Result = make([]stringResult, len(cs)+1)
 
 		for i := range cs {
 			st.Result[i].Stage = cs[i].Stage
@@ -142,20 +143,33 @@ func (s *Server) Start(_ context.Context) {
 
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 
-	// pprof handlers
-	mux.HandleFunc("/debug/pprof/", http.DefaultServeMux.ServeHTTP)
-	mux.HandleFunc("/debug/pprof/profile", http.DefaultServeMux.ServeHTTP)
-	mux.HandleFunc("/debug/pprof/heap", http.DefaultServeMux.ServeHTTP)
+	if pprofEndpoints {
+		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+		mux.Handle("GET /debug/pprof/allocs", pprof.Handler("allocs"))
+		mux.Handle("GET /debug/pprof/block", pprof.Handler("block"))
+		mux.Handle("GET /debug/pprof/heap", pprof.Handler("heap"))
+		mux.Handle("GET /debug/pprof/mutex", pprof.Handler("mutex"))
+		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
+	}
 
 	// root handler for those looking for what the server is
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		_, err := w.Write([]byte(`
+		body := `
 <h1>Regal Language Server</h1>
-<ul>
-<li><a href="/debug/pprof/">pprof</a></li>
+<ul>`
+
+		if pprofEndpoints {
+			body += `<li><a href="/debug/pprof/">pprof</a></li>
 <li><a href="/debug/statsviz">statsviz</a></li>
-</ul>`))
-		if err != nil {
+</ul>`
+		} else {
+			body += `Start server with REGAL_DEBUG or REGAL_DEBUG_PPROF set to enable pprof endpoints`
+		}
+
+		if _, err := w.Write([]byte(body)); err != nil {
 			s.log.Message("failed to write response: %v", err)
 		}
 	})
@@ -182,8 +196,7 @@ func (s *Server) Start(_ context.Context) {
 	s.log.Message("starting web server for docs on %s", s.baseURL)
 
 	//nolint:gosec // this is a local server, no timeouts needed
-	err = http.Serve(listener, mux)
-	if err != nil {
+	if err = http.Serve(listener, mux); err != nil {
 		s.log.Message("failed to serve web server: %v", err)
 	}
 }

@@ -62,8 +62,3 @@ Print statements are also supported, these are shown in the debug console:
 <img
   src={require('./assets/dap/print.png').default}
   alt="Print statements shown in the debug output console"/>
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!

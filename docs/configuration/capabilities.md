@@ -75,8 +75,3 @@ Regal includes capabilities files for the following engines:
 | ------ | --------------------------------------------------------------- | -------------------- |
 | `opa`  | [OPA website](https://www.openpolicyagent.org/)                 | Open Policy Agent    |
 | `eopa` | [Enterprise OPA website](https://www.styra.com/enterprise-opa/) | Styra Enterprise OPA |
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!

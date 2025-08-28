@@ -141,8 +141,3 @@ for the `regal lint` command:
 - `--ignore-files` ignores files using glob patterns, overriding `ignore` in the config file (may be repeated)
 
 **Note:** all CLI flags override configuration provided in file.
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!

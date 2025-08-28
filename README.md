@@ -308,11 +308,3 @@ The current Roadmap items are all related to the preparation for
 If there's something you'd like to have added to the roadmap, either open an issue, or reach out in the community Slack!
 
 
-<!-- markdownlint-disable MD041 -->
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!
-
-

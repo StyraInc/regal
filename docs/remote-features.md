@@ -25,8 +25,3 @@ This functionality can be disabled in two ways:
 
 * Using `.regal/config.yaml` / `.regal.yaml`: set `features.remote.check-version` to `false`.
 * Using an environment variable: set `REGAL_DISABLE_CHECK_VERSION` to `true`.
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!

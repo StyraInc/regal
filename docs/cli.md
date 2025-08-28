@@ -47,8 +47,3 @@ Rego files not only for syntax errors, but also for OPA
 mode checks from before OPA 1.0 have now been made default checks in OPA, and only two additional checks are currently
 provided by the `--strict` flag. Those are both important checks not covered by Regal though, so our recommendation is
 to run `opa check --strict` against your policies before linting with Regal.
-
-## Community
-
-For questions, discussions and announcements related to Styra products, services and open source projects, please join
-the Styra community on [Slack](https://inviter.co/styra)!

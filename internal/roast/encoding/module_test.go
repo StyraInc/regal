@@ -243,9 +243,7 @@ func BenchmarkSerializeModule(b *testing.B) {
 
 	json := jsoniter.ConfigFastest
 
-	b.ResetTimer()
-
-	for range b.N {
+	for b.Loop() {
 		_, err := json.Marshal(module)
 		if err != nil {
 			b.Fatalf("failed to marshal module: %v", err)

@@ -37,10 +37,7 @@ func TestRoastAndOPAInterfaceToValueSameOutput(t *testing.T) {
 func BenchmarkInterfaceToValue(b *testing.B) {
 	inputMap := inputMapB(b)
 
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for range b.N {
+	for b.Loop() {
 		_, err := AnyToValue(inputMap)
 		if err != nil {
 			b.Fatal(err)
@@ -54,10 +51,7 @@ func BenchmarkInterfaceToValue(b *testing.B) {
 func BenchmarkOPAInterfaceToValue(b *testing.B) {
 	inputMap := inputMapB(b)
 
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for range b.N {
+	for b.Loop() {
 		_, err := ast.InterfaceToValue(inputMap)
 		if err != nil {
 			b.Fatal(err)

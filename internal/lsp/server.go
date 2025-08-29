@@ -311,11 +311,7 @@ func (l *LanguageServer) SetConn(conn *jsonrpc2.Conn) {
 func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -367,7 +363,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				l.log.Debug("linting file %s done", job.URI)
 			}
 		}
-	}()
+	})
 
 	wg.Add(1)
 
@@ -416,11 +412,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 		}()
 	}
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -464,7 +456,7 @@ func (l *LanguageServer) StartDiagnosticsWorker(ctx context.Context) {
 				l.log.Debug("linting workspace done")
 			}
 		}
-	}()
+	})
 
 	<-ctx.Done()
 	wg.Wait()

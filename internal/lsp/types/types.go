@@ -101,7 +101,7 @@ type (
 	}
 
 	ServerCapabilities struct {
-		CodeLensProvider           ResolveProviderOption   `json:"codeLensProvider,omitempty"`
+		CodeLensProvider           ResolveProviderOption   `json:"codeLensProvider"`
 		Workspace                  WorkspaceOptions        `json:"workspace"`
 		DiagnosticProvider         DiagnosticOptions       `json:"diagnosticProvider"`
 		CodeActionProvider         CodeActionOptions       `json:"codeActionProvider"`

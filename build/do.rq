@@ -85,7 +85,6 @@ job contains "tasks" if {
 #   - https://github.com/open-policy-agent/opa
 job contains "pr" if {
 	run("go mod tidy")
-	run("npm install --silent --prefix build")
 
 	build(true)
 
@@ -170,6 +169,7 @@ e2e if {
 lint if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run("./regal lint --format pretty bundle")
+	run("npm install --silent --prefix build")
 	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md --ignore README.md docs/")
 	run("npx --prefix build dprint --config build/dprint.json check")
 }
@@ -177,6 +177,7 @@ lint if {
 lint_ci if {
 	run("opa check --strict --capabilities build/capabilities.json bundle")
 	run_quiet("./regal lint --format github bundle")
+	run("npm install --silent --prefix build")
 	run("npx --prefix build markdownlint --config docs/.markdownlint.yaml --ignore docs/CODE_OF_CONDUCT.md --ignore README.md docs/")
 	run("npx --prefix build dprint --config build/dprint.json check")
 }

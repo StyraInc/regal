@@ -7,10 +7,7 @@ import (
 )
 
 func BenchmarkStringRepeatMake(b *testing.B) {
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for range b.N {
+	for b.Loop() {
 		_ = stringRepeatMake("test", 1000)
 	}
 }
@@ -39,7 +36,7 @@ func BenchmarkFilter(b *testing.B) {
 	}
 
 	b.Run("Filter", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			_ = Filter(strings, pred)
 		}
 	})

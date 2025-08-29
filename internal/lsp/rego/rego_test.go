@@ -82,9 +82,6 @@ func TestAllKeywords(t *testing.T) {
 
 // 2	 532180958 ns/op	348596532 B/op	 7898069 allocs/op
 func BenchmarkStoreAllCachedQueries(b *testing.B) {
-	b.ReportAllocs()
-	b.ResetTimer()
-
 	for b.Loop() {
 		if err := StoreAllCachedQueries(b.Context(), nil); err != nil {
 			b.Fatalf("failed to store all cached queries: %v", err)

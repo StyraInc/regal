@@ -740,9 +740,6 @@ func BenchmarkEachRule(b *testing.B) {
 			// 	continue
 			// }
 			b.Run(ruleName, func(b *testing.B) {
-				b.ResetTimer()
-				b.ReportAllocs()
-
 				var rep report.Report
 
 				for b.Loop() {

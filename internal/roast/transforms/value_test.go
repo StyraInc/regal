@@ -37,8 +37,9 @@ func BenchmarkAnyToValue(b *testing.B) {
 	}
 }
 
-// BenchmarkOPAInterfaceToValue-10    	616	   1942695 ns/op	 1566569 B/op	   45901 allocs/op
-// BenchmarkOPAInterfaceToValue-10    	626	   1838247 ns/op	 1566848 B/op	   36037 allocs/op OPA 1.0
+// 1942695 ns/op	 1566569 B/op	   45901 allocs/op
+// 1838247 ns/op	 1566848 B/op	   36037 allocs/op OPA 1.0
+// _589448 ns/op	 1048148 B/op	   18306 allocs/op Oct 2026, we should be able to drop our own version soon
 // ...
 func BenchmarkOPAInterfaceToValue(b *testing.B) {
 	inputMap := inputMap(b)

@@ -18,6 +18,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/internal/lsp/rego"
 	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
 	"github.com/open-policy-agent/regal/internal/lsp/semantictokens"
@@ -29,7 +30,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/internal/test/must"
 	"github.com/open-policy-agent/regal/internal/testutil"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
 )
 
@@ -136,7 +136,7 @@ func storeForDocument(tb testing.TB, doc document, jsonData []byte) storage.Stor
 	}
 
 	if len(jsonData) > 0 {
-		value := must.UnmarshalTo[ast.Value](tb, jsonData, encoding.NoASTOptions)
+		value := must.UnmarshalTo[ast.Value](tb, jsonData, noast.Options)
 		if obj, ok := value.(ast.Object); !ok {
 			tb.Fatalf("expected JSON data to decode to an object, got %T", value)
 		} else if data, ok = data.Merge(obj); !ok {

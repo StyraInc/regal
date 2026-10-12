@@ -13,6 +13,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/tester"
 
+	e2eutil "github.com/open-policy-agent/regal/e2e/util"
 	"github.com/open-policy-agent/regal/internal/io"
 	"github.com/open-policy-agent/regal/internal/mode"
 	"github.com/open-policy-agent/regal/internal/test/assert"
@@ -66,7 +67,7 @@ func TestLintFileFromStdin(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertOnlyViolations(t, rep, "opa-fmt", "use-assignment-operator")
+	e2eutil.AssertOnlyViolations(t, rep, "opa-fmt", "use-assignment-operator")
 }
 
 func TestLintNonExistentDir(t *testing.T) {
@@ -124,7 +125,7 @@ func TestLintV1Violations(t *testing.T) {
 		}
 	}
 
-	violationNames := testutil.ViolationTitles(rep)
+	violationNames := e2eutil.ViolationTitles(rep)
 	for ruleName := range ruleNames.Diff(violationNames).Values() {
 		t.Errorf("expected violation for rule %q", ruleName)
 	}
@@ -138,7 +139,7 @@ func TestLintV0NoRegoV1ImportViolations(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertContainsViolations(t, rep, "implicit-future-keywords", "use-if", "use-contains")
+	e2eutil.AssertContainsViolations(t, rep, "implicit-future-keywords", "use-if", "use-contains")
 }
 
 func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
@@ -152,7 +153,7 @@ func TestLintV0WithRegoV1ImportViolations(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertContainsViolations(t, rep, "use-if", "use-contains", "use-rego-v1", "rule-named-if")
+	e2eutil.AssertContainsViolations(t, rep, "use-if", "use-contains", "use-rego-v1", "rule-named-if")
 }
 
 func TestLintFailsNonExistentConfigFile(t *testing.T) {
@@ -176,7 +177,7 @@ func TestLintRuleIgnoreFiles(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertNotContainsViolations(t, rep, "prefer-snake-case")
+	e2eutil.AssertNotContainsViolations(t, rep, "prefer-snake-case")
 }
 
 func TestLintWithDebugOption(t *testing.T) {
@@ -197,7 +198,7 @@ func TestLintRuleNamingConventionFromCustomCategory(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertNumViolations(t, 2, rep)
+	assert.NumViolations(t, 2, rep)
 
 	expectedViolations := []string{
 		`Naming violation: package name "custom_naming_convention" does not match configured convention`,
@@ -236,7 +237,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 			expectStdout(unmarshalsTo(&rep)).
 			verify(t)
 
-		testutil.AssertNumViolations(t, 1, rep)
+		assert.NumViolations(t, 1, rep)
 	})
 
 	t.Run("custom policy where nothing aggregate is a violation", func(t *testing.T) {
@@ -249,7 +250,7 @@ func TestAggregatesAreCollectedAndUsed(t *testing.T) {
 			expectStdout(unmarshalsTo(&rep)).
 			verify(t)
 
-		testutil.AssertNumViolations(t, 1, rep)
+		assert.NumViolations(t, 1, rep)
 	})
 }
 
@@ -261,8 +262,8 @@ func TestLintAggregateIgnoreDirective(t *testing.T) {
 		expectStdout(unmarshalsTo(&rep)).
 		verify(t)
 
-	testutil.AssertNumViolations(t, 2, rep)
-	testutil.AssertOnlyViolations(t, rep, "no-defined-entrypoint", "unresolved-import")
+	assert.NumViolations(t, 2, rep)
+	e2eutil.AssertOnlyViolations(t, rep, "no-defined-entrypoint", "unresolved-import")
 
 	// ensure that it's the file without the ignore directive that has the violation
 	assert.True(t, strings.HasSuffix(rep.Violations[1].Location.File, "second.rego"))
@@ -397,7 +398,7 @@ func TestLintWithCustomCapabilitiesAndUnmetRequirementMultipleFiles(t *testing.T
 func TestLintPprof(t *testing.T) {
 	// this overrides the ignore directives for e2e loaded from the config file
 	regal("lint", "--ignore-files=none", "--pprof", "clock", cwd("testdata/violations")).
-		cleanup(testutil.RemoveIgnoreErr("clock.pprof")).
+		cleanup(e2eutil.RemoveIgnoreErr("clock.pprof")).
 		expectExitCode(3).
 		expectStdout(notEmpty()).
 		expectFiles(exists("clock.pprof")).

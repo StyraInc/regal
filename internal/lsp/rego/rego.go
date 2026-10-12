@@ -9,10 +9,10 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 	"github.com/open-policy-agent/regal/internal/util"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
@@ -95,15 +95,15 @@ func CachedQueryEval[T any](ctx context.Context, pq *query.Prepared, input ast.V
 	}
 
 	if val, ok := result.Expressions[0].Value.(ast.Value); ok {
-		bs, err := json.Marshal(val, encoding.NoASTOptions)
+		bs, err := json.Marshal(val, noast.Options)
 		if err != nil {
 			return fmt.Errorf("failed to marshal value: %w", err)
 		}
 
-		return util.WrapErr(json.Unmarshal(bs, toValue), "failed to unmarshal value")
+		return util.WrapErr(json.Unmarshal(bs, toValue, noast.Options), "failed to unmarshal value")
 	}
 
-	return util.WrapErr(encoding.JSONRoundTrip(result.Expressions[0].Value, toValue), "failed to unmarshal value")
+	return fmt.Errorf("unexpected query result format: %v", result.Expressions[0].Value)
 }
 
 func CachedQueryEvalUndecoded[T any](ctx context.Context, pq *query.Prepared, input ast.Value) (res T, err error) {

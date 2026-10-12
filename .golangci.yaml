@@ -39,12 +39,16 @@ linters:
       max-complexity: 40 # default is 10
     depguard:
       rules:
-        main:
+        no-yaml-v2:
           deny:
             - pkg: gopkg.in/yaml.v2
-              desc: use yaml.v3 only
+              desc: use yaml.v3
             - pkg: go.yaml.in/yaml/v2
-              desc: use yaml.v3 only
+              desc: use yaml.v3
+        no-json-v1:
+          deny:
+            - pkg: encoding/json$
+              desc: use encoding/json/v2
     errcheck:
       exclude-functions:
         - (*github.com/olekukonko/tablewriter.Table).Append
@@ -54,14 +58,21 @@ linters:
         - (*os.File).WriteString
         - (*encoding/json/jsontext.Encoder).WriteToken
         - (*encoding/json/jsontext.Encoder).WriteValue
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.ArrayField
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.ArrayFieldFn
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.ArrayToFn
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.FieldFn
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.ObjectStart
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.WhenTrue
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.StringField
-        - github.com/open-policy-agent/regal/internal/roast/encoding/write.Tokens
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayField
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayFieldFn
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayFieldTo
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayFieldToFn
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayOfStringField
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ArrayToFn
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.FieldFn
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.FieldPtrFn
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.Foreach
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.MapField
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.ObjectStart
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.WhenTrue
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.String
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.StringField
+        - github.com/open-policy-agent/regal/internal/encoding/util/write.Tokens
     gocritic:
       enable-all: true
       disabled-checks:

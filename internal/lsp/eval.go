@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
@@ -23,6 +22,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/topdown/print"
 
 	rbundle "github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	rio "github.com/open-policy-agent/regal/internal/io"
 	rquery "github.com/open-policy-agent/regal/internal/lsp/rego"
 	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
@@ -31,7 +31,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/uri"
 	"github.com/open-policy-agent/regal/internal/util"
 	"github.com/open-policy-agent/regal/pkg/config"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
 
@@ -47,9 +46,6 @@ var (
 		Metadata: map[string]any{"name": "workspace"},
 	}
 	regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
-	defaultCaps                = sync.OnceValue(func() *ast.Term {
-		return ast.NewTerm(rast.StructToValue(config.CapabilitiesForThisVersion()))
-	})
 )
 
 type (
@@ -190,7 +186,7 @@ func (l *LanguageServer) handleEvalCommand(ctx context.Context, args types.Comma
 			Coverage:          report,
 		}
 
-		bs, err := json.Marshal(responseParams, encoding.NoASTOptions, jsontext.WithIndent("  "))
+		bs, err := json.Marshal(responseParams, noast.Options, jsontext.WithIndent("  "))
 		if err != nil {
 			return fmt.Errorf("failed to marshal eval response params: %w", err)
 		}
@@ -214,7 +210,7 @@ func (l *LanguageServer) handleEvalCommand(ctx context.Context, args types.Comma
 				value = ast.InternedEmptyObjectValue // undefined displays as an empty object
 			}
 
-			err = json.MarshalWrite(f, value, encoding.NoASTOptions, jsontext.WithIndent("  "))
+			err = json.MarshalWrite(f, value, noast.Options, jsontext.WithIndent("  "))
 
 			rio.CloseIgnore(f)
 		}
@@ -281,7 +277,7 @@ func (l *LanguageServer) prepareEval(ctx context.Context, opts EvalWorkspaceOpti
 		rast.Item("internal", ast.ObjectTerm(
 			rast.Item("combined_config", conf),
 			rast.Item("user_config", conf),
-			rast.Item("capabilities", rast.GetOr(confValue, "capabilities", defaultCaps)),
+			rast.Item("capabilities", rast.GetOr(confValue, "capabilities", config.OpaCapsForThisVersionTerm)),
 		)),
 	))
 

@@ -10,7 +10,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/parse"
 	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/internal/test/must"
-	"github.com/open-policy-agent/regal/internal/testutil"
 )
 
 func TestPutFileModStoresRoastRepresentation(t *testing.T) {
@@ -20,7 +19,7 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
 	fileURI := "file:///example.rego"
 	module := parse.MustParseModule("package example\n\nrule := true")
 
-	testutil.NoErr(PutFileMod(t.Context(), store, fileURI, module))(t)
+	assert.Equal(t, nil, PutFileMod(t.Context(), store, fileURI, module))
 
 	parsed := must.Return(storage.ReadOne(t.Context(), store, storage.Path{"workspace", "parsed", fileURI}))(t)
 	parsedVal := must.Be[ast.Value](t, parsed)
@@ -34,15 +33,8 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
   "package": {
     "location": "1:1:1:8",
     "path": [
-      {
-        "type": "var",
-        "value": "data"
-      },
-      {
-        "location": "1:9:1:16",
-        "type": "string",
-        "value": "example"
-      }
+      {"type": "var", "value": "data"},
+      {"location": "1:9:1:16", "type": "string", "value": "example"}
     ]
   },
   "rules": [
@@ -50,18 +42,8 @@ func TestPutFileModStoresRoastRepresentation(t *testing.T) {
       "head": {
         "assign": true,
         "location": "3:1:3:13",
-        "ref": [
-          {
-            "location": "3:1:3:5",
-            "type": "var",
-            "value": "rule"
-          }
-        ],
-        "value": {
-          "location": "3:9:3:13",
-          "type": "boolean",
-          "value": true
-        }
+        "ref": [{"location": "3:1:3:5", "type": "var", "value": "rule"}],
+        "value": { "location": "3:9:3:13", "type": "boolean", "value": true}
       },
       "location": "3:1:3:13"
     }

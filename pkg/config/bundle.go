@@ -24,7 +24,7 @@ func WithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Config) (Con
 
 	defaultConfig := util.Must(encoding.JSONRoundTripTo[Config](bundledConf))
 	if userConfig == nil {
-		defaultConfig.Capabilities = CapabilitiesForThisVersion()
+		defaultConfig.Capabilities = OpaCapsForThisVersionInterned()
 
 		return defaultConfig, nil
 	}
@@ -36,7 +36,7 @@ func WithDefaultsFromBundle(regalBundle *bundle.Bundle, userConfig *Config) (Con
 	}
 
 	if defaultConfig.Capabilities == nil {
-		defaultConfig.Capabilities = CapabilitiesForThisVersion()
+		defaultConfig.Capabilities = OpaCapsForThisVersionInterned()
 	}
 
 	// adopt user rule levels based on config and defaults

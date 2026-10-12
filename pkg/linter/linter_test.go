@@ -34,7 +34,7 @@ camelCase if {
 	linter := regal.NewLinter().WithEnableAll(true).WithInputModules(input)
 	result := must.Return(linter.Lint(t.Context()))(t)
 
-	testutil.AssertNumViolations(t, 2, result)
+	assert.NumViolations(t, 2, result)
 
 	assert.Equal(t, "todo-comment", result.Violations[0].Title, "unexpected violation")
 	assert.Equal(t, 3, result.Violations[0].Location.Row, "unexpected line number")
@@ -58,7 +58,7 @@ func TestLintWithUserConfig(t *testing.T) {
 		WithInputModules(input).
 		Lint(t.Context()))(t)
 
-	testutil.AssertNumViolations(t, 1, result)
+	assert.NumViolations(t, 1, result)
 	assert.Equal(t, "top-level-iteration", result.Violations[0].Title, "unexpected first violation")
 }
 
@@ -184,7 +184,7 @@ or := 1
 
 			result := must.Return(linter.Lint(t.Context()))(t)
 
-			testutil.AssertNumViolations(t, len(tc.expViolations), result)
+			assert.NumViolations(t, len(tc.expViolations), result)
 
 			for idx, violation := range result.Violations {
 				assert.Equal(t, tc.expViolations[idx], violation.Title, "unexpected violation at index %d", idx)
@@ -209,7 +209,7 @@ func TestLintWithCustomRule(t *testing.T) {
 		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")).
 		Lint(t.Context()))(t)
 
-	testutil.AssertNumViolations(t, 1, result)
+	assert.NumViolations(t, 1, result)
 	assert.Equal(t, "acme-corp-package", result.Violations[0].Title, "unexpected first violation")
 }
 
@@ -236,7 +236,7 @@ func TestLintWithCustomEmbeddedRules(t *testing.T) {
 		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n")).
 		Lint(t.Context()))(t)
 
-	testutil.AssertNumViolations(t, 1, result)
+	assert.NumViolations(t, 1, result)
 	assert.Equal(t, "acme-corp-package", result.Violations[0].Title, "unexpected first violation")
 }
 
@@ -250,7 +250,7 @@ func TestLintWithCustomRuleAndCustomConfig(t *testing.T) {
 		WithCustomRulesPaths(filepath.Join("testdata", "custom.rego")).
 		WithInputModules(test.InputPolicy("p/p.rego", "package p\n\nimport rego.v1\n"))
 
-	testutil.AssertNumViolations(t, 0, must.Return(linter.Lint(t.Context()))(t))
+	assert.NumViolations(t, 0, must.Return(linter.Lint(t.Context()))(t))
 }
 
 func TestLintMergedConfigInheritsLevelFromProvided(t *testing.T) {
@@ -326,7 +326,7 @@ func TestEnabledRules(t *testing.T) {
 		WithEnabledRules("opa-fmt", "no-whitespace-comment").
 		DetermineEnabledRules(t.Context())
 
-	testutil.NoErr(err)(t)
+	assert.Equal(t, nil, err, "unexpected error")
 	assert.Equal(t, 2, len(enabledRules), "enabled rules")
 	assert.Equal(t, "no-whitespace-comment", enabledRules[0], "first enabled rule")
 	assert.Equal(t, "opa-fmt", enabledRules[1], "second enabled rule")
@@ -388,13 +388,12 @@ allow if {
 
 	result := must.Return(regal.NewLinter().WithInputModules(input).Lint(t.Context()))(t)
 
-	testutil.AssertNumViolations(t, 2, result)
-
 	// one violation for each operand of the `or` expression
+	assert.NumViolations(t, 2, result)
+
 	assert.Equal(t, "prefer-equals-comparison", result.Violations[0].Title, "unexpected violation")
 	assert.Equal(t, 6, result.Violations[0].Location.Row, "unexpected line number")
 	assert.Equal(t, 2, result.Violations[0].Location.Column, "unexpected column number")
-
 	assert.Equal(t, "prefer-equals-comparison", result.Violations[1].Title, "unexpected violation")
 	assert.Equal(t, 6, result.Violations[1].Location.Row, "unexpected line number")
 	assert.Equal(t, 17, result.Violations[1].Location.Column, "unexpected column number")

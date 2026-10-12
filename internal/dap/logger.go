@@ -23,50 +23,34 @@ func NoOpLogger() *DebugLogger {
 }
 
 func (l *DebugLogger) Debug(fmt string, a ...any) {
-	if l == nil {
-		return
+	if l != nil {
+		l.Local.Debug(fmt, a...)
+		l.send(logging.Debug, fmt, a...)
 	}
-
-	l.Local.Debug(fmt, a...)
-
-	l.send(logging.Debug, fmt, a...)
 }
 
 func (l *DebugLogger) Info(fmt string, a ...any) {
-	if l == nil {
-		return
+	if l != nil {
+		l.Local.Info(fmt, a...)
+		l.send(logging.Info, fmt, a...)
 	}
-
-	l.Local.Info(fmt, a...)
-
-	l.send(logging.Info, fmt, a...)
 }
 
 func (l *DebugLogger) Error(fmt string, a ...any) {
-	if l == nil {
-		return
+	if l != nil {
+		l.Local.Error(fmt, a...)
+		l.send(logging.Error, fmt, a...)
 	}
-
-	l.Local.Error(fmt, a...)
-
-	l.send(logging.Error, fmt, a...)
 }
 
 func (l *DebugLogger) Warn(fmt string, a ...any) {
-	if l == nil {
-		return
+	if l != nil {
+		l.Local.Warn(fmt, a...)
+		l.send(logging.Warn, fmt, a...)
 	}
-
-	l.Local.Warn(fmt, a...)
-
-	l.send(logging.Warn, fmt, a...)
 }
 
 func (l *DebugLogger) WithFields(map[string]any) logging.Logger {
-	if l == nil {
-		return nil
-	}
-
 	return l
 }
 
@@ -75,27 +59,19 @@ func (l *DebugLogger) GetLevel() logging.Level {
 		return 0
 	}
 
-	if l.Local.GetLevel() > l.level {
-		return l.level
-	}
-
-	return l.level
+	return min(l.Local.GetLevel(), l.level)
 }
 
 func (l *DebugLogger) SetRemoteEnabled(enabled bool) {
-	if l == nil {
-		return
+	if l != nil {
+		l.remoteEnabled = enabled
 	}
-
-	l.remoteEnabled = enabled
 }
 
 func (l *DebugLogger) SetLevel(level logging.Level) {
-	if l == nil {
-		return
+	if l != nil {
+		l.level = level
 	}
-
-	l.level = level
 }
 
 func (l *DebugLogger) SetLevelFromString(level string) {

@@ -7,7 +7,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/pkg/builtins/regal"
 )
 
@@ -43,5 +43,5 @@ func TestRegalParseModuleWithTemplateString(t *testing.T) {
 		return nil
 	}
 
-	testutil.NoErr(regal.RegalParseModule(bctx, ops, eqIter))(t)
+	assert.Equal(t, nil, regal.RegalParseModule(bctx, ops, eqIter))
 }

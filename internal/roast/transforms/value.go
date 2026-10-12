@@ -1,8 +1,7 @@
-//nolint:gochecknoglobals
 package transforms
 
 import (
-	jsonv1 "encoding/json"
+	jsonv1 "encoding/json" //nolint:depguard
 	"encoding/json/jsontext"
 	"fmt"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 
 	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
@@ -104,7 +104,7 @@ func AnyToValue(x any) (ast.Value, error) {
 
 		return ast.NewObject(tuples...), nil
 	case *jsontext.Value:
-		return encoding.JSONUnmarshalTo[ast.Value](*x, encoding.NoASTOptions)
+		return encoding.JSONUnmarshalTo[ast.Value](*x, noast.Options)
 	default:
 		return nil, fmt.Errorf("unsupported type: %T", x)
 	}

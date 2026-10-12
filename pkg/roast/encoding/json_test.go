@@ -3,96 +3,12 @@ package encoding
 import (
 	"bytes"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
-	"io"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/internal/test/must"
-)
-
-var (
-	_ = intern("a", "b", "c", "d", "e", "f", "nested", "object", "two", "interned")
-
-	valueTests = []struct {
-		name string
-		json []byte
-		want ast.Value
-	}{
-		{
-			name: "not interned string",
-			json: []byte(`"not interned"`),
-			want: ast.String("not interned"),
-		},
-		{
-			name: "interned string",
-			json: []byte(`"interned"`),
-			want: ast.InternedValue("interned"),
-		},
-		{
-			name: "string with escapes",
-			json: []byte(`"data.regal.rules.bugs[\"argument-always-wildcard_test\"]"`),
-			want: ast.InternedValue(`data.regal.rules.bugs["argument-always-wildcard_test"]`),
-		},
-		{
-			name: "boolean true",
-			json: []byte(`true`),
-			want: ast.InternedBooleanTrueValue,
-		},
-		{
-			name: "boolean false",
-			json: []byte(`false`),
-			want: ast.InternedBooleanFalseValue,
-		},
-		{
-			name: "null",
-			json: []byte(`null`),
-			want: ast.NullValue,
-		},
-		{
-			name: "interned integer",
-			json: []byte(`50`),
-			want: ast.Number("50"),
-		},
-		{
-			name: "not interned integer",
-			json: []byte(`123456789012345678901234567890`),
-			want: ast.Number("123456789012345678901234567890"),
-		},
-		{
-			name: "float",
-			json: []byte(`3.14`),
-			want: ast.Number("3.14"),
-		},
-		{
-			name: "array",
-			json: []byte(`[1, "two", true, null, [3, 4]]`),
-			want: ast.MustParseTerm(`[1, "two", true, null, [3, 4]]`).Value,
-		},
-		{
-			name: "empty array",
-			json: []byte(`[]`),
-			want: ast.InternedEmptyArrayValue,
-		},
-		{
-			name: "object",
-			json: []byte(`{"a": 1, "b": "two", "c": true, "d": null, "e": {"nested": "object"}}`),
-			want: ast.MustParseTerm(
-				`{"a": 1, "b": "two", "c": true, "d": null, "e": {"nested": "object"}}`).Value,
-		},
-		{
-			name: "empty object",
-			json: []byte(`{}`),
-			want: ast.InternedEmptyObjectValue,
-		},
-		{
-			name: "complex object",
-			json: []byte(`{"label":"data.regal.rules.bugs[\"argument-always-wildcard_test\"]"}`),
-			want: ast.MustParseTerm(`{"label":"data.regal.rules.bugs[\"argument-always-wildcard_test\"]"}`).Value,
-		},
-	}
 )
 
 // Simple routine check to see that things are working as expected.
@@ -145,113 +61,19 @@ test_foo if {
 func TestJSONRoundTripBigNumber(t *testing.T) {
 	t.Parallel()
 
-	module := ast.MustParseModule("package p\n\nn := 1e400")
+	mod := ast.MustParseModule("package p\n\nn := 1e400")
+	val := must.Return(JSONRoundTripTo[ast.Value](mod, noast.Options))(t)
+	obj := must.Be[ast.Object](t, val)
+	num := must.Be[ast.Number](t, must.Return(obj.Find(ast.Ref{
+		ast.InternedTerm("rules"),
+		ast.InternedTerm(0),
+		ast.InternedTerm("head"),
+		ast.InternedTerm("value"),
+		ast.InternedTerm("value"),
+	}))(t))
 
-	var modMap map[string]any
-	if err := JSONRoundTrip(module, &modMap); err != nil {
-		t.Fatalf("failed to marshal module: %v", err)
-	}
-}
-
-func TestDecodeToValue(t *testing.T) {
-	t.Parallel()
-
-	regalDecodeToValue := func(bs []byte) (ast.Value, error) {
-		return JSONUnmarshalTo[ast.Value](bs, NoASTOptions)
-	}
-
-	decoders := []struct {
-		name string
-		fn   func([]byte) (ast.Value, error)
-	}{
-		{name: "regal", fn: regalDecodeToValue},
-		{name: "opa", fn: opaDecodeToValue},
-	}
-
-	for _, test := range valueTests {
-		for _, decoder := range decoders {
-			t.Run(test.name+" "+decoder.name, func(t *testing.T) {
-				t.Parallel()
-
-				got, err := decoder.fn(test.json)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-
-				if !ast.ValueEqual(test.want, got) {
-					t.Fatalf("expected:\n%v\n got:\n%v", test.want, got)
-				}
-			})
-		}
-	}
-}
-
-func BenchmarkDecodeToValue(b *testing.B) {
-	for _, test := range valueTests {
-		b.Run(test.name, func(b *testing.B) {
-			for b.Loop() {
-				_, _ = JSONUnmarshalTo[ast.Value](test.json, NoASTOptions)
-			}
-		})
-
-		b.Run(test.name+" OPA decode", func(b *testing.B) {
-			for b.Loop() {
-				_, _ = opaDecodeToValue(test.json)
-			}
-		})
-	}
-}
-
-func TestValueNoASTRoundTrip(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range valueTests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			exp := must.Marshal(t, test.want, NoASTOptions)
-			got := must.UnmarshalTo[ast.Value](t, exp, NoASTOptions)
-
-			if !ast.ValueEqual(test.want, got) {
-				t.Fatalf("expected:\n%v\n got:\n%v", test.want, got)
-			}
-		})
-	}
-}
-
-func TestValueNoASTNonStringKeys(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		value ast.Value
-		want  string
-	}{
-		"number key": {ast.MustParseTerm(`{1: "a"}`).Value, `{"1":"a"}`},
-		"array key":  {ast.MustParseTerm(`{[1, 2]: "a"}`).Value, `{"[1, 2]":"a"}`},
-		"bool key":   {ast.MustParseTerm(`{true: "a"}`).Value, `{"true":"a"}`},
-		"null key":   {ast.MustParseTerm(`{null: "a"}`).Value, `{"null":"a"}`},
-		"set key":    {ast.MustParseTerm(`{{1, 2}: "a"}`).Value, `{"{1, 2}":"a"}`},
-		"object key": {ast.MustParseTerm(`{{"a": 1}: "a"}`).Value, `{"{\"a\": 1}":"a"}`},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			if got := string(must.Marshal(t, test.value, NoASTOptions)); got != test.want {
-				t.Fatalf("expected %s, got %s", test.want, got)
-			}
-		})
-	}
-}
-
-func BenchmarkValueNoASTEncode(b *testing.B) {
-	for _, test := range valueTests {
-		b.Run(test.name, func(b *testing.B) {
-			for b.Loop() {
-				must.Equal(b, nil, json.MarshalWrite(io.Discard, test.want, NoASTOptions))
-			}
-		})
+	if !num.Equal(ast.Number("1e400")) {
+		t.Fatalf("expected n to be 1e400, got: %v", num)
 	}
 }
 
@@ -301,21 +123,4 @@ func TestGet(t *testing.T) {
 			}
 		})
 	}
-}
-
-// hack to ensure this has been called before any tests are set up
-func intern(s ...string) bool {
-	ast.InternStringTerm(s...)
-
-	return true
-}
-
-// as found in OPA's cmd/eval.go
-func opaDecodeToValue(bs []byte) (value ast.Value, err error) {
-	var input any
-	if err = util.Unmarshal(bs, &input); err == nil {
-		value, err = ast.InterfaceToValue(input)
-	}
-
-	return value, err
 }

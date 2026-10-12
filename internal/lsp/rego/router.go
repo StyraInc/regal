@@ -15,6 +15,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/internal/lsp/client"
 	"github.com/open-policy-agent/regal/internal/lsp/log"
 	"github.com/open-policy-agent/regal/internal/lsp/rego/query"
@@ -309,7 +310,7 @@ func passthrough(ctx context.Context, rctx *RegalContext, req *jsonrpc2.Request)
 	cached := inputValuesPool.Get().(*inputCacheItem) //nolint:forcetypeassert
 	defer inputValuesPool.Put(cached)
 
-	if err := json.Unmarshal(*req.Params, &cached.params.Value, encoding.NoASTOptions); err != nil {
+	if err := json.Unmarshal(*req.Params, &cached.params.Value, noast.Options); err != nil {
 		return nil, fmt.Errorf("failed to decode params: %w\n%s", err, string(*req.Params))
 	}
 
@@ -325,7 +326,7 @@ func passthrough(ctx context.Context, rctx *RegalContext, req *jsonrpc2.Request)
 		return nil, fmt.Errorf("failed to evaluate prepared query: %w", err)
 	}
 
-	bs, err := json.Marshal(obj.Get(ast.InternedTerm("response")).Value, encoding.NoASTOptions)
+	bs, err := json.Marshal(obj.Get(ast.InternedTerm("response")).Value, noast.Options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal response: %w", err)
 	}

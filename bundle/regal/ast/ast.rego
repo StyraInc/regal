@@ -64,7 +64,7 @@ builtin_names := config.builtin_names
 # METADATA
 # description: |
 #   set containing the namespaces of all built-in functions (given the active capabilities),
-#   like "http" in `http.send` or "sum" in `sum``
+#   like "http" in `http.send` or "sum" in `sum`
 builtin_namespaces contains regex.replace(name, `\..*`, "") if some name in builtin_names
 
 # METADATA

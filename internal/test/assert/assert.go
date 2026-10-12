@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/open-policy-agent/regal/pkg/report"
 )
 
 func Equal[T comparable](tb testing.TB, exp, got T, s ...any) {
@@ -33,7 +35,9 @@ func SlicesEqual[T comparable](tb testing.TB, exp, got []T, s ...any) {
 func MapsEqual[K comparable, V comparable](tb testing.TB, exp, got map[K]V, s ...any) {
 	tb.Helper()
 
-	True(tb, maps.Equal(exp, got), s...)
+	if !maps.Equal(exp, got) {
+		tb.Error(FormatMsg(exp, got, s...))
+	}
 }
 
 func DeepEqual(tb testing.TB, exp, got any, s ...any) {
@@ -111,8 +115,8 @@ func JSONEqual[A, B ~string | ~[]byte](tb testing.TB, exp A, got B) {
 	expVal, gotVal := mustCanonicalize(tb, exp), mustCanonicalize(tb, got)
 
 	if !bytes.Equal(expVal, gotVal) {
-		expVal.Format(jsontext.WithIndent("  "))
-		gotVal.Format(jsontext.WithIndent("  "))
+		expVal.Indent(jsontext.WithIndent("  "))
+		gotVal.Indent(jsontext.WithIndent("  "))
 
 		tb.Fatalf("expected JSON to be equal, got:\n%s", cmp.Diff(expVal.String(), gotVal.String()))
 	}
@@ -127,4 +131,12 @@ func mustCanonicalize[A ~string | ~[]byte](tb testing.TB, val A) jsontext.Value 
 	}
 
 	return v
+}
+
+func NumViolations(tb testing.TB, num int, rep report.Report) {
+	tb.Helper()
+
+	if rep.Summary.NumViolations != num {
+		tb.Fatalf("expected %d violations, got %d", num, rep.Summary.NumViolations)
+	}
 }

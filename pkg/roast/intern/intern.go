@@ -38,13 +38,25 @@ func init() {
 		"# METADATA",
 		" METADATA",
 
+		// Value types
+		"null",
+		"boolean",
+		"number",
+		"string",
+		"array",
+		"object",
+		"set",
+		"objectcomprehension",
+		"setcomprehension",
+		"arraycomprehension",
+		"call",
+
 		// These are strings commonly found in linter policies, but
 		// not necessarily anywhere else.
 		"}",
 		"ast",
 		"boolean",
 		"bugs",
-		"call",
 		"category",
 		"col",
 		"idiomatic",
@@ -81,7 +93,6 @@ func init() {
 		"key",
 		"term",
 		"domain",
-		"type",
 		"path",
 		"args",
 		"terms",
@@ -91,6 +102,7 @@ func init() {
 		"capabilities",
 		"system",
 		"main",
+		"string",
 		"templatestring",
 		"parts",
 		"multi_line",
@@ -165,5 +177,6 @@ func init() {
 		// Common
 		"a", "b", "c",
 		"i", "j", "k",
+		"x", "y", "z",
 	)
 }

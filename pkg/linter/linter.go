@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing/fstest"
 
+	"go.yaml.in/yaml/v3"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
@@ -94,6 +94,15 @@ var (
 		}}},
 	}}
 
+	preparedInput = ast.NewObject(
+		rast.Item("regal", ast.ObjectTerm(
+			rast.Item("operations", rast.ArrayTerm("prepare")),
+			rast.Item("file", ast.ObjectTerm(
+				rast.Item("name", ast.InternedTerm("__prepare__")),
+				rast.Item("rego_version", ast.InternedTerm("v1")),
+			)),
+		)),
+	)
 	aggregateArray  = &ast.Term{Value: ast.NewArray(ast.InternedTerm("aggregate"))}
 	aggregateObject = &ast.Term{Value: ast.NewObject(
 		rast.Item("name", ast.InternedTerm("__aggregate_report__")),
@@ -391,7 +400,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	ignore := l.combinedCfg.Ignore.Files
-
 	if len(l.ignoreFiles) > 0 {
 		ignore = l.ignoreFiles
 	}
@@ -570,7 +578,7 @@ func (l Linter) GetConfig() (*config.Config, error) {
 	if l.debugMode {
 		w := log.Writer()
 		w.Write(outil.StringToByteSlice("merged provided and user config:\n"))
-		yaml.NewEncoder(w).Encode(mcPtr)
+		_ = yaml.NewEncoder(w).Encode(mcPtr)
 	}
 
 	return mcPtr, err
@@ -665,16 +673,6 @@ func (l Linter) regoPrepare(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	inputValue := ast.NewObject(
-		rast.Item("regal", ast.ObjectTerm(
-			rast.Item("operations", rast.ArrayTerm("prepare")),
-			rast.Item("file", ast.ObjectTerm(
-				rast.Item("name", ast.InternedTerm("__prepare__")),
-				rast.Item("rego_version", ast.InternedTerm("v1")),
-			)),
-		)),
-	)
-
 	stg := l.preparedQuery.Store().Storage()
 	txn := storage.NewTransactionOrDie(ctx, stg, storage.WriteParams)
 	hnd := &prepareResultHandler{stg: stg, txn: txn}
@@ -682,7 +680,7 @@ func (l Linter) regoPrepare(ctx context.Context) error {
 	// TODO: profiling, instrumentation, metrics
 	ev := l.preparedQuery.Evaluator().
 		WithTransaction(txn).
-		WithInput(inputValue).
+		WithInput(preparedInput).
 		WithResultHandler(hnd)
 
 	if err := ev.Eval(ctx); err != nil {
@@ -741,7 +739,7 @@ func (l Linter) prepareData(conf *config.Config) ast.Object {
 		rast.Item("internal", ast.ObjectTerm(
 			rast.Item("combined_config", ast.NewTerm(conf.ToValue())),
 			rast.Item("user_config", ast.NewTerm(userConf)),
-			rast.Item("capabilities", ast.NewTerm(rast.StructToValue(config.CapabilitiesForThisVersion()))),
+			rast.Item("capabilities", config.OpaCapsForThisVersionTerm()),
 			rast.Item("path_prefix", ast.InternedTerm(l.pathPrefix)),
 			rast.Item("prepared", ast.InternedNullTerm),
 		)),

@@ -21,7 +21,7 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/test"
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 	"github.com/open-policy-agent/regal/internal/lsp/uri"
-	"github.com/open-policy-agent/regal/internal/testutil"
+	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/internal/util"
 )
 
@@ -179,11 +179,11 @@ func createAndInitServerWithClientName(
 		Capabilities any              `json:"capabilities"`
 		ServerInfo   types.ServerInfo `json:"serverInfo,omitzero"`
 	}
-	testutil.NoErr(connClient.Call(ctx, "initialize", request, &response))(t)
+	assert.Equal(t, nil, connClient.Call(ctx, "initialize", request, &response))
 
 	// 2. Client sends initialized notification
 	// no response to the call is expected
-	testutil.NoErr(connClient.Call(ctx, "initialized", struct{}{}, nil))(t)
+	assert.Equal(t, nil, connClient.Call(ctx, "initialized", struct{}{}, nil))
 
 	// wait for the server to complete the start up process to avoid races
 	// where the initial workspace loading and linting races with requests

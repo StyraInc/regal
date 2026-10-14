@@ -18,6 +18,10 @@ notices contains result.notice(rego.metadata.chain()) if "no_filename" in config
 
 report contains violation if {
 	parts := split(input.regal.file.abs, input.regal.environment.path_separator)
+
+	# Docker build policies must be placed next to the Dockerfile they apply to
+	regal.last(parts) != "Dockerfile.rego"
+
 	file_path_values := array.slice(parts, 0, count(parts) - 1)
 	num_file_path_values := count(file_path_values)
 

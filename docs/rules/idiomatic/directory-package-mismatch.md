@@ -83,6 +83,11 @@ While directory structure doesn't matter to OPA when parsing _policies_, directo
 to the bundle root. Having policies structured in the same manner provides a uniform experience, and makes it
 easier to understand where both policies and data come from.
 
+### Docker Build Policies
+
+Files named `Dockerfile.rego` are ignored by this rule, as [Docker build policies](https://docs.docker.com/build/policies/)
+must be placed next to the Dockerfile they apply to, and always use the `docker` package.
+
 ### `regal fix` & Editor Support
 
 Regal's [`fix` command](https://www.openpolicyagent.org/projects/regal/fixing) can automatically

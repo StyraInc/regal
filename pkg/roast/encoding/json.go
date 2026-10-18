@@ -72,6 +72,15 @@ func GetString(value jsontext.Value, ptr jsontext.Pointer) (string, bool) {
 	return "", false
 }
 
+// MarshalWriteLn is a convenience function json.MarshalWrite followed by a newline.
+func MarshalWriteLn(w io.Writer, v any, opts ...json.Options) (err error) {
+	if err = json.MarshalWrite(w, v, opts...); err == nil {
+		_, err = w.Write(util.StringToByteSlice("\n"))
+	}
+
+	return err
+}
+
 func getInObject(obj jsontext.Value, key string) (res jsontext.Value) {
 	dec := jsontext.NewDecoder(bytes.NewReader(obj))
 	tok, err := dec.ReadToken() //nolint
@@ -91,13 +100,4 @@ func getInObject(obj jsontext.Value, key string) (res jsontext.Value) {
 	}
 
 	return res.Clone()
-}
-
-// MarshalWriteLn is a convenience function json.MarshalWrite followed by a newline.
-func MarshalWriteLn(w io.Writer, v any, opts ...json.Options) (err error) {
-	if err = json.MarshalWrite(w, v, opts...); err == nil {
-		_, err = w.Write(util.StringToByteSlice("\n"))
-	}
-
-	return err
 }

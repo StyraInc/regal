@@ -216,7 +216,7 @@ func opaTest(args []string) int {
 		CapturePrintOutput(true).
 		EnableTracing(testParams.verbose || testParams.varValues).
 		SetCoverageQueryTracer(coverTracer).
-		SetRuntime(Runtime()).
+		SetRuntime(runtime()).
 		SetModules(modules).
 		SetBundles(bundles).
 		SetTimeout(getTimeout()).
@@ -395,7 +395,7 @@ func init() {
 	RootCommand.AddCommand(testCommand)
 }
 
-func Runtime() *ast.Term {
+func runtime() *ast.Term {
 	env := ast.NewObject()
 
 	for _, s := range os.Environ() {

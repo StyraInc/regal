@@ -76,16 +76,6 @@ func (s *Server) Close() (err error) {
 	return util.WrapErr(err, "failed to close debug server")
 }
 
-func parsePort(addr string) (port uint16) {
-	if strings.Contains(addr, ":") {
-		if portint, _ := outil.Atoi(strings.SplitN(addr, ":", 2)[1]); portint > 0 && portint <= 65535 {
-			port = uint16(portint)
-		}
-	}
-
-	return port
-}
-
 func NewEventHandler(pm *ProtocolManager) debug.EventHandler {
 	return func(e debug.Event) {
 		switch e.Type {
@@ -101,4 +91,14 @@ func NewEventHandler(pm *ProtocolManager) debug.EventHandler {
 			pm.SendEvent(NewThreadEvent(e.Thread, e.Message))
 		}
 	}
+}
+
+func parsePort(addr string) (port uint16) {
+	if strings.Contains(addr, ":") {
+		if portint, _ := outil.Atoi(strings.SplitN(addr, ":", 2)[1]); portint > 0 && portint <= 65535 {
+			port = uint16(portint)
+		}
+	}
+
+	return port
 }

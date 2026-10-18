@@ -91,6 +91,20 @@ func All(contents string, module *ast.Module, builtins map[string]*ast.Builtin) 
 	return append(docSymbols, pkg)
 }
 
+func ToWorkspaceSymbols(docSym []types.DocumentSymbol, docURL string, symbols *[]types.WorkspaceSymbol) {
+	for _, sym := range docSym {
+		// Only include the "main" symbol for incremental rules and functions
+		// as numeric items isn't very useful in the workspace symbol list.
+		if !strings.HasPrefix(sym.Name, "#") {
+			*symbols = append(*symbols, toWorkspaceSymbol(sym, docURL))
+
+			if sym.Children != nil {
+				ToWorkspaceSymbols(*sym.Children, docURL, symbols)
+			}
+		}
+	}
+}
+
 func locationToRange(location *ast.Location) types.Range {
 	startLine := util.IntTo[uint](location.Row - 1)
 	numLines := util.BytesNumLines(location.Text)
@@ -113,25 +127,6 @@ func toWorkspaceSymbol(docSym types.DocumentSymbol, docURL string) types.Workspa
 	}
 }
 
-func ToWorkspaceSymbols(docSym []types.DocumentSymbol, docURL string, symbols *[]types.WorkspaceSymbol) {
-	for _, sym := range docSym {
-		// Only include the "main" symbol for incremental rules and functions
-		// as numeric items isn't very useful in the workspace symbol list.
-		if !strings.HasPrefix(sym.Name, "#") {
-			*symbols = append(*symbols, toWorkspaceSymbol(sym, docURL))
-
-			if sym.Children != nil {
-				ToWorkspaceSymbols(*sym.Children, docURL, symbols)
-			}
-		}
-	}
-}
-
 func documentSymbol(name string, kind symbols.SymbolKind, rang types.Range) types.DocumentSymbol {
-	return types.DocumentSymbol{
-		Name:           name,
-		Kind:           kind,
-		Range:          rang,
-		SelectionRange: rang,
-	}
+	return types.DocumentSymbol{Name: name, Kind: kind, Range: rang, SelectionRange: rang}
 }

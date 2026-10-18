@@ -134,7 +134,7 @@ func lookupEmbeddedURL(parsedURL *url.URL) (*ast.Capabilities, error) {
 		// an issue today. But in future we may need to expand List()
 		// so that it filters to only a specific engine or something to
 		// that effect.
-		versionsList, err := List()
+		versionsList, err := list()
 		if err != nil {
 			return nil, fmt.Errorf(
 				"while processing regal URL '%s', failed to determine the latest version for engine '%s': %w",
@@ -233,7 +233,7 @@ func semverSort(stringVersions []string) {
 // 0 is the newest version), with version strings that are not valid semver
 // versions sorting after all valid versions strings but otherwise being
 // compared lexicographically.
-func List() (map[string][]string, error) {
+func list() (map[string][]string, error) {
 	opaCaps, err := ast.LoadCapabilitiesVersions()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load OPA capabilities due to error: %w", err)

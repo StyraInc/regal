@@ -754,7 +754,7 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job fileJob) er
 	}
 
 	// determine the new contents for the file, if permitted
-	newContents, err := l.templateContentsForFile(job.URI)
+	newContents, err := l.templateContents(job.URI)
 	if err != nil {
 		return fmt.Errorf("failed to template new file: %w", err)
 	}
@@ -787,12 +787,13 @@ func (l *LanguageServer) processTemplateJob(ctx context.Context, job fileJob) er
 	return nil
 }
 
-func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error) {
+func (l *LanguageServer) templateContents(fileURI string) (string, error) {
 	path := uri.ToPath(fileURI)
+	wsPath := l.Workspace().Path()
 
 	// this function should not be called with files in the root, but if it is,
 	// then it is an error to prevent unwanted behavior.
-	if filepath.Dir(path) == l.Workspace().Path() {
+	if filepath.Dir(path) == wsPath {
 		return "", errors.New("this function does not template files in the workspace root")
 	}
 
@@ -822,9 +823,9 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	// known root, but the package could be determined based on the file path
 	// relative to the server's workspace root
 	if len(roots) == 1 && roots[0] == dir {
-		roots = []string{l.Workspace().Path()}
+		roots = []string{wsPath}
 	} else {
-		roots = append(roots, l.Workspace().Path())
+		roots = append(roots, wsPath)
 	}
 
 	longestPrefixRoot := ""
@@ -862,9 +863,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 	}
 
 	// if we are in the root, then we can use main as a default
-	pkg = cmp.Or(pkg, "main")
-
-	if strings.HasSuffix(fileURI, "_test.rego") {
+	if pkg = cmp.Or(pkg, "main"); strings.HasSuffix(fileURI, "_test.rego") {
 		pkg += "_test"
 	}
 
@@ -872,7 +871,7 @@ func (l *LanguageServer) templateContentsForFile(fileURI string) (string, error)
 		return fmt.Sprintf("package %s\n\nimport rego.v1\n", pkg), nil
 	}
 
-	return fmt.Sprintf("package %s\n\n", pkg), nil
+	return "package " + pkg + "\n\n", nil
 }
 
 // Note: currently ignoring params.Query, as the client seems to do a good
@@ -1084,16 +1083,19 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	ctx context.Context,
 	params types.DocumentFormattingParams,
 ) (any, error) {
+	workspace := l.Workspace()
+	client := workspace.Client()
+
 	// Fetch the contents used for formatting from the appropriate cache location.
 	oldContent, _ := l.maybeIgnoredContents(params.TextDocument.URI)
 	if oldContent == "" {
 		// if the file is empty, then the formatters will fail, so we template instead
-		if filepath.Dir(uri.ToPath(params.TextDocument.URI)) == l.Workspace().Path() {
+		if filepath.Dir(uri.ToPath(params.TextDocument.URI)) == workspace.Path() {
 			// disable the templating feature for files in the workspace root.
 			return noTextEdits, nil
 		}
 
-		newContent, err := l.templateContentsForFile(params.TextDocument.URI)
+		newContent, err := l.templateContents(params.TextDocument.URI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to template contents as a templating fallback: %w", err)
 		}
@@ -1104,7 +1106,7 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 		parseSuccess, err := updateParse(ctx, l.parseOpts(params.TextDocument.URI, l.builtinsForCurrentCapabilities()))
 		if err != nil {
 			l.log.Message("failed to update module for %s: %s", params.TextDocument.URI, err)
-		} else if l.Workspace().Client().InitOptions.EnableServerTesting && parseSuccess {
+		} else if client.InitOptions.EnableServerTesting && parseSuccess {
 			l.testLocationJobs <- fileJob{URI: params.TextDocument.URI}
 		}
 
@@ -1114,22 +1116,20 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 	}
 
 	// opa-fmt is the default formatter if not set in the client options
-	formatter := cmp.Or(l.Workspace().Client().InitOptions.Formatter, "opa-fmt")
+	formatter := cmp.Or(client.InitOptions.Formatter, "opa-fmt")
 
 	var newContent string
 
 	switch formatter {
 	case "opa-fmt", "opa-fmt-rego-v1":
-		opts := format.Opts{RegoVersion: l.regoVersionForURI(params.TextDocument.URI)}
-		if formatter == "opa-fmt-rego-v1" {
-			opts.RegoVersion = ast.RegoV0CompatV1
+		opts := format.Opts{RegoVersion: ast.RegoV0CompatV1}
+		if formatter == "opa-fmt" {
+			opts.RegoVersion = l.regoVersionForURI(params.TextDocument.URI)
 		}
 
-		f := &fixes.Fmt{OPAFmtOpts: opts}
-
-		fixResults, err := f.Fix(
+		fixResults, err := (&fixes.Fmt{OPAFmtOpts: opts}).Fix(
 			&fixes.FixCandidate{Filename: filepath.Base(uri.ToPath(params.TextDocument.URI)), Contents: oldContent},
-			&fixes.RuntimeOptions{BaseDir: l.Workspace().Path()},
+			&fixes.RuntimeOptions{BaseDir: workspace.Path()},
 		)
 		if err != nil {
 			l.log.Message("failed to format file: %s", err)
@@ -1151,17 +1151,13 @@ func (l *LanguageServer) handleTextDocumentFormatting(
 			return nil, fmt.Errorf("failed to create fixer input: %w", err)
 		}
 
-		roots, err := config.GetPotentialRoots(l.Workspace().Path(), uri.ToPath(params.TextDocument.URI))
+		roots, err := config.GetPotentialRoots(workspace.Path(), uri.ToPath(params.TextDocument.URI))
 		if err != nil {
 			return nil, fmt.Errorf("could not find potential roots: %w", err)
 		}
 
 		fi := fixer.NewFixer().RegisterFixes(fixes.NewDefaultFormatterFixes()...).RegisterRoots(roots...)
-		li := linter.NewLinter().WithInputModules(&input)
-
-		if cfg := l.getLoadedConfig(); cfg != nil {
-			li = li.WithUserConfig(*cfg)
-		}
+		li := linter.NewLinter().WithInputModules(&input).WithUserConfig(*l.getLoadedConfig())
 
 		fixReport, err := fi.Fix(ctx, &li, memfp)
 		if err != nil {
@@ -1541,7 +1537,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 	ctx context.Context,
 	params types.WorkspaceDidChangeWatchedFilesParams,
 ) (any, error) {
-	changes := false
+	changes, ws := false, l.Workspace()
 
 	for _, change := range slices.Compact(params.Changes) {
 		switch {
@@ -1560,7 +1556,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 				}
 			} else if change.Type == 1 && config.HasConfigSuffix(change.URI) {
 				// this handles the case of a new config file being created when one did not exist before
-				if configFile, err := config.Find(l.Workspace().Path()); err == nil {
+				if configFile, err := config.Find(ws.Path()); err == nil {
 					l.configWatcher.Watch(configFile.Name())
 					rio.CloseIgnore(configFile)
 				}
@@ -1568,7 +1564,7 @@ func (l *LanguageServer) handleWorkspaceDidChangeWatchedFiles(
 		case strings.HasSuffix(change.URI, ".rego"):
 			parseSuccess, err := updateParse(ctx, l.parseOpts(change.URI, l.builtinsForCurrentCapabilities()))
 			if err == nil {
-				if l.Workspace().Client().InitOptions.EnableServerTesting && parseSuccess {
+				if ws.Client().InitOptions.EnableServerTesting && parseSuccess {
 					l.testLocationJobs <- fileJob{URI: change.URI}
 				}
 
@@ -1677,16 +1673,18 @@ func (l *LanguageServer) parseOpts(fileURI string, bis map[string]*ast.Builtin) 
 }
 
 func (l *LanguageServer) regalContext(fileURI string, _ rego.Requirements) *rego.RegalContext {
+	workspace := l.Workspace()
+
 	return &rego.RegalContext{
 		File: rego.File{
-			Name:        l.Workspace().RelativePath(fileURI),
+			Name:        workspace.RelativePath(fileURI),
 			RegoVersion: l.regoVersionForURI(fileURI).String(),
 			URI:         fileURI,
 		},
 		Environment: rego.Environment{
 			PathSeparator:     paths.Separator,
-			WorkspaceRootURI:  l.Workspace().URI(),
-			WorkspaceRootPath: l.Workspace().Path(),
+			WorkspaceRootURI:  workspace.URI(),
+			WorkspaceRootPath: workspace.Path(),
 		},
 	}
 }

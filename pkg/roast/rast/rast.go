@@ -14,6 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/open-policy-agent/regal/internal/funsafe"
+
 	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
 )
 
@@ -52,6 +54,15 @@ func ArrayTerm(a ...string) *ast.Term {
 	}
 
 	return ast.ArrayTerm(outil.Map(a, ast.InternedTerm)...)
+}
+
+func ArrayMap[T any](a *ast.Array, f func(*ast.Term) T) []T {
+	terms := make([]T, a.Len())
+	for i := range terms {
+		terms[i] = f(a.Elem(i))
+	}
+
+	return terms
 }
 
 func AppendLocation(buf []byte, loc *ast.Location) []byte {
@@ -200,10 +211,10 @@ func StructToValue(input any) ast.Value {
 			if !inline {
 				kvs = append(kvs, Item(tag, ast.NewTerm(val)))
 			} else if obj, ok := val.(ast.Object); ok {
-				obj.Foreach(func(key *ast.Term, value *ast.Term) {
+				for _, elem := range funsafe.ObjectElems(obj) {
 					// TODO(anders): conflict / error handling
-					kvs = append(kvs, [2]*ast.Term{key, value})
-				})
+					kvs = append(kvs, [2]*ast.Term{elem.Key(), elem.Value()})
+				}
 			}
 		}
 	}

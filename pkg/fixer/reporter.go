@@ -57,23 +57,19 @@ func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
 				continue
 			}
 
-			conflictingFiles := util.KeysSorted(cs)
-
 			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
 
-			for _, file := range conflictingFiles {
+			for _, file := range util.KeysSorted(cs) {
 				fmt.Fprintln(r.outputWriter, "Cannot overwrite existing file:", relOrDefault(rootKey, file, file))
 
-				conflicts := util.Sorted(fixReport.conflictsSourceFile[rootKey][file])
-				for _, oldPath := range conflicts {
+				for _, oldPath := range util.Sorted(fixReport.conflictsSourceFile[rootKey][file]) {
 					fmt.Fprintln(r.outputWriter, "-", relOrDefault(rootKey, oldPath, oldPath))
 				}
 			}
 		}
 	}
 
-	roots = util.KeysSorted(fixReport.conflictsManyToOne)
-	if len(roots) > 0 {
+	if roots = util.KeysSorted(fixReport.conflictsManyToOne); len(roots) > 0 {
 		if len(fixReport.conflictsSourceFile) > 0 {
 			fmt.Fprintln(r.outputWriter)
 		}
@@ -92,8 +88,7 @@ func (r *PrettyReporter) ReportConflicts(fixReport *Report) error {
 
 			fmt.Fprintln(r.outputWriter, "In project root:", rootKey)
 
-			conflictingFiles := util.KeysSorted(cs)
-			for _, file := range conflictingFiles {
+			for _, file := range util.KeysSorted(cs) {
 				fmt.Fprintln(r.outputWriter, "Cannot move multiple files to:", relOrDefault(rootKey, file, file))
 
 				// get the old paths from the movedFiles since that includes all the files moved, not just the conflicting ones
@@ -148,13 +143,10 @@ func (r *PrettyReporter) Report(fixReport *Report) error {
 		}
 
 		fixesByFile := byRoot[root]
-		files := util.KeysSorted(fixesByFile)
 
 		fmt.Fprintf(r.outputWriter, "In project root: %s\n", root)
 
-		for _, file := range files {
-			fxs := fixesByFile[file]
-
+		for _, file := range util.KeysSorted(fixesByFile) {
 			rel := relOrDefault(root, file, file)
 
 			oldPath, ok := fixReport.OldPathForFile(file)
@@ -164,11 +156,11 @@ func (r *PrettyReporter) Report(fixReport *Report) error {
 				fmt.Fprintf(r.outputWriter, "%s:\n", rel)
 			}
 
-			for _, fix := range fxs {
+			for _, fix := range fixesByFile[file] {
 				fmt.Fprintf(r.outputWriter, "- %s\n", fix.Title)
 			}
 
-			if len(files) > 3 {
+			if len(fixesByFile) > 3 {
 				fmt.Fprintln(r.outputWriter, "")
 			}
 		}

@@ -19,7 +19,7 @@ import (
 // This is an optimized version of the same function in the OPA codebase,
 // and optimized in a way that makes it useful only for a map[string]any
 // unmarshaled from RoAST JSON. Don't use it for anything else.
-func AnyToValue(x any) (ast.Value, error) {
+func AnyToValue(x any) (_ ast.Value, err error) {
 	switch x := x.(type) {
 	case ast.Value:
 		return x, nil
@@ -53,7 +53,6 @@ func AnyToValue(x any) (ast.Value, error) {
 		}
 
 		r := util.NewPtrSlice[ast.Term](len(x))
-
 		for i, s := range x {
 			r[i].Value = ast.InternedValue(s)
 		}
@@ -65,14 +64,10 @@ func AnyToValue(x any) (ast.Value, error) {
 		}
 
 		r := util.NewPtrSlice[ast.Term](len(x))
-
 		for i, e := range x {
-			e, err := AnyToValue(e)
-			if err != nil {
+			if r[i].Value, err = AnyToValue(e); err != nil {
 				return nil, err
 			}
-
-			r[i].Value = e
 		}
 
 		return ast.NewArray(r...), nil
@@ -86,13 +81,9 @@ func AnyToValue(x any) (ast.Value, error) {
 
 		for k, v := range x {
 			kvs[idx].Value = ast.InternedValue(k)
-
-			v, err := AnyToValue(v)
-			if err != nil {
+			if kvs[idx+1].Value, err = AnyToValue(v); err != nil {
 				return nil, err
 			}
-
-			kvs[idx+1].Value = v
 
 			idx += 2
 		}

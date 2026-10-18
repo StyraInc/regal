@@ -251,6 +251,8 @@ func readValueToTerm(dec *jsontext.Decoder) (*ast.Term, error) {
 		if len(value) == 2 && value[0] == '{' && value[1] == '}' {
 			return ast.InternedEmptyObject, nil
 		}
+	default:
+		return nil, fmt.Errorf("unexpected JSON kind: %v", value.Kind())
 	}
 
 	var val ast.Value

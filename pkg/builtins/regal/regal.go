@@ -123,8 +123,8 @@ func RegalLast(_ rego.BuiltinContext, operands []*ast.Term, iter func(*ast.Term)
 		return err
 	}
 
-	if arrOp.Len() > 0 {
-		return iter(arrOp.Elem(arrOp.Len() - 1))
+	if n := arrOp.Len(); n > 0 {
+		return iter(arrOp.Elem(n - 1))
 	}
 
 	// index out of bounds, but have no use for this information anyway

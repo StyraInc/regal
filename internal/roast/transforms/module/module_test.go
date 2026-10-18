@@ -16,7 +16,7 @@ func TestModuleToValue(t *testing.T) {
 	t.Parallel()
 
 	policy := `# METADATA
-# title: p p p
+# title: ppp
 package p
 
 import rego.v1
@@ -149,10 +149,10 @@ q if {
 	must.Equal(t, 1, bodyAttr(t, explicit, "rhs").Len())
 }
 
-// 31468 ns/op	   62496 B/op	    1474 allocs/op
+// 31475 ns/op	   62417 B/op	    1470 allocs/op
 func BenchmarkModuleToValue(b *testing.B) {
 	policy := `# METADATA
-# title: p p p
+# title: ppp
 package p
 
 import rego.v1

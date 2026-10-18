@@ -43,6 +43,8 @@ func GetForError(e error) string {
 		}
 	case reflect.Struct:
 		return matchMessage(value)
+	default:
+		// please the exhaustive linter
 	}
 
 	return ""

@@ -31,31 +31,32 @@ import (
 	"github.com/open-policy-agent/regal/pkg/version"
 )
 
-type lintAndFixParams struct {
-	configFile      string
-	format          string
-	outputFile      string
-	rules           repeatedStringFlag
-	disable         repeatedStringFlag
-	disableCategory repeatedStringFlag
-	enable          repeatedStringFlag
-	enableCategory  repeatedStringFlag
-	ignoreFiles     repeatedStringFlag
-	timeout         time.Duration
-	debug           bool
-	disableAll      bool
-	enableAll       bool
-}
+type (
+	lintAndFixParams struct {
+		configFile      string
+		format          string
+		outputFile      string
+		rules           repeatedStringFlag
+		disable         repeatedStringFlag
+		disableCategory repeatedStringFlag
+		enable          repeatedStringFlag
+		enableCategory  repeatedStringFlag
+		ignoreFiles     repeatedStringFlag
+		timeout         time.Duration
+		debug           bool
+		disableAll      bool
+		enableAll       bool
+	}
+	lintParams struct {
+		lintAndFixParams
 
-type lintParams struct {
-	lintAndFixParams
-
-	failLevel   string
-	enablePrint bool
-	metrics     bool
-	profile     bool
-	instrument  bool
-}
+		failLevel   string
+		enablePrint bool
+		metrics     bool
+		profile     bool
+		instrument  bool
+	}
+)
 
 func (params *lintAndFixParams) outputWriter() (io.Writer, error) {
 	if params.outputFile == "" {

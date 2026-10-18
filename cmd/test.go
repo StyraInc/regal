@@ -36,27 +36,61 @@ import (
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
 )
 
+type (
+	testCommandParams struct {
+		outputFormat *outil.EnumFlag
+		runRegex     string
+		ignore       []string
+		threshold    float64
+		timeout      time.Duration
+		count        int
+		verbose      bool
+		coverage     bool
+		bundleMode   bool
+		benchmark    bool
+		benchMem     bool
+		skipExitZero bool
+		varValues    bool
+	}
+	loaderFilter struct {
+		Ignore []string
+	}
+)
+
 const benchmarkGoBenchOutput = "gobench"
 
-type testCommandParams struct {
-	outputFormat *outil.EnumFlag
-	runRegex     string
-	ignore       []string
-	threshold    float64
-	timeout      time.Duration
-	count        int
-	verbose      bool
-	coverage     bool
-	bundleMode   bool
-	benchmark    bool
-	benchMem     bool
-	skipExitZero bool
-	varValues    bool
-}
+var (
+	testParams  = newTestCommandParams()
+	testCommand = &cobra.Command{
+		Hidden: true,
+		Use:    "test <path> [path [...]]",
+		Short:  "Execute Rego test cases for Regal",
+		Long: `Execute Rego test cases for Regal rules.
 
-type loaderFilter struct {
-	Ignore []string
-}
+The 'test' command works mostly like OPA's test command, but with all Regal-specific built-ins included. Note that this
+command is only meant to be used for testing of Regal rules, and should only be relevant to users authoring their own
+rules.
+
+`,
+		PreRunE: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("specify at least one file")
+			}
+
+			return nil
+		},
+
+		RunE: wrapProfiling(func(args []string) error {
+			relaxGC()
+
+			if c := opaTest(args); c != 0 {
+				return ExitError{code: c}
+			}
+
+			return nil
+		}),
+	}
+)
 
 func newTestCommandParams() *testCommandParams {
 	return &testCommandParams{
@@ -72,38 +106,6 @@ func (f loaderFilter) Apply(abspath string, info os.FileInfo, depth int) bool {
 	return slices.ContainsFunc(f.Ignore, func(s string) bool {
 		return loader.GlobExcludeName(s, 1)(abspath, info, depth)
 	})
-}
-
-var testParams = newTestCommandParams()
-
-var testCommand = &cobra.Command{
-	Hidden: true,
-	Use:    "test <path> [path [...]]",
-	Short:  "Execute Rego test cases for Regal",
-	Long: `Execute Rego test cases for Regal rules.
-
-The 'test' command works mostly like OPA's test command, but with all Regal-specific built-ins included. Note that this
-command is only meant to be used for testing of Regal rules, and should only be relevant to users authoring their own
-rules.
-
-`,
-	PreRunE: func(_ *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return errors.New("specify at least one file")
-		}
-
-		return nil
-	},
-
-	RunE: wrapProfiling(func(args []string) error {
-		relaxGC()
-
-		if c := opaTest(args); c != 0 {
-			return ExitError{code: c}
-		}
-
-		return nil
-	}),
 }
 
 func opaTest(args []string) int {

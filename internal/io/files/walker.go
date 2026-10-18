@@ -10,21 +10,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/io/files/filter"
 )
 
-// Walker is a utility for walking directories and files, applying
-// provided filters before processing each file or directory.
-type Walker struct {
-	// root is the root directory to start walking from.
-	root string
-	// filters are the filters to apply to each file or directory.
-	// If any filter returns true, the file or directory is skipped.
-	filters []filter.Func
-	// skipFunc is a special filter that allows skipping entire directory
-	// entire directory trees (like .git, node_modules, etc.).
-	skipFunc filter.Func
-	// statRoot indicates whether to stat the root directory before walking.
-	statRoot bool
-}
-
 // Note(anderseknert):
 // It would have been nice if Walker could both Walk and Reduce instead of
 // having this separation. The reason we don't is that the reducer needs a
@@ -33,12 +18,28 @@ type Walker struct {
 // type just for walking is not a great experience, so for now we split the two.
 // Perhaps we'll find a better way to do it in the future.
 
-// WalkReducer extends FileWalker to allow reducing the results of the walk.
-type WalkReducer[T any] struct {
-	*Walker
+type (
+	// Walker is a utility for walking directories and files, applying
+	// provided filters before processing each file or directory.
+	Walker struct {
+		// root is the root directory to start walking from.
+		root string
+		// filters are the filters to apply to each file or directory.
+		// If any filter returns true, the file or directory is skipped.
+		filters []filter.Func
+		// skipFunc is a special filter that allows skipping entire directory
+		// entire directory trees (like .git, node_modules, etc.).
+		skipFunc filter.Func
+		// statRoot indicates whether to stat the root directory before walking.
+		statRoot bool
+	}
+	// WalkReducer extends FileWalker to allow reducing the results of the walk.
+	WalkReducer[T any] struct {
+		*Walker
 
-	initial T
-}
+		initial T
+	}
+)
 
 // NewWalker creates a new FileWalker with the specified root directory.
 func NewWalker(root string) *Walker {

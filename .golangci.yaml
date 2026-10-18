@@ -37,6 +37,9 @@ linters:
   settings:
     cyclop:
       max-complexity: 40 # default is 10
+    decorder:
+      disable-dec-order-check: false
+      disable-dec-num-check: false
     depguard:
       rules:
         no-yaml-v2:

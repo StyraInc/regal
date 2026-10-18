@@ -6,10 +6,18 @@ import (
 	"sync"
 )
 
-// Level controls the level of server logging and corresponds to TraceValue in
-// the LSP spec:
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#traceValue.
-type Level int
+type (
+	// Level controls the level of server logging and corresponds to TraceValue in
+	// the LSP spec:
+	// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#traceValue.
+	Level  uint8
+	Logger struct {
+		io.Writer
+
+		Level Level
+		rwm   sync.RWMutex
+	}
+)
 
 const (
 	// LevelOff is used to disable logging completely.
@@ -21,13 +29,6 @@ const (
 	// not expected to be useful unless debugging the server.
 	LevelDebug
 )
-
-type Logger struct {
-	io.Writer
-
-	Level Level
-	rwm   sync.RWMutex
-}
 
 func (l Level) String() string {
 	return [...]string{"Off", "Messages", "Debug"}[l]

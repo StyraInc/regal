@@ -7,9 +7,10 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-type Func[T any] func(T) (any, error)
-
-type ContextFunc[T any] func(context.Context, T) (any, error)
+type (
+	Func[T any]        func(T) (any, error)
+	ContextFunc[T any] func(context.Context, T) (any, error)
+)
 
 var ErrInvalidParams = &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 

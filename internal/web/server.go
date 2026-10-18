@@ -15,15 +15,16 @@ import (
 	"github.com/open-policy-agent/regal/internal/util"
 )
 
-//go:embed index.html style.css
-var content embed.FS
-
 type Server struct {
 	log     *log.Logger
 	baseURL string
 }
 
-var pprofEndpoints = os.Getenv("REGAL_DEBUG") != "" || os.Getenv("REGAL_DEBUG_PPROF") != ""
+var (
+	//go:embed index.html style.css
+	content        embed.FS
+	pprofEndpoints = os.Getenv("REGAL_DEBUG") != "" || os.Getenv("REGAL_DEBUG_PPROF") != ""
+)
 
 func NewServer(logger *log.Logger) *Server {
 	return &Server{log: logger}

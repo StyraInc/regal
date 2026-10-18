@@ -26,45 +26,6 @@ import (
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
-var (
-	inputValuesPool = &sync.Pool{New: func() any {
-		return &inputCacheItem{
-			input:  ast.NewObjectWithCapacity(3),
-			params: ast.NewTerm(ast.NullValue),
-			regctx: ast.NewTerm(ast.NullValue),
-		}
-	}}
-	fileLines = Requirements{File: FileRequirements{Lines: true}}
-)
-
-func init() {
-	ast.InternStringTerm(
-		"textDocument/codeAction", "textDocument/codeLens", "textDocument/completion", "textDocument/documentLink",
-		"textDocument/documentHighlight", "textDocument/foldingRange", "textDocument/hover", "textDocument/inlayHint",
-		"textDocument/linkedEditingRange", "textDocument/selectionRange", "textDocument/semanticTokens/full",
-		"textDocument/signatureHelp", "textDocument/references", "textDocument/prepareRename", "textDocument/rename",
-		"completionItem/resolve", "inlayHint/resolve",
-
-		"method", "params", "identifier",
-
-		"feature_flags",
-		"debug_provider",
-		"explorer_provider",
-		"inline_evaluation_provider",
-		"opa_test_provider",
-		"server",
-		"content",
-		"successful_parse_count",
-		"parse_errors",
-		"workspace_root_path",
-		"foldingRange",
-		"foldingrange",
-		"bundle",
-		"lineFoldingOnly",
-		"init_options",
-	)
-}
-
 type (
 	Providers struct {
 		ContextProvider              func(uri string, reqs Requirements) *RegalContext
@@ -110,6 +71,45 @@ type (
 		regctx *ast.Term
 	}
 )
+
+var (
+	inputValuesPool = &sync.Pool{New: func() any {
+		return &inputCacheItem{
+			input:  ast.NewObjectWithCapacity(3),
+			params: ast.NewTerm(ast.NullValue),
+			regctx: ast.NewTerm(ast.NullValue),
+		}
+	}}
+	fileLines = Requirements{File: FileRequirements{Lines: true}}
+)
+
+func init() {
+	ast.InternStringTerm(
+		"textDocument/codeAction", "textDocument/codeLens", "textDocument/completion", "textDocument/documentLink",
+		"textDocument/documentHighlight", "textDocument/foldingRange", "textDocument/hover", "textDocument/inlayHint",
+		"textDocument/linkedEditingRange", "textDocument/selectionRange", "textDocument/semanticTokens/full",
+		"textDocument/signatureHelp", "textDocument/references", "textDocument/prepareRename", "textDocument/rename",
+		"completionItem/resolve", "inlayHint/resolve",
+
+		"method", "params", "identifier",
+
+		"feature_flags",
+		"debug_provider",
+		"explorer_provider",
+		"inline_evaluation_provider",
+		"opa_test_provider",
+		"server",
+		"content",
+		"successful_parse_count",
+		"parse_errors",
+		"workspace_root_path",
+		"foldingRange",
+		"foldingrange",
+		"bundle",
+		"lineFoldingOnly",
+		"init_options",
+	)
+}
 
 func NewRouter(ctx context.Context, s storage.Store, qc *query.Cache, prvs Providers, log *log.Logger) *Router {
 	if _, err := qc.GetOrSet(ctx, s, query.MainEval); err != nil {

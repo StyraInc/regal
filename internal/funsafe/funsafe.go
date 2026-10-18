@@ -12,8 +12,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/debug"
 )
 
-var _ debug.Variable = DebugVar{}
-
 type (
 	Object struct {
 		elems     map[int]*objectElem
@@ -45,6 +43,8 @@ type (
 		value ast.Value
 	}
 )
+
+var _ debug.Variable = DebugVar{}
 
 // ToDebugVar converts a [debug.Variable] to a [DebugVar]. See [DebugVar] for details on why this is needed.
 func ToDebugVar(v debug.Variable) DebugVar {

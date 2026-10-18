@@ -21,31 +21,31 @@ import (
 	_ "embed"
 )
 
+type (
+	Options struct {
+		CurrentTime       time.Time
+		CurrentVersion    string
+		StateDir          string
+		ReleaseServerHost string
+		ReleaseServerPath string
+		CTAURLPrefix      string
+		Debug             bool
+	}
+	latestVersionFileContents struct {
+		CheckedAt     time.Time `json:"checked_at"`
+		LatestVersion string    `json:"latest_version"`
+	}
+	decision struct {
+		NeedsUpdate   bool   `json:"needs_update"`
+		LatestVersion string `json:"latest_version"`
+		CTA           string `json:"cta"`
+	}
+)
+
 const CheckVersionDisableEnvVar = "REGAL_DISABLE_VERSION_CHECK"
 
 //go:embed update.rego
 var updateModule string
-
-type Options struct {
-	CurrentTime       time.Time
-	CurrentVersion    string
-	StateDir          string
-	ReleaseServerHost string
-	ReleaseServerPath string
-	CTAURLPrefix      string
-	Debug             bool
-}
-
-type latestVersionFileContents struct {
-	CheckedAt     time.Time `json:"checked_at"`
-	LatestVersion string    `json:"latest_version"`
-}
-
-type decision struct {
-	NeedsUpdate   bool   `json:"needs_update"`
-	LatestVersion string `json:"latest_version"`
-	CTA           string `json:"cta"`
-}
 
 func CheckAndWarn(ctx context.Context, opts Options, w io.Writer) {
 	// only perform the version check on binaries with production semvers set
@@ -57,7 +57,6 @@ func CheckAndWarn(ctx context.Context, opts Options, w io.Writer) {
 		return
 	}
 
-	latestVersion, cacheIsStale := getLatestCachedVersionAndCheckStale(opts)
 	mod := map[string]*ast.Module{"update.rego": ast.MustParseModule(updateModule)}
 
 	q, err := ogre.New(ast.MustParseBody("result = data.update.check")).WithModules(mod).Prepare(ctx)
@@ -68,6 +67,8 @@ func CheckAndWarn(ctx context.Context, opts Options, w io.Writer) {
 
 		return
 	}
+
+	latestVersion, cacheIsStale := getLatestCachedVersionAndCheckStale(opts)
 
 	input := ast.NewObject(
 		rast.Item("current_version", ast.InternedTerm(opts.CurrentVersion)),

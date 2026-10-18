@@ -13,18 +13,19 @@ import (
 	"github.com/open-policy-agent/regal/pkg/config"
 )
 
-var DirectoryPackageMismatchFixer = &DirectoryPackageMismatch{}
-
 type DirectoryPackageMismatch struct{}
+
+var (
+	DirectoryPackageMismatchFixer = &DirectoryPackageMismatch{}
+	// For now, just handle the "normal" set of characters, plus hyphens.
+	// We can broaden this later, but we should avoid characters that may have
+	// special meaning in files and directories.
+	regularName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_-]*$`)
+)
 
 func (*DirectoryPackageMismatch) Name() string {
 	return "directory-package-mismatch"
 }
-
-// For now, just handle the "normal" set of characters, plus hyphens.
-// We can broaden this later, but we should avoid characters that may have
-// special meaning in files and directories.
-var regularName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_-]*$`)
 
 // Fix moves a file to the correct directory based on the package name, and relative to the base
 // directory provided in opts. If the file is already in the correct directory, no action is taken.

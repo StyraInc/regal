@@ -24,15 +24,15 @@ import (
 	_ "github.com/open-policy-agent/regal/pkg/builtins/regal"
 )
 
-var (
-	OPACapabilities = sync.OnceValue(opaCapabilities)
-	Capabilities    = sync.OnceValue(capabilities)
-)
-
 type readWriteCloser struct {
 	in  io.ReadCloser
 	out io.WriteCloser
 }
+
+var (
+	OPACapabilities = sync.OnceValue(opaCapabilities)
+	Capabilities    = sync.OnceValue(capabilities)
+)
 
 func NewReadWriteCloser(in io.ReadCloser, out io.WriteCloser) readWriteCloser {
 	return readWriteCloser{in: in, out: out}
@@ -114,6 +114,14 @@ func ExcludeTestLegacyFilter() ofilter.LoaderFilter {
 			// more polished to deal with this for the time being.
 			info.Name() != "todo_test.rego"
 	}
+}
+
+func Dir(path string) string {
+	if IsDir(path) {
+		return path
+	}
+
+	return filepath.Dir(path)
 }
 
 func IsDir(path string) bool {

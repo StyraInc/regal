@@ -10,23 +10,22 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/log"
 )
 
-type Watcher struct {
-	log    *log.Logger
-	Reload chan string
-	Drop   chan struct{}
+type (
+	Watcher struct {
+		log    *log.Logger
+		Reload chan string
+		Drop   chan struct{}
 
-	pathUpdates chan string
-
-	fsWatcher *fsnotify.Watcher
-
-	path          string
-	fsWatcherLock sync.Mutex
-}
-
-type WatcherOpts struct {
-	Logger *log.Logger
-	Path   string
-}
+		pathUpdates   chan string
+		fsWatcher     *fsnotify.Watcher
+		path          string
+		fsWatcherLock sync.Mutex
+	}
+	WatcherOpts struct {
+		Logger *log.Logger
+		Path   string
+	}
+)
 
 func NewWatcher(opts *WatcherOpts) *Watcher {
 	w := &Watcher{

@@ -11,14 +11,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/debug"
 )
 
-var (
-	// DefaultHandler is the default implementation of Handler that returns an error
-	// to indicate no evaluate handler is set, hinting that the DAP is not connected to a language server.
-	DefaultHandler = fallback{}
-
-	errNoEvalHandler = errors.New("no evaluate handler set (DAP not connected to language server?)")
-)
-
 type (
 	// Request is a type alias for [*godap.EvaluateRequest] to simplify the interface definition.
 	Request = *godap.EvaluateRequest
@@ -30,6 +22,14 @@ type (
 	}
 
 	fallback struct{}
+)
+
+var (
+	// DefaultHandler is the default implementation of Handler that returns an error
+	// to indicate no evaluate handler is set, hinting that the DAP is not connected to a language server.
+	DefaultHandler = fallback{}
+
+	errNoEvalHandler = errors.New("no evaluate handler set (DAP not connected to language server?)")
 )
 
 // NewResponse creates a new EvaluateResponse with the given body.

@@ -16,21 +16,22 @@ import (
 	rutil "github.com/open-policy-agent/regal/internal/util"
 )
 
-// Input represents the input for a linter evaluation.
-type Input struct {
-	// FileContent carries the string contents of each file
-	FileContent map[string]string
-	// Modules is the set of modules to lint.
-	Modules map[string]*ast.Module
-	// FileNames is used to maintain consistent order between runs.
-	FileNames []string
-}
-
-type regoFile struct {
-	name   string
-	parsed *ast.Module
-	raw    []byte
-}
+type (
+	// Input represents the input for a linter evaluation.
+	Input struct {
+		// FileContent carries the string contents of each file
+		FileContent map[string]string
+		// Modules is the set of modules to lint.
+		Modules map[string]*ast.Module
+		// FileNames is used to maintain consistent order between runs.
+		FileNames []string
+	}
+	regoFile struct {
+		name   string
+		parsed *ast.Module
+		raw    []byte
+	}
+)
 
 // NewInput creates a new Input from a set of modules.
 func NewInput(fileContent map[string]string, modules map[string]*ast.Module) Input {

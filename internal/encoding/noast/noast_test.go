@@ -168,10 +168,6 @@ func TestEncodeObjectNonStringKeys(t *testing.T) {
 	}
 }
 
-func init() {
-	ast.InternStringTerm("a", "b", "b", "c", "d", "e", "f", "nested", "object", "two", "interned")
-}
-
 // as found in OPA's cmd/eval.go
 func opaDecodeToValue(bs []byte) (value ast.Value, err error) {
 	var input any
@@ -180,4 +176,8 @@ func opaDecodeToValue(bs []byte) (value ast.Value, err error) {
 	}
 
 	return value, err
+}
+
+func init() {
+	ast.InternStringTerm("a", "b", "b", "c", "d", "e", "f", "nested", "object", "two", "interned")
 }

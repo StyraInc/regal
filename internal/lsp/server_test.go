@@ -25,6 +25,8 @@ import (
 	"github.com/open-policy-agent/regal/internal/util"
 )
 
+type receivedMessagesMap map[string]chan []string
+
 const (
 	mainRegoFileName = "/main.rego"
 	// defaultTimeout is set based on the investigation done as part of
@@ -36,8 +38,6 @@ const (
 	// state changes. Smaller value means a faster happy path.
 	testPollInterval = 100 * time.Millisecond
 )
-
-type receivedMessagesMap map[string]chan []string
 
 // determineTimeout returns a timeout duration based on whether
 // the test suite is running with race detection, if so, a more permissive
@@ -60,8 +60,7 @@ func determineTimeout() time.Duration {
 func drainMessages[T any](ch chan T) {
 	for {
 		select {
-		case <-ch:
-			// Keep draining
+		case <-ch: // Keep draining
 		default:
 			return
 		}
@@ -137,8 +136,7 @@ func createAndInitServerWithClientName(
 
 		// Close the pipes to make jsonrpc2's readMessages goroutine hit a
 		// read error and exit its loop.
-		_ = netConnClient.Close()
-		_ = netConnServer.Close()
+		_, _ = netConnClient.Close(), netConnServer.Close()
 
 		// Wait for readMessages to fully exit before calling conn.Close().
 		// conn.Close() closes pending call.done channels; if readMessages
@@ -147,8 +145,7 @@ func createAndInitServerWithClientName(
 		<-connServer.DisconnectNotify()
 		<-connClient.DisconnectNotify()
 
-		_ = connServer.Close()
-		_ = connClient.Close()
+		_, _ = connServer.Close(), connClient.Close()
 	})
 
 	ls.SetConn(connServer)

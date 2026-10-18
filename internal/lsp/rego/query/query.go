@@ -23,6 +23,21 @@ import (
 	_ "github.com/open-policy-agent/regal/pkg/builtins"
 )
 
+type (
+	Cache struct {
+		prepared *concurrent.Map[string, *Prepared]
+	}
+	Prepared struct {
+		body     ast.Body
+		prepared *rego.PreparedEvalQuery
+		store    storage.Store
+	}
+	schemaResolver struct {
+		value ast.Value
+	}
+	regoOptions = []func(*rego.Rego)
+)
+
 const (
 	RuleHeadLocations = "data.regal.ast.rule_head_locations"
 	MainEval          = "data.regal.lsp.main.eval"
@@ -39,23 +54,28 @@ var (
 
 	genJSONValue    = func(term *ast.Term, _ *rego.EvalContext) (any, error) { return term.Value, nil }
 	StderrPrintHook = topdown.NewPrintHook(os.Stderr)
-)
 
-type (
-	Cache struct {
-		prepared *concurrent.Map[string, *Prepared]
-	}
+	schemaResolvers = sync.OnceValue(func() (resolvers []func(*rego.Rego)) {
+		ss := compile.RegalSchemaSet()
+		added := util.NewSet[string]()
 
-	Prepared struct {
-		body     ast.Body
-		prepared *rego.PreparedEvalQuery
-		store    storage.Store
-	}
+		// Find all schema references in the bundle and add the schemas to the base cache.
+		for _, module := range rbundle.Loaded().Modules {
+			for _, annos := range module.Parsed.Annotations {
+				for _, s := range annos.Schemas {
+					if len(s.Schema) != 0 && !added.Contains(s.Schema.String()) {
+						resolvers = append(resolvers, rego.Resolver(
+							ast.DefaultRootRef.Extend(s.Schema),
+							schemaResolver{value: ast.MustInterfaceToValue(ss.Get(s.Schema))},
+						))
+						added.Add(s.Schema.String())
+					}
+				}
+			}
+		}
 
-	schemaResolver struct {
-		value ast.Value
-	}
-	regoOptions = []func(*rego.Rego)
+		return resolvers
+	})
 )
 
 func SchemaResolvers() []func(*rego.Rego) {
@@ -195,28 +215,6 @@ func prepareQueryArgs(
 
 	return args, txn
 }
-
-var schemaResolvers = sync.OnceValue(func() (resolvers []func(*rego.Rego)) {
-	ss := compile.RegalSchemaSet()
-	added := util.NewSet[string]()
-
-	// Find all schema references in the bundle and add the schemas to the base cache.
-	for _, module := range rbundle.Loaded().Modules {
-		for _, annos := range module.Parsed.Annotations {
-			for _, s := range annos.Schemas {
-				if len(s.Schema) != 0 && !added.Contains(s.Schema.String()) {
-					resolvers = append(resolvers, rego.Resolver(
-						ast.DefaultRootRef.Extend(s.Schema),
-						schemaResolver{value: ast.MustInterfaceToValue(ss.Get(s.Schema))},
-					))
-					added.Add(s.Schema.String())
-				}
-			}
-		}
-	}
-
-	return resolvers
-})
 
 // Eval implements the resolver.Resolver interface to resolve schemas from annotations at runtime.
 func (sr schemaResolver) Eval(context.Context, resolver.Input) (resolver.Result, error) {

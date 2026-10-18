@@ -8,6 +8,17 @@ import (
 	opaversion "github.com/open-policy-agent/opa/v1/version"
 )
 
+// Info wraps the various version metadata values and provides a means of marshalling as JSON or pretty string.
+type Info struct {
+	Version    string `json:"version"`
+	GoVersion  string `json:"go_version"`
+	OPAVersion string `json:"opa_version"`
+	Platform   string `json:"platform"`
+	Commit     string `json:"commit"`
+	Timestamp  string `json:"timestamp"`
+	Hostname   string `json:"hostname"`
+}
+
 const platform = runtime.GOOS + "/" + runtime.GOARCH
 
 // Values injected at build time using -ldflags.
@@ -20,17 +31,6 @@ var (
 	// The version of Go Regal was built with.
 	goVersion = runtime.Version()
 )
-
-// Info wraps the various version metadata values and provides a means of marshalling as JSON or pretty string.
-type Info struct {
-	Version    string `json:"version"`
-	GoVersion  string `json:"go_version"`
-	OPAVersion string `json:"opa_version"`
-	Platform   string `json:"platform"`
-	Commit     string `json:"commit"`
-	Timestamp  string `json:"timestamp"`
-	Hostname   string `json:"hostname"`
-}
 
 func (vi Info) String() string {
 	return strings.Join(

@@ -143,10 +143,13 @@ func SafeCopy(b *bundle.Bundle) *bundle.Bundle {
 	}
 
 	var dataCopy map[string]any
+
 	if b.Data != nil {
 		var x any = b.Data
 		if err := util.RoundTripFast(&x); err == nil && x != nil {
-			dataCopy = x.(map[string]any)
+			if m, ok := x.(map[string]any); ok {
+				dataCopy = m
+			}
 		}
 	}
 
@@ -171,4 +174,3 @@ func SafeCopy(b *bundle.Bundle) *bundle.Bundle {
 		WasmModules: slices.Clone(b.WasmModules),
 	}
 }
-

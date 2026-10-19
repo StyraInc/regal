@@ -141,6 +141,7 @@ func (l *LanguageServer) StartCommandWorker(ctx context.Context) {
 
 				if err != nil {
 					l.log.Message("command failed: %s", err)
+
 					if w := l.Window(); w != nil {
 						w.ShowMessage(ctx, types.ErrorMessage, err.Error())
 					}
@@ -476,6 +477,7 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 		if w := l.Window(); w != nil {
 			w.ShowDocument(rpcCtx, workspace.URI(filename), false)
 		}
+
 		rpcCancel()
 	}
 
@@ -492,6 +494,7 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 				if w := l.Window(); w != nil {
 					w.ShowDocument(rpcCtx, workspace.URI(planFile), false)
 				}
+
 				rpcCancel()
 			}
 		}

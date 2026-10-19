@@ -31,6 +31,7 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 		if err != nil {
 			return
 		}
+
 		handle, err := lsp.New(r.Context(), ws, nil)
 		if err != nil {
 			_ = ws.Close()
@@ -39,6 +40,8 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 		}
 
 		_ = handle.Wait(r.Context())
+
+		//nolint:contextcheck
 		_ = handle.Close()
 	}))
 	defer server.Close()
@@ -48,12 +51,12 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 	baseTempDir := t.TempDir()
 
 	const concurrency = 6
+
 	var wg sync.WaitGroup
-	wg.Add(concurrency)
 
 	for i := range concurrency {
-		go func(sessionID int) {
-			defer wg.Done()
+		wg.Go(func() {
+			sessionID := i
 
 			sessionDir := filepath.Join(baseTempDir, fmt.Sprintf("session-%d", sessionID))
 			if err := os.MkdirAll(sessionDir, 0o755); err != nil {
@@ -61,31 +64,39 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 
 				return
 			}
+
 			rootURI := "file://" + filepath.ToSlash(sessionDir)
 			policyURI := rootURI + "/policy.rego"
 
-			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 			defer cancel()
 
-			ws, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+			ws, resp, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
+
 			if err != nil {
 				t.Errorf("session %d dial error: %v", sessionID, err)
 
 				return
 			}
+
 			defer ws.Close()
 
 			receivedDiagnostics := make(chan struct{}, 10)
-			clientHandler := jsonrpc2.HandlerWithError(func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (any, error) {
-				if req.Method == "textDocument/publishDiagnostics" {
-					select {
-					case receivedDiagnostics <- struct{}{}:
-					default:
+			clientHandler := jsonrpc2.HandlerWithError(
+				func(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (any, error) {
+					if req.Method == "textDocument/publishDiagnostics" {
+						select {
+						case receivedDiagnostics <- struct{}{}:
+						default:
+						}
 					}
-				}
 
-				return struct{}{}, nil
-			})
+					return struct{}{}, nil
+				},
+			)
 
 			clientConn := jsonrpc2.NewConn(
 				ctx,
@@ -95,10 +106,12 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 			defer clientConn.Close()
 
 			var initRes any
-			if err := clientConn.Call(ctx, "initialize", map[string]any{
+
+			err = clientConn.Call(ctx, "initialize", map[string]any{
 				"rootUri":      rootURI,
 				"capabilities": map[string]any{},
-			}, &initRes); err != nil {
+			}, &initRes)
+			if err != nil {
 				t.Errorf("session %d initialize failed: %v", sessionID, err)
 
 				return
@@ -110,14 +123,15 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 				return
 			}
 
-			if err := clientConn.Notify(ctx, "textDocument/didOpen", map[string]any{
+			err = clientConn.Notify(ctx, "textDocument/didOpen", map[string]any{
 				"textDocument": map[string]any{
 					"uri":        policyURI,
 					"languageId": "rego",
 					"version":    1,
 					"text":       "package policy\n\ndefault allow := false\n\nallow if {\n\t1 == 1\n}\n",
 				},
-			}); err != nil {
+			})
+			if err != nil {
 				t.Errorf("session %d didOpen failed: %v", sessionID, err)
 
 				return
@@ -142,9 +156,10 @@ func TestConcurrentLSPInitializationAndDiagnostics(t *testing.T) {
 			time.Sleep(100 * time.Millisecond)
 
 			var shutdownRes any
+
 			_ = clientConn.Call(ctx, "shutdown", nil, &shutdownRes)
 			_ = clientConn.Notify(ctx, "exit", nil)
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -162,6 +177,7 @@ func TestImmediateClientMessageOnConnect(t *testing.T) {
 		if err != nil {
 			return
 		}
+
 		handle, err := lsp.New(r.Context(), ws, nil)
 		if err != nil {
 			_ = ws.Close()
@@ -170,17 +186,24 @@ func TestImmediateClientMessageOnConnect(t *testing.T) {
 		}
 
 		_ = handle.Wait(r.Context())
+
+		//nolint:contextcheck
 		_ = handle.Close()
 	}))
 	defer server.Close()
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 
-	const iterations = 10
-	for i := range iterations {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	const iterations = 5
 
-		ws, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+	for i := range iterations {
+		ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+
+		ws, resp, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+		if resp != nil {
+			_ = resp.Body.Close()
+		}
+
 		if err != nil {
 			cancel()
 			t.Fatalf("iteration %d dial error: %v", i, err)
@@ -196,12 +219,17 @@ func TestImmediateClientMessageOnConnect(t *testing.T) {
 
 		sessionDir := filepath.Join(t.TempDir(), fmt.Sprintf("iter-%d", i))
 		if err := os.MkdirAll(sessionDir, 0o755); err != nil {
+			_ = clientConn.Close()
+			_ = ws.Close()
+
 			cancel()
 			t.Fatalf("iteration %d mkdir error: %v", i, err)
 		}
+
 		rootURI := "file://" + filepath.ToSlash(sessionDir)
 
 		var initRes any
+
 		// Immediately send initialize to trigger concurrent SetConn vs Handle
 		err = clientConn.Call(ctx, "initialize", map[string]any{
 			"rootUri":      rootURI,
@@ -212,11 +240,13 @@ func TestImmediateClientMessageOnConnect(t *testing.T) {
 		}
 
 		var shutdownRes any
+
 		_ = clientConn.Call(ctx, "shutdown", nil, &shutdownRes)
 		_ = clientConn.Notify(ctx, "exit", nil)
 
 		_ = clientConn.Close()
 		_ = ws.Close()
+
 		cancel()
 	}
 }

@@ -323,6 +323,7 @@ func (l *LanguageServer) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *j
 		if c == nil {
 			c = l.Conn()
 		}
+
 		if c != nil {
 			if err := c.Close(); err != nil {
 				return nil, fmt.Errorf("failed to close connection: %w", err)

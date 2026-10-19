@@ -38,6 +38,8 @@ rules:
       level: error
     redundant-loop-count:
       level: error
+    rule-assignment-conflict:
+      level: error
     rule-assigns-default:
       level: error
     rule-named-if:

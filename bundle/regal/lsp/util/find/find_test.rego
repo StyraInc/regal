@@ -52,6 +52,36 @@ import data.alpha["be-ta"].gamma`
 	ast.ref_static_to_string(imp.path.value) == exp_path
 }
 
+test_import_alias_at_position[tdp.params.position] if {
+	policy := `package p
+import data.foo.bar as baz
+import data.qux`
+
+	module := regal.parse_module("p.rego", policy)
+
+	some [tdp, exp_alias] in [
+		[text_document_position(1, 26), "baz"],
+		[text_document_position(1, 24), "baz"],
+	]
+
+	imp := find.import_alias_at_position
+		with input as object.union(tdp, {"regal": {"file": {"lines": split(policy, "\n")}}})
+		with data.workspace.parsed["file:///p.rego"] as module
+
+	imp.alias == exp_alias
+}
+
+test_import_alias_at_position_not_on_alias if {
+	policy := `package p
+import data.foo.bar as baz`
+
+	module := regal.parse_module("p.rego", policy)
+
+	not find.import_alias_at_position
+		with input as object.union(text_document_position(1, 10), {"regal": {"file": {"lines": split(policy, "\n")}}})
+		with data.workspace.parsed["file:///p.rego"] as module
+}
+
 text_document_position(line, character) := {"params": {
 	"textDocument": {"uri": "file:///p.rego"},
 	"position": {

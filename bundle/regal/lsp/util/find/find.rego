@@ -53,6 +53,28 @@ import_at_position := imp if {
 
 # METADATA
 # description: |
+#   find the import statement at input.params.position, if the position is on its alias.
+#   The alias has no location in the AST, so it is found in the text following the import path.
+# schemas:
+#   - input.params: schema.regal.lsp.textdocumentposition
+import_alias_at_position := imp if {
+	some imp in data.workspace.parsed[input.params.textDocument.uri].imports
+
+	imp.alias
+
+	path_end := range.parse(imp.path.location).end
+
+	input.params.position.line == path_end.line
+
+	rest := substring(input.regal.file.lines[path_end.line], path_end.character, -1)
+	start := path_end.character + count(regex.find_n(`^\s+as\s+`, rest, 1)[0])
+
+	input.params.position.character >= start
+	input.params.position.character <= start + count(imp.alias)
+}
+
+# METADATA
+# description: |
 #   find the `some`-declared variable at the given position, if any.
 # schemas:
 #   - input.params: schema.regal.lsp.textdocumentposition

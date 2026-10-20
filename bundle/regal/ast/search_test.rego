@@ -139,3 +139,9 @@ test_logical_operand_locations if {
 test_logical_operand_locations_none_found if {
 	ast.logical_operand_locations == {} with input as ast.policy(`r if input.a == 1`)
 }
+
+test_found_var_terms_includes_ref_heads if {
+	vars := ast.found.var_terms[0] with input as ast.policy("r := count(x) + y.z")
+
+	{var.value | some var in vars} == {"r", "plus", "count", "x", "y"}
+}

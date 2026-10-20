@@ -195,3 +195,18 @@ r := result if {
 		{"uri": "file:///p.rego", "range": {"start": {"line": 5, "character": 2}, "end": {"line": 5, "character": 3}}},
 	}
 }
+
+test_references_arg_from_use_in_rule_head if {
+	policy := `package p
+
+fn(x) := x.y`
+
+	refs := references.result.response with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 2, "character": 9}
+		with input.regal.file.lines as split(policy, "\n")
+
+	refs == {
+		{"uri": "file:///p.rego", "range": {"start": {"line": 2, "character": 9}, "end": {"line": 2, "character": 10}}},
+	}
+}

@@ -22,6 +22,7 @@ greet(name) := msg if {
 		with input.params.textDocument.uri as "file:///a.rego"
 		with input.params.position as {"line": 2, "character": 6}
 		with input.regal.file.lines as split(policy_a, "\n")
+		with input.params.context as {"includeDeclaration": true}
 
 	refs == {
 		{"uri": "file:///a.rego", "range": {"start": {"line": 2, "character": 6}, "end": {"line": 2, "character": 10}}},
@@ -50,6 +51,7 @@ other_rule contains x if {
 		with input.params.textDocument.uri as "file:///p.rego"
 		with input.params.position as {"line": 3, "character": 6}
 		with input.regal.file.lines as split(policy, "\n")
+		with input.params.context as {"includeDeclaration": true}
 
 	refs == {
 		{"uri": "file:///p.rego", "range": {"start": {"line": 3, "character": 6}, "end": {"line": 3, "character": 10}}},
@@ -85,6 +87,7 @@ r if {
 		with input.params.textDocument.uri as "file:///p.rego"
 		with input.params.position as {"line": 3, "character": 7}
 		with input.regal.file.lines as split(policy, "\n")
+		with input.params.context as {"includeDeclaration": true}
 
 	refs == {
 		{"uri": "file:///p.rego", "range": {"start": {"line": 3, "character": 7}, "end": {"line": 3, "character": 8}}},
@@ -106,10 +109,89 @@ r := result if {
 		with input.params.textDocument.uri as "file:///p.rego"
 		with input.params.position as {"line": 4, "character": 7}
 		with input.regal.file.lines as split(policy, "\n")
+		with input.params.context as {"includeDeclaration": true}
 
 	refs == {
 		{"uri": "file:///p.rego", "range": {"start": {"line": 3, "character": 12}, "end": {"line": 3, "character": 13}}},
 		{"uri": "file:///p.rego", "range": {"start": {"line": 4, "character": 7}, "end": {"line": 4, "character": 8}}},
+		{"uri": "file:///p.rego", "range": {"start": {"line": 5, "character": 2}, "end": {"line": 5, "character": 3}}},
+	}
+}
+
+test_references_arg_without_declaration_by_default if {
+	policy := `package p
+
+greet(name) := msg if {
+	msg := sprintf("hello, %s", [name])
+}`
+
+	refs := references.result.response with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 2, "character": 6}
+		with input.regal.file.lines as split(policy, "\n")
+
+	refs == {
+		{"uri": "file:///p.rego", "range": {"start": {"line": 3, "character": 30}, "end": {"line": 3, "character": 34}}},
+	}
+}
+
+test_references_some_var_without_declaration_when_false if {
+	policy := `package p
+
+list_admins contains user.name if {
+	some user in input.users
+	user.role == "admin"
+}`
+
+	refs := references.result.response with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 3, "character": 6}
+		with input.regal.file.lines as split(policy, "\n")
+		with input.params.context as {"includeDeclaration": false}
+
+	refs == {
+		{"uri": "file:///p.rego", "range": {"start": {"line": 2, "character": 21}, "end": {"line": 2, "character": 25}}},
+		{"uri": "file:///p.rego", "range": {"start": {"line": 4, "character": 1}, "end": {"line": 4, "character": 5}}},
+	}
+}
+
+test_references_every_var_without_declaration_by_default if {
+	policy := `package p
+
+r if {
+	every k, v in input.items {
+		k > 0
+		v.active
+	}
+}`
+
+	refs := references.result.response with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 3, "character": 7}
+		with input.regal.file.lines as split(policy, "\n")
+
+	refs == {
+		{"uri": "file:///p.rego", "range": {"start": {"line": 4, "character": 2}, "end": {"line": 4, "character": 3}}},
+	}
+}
+
+test_references_comprehension_var_without_declaration_by_default if {
+	policy := `package p
+
+r := result if {
+	result := [x |
+		some x in input.items
+		x > 0
+	]
+}`
+
+	refs := references.result.response with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 4, "character": 7}
+		with input.regal.file.lines as split(policy, "\n")
+
+	refs == {
+		{"uri": "file:///p.rego", "range": {"start": {"line": 3, "character": 12}, "end": {"line": 3, "character": 13}}},
 		{"uri": "file:///p.rego", "range": {"start": {"line": 5, "character": 2}, "end": {"line": 5, "character": 3}}},
 	}
 }

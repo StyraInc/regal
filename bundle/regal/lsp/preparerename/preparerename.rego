@@ -5,6 +5,7 @@
 #   - input.params:         schema.regal.lsp.textdocumentposition
 package regal.lsp.preparerename
 
+import data.regal.ast
 import data.regal.lsp.util.find
 import data.regal.lsp.util.range
 
@@ -12,7 +13,14 @@ import data.regal.lsp.util.range
 # entrypoint: true
 default result["response"] := null
 
-result["response"] := _response_for(arg) if [arg, _] := find.arg_at_position
+result["response"] := _response_for(var) if {
+	[arg, rule_index] := find.arg_at_position
+
+	some var in ast.found.var_terms[rule_index]
+
+	var.value == arg.value
+	range.contains_position(range.parse(var.location), input.params.position)
+}
 
 result["response"] := _response_for(var) if [var, _] := find.some_var_at_position
 

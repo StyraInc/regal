@@ -23,6 +23,7 @@ greet(name) := msg if {
 		with input.params.position as {"line": 2, "character": 6}
 		with input.params.newName as "user"
 		with input.regal.file.lines as split(policy_a, "\n")
+		with input.method as "textDocument/rename"
 
 	resp == {"changes": {
 		"file:///a.rego": {
@@ -51,6 +52,7 @@ list_admins contains admin if {
 		with input.params.position as {"line": 3, "character": 6}
 		with input.params.newName as "u"
 		with input.regal.file.lines as split(policy, "\n")
+		with input.method as "textDocument/rename"
 
 	resp == {"changes": {"file:///p.rego": {
 		{"newText": "u", "range": {"start": {"line": 3, "character": 6}, "end": {"line": 3, "character": 10}}},
@@ -69,6 +71,7 @@ foo := 42`
 		with input.params.position as {"line": 2, "character": 11}
 		with input.params.newName as "x"
 		with input.regal.file.lines as split(policy, "\n")
+		with input.method as "textDocument/rename"
 
 	resp == null
 }
@@ -88,6 +91,7 @@ r if {
 		with input.params.position as {"line": 3, "character": 7}
 		with input.params.newName as "key"
 		with input.regal.file.lines as split(policy, "\n")
+		with input.method as "textDocument/rename"
 
 	resp == {"changes": {"file:///p.rego": {
 		{"newText": "key", "range": {"start": {"line": 3, "character": 7}, "end": {"line": 3, "character": 8}}},
@@ -110,6 +114,7 @@ r := result if {
 		with input.params.position as {"line": 4, "character": 7}
 		with input.params.newName as "item"
 		with input.regal.file.lines as split(policy, "\n")
+		with input.method as "textDocument/rename"
 
 	resp == {"changes": {"file:///p.rego": {
 		{"newText": "item", "range": {"start": {"line": 3, "character": 12}, "end": {"line": 3, "character": 13}}},

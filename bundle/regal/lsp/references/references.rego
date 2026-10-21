@@ -6,6 +6,8 @@
 #   - input.params.context: {type: "object", properties: {includeDeclaration: {type: "boolean"}}}
 package regal.lsp.references
 
+import future.keywords.or
+
 import data.regal.ast
 import data.regal.lsp.util.find
 import data.regal.lsp.util.range
@@ -36,6 +38,7 @@ _arg_refs contains ref if {
 
 	value.type == "var"
 	value.value == arg.value
+	_include_declaration or not value in rule.head.args
 
 	ref := {
 		"uri": url,
@@ -51,6 +54,7 @@ _some_var_refs contains ref if {
 
 	value.type == "var"
 	value.value == var.value
+	_include_declaration or value != var
 
 	ref := {
 		"uri": input.params.textDocument.uri,
@@ -70,6 +74,7 @@ _every_var_refs contains ref if {
 
 	value.type == "var"
 	value.value == var.value
+	_include_declaration or value != var
 
 	ref := {
 		"uri": input.params.textDocument.uri,
@@ -90,12 +95,19 @@ _comprehension_var_refs contains ref if {
 	value.type == "var"
 	value.value == var.value
 	not startswith(value.value, "$")
+	_include_declaration or value != var
 
 	ref := {
 		"uri": input.params.textDocument.uri,
 		"range": range.parse(value.location),
 	}
 }
+
+default _include_declaration := false
+
+_include_declaration if input.params.context.includeDeclaration
+
+_include_declaration if input.method == "textDocument/rename"
 
 _has_arg_named(args, name) if {
 	some arg in args

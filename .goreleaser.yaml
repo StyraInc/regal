@@ -29,7 +29,6 @@ builds:
     goos:
       - darwin
     goarch:
-      - amd64
       - arm64
     tags:
       - regal_standalone

@@ -7,18 +7,12 @@
 package regal.lsp.rename
 
 import data.regal.lsp.references
-import data.regal.lsp.util.find
 
 # METADATA
 # entrypoint: true
 default result.response := null
 
-result.response := {"changes": _changes} if {
-	_changes != {}
-
-	not find.import_at_position
-	not find.import_alias_at_position
-}
+result.response := {"changes": _changes} if _changes != {}
 
 _changes[ref.uri] contains change if {
 	some ref in references.result.response

@@ -194,16 +194,6 @@ found.refs[rule_index] contains term if {
 }
 
 # METADATA
-# description: all var terms found in module, including the heads of refs
-found.var_terms[rule_index] contains value if {
-	some rule_index
-
-	walk(_rules[rule_index], [_, value])
-
-	value.type == "var"
-}
-
-# METADATA
 # description: all calls found in module
 found.calls[rule_index] contains value if {
 	some rule_index

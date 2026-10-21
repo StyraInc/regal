@@ -37,17 +37,6 @@ import (
 	_ "github.com/open-policy-agent/regal/pkg/builtins"
 )
 
-var (
-	emptyStringAnyMap       = make(map[string]any, 0)
-	emptyPrintOutput        = PrintOutput{}
-	emptyEvalResult         = EvalResult{}
-	workspaceBundleManifest = bundle.Manifest{
-		Roots:    &[]string{"workspace"}, // no data in this bundle so no roots are used, however, roots must be set
-		Metadata: map[string]any{"name": "workspace"},
-	}
-	regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
-)
-
 type (
 	EvalResult struct {
 		Value       ast.Value   `json:"value"`
@@ -94,6 +83,17 @@ type (
 		Opts  prepareOpts
 		Args  []func(*rego.Rego)
 	}
+)
+
+var (
+	emptyStringAnyMap       = make(map[string]any, 0)
+	emptyPrintOutput        = PrintOutput{}
+	emptyEvalResult         = EvalResult{}
+	workspaceBundleManifest = bundle.Manifest{
+		Roots:    &[]string{"workspace"}, // no data in this bundle so no roots are used, however, roots must be set
+		Metadata: map[string]any{"name": "workspace"},
+	}
+	regalEvalUseAsInputComment = regexp.MustCompile(`^\s*regal eval:\s*use-as-input`)
 )
 
 func (l *LanguageServer) handleEvalCommand(ctx context.Context, args types.CommandArgs) (err error) {

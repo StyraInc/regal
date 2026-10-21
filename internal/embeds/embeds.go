@@ -4,8 +4,9 @@ import (
 	"embed"
 )
 
-//go:embed templates
-var EmbedTemplatesFS embed.FS
-
-//go:embed schemas
-var SchemasFS embed.FS
+var (
+	//go:embed templates
+	EmbedTemplatesFS embed.FS
+	//go:embed schemas
+	SchemasFS embed.FS
+)

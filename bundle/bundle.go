@@ -15,6 +15,13 @@ import (
 	"github.com/open-policy-agent/regal/internal/mode"
 )
 
+type devMode struct {
+	bundlePath  string
+	bndl        *bundle.Bundle
+	mux         sync.RWMutex
+	subscribers []chan struct{}
+}
+
 // Bundle FS will include the tests as well, but since that has negligible impact on the size of the binary,
 // it's preferable to filter them out from the bundle than to e.g. create a separate directory for tests.
 var (
@@ -25,16 +32,10 @@ var (
 
 	//go:embed *
 	regalBundle embed.FS
+	compileMu   sync.Mutex
 
 	lastErrMsg = atomic.Pointer[string]{}
 )
-
-type devMode struct {
-	bundlePath  string
-	bndl        *bundle.Bundle
-	mux         sync.RWMutex
-	subscribers []chan struct{}
-}
 
 // SetPath sets the path of a Regal development bundle, and attempts to load it immediately.
 func (dm *devMode) SetPath(path string) {
@@ -123,8 +124,6 @@ func Loaded() *bundle.Bundle {
 
 	return Embedded()
 }
-
-var compileMu sync.Mutex
 
 // CompileLock synchronizes compilation of embedded modules across goroutines.
 func CompileLock() func() {

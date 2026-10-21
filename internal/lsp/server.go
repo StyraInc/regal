@@ -62,6 +62,88 @@ import (
 	"github.com/open-policy-agent/regal/pkg/version"
 )
 
+type (
+	LanguageServerOptions struct {
+		// Logger is the logger to use for the language server.
+		Logger *log.Logger
+
+		// WorkspaceDiagnosticsPoll, if set > 0 will cause a full workspace lint
+		// to run on this interval. This is intended to be used where eventing
+		// is not working, as expected. E.g. with a client that does not send
+		// changes or when running in extremely slow environments like GHA with
+		// the go race detector on. TODO, work out why this is required.
+		WorkspaceDiagnosticsPoll time.Duration
+
+		// FeatureFlags defines which custom features are enabled.
+		// If not provided, DefaultServerFeatureFlags() will be used.
+		FeatureFlags *types.ServerFeatureFlags
+	}
+	LanguageServer struct {
+		log          *log.Logger
+		featureFlags types.ServerFeatureFlags
+
+		regoStore storage.Store
+		connMu    sync.RWMutex
+		conn      *jsonrpc2.Conn
+		window    *window.Window
+
+		configWatcher               *lsconfig.Watcher
+		loadedConfig                *config.Config
+		loadedConfigLock            sync.RWMutex
+		loadedConfigAllRegoVersions *concurrent.Map[string, ast.RegoVersion]
+		loadedBuiltins              *concurrent.Map[string, map[string]*ast.Builtin]
+
+		cache       *cache.Cache
+		bundleCache *bundles.Cache
+		queryCache  *query.Cache
+
+		regoRouter *rego.Router
+
+		// initializationGate blocks workers until the initialized notification is received
+		initializationGate     chan struct{}
+		initializationGateOnce sync.Once
+
+		lintJobs         chan lintJob
+		templateFileJobs chan fileJob
+		testLocationJobs chan fileJob
+		prepareQueryJobs chan struct{}
+		commandRequest   chan types.ExecuteCommandParams
+
+		input *input.Manager
+
+		// templatingFiles tracks files currently being templated to ensure
+		// other updates are not processed while the file is being updated.
+		templatingFiles *concurrent.Map[string, bool]
+
+		webServer *web.Server
+
+		workspace                workspace.Workspace
+		workspaceDiagnosticsPoll time.Duration
+
+		// workersWg tracks all running worker goroutines to enable clean shutdown
+		workersWg sync.WaitGroup
+
+		// Flag used to suppress input.json prompt if user chooses to ignore it
+		supressInputPrompt bool
+	}
+	fileLoadFailure struct {
+		URI   string
+		Error error
+	}
+	// lintJob is sent to the lintJobs channel to trigger a linter run.
+	lintJob struct {
+		Reason string
+	}
+	fileJob struct {
+		Reason string
+		URI    string
+	}
+	fileToLoad struct {
+		uri  string
+		path string
+	}
+)
+
 const (
 	noInputFoundMsg = "No input.json/yaml file was found. " +
 		"This file is used to provide input data for rule evaluation. " +
@@ -99,21 +181,6 @@ var (
 	fixRedundantExistence     = &fixes.RedundantExistenceCheck{}
 )
 
-// lintJob is sent to the lintJobs channel to trigger a linter run.
-type lintJob struct {
-	Reason string
-}
-
-type fileJob struct {
-	Reason string
-	URI    string
-}
-
-type fileToLoad struct {
-	uri  string
-	path string
-}
-
 // DefaultServerFeatureFlags returns the default feature flags with all
 // custom features enabled.
 func DefaultServerFeatureFlags() *types.ServerFeatureFlags {
@@ -125,76 +192,6 @@ func DefaultServerFeatureFlags() *types.ServerFeatureFlags {
 		OPATestProvider:                  true,
 		TestCreationProvider:             true,
 	}
-}
-
-type LanguageServerOptions struct {
-	// Logger is the logger to use for the language server.
-	Logger *log.Logger
-
-	// WorkspaceDiagnosticsPoll, if set > 0 will cause a full workspace lint
-	// to run on this interval. This is intended to be used where eventing
-	// is not working, as expected. E.g. with a client that does not send
-	// changes or when running in extremely slow environments like GHA with
-	// the go race detector on. TODO, work out why this is required.
-	WorkspaceDiagnosticsPoll time.Duration
-
-	// FeatureFlags defines which custom features are enabled.
-	// If not provided, DefaultServerFeatureFlags() will be used.
-	FeatureFlags *types.ServerFeatureFlags
-}
-
-type LanguageServer struct {
-	log          *log.Logger
-	featureFlags types.ServerFeatureFlags
-
-	regoStore storage.Store
-	connMu    sync.RWMutex
-	conn      *jsonrpc2.Conn
-	window    *window.Window
-
-	configWatcher               *lsconfig.Watcher
-	loadedConfig                *config.Config
-	loadedConfigLock            sync.RWMutex
-	loadedConfigAllRegoVersions *concurrent.Map[string, ast.RegoVersion]
-	loadedBuiltins              *concurrent.Map[string, map[string]*ast.Builtin]
-
-	cache       *cache.Cache
-	bundleCache *bundles.Cache
-	queryCache  *query.Cache
-
-	regoRouter *rego.Router
-
-	// initializationGate blocks workers until the initialized notification is received
-	initializationGate     chan struct{}
-	initializationGateOnce sync.Once
-
-	lintJobs         chan lintJob
-	templateFileJobs chan fileJob
-	testLocationJobs chan fileJob
-	prepareQueryJobs chan struct{}
-	commandRequest   chan types.ExecuteCommandParams
-
-	input *input.Manager
-
-	// templatingFiles tracks files currently being templated to ensure
-	// other updates are not processed while the file is being updated.
-	templatingFiles *concurrent.Map[string, bool]
-
-	webServer *web.Server
-
-	workspace                workspace.Workspace
-	workspaceDiagnosticsPoll time.Duration
-
-	// workersWg tracks all running worker goroutines to enable clean shutdown
-	workersWg sync.WaitGroup
-
-	// Flag used to suppress input.json prompt if user chooses to ignore it
-	supressInputPrompt bool
-}
-
-type fileLoadFailure struct {
-	URI   string
-	Error error
 }
 
 func NewLanguageServer(ctx context.Context, opts *LanguageServerOptions) *LanguageServer {

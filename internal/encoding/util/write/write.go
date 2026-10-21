@@ -8,9 +8,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/util"
 )
 
-var locationKeyArr = [...]byte{'"', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', '"'}
-
 type marshalToFn[T any] func(*jsontext.Encoder, T) error
+
+var locationKeyArr = [...]byte{'"', 'l', 'o', 'c', 'a', 't', 'i', 'o', 'n', '"'}
 
 func ArrayField[T any](enc *jsontext.Encoder, name string, vals []T) error {
 	if len(vals) == 0 {

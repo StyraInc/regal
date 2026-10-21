@@ -24,14 +24,23 @@ import (
 	rutil "github.com/open-policy-agent/regal/internal/util"
 )
 
-// Cache is a struct that maintains a number of bundles in memory and
-// provides a way to refresh them when the source files change.
-type Cache struct {
-	log           *log.Logger
-	mu            sync.RWMutex
-	bundles       map[string]*cacheBundle
-	workspacePath string
-}
+type (
+	// Cache is a struct that maintains a number of bundles in memory and
+	// provides a way to refresh them when the source files change.
+	Cache struct {
+		log           *log.Logger
+		mu            sync.RWMutex
+		bundles       map[string]*cacheBundle
+		workspacePath string
+	}
+	// cacheBundle is an internal struct that holds a bundle.Bundle and the MD5
+	// hash of each source file in the bundle. Hashes are used to determine if
+	// the bundle should be reloaded.
+	cacheBundle struct {
+		sourceDigests map[string][]byte
+		bundle        bundle.Bundle
+	}
+)
 
 func NewCache(workspacePath string, logger *log.Logger) *Cache {
 	return &Cache{
@@ -39,14 +48,6 @@ func NewCache(workspacePath string, logger *log.Logger) *Cache {
 		bundles:       make(map[string]*cacheBundle),
 		log:           logger,
 	}
-}
-
-// cacheBundle is an internal struct that holds a bundle.Bundle and the MD5
-// hash of each source file in the bundle. Hashes are used to determine if
-// the bundle should be reloaded.
-type cacheBundle struct {
-	sourceDigests map[string][]byte
-	bundle        bundle.Bundle
 }
 
 // Refresh walks the workspace path and loads or refreshes any bundles that

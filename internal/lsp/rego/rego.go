@@ -16,22 +16,6 @@ import (
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
-var (
-	emptyResult           = rego.Result{}
-	errNoResults          = errors.New("no results returned from evaluation")
-	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
-	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
-)
-
-func init() {
-	ast.InternStringTerm(
-		// All keys from Code Actions
-		"identifier", "workspace_root_uri", "web_server_base_uri", "client", "params", "start", "end",
-		"textDocument", "context", "range", "uri", "diagnostics", "only", "triggerKind", "codeDescription",
-		"message", "severity", "source", "code", "data", "title", "command", "kind", "isPreferred",
-	)
-}
-
 type (
 	RuleHeads map[string][]*ast.Location
 
@@ -75,6 +59,22 @@ type (
 		ParseErrors              bool `json:"parse_errors"`
 	}
 )
+
+var (
+	emptyResult           = rego.Result{}
+	errNoResults          = errors.New("no results returned from evaluation")
+	errExcpectedOneResult = errors.New("expected exactly one result from evaluation")
+	errExcpectedOneExpr   = errors.New("expected exactly one expression in result")
+)
+
+func init() {
+	ast.InternStringTerm(
+		// All keys from Code Actions
+		"identifier", "workspace_root_uri", "web_server_base_uri", "client", "params", "start", "end",
+		"textDocument", "context", "range", "uri", "diagnostics", "only", "triggerKind", "codeDescription",
+		"message", "severity", "source", "code", "data", "title", "command", "kind", "isPreferred",
+	)
+}
 
 // AllRuleHeadLocations returns mapping of rules names to the head locations.
 func AllRuleHeadLocations(

@@ -14,10 +14,6 @@ import (
 	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
-func NewCompilerWithRegalBuiltins() *ast.Compiler {
-	return ast.NewCompiler().WithCapabilities(io.Capabilities())
-}
-
 // RegalSchemaSet returns a SchemaSet containing the Regal schemas embedded in the binary.
 // Currently only used by the test command. Should we want to expand the use of this later,
 // we'll probably want to only read the schemas relevant to the context.
@@ -42,3 +38,7 @@ var RegalSchemaSet = sync.OnceValue(func() *ast.SchemaSet {
 
 	return schemaSet
 })
+
+func NewCompilerWithRegalBuiltins() *ast.Compiler {
+	return ast.NewCompiler().WithCapabilities(io.Capabilities())
+}

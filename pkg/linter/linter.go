@@ -39,34 +39,49 @@ import (
 	_ "github.com/open-policy-agent/regal/pkg/builtins"
 )
 
-// Linter stores data to use for linting.
-type Linter struct {
-	printHook         print.Hook
-	metrics           metrics.Metrics
-	inputModules      *rules.Input
-	userConfig        *config.Config
-	combinedCfg       *config.Config
-	pathPrefix        string
-	customRuleError   error
-	inputPaths        []string
-	ruleBundles       []*bundle.Bundle
-	disable           []string
-	disableCategory   []string
-	enable            []string
-	enableCategory    []string
-	ignoreFiles       []string
-	customRuleModules []*ast.Module
-	useCollectQuery   bool
-	debugMode         bool
-	exportAggregates  bool
-	disableAll        bool
-	enableAll         bool
-	profiling         bool
-	instrumentation   bool
-	isPrepared        bool
+type (
+	// Linter stores data to use for linting.
+	Linter struct {
+		printHook         print.Hook
+		metrics           metrics.Metrics
+		inputModules      *rules.Input
+		userConfig        *config.Config
+		combinedCfg       *config.Config
+		pathPrefix        string
+		customRuleError   error
+		inputPaths        []string
+		ruleBundles       []*bundle.Bundle
+		disable           []string
+		disableCategory   []string
+		enable            []string
+		enableCategory    []string
+		ignoreFiles       []string
+		customRuleModules []*ast.Module
+		useCollectQuery   bool
+		debugMode         bool
+		exportAggregates  bool
+		disableAll        bool
+		enableAll         bool
+		profiling         bool
+		instrumentation   bool
+		isPrepared        bool
 
-	preparedQuery *ogre.Query
-}
+		preparedQuery *ogre.Query
+	}
+	determineRulesHandler struct {
+		ruleKeys []string
+	}
+	lintResultHandler struct {
+		results []*report.Report
+	}
+	prepareResultHandler struct {
+		stg storage.Store
+		txn storage.Transaction
+	}
+	aggregateResultHandler struct {
+		rep *report.Report
+	}
+)
 
 var (
 	eqVarValue      ast.Value = ast.Var("eq")
@@ -502,10 +517,6 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	return *regoReport, nil
 }
 
-type determineRulesHandler struct {
-	ruleKeys []string
-}
-
 func (h *determineRulesHandler) Handle(result ogre.Result) error {
 	enabled, ok := result.Value.(ast.Object)
 	if !ok {
@@ -614,11 +625,6 @@ func (l Linter) countSkippedFromNotices(ctx context.Context, r *report.Report) i
 	}
 
 	return rulesSkippedCounter
-}
-
-type prepareResultHandler struct {
-	stg storage.Store
-	txn storage.Transaction
 }
 
 func (h *prepareResultHandler) Handle(result ogre.Result) error {
@@ -809,10 +815,6 @@ func (l Linter) validate(conf *config.Config) error {
 	return nil
 }
 
-type lintResultHandler struct {
-	results []*report.Report
-}
-
 func (h *lintResultHandler) Handle(result ogre.Result) error {
 	r, err := report.FromQueryResult(result.Value, false)
 	if err != nil {
@@ -915,10 +917,6 @@ func (l Linter) lint(ctx context.Context, input rules.Input) (*report.Report, er
 	}
 
 	return regoReport, nil
-}
-
-type aggregateResultHandler struct {
-	rep *report.Report
 }
 
 func (h *aggregateResultHandler) Handle(result ogre.Result) (err error) {

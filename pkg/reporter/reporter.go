@@ -26,47 +26,42 @@ import (
 	"github.com/open-policy-agent/regal/pkg/report"
 )
 
-// Reporter releases linter reports in a format decided by the implementation.
-type Reporter interface {
-	// Publish releases a report to any appropriate target
-	Publish(context.Context, report.Report) error
-}
-
-// PrettyReporter is a Reporter for representing reports as tables.
-type PrettyReporter struct {
-	out io.Writer
-}
-
-// CompactReporter reports violations in a compact table.
-type CompactReporter struct {
-	out io.Writer
-}
-
-// JSONReporter reports violations as JSON.
-type JSONReporter struct {
-	out io.Writer
-}
-
-// GitHubReporter reports violations in a format suitable for GitHub Actions.
-type GitHubReporter struct {
-	out io.Writer
-}
-
-// FestiveReporter reports violations in a format suitable for the holidays.
-type FestiveReporter struct {
-	out io.Writer
-}
-
-// SarifReporter reports violations in the SARIF (https://sarifweb.azurewebsites.net/) format.
-type SarifReporter struct {
-	out io.Writer
-}
-
-// JUnitReporter reports violations in the JUnit XML format
-// (https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd).
-type JUnitReporter struct {
-	out io.Writer
-}
+type (
+	// Reporter releases linter reports in a format decided by the implementation.
+	Reporter interface {
+		// Publish releases a report to any appropriate target
+		Publish(context.Context, report.Report) error
+	}
+	// PrettyReporter is a Reporter for representing reports as tables.
+	PrettyReporter struct {
+		out io.Writer
+	}
+	// CompactReporter reports violations in a compact table.
+	CompactReporter struct {
+		out io.Writer
+	}
+	// JSONReporter reports violations as JSON.
+	JSONReporter struct {
+		out io.Writer
+	}
+	// GitHubReporter reports violations in a format suitable for GitHub Actions.
+	GitHubReporter struct {
+		out io.Writer
+	}
+	// FestiveReporter reports violations in a format suitable for the holidays.
+	FestiveReporter struct {
+		out io.Writer
+	}
+	// SarifReporter reports violations in the SARIF (https://sarifweb.azurewebsites.net/) format.
+	SarifReporter struct {
+		out io.Writer
+	}
+	// JUnitReporter reports violations in the JUnit XML format
+	// (https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd).
+	JUnitReporter struct {
+		out io.Writer
+	}
+)
 
 // NewPrettyReporter creates a new PrettyReporter.
 func NewPrettyReporter(out io.Writer) PrettyReporter {

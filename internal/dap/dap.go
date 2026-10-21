@@ -14,15 +14,16 @@ import (
 	"github.com/open-policy-agent/opa/v1/logging"
 )
 
-type MessageHandler func(ctx context.Context, request godap.Message) (bool, godap.ResponseMessage, error)
-
-type ProtocolManager struct {
-	inChan  chan godap.Message
-	outChan chan godap.Message
-	logger  logging.Logger
-	seq     int
-	seqLock sync.Mutex
-}
+type (
+	MessageHandler  func(ctx context.Context, request godap.Message) (bool, godap.ResponseMessage, error)
+	ProtocolManager struct {
+		inChan  chan godap.Message
+		outChan chan godap.Message
+		logger  logging.Logger
+		seq     int
+		seqLock sync.Mutex
+	}
+)
 
 func NewProtocolManager(logger logging.Logger) *ProtocolManager {
 	return &ProtocolManager{

@@ -24,6 +24,29 @@ import (
 	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
+type (
+	// diagnosticsRunOpts contains options for file and workspace linting.
+	diagnosticsRunOpts struct {
+		Cache            *cache.Cache
+		RegalConfig      *config.Config
+		WorkspaceRootURI string
+		UpdateForRules   []string
+		CustomRulesPath  string
+
+		// File-specific
+		FileURI string
+	}
+	// updateParseOpts contains options for updateParse function.
+	updateParseOpts struct {
+		Cache       *cache.Cache
+		Store       storage.Store
+		FileURI     string
+		Builtins    map[string]*ast.Builtin
+		RegoVersion ast.RegoVersion
+		Workspace   workspace.Workspace
+	}
+)
+
 var (
 	emptyDiagnostics = []types.Diagnostic{}
 
@@ -37,28 +60,6 @@ var (
 	strKeys       = [...]string{"regal/parse"}
 	regalParseKey = &strKeys[0]
 )
-
-// diagnosticsRunOpts contains options for file and workspace linting.
-type diagnosticsRunOpts struct {
-	Cache            *cache.Cache
-	RegalConfig      *config.Config
-	WorkspaceRootURI string
-	UpdateForRules   []string
-	CustomRulesPath  string
-
-	// File-specific
-	FileURI string
-}
-
-// updateParseOpts contains options for updateParse function.
-type updateParseOpts struct {
-	Cache       *cache.Cache
-	Store       storage.Store
-	FileURI     string
-	Builtins    map[string]*ast.Builtin
-	RegoVersion ast.RegoVersion
-	Workspace   workspace.Workspace
-}
 
 // updateParse updates the module cache with the latest parse result for a given URI,
 // if the module cannot be parsed, the parse errors are saved as diagnostics for the

@@ -10,11 +10,18 @@ import (
 	"github.com/open-policy-agent/regal/pkg/fixer/fixes"
 )
 
-// Reporter is responsible for outputting a fix report in a specific format.
-type Reporter interface {
-	Report(*Report) error
-	SetDryRun(bool)
-}
+type (
+	// Reporter is responsible for outputting a fix report in a specific format.
+	Reporter interface {
+		Report(*Report) error
+		SetDryRun(bool)
+	}
+	// PrettyReporter outputs a fix report in a human-readable format.
+	PrettyReporter struct {
+		outputWriter io.Writer
+		dryRun       bool
+	}
+)
 
 // ReporterForFormat returns a suitable Reporter for outputting a fix report in the given format.
 func ReporterForFormat(format string, outputWriter io.Writer) (Reporter, error) {
@@ -24,12 +31,6 @@ func ReporterForFormat(format string, outputWriter io.Writer) (Reporter, error) 
 	default:
 		return nil, fmt.Errorf("unsupported format %s", format)
 	}
-}
-
-// PrettyReporter outputs a fix report in a human-readable format.
-type PrettyReporter struct {
-	outputWriter io.Writer
-	dryRun       bool
 }
 
 func NewPrettyReporter(outputWriter io.Writer) *PrettyReporter {

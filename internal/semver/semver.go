@@ -10,9 +10,6 @@ import (
 	outil "github.com/open-policy-agent/opa/v1/util"
 )
 
-// reMetaIdentifier matches pre-release and metadata identifiers against the spec requirements.
-var reMetaIdentifier = regexp.MustCompile(`^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$`)
-
 // Version represents a parsed SemVer.
 //
 //nolint:tagliatelle
@@ -23,6 +20,9 @@ type Version struct {
 	PreRelease string `json:"PreRelease,omitempty"`
 	Metadata   string `json:"Metadata,omitempty"`
 }
+
+// reMetaIdentifier matches pre-release and metadata identifiers against the spec requirements.
+var reMetaIdentifier = regexp.MustCompile(`^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$`)
 
 // Parse constructs new semver Version from version string.
 func Parse(version string) (v Version, err error) {

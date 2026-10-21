@@ -19,6 +19,9 @@ import (
 	regal "github.com/open-policy-agent/regal/pkg/linter"
 )
 
+//go:embed testdata/*
+var testLintWithCustomEmbeddedRulesFS embed.FS
+
 func TestLintWithDefaultBundle(t *testing.T) {
 	t.Parallel()
 
@@ -224,9 +227,6 @@ func TestLintWithErrorInEnable(t *testing.T) {
 
 	testutil.ErrMustContain(err, "unknown rules: [foo]")(t)
 }
-
-//go:embed testdata/*
-var testLintWithCustomEmbeddedRulesFS embed.FS
 
 func TestLintWithCustomEmbeddedRules(t *testing.T) {
 	t.Parallel()

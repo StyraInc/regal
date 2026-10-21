@@ -10,8 +10,16 @@ import (
 	"strings"
 )
 
-// OpKind is used to denote the type of operation a line represents.
-type OpKind int
+type (
+	// OpKind is used to denote the type of operation a line represents.
+	OpKind    int
+	operation struct {
+		Content []string // content from b
+		Kind    OpKind
+		I1, I2  uint // indices of the line in a
+		J1      uint // indices of the line in b, J2 implied by len(Content)
+	}
+)
 
 const (
 	// Delete is the operation kind for a line that is present in the input
@@ -27,13 +35,6 @@ const (
 // Sources:
 // https://blog.jcoglan.com/2017/02/17/the-myers-diff-algorithm-part-3/
 // https://www.codeproject.com/Articles/42279/%2FArticles%2F42279%2FInvestigating-Myers-diff-algorithm-Part-1-of-2
-
-type operation struct {
-	Content []string // content from b
-	Kind    OpKind
-	I1, I2  uint // indices of the line in a
-	J1      uint // indices of the line in b, J2 implied by len(Content)
-}
 
 // operations returns the list of operations to convert a into b, consolidating
 // operations for multiple lines and not including equal lines.

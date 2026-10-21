@@ -6,15 +6,16 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 )
 
-type baseCache struct {
-	root *baseCacheElem
-	rwm  sync.RWMutex
-}
-
-type baseCacheElem struct {
-	value    ast.Value
-	children map[ast.Value]*baseCacheElem
-}
+type (
+	baseCache struct {
+		root *baseCacheElem
+		rwm  sync.RWMutex
+	}
+	baseCacheElem struct {
+		value    ast.Value
+		children map[ast.Value]*baseCacheElem
+	}
+)
 
 func NewBaseCache() *baseCache {
 	return &baseCache{

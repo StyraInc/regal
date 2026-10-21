@@ -24,21 +24,22 @@ import (
 	"github.com/open-policy-agent/regal/pkg/config"
 )
 
-type newRuleCommandParams struct {
-	type_     string // 'type' is a keyword
-	category  string
-	name      string
-	output    string
-	aggregate bool
-}
-
-type TemplateValues struct {
-	Category     string
-	NameOriginal string
-	Name         string
-	NameTest     string
-	FileName     string
-}
+type (
+	TemplateValues struct {
+		Category     string
+		NameOriginal string
+		Name         string
+		NameTest     string
+		FileName     string
+	}
+	newRuleCommandParams struct {
+		type_     string // 'type' is a keyword
+		category  string
+		name      string
+		output    string
+		aggregate bool
+	}
+)
 
 var (
 	categoryRegex = regexp.MustCompile(`^[a-z]+$`)

@@ -17,20 +17,21 @@ import (
 	"github.com/open-policy-agent/regal/pkg/report"
 )
 
-type OnConflictOperation string
+type (
+	OnConflictOperation string
+	// Fixer must be instantiated via NewFixer.
+	Fixer struct {
+		registeredFixes     []fixes.Fix
+		onConflictOperation OnConflictOperation
+		registeredRoots     []string
+		versionsMap         map[string]ast.RegoVersion
+	}
+)
 
 const (
 	OnConflictError  OnConflictOperation = "error"
 	OnConflictRename OnConflictOperation = "rename"
 )
-
-// Fixer must be instantiated via NewFixer.
-type Fixer struct {
-	registeredFixes     []fixes.Fix
-	onConflictOperation OnConflictOperation
-	registeredRoots     []string
-	versionsMap         map[string]ast.RegoVersion
-}
 
 // NewFixer instantiates a Fixer.
 func NewFixer() *Fixer {

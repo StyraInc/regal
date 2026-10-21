@@ -18,13 +18,24 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/input"
 )
 
-type TestModuleOptions struct {
-	Module        *ast.Module
-	AllModules    map[string]*ast.Module
-	WorkspacePath string
-	FileURI       string
-	InputManager  *input.Manager
-}
+type (
+	TestModuleOptions struct {
+		Module        *ast.Module
+		AllModules    map[string]*ast.Module
+		WorkspacePath string
+		FileURI       string
+		InputManager  *input.Manager
+	}
+	TestCreationOptions struct {
+		RuleName      string
+		PackagePath   string
+		WorkspacePath string
+		FileURI       string
+		Rule          *ast.Rule
+		Compiler      *ast.Compiler
+		InputManager  *input.Manager
+	}
+)
 
 func CreateTestModule(ctx context.Context, opts TestModuleOptions) (string, error) {
 	if len(opts.Module.Rules) == 0 {
@@ -81,16 +92,6 @@ func CreateTestModule(ctx context.Context, opts TestModuleOptions) (string, erro
 	}
 
 	return b.String(), errors.Join(ruleErrs...)
-}
-
-type TestCreationOptions struct {
-	RuleName      string
-	PackagePath   string
-	WorkspacePath string
-	FileURI       string
-	Rule          *ast.Rule
-	Compiler      *ast.Compiler
-	InputManager  *input.Manager
 }
 
 func analyzeDependencies(ctx context.Context, opts TestCreationOptions) ([]string, error) {

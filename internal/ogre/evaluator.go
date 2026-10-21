@@ -17,11 +17,6 @@ import (
 	_ "github.com/open-policy-agent/regal/pkg/builtins"
 )
 
-var (
-	errNoResultHandler = errors.New("result handler must be provided")
-	errUnpreparedQuery = errors.New("query must be prepared before eval")
-)
-
 type Evaluator struct {
 	txn           storage.Transaction
 	input         ast.Value
@@ -30,6 +25,11 @@ type Evaluator struct {
 	prepared      *Query
 	id            int64
 }
+
+var (
+	errNoResultHandler = errors.New("result handler must be provided")
+	errUnpreparedQuery = errors.New("query must be prepared before eval")
+)
 
 func (e *Evaluator) WithID(id int64) *Evaluator {
 	e.id = id

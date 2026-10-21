@@ -5,14 +5,15 @@ import (
 	"sync"
 )
 
-// Map provides a simple concurrent map implementation.
-type Map[K comparable, V any] struct {
-	m    map[K]V
-	murw sync.RWMutex
-}
-
-// ValueTransformer is a function that transforms a value in the map.
-type ValueTransformer[V any] func(V) V
+type (
+	// Map provides a simple concurrent map implementation.
+	Map[K comparable, V any] struct {
+		m    map[K]V
+		murw sync.RWMutex
+	}
+	// ValueTransformer is a function that transforms a value in the map.
+	ValueTransformer[V any] func(V) V
+)
 
 // MapOf creates a new concurrent map wrapping the given map.
 func MapOf[K comparable, V any](src map[K]V) *Map[K, V] {

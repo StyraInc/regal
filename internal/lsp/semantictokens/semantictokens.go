@@ -10,7 +10,22 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 )
 
-type TokenType = uint32
+type (
+	TokenType = uint32
+	Token     struct {
+		Line      uint32 `json:"line"`
+		Col       uint32 `json:"col"`
+		Length    uint32 `json:"length"`
+		Type      uint32 `json:"type"`
+		Modifiers uint32 `json:"modifiers"`
+	}
+	// SemanticTokensResult represents the structured result from the Rego query.
+	SemanticTokensResult struct {
+		PackageTokens []Token `json:"packages"`
+		ImportTokens  []Token `json:"imports"`
+		Vars          []Token `json:"vars"`
+	}
+)
 
 const (
 	Namespace TokenType = iota
@@ -18,21 +33,6 @@ const (
 	Import
 	Keyword
 )
-
-type Token struct {
-	Line      uint32 `json:"line"`
-	Col       uint32 `json:"col"`
-	Length    uint32 `json:"length"`
-	Type      uint32 `json:"type"`
-	Modifiers uint32 `json:"modifiers"`
-}
-
-// SemanticTokensResult represents the structured result from the Rego query.
-type SemanticTokensResult struct {
-	PackageTokens []Token `json:"packages"`
-	ImportTokens  []Token `json:"imports"`
-	Vars          []Token `json:"vars"`
-}
 
 func Full(result SemanticTokensResult) (*types.SemanticTokens, error) {
 	tokens := slices.Concat(result.PackageTokens, result.Vars, result.ImportTokens)

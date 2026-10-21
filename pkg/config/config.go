@@ -25,6 +25,73 @@ import (
 	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
+// The receiver types is a bit of a mess, but we can probably not change
+// these without breaking some integration. So this should be a 1.0 change.
+type (
+	Config struct {
+		// Defaults state is loaded from configuration under rules and so is not (un)marshalled
+		// in the same way.
+		Defaults        Defaults            `json:"-"                          yaml:"-"`
+		Rules           map[string]Category `json:"rules"                      yaml:"rules"`
+		Capabilities    *Capabilities       `json:"capabilities,omitempty"     yaml:"capabilities,omitempty"`
+		Features        *Features           `json:"features,omitempty"         yaml:"features,omitempty"`
+		Project         *Project            `json:"project,omitempty"          yaml:"project,omitempty"`
+		CapabilitiesURL string              `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
+		Ignore          Ignore              `json:"ignore,omitzero"            yaml:"ignore,omitempty"`
+	}
+	Root struct {
+		Path string
+		// Note that contrary to ast.RegoVersion, we'll only accept 0 or 1 here currently.
+		// This aligns with the Rego versioning scheme used in .manifest files, which is
+		// the alternative way to provide this for a specific directory.
+		RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
+	}
+	Project struct {
+		Roots *[]Root `json:"roots,omitempty" yaml:"roots,omitempty"`
+		// Set the Rego version for the whole project or workspace. Individual roots may override this.
+		RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
+	}
+	Category map[string]Rule
+	// Defaults is used to store information about global and category
+	// defaults for rules.
+	Defaults struct {
+		Categories map[string]Default
+		Global     Default
+	}
+	// Default represents global or category settings for rules,
+	// currently only the level is supported.
+	Default struct {
+		Level string `json:"level" yaml:"level"`
+	}
+	Features struct {
+		Remote *RemoteFeatures `json:"remote,omitempty" yaml:"remote,omitempty"`
+	}
+	RemoteFeatures struct {
+		CheckVersion bool `json:"check-version,omitempty" yaml:"check-version,omitempty"`
+	}
+	Ignore struct {
+		Files []string `json:"files,omitempty" yaml:"files,omitempty"`
+	}
+	ExtraAttributes map[string]any
+	Rule            struct { //nolint:recvcheck
+		Ignore *Ignore         `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+		Extra  ExtraAttributes `json:",inline"          yaml:",inline"` //nolint:revive
+		Level  string          `json:"level"`
+	}
+	Capabilities struct { //nolint:recvcheck
+		Builtins       map[string]*Builtin `json:"builtins"        yaml:"builtins"`
+		FutureKeywords []string            `json:"future_keywords" yaml:"future_keywords"`
+		Features       []string            `json:"features"        yaml:"features"`
+	}
+	Decl struct {
+		Result string   `json:"result" yaml:"result"`
+		Args   []string `json:"args"   yaml:"args"`
+	}
+	Builtin struct {
+		Decl Decl `json:"decl" yaml:"decl"`
+	}
+)
+
 const (
 	capabilitiesEngineOPA    = "opa"
 	capabilitiesEngineEOPA   = "eopa"
@@ -41,89 +108,6 @@ var (
 	})
 	OpaCapsForThisVersionInterned = sync.OnceValue(CapabilitiesForThisVersion)
 	opabuiltinCache               = concurrent.MapOf(make(map[string]*Builtin))
-)
-
-type (
-	// The receiver types is a bit of a mess, but we can probably not change
-	// these without breaking some integration. So this should be a 1.0 change.
-
-	Config struct {
-		// Defaults state is loaded from configuration under rules and so is not (un)marshalled
-		// in the same way.
-		Defaults        Defaults            `json:"-"                          yaml:"-"`
-		Rules           map[string]Category `json:"rules"                      yaml:"rules"`
-		Capabilities    *Capabilities       `json:"capabilities,omitempty"     yaml:"capabilities,omitempty"`
-		Features        *Features           `json:"features,omitempty"         yaml:"features,omitempty"`
-		Project         *Project            `json:"project,omitempty"          yaml:"project,omitempty"`
-		CapabilitiesURL string              `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
-		Ignore          Ignore              `json:"ignore,omitzero"            yaml:"ignore,omitempty"`
-	}
-
-	Root struct {
-		Path string
-		// Note that contrary to ast.RegoVersion, we'll only accept 0 or 1 here currently.
-		// This aligns with the Rego versioning scheme used in .manifest files, which is
-		// the alternative way to provide this for a specific directory.
-		RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
-	}
-
-	Project struct {
-		Roots *[]Root `json:"roots,omitempty" yaml:"roots,omitempty"`
-		// Set the Rego version for the whole project or workspace. Individual roots may override this.
-		RegoVersion *int `json:"rego-version,omitempty" yaml:"rego-version,omitempty"`
-	}
-
-	Category map[string]Rule
-
-	// Defaults is used to store information about global and category
-	// defaults for rules.
-	Defaults struct {
-		Categories map[string]Default
-		Global     Default
-	}
-
-	// Default represents global or category settings for rules,
-	// currently only the level is supported.
-	Default struct {
-		Level string `json:"level" yaml:"level"`
-	}
-
-	Features struct {
-		Remote *RemoteFeatures `json:"remote,omitempty" yaml:"remote,omitempty"`
-	}
-
-	RemoteFeatures struct {
-		CheckVersion bool `json:"check-version,omitempty" yaml:"check-version,omitempty"`
-	}
-
-	Ignore struct {
-		Files []string `json:"files,omitempty" yaml:"files,omitempty"`
-	}
-
-	ExtraAttributes map[string]any
-
-	//nolint:recvcheck
-	Rule struct {
-		Ignore *Ignore         `json:"ignore,omitempty" yaml:"ignore,omitempty"`
-		Extra  ExtraAttributes `json:",inline"          yaml:",inline"` //nolint:revive
-		Level  string          `json:"level"`
-	}
-
-	//nolint:recvcheck
-	Capabilities struct {
-		Builtins       map[string]*Builtin `json:"builtins"        yaml:"builtins"`
-		FutureKeywords []string            `json:"future_keywords" yaml:"future_keywords"`
-		Features       []string            `json:"features"        yaml:"features"`
-	}
-
-	Decl struct {
-		Result string   `json:"result" yaml:"result"`
-		Args   []string `json:"args"   yaml:"args"`
-	}
-
-	Builtin struct {
-		Decl Decl `json:"decl" yaml:"decl"`
-	}
 )
 
 func HasConfigSuffix(path string) bool {
@@ -188,13 +172,8 @@ func Find(path string) (*os.File, error) {
 // findUpwards searches for a file or directory matching the given name,
 // starting from the provided path and moving upwards.
 func findUpwards(path, name string, expectDir bool) (string, error) {
-	dir := path
-	if !rio.IsDir(path) {
-		dir = filepath.Dir(path)
-	}
-
-	// returns e.g. "C:" on windows, "" on other platforms
-	volume := filepath.VolumeName(dir)
+	dir := rio.Dir(path)
+	volume := filepath.VolumeName(dir) // "C:" on windows, "" on other platforms
 
 	for {
 		var searchPath string
@@ -419,36 +398,24 @@ func CapabilitiesForThisVersion() *Capabilities {
 }
 
 func (f *Features) IsZero() bool {
-	return f == nil || (f.Remote == nil)
+	return f == nil || f.Remote == nil
 }
 
 func GetPotentialRoots(paths ...string) ([]string, error) {
-	var err error
-
 	absDirPaths := make([]string, len(paths))
-
-	for i, path := range paths {
-		abs := path
-
-		if !filepath.IsAbs(abs) {
-			if abs, err = filepath.Abs(path); err != nil {
-				return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
-			}
-		}
-
-		if rio.IsDir(abs) {
-			absDirPaths[i] = abs
-		} else {
-			absDirPaths[i] = filepath.Dir(abs)
-		}
-	}
-
 	dirMap := util.NewSet[string]()
 
-	for _, dir := range absDirPaths {
-		brds, err := FindBundleRootDirectories(dir)
+	for i, path := range paths {
+		abs, err := filepath.Abs(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", dir, err)
+			return nil, fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+		}
+
+		absDirPaths[i] = rio.Dir(abs)
+
+		brds, err := FindBundleRootDirectories(absDirPaths[i])
+		if err != nil {
+			return nil, fmt.Errorf("failed to find bundle root directories in %s: %w", absDirPaths[i], err)
 		}
 
 		dirMap.Add(brds...)

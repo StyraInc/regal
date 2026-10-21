@@ -99,3 +99,21 @@ r := result if {
 		"range": {"start": {"line": 4, "character": 7}, "end": {"line": 4, "character": 8}},
 	}
 }
+
+test_preparerename_import_not_supported[name] if {
+	policy := `package p
+
+import data.pkgb as wow
+
+allow if wow.b == 1`
+
+	some name, character in {"path": 10, "alias": 21}
+
+	resp := preparerename.result.response
+		with data.workspace.parsed["file:///p.rego"] as regal.parse_module("p.rego", policy)
+		with input.params.textDocument.uri as "file:///p.rego"
+		with input.params.position as {"line": 2, "character": character}
+		with input.regal.file.lines as split(policy, "\n")
+
+	resp == null
+}

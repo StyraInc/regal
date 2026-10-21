@@ -44,3 +44,15 @@ test_imports_all_kewords_opa_1dot0[keyword] if {
 	ast.imports_keyword([], keyword) with input.regal.file.rego_version as "v1"
 		with data.regal.capabilities.is_opa_v1 as true
 }
+
+test_imported_identifier_last_path_element if {
+	module := ast.policy("import data.foo.bar")
+
+	ast.imported_identifier(module.imports[0]) == "bar"
+}
+
+test_imported_identifier_alias if {
+	module := ast.policy("import data.foo.bar as baz")
+
+	ast.imported_identifier(module.imports[0]) == "baz"
+}

@@ -15,7 +15,7 @@ imports := input.imports
 # description: |
 #   set of all names imported in the input module, meaning commonly the last part of any
 #   imported ref, like "bar" in "data.foo.bar", or an alias like "baz" in "data.foo.bar as baz".
-imported_identifiers contains _imported_identifier(imp) if {
+imported_identifiers contains imported_identifier(imp) if {
 	some imp in imports
 
 	imp.path.value[0].value in {"input", "data"}
@@ -35,7 +35,7 @@ resolved_imports[identifier] := paths[0] if {
 	paths := [path |
 		some imp in imports
 
-		_imported_identifier(imp) == identifier
+		imported_identifier(imp) == identifier
 
 		path := [term.value | some term in imp.path.value]
 	]
@@ -65,8 +65,13 @@ imports_keyword(imports, keyword) if {
 	input.regal.file.rego_version != "v0"
 } else if _has_keyword([term.value | term := imports[_].path.value[_]], keyword)
 
-_imported_identifier(imp) := imp.alias
-_imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
+# METADATA
+# description: |
+#   the name an import is referred to by, meaning its alias, or the last element of its path
+# scope: document
+imported_identifier(imp) := imp.alias
+
+imported_identifier(imp) := regal.last(imp.path.value).value if not imp.alias
 
 _has_keyword(["future", "keywords"], _)
 _has_keyword(["future", "keywords", "every"], "in")

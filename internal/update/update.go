@@ -23,11 +23,8 @@ import (
 
 const CheckVersionDisableEnvVar = "REGAL_DISABLE_VERSION_CHECK"
 
-var (
-	//go:embed update.rego
-	updateModule string
-	query        = ast.MustParseBody("result = data.update.check")
-)
+//go:embed update.rego
+var updateModule string
 
 type Options struct {
 	CurrentTime       time.Time
@@ -63,7 +60,7 @@ func CheckAndWarn(ctx context.Context, opts Options, w io.Writer) {
 	latestVersion, cacheIsStale := getLatestCachedVersionAndCheckStale(opts)
 	mod := map[string]*ast.Module{"update.rego": ast.MustParseModule(updateModule)}
 
-	q, err := ogre.New(query).WithModules(mod).Prepare(ctx)
+	q, err := ogre.New(ast.MustParseBody("result = data.update.check")).WithModules(mod).Prepare(ctx)
 	if err != nil {
 		if opts.Debug {
 			w.Write(fmt.Appendf(nil, "failed to prepare update query: %v", err))

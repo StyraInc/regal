@@ -6,6 +6,19 @@ import (
 
 	"github.com/open-policy-agent/regal/internal/util"
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
+
+	_ "github.com/open-policy-agent/regal/pkg/roast/intern"
+)
+
+var (
+	dataVarAST = &ast.Term{Value: ast.NewObject(
+		rast.Item("type", ast.InternedTerm("var")),
+		rast.Item("value", ast.InternedTerm("data")),
+	)}
+	boolTrueAST = &ast.Term{Value: ast.NewObject(
+		rast.Item("type", ast.InternedTerm("boolean")),
+		rast.Item("value", ast.InternedBooleanTrue),
+	)}
 )
 
 // ToValue converts an AST module to RoAST value representation.
@@ -62,15 +75,24 @@ func packageToValue(pkg *ast.Package, annotations []*ast.Annotations) ast.Value 
 	}
 
 	if len(annotations) > 0 {
-		pkgan := make([]*ast.Term, 0, len(annotations))
+		var (
+			n         int
+			pkgAnnots [64]int
+		)
 
-		for _, a := range annotations {
+		for i, a := range annotations {
 			if a.Scope != "document" && a.Scope != "rule" {
-				pkgan = append(pkgan, ast.NewTerm(annotationsToObject(a)))
+				n++
+				pkgAnnots[n] = i
 			}
 		}
 
-		if len(pkgan) > 0 {
+		if n > 0 {
+			pkgan := make([]*ast.Term, 0, n)
+			for i := range n {
+				pkgan = append(pkgan, annotationsToObject(annotations[pkgAnnots[i]]))
+			}
+
 			rast.Insert(value, "annotations", ast.ArrayTerm(pkgan...))
 		}
 	}
@@ -92,7 +114,7 @@ func pathArray(terms []*ast.Term) *ast.Term {
 }
 
 func locationItem(location *ast.Location) [2]*ast.Term {
-	return rast.Item("location", ast.InternedTerm(outil.ByteSliceToString(rast.AppendLocation(nil, location))))
+	return rast.Item("location", locationStringTerm(location))
 }
 
 func termToObjectLoc(term *ast.Term, includeLocation bool) *ast.Term {
@@ -111,8 +133,27 @@ func termToObjectLoc(term *ast.Term, includeLocation bool) *ast.Term {
 			)
 		}
 
+		var typeName string
+
+		switch v := term.Value.(type) {
+		case ast.Var:
+			if v == "data" {
+				return dataVarAST
+			}
+
+			typeName = "var"
+		case ast.Boolean:
+			if v {
+				return boolTrueAST
+			}
+
+			typeName = "boolean"
+		default:
+			typeName = ast.ValueName(term.Value)
+		}
+
 		return ast.ObjectTerm(
-			rast.Item("type", ast.InternedTerm(ast.ValueName(term.Value))),
+			rast.Item("type", ast.InternedTerm(typeName)),
 			rast.Item("value", termValueTerm(term.Value)),
 		)
 	}
@@ -122,6 +163,10 @@ func termToObjectLoc(term *ast.Term, includeLocation bool) *ast.Term {
 
 func termToObject(term *ast.Term) *ast.Term {
 	return termToObjectLoc(term, true)
+}
+
+func termValueRefTerm(ref ast.Ref) *ast.Term {
+	return ast.ArrayTerm(outil.Map(ref, termToObject)...)
 }
 
 func termValueTerm(val ast.Value) *ast.Term {
@@ -139,7 +184,7 @@ func termValueTerm(val ast.Value) *ast.Term {
 			return ast.InternedTerm(i)
 		}
 	case ast.Ref:
-		return ast.ArrayTerm(outil.Map(v, termToObject)...)
+		return termValueRefTerm(v)
 	case ast.Call:
 		return ast.ArrayTerm(outil.Map(v, termToObject)...)
 	case *ast.Array:
@@ -219,7 +264,7 @@ func termValueTerm(val ast.Value) *ast.Term {
 }
 
 // Mostly copied from OPA's private implementation.
-func annotationsToObject(a *ast.Annotations) ast.Object {
+func annotationsToObject(a *ast.Annotations) *ast.Term {
 	if a == nil {
 		return nil
 	}
@@ -331,7 +376,7 @@ func annotationsToObject(a *ast.Annotations) ast.Object {
 		rast.Insert(obj, "custom", ast.NewTerm(c))
 	}
 
-	return obj
+	return ast.NewTerm(obj)
 }
 
 func refToArray(ref ast.Ref) *ast.Array {
@@ -358,15 +403,7 @@ func ruleToObject(rule *ast.Rule) *ast.Term {
 	obj := objectWithLocationAndCap(rule.Location, preAlloc+min(1, len(rule.Annotations)))
 
 	if len(rule.Annotations) > 0 {
-		annotations := make([]*ast.Term, 0, len(rule.Annotations))
-
-		for _, a := range rule.Annotations {
-			annotations = append(annotations, ast.NewTerm(annotationsToObject(a)))
-		}
-
-		if len(annotations) > 0 {
-			rast.Insert(obj, "annotations", ast.ArrayTerm(annotations...))
-		}
+		rast.Insert(obj, "annotations", ast.ArrayTerm(outil.Map(rule.Annotations, annotationsToObject)...))
 	}
 
 	if rule.Default {
@@ -398,19 +435,19 @@ func headToObject(head *ast.Head) *ast.Term {
 	obj := objectWithLocationAndCap(head.Location, preAlloc)
 
 	if head.Reference != nil {
-		obj.Insert(ast.InternedTerm("ref"), termValueTerm(head.Reference))
+		rast.Insert(obj, "ref", termValueRefTerm(head.Reference))
 	}
 
 	if len(head.Args) > 0 {
-		obj.Insert(ast.InternedTerm("args"), ast.ArrayTerm(outil.Map(head.Args, termToObject)...))
+		rast.Insert(obj, "args", ast.ArrayTerm(outil.Map(head.Args, termToObject)...))
 	}
 
 	if head.Assign {
-		obj.Insert(ast.InternedTerm("assign"), ast.InternedTerm(true))
+		rast.Insert(obj, "assign", ast.InternedBooleanTrue)
 	}
 
 	if head.Key != nil {
-		obj.Insert(ast.InternedTerm("key"), termToObject(head.Key))
+		rast.Insert(obj, "key", termToObject(head.Key))
 	}
 
 	if head.Value != nil {
@@ -421,7 +458,7 @@ func headToObject(head *ast.Head) *ast.Term {
 			}
 		}
 
-		obj.Insert(ast.InternedTerm("value"), termToObject(head.Value))
+		rast.Insert(obj, "value", termToObject(head.Value))
 	}
 
 	return ast.NewTerm(obj)
@@ -518,7 +555,10 @@ func logicalToTerm(op string, loc *ast.Location, lhs, rhs ast.Body, explicitLhs,
 		rast.Insert(terms, "explicit_rhs", ast.InternedBooleanTrue)
 	}
 
-	return ast.NewTerm(rast.Insert(rast.Insert(terms, "lhs", bodyToArray(lhs)), "rhs", bodyToArray(rhs)))
+	rast.Insert(terms, "lhs", bodyToArray(lhs))
+	rast.Insert(terms, "rhs", bodyToArray(rhs))
+
+	return ast.NewTerm(terms)
 }
 
 func objectWithLocationAndCap(loc *ast.Location, c int) ast.Object {
@@ -526,7 +566,13 @@ func objectWithLocationAndCap(loc *ast.Location, c int) ast.Object {
 		return ast.NewObjectWithCapacity(c)
 	}
 
-	trm := ast.InternedTerm(outil.ByteSliceToString(rast.AppendLocation(nil, loc)))
+	obj := ast.NewObjectWithCapacity(c + 1)
+	rast.Insert(obj, "location", locationStringTerm(loc))
 
-	return rast.Insert(ast.NewObjectWithCapacity(c+1), "location", trm)
+	return obj
+}
+
+// made only to be able to track allocs from separately from StringTerm.
+func locationStringTerm(loc *ast.Location) *ast.Term {
+	return &ast.Term{Value: ast.String(outil.ByteSliceToString(rast.AppendLocation(nil, loc)))}
 }

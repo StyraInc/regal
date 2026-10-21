@@ -10,8 +10,8 @@ import (
 	"github.com/open-policy-agent/regal/pkg/rules"
 )
 
-// BenchmarkInputFromPaths/without_versions_map-16      79  15081353 ns/op  54183167 B/op  665869 allocs/op
-// BenchmarkInputFromPaths/with_versions_map-16         72  14505236 ns/op  54181776 B/op  666665 allocs/op
+// BenchmarkInputFromPaths/without_versions_map-16       57  20672270 ns/op    67962876 B/op    1072698 allocs/op
+// BenchmarkInputFromPaths/with_versions_map-16          56  19535831 ns/op    67945825 B/op    1073711 allocs/op
 func BenchmarkInputFromPaths(b *testing.B) {
 	tests := []struct {
 		name  string

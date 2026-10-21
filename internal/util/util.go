@@ -273,11 +273,6 @@ func AnyAs[T any](val any) (t T, err error) {
 	return t, fmt.Errorf("expected value of type %T, got %T", t, val)
 }
 
-// AnySliceTo converts a slice of any to a slice of T, returning an error if any element cannot be casted.
-func AnySliceTo[T any](in []any) ([]T, error) {
-	return util.TryMap(in, AnyAs[T])
-}
-
 // Reversed reverses s in place using slices.Reverse and returns it.
 func Reversed[T any](s []T) []T {
 	slices.Reverse(s)

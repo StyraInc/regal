@@ -75,7 +75,7 @@ func PutBuiltins(ctx context.Context, store storage.Store, builtins map[string]*
 }
 
 func PutConfig(ctx context.Context, store storage.Store, config *config.Config) error {
-	return Put(ctx, store, pathWorkspaceConfig, rast.StructToValue(config))
+	return Put(ctx, store, pathWorkspaceConfig, config.ToValue())
 }
 
 func PutClient(ctx context.Context, store storage.Store, client client.Client) error {

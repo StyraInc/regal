@@ -1,4 +1,4 @@
-#!/usr/bin/env -S go tool git.sr.ht/~charles/rq/cmd/rq
+#!/usr/bin/env -S rq
 # rq: query data.script.main
 # rq: output /dev/null
 

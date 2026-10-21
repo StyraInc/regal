@@ -84,7 +84,7 @@ func mockData(t *testing.T) ast.Object {
 			rast.Item("user_config", ast.ObjectTerm(
 				rast.Item("rules", ast.InternedEmptyObject),
 			)),
-			rast.Item("capabilities", ast.NewTerm(rast.StructToValue(config.CapabilitiesForThisVersion()))),
+			rast.Item("capabilities", config.OpaCapsForThisVersionTerm()),
 			rast.Item("path_prefix", ast.InternedTerm("")),
 			rast.Item("prepared", ast.ObjectTerm(
 				rast.Item("rules_to_run", ast.ObjectTerm(

@@ -1,13 +1,13 @@
 package config
 
 import (
-	"maps"
+	"bytes"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	outil "github.com/open-policy-agent/opa/v1/util"
@@ -174,6 +174,7 @@ func TestMarshalConfig(t *testing.T) {
 					Extra: ExtraAttributes{
 						"bar":    "baz",
 						"ignore": "this should be removed by the marshaller",
+						"level":  "also removed",
 					},
 				},
 			},
@@ -184,14 +185,64 @@ func TestMarshalConfig(t *testing.T) {
 	expect := `rules:
     testing:
         foo:
-            bar: baz
+            level: error
             ignore:
                 files:
                     - foo.rego
-            level: error
+            bar: baz
 `
 
 	assert.Equal(t, expect, string(bs), "marshalled config")
+}
+
+func TestMarshalConfigWithDefaultRuleConfigs(t *testing.T) {
+	t.Parallel()
+
+	conf := Config{
+		Defaults: Defaults{
+			Global: Default{
+				Level: "warn",
+			},
+			Categories: map[string]Default{
+				"bugs": {
+					Level: "error",
+				},
+			},
+		},
+		Rules: map[string]Category{
+			"bugs": {
+				"bug1": Rule{},
+				"bug2": Rule{Level: "ignore"},
+			},
+			"foo": {
+				"foo1": Rule{Level: "ignore"},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+
+	must.Equal(t, nil, enc.Encode(conf))
+
+	expect := `rules:
+  default:
+    level: warn
+  bugs:
+    default:
+      level: error
+    bug1:
+      level: error
+    bug2:
+      level: ignore
+  foo:
+    foo1:
+      level: ignore
+`
+
+	assert.Equal(t, expect, buf.String(), "marshalled config")
 }
 
 func TestUnmarshalMarshalConfigWithDefaultRuleConfigs(t *testing.T) {
@@ -219,10 +270,27 @@ rules:
 
 	originalConfig.Capabilities = nil
 
-	roundTrippedConfig := testutil.MustUnmarshalYAML[Config](t, must.Return(yaml.Marshal(originalConfig))(t))
+	marshaled := must.Return(yaml.Marshal(originalConfig))(t)
+
+	roundTrippedConfig := testutil.MustUnmarshalYAML[Config](t, marshaled)
 
 	assert.Equal(t, "ignore", roundTrippedConfig.Defaults.Global.Level, "global default level post round trip")
 	assert.Equal(t, "error", roundTrippedConfig.Defaults.Categories["bugs"].Level, "bugs default level post round trip")
+}
+
+func TestUnmarshalMarshalConfigWithDefaultRuleConfigsTmp(t *testing.T) {
+	t.Parallel()
+
+	bs := []byte(`
+rules:
+  bugs:
+    default:
+      level: error`)
+
+	originalConfig := testutil.MustUnmarshalYAML[Config](t, bs)
+
+	assert.KeyMissing(t, originalConfig.Rules["bugs"], "default")
+	assert.Equal(t, "error", originalConfig.Defaults.Categories["bugs"].Level, "bugs default level")
 }
 
 func TestUnmarshalConfig(t *testing.T) {
@@ -401,7 +469,7 @@ func TestAllRegoVersions(t *testing.T) {
 
 			root := test.TempDir(t, testData.FS)
 			versions := must.Return(AllRegoVersions(root, conf))(t)
-			assert.True(t, maps.Equal(versions, testData.Expected))
+			assert.MapsEqual(t, testData.Expected, versions)
 		})
 	}
 }

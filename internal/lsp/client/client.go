@@ -8,11 +8,11 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
+	"github.com/open-policy-agent/regal/internal/encoding/util/read"
 	"github.com/open-policy-agent/regal/internal/lsp/clients"
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 	"github.com/open-policy-agent/regal/internal/lsp/uri"
-	"github.com/open-policy-agent/regal/internal/roast/encoding/read"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 //nolint:recvcheck // UnmarshalJSONFrom must use a pointer receiver
@@ -54,7 +54,7 @@ func (c *Client) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		case "init_options", "initializationOptions":
 			err = json.UnmarshalDecode(dec, &c.InitOptions)
 		case "capabilities":
-			err = json.UnmarshalDecode(dec, &c.Capabilities, encoding.NoASTOptions)
+			err = json.UnmarshalDecode(dec, &c.Capabilities, noast.Options)
 		default:
 			err = read.Unknown(dec, key)
 		}

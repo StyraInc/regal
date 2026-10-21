@@ -106,12 +106,12 @@ func (f *Fixer) FixViolations(
 	fp fileprovider.FileProvider,
 	config *config.Config,
 ) (*Report, error) {
-	fixReport := NewReport()
-
 	startingFiles, err := fp.List()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
+
+	fixReport := NewReport()
 
 	for i := range violations {
 		fixInstance, ok := f.GetFixForName(violations[i].Title)

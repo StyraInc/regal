@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/open-policy-agent/regal/bundle"
+	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/internal/test/must"
-	"github.com/open-policy-agent/regal/internal/testutil"
 	"github.com/open-policy-agent/regal/pkg/config"
 	regal "github.com/open-policy-agent/regal/pkg/linter"
 	"github.com/open-policy-agent/regal/pkg/report"
@@ -22,7 +22,7 @@ func BenchmarkRegalLintingItself(b *testing.B) {
 			WithInputPaths([]string{"../../bundle"}).
 			WithUserConfig(must.Return(config.FromPath(filepath.Join("..", "..", ".regal", "config.yaml")))(b))
 
-		testutil.AssertNumViolations(b, 0, must.Return(linter.Lint(b.Context()))(b))
+		assert.NumViolations(b, 0, must.Return(linter.Lint(b.Context()))(b))
 	}
 }
 
@@ -52,6 +52,7 @@ func BenchmarkRegalLintingItselfPrepareOnce(b *testing.B) {
 // 64977849 ns/op   38570571 B/op     932404 allocs/op // OPA v1.12.2
 // 61936272 ns/op   38191932 B/op     921084 allocs/op // OPA v1.13.1
 // 75080301 ns/op   47586984 B/op    1064790 allocs/op // OPA v1.20.1
+// 54175355 ns/op   33455758 B/op     661961 allocs/op // JSON & YAML improvements
 func BenchmarkOnlyPrepare(b *testing.B) {
 	linter := bundleLinter(b, true)
 	for b.Loop() {
@@ -63,6 +64,7 @@ func BenchmarkOnlyPrepare(b *testing.B) {
 // 123784616 ns/op	284724624 B/op	 5918990 allocs/op // OPA v1.12.2
 // _95888368 ns/op	156125725 B/op	 3331213 allocs/op // With Rego prepare eval phase (!!!)
 // 127176516 ns/op	248721019 B/op	 5151370 allocs/op // OPA v1.20.1
+// 108518633 ns/op	239342594 B/op	 4861735 allocs/op // OPA v1.21.0
 func BenchmarkRegalNoEnabledRules(b *testing.B) {
 	benchmarkLint(b, bundleLinter(b, false).WithDisableAll(true))
 }
@@ -79,13 +81,16 @@ func BenchmarkRegalNoEnabledRulesPrepareOnce(b *testing.B) {
 // a single, or handful of rules to get a better idea of how long they take to run, and relative to each other.
 func BenchmarkEachRule(b *testing.B) {
 	config := must.Return(config.WithDefaultsFromBundle(bundle.Loaded(), nil))(b)
-	linter := bundleLinter(b, false).WithDisableAll(true).MustPrepare(b.Context())
+	linter := bundleLinter(b, true).WithDisableAll(true).MustPrepare(b.Context())
 
 	for _, category := range config.Rules {
 		for ruleName := range category {
 			// Uncomment / modify this to benchmark specific rule(s) only
 			//
-			// if ruleName != "metasyntactic-variable" {
+			// if categoryName != "performance" {
+			// 	continue
+			// }
+			// if ruleName != "non-loop-expression" {
 			// 	continue
 			// }
 			b.Run(ruleName, func(b *testing.B) {

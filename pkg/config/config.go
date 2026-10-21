@@ -1,31 +1,28 @@
 package config
 
 import (
-	"context"
-	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/bundle"
 	"github.com/open-policy-agent/opa/v1/types"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
-	"github.com/open-policy-agent/regal/internal/capabilities"
 	rio "github.com/open-policy-agent/regal/internal/io"
 	"github.com/open-policy-agent/regal/internal/io/files"
 	"github.com/open-policy-agent/regal/internal/io/files/filter"
-	"github.com/open-policy-agent/regal/internal/roast/encoding/read"
-	"github.com/open-policy-agent/regal/internal/roast/encoding/write"
 	"github.com/open-policy-agent/regal/internal/util"
 	"github.com/open-policy-agent/regal/pkg/roast/encoding"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
+	"github.com/open-policy-agent/regal/pkg/roast/util/concurrent"
 )
 
 const (
@@ -36,6 +33,14 @@ const (
 	regalDirName             = ".regal"
 	configFileName           = "config.yaml"
 	standaloneConfigFileName = ".regal.yaml"
+)
+
+var (
+	OpaCapsForThisVersionTerm = sync.OnceValue(func() *ast.Term {
+		return ast.NewTerm(rast.StructToValue(OpaCapsForThisVersionInterned()))
+	})
+	OpaCapsForThisVersionInterned = sync.OnceValue(CapabilitiesForThisVersion)
+	opabuiltinCache               = concurrent.MapOf(make(map[string]*Builtin))
 )
 
 type (
@@ -51,7 +56,7 @@ type (
 		Features        *Features           `json:"features,omitempty"         yaml:"features,omitempty"`
 		Project         *Project            `json:"project,omitempty"          yaml:"project,omitempty"`
 		CapabilitiesURL string              `json:"capabilities_url,omitempty" yaml:"capabilities_url,omitempty"`
-		Ignore          Ignore              `json:"ignore"                     yaml:"ignore"`
+		Ignore          Ignore              `json:"ignore,omitzero"            yaml:"ignore,omitempty"`
 	}
 
 	Root struct {
@@ -99,11 +104,12 @@ type (
 
 	//nolint:recvcheck
 	Rule struct {
-		Ignore *Ignore `json:"ignore,omitempty" yaml:"ignore,omitempty"`
-		Extra  ExtraAttributes
-		Level  string `json:"level"`
+		Ignore *Ignore         `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+		Extra  ExtraAttributes `json:",inline"          yaml:",inline"` //nolint:revive
+		Level  string          `json:"level"`
 	}
 
+	//nolint:recvcheck
 	Capabilities struct {
 		Builtins       map[string]*Builtin `json:"builtins"        yaml:"builtins"`
 		FutureKeywords []string            `json:"future_keywords" yaml:"future_keywords"`
@@ -122,20 +128,6 @@ type (
 
 func HasConfigSuffix(path string) bool {
 	return util.HasAnySuffix(path, standaloneConfigFileName, ".regal/config.yaml", ".regal\\config.yaml")
-}
-
-func (d *Default) mapToConfig(result any) error {
-	resultMap, ok := result.(map[string]any)
-	if !ok {
-		return errors.New("result was not a map")
-	}
-
-	level, ok := resultMap[keyLevel].(string)
-	if ok {
-		d.Level = level
-	}
-
-	return nil
 }
 
 func FromPath(path string) (Config, error) {
@@ -191,16 +183,6 @@ func Find(path string) (*os.File, error) {
 
 	// regalConfigFileError is nil at this point, so we can return the file
 	return regalConfigFile, nil
-}
-
-func (e ExtraAttributes) MarshalJSONTo(enc *jsontext.Encoder) error {
-	for key, val := range e {
-		if err := write.Field(enc, key, val); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // findUpwards searches for a file or directory matching the given name,
@@ -382,6 +364,9 @@ func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
 // AllRegoVersions returns a map of all Rego versions found in the provided config and .manifest files,
 // keyed by the path of the directory for which the version applies. Config file has higher precedence
 // than .manifest files.
+//
+// // TODO(anders): This is weird. Config may have higher precedence but why do we not even cnsider
+// // the manifest files at all if no config is provided?
 func AllRegoVersions(root string, conf *Config) (map[string]ast.RegoVersion, error) {
 	versionsMap := make(map[string]ast.RegoVersion)
 	if conf == nil {
@@ -428,463 +413,9 @@ func AllRegoVersions(root string, conf *Config) (map[string]ast.RegoVersion, err
 	return versionsMap, nil
 }
 
-// Translate integer value 0 or 1 as found in config or .manifest to ast.RegoVersion.
-func regoVersionFromConfigValue(version *int) ast.RegoVersion {
-	if version == nil {
-		return ast.RegoUndefined
-	}
-
-	switch *version {
-	case 0:
-		return ast.RegoV0
-	case 1:
-		return ast.RegoV1
-	default:
-		return ast.RegoUndefined
-	}
-}
-
-func (c Config) MarshalYAML() (any, error) {
-	unstructuredConfig, err := encoding.JSONRoundTripTo[map[string]any](c)
-	if err != nil {
-		return nil, fmt.Errorf("failed to created unstructured config: %w", err)
-	}
-
-	// place the global defaults at the top level under rules
-	if c.Defaults.Global.Level != "" {
-		r, ok := unstructuredConfig["rules"].(map[string]any)
-		if !ok {
-			return nil, errors.New("rules in config were not a map")
-		}
-
-		r["default"] = c.Defaults.Global
-	}
-
-	// place the category defaults under the respective category
-	for categoryName, categoryDefault := range c.Defaults.Categories {
-		rawRuleMap, ok := unstructuredConfig["rules"].(map[string]any)
-		if !ok {
-			return nil, errors.New("rules in config were not a map")
-		}
-
-		rawCategoryMap, ok := rawRuleMap[categoryName].(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("category %s was not a map", categoryName)
-		}
-
-		rawCategoryMap["default"] = categoryDefault
-	}
-
-	if len(c.Ignore.Files) == 0 {
-		delete(unstructuredConfig, keyIgnore)
-	}
-
-	if c.CapabilitiesURL == "" || c.CapabilitiesURL == capabilities.DefaultURL {
-		delete(unstructuredConfig, "capabilities_url")
-	}
-
-	return unstructuredConfig, nil
-}
-
-// marshallingIntermediary is used to contain config data in a format that is used during unmarshalling.
-// The internally loaded config data layout differs from the user-defined YAML.
-type marshallingIntermediary struct {
-	// rules are unmarshalled as any since the defaulting needs to be extracted from here
-	// and configured elsewhere in the struct.
-	Rules        map[string]any `yaml:"rules"`
-	Project      *Project       `yaml:"project"`
-	Capabilities struct {
-		From struct {
-			Engine  string `yaml:"engine"`
-			Version any    `yaml:"version"`
-			File    string `yaml:"file"`
-			URL     string `yaml:"url"`
-		} `yaml:"from"`
-		Plus struct {
-			Builtins []*ast.Builtin `yaml:"builtins"`
-		} `yaml:"plus"`
-		Minus struct {
-			Builtins []struct {
-				Name string `yaml:"name"`
-			} `yaml:"builtins"`
-		} `yaml:"minus"`
-	} `yaml:"capabilities"`
-	Ignore   Ignore `yaml:"ignore"`
-	Features struct {
-		RemoteFeatures struct {
-			CheckVersion bool `yaml:"check-version"`
-		} `yaml:"remote"`
-	} `yaml:"features"`
-}
-
-func (p *Project) UnmarshalYAML(value *yaml.Node) error {
-	var result map[string]any
-
-	if err := value.Decode(&result); err != nil {
-		return fmt.Errorf("unmarshalling project failed %w", err)
-	}
-
-	if result["roots"] != nil {
-		// A project root can either be provided as a string or an object. If it's a string, we'll
-		// convert it to an object with the path as the only value.
-		if roots, ok := result["roots"].([]any); ok {
-			for key, val := range roots {
-				if root, ok := val.(string); ok {
-					roots[key] = Root{Path: root}
-				}
-			}
-		}
-	}
-
-	return encoding.JSONRoundTrip(result, p)
-}
-
-func (c *Config) UnmarshalYAML(value *yaml.Node) error {
-	var result marshallingIntermediary
-
-	if err := value.Decode(&result); err != nil {
-		return fmt.Errorf("unmarshalling config failed %w", err)
-	}
-
-	// this call will walk the rule config and load defaults into the config
-	if err := extractDefaults(c, &result); err != nil {
-		return fmt.Errorf("extracting defaults failed: %w", err)
-	}
-
-	if err := extractRules(c, &result); err != nil {
-		return fmt.Errorf("extracting rules failed: %w", err)
-	}
-
-	c.Ignore = result.Ignore
-
-	capabilitiesFile := result.Capabilities.From.File
-	capabilitiesEngine := result.Capabilities.From.Engine
-	capabilitiesEngineVersion := result.Capabilities.From.Version
-	capabilitiesURL := result.Capabilities.From.URL
-
-	// Capabilities can be specified by an engine+version combo, a local
-	// file path, or a URL. These cannot be mixed and matched.
-	if capabilitiesURL != "" && capabilitiesFile != "" {
-		return errors.New("capabilities from.url and from.file are mutually exclusive")
-	}
-
-	if capabilitiesURL != "" && capabilitiesEngine != "" {
-		return errors.New("capabilities from.url and from.engine are mutually exclusive")
-	}
-
-	if capabilitiesURL != "" && capabilitiesEngineVersion != "" {
-		return errors.New("capabilities from.url and from.version are mutually exclusive")
-	}
-
-	if capabilitiesFile != "" && capabilitiesEngine != "" {
-		return errors.New("capabilities from.file and from.engine are mutually exclusive")
-	}
-
-	if capabilitiesEngine != "" && capabilitiesEngineVersion == "" {
-		// Although regal:///capabilities/{engine} is valid and refers
-		// to the latest version for that engine, we'll keep the
-		// existing (pre-capabilities.Lookup()) behavior in place and
-		// disallow that when using the engine key.
-		return errors.New("please set the version for the engine from which to load capabilities from")
-	}
-
-	if capabilitiesEngine != "" {
-		version, ok := capabilitiesEngineVersion.(string)
-		if !ok {
-			return errors.New("capabilities: from.version must be a string")
-		}
-
-		if capabilitiesEngine == capabilitiesEngineOPA && !strings.HasPrefix(version, "v") {
-			return errors.New("capabilities: from.version must be a valid OPA version (with a 'v' prefix)")
-		}
-
-		capabilitiesURL = "regal:///capabilities/" + capabilitiesEngine + "/" + version
-	}
-
-	if capabilitiesFile != "" {
-		absfp, err := filepath.Abs(capabilitiesFile)
-		if err != nil {
-			return fmt.Errorf(
-				"unable to load capabilities from '%s', failed to determine absolute path: %w",
-				capabilitiesFile,
-				err,
-			)
-		}
-
-		// prepending a / is done here to ensure that windows drive letter paths
-		// are parsed as paths and not host:ports in URLs.
-		if !strings.HasPrefix(absfp, "/") {
-			absfp = "/" + absfp
-		}
-
-		capabilitiesURL = "file://" + absfp
-	}
-
-	if capabilitiesEngine == "" && capabilitiesFile == "" && capabilitiesURL == "" {
-		capabilitiesURL = capabilities.DefaultURL
-	}
-
-	opaCaps, err := capabilities.Lookup(context.Background(), capabilitiesURL)
-	if err != nil {
-		return fmt.Errorf("failed to load capabilities: %w", err)
-	}
-
-	// This is used in the LSP to load the OPA capabilities, since the
-	// capabilities version in the user-facing config does not contain all
-	// of the information that the LSP needs.
-	c.CapabilitiesURL = capabilitiesURL
-	c.Capabilities = fromOPACapabilities(opaCaps)
-	c.Project = result.Project
-
-	// remove any builtins referenced in the minus config
-	for _, minusBuiltin := range result.Capabilities.Minus.Builtins {
-		delete(c.Capabilities.Builtins, minusBuiltin.Name)
-	}
-
-	// add any builtins referenced in the plus config
-	for _, plusBuiltin := range result.Capabilities.Plus.Builtins {
-		c.Capabilities.Builtins[plusBuiltin.Name] = fromOPABuiltin(*plusBuiltin)
-	}
-
-	// feature defaults
-	if result.Features.RemoteFeatures.CheckVersion {
-		c.Features = &Features{Remote: &RemoteFeatures{CheckVersion: true}}
-	}
-
-	return nil
-}
-
-// extractRules is a helper to load rules from the raw config data.
-func extractRules(config *Config, result *marshallingIntermediary) error {
-	// in order to support wildcard 'default' configs, we
-	// have some hooks in this unmarshalling process to load these.
-	categoryMap := make(map[string]Category)
-
-	for key, val := range result.Rules {
-		if key == "default" {
-			continue
-		}
-
-		rawRuleMap, ok := val.(map[string]any)
-		if !ok {
-			return fmt.Errorf("rules for category %s were not a map", key)
-		}
-
-		ruleMap := make(map[string]Rule)
-
-		for ruleName, ruleData := range rawRuleMap {
-			if ruleName == "default" {
-				continue
-			}
-
-			var r Rule
-
-			if err := r.mapToConfig(ruleData); err != nil {
-				return fmt.Errorf("unmarshalling rule failed: %w", err)
-			}
-
-			ruleMap[ruleName] = r
-		}
-
-		categoryMap[key] = ruleMap
-	}
-
-	config.Rules = categoryMap
-
-	return nil
-}
-
-// extractDefaults is a helper to load both global and category defaults from the raw config data.
-func extractDefaults(c *Config, result *marshallingIntermediary) error {
-	c.Defaults.Categories = make(map[string]Default)
-
-	if rawGlobalDefault, ok := result.Rules["default"]; ok {
-		if err := c.Defaults.Global.mapToConfig(rawGlobalDefault); err != nil {
-			return fmt.Errorf("unmarshalling global defaults failed: %w", err)
-		}
-	}
-
-	for key, val := range result.Rules {
-		rawRuleMap, ok := val.(map[string]any)
-		if !ok {
-			return fmt.Errorf("rules for category %s were not a map", key)
-		}
-
-		rawCategoryDefault, ok := rawRuleMap["default"]
-		if ok {
-			var categoryDefault Default
-
-			if err := categoryDefault.mapToConfig(rawCategoryDefault); err != nil {
-				return fmt.Errorf("unmarshalling category defaults failed: %w", err)
-			}
-
-			c.Defaults.Categories[key] = categoryDefault
-		}
-	}
-
-	return nil
-}
-
 // CapabilitiesForThisVersion returns the capabilities for the current OPA version Regal depends on.
 func CapabilitiesForThisVersion() *Capabilities {
 	return fromOPACapabilities(rio.OPACapabilities())
-}
-
-func fromOPABuiltin(builtin ast.Builtin) *Builtin {
-	args := outil.Map(builtin.Decl.FuncArgs().Args, types.Type.String)
-	rb := &Builtin{Decl: Decl{Args: args}}
-
-	if builtin.Decl != nil && builtin.Decl.Result() != nil {
-		// internal.print has no result
-		rb.Decl.Result = builtin.Decl.Result().String()
-	}
-
-	if corrected, ok := builtinResultOverrides[builtin.Name]; ok {
-		rb.Decl.Result = corrected
-	}
-
-	return rb
-}
-
-// builtinResultOverrides corrects imprecise return types in OPA's builtin
-// metadata. object.subset returns a boolean, but is declared `any` in the
-// pinned OPA version, which causes false positives for the
-// unassigned-return-value rule. Fixed upstream in
-// https://github.com/open-policy-agent/opa/pull/8849; remove entries here once
-// the depended-upon OPA release ships the fix.
-var builtinResultOverrides = map[string]string{
-	"object.subset": "boolean",
-}
-
-func fromOPACapabilities(capabilities *ast.Capabilities) *Capabilities {
-	result := Capabilities{Builtins: make(map[string]*Builtin, len(capabilities.Builtins))}
-	for _, builtin := range capabilities.Builtins {
-		result.Builtins[builtin.Name] = fromOPABuiltin(*builtin)
-	}
-
-	result.FutureKeywords = capabilities.FutureKeywords
-	result.Features = capabilities.Features
-
-	return &result
-}
-
-func ToMap(config *Config) map[string]any {
-	confMap := make(map[string]any)
-	if config == nil {
-		return confMap
-	}
-
-	encoding.MustJSONRoundTrip(config, &confMap)
-
-	// Not sure why `omitempty` doesn't do the trick here, but having `ignore: {}` in the config for each
-	// rule is annoying noice when printed from Rego.
-	for categoryName, category := range config.Rules {
-		for ruleName, rule := range category {
-			if rule.Ignore == nil {
-				// casts should be safe here as the structure is copied from the config struct
-				//nolint:forcetypeassert
-				delete(confMap["rules"].(map[string]any)[categoryName].(map[string]any)[ruleName].(map[string]any), "ignore")
-			}
-		}
-	}
-
-	return confMap
-}
-
-func (rule Rule) MarshalJSONTo(enc *jsontext.Encoder) error {
-	enc.WriteToken(jsontext.BeginObject)
-	write.StringField(enc, keyLevel, rule.Level)
-
-	if rule.Ignore != nil && len(rule.Ignore.Files) > 0 {
-		_ = write.Field(enc, keyIgnore, rule.Ignore)
-	}
-
-	for key, val := range rule.Extra {
-		if key != keyIgnore && key != keyLevel {
-			_ = write.Field(enc, key, val)
-		}
-	}
-
-	return enc.WriteToken(jsontext.EndObject)
-}
-
-func (rule *Rule) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
-	return read.Object(dec, func(dec *jsontext.Decoder, key string) (err error) {
-		switch key {
-		case keyLevel:
-			rule.Level, err = read.String(dec)
-		case keyIgnore:
-			rule.Ignore = &Ignore{}
-			err = json.UnmarshalDecode(dec, rule.Ignore)
-		default:
-			if rule.Extra == nil {
-				rule.Extra = make(map[string]any)
-			}
-
-			var val any
-
-			err = json.UnmarshalDecode(dec, &val)
-			rule.Extra[key] = val
-		}
-
-		return err
-	})
-}
-
-func (rule Rule) MarshalYAML() (any, error) {
-	result := map[string]any{keyLevel: rule.Level}
-
-	if rule.Ignore != nil && len(rule.Ignore.Files) != 0 {
-		result[keyIgnore] = rule.Ignore
-	}
-
-	for key, val := range rule.Extra {
-		if key != keyIgnore && key != keyLevel {
-			result[key] = val
-		}
-	}
-
-	return result, nil
-}
-
-func (rule *Rule) UnmarshalYAML(value *yaml.Node) error {
-	var result map[string]any
-	if err := value.Decode(&result); err != nil {
-		return fmt.Errorf("unmarshalling rule failed %w", err)
-	}
-
-	return rule.mapToConfig(result)
-}
-
-// Note that this function will mutate the result map. This isn't a problem right now
-// as we only use this after unmarshalling, but if we use this for other purposes later
-// we need to make a copy of the map first.
-func (rule *Rule) mapToConfig(result any) error {
-	ruleMap, ok := result.(map[string]any)
-	if !ok {
-		return errors.New("result was not a map")
-	}
-
-	level, ok := ruleMap[keyLevel].(string)
-	if ok {
-		rule.Level = level
-	}
-
-	if ignore, ok := ruleMap[keyIgnore]; ok {
-		dst, err := encoding.JSONRoundTripTo[*Ignore](ignore)
-		if err != nil {
-			return fmt.Errorf("unmarshalling rule ignore failed: %w", err)
-		}
-
-		rule.Ignore = dst
-	}
-
-	rule.Extra = ruleMap
-
-	delete(rule.Extra, keyLevel)
-	delete(rule.Extra, keyIgnore)
-
-	return nil
 }
 
 func (f *Features) IsZero() bool {
@@ -928,4 +459,48 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 	}
 
 	return dirMap.Items(), nil
+}
+
+func fromOPABuiltin(builtin *ast.Builtin) *Builtin {
+	if b, ok := opabuiltinCache.Get(builtin.Name); ok {
+		return b
+	}
+
+	rb := &Builtin{Decl: Decl{Args: outil.Map(builtin.Decl.FuncArgs().Args, types.Type.String)}}
+	if builtin.Decl != nil && builtin.Decl.Result() != nil {
+		// internal.print has no result
+		rb.Decl.Result = builtin.Decl.Result().String()
+	}
+
+	opabuiltinCache.Set(builtin.Name, rb)
+
+	return rb
+}
+
+func fromOPACapabilities(capabilities *ast.Capabilities) *Capabilities {
+	result := Capabilities{Builtins: make(map[string]*Builtin, len(capabilities.Builtins))}
+	for _, builtin := range capabilities.Builtins {
+		result.Builtins[builtin.Name] = fromOPABuiltin(builtin)
+	}
+
+	result.FutureKeywords = capabilities.FutureKeywords
+	result.Features = capabilities.Features
+
+	return &result
+}
+
+// Translate integer value 0 or 1 as found in config or .manifest to ast.RegoVersion.
+func regoVersionFromConfigValue(version *int) ast.RegoVersion {
+	if version == nil {
+		return ast.RegoUndefined
+	}
+
+	switch *version {
+	case 0:
+		return ast.RegoV0
+	case 1:
+		return ast.RegoV1
+	default:
+		return ast.RegoUndefined
+	}
 }

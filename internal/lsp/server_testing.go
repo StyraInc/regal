@@ -16,11 +16,11 @@ import (
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
 	"github.com/open-policy-agent/opa/v1/tester"
-	outil "github.com/open-policy-agent/opa/v1/util"
 
 	"github.com/open-policy-agent/regal/internal/compile"
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 	"github.com/open-policy-agent/regal/pkg/config"
+	"github.com/open-policy-agent/regal/pkg/roast/rast"
 )
 
 var runtimeInfo = sync.OnceValue(func() *ast.Term {
@@ -193,11 +193,15 @@ func collectTestResults(ch chan *tester.Result) []tester.Result {
 }
 
 func newStoreAndTxn(ctx context.Context, cfg *config.Config) (storage.Store, storage.Transaction) {
-	store := inmem.NewFromObjectWithOpts(map[string]any{
-		"internal": map[string]any{
-			"capabilities": outil.Or(cfg.Capabilities, config.CapabilitiesForThisVersion),
-		},
-	}, inmem.OptRoundTripOnWrite(false), inmem.OptReturnASTValuesOnRead(true))
+	capsTerm := config.OpaCapsForThisVersionTerm()
+	if cfg.Capabilities != nil {
+		capsTerm = ast.NewTerm(rast.StructToValue(cfg.Capabilities))
+	}
+
+	store := inmem.NewFromASTObject(ast.NewObject(
+		rast.Item("internal",
+			ast.ObjectTerm(rast.Item("capabilities", capsTerm))),
+	))
 
 	txn, _ := store.NewTransaction(ctx, storage.WriteParams)
 

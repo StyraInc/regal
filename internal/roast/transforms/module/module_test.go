@@ -1,12 +1,15 @@
 package module
 
 import (
+	"encoding/json/v2"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
+	"github.com/open-policy-agent/regal/internal/encoding/roast"
+	"github.com/open-policy-agent/regal/internal/test/assert"
 	"github.com/open-policy-agent/regal/internal/test/must"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 )
 
 func TestModuleToValue(t *testing.T) {
@@ -118,9 +121,7 @@ q if {
 		x == 1
 	} and input.b
 }
-`, ast.ParserOptions{
-		Capabilities: ast.CapabilitiesForThisVersion(ast.CapabilitiesExperimentalKeywords(true)),
-	})
+`, ast.ParserOptions{Capabilities: ast.CapabilitiesForThisVersion()})
 
 	value := must.Return(ToValue(module))(t)
 
@@ -180,7 +181,7 @@ func bodyAttr(t *testing.T, value ast.Value, key string) *ast.Array {
 	return must.Be[*ast.Array](t, attr(t, value, key))
 }
 
-// BenchmarkModuleToValue/ToValue-16         34318 ns/op	   64553 B/op	    1541 allocs/op
+// 31468 ns/op	   62496 B/op	    1474 allocs/op
 func BenchmarkModuleToValue(b *testing.B) {
 	policy := `# METADATA
 # title: p p p
@@ -215,16 +216,16 @@ setcomp := {x | some x in input}
 `
 	module := ast.MustParseModuleWithOpts(policy, ast.ParserOptions{ProcessAnnotation: true})
 
-	var v1, v2 ast.Value
+	var v1 ast.Value
 
-	b.Run("ToValue", func(b *testing.B) {
-		for b.Loop() {
-			v1 = must.Return(ToValue(module))(b)
-		}
-	})
+	for b.Loop() {
+		v1 = must.Return(ToValue(module))(b)
+	}
 
-	encoding.MustJSONRoundTrip(module, &v2, encoding.NoASTOptions)
-	must.Equal(b, 0, v1.Compare(v2), "expected value to equal round-tripped value, got: %v\n\n, want: %v", v1, v2)
+	v1JSON := must.Return(json.Marshal(v1, noast.Options))(b)
+	v2JSON := must.Return(json.Marshal(module, roast.Options))(b)
+
+	assert.JSONEqual(b, v1JSON, v2JSON)
 }
 
 // Tangentially related benchmark to find out the cost of repeatedly inserting items into an object

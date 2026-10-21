@@ -10,6 +10,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	rp "github.com/open-policy-agent/regal/internal/parse"
 	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
@@ -64,5 +65,5 @@ func parse(args []string) (err error) {
 		return err
 	}
 
-	return encoding.MarshalWriteLn(os.Stdout, value, encoding.NoASTOptions, jsontext.WithIndent("  "))
+	return encoding.MarshalWriteLn(os.Stdout, value, noast.Options, jsontext.WithIndent("  "))
 }

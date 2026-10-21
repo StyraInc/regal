@@ -65,12 +65,12 @@ func (rule Rule) toObject() ast.Object {
 	obj := ast.NewObject(rast.Item(keyLevel, ast.InternedTerm(rule.Level)))
 
 	if rule.Ignore != nil && len(rule.Ignore.Files) != 0 {
-		obj.Insert(ast.InternedTerm(keyIgnore), ast.ObjectTerm(rast.Item("files", rast.ArrayTerm(rule.Ignore.Files...))))
+		rast.Insert(obj, keyIgnore, ast.ObjectTerm(rast.Item("files", rast.ArrayTerm(rule.Ignore.Files...))))
 	}
 
 	for key, val := range rule.Extra {
 		if value, err := transform.AnyToValue(val); err == nil {
-			obj.Insert(ast.InternedTerm(key), ast.NewTerm(value))
+			rast.Insert(obj, key, ast.NewTerm(value))
 		}
 	}
 
@@ -99,11 +99,11 @@ func (p *Project) toObject() ast.Object {
 			rootsArr[i] = ast.NewTerm(root.toObject())
 		}
 
-		obj.Insert(ast.InternedTerm("roots"), ast.ArrayTerm(rootsArr...))
+		rast.Insert(obj, "roots", ast.ArrayTerm(rootsArr...))
 	}
 
 	if p.RegoVersion != nil {
-		obj.Insert(ast.InternedTerm("rego_version"), ast.InternedTerm(*p.RegoVersion))
+		rast.Insert(obj, "rego_version", ast.InternedTerm(*p.RegoVersion))
 	}
 
 	return obj
@@ -114,7 +114,7 @@ func (f *Features) toObject() ast.Object {
 
 	if f.Remote != nil {
 		remoteObj := ast.NewObject(rast.Item("check-version", ast.InternedTerm(f.Remote.CheckVersion)))
-		obj.Insert(ast.InternedTerm("remote"), ast.NewTerm(remoteObj))
+		rast.Insert(obj, "remote", ast.NewTerm(remoteObj))
 	}
 
 	return obj

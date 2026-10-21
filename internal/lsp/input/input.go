@@ -15,11 +15,12 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/storage"
 
+	"github.com/open-policy-agent/regal/internal/encoding/noast"
 	"github.com/open-policy-agent/regal/internal/io/files"
 	"github.com/open-policy-agent/regal/internal/io/files/filter"
 	"github.com/open-policy-agent/regal/internal/lsp/log"
@@ -27,7 +28,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/uri"
 	"github.com/open-policy-agent/regal/internal/lsp/workspace"
 	"github.com/open-policy-agent/regal/internal/util"
-	"github.com/open-policy-agent/regal/pkg/roast/encoding"
 	"github.com/open-policy-agent/regal/pkg/roast/transform"
 )
 
@@ -140,7 +140,7 @@ func (m *Manager) Update(ctx context.Context, pathOrURI string, content []byte) 
 	suffix := path[strings.LastIndexByte(path, '.')+1:]
 	switch suffix {
 	case "json":
-		err = json.Unmarshal(content, &val, encoding.NoASTOptions)
+		err = json.Unmarshal(content, &val, noast.Options)
 	case "yaml":
 		var res map[string]any
 		if err = yaml.Unmarshal(content, &res); err == nil {

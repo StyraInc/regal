@@ -10,7 +10,7 @@ import (
 	"github.com/open-policy-agent/regal/internal/roast/transforms/module"
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
 
-	_ "github.com/open-policy-agent/regal/internal/roast/encoding"
+	_ "github.com/open-policy-agent/regal/internal/encoding/roast"
 )
 
 var (
@@ -38,12 +38,9 @@ func ToAST(name, content string, mod *ast.Module, collect bool) (ast.Value, erro
 		return nil, fmt.Errorf("failed to convert module to value: %w", err)
 	}
 
-	//nolint:forcetypeassert
-	rast.Insert(value.(ast.Object), "regal", ast.NewTerm(
-		RegalContextWithOperations(name, content, mod.RegoVersion().String(), collect),
-	))
+	rctx := RegalContextWithOperations(name, content, mod.RegoVersion().String(), collect)
 
-	return value, nil
+	return insert(value, "regal", ast.NewTerm(rctx))
 }
 
 func ToASTWithRegalContext(mod *ast.Module, regalContext ast.Object) (ast.Value, error) {
@@ -52,12 +49,7 @@ func ToASTWithRegalContext(mod *ast.Module, regalContext ast.Object) (ast.Value,
 		return nil, fmt.Errorf("failed to convert module to value: %w", err)
 	}
 
-	//nolint:forcetypeassert
-	value.(ast.Object).Insert(ast.InternedTerm("regal"), ast.NewTerm(
-		regalContext,
-	))
-
-	return value, nil
+	return insert(value, "regal", ast.NewTerm(regalContext))
 }
 
 // RegalContext creates a context object for a Regal input, containing the attributes
@@ -88,4 +80,14 @@ func RegalContextWithOperations(name, content, regoVersion string, collect bool)
 	context.Insert(operations[0], operations[1])
 
 	return context
+}
+
+func insert(val ast.Value, key string, value *ast.Term) (_ ast.Value, err error) {
+	if obj, ok := val.(ast.Object); !ok {
+		return nil, fmt.Errorf("can't insert into non-object value: %T", val)
+	} else {
+		rast.Insert(obj, key, value)
+	}
+
+	return val, err
 }

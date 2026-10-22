@@ -241,6 +241,8 @@ rules:
       level: error
     identically-named-tests:
       level: error
+    input-without-with:
+      level: error
     metasyntactic-variable:
       level: error
     print-or-trace-call:

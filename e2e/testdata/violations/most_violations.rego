@@ -30,6 +30,9 @@ import data.redundant.alias as alias
 # redundant-data-import
 import data
 
+# redundant-future-keywords
+import future.keywords.every
+
 # import-shadows-builtin
 import data.http
 

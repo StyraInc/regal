@@ -48,7 +48,7 @@ func MustJSONRoundTrip(from, to any, opts ...json.Options) {
 	}
 }
 
-func Get(value jsontext.Value, ptr jsontext.Pointer) (val jsontext.Value) {
+func Get(value jsontext.Value, ptr jsontext.Pointer) jsontext.Value {
 	path := strings.TrimPrefix(string(ptr), "/")
 	key, rest, _ := strings.Cut(path, "/")
 
@@ -57,9 +57,9 @@ func Get(value jsontext.Value, ptr jsontext.Pointer) (val jsontext.Value) {
 		return Get(getInObject(value, key), jsontext.Pointer(rest))
 	case jsontext.KindBeginArray:
 		return nil // TODO: implement
+	default:
+		return value
 	}
-
-	return value
 }
 
 func GetString(value jsontext.Value, ptr jsontext.Pointer) (string, bool) {

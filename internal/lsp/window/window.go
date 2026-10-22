@@ -57,7 +57,7 @@ func (w *Window) ShowDocument(ctx context.Context, uri string, takeFocus bool) b
 }
 
 func rawShowDocumentParams(uri string, takeFocus bool) *jsontext.Value {
-	alloc := 10 + len(uri) // {"uri":""}
+	alloc := len(`{"uri":""}`) + len(uri)
 	if takeFocus {
 		alloc += 17 // ,"takeFocus":true
 	}

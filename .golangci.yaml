@@ -2,38 +2,37 @@ version: "2"
 linters:
   default: all
   disable:
-    # these linters are disabled either because they
-    # are annoying or because they are deprecated
-    - dupword
-    - err113
+    # irrelevant to this project
+    - promlinter
+    - protogetter
+    - rowserrcheck
+    - sqlclosecheck
+    - testifylint
+    - ginkgolinter
+    - unqueryvet
+    - nlreturn # covered by wsl_v5
+    # deprecated
     - exhaustruct
+    - gomodguard
+    - wsl
+    # wrong and/or annoying
+    - err113
     - exhaustruct_v5
-    - exhaustive
-    - funlen
     - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
     - gocyclo
     - godox
-    - gomodguard # replace by gomodguard_v2
     - inamedparam
     - ireturn
     - mnd
     - nestif
-    - nlreturn # covered by wsl_v5
     - noinlineerr
     - nonamedreturns
-    - promlinter # we don't use Prometheus
-    - protogetter # we don't have protobuf types
-    - rowserrcheck # we don't use SQL
-    - sqlclosecheck # we don't use SQL
-    - testifylint # not used here
     - testpackage
-    - unqueryvet # no SQL here
     - varnamelen
     - wrapcheck
-    - wsl # replaced by wsl_v5
   settings:
     cyclop:
       max-complexity: 40 # default is 10
@@ -76,10 +75,15 @@ linters:
         - github.com/open-policy-agent/regal/internal/encoding/util/write.String
         - github.com/open-policy-agent/regal/internal/encoding/util/write.StringField
         - github.com/open-policy-agent/regal/internal/encoding/util/write.Tokens
+    exhaustive:
+      default-signifies-exhaustive: true
     funcorder:
       constructor: true
       struct-method: true
       function: true
+    funlen:
+      lines: -1 # count statements, not lines
+      statements: 60 # TODO: try to improve the 3 remaining functions above 50
     gocritic:
       enable-all: true
       disabled-checks:

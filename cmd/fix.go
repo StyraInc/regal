@@ -101,7 +101,7 @@ The linter rules with automatic fixes available are currently:
 
 // TODO: This function is too long and should be broken down
 //
-//nolint:cyclop,maintidx
+//nolint:cyclop,maintidx,funlen
 func fix(args []string, params *fixParams) (err error) {
 	ctx, cancel := getLinterContext(params.lintAndFixParams)
 	defer cancel()
@@ -112,9 +112,8 @@ func fix(args []string, params *fixParams) (err error) {
 	}
 
 	var (
-		regalDir         *os.File
-		customRulesDir   string
-		configSearchPath string
+		regalDir                         *os.File
+		customRulesDir, configSearchPath string
 	)
 
 	if len(args) == 1 {

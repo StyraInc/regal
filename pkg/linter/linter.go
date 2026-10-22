@@ -404,13 +404,12 @@ func (l Linter) MustPrepare(ctx context.Context) Linter {
 }
 
 // Lint runs the linter on provided policies.
-func (l Linter) Lint(ctx context.Context) (report.Report, error) {
+func (l Linter) Lint(ctx context.Context) (r report.Report, err error) {
 	l.startTimer(regalmetrics.RegalLint)
 
 	if !l.isPrepared {
-		var err error
 		if l, err = l.Prepare(ctx); err != nil {
-			return report.Report{}, fmt.Errorf("failed to prepare linter: %w", err)
+			return r, fmt.Errorf("failed to prepare linter: %w", err)
 		}
 	}
 
@@ -423,7 +422,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	filtered, err := config.FilterIgnoredPaths(l.inputPaths, ignore, true, l.pathPrefix)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
+		return r, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
 	l.stopTimer(regalmetrics.RegalFilterIgnoredFiles)
@@ -440,7 +439,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 	inputFromPaths, err := rules.InputFromPaths(filtered, l.pathPrefix, versionsMap)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("errors encountered when reading files to lint: %w", err)
+		return r, fmt.Errorf("errors encountered when reading files to lint: %w", err)
 	}
 
 	l.stopTimer(regalmetrics.RegalInputParse)
@@ -452,7 +451,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 
 		filteredPaths, err := config.FilterIgnoredPaths(l.inputModules.FileNames, ignore, false, l.pathPrefix)
 		if err != nil {
-			return report.Report{}, fmt.Errorf("failed to filter paths: %w", err)
+			return r, fmt.Errorf("failed to filter paths: %w", err)
 		}
 
 		for _, filename := range filteredPaths {
@@ -465,12 +464,12 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 	}
 
 	if len(l.inputPaths) == 0 && l.inputModules == nil {
-		return report.Report{}, errNothingToLint
+		return r, errNothingToLint
 	}
 
 	regoReport, err := l.lint(ctx, input)
 	if err != nil {
-		return report.Report{}, fmt.Errorf("failed to lint using Rego rules: %w", err)
+		return r, fmt.Errorf("failed to lint using Rego rules: %w", err)
 	}
 
 	if len(input.FileNames) > 1 {
@@ -479,7 +478,7 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		if allAggregates != nil && allAggregates.Len() > 0 {
 			aggregateReport, err := l.lintWithAggregateRules(ctx, allAggregates, regoReport.IgnoreDirectives)
 			if err != nil {
-				return report.Report{}, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
+				return r, fmt.Errorf("failed to lint using Rego aggregate rules: %w", err)
 			}
 
 			regoReport.Violations = append(regoReport.Violations, aggregateReport.Violations...)
@@ -490,12 +489,10 @@ func (l Linter) Lint(ctx context.Context) (report.Report, error) {
 		}
 	}
 
-	skippedCount := l.countSkippedFromNotices(ctx, regoReport)
-
 	regoReport.Summary = report.Summary{
 		FilesScanned:  len(input.FileNames),
 		FilesFailed:   len(regoReport.ViolationsFileCount()),
-		RulesSkipped:  skippedCount,
+		RulesSkipped:  l.countSkippedFromNotices(ctx, regoReport),
 		NumViolations: len(regoReport.Violations),
 	}
 

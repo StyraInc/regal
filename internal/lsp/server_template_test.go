@@ -124,7 +124,7 @@ func TestTemplateContentsForFile(t *testing.T) {
 
 			ls.cache.SetFileContents(fileURI, tc.CacheFileContents)
 
-			newContents, err := ls.templateContentsForFile(fileURI)
+			newContents, err := ls.templateContents(fileURI)
 			if tc.ExpectedError != "" {
 				testutil.ErrMustContain(err, tc.ExpectedError)(t)
 			} else if err != nil {
@@ -151,7 +151,7 @@ func TestTemplateContentsForFileInWorkspaceRoot(t *testing.T) {
 
 	ls.cache.SetFileContents(fileURI, "")
 
-	_, err := ls.templateContentsForFile(fileURI)
+	_, err := ls.templateContents(fileURI)
 
 	testutil.ErrMustContain(err, "this function does not template files in the workspace root")(t)
 }
@@ -167,7 +167,7 @@ func TestTemplateContentsForFileWithUnknownRoot(t *testing.T) {
 	ls.cache.SetFileContents(fileURI, "")
 
 	must.MkdirAll(t, td, "foo")
-	assert.Equal(t, "package foo\n\n", must.Return(ls.templateContentsForFile(fileURI))(t))
+	assert.Equal(t, "package foo\n\n", must.Return(ls.templateContents(fileURI))(t))
 }
 
 func TestNewFileTemplating(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	outil "github.com/open-policy-agent/opa/v1/util"
 
+	"github.com/open-policy-agent/regal/internal/funsafe"
 	"github.com/open-policy-agent/regal/internal/util"
 	"github.com/open-policy-agent/regal/pkg/roast/rast"
 
@@ -192,21 +193,16 @@ func termValueTerm(val ast.Value) *ast.Term {
 			return ast.InternedEmptyArray
 		}
 
-		terms := make([]*ast.Term, 0, v.Len())
-		for i := range v.Len() {
-			terms = append(terms, termToObject(v.Elem(i)))
-		}
-
-		return ast.ArrayTerm(terms...)
+		return ast.ArrayTerm(rast.ArrayMap(v, termToObject)...)
 	case ast.Object:
 		if v.Len() == 0 {
 			return ast.InternedEmptyArray
 		}
 
-		items := make([]*ast.Term, 0, v.Len())
-		v.Foreach(func(k, v *ast.Term) {
-			items = append(items, ast.ArrayTerm(termToObject(k), termToObject(v)))
-		})
+		i, items := 0, make([]*ast.Term, v.Len())
+		for _, elem := range funsafe.ObjectElems(v) {
+			i, items[i] = i+1, ast.ArrayTerm(termToObject(elem.Key()), termToObject(elem.Value()))
+		}
 
 		return ast.ArrayTerm(items...)
 	case ast.Set:
@@ -214,9 +210,7 @@ func termValueTerm(val ast.Value) *ast.Term {
 			return ast.InternedEmptyArray
 		}
 
-		items := outil.Map(v.Slice(), termToObject)
-
-		return ast.ArrayTerm(items...)
+		return ast.ArrayTerm(outil.Map(v.Slice(), termToObject)...)
 	case *ast.ArrayComprehension:
 		return ast.ObjectTerm(rast.Item("term", termToObject(v.Term)), rast.Item("body", bodyToArray(v.Body)))
 	case *ast.SetComprehension:
@@ -269,17 +263,7 @@ func annotationsToObject(a *ast.Annotations) *ast.Term {
 		return nil
 	}
 
-	preAlloc := 0
-	if a.Entrypoint {
-		preAlloc++
-	}
-
-	preAlloc += min(1, len(a.Scope)) + min(1, len(a.Title)) + min(1, len(a.Description)) +
-		min(1, len(a.Organizations)) + min(1, len(a.RelatedResources)) + min(1, len(a.Authors)) +
-		min(1, len(a.Schemas)) + min(1, len(a.Custom))
-
-	obj := objectWithLocationAndCap(a.Location, preAlloc)
-
+	obj := objectWithLocationAndCap(a.Location, annotationsPreAlloc(a))
 	if a.Scope != "" {
 		rast.Insert(obj, "scope", ast.InternedTerm(a.Scope))
 	}
@@ -301,82 +285,72 @@ func annotationsToObject(a *ast.Annotations) *ast.Term {
 	}
 
 	if len(a.RelatedResources) > 0 {
-		rrs := make([]*ast.Term, 0, len(a.RelatedResources))
-
-		for _, rr := range a.RelatedResources {
-			rrObj := ast.NewObject(rast.Item("ref", ast.StringTerm(rr.Ref.String())))
-			if rr.Description != "" {
-				rast.Insert(rrObj, "description", ast.StringTerm(rr.Description))
-			}
-
-			rrs = append(rrs, ast.NewTerm(rrObj))
-		}
-
-		rast.Insert(obj, "related_resources", ast.ArrayTerm(rrs...))
+		rast.Insert(obj, "related_resources", ast.ArrayTerm(outil.Map(a.RelatedResources, relatedResourceToObject)...))
 	}
 
 	if len(a.Authors) > 0 {
-		as := make([]*ast.Term, 0, len(a.Authors))
-
-		for _, author := range a.Authors {
-			aObj := ast.NewObjectWithCapacity(min(1, len(author.Name)) + min(1, len(author.Email)))
-			if author.Name != "" {
-				rast.Insert(aObj, "name", ast.InternedTerm(author.Name))
-			}
-
-			if author.Email != "" {
-				rast.Insert(aObj, "email", ast.InternedTerm(author.Email))
-			}
-
-			as = append(as, ast.NewTerm(aObj))
-		}
-
-		rast.Insert(obj, "authors", ast.ArrayTerm(as...))
+		rast.Insert(obj, "authors", ast.ArrayTerm(outil.Map(a.Authors, authorToObject)...))
 	}
 
 	if len(a.Schemas) > 0 {
-		ss := make([]*ast.Term, 0, len(a.Schemas))
-
-		for _, s := range a.Schemas {
-			preAlloc := 0
-			if s.Definition != nil {
-				preAlloc++
-			}
-
-			sObj := ast.NewObjectWithCapacity(preAlloc + min(1, len(s.Path)) + min(1, len(s.Schema)))
-			if len(s.Path) > 0 {
-				rast.Insert(sObj, "path", ast.NewTerm(refToArray(s.Path)))
-			}
-
-			if len(s.Schema) > 0 {
-				rast.Insert(sObj, "schema", ast.NewTerm(refToArray(s.Schema)))
-			}
-
-			if s.Definition != nil {
-				def, err := ast.InterfaceToValue(s.Definition)
-				if err != nil {
-					panic(err)
-				}
-
-				rast.Insert(sObj, "definition", ast.NewTerm(def))
-			}
-
-			ss = append(ss, ast.NewTerm(sObj))
-		}
-
-		rast.Insert(obj, "schemas", ast.ArrayTerm(ss...))
+		rast.Insert(obj, "schemas", ast.ArrayTerm(outil.Map(a.Schemas, schemaToObject)...))
 	}
 
 	if len(a.Custom) > 0 {
-		c, err := ast.InterfaceToValue(a.Custom)
-		if err != nil {
-			panic(err)
-		}
-
-		rast.Insert(obj, "custom", ast.NewTerm(c))
+		rast.Insert(obj, "custom", ast.NewTerm(ast.MustInterfaceToValue(a.Custom)))
 	}
 
 	return ast.NewTerm(obj)
+}
+
+func annotationsPreAlloc(a *ast.Annotations) int {
+	return min(1, len(a.Scope)) + min(1, len(a.Title)) + min(1, len(a.Description)) +
+		min(1, len(a.Organizations)) + min(1, len(a.RelatedResources)) + min(1, len(a.Authors)) +
+		min(1, len(a.Schemas)) + min(1, len(a.Custom)) + util.BoolToInt(a.Entrypoint)
+}
+
+func relatedResourceToObject(rr *ast.RelatedResourceAnnotation) *ast.Term {
+	rrObj := ast.NewObjectWithCapacity(1 + util.BoolToInt(rr.Description != ""))
+
+	rast.Insert(rrObj, "ref", ast.StringTerm(rr.Ref.String()))
+
+	if rr.Description != "" {
+		rast.Insert(rrObj, "description", ast.StringTerm(rr.Description))
+	}
+
+	return ast.NewTerm(rrObj)
+}
+
+func schemaToObject(s *ast.SchemaAnnotation) *ast.Term {
+	n := util.BoolToInt(s.Definition != nil) + min(1, len(s.Path)) + min(1, len(s.Schema))
+
+	sObj := ast.NewObjectWithCapacity(n)
+	if len(s.Path) > 0 {
+		rast.Insert(sObj, "path", ast.NewTerm(refToArray(s.Path)))
+	}
+
+	if len(s.Schema) > 0 {
+		rast.Insert(sObj, "schema", ast.NewTerm(refToArray(s.Schema)))
+	}
+
+	if s.Definition != nil {
+		rast.Insert(sObj, "definition", ast.NewTerm(ast.MustInterfaceToValue(s.Definition)))
+	}
+
+	return ast.NewTerm(sObj)
+}
+
+func authorToObject(author *ast.AuthorAnnotation) *ast.Term {
+	aObj := ast.NewObjectWithCapacity(min(1, len(author.Name)) + min(1, len(author.Email)))
+	if author.Name != "" {
+		rast.Insert(aObj, "name", ast.InternedTerm(author.Name))
+	}
+
+	if author.Email != "" {
+		rast.Insert(aObj, "email", ast.InternedTerm(author.Email))
+	}
+
+	return ast.NewTerm(aObj)
 }
 
 func refToArray(ref ast.Ref) *ast.Array {

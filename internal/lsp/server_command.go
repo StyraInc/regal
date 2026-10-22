@@ -334,34 +334,17 @@ func (l *LanguageServer) handleIgnoreRuleCommand(_ context.Context, args types.C
 
 func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types.ExecuteCommandParams) error {
 	workspace := l.Workspace()
-	if !workspace.Client().InitOptions.EnableExplorer {
+
+	client := workspace.Client()
+	if !client.InitOptions.EnableExplorer {
 		l.log.Message("regal.explorer command called but client does not support explorer functionality")
 
 		return errors.New("client does not support explorer functionality")
 	}
 
-	var args types.ExplorerCommandArgs
-
-	if len(params.Arguments) > 0 {
-		arg, ok := params.Arguments[0].(map[string]any)
-		if !ok {
-			return fmt.Errorf(
-				"failed to unmarshal regal.explorer command arguments, expected object, got %T",
-				params.Arguments[0],
-			)
-		}
-
-		args = types.ExplorerCommandArgs{
-			Target:      util.MapGet[string](arg, "target"),
-			Strict:      util.MapGet[bool](arg, "strict"),
-			Annotations: util.MapGet[bool](arg, "annotations"),
-			Print:       util.MapGet[bool](arg, "print"),
-			Format:      util.MapGet[bool](arg, "format"),
-		}
-	}
-
-	if args.Target == "" {
-		return errors.New("explorer: target file URI is required")
+	args, err := parseArgs(params)
+	if err != nil {
+		return err
 	}
 
 	contents, ok := l.cache.GetFileContents(args.Target)
@@ -369,38 +352,18 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 		return fmt.Errorf("could not get file contents for uri %q", args.Target)
 	}
 
+	hasErrors := false
 	path := workspace.RelativePath(args.Target)
-
-	compileResults := explorer.CompilerStages(
-		path,
-		contents,
-		args.Strict,
-		args.Annotations,
-		args.Print,
-	)
+	compileResults := explorer.CompilerStages(path, contents, args.Strict, args.Annotations, args.Print)
 
 	// For VSCode, use the notification approach
-	if l.Workspace().Client().Identifier == clients.IdentifierVSCode {
+	if client.Identifier == clients.IdentifierVSCode {
 		stages := make([]types.ExplorerStageResult, 0, len(compileResults))
-		hasErrors := false
 
 		for _, cs := range compileResults {
-			stage := types.ExplorerStageResult{
-				Name:  string(cs.Stage),
-				Error: cs.Error != "",
-			}
+			stage := types.ExplorerStageResult{Name: string(cs.Stage), Error: cs.Error != ""}
 
-			if cs.Error != "" {
-				hasErrors = true
-				stage.Output = cs.Error
-			} else {
-				if args.Format {
-					stage.Output = cs.FormattedResult()
-				} else if cs.Result != nil {
-					stage.Output = cs.Result.String()
-				}
-			}
-
+			stage.Output, hasErrors = toOutput(cs, args.Format, hasErrors)
 			stages = append(stages, stage)
 		}
 
@@ -427,29 +390,14 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 
-	hasErrors := false
-	baseName := filepath.Base(uri.ToPath(args.Target))
-	baseName = strings.TrimSuffix(baseName, ".rego")
-
-	var previousOutput string
-
-	filesToOpen := make([]string, 0)
+	var (
+		filesToOpen            []string
+		output, previousOutput string
+		baseName               = strings.TrimSuffix(filepath.Base(path), ".rego")
+	)
 
 	for i, cs := range compileResults {
-		var output string
-
-		if cs.Error != "" {
-			hasErrors = true
-			output = cs.Error
-		} else if cs.Result != nil {
-			if args.Format {
-				output = cs.FormattedResult()
-			} else {
-				output = cs.Result.String()
-			}
-		}
-
-		if output == "" {
+		if output, hasErrors = toOutput(cs, args.Format, hasErrors); output == "" {
 			continue
 		}
 
@@ -458,14 +406,9 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 
 		if err := os.WriteFile(filename, []byte(output), 0o600); err != nil {
 			l.log.Message("failed to write stage file %s: %s", filename, err)
-
-			continue
-		}
-
-		// Only open stages where output differs from previous stage
-		if output != previousOutput {
-			filesToOpen = append(filesToOpen, filename)
-			previousOutput = output
+		} else if output != previousOutput {
+			// Only open stages where output differs from previous stage
+			filesToOpen, previousOutput = append(filesToOpen, filename), output
 		}
 	}
 
@@ -501,6 +444,18 @@ func (l *LanguageServer) handleExplorerCommand(ctx context.Context, params types
 	}
 
 	return nil
+}
+
+func toOutput(cs explorer.CompileResult, format, hasErrors bool) (string, bool) {
+	if cs.Error != "" || cs.Result == nil {
+		return cs.Error, cs.Error != ""
+	}
+
+	if format {
+		return cs.FormattedResult(), hasErrors
+	}
+
+	return cs.Result.String(), hasErrors
 }
 
 func (l *LanguageServer) handleWorkspaceExecuteCommand(params types.ExecuteCommandParams) (any, error) {
@@ -604,4 +559,28 @@ func (l *LanguageServer) displayTestResult(ctx context.Context, testCode, source
 	}
 
 	return nil
+}
+
+func parseArgs(params types.ExecuteCommandParams) (args types.ExplorerCommandArgs, err error) {
+	if len(params.Arguments) > 0 {
+		if arg, ok := params.Arguments[0].(map[string]any); ok {
+			args = types.ExplorerCommandArgs{
+				Target:      util.MapGet[string](arg, "target"),
+				Strict:      util.MapGet[bool](arg, "strict"),
+				Annotations: util.MapGet[bool](arg, "annotations"),
+				Print:       util.MapGet[bool](arg, "print"),
+				Format:      util.MapGet[bool](arg, "format"),
+			}
+		} else {
+			err = fmt.Errorf(
+				"failed to unmarshal regal.explorer command arguments, expected object, got %T", params.Arguments[0],
+			)
+		}
+	}
+
+	if err == nil && args.Target == "" {
+		err = errors.New("explorer: target file URI is required")
+	}
+
+	return args, err
 }

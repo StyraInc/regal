@@ -15,16 +15,27 @@ import data.regal.lsp.util.range
 # schemas:
 #   - input.params: schema.regal.lsp.textdocumentposition
 arg_at_position := [arg, rule_index] if {
-	some rule_index, vars in ast.found.var_terms
-	some var in vars
+	[var, rule_index] := var_at_position
 
-	range.contains_position(range.parse(var.location), input.params.position)
+	not startswith(var.value, "$")
 
 	some arg in data.workspace.parsed[input.params.textDocument.uri].rules[rule_index].head.args
 
 	arg.type == "var"
 	arg.value == var.value
-	not startswith(var.value, "$")
+}
+
+# METADATA
+# description: find the variable at input.params.position, and the index of its rule, if any
+# schemas:
+#   - input.params: schema.regal.lsp.textdocumentposition
+var_at_position := [var, rule_index] if {
+	[rule, rule_index] := rule_at_position
+
+	walk(rule, [_, var])
+
+	var.type == "var"
+	range.contains_position(range.parse(var.location), input.params.position)
 }
 
 # METADATA

@@ -183,17 +183,6 @@ func (n Notice) ByTitle(other Notice) int {
 	return strings.Compare(n.Title, other.Title)
 }
 
-func violationFromObject(obj ast.Object) Violation {
-	return Violation{
-		Title:            rast.GetString(obj, "title"),
-		Description:      rast.GetString(obj, "description"),
-		Category:         rast.GetString(obj, "category"),
-		Level:            rast.GetString(obj, "level"),
-		RelatedResources: relatedResourcesValue(obj, "related_resources"),
-		Location:         locationValue(obj, "location"),
-	}
-}
-
 func NoticeFromObject(obj ast.Object) Notice {
 	return Notice{
 		Title:       rast.GetString(obj, "title"),
@@ -212,10 +201,7 @@ func LocationFromObject(obj ast.Object) Location {
 	}
 
 	if endObj, ok := rast.GetValue[ast.Object](obj, "end"); ok {
-		l.End = &Position{
-			Row:    rast.GetInt(endObj, "row"),
-			Column: rast.GetInt(endObj, "col"),
-		}
+		l.End = &Position{Row: rast.GetInt(endObj, "row"), Column: rast.GetInt(endObj, "col")}
 	}
 
 	if text := rast.GetString(obj, "text"); text != "" {
@@ -223,6 +209,17 @@ func LocationFromObject(obj ast.Object) Location {
 	}
 
 	return l
+}
+
+func violationFromObject(obj ast.Object) Violation {
+	return Violation{
+		Title:            rast.GetString(obj, "title"),
+		Description:      rast.GetString(obj, "description"),
+		Category:         rast.GetString(obj, "category"),
+		Level:            rast.GetString(obj, "level"),
+		RelatedResources: relatedResourcesValue(obj, "related_resources"),
+		Location:         locationValue(obj, "location"),
+	}
 }
 
 func relatedResourcesValue(obj ast.Object, key string) (resources []RelatedResource) {

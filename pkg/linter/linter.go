@@ -616,15 +616,12 @@ func (l Linter) countSkippedFromNotices(ctx context.Context, r *report.Report) i
 	}
 
 	r.Notices = slices.Compact(outil.SortedFunc(r.Notices, report.Notice.ByTitle))
-	rulesSkippedCounter := 0
 
-	for _, notice := range r.Notices {
-		if notice.Severity != "none" {
-			rulesSkippedCounter++
-		}
-	}
+	return outil.Count(severityNotNone, r.Notices...)
+}
 
-	return rulesSkippedCounter
+func severityNotNone(n report.Notice) bool {
+	return n.Severity != "none"
 }
 
 func (h *prepareResultHandler) Handle(result ogre.Result) error {

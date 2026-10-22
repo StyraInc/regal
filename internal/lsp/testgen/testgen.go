@@ -94,6 +94,54 @@ func CreateTestModule(ctx context.Context, opts TestModuleOptions) (string, erro
 	return b.String(), errors.Join(ruleErrs...)
 }
 
+func BuildTestHeader(packagePath string) string {
+	testPackage := createTestPackage(packagePath)
+
+	return fmt.Sprintf(`package %s
+
+import %s`, testPackage, packagePath)
+}
+
+func CreateTestFunction(ctx context.Context, opts TestCreationOptions) (string, error) {
+	if opts.Rule == nil || opts.Compiler == nil {
+		return "", errors.New("dependency analysis requires Rule and Compiler to be provided")
+	}
+
+	withClauses, err := analyzeDependencies(ctx, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to analyze dependencies: %w", err)
+	}
+
+	testFunction := buildTestFunction(opts, withClauses)
+	completeTest := BuildTestHeader(opts.PackagePath) + "\n\n" + testFunction
+
+	formatted, err := format.Source("test.rego", []byte(completeTest))
+	if err != nil {
+		// Array access syntax like input.permissions[0] can cause parsing issues:
+		// input skeleton doesn't handle arrays, so writing input.permissions.0
+		// would result in invalid rego. Falling back here if test generation creates
+		// invalid rego.
+		//
+		// TODO: handle array access in withClause generation and input.json skeleton
+		testFunction = buildTestFunction(opts, []string{})
+		completeTest = BuildTestHeader(opts.PackagePath) + "\n\n" + testFunction
+
+		formatted, err = format.Source("test.rego", []byte(completeTest))
+		if err != nil {
+			return "", fmt.Errorf("failed to format basic test: %w", err)
+		}
+	}
+
+	lines := strings.Split(string(formatted), "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "test_") {
+			return strings.Join(lines[i:], "\n"), nil
+		}
+	}
+
+	return testFunction, nil
+}
+
 func analyzeDependencies(ctx context.Context, opts TestCreationOptions) ([]string, error) {
 	refs, err := dependencies.Base(opts.Compiler, opts.Rule)
 	if err != nil {
@@ -203,54 +251,6 @@ func buildTestFunction(opts TestCreationOptions, withClauses []string) string {
 	return fmt.Sprintf(`%s if {
     %s%s
 }`, testName, ruleCall, withClause)
-}
-
-func BuildTestHeader(packagePath string) string {
-	testPackage := createTestPackage(packagePath)
-
-	return fmt.Sprintf(`package %s
-
-import %s`, testPackage, packagePath)
-}
-
-func CreateTestFunction(ctx context.Context, opts TestCreationOptions) (string, error) {
-	if opts.Rule == nil || opts.Compiler == nil {
-		return "", errors.New("dependency analysis requires Rule and Compiler to be provided")
-	}
-
-	withClauses, err := analyzeDependencies(ctx, opts)
-	if err != nil {
-		return "", fmt.Errorf("failed to analyze dependencies: %w", err)
-	}
-
-	testFunction := buildTestFunction(opts, withClauses)
-	completeTest := BuildTestHeader(opts.PackagePath) + "\n\n" + testFunction
-
-	formatted, err := format.Source("test.rego", []byte(completeTest))
-	if err != nil {
-		// Array access syntax like input.permissions[0] can cause parsing issues:
-		// input skeleton doesn't handle arrays, so writing input.permissions.0
-		// would result in invalid rego. Falling back here if test generation creates
-		// invalid rego.
-		//
-		// TODO: handle array access in withClause generation and input.json skeleton
-		testFunction = buildTestFunction(opts, []string{})
-		completeTest = BuildTestHeader(opts.PackagePath) + "\n\n" + testFunction
-
-		formatted, err = format.Source("test.rego", []byte(completeTest))
-		if err != nil {
-			return "", fmt.Errorf("failed to format basic test: %w", err)
-		}
-	}
-
-	lines := strings.Split(string(formatted), "\n")
-	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "test_") {
-			return strings.Join(lines[i:], "\n"), nil
-		}
-	}
-
-	return testFunction, nil
 }
 
 func findDataFile(workspacePath string) map[string]any {

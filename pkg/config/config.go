@@ -169,53 +169,6 @@ func Find(path string) (*os.File, error) {
 	return regalConfigFile, nil
 }
 
-// findUpwards searches for a file or directory matching the given name,
-// starting from the provided path and moving upwards.
-func findUpwards(path, name string, expectDir bool) (string, error) {
-	dir := rio.Dir(path)
-	volume := filepath.VolumeName(dir) // "C:" on windows, "" on other platforms
-
-	for {
-		var searchPath string
-		if volume == "" {
-			searchPath = filepath.Join(string(os.PathSeparator), dir, name)
-		} else {
-			searchPath = filepath.Join(dir, name)
-		}
-
-		if fileInfo, err := os.Stat(searchPath); err == nil && fileInfo.IsDir() == expectDir {
-			return searchPath, nil
-		}
-
-		//nolint:gocritic
-		if searchPath == volume+string(os.PathSeparator)+name {
-			return "", errors.New("can't traverse past root directory")
-		}
-
-		// Move up one level in the directory tree
-		parts := strings.Split(dir, string(os.PathSeparator))
-		if len(parts) < 2 {
-			return "", errors.New("stopping as dir is root directory")
-		}
-
-		parts = parts[:len(parts)-1]
-		if parts[0] == volume {
-			parts[0] = volume + string(os.PathSeparator)
-		}
-
-		dir = filepath.Join(parts...)
-	}
-}
-
-func findFileUpwards(path, name string, expectDir bool) (*os.File, error) {
-	dir, err := findUpwards(path, name, expectDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find .regal directory: %w", err)
-	}
-
-	return util.Wrap(os.Open(dir))("failed to open .regal directory")
-}
-
 // FindRegalDirectoryPath searches for a .regal directory upwards from the provided path.
 func FindRegalDirectoryPath(path string) (string, error) {
 	return findUpwards(path, regalDirName, true)
@@ -292,52 +245,6 @@ func FindBundleRootDirectories(path string) ([]string, error) {
 	}
 
 	return slices.Compact(outil.Sorted(foundBundleRoots)), nil
-}
-
-// TODO: this doesn't properly handle .regal.yaml??
-func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
-	defer file.Close()
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat file: %w", err)
-	}
-
-	parent, filename := filepath.Split(file.Name())
-	if (fileInfo.IsDir() && filename != ".regal") ||
-		(!fileInfo.IsDir() && filename != ".regal.yaml") {
-		return nil, fmt.Errorf("expected a directory named '.regal' or a file named '.regal.yaml', got '%s'", filename)
-	}
-
-	parent = filepath.Clean(parent)
-
-	configFilePath := file.Name()
-	if fileInfo.IsDir() {
-		configFilePath = filepath.Join(configFilePath, "config.yaml")
-	}
-
-	foundBundleRoots := []string{parent}
-
-	if conf, err := FromPath(configFilePath); err == nil && conf.Project != nil && conf.Project.Roots != nil {
-		for _, root := range *conf.Project.Roots {
-			foundBundleRoots = append(foundBundleRoots, filepath.Join(parent, root.Path))
-		}
-	}
-
-	// Include the "rules" directory when loading from a .regal dir
-	if fileInfo.IsDir() {
-		if customDir := filepath.Join(file.Name(), "rules"); rio.IsDir(customDir) {
-			foundBundleRoots = append(foundBundleRoots, customDir)
-		}
-	}
-
-	// Include a search for manifest files
-	manifestRoots, err := rio.FindManifestLocations(parent)
-	if err != nil {
-		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
-	}
-
-	return append(foundBundleRoots, outil.Map(manifestRoots, util.FilepathJoiner(parent))...), nil
 }
 
 // AllRegoVersions returns a map of all Rego versions found in the provided config and .manifest files,
@@ -428,6 +335,99 @@ func GetPotentialRoots(paths ...string) ([]string, error) {
 	return dirMap.Items(), nil
 }
 
+// findUpwards searches for a file or directory matching the given name,
+// starting from the provided path and moving upwards.
+func findUpwards(path, name string, expectDir bool) (string, error) {
+	dir := rio.Dir(path)
+	volume := filepath.VolumeName(dir) // "C:" on windows, "" on other platforms
+
+	for {
+		var searchPath string
+		if volume == "" {
+			searchPath = filepath.Join(string(os.PathSeparator), dir, name)
+		} else {
+			searchPath = filepath.Join(dir, name)
+		}
+
+		if fileInfo, err := os.Stat(searchPath); err == nil && fileInfo.IsDir() == expectDir {
+			return searchPath, nil
+		}
+
+		//nolint:gocritic
+		if searchPath == volume+string(os.PathSeparator)+name {
+			return "", errors.New("can't traverse past root directory")
+		}
+
+		// Move up one level in the directory tree
+		parts := strings.Split(dir, string(os.PathSeparator))
+		if len(parts) < 2 {
+			return "", errors.New("stopping as dir is root directory")
+		}
+
+		parts = parts[:len(parts)-1]
+		if parts[0] == volume {
+			parts[0] = volume + string(os.PathSeparator)
+		}
+
+		dir = filepath.Join(parts...)
+	}
+}
+
+func findFileUpwards(path, name string, expectDir bool) (*os.File, error) {
+	dir, err := findUpwards(path, name, expectDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find .regal directory: %w", err)
+	}
+
+	return util.Wrap(os.Open(dir))("failed to open .regal directory")
+}
+
+// TODO: this doesn't properly handle .regal.yaml??
+func rootsFromRegalConfigDirOrFile(file *os.File) ([]string, error) {
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat file: %w", err)
+	}
+
+	parent, filename := filepath.Split(file.Name())
+	if (fileInfo.IsDir() && filename != ".regal") ||
+		(!fileInfo.IsDir() && filename != ".regal.yaml") {
+		return nil, fmt.Errorf("expected a directory named '.regal' or a file named '.regal.yaml', got '%s'", filename)
+	}
+
+	parent = filepath.Clean(parent)
+
+	configFilePath := file.Name()
+	if fileInfo.IsDir() {
+		configFilePath = filepath.Join(configFilePath, "config.yaml")
+	}
+
+	foundBundleRoots := []string{parent}
+
+	if conf, err := FromPath(configFilePath); err == nil && conf.Project != nil && conf.Project.Roots != nil {
+		for _, root := range *conf.Project.Roots {
+			foundBundleRoots = append(foundBundleRoots, filepath.Join(parent, root.Path))
+		}
+	}
+
+	// Include the "rules" directory when loading from a .regal dir
+	if fileInfo.IsDir() {
+		if customDir := filepath.Join(file.Name(), "rules"); rio.IsDir(customDir) {
+			foundBundleRoots = append(foundBundleRoots, customDir)
+		}
+	}
+
+	// Include a search for manifest files
+	manifestRoots, err := rio.FindManifestLocations(parent)
+	if err != nil {
+		return nil, fmt.Errorf("failed while looking for manifest locations: %w", err)
+	}
+
+	return append(foundBundleRoots, outil.Map(manifestRoots, util.FilepathJoiner(parent))...), nil
+}
+
 func fromOPABuiltin(builtin *ast.Builtin) *Builtin {
 	if b, ok := opabuiltinCache.Get(builtin.Name); ok {
 		return b
@@ -458,16 +458,14 @@ func fromOPACapabilities(capabilities *ast.Capabilities) *Capabilities {
 
 // Translate integer value 0 or 1 as found in config or .manifest to ast.RegoVersion.
 func regoVersionFromConfigValue(version *int) ast.RegoVersion {
-	if version == nil {
-		return ast.RegoUndefined
+	if version != nil {
+		switch *version {
+		case 0:
+			return ast.RegoV0
+		case 1:
+			return ast.RegoV1
+		}
 	}
 
-	switch *version {
-	case 0:
-		return ast.RegoV0
-	case 1:
-		return ast.RegoV1
-	default:
-		return ast.RegoUndefined
-	}
+	return ast.RegoUndefined
 }

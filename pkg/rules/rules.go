@@ -138,6 +138,21 @@ func RegoVersionFromMap(
 	return selectedVersion
 }
 
+// InputFromText creates a new Input from raw Rego text.
+func InputFromText(fileName, text string) (Input, error) {
+	return rutil.Wrap(InputFromTextWithOptions(fileName, text, parse.Options()))("can't create input from text")
+}
+
+// InputFromTextWithOptions creates a new Input from raw Rego text while respecting the provided options.
+func InputFromTextWithOptions(fileName, text string, opts ast.ParserOptions) (Input, error) {
+	mod, err := ast.ParseModuleWithOpts(fileName, text, opts)
+	if err != nil {
+		return Input{}, fmt.Errorf("failed to parse module: %w", err)
+	}
+
+	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
+}
+
 func regoWithOpts(path string, opts ast.ParserOptions) (*regoFile, error) {
 	path = filepath.Clean(path)
 
@@ -174,21 +189,6 @@ func inputFromStdin() (Input, error) {
 		Modules:     map[string]*ast.Module{"stdin": module},
 		FileNames:   []string{"stdin"},
 	}, nil
-}
-
-// InputFromText creates a new Input from raw Rego text.
-func InputFromText(fileName, text string) (Input, error) {
-	return rutil.Wrap(InputFromTextWithOptions(fileName, text, parse.Options()))("can't create input from text")
-}
-
-// InputFromTextWithOptions creates a new Input from raw Rego text while respecting the provided options.
-func InputFromTextWithOptions(fileName, text string, opts ast.ParserOptions) (Input, error) {
-	mod, err := ast.ParseModuleWithOpts(fileName, text, opts)
-	if err != nil {
-		return Input{}, fmt.Errorf("failed to parse module: %w", err)
-	}
-
-	return NewInput(map[string]string{fileName: text}, map[string]*ast.Module{fileName: mod}), nil
 }
 
 func errNotNil(err error) bool {

@@ -76,6 +76,10 @@ linters:
         - github.com/open-policy-agent/regal/internal/encoding/util/write.String
         - github.com/open-policy-agent/regal/internal/encoding/util/write.StringField
         - github.com/open-policy-agent/regal/internal/encoding/util/write.Tokens
+    funcorder:
+      constructor: true
+      struct-method: true
+      function: true
     gocritic:
       enable-all: true
       disabled-checks:

@@ -74,14 +74,6 @@ func CompilerStages(path, rego string, useStrict, useAnno, usePrint bool) []Comp
 	return result
 }
 
-func getOne(mods map[string]*ast.Module) *ast.Module {
-	for _, m := range mods {
-		return m.Copy()
-	}
-
-	panic("unreachable")
-}
-
 func Plan(ctx context.Context, path, rego string, usePrint bool) (string, error) {
 	mod, err := ast.ParseModuleWithOpts(path, rego, parse.Options())
 	if err != nil {
@@ -111,4 +103,12 @@ func Plan(ctx context.Context, path, rego string, usePrint bool) (string, error)
 	}
 
 	return buf.String(), nil
+}
+
+func getOne(mods map[string]*ast.Module) *ast.Module {
+	for _, m := range mods {
+		return m.Copy()
+	}
+
+	panic("unreachable")
 }

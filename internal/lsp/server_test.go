@@ -22,7 +22,6 @@ import (
 	"github.com/open-policy-agent/regal/internal/lsp/types"
 	"github.com/open-policy-agent/regal/internal/lsp/uri"
 	"github.com/open-policy-agent/regal/internal/test/assert"
-	"github.com/open-policy-agent/regal/internal/util"
 )
 
 type receivedMessagesMap map[string]chan []string
@@ -240,24 +239,6 @@ func createMessageChannels(files map[string]string) receivedMessagesMap {
 	}
 
 	return receivedMessages
-}
-
-func TestPositionToOffset(t *testing.T) {
-	t.Parallel()
-
-	text := "line1\nline2\nline3"
-
-	for line := range uint32(2) {
-		for char := range uint32(5) {
-			pos := types.Position{Line: line, Character: char}
-			exp := line*6 + char
-			got := util.IntTo[uint32](pos.ToOffset(text))
-
-			if exp != got {
-				t.Fatalf("expected offset for line %d char %d to be %d, got %d", line, char, exp, got)
-			}
-		}
-	}
 }
 
 func notifyDocumentChange(t *testing.T, connClient *jsonrpc2.Conn, fileURI, newContents string) {

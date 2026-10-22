@@ -74,12 +74,6 @@ func ModuleUnknownVersionWithOpts(filename, policy string, opts ast.ParserOption
 	return nil, err
 }
 
-func hasRegoV1Import(imports []*ast.Import) bool {
-	return slices.ContainsFunc(imports, func(imp *ast.Import) bool {
-		return ast.RegoV1CompatibleRef.Equal(imp.Path.Value)
-	})
-}
-
 // MustParseModule works like ast.MustParseModule but with the Regal parser options applied.
 func MustParseModule(policy string) *ast.Module {
 	return ast.MustParseModuleWithOpts(policy, Options())
@@ -144,4 +138,10 @@ func refHeadTerm(name string) *ast.Term {
 	default:
 		return ast.VarTerm(name)
 	}
+}
+
+func hasRegoV1Import(imports []*ast.Import) bool {
+	return slices.ContainsFunc(imports, func(imp *ast.Import) bool {
+		return ast.RegoV1CompatibleRef.Equal(imp.Path.Value)
+	})
 }

@@ -122,6 +122,14 @@ func JSONEqual[A, B ~string | ~[]byte](tb testing.TB, exp A, got B) {
 	}
 }
 
+func NumViolations(tb testing.TB, num int, rep report.Report) {
+	tb.Helper()
+
+	if rep.Summary.NumViolations != num {
+		tb.Fatalf("expected %d violations, got %d", num, rep.Summary.NumViolations)
+	}
+}
+
 func mustCanonicalize[A ~string | ~[]byte](tb testing.TB, val A) jsontext.Value {
 	tb.Helper()
 
@@ -131,12 +139,4 @@ func mustCanonicalize[A ~string | ~[]byte](tb testing.TB, val A) jsontext.Value 
 	}
 
 	return v
-}
-
-func NumViolations(tb testing.TB, num int, rep report.Report) {
-	tb.Helper()
-
-	if rep.Summary.NumViolations != num {
-		tb.Fatalf("expected %d violations, got %d", num, rep.Summary.NumViolations)
-	}
 }

@@ -12,7 +12,11 @@ import data.regal.lsp.util.range
 # entrypoint: true
 default result["response"] := null
 
-result["response"] := _response_for(arg) if [arg, _] := find.arg_at_position
+result["response"] := _response_for(var) if {
+	find.arg_at_position
+
+	[var, _] := find.var_at_position
+}
 
 result["response"] := _response_for(var) if [var, _] := find.some_var_at_position
 

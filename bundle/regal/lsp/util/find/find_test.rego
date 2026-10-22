@@ -31,6 +31,40 @@ rule2 if {
 	rule.head.ref[0].value == exp_name
 }
 
+test_arg_at_position[name] if {
+	some name, snippet in {
+		"declaration": "fn(x|) := x.y",
+		"just after the declaration": "fn(x)| := x.y",
+		"use in the head value": "fn(x) := x|.y",
+		"use in the body": "fn(x) := y if y := x|.y",
+		"use in the else branch": "fn(x) := 1 if false else := x|",
+	}
+
+	[tdp, module] := _at_cursor(snippet)
+
+	[arg, rule_index] := find.arg_at_position
+		with input as tdp
+		with data.workspace.parsed["file:///p.rego"] as module
+
+	arg.value == "x"
+	rule_index == 0
+}
+
+test_arg_at_position_not_an_arg[name] if {
+	some name, snippet in {
+		"wildcard": "fn(_|) := 1",
+		"second wildcard": "fn(_, _|) := 1",
+		"field with the same name as the argument": "fn(x) := input.x|",
+		"array argument, not supported": "fn([a|, b]) := a",
+	}
+
+	[tdp, module] := _at_cursor(snippet)
+
+	not find.arg_at_position
+		with input as tdp
+		with data.workspace.parsed["file:///p.rego"] as module
+}
+
 test_import_at_position[tdp.params.position] if {
 	policy := `package p
 import data.foo.bar
@@ -52,34 +86,45 @@ import data.alpha["be-ta"].gamma`
 	ast.ref_static_to_string(imp.path.value) == exp_path
 }
 
-test_import_alias_at_position[tdp.params.position] if {
-	policy := `package p
-import data.foo.bar as baz
-import data.qux`
+test_import_alias_at_position[name] if {
+	some name, snippet in {
+		"in the alias": "import data.foo.bar as b|az",
+		"just after the alias": "import data.foo.bar as baz |",
+	}
 
-	module := regal.parse_module("p.rego", policy)
-
-	some [tdp, exp_alias] in [
-		[text_document_position(1, 26), "baz"],
-		[text_document_position(1, 24), "baz"],
-	]
+	[tdp, module] := _at_cursor(snippet)
 
 	imp := find.import_alias_at_position
-		with input as object.union(tdp, {"regal": {"file": {"lines": split(policy, "\n")}}})
+		with input as tdp
 		with data.workspace.parsed["file:///p.rego"] as module
 
-	imp.alias == exp_alias
+	imp.alias == "baz"
 }
 
-test_import_alias_at_position_not_on_alias if {
-	policy := `package p
-import data.foo.bar as baz`
+test_import_alias_at_position_not_on_alias[name] if {
+	some name, snippet in {
+		"in the path": "import data.fo|o.bar as baz",
+		"on the as keyword": "import data.foo.bar a|s baz",
+	}
 
-	module := regal.parse_module("p.rego", policy)
+	[tdp, module] := _at_cursor(snippet)
 
 	not find.import_alias_at_position
-		with input as object.union(text_document_position(1, 10), {"regal": {"file": {"lines": split(policy, "\n")}}})
+		with input as tdp
 		with data.workspace.parsed["file:///p.rego"] as module
+}
+
+# input and module for a snippet, where the cursor is on the character before the "|" in the snippet
+_at_cursor(snippet) := [tdp, module] if {
+	text := $"package p\n\n{snippet}"
+	lines_before := split(split(text, "|")[0], "\n")
+	lines := split(replace(text, "|", ""), "\n")
+
+	tdp := object.union(
+		text_document_position(count(lines_before) - 1, count(regal.last(lines_before)) - 1),
+		{"regal": {"file": {"lines": lines}}},
+	)
+	module := regal.parse_module("p.rego", concat("\n", lines))
 }
 
 text_document_position(line, character) := {"params": {

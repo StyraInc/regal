@@ -9,26 +9,33 @@ import data.regal.lsp.location
 import data.regal.lsp.util.range
 
 # METADATA
-# description: find the function argument at the given position, if any
+# description: |
+#   find the function argument at the given position, if any, either where it is declared
+#   or where it is used in the rule
 # schemas:
 #   - input.params: schema.regal.lsp.textdocumentposition
 arg_at_position := [arg, rule_index] if {
-	text := input.regal.file.lines[input.params.position.line]
+	[var, rule_index] := var_at_position
 
-	# `+ 1` converts LSP 0-based char position to word_at's 1-based column
-	word := location.word_at(text, input.params.position.character + 1)
+	not startswith(var.value, "$")
 
-	some rule_index
-	arg := data.workspace.parsed[input.params.textDocument.uri].rules[rule_index].head.args[_]
+	some arg in data.workspace.parsed[input.params.textDocument.uri].rules[rule_index].head.args
 
 	arg.type == "var"
-	arg.value == word.text
+	arg.value == var.value
+}
 
-	arg_pos := range.parse(arg.location)
+# METADATA
+# description: find the variable at input.params.position, and the index of its rule, if any
+# schemas:
+#   - input.params: schema.regal.lsp.textdocumentposition
+var_at_position := [var, rule_index] if {
+	[rule, rule_index] := rule_at_position
 
-	input.params.position.line == arg_pos.start.line
-	input.params.position.character >= arg_pos.start.character
-	input.params.position.character <= arg_pos.end.character
+	walk(rule, [_, var])
+
+	var.type == "var"
+	range.contains_position(range.parse(var.location), input.params.position)
 }
 
 # METADATA

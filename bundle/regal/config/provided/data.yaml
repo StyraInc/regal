@@ -79,6 +79,8 @@ rules:
       max-line-length: 120
     prefer-value-in-head:
       level: ignore
+    shadowed-assignment:
+      level: ignore
   idiomatic:
     ambiguous-scope:
       level: error
